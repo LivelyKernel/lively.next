@@ -22,8 +22,8 @@ import { once } from 'lively.bindings';
 import { ModeSelector } from 'lively.components/widgets/mode-selector.cp.js';
 import { fun } from 'lively.lang';
 import { repositoryOwnerAndNameRegex } from './project.js';
-import GitShellResource from 'lively.shell/git-client-resource.js';
 import { debounceNamed } from 'lively.lang/function.js';
+import { GitHubAPIWrapper } from 'lively.git';
 
 class ProjectSettingsPromptModel extends AbstractPromptModel {
   static get properties () {
@@ -180,8 +180,8 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
     if (urlString.endsWith('.git')) urlString = urlString.replace('.git', '');
     const projectRepoOwner = urlString.match(repositoryOwnerAndNameRegex)[1];
     const projectName = urlString.match(repositoryOwnerAndNameRegex)[2];
-    const repoInfos = await GitShellResource.remoteRepoInfos(projectRepoOwner, projectName);
-    const branchListing = await GitShellResource.listGithubBranches(projectRepoOwner, projectName);
+    const repoInfos = await GitHubAPIWrapper.remoteRepoInfos(projectRepoOwner, projectName);
+    const branchListing = await GitHubAPIWrapper.listGithubBranches(projectRepoOwner, projectName);
     branchSelector.items = branchListing.map(b => ({ string: b, value: { name: b }, isListItem: true }));
     branchSelector.selection = this.ui.branchSelector.items.find(i => i.value.name === repoInfos.default_branch).value;
     branchSelector.visible = true;

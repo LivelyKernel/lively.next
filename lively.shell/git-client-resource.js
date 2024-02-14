@@ -3,7 +3,6 @@
 import ShellClientResource from './client-resource.js';
 import { runCommand } from 'lively.ide/shell/shell-interface.js';
 import L2LClient from 'lively.2lively/client.js';
-import { currentUserToken } from 'lively.user';
 
 export default class GitShellResource extends ShellClientResource {
   constructor (url) {
@@ -16,36 +15,10 @@ export default class GitShellResource extends ShellClientResource {
     }
   }
 
-  static async remoteRepoInfos (repoOwner, repoName) {
-    const token = currentUserToken();
-    const res = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}`, {
-      headers: {
-        accept: 'application/vnd.github+json',
-        authorization: `Bearer ${token}`,
-        'X-GitHub-Api-Version': '2022-11-28'
-      }
-    });
-    return await res.json();
-  }
-
-  static async listGithubBranches (repoOwner, repoName) {
-    const token = currentUserToken();
-    const res = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/branches`, {
-      headers: {
-        accept: 'application/vnd.github+json',
-        authorization: `Bearer ${token}`,
-        'X-GitHub-Api-Version': '2022-11-28'
-      }
-    });
-    const branchData = await res.json();
-    // TODO: If this is called with a non-existing repository bad things happen!
-    return branchData.map(b => b.name);
-  }
-
   async fetch (remote = 'origin') {
     await this.runCommand(`git fetch ${remote}`).whenDone();
   }
-  
+
   async branchesInRepository () {
     const output = await this.runCommand('git branch --all').whenDone();
     // TODO: insert error handling
@@ -112,9 +85,9 @@ export default class GitShellResource extends ShellClientResource {
    * @returns
    */
   async createAndCheckoutBranch (branchName, tracked = false) {
-    const branchCreationCmd = tracked ? 
-     `git checkout --track origin/${branchName}`:
-     `git checkout -b ${branchName}`;
+    const branchCreationCmd = tracked
+      ? `git checkout --track origin/${branchName}`
+      : `git checkout -b ${branchName}`;
     const cmd = this.runCommand(branchCreationCmd);
     await cmd.whenDone();
     // Branch could successfully be created and switched to.

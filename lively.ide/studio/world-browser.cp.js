@@ -14,9 +14,8 @@ import { Project } from 'lively.project';
 import { without, add } from 'lively.morphic/components/core.js';
 import { Text } from 'lively.morphic/text/morph.js';
 import { Path } from 'lively.morphic/morph.js';
-import GitShellResource from 'lively.shell/git-client-resource.js';
 import { Rectangle } from 'lively.graphics/geometry-2d.js';
-
+import { GitHubAPIWrapper } from 'lively.git';
 import { currentUserToken, isUserLoggedIn } from 'lively.user';
 import { resource } from 'lively.resources';
 import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
@@ -283,10 +282,10 @@ class ProjectVersionViewer extends WorldVersionViewer {
         $world.get('user flap').show();
       } else {
         // used to figure out the default branch on github or if no repo exists at all
-        repoInfos = await GitShellResource.remoteRepoInfos(_projectOwner, _projectName);
+        repoInfos = await GitHubAPIWrapper.remoteRepoInfos(_projectOwner, _projectName);
         notOnGithub = repoInfos.message === 'Not Found';
         // retrieves all branches that exist remotely
-        if (!notOnGithub) githubBranches = await GitShellResource.listGithubBranches(_projectOwner, _projectName);
+        if (!notOnGithub) githubBranches = await GitHubAPIWrapper.listGithubBranches(_projectOwner, _projectName);
       }
     }
 
@@ -356,7 +355,7 @@ class ProjectVersionViewer extends WorldVersionViewer {
       await localRepo.runCommand('git stash drop').whenDone();
     }
     if (stashApplicationCommand.exitCode !== 0 && !stashApplicationCommand.stderr.includes('is not a valid reference')) {
-      console.warn('Stash application failed due to conflict. Aborting stash application.');
+      console.warn('Stash application failed due to conflict. Aborting stash application.'); // eslint-disable-line no-console
       await localRepo.runCommand('git reset --hard').whenDone();
     }
     spinner.visible = false;
