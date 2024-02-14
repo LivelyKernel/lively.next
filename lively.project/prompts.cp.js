@@ -504,7 +504,7 @@ class ProjectSavePrompt extends AbstractPromptModel {
         const branchName = branchInput.textString.trim();
         success = await this.project.gitResource.createAndCheckoutBranch(branchName);
         if (!success) $world.setStatusMessage(`Could not create branch ${branchName}, possibly due to a name collision!`, StatusMessageError);
-      }
+      } else success = true;
 
       if (success) success = await this.project.save({ increaseLevel, message, tag: this.tag });
       li.remove();
