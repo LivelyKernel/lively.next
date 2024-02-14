@@ -92,6 +92,10 @@ function handleTextProps (props) {
   return props;
 }
 
+function ensureOrder (originalSubmorphs, adjustedSubmorphs = []) {
+  return arr.sortBy(adjustedSubmorphs, (spec) => originalSubmorphs?.indexOf(originalSubmorphs?.find(elem => elem.name === spec.name)));
+}
+
 /**
  * Merges two different specs.
  */
@@ -102,8 +106,15 @@ function mergeInHierarchy (
   executeCommands = false,
   removeFn = (parent, aMorph) => aMorph.remove(),
   addFn = (parent, aMorph, before) => parent.addMorph(aMorph, before).__wasAddedToDerived__ = true) {
-  iterator(root, props); // this is the place, where we can also replace submorphs entirely...
-  let [commands, nextPropsToApply] = arr.partition([...props.submorphs || []], (prop) => !!prop.COMMAND);
+  const orderedSubmorphs = ensureOrder(root.submorphs, props.submorphs);
+  if (props.submorphs) {
+    iterator(root, { ...props, submorphs: orderedSubmorphs });
+  } else {
+    iterator(root, props);
+  }
+  // at this point, we need to ensure that the order of the props.submorphs matches
+  // the original submorph order
+  let [commands, nextPropsToApply] = arr.partition(orderedSubmorphs, (prop) => !!prop.COMMAND);
   props = nextPropsToApply.shift();
   for (let submorph of root.submorphs || []) {
     if (!props) break;
