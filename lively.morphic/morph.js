@@ -1027,7 +1027,7 @@ export class Morph {
         (descr.hasOwnProperty('serialize') && !descr.serialize) ||
         key in ignored
       ) continue;
-      if (skipUnchangedFromDefault) {
+      if (skipUnchangedFromDefault && key !== 'name') {
         if (obj.equals(this[key], defaults[key]) || (
           this[key] && defaults[key] &&
             this[key].valueOf && defaults[key].valueOf &&

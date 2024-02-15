@@ -505,13 +505,15 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
   const {
     skipAttributes, skipUnchangedFromDefault,
     valueTransform, keepConnections, objToPath,
-    onlyIncludeStyleProps
+    onlyIncludeStyleProps, asExpression
   } = opts;
   const { properties } = morph.propertiesAndPropertySettings();
 
   for (const name in morph.spec(skipUnchangedFromDefault)) {
     let v = morph[name];
-    if (masterInScope && !morph.__only_serialize__.includes(name)) continue;
+    if (masterInScope &&
+        !morph.__only_serialize__.includes(name) &&
+        !(name === 'name' && asExpression)) continue;
     if (name === 'textAndAttributes') continue;
 
     // store away just in case
