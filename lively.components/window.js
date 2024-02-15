@@ -110,7 +110,7 @@ export default class Window extends Morph {
   }
 
   static maximumBounds () {
-    return $world.visibleBoundsExcludingStudioInterface().insetBy(40).roundTo(1);
+    return ($world.isIDEWorld ? $world.visibleBoundsExcludingStudioInterface() : $world.visibleBounds()).insetBy(40).roundTo(1);
   }
 
   updateNonMinimizedBounds () {
