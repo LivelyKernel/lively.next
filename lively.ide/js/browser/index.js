@@ -1064,7 +1064,7 @@ export class BrowserModel extends ViewModel {
     };
 
     let tabs = this.ui.tabs.tabs;
-    let tabsSpec = tabs.map(tab => tab.spec);
+    let tabsSpec = tabs.map(tab => tab.config);
     return tabsSpec;
   }
 
