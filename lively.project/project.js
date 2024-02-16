@@ -801,45 +801,6 @@ export class Project {
     this.dependencyMap = null;
   }
 
-  /**
-   * Tries to load the project and adds it to the config of the currently opened project if loading was successful.
-   * Also ensures and loads all dependencies that the project to be loaded might have.
-   * @param {string} owner
-   * @param {string} name
-   */
-  async addDependencyToProject (owner, name) {
-    const ownerAndNameString = `${owner}--${name}`;
-    const dep = (await Project.listAvailableProjects()).find(proj => ownerAndNameString === `${proj.projectRepoOwner}--${proj.name}`);
-    // TODO: We could think about adding clone support here as well, so that dependencies can be added directly from GitHub.
-    if (!dep) throw Error('Dependency is not available!');
-
-    // Order is important here, as we do not want to change the config object when loading of the Project fails!
-    try {
-      await Project.loadProject(name, true);
-    } catch (err) {
-      throw Error('Error loading and adding dependency package', { cause: err });
-    }
-
-    const version = dep.version;
-    const addedSemver = semver.coerce(version);
-    // **Note**: Since each save operation in lively increases the patch version, we bind against arbitrary patch ranges.
-    // This assumes, that projects developer actually utilize minor/major increases in a meaningful way.
-    // We decided against denoting a concrete patch version here, since then one would basically always load "outdated" dependencies.
-    const newDepVersion = `${addedSemver.major}.${addedSemver.minor}.x`;
-    const deps = this.config.lively.projectDependencies;
-    const alreadyDependent = deps.find(dep => dep.name === ownerAndNameString);
-    if (alreadyDependent) {
-      alreadyDependent.version = newDepVersion;
-    } else this.config.lively.projectDependencies.push({ name: ownerAndNameString, version: newDepVersion });
-  }
-
-  // Caution: This only removes the dependency from the runtime config information.
-  // Config data needs to be explicitly written to disk!
-  removeDependencyFromProject (owner, name) {
-    const deps = this.config.lively.projectDependencies;
-    this.config.lively.projectDependencies = deps.filter(dep => dep.name !== `${owner}--${name}`);
-  }
-
   async addMissingProjectDependencies () {
     const availableDeps = (await Project.listAvailableProjects()).map(proj => ({ name: proj.name, version: proj.version }));
     let currentDeps = this.config.lively.projectDependencies.slice();
