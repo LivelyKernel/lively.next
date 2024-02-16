@@ -26,6 +26,8 @@ import { supportedImageFormats } from 'lively.ide/assets.js';
 import { evalOnServer } from 'lively.freezer/src/util/helpers.js';
 import { promise } from 'lively.lang';
 import { setupLively2Lively, setupLivelyShell } from 'lively.morphic/world-loading.js';
+import { GitHubAPIWrapper } from 'lively.git';
+import { generateKeyPair } from 'lively.git/js-keygen/js-keygen.js';
 
 export const repositoryOwnerAndNameRegex = /\.com\/(.+)\/(.*)/;
 const fontCSSWarningString = `/*\nDO NOT CHANGE THE CONTENTS OF THIS FILE!
@@ -396,11 +398,13 @@ export class Project {
    * Called when a project gets saved.
    */
   async saveConfigData () {
+    const remoteConfigured = await this.hasRemoteConfigured();
     // Update for the case that a user changed its plan since the last save.
-    if (await this.hasRemoteConfigured()) await this.checkPagesSupport();
+    if (remoteConfigured) await this.checkPagesSupport();
 
     await this.removeUnusedProjectDependencies();
     await this.addMissingProjectDependencies();
+    if (remoteConfigured) await this.setupDependencyPermissions();
     if (!this.configFile) {
       throw Error('No config file found. Should never happen.');
     }
@@ -408,6 +412,22 @@ export class Project {
       await this.configFile.write(JSON.stringify(this.config, null, 2));
     } catch (e) {
       throw Error('Error writing config file', { cause: e });
+    }
+  }
+
+  async setupDependencyPermissions () {
+    const dependencies = await this.generateFlatDependenciesList();
+    const alreadySetupDependencies = await GitHubAPIWrapper.listActionSecrets(this.repoOwner, this.name);
+
+    for (let dep of dependencies) {
+      const normalizedDep = dep.replaceAll('/', '_').replaceAll('-', '_').replaceAll('__', '_');
+      if (alreadySetupDependencies.includes(normalizedDep)) continue;
+      const [priv, pub] = await generateKeyPair();
+      const repoPublicKey = await GitHubAPIWrapper.retrieveRepositoriesPublicKey(this.repoOwner, this.name);
+      const depName = dep.replace(/.*--/, '');
+      const depOwner = dep.replace(/--.*/, '');
+      await GitHubAPIWrapper.addDeployKey(depOwner, depName, this.fullName.replaceAll('/', '_').replaceAll('-', '_').replaceAll('__', '_'), pub);
+      await GitHubAPIWrapper.addOrUpdateRepositorySecret(this.repoOwner, this.name, normalizedDep, priv, repoPublicKey.key, repoPublicKey.id);
     }
   }
 
@@ -605,7 +625,7 @@ export class Project {
         with:
           repository: ${owner}/${name}
           path: local_projects/${dep}/
-          ssh-key: \${{ secrets.${dep.replaceAll('/', '_').replaceAll('-','_').replaceAll('__','_')} }}`;
+          ssh-key: \${{ secrets.${dep.replaceAll('/', '_').replaceAll('-', '_').replaceAll('__', '_')} }}`;
         depSetupStatements += depStatement;
       });
       definition = definition.replace('%PROJECT_DEPENDENCIES%', depSetupStatements);
