@@ -1314,10 +1314,10 @@ class PropChangeReconciliation extends Reconciliation {
   get propValueDiffersFromParent () {
     let { target, prop } = this.change;
     const policy = this.getResponsiblePolicyFor(target);
-    const { parent } = policy;
+    const { parent, targetMorph } = policy;
     let val;
     if (parent) {
-      let synthesized = parent.synthesizeSubSpec(target.name);
+      let synthesized = parent.synthesizeSubSpec(target === targetMorph ? null : target.name);
       if (synthesized.isPolicy) synthesized = synthesized.synthesizeSubSpec();
       val = synthesized[prop];
     }
