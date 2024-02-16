@@ -10,7 +10,7 @@ import { StatusMessageConfirm, StatusMessageError } from 'lively.halos/component
 import { join } from 'lively.modules/src/url-helpers.js';
 import { runCommand } from 'lively.shell/client-command.js';
 import ShellClientResource from 'lively.shell/client-resource.js';
-import { semver, PackageRegistry } from 'lively.modules/index.js';
+import { PackageRegistry } from 'lively.modules/index.js';
 import { currentUserToken, currentUserData, isUserLoggedIn, currentUser, currentUsername } from 'lively.user';
 import { reloadPackage } from 'lively.modules/src/packages/package.js';
 import { buildScriptShell } from './templates/build-shell.js';
@@ -28,6 +28,7 @@ import { promise } from 'lively.lang';
 import { setupLively2Lively, setupLivelyShell } from 'lively.morphic/world-loading.js';
 import { GitHubAPIWrapper } from 'lively.git';
 import { generateKeyPair } from 'lively.git/js-keygen/js-keygen.js';
+import * as semver from 'esm://cache/semver';
 
 export const repositoryOwnerAndNameRegex = /\.com\/(.+)\/(.*)/;
 const fontCSSWarningString = `/*\nDO NOT CHANGE THE CONTENTS OF THIS FILE!
