@@ -50,11 +50,11 @@ export default class LivelyDAVPlugin {
 
   get after () { return ['cors', 'socketio', 'eval']; }
 
-  setup ({ server }) {
+  setup ({ server, port }) {
     server.once('close', () => this.server = null);
     this.server = server;
     if (process.env.ENTR_SUPPORT === '1') {
-      child.exec('find | entr -r -d -s \'curl --header "x-lively-refresh-file-hashes: true" http://localhost:9011/file-hash-regeneration.js\'', () => { });
+      child.exec(`find ${process.env.lv_next_dir} | entr -n -r -d -s \'curl --header "x-lively-refresh-file-hashes: true" http://localhost:${port}/file-hash-regeneration.js\'`, () => { });
     }
     this.patchServerForJsDAV(server);
     this.fileHashes = {};
