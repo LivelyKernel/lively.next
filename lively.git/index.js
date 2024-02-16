@@ -86,6 +86,37 @@ export class GitHubAPIWrapper {
     });
   }
 
+  static async deleteRepositorySecret (repoOwner, repoName, secretName) {
+    const res = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/actions/secrets/${secretName}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${currentUserToken()}`,
+        'X-GitHub-Api-Version': '2022-11-28'
+      }
+    });
+  }
+
+  static async deleteDeployKey (repoOwner, repoName, title) {
+  // TODO: If this is called with a non-existing key bad things happen!
+    const resKeyList = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/keys`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${currentUserToken()}`,
+        'X-GitHub-Api-Version': '2022-11-28'
+      }
+    });
+    const deployKeys = await resKeyList.json();
+    const keyIdToRemove = deployKeys.find(key => key.title === title).id;
+
+    const resKeyDeletion = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/keys/${keyIdToRemove}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${currentUserToken()}`,
+        'X-GitHub-Api-Version': '2022-11-28'
+      }
+    });
+    }
+
   static async listGithubBranches (repoOwner, repoName) {
     const token = currentUserToken();
     const res = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/branches`, {

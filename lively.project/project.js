@@ -418,16 +418,26 @@ export class Project {
 
   async setupDependencyPermissions () {
     const dependencies = await this.generateFlatDependenciesList();
-    const alreadySetupDependencies = await GitHubAPIWrapper.listActionSecrets(this.repoOwner, this.name);
+    const normalizedDeps = dependencies.map(d => d.replaceAll('/', '_').replaceAll('-', '_'));
+    const alreadySetupDependencies = (await GitHubAPIWrapper.listActionSecrets(this.repoOwner, this.name)).map(d => d.toLowerCase());
 
-    for (let dep of dependencies) {
-      const normalizedDep = dep.replaceAll('/', '_').replaceAll('-', '_').replaceAll('__', '_');
+    for (let dep of alreadySetupDependencies) {
+      if (normalizedDeps.includes(dep)) continue;
+      await GitHubAPIWrapper.deleteRepositorySecret(this.repoOwner, this.name, dep);
+      const dependencyOwner = dep.replace(/__.*/, '');
+      const dependencyName = dep.replace(/.*__/, '');
+      await GitHubAPIWrapper.deleteDeployKey(dependencyOwner.replaceAll('_', '-'), dependencyName.replaceAll('_', '-'), this.fullName.replaceAll('/', '_').replaceAll('-', '_'));
+    }
+
+    for (let i = 0; i < dependencies.length; i++) {
+      const dep = dependencies[i];
+      const normalizedDep = normalizedDeps[i];
       if (alreadySetupDependencies.includes(normalizedDep)) continue;
       const [priv, pub] = await generateKeyPair();
       const repoPublicKey = await GitHubAPIWrapper.retrieveRepositoriesPublicKey(this.repoOwner, this.name);
       const depName = dep.replace(/.*--/, '');
       const depOwner = dep.replace(/--.*/, '');
-      await GitHubAPIWrapper.addDeployKey(depOwner, depName, this.fullName.replaceAll('/', '_').replaceAll('-', '_').replaceAll('__', '_'), pub);
+      await GitHubAPIWrapper.addDeployKey(depOwner, depName, this.fullName.replaceAll('/', '_').replaceAll('-', '_'), pub);
       await GitHubAPIWrapper.addOrUpdateRepositorySecret(this.repoOwner, this.name, normalizedDep, priv, repoPublicKey.key, repoPublicKey.id);
     }
   }
