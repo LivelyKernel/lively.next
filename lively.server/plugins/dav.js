@@ -61,23 +61,27 @@ export default class LivelyDAVPlugin {
     this.computeFileHashes();
   }
 
-  async computeFileHashes() {
-    console.log('[lively.server] creating file hash map')
+  async computeFileHashes () {
+    if (this._skipHashUpdate) {
+      this._skipHashUpdate = false;
+      return;
+    }
+    console.log('[lively.server] creating file hash map');
     const rootDir = resource('file://' + this.options.rootDirectory);
     const filesToHash = await rootDir.dirList('infinity', {
       exclude: (res) => {
-	return res.url.includes('lively.next-node_modules') ||
-               res.url.includes('.module_cache') || 
-               !res.url.startsWith(System.baseURL + 'lively') && !res.url.includes('esm_cache') || 
-               res.isFile() && !res.url.endsWith('.js' ) && !res.url.endsWith('.cjs')
-        }
-      });
+        return res.url.includes('lively.next-node_modules') ||
+               res.url.includes('.module_cache') ||
+               !res.url.startsWith(System.baseURL + 'lively') && !res.url.includes('esm_cache') ||
+               res.isFile() && !res.url.endsWith('.js') && !res.url.endsWith('.cjs');
+      }
+    });
     for (let file of filesToHash) {
       if (!file.isFile()) continue;
       this.fileHashes[file.url.replace(System.baseURL, '/').replace('/esm_cache', 'esm://cache')] = string.hashCode(await file.read());
     }
-    console.log('[lively.server] finished file hash map')
- }
+    console.log('[lively.server] finished file hash map');
+  }
 
   patchServerForJsDAV (server, thenDo) {
     // this is what jsDAV expects...
@@ -93,15 +97,10 @@ export default class LivelyDAVPlugin {
   }
 
   async handleRequest (req, res, next) {
-
-    if (req.headers['x-lively-refresh-file-hashes']){
-      fun.throttleNamed('file-hash-generation', 2000,
-        async () => {
-          await this.computeFileHashes();
-          res.writeHead(200);
-          res.end();
-          return;
-        })()
+    if (req.headers['x-lively-refresh-file-hashes']) {
+      await this.computeFileHashes();
+      res.writeHead(200);
+      res.end();
       return;
     }
 
@@ -130,6 +129,7 @@ export default class LivelyDAVPlugin {
 
     if (req.url.endsWith('.js') || req.url.endsWith('.cjs')) {
       if (req.method == 'PUT' || !this.fileHashes[req.url]) {
+        this._skipHashUpdate = true;
         resource('file://' + this.options.rootDirectory).join(decodeURIComponent(req.url)).read().then(source => {
           this.fileHashes[req.url.replace('/esm_cache', 'esm://cache')] = string.hashCode(source);
         }).catch(err => {
