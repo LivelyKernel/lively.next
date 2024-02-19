@@ -637,7 +637,7 @@ export class Project {
         with:
           repository: ${owner}/${name}
           path: local_projects/${dep.name}/
-          ssh-key: \${{ secrets.${dep.name.replaceAll('/', '_').replaceAll('-', '_').replaceAll('__', '_')} }}`;
+          ssh-key: \${{ secrets.${dep.name.replaceAll('/', '_').replaceAll('-', '_')} }}`;
           if (!dep.privateRepo) depStatement = depStatement.replace(/\n\s*ssh-key.*}}/, '');
           depSetupStatements += depStatement;
         }
