@@ -24,6 +24,7 @@ import { fun } from 'lively.lang';
 import { repositoryOwnerAndNameRegex } from './project.js';
 import { debounceNamed } from 'lively.lang/function.js';
 import { GitHubAPIWrapper } from 'lively.git';
+import { Text } from 'lively.morphic/text/morph.js';
 
 class ProjectSettingsPromptModel extends AbstractPromptModel {
   static get properties () {
@@ -474,6 +475,9 @@ class ProjectSavePrompt extends AbstractPromptModel {
 
   async viewDidLoad () {
     const { promptTitle, diffButton, branchInput } = this.ui;
+    const dependencies = await this.project.generateFlatDependenciesList();
+    const localDeps = dependencies.some(d => !d.hasRemote);
+    this.ui.dependencyStatusInfo.visible = localDeps;
     branchInput.deactivate();
     diffButton.disable();
     const currentBranchName = await this.project.gitResource.branchName();
@@ -1027,165 +1031,183 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
       spacing: 5
     }),
     extent: pt(455.5, 333),
-    submorphs: [without('third row'), without('second row'), without('first row'), add(
-      {
-        name: 'advanced holder',
-        extent: pt(10, 0),
-        layout: new TilingLayout({
-          axis: 'column'
-        }),
-        fill: Color.transparent,
-        submorphs: [{
-          name: 'advanced toggler',
-          type: Label,
-          fontSize: 15,
-          fontColor: Color.white,
-          textAndAttributes: ['', { fontFamily: 'Font Awesome' }, ' Show Advanced Options', null]
-        }, {
-          name: 'second row',
-          extent: pt(450, 0),
-          fill: Color.transparent,
-          visible: false,
+    submorphs: [without('third row'), without('second row'), without('first row'),
+      add({
+        type: Text,
+        name: 'dependency status info',
+        fontSize: 16,
+        fontColor: Color.rgb(255, 108, 0),
+        textAndAttributes: ['', {
+          fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+          fontWeight: '900'
+        }, ' ', {}, 'At least one of the dependencies of this project is not available remotely!', null],
+        borderColor: Color.rgb(23, 160, 251),
+        dynamicCursorColoring: true,
+        extent: pt(445.5, 33.5),
+        fill: Color.rgba(255, 255, 255, 0),
+        fixedHeight: true,
+        fixedWidth: true,
+        lineWrapping: 'by-words',
+        padding: rect(1, 1, 0, 0)
+      }, 'fourth row'), add(
+        {
+          name: 'advanced holder',
+          extent: pt(10, 0),
           layout: new TilingLayout({
-            align: 'right',
-            axis: 'column',
-            padding: rect(0, 15, 0, -15),
-            spacing: 11
+            axis: 'column'
           }),
-          position: pt(-146, 28),
+          fill: Color.transparent,
           submorphs: [{
-            name: 'aMorph',
-            borderColor: Color.rgba(23, 160, 251, 0),
-            borderWidth: 1,
-            extent: pt(256.5, 31),
-            fill: Color.rgba(255, 255, 255, 0),
-            layout: new TilingLayout({
-              axisAlign: 'center',
-              orderByIndex: true,
-              spacing: 10
-            }),
-            position: pt(0, -1),
-            submorphs: [{
-              type: Label,
-              name: 'description label',
-              fill: Color.rgba(255, 255, 255, 0),
-              fontColor: Color.rgb(255, 255, 255),
-              fontFamily: '"IBM Plex Sans"',
-              fontSize: 15,
-              nativeCursor: 'pointer',
-              textAndAttributes: ['Bump Minor Version:', null]
-            }, part(Checkbox, {
-              name: 'minor check',
-              padding: rect(0, -3, 0, 3),
-              position: pt(139, 0)
-            })]
+            name: 'advanced toggler',
+            type: Label,
+            fontSize: 15,
+            fontColor: Color.white,
+            textAndAttributes: ['', { fontFamily: 'Font Awesome' }, ' Show Advanced Options', null]
           }, {
-            name: 'aMorph1',
-            borderColor: Color.rgba(23, 160, 251, 0),
-            borderWidth: 1,
-            extent: pt(256.5, 29.5),
-            fill: Color.rgba(255, 255, 255, 0),
+            name: 'second row',
+            extent: pt(450, 0),
+            fill: Color.transparent,
+            visible: false,
             layout: new TilingLayout({
-              axisAlign: 'center',
-              orderByIndex: true,
-              spacing: 10
+              align: 'right',
+              axis: 'column',
+              padding: rect(0, 15, 0, -15),
+              spacing: 11
             }),
-            position: pt(0, 63),
+            position: pt(-146, 28),
             submorphs: [{
-              type: Label,
-              name: 'description label',
+              name: 'aMorph',
+              borderColor: Color.rgba(23, 160, 251, 0),
+              borderWidth: 1,
+              extent: pt(256.5, 31),
               fill: Color.rgba(255, 255, 255, 0),
-              fontColor: Color.rgb(255, 255, 255),
-              fontFamily: '"IBM Plex Sans"',
-              fontSize: 15,
-              nativeCursor: 'pointer',
-              textAndAttributes: ['Bump Major Version:', null]
-            }, part(Checkbox, {
-              name: 'major check',
-              position: pt(139, 0)
-            })]
-          }, {
-            name: 'tag row',
-            fill: Color.rgba(255, 255, 255, 0),
-            borderColor: Color.rgba(23, 160, 251, 0),
-            extent: pt(256.5, 29.5),
-            layout: new TilingLayout({
-              axisAlign: 'center',
-              orderByIndex: true,
-              spacing: 10
-            }),
-            position: pt(-82, 26),
-            submorphs: [{
-              type: Label,
-              name: 'tag label',
-              fill: Color.rgba(255, 255, 255, 0),
-              fontColor: Color.rgb(255, 255, 255),
-              fontFamily: '"IBM Plex Sans"',
-              fontSize: 15,
-              nativeCursor: 'pointer',
-              textAndAttributes: ['Tag this Version as Release:', null]
-            }, part(Checkbox, {
-              name: 'tag check',
-              position: pt(179, 0)
-            })]
-          }, {
-            name: 'branch row',
-            borderColor: Color.rgba(23, 160, 251, 0),
-            extent: pt(256.5, 29.5),
-            fill: Color.rgba(255, 255, 255, 0),
-            layout: new TilingLayout({
-              axisAlign: 'center',
-              spacing: 10
-            }),
-            position: pt(-79, 22),
-            submorphs: [{
-              type: Label,
-              name: 'branch label',
-              fill: Color.rgba(255, 255, 255, 0),
-              fontColor: Color.rgb(255, 255, 255),
-              fontFamily: '"IBM Plex Sans"',
-              fontSize: 15,
-              nativeCursor: 'pointer',
-              position: pt(0, 4),
-              textAndAttributes: ['Create a new branch to save on:', null]
-
-            }, part(Checkbox, {
-              name: 'branch check'
-            }), part(InputLineDark, {
-              name: 'branch input',
-              extent: pt(201.1, 23.3),
-              placeholder: ['Branch Name', null],
-              fontSize: 12,
+              layout: new TilingLayout({
+                axisAlign: 'center',
+                orderByIndex: true,
+                spacing: 10
+              }),
+              position: pt(0, -1),
               submorphs: [{
-                name: 'placeholder',
-                extent: pt(10, 23.3),
-                nativeCursor: 'text',
-                visible: true
-              }],
-              textAndAttributes: ['', null]
+                type: Label,
+                name: 'description label',
+                fill: Color.rgba(255, 255, 255, 0),
+                fontColor: Color.rgb(255, 255, 255),
+                fontFamily: '"IBM Plex Sans"',
+                fontSize: 15,
+                nativeCursor: 'pointer',
+                textAndAttributes: ['Bump Minor Version:', null]
+              }, part(Checkbox, {
+                name: 'minor check',
+                padding: rect(0, -3, 0, 3),
+                position: pt(139, 0)
+              })]
+            }, {
+              name: 'aMorph1',
+              borderColor: Color.rgba(23, 160, 251, 0),
+              borderWidth: 1,
+              extent: pt(256.5, 29.5),
+              fill: Color.rgba(255, 255, 255, 0),
+              layout: new TilingLayout({
+                axisAlign: 'center',
+                orderByIndex: true,
+                spacing: 10
+              }),
+              position: pt(0, 63),
+              submorphs: [{
+                type: Label,
+                name: 'description label',
+                fill: Color.rgba(255, 255, 255, 0),
+                fontColor: Color.rgb(255, 255, 255),
+                fontFamily: '"IBM Plex Sans"',
+                fontSize: 15,
+                nativeCursor: 'pointer',
+                textAndAttributes: ['Bump Major Version:', null]
+              }, part(Checkbox, {
+                name: 'major check',
+                position: pt(139, 0)
+              })]
+            }, {
+              name: 'tag row',
+              fill: Color.rgba(255, 255, 255, 0),
+              borderColor: Color.rgba(23, 160, 251, 0),
+              extent: pt(256.5, 29.5),
+              layout: new TilingLayout({
+                axisAlign: 'center',
+                orderByIndex: true,
+                spacing: 10
+              }),
+              position: pt(-82, 26),
+              submorphs: [{
+                type: Label,
+                name: 'tag label',
+                fill: Color.rgba(255, 255, 255, 0),
+                fontColor: Color.rgb(255, 255, 255),
+                fontFamily: '"IBM Plex Sans"',
+                fontSize: 15,
+                nativeCursor: 'pointer',
+                textAndAttributes: ['Tag this Version as Release:', null]
+              }, part(Checkbox, {
+                name: 'tag check',
+                position: pt(179, 0)
+              })]
+            }, {
+              name: 'branch row',
+              borderColor: Color.rgba(23, 160, 251, 0),
+              extent: pt(256.5, 29.5),
+              fill: Color.rgba(255, 255, 255, 0),
+              layout: new TilingLayout({
+                axisAlign: 'center',
+                spacing: 10
+              }),
+              position: pt(-79, 22),
+              submorphs: [{
+                type: Label,
+                name: 'branch label',
+                fill: Color.rgba(255, 255, 255, 0),
+                fontColor: Color.rgb(255, 255, 255),
+                fontFamily: '"IBM Plex Sans"',
+                fontSize: 15,
+                nativeCursor: 'pointer',
+                position: pt(0, 4),
+                textAndAttributes: ['Create a new branch to save on:', null]
 
+              }, part(Checkbox, {
+                name: 'branch check'
+              }), part(InputLineDark, {
+                name: 'branch input',
+                extent: pt(201.1, 23.3),
+                placeholder: ['Branch Name', null],
+                fontSize: 12,
+                submorphs: [{
+                  name: 'placeholder',
+                  extent: pt(10, 23.3),
+                  nativeCursor: 'text',
+                  visible: true
+                }],
+                textAndAttributes: ['', null]
+
+              })]
+            }, part(SystemButtonDark, {
+              name: 'diff button',
+              extent: pt(449.5, 27),
+              submorphs: [{
+                name: 'label',
+                textAndAttributes: ['Show Summary of Changes (Advanced Operation)', null, '', {
+                  fontFamily: 'Tabler Icons',
+                  fontWeight: '900'
+                }, ' ', {}]
+              }]
             })]
-          }, part(SystemButtonDark, {
-            name: 'diff button',
-            extent: pt(449.5, 27),
-            submorphs: [{
-              name: 'label',
-              textAndAttributes: ['Show Summary of Changes (Advanced Operation)', null, '', {
-                fontFamily: 'Tabler Icons',
-                fontWeight: '900'
-              }, ' ', {}]
-            }]
-          })]
-        }]
-      }), {
-      name: 'fourth row',
-      submorphs: [{
-        name: 'description',
-        dropShadow: new ShadowObject({ distance: 4, color: Color.rgba(0, 0, 0, 0.26), blur: 10 }),
-        textAndAttributes: ['', null]
+          }]
+        }), {
+        name: 'fourth row',
+        submorphs: [{
+          name: 'description',
+          dropShadow: new ShadowObject({ distance: 4, color: Color.rgba(0, 0, 0, 0.26), blur: 10 }),
+          textAndAttributes: ['', null]
 
+        }]
       }]
-    }]
   }, {
     name: 'button wrapper',
     layout: new TilingLayout({
