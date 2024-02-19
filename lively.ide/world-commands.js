@@ -1259,11 +1259,14 @@ const commands = [
           $world.get('user flap').show();
           return;
         }
+        const li = $world.showLoadingIndicatorFor(null, 'Setting up Save operation...')
         await $world.openedProject.saveConfigData();
         if (!(await $world.openedProject.hasUncommitedChanges())) {
           $world.setStatusMessage('All changes are saved. Nothing to do.', StatusMessageConfirm);
+          li.remove();
           return;
         }
+        li.remove();
         saved = await $world.openPrompt(part(SaveProjectDialog, { viewModel: { project: $world.openedProject } }));
       } else { // in case there is another morph implementing save...
         const relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
