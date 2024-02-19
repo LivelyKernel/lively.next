@@ -266,6 +266,15 @@ export default class Renderer {
     let node;
     node = this.renderMap.get(morph);
     if (force || !node) {
+      // if the node is not present, ensure that the renderingState is reset
+      if (!node) {
+        // FIXME: we need a proper reset routine here that takes into account
+        // the specifics of the morph (text, vanilla, poly...)
+        // this is just for getting the job done for the time being
+        const { animationAdded } = morph.renderingState;
+        morph.renderingState = morph.defaultRenderingState;
+        morph.renderingState.animationAdded = animationAdded;
+      }
       node = morph.getNodeForRenderer(this); // returns a DOM node as specified by the morph
       this.renderMap.set(morph, node);
     }
