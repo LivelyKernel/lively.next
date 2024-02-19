@@ -418,7 +418,7 @@ export class Project {
 
   async setupDependencyPermissions () {
     const dependencies = await this.generateFlatDependenciesList();
-    const normalizedDeps = dependencies.map(d => d.replaceAll('/', '_').replaceAll('-', '_'));
+    const normalizedDeps = dependencies.map(d => d.name.replaceAll('/', '_').replaceAll('-', '_'));
     const alreadySetupDependencies = (await GitHubAPIWrapper.listActionSecrets(this.repoOwner, this.name)).map(d => d.toLowerCase());
 
     for (let dep of alreadySetupDependencies) {
@@ -435,8 +435,8 @@ export class Project {
       if (alreadySetupDependencies.includes(normalizedDep)) continue;
       const [priv, pub] = await generateKeyPair();
       const repoPublicKey = await GitHubAPIWrapper.retrieveRepositoriesPublicKey(this.repoOwner, this.name);
-      const depName = dep.replace(/.*--/, '');
-      const depOwner = dep.replace(/--.*/, '');
+      const depName = dep.name.replace(/.*--/, '');
+      const depOwner = dep.name.replace(/--.*/, '');
       await GitHubAPIWrapper.addDeployKey(depOwner, depName, this.fullName.replaceAll('/', '_').replaceAll('-', '_'), pub);
       await GitHubAPIWrapper.addOrUpdateRepositorySecret(this.repoOwner, this.name, normalizedDep, priv, repoPublicKey.key, repoPublicKey.id);
     }
@@ -628,16 +628,19 @@ export class Project {
     if (projectDependencies.length > 0) {
       let depSetupStatements = '';
       projectDependencies.forEach(dep => {
-        const name = dep.replace(/.*--/, '');
-        const owner = dep.replace(/--.*/, '');
-        const depStatement =
+        if (dep.hasRemote) {
+          const name = dep.name.replace(/.*--/, '');
+          const owner = dep.name.replace(/--.*/, '');
+          let depStatement =
         `\n      - name: Checkout Project Dependencies
         uses: actions/checkout@v4
         with:
           repository: ${owner}/${name}
-          path: local_projects/${dep}/
-          ssh-key: \${{ secrets.${dep.replaceAll('/', '_').replaceAll('-', '_').replaceAll('__', '_')} }}`;
-        depSetupStatements += depStatement;
+          path: local_projects/${dep.name}/
+          ssh-key: \${{ secrets.${dep.name.replaceAll('/', '_').replaceAll('-', '_').replaceAll('__', '_')} }}`;
+          if (!dep.privateRepo) depStatement = depStatement.replace(/\n\s*ssh-key.*}}/, '');
+          depSetupStatements += depStatement;
+        }
       });
       definition = definition.replace('%PROJECT_DEPENDENCIES%', depSetupStatements);
     } else definition = definition.replace('%PROJECT_DEPENDENCIES%', '');
@@ -764,9 +767,14 @@ export class Project {
     const dependencyMap = {};
 
     let availableProjects = await Project.listAvailableProjects();
-    let depsToEnsure = this.config.lively.projectDependencies.map(dep => ({
-      name: dep.name
-    }));
+    let depsToEnsure = this.config.lively.projectDependencies.map(dep => {
+      const avlProj = availableProjects.find(p => p._name === dep.name);
+      return {
+        name: dep.name,
+        privateRepo: avlProj.config.lively.repositoryIsPrivate,
+        hasRemote: 'testOnPush' in avlProj.config.lively
+      };
+    });
 
     while (depsToEnsure.length > 0) {
       const depToEnsure = depsToEnsure[0];
@@ -775,15 +783,24 @@ export class Project {
         continue;
       }
 
-      const transitiveDepsOfDepToEnsure = availableProjects.find(proj => proj._name === depToEnsure.name).lively.projectDependencies.map(dep => ({
-        name: dep.name
-      }));
+      const transitiveDepsOfDepToEnsure = availableProjects.find(proj => proj._name === depToEnsure.name).lively.projectDependencies.map(dep => {
+        const avlProj = availableProjects.find(p => p._name === dep.name);
+        return {
+          name: dep.name,
+          privateRepo: avlProj.config.lively.repositoryIsPrivate,
+          hasRemote: 'testOnPush' in avlProj.config.lively
+        };
+      });
       depsToEnsure = depsToEnsure.concat(transitiveDepsOfDepToEnsure);
 
-      dependencyMap[depToEnsure.name] = true;
+      dependencyMap[depToEnsure.name] = {
+        name: depToEnsure.name,
+        privateRepo: depToEnsure.privateRepo,
+        hasRemote: depToEnsure.hasRemote
+      };
       depsToEnsure.shift();
     }
-    return Object.keys(dependencyMap);
+    return Object.values(dependencyMap);
   }
 
   async checkVersionCompatibilityOfProjectDependencies (onlyLoadNotOpen = false) {
