@@ -242,7 +242,13 @@ function handleStylePolicy (stylePolicy, opts) {
   const { asExpression, nestedExpressions } = opts;
   if (!asExpression) return; // ignore overridden master if not serializing as expression
   const exprId = string.newUUID();
+  // FIXME: maybe the parent fallback should be the default behavior of getConfigAsExpression()?
   nestedExpressions[exprId] = stylePolicy.getConfigAsExpression();
+  while (typeof nestedExpressions[exprId] === 'undefined' && !opts.prevMasterInScope) {
+    nestedExpressions[exprId] = stylePolicy.getConfigAsExpression();
+    if (!stylePolicy.parent) break;
+    stylePolicy = stylePolicy.parent;
+  }
   if (typeof nestedExpressions[exprId] === 'undefined') {
     delete nestedExpressions[exprId];
     return;
@@ -352,24 +358,31 @@ function getArrayExpression (name, list, path, subopts) {
 
 function getStyleProto (morph, opts) {
   let styleProto;
-  const { masterInScope } = opts;
+  const { masterInScope, prevMasterInScope } = opts;
   if (masterInScope?.managesMorph(morph.name) || morph === masterInScope?.targetMorph) {
     let policy = masterInScope;
     // the closest installed policy takes precedence
     if (morph !== masterInScope.targetMorph && morph.master) policy = morph.master;
 
     const target = morph === policy.targetMorph ? null : morph.name;
-    if (policy._autoMaster?.managesMorph(target)) {
+    const scopeMorph = policy.targetMorph;
+    // if there is a component applied, this takes precedence over auto
+    if (policy._autoMaster !== policy.parent &&
+        policy._autoMaster?.managesMorph(target)) {
       // if the auto master is present, then any overridden props
       // are to be computed based on the morphs differences from
       // the auto master, since the auto master takes precedence over the parent.
       // This does not even require structural inheritance.
       policy = policy._autoMaster;
-    } else if (policy.targetMorph.isComponent || policy.parent) policy = policy.parent;
-
-    styleProto = policy?.synthesizeSubSpec(target, null, false);
+    } else if (policy.targetMorph.isComponent ||
+      !prevMasterInScope && policy.parent
+    ) {
+      policy = policy.parent;
+    }
+    // if any of the above cases are true, we do not take into account the component state
+    styleProto = policy?.synthesizeSubSpec(target, scopeMorph, prevMasterInScope?.targetMorph);
     while (styleProto?.isPolicyApplicator) {
-      styleProto = styleProto.synthesizeSubSpec(null, null, false);
+      styleProto = styleProto.synthesizeSubSpec(null, scopeMorph, prevMasterInScope?.targetMorph);
     }
   }
   return styleProto;
@@ -511,6 +524,8 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
 
   for (const name in morph.spec(skipUnchangedFromDefault)) {
     let v = morph[name];
+    let styleProtoVal = styleProto?.[name];
+    if (styleProtoVal?.isDefault) styleProtoVal = styleProtoVal.value;
     if (masterInScope &&
         !morph.__only_serialize__.includes(name) &&
         !(name === 'name' && asExpression)) continue;
@@ -526,7 +541,7 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
     if (styleProto && (folded = properties[name].foldable)) {
       let unchanged = true;
       for (let subProp of folded) {
-        if (!obj.equals(v[subProp], styleProto[name]?.[subProp] || styleProto[name])) {
+        if (!obj.equals(v[subProp], styleProtoVal?.[subProp] || styleProtoVal)) {
           unchanged = false;
           break;
         }
@@ -537,7 +552,7 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
       exported[name] = val;
       continue;
     }
-    if (name !== 'name' && styleProto && obj.equals(v, styleProto[name])) continue;
+    if (name !== 'name' && styleProto && obj.equals(v, styleProtoVal)) continue;
     if (name === 'master') {
       // this should only print masters that are actually overridden or have been
       // applied to morphs that previously did not have any masters (after the fact application)
@@ -580,18 +595,18 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
       continue;
     }
     if (val && val.__serialize__) {
-      if (styleProto && styleProto[name] !== undefined &&
+      if (styleProtoVal !== undefined &&
           getExpression(name, val, { ...opts, asExpression: false }) ===
-          getExpression(name, valueTransform(name, styleProto[name], morph), { ...opts, asExpression: false })) continue;
+          getExpression(name, valueTransform(name, styleProtoVal, morph), { ...opts, asExpression: false })) continue;
       exported[name] = getExpression(name, val, opts);
       continue;
     }
     if (Array.isArray(val)) {
       // check if each array member is seralizable
       const serializedArray = getArrayExpression(name, val, path, opts);
-      if (styleProto && Array.isArray(styleProto[name])) {
+      if (styleProto && Array.isArray(styleProtoVal)) {
         try {
-          const other = JSON.stringify(getArrayExpression(name, styleProto[name], path, opts));
+          const other = JSON.stringify(getArrayExpression(name, styleProtoVal, path, opts));
           if (JSON.stringify(serializedArray) === other) continue;
         } catch {
           console.warn(`[lively.serializer] Failed to optimize property "${name}"`); // eslint-disable-line no-console
@@ -831,6 +846,7 @@ export function serializeSpec (morph, opts = {}) {
     seenMorphsInScope = {},
     exprSerializer = new ExpressionSerializer(),
     masterInScope = morph.master,
+    prevMasterInScope = false,
     uncollapseHierarchy = false
   } = opts;
   const subopts = {
@@ -853,6 +869,7 @@ export function serializeSpec (morph, opts = {}) {
     objRefs,
     objToPath,
     masterInScope: morph.master || masterInScope,
+    prevMasterInScope: morph.master && morph.master !== masterInScope ? masterInScope : prevMasterInScope,
     exprSerializer,
     uncollapseHierarchy,
     seenMorphsInScope
@@ -863,6 +880,7 @@ export function serializeSpec (morph, opts = {}) {
   }
 
   let exported = {};
+
   const styleProto = skipUnchangedFromMaster && getStyleProto(morph, subopts);
 
   gatherConnectionInfo(morph, path, subopts);
