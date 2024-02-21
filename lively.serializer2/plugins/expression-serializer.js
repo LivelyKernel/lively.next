@@ -243,7 +243,8 @@ function handleStylePolicy (stylePolicy, opts) {
   if (!asExpression) return; // ignore overridden master if not serializing as expression
   const exprId = string.newUUID();
   // FIXME: maybe the parent fallback should be the default behavior of getConfigAsExpression()?
-  while (!nestedExpressions[exprId]) {
+  nestedExpressions[exprId] = stylePolicy.getConfigAsExpression();
+  while (typeof nestedExpressions[exprId] === 'undefined' && !opts.prevMasterInScope) {
     nestedExpressions[exprId] = stylePolicy.getConfigAsExpression();
     if (!stylePolicy.parent) break;
     stylePolicy = stylePolicy.parent;
