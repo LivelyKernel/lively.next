@@ -109,6 +109,10 @@ class ShapeMorpher extends ViewModel {
     };
   }
 
+  viewDidLoad () {
+    this.view.master.setState(this.step);
+  }
+
   zoomIn () {
     this.isZoomed = true;
     this.view.withAnimationDo(() => {

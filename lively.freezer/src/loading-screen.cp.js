@@ -31,6 +31,7 @@ export class WorldLoadingScreen extends Morph {
       const bg = this.get('background');
       let progressBar = this.get('loading indicator');
 
+      bg.viewModel.setProperty('step', 2); // to avoid issues during transitioning
       bg.master.setState(2);
       document.body.style.backgroundColor = 'black';
 
