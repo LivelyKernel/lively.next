@@ -444,6 +444,11 @@ export class AttributeConnection {
 
   isSimilarConnection (other) {
     if (!other || other.constructor !== this.constructor) return false;
+    if (this.targetMethodName === 'call' && typeof this.targetObj === 'function') {
+      return this.sourceObj === other.sourceObj &&
+        this.sourceAttrName === other.sourceAttrName &&
+        this.targetObj.toString() === other.targetObj.toString();
+    }
     return this.sourceObj === other.sourceObj &&
         this.sourceAttrName === other.sourceAttrName &&
         this.targetObj === other.targetObj &&
