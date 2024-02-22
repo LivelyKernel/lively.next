@@ -615,7 +615,7 @@ export default class LivelyRollup {
 
     let defaultExport = '';
     if (this.captureModuleScope) {
-      instrumented = replaceExportedVarDeclarations(parsed);
+      instrumented = replaceExportedVarDeclarations(parsed, recorderName);
       if (this.isResurrectionBuild) instrumented = await replaceImportedNamespaces(instrumented, id, this);
       instrumented = tfm(instrumented, captureObj, opts);
       instrumented = insertCapturesForExportedImports(instrumented, { captureObj });
