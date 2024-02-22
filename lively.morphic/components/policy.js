@@ -569,7 +569,11 @@ export class StylePolicy {
         else {
           printed = expr.__expr__;
           if (!printed) continue;
-          Object.assign(bindings, expr.bindings); // FIXME: this is not a proper bindings merge
+          Object.entries(expr.bindings || {}).forEach(([binding, imports]) => {
+            if (bindings[binding]) {
+              bindings[binding] = arr.uniq([...bindings[binding], ...imports]);
+            } else bindings[binding] = imports;
+          });
         }
         __expr__ += `${name}: ${printed},\n`;
       }
