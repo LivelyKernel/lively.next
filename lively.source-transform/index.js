@@ -1,5 +1,5 @@
 /* global global, babel */
-import { parseFunction, parse, stringify, ReplaceVisitor } from 'lively.ast';
+import { parseFunction, parse, stringify, ReplaceVisitor, nodes } from 'lively.ast';
 import { QueryReplaceManyVisitor } from 'lively.ast/lib/visitors.js';
 import catchBinding from '@babel/plugin-syntax-import-meta';
 import importMeta from '@babel/plugin-syntax-import-meta';
@@ -145,8 +145,8 @@ export function ensureComponentDescriptors (translated, moduleName, recorderName
     });
 }
 
-export function replaceExportedVarDeclarations (translated) {
-  return QueryReplaceManyVisitor.run(
+export function replaceExportedVarDeclarations (translated, recorderName) {
+  translated = QueryReplaceManyVisitor.run(
     translated, `
          // ExportNamedDeclaration [
                /:declaration VariableDeclaration
@@ -156,6 +156,16 @@ export function replaceExportedVarDeclarations (translated) {
       const exportedVariable = variableDeclaration.declarations?.[0];
       return [variableDeclaration, parse(`var ${exportedVariable.id.name}; export { ${exportedVariable.id.name} }`).body[1]];
     });
+
+  for (let i = 0; i < translated.body.length; i++) {
+    const node = translated.body[i];
+    if (node.type === 'VariableDeclaration' && node.declarations?.[0].init?.type === 'ObjectExpression') {
+      const { id, init } = node.declarations[0];
+      node.declarations[0].init = nodes.logical('||', parse(`${recorderName}.${id.name}`).body[0].expression, init);
+    }
+  }
+
+  return translated;
 }
 
 export async function replaceImportedNamespaces (translated, moduleName, bundler) {
