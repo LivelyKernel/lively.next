@@ -142,7 +142,7 @@ export class UserFlapModel extends ViewModel {
         $world.setStatusMessage('Login is not possible while in offline mode');
         return;
       }
-      let cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'scope=user,repo,delete_repo,workflow,secrets' https://github.com/login/device/code`;
+      let cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'scope=user,repo,delete_repo,workflow' https://github.com/login/device/code`;
       const { stdout: resOne } = await runCommand(cmdString).whenDone();
       if (resOne === '') {
         $world.setStatusMessage('You seem to be offline.', StatusMessageError);
