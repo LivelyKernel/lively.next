@@ -1521,12 +1521,69 @@ class TextChangeReconciliation extends PropChangeReconciliation {
     // if textString/value are present, clear them and use textAndAttributes instead
     const textAttrsAsExpr = getTextAttributesExpr(textMorph);
     requiredBindings.push(...Object.entries(textAttrsAsExpr.bindings));
-    this.modulesToLint.add(modId); // laways lint after text and attributes are added
     const textStringProp = getProp(specNode, 'textString');
     const valueProp = getProp(specNode, 'value');
+    if (textStringProp || valueProp) this.modulesToLint.add(modId);
     if (textStringProp) this.deletePropIn(specNode, 'textString', false); // do not remove the entire node even if eligible for now
     if (valueProp) this.deletePropIn(specNode, 'value', false);
     this.patchPropIn(specNode, 'textAndAttributes', textAttrsAsExpr);
     return this;
+  }
+
+  getAstNodeAndAttributePositionInRange (specNode, range) {
+    const textAttrProp = getProp(specNode, 'textAndAttributes');
+    if (!textAttrProp) return {};
+    const { textAndAttributes } = this.target;
+    const attr = this.target.textAttributeAt(range.start);
+    const attrIndex = textAndAttributes.indexOf(attr);
+    const stringNode = textAttrProp.value.elements[attrIndex - 1];
+    // determine the range of the text attribute pair
+    let attributeStart = 0;
+    let i = 0;
+    while (textAndAttributes[i + 1] !== attr) {
+      attributeStart += textAndAttributes[i].length;
+      i += 2;
+      if (i >= textAndAttributes.length) break;
+    }
+    return { attributeStart, stringNode };
+  }
+
+  patchPropIn (specNode, propName, textAttrsAsExpr) {
+    const { modId } = this.getDescriptorContext();
+    const { args, selector } = this.change;
+
+    const defaultPatch = () => {
+      this.modulesToLint.add(modId);
+      return super.patchPropIn(specNode, propName, textAttrsAsExpr);
+    };
+
+    if (!args) return defaultPatch();
+
+    const [changedRange, attrReplacement] = args;
+
+    if (selector === 'replace') {
+      const isDeletion = attrReplacement[0] === '' && attrReplacement[1] === null;
+      const isInsertion = !isDeletion && attrReplacement[0].length > 0;
+      const { attributeStart, stringNode } = this.getAstNodeAndAttributePositionInRange(specNode, changedRange);
+
+      if (!stringNode) return defaultPatch();
+
+      const insertionStartIndex = this.target.positionToIndex(changedRange.start);
+      if (isDeletion) {
+        const insertionEndIndex = this.target.positionToIndex(changedRange.end);
+        const deleteCharacters = insertionEndIndex - insertionStartIndex;
+        const deletionIndexInSource = stringNode.start + insertionStartIndex - attributeStart + 1;
+        this.addChangesToModule(modId, [{ action: 'replace', start: deletionIndexInSource, end: deletionIndexInSource + deleteCharacters, lines: [''] }]);
+        return this;
+      }
+
+      if (isInsertion) {
+        const insertionIndexInSource = stringNode.start + insertionStartIndex - attributeStart + 1;
+        this.addChangesToModule(modId, [{ action: 'insert', start: insertionIndexInSource, lines: [attrReplacement[0]] }]);
+        return this;
+      }
+    }
+
+    return defaultPatch();
   }
 }
