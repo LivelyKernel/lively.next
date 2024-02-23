@@ -414,7 +414,7 @@ export class SearchWidgetModel extends ViewModel {
 
   search () {
     debounceNamed('search', 500, () => {
-      if (!this.input) {
+      if (!this.input || !this.view.owner) {
         this.cleanup();
         this.showNoSearchHint();
         return;
