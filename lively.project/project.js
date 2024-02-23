@@ -405,7 +405,7 @@ export class Project {
 
     await this.removeUnusedProjectDependencies();
     await this.addMissingProjectDependencies();
-    if (remoteConfigured) await this.setupDependencyPermissions();
+    if (remoteConfigured && !lively.isInOfflineMode) await this.setupDependencyPermissions();
     if (!this.configFile) {
       throw Error('No config file found. Should never happen.');
     }
