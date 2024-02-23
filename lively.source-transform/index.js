@@ -145,7 +145,7 @@ export function ensureComponentDescriptors (translated, moduleName, recorderName
     });
 }
 
-export function replaceExportedVarDeclarations (translated, recorderName) {
+export function replaceExportedVarDeclarations (translated, recorderName, moduleName) {
   translated = QueryReplaceManyVisitor.run(
     translated, `
          // ExportNamedDeclaration [
@@ -157,11 +157,13 @@ export function replaceExportedVarDeclarations (translated, recorderName) {
       return [variableDeclaration, parse(`var ${exportedVariable.id.name}; export { ${exportedVariable.id.name} }`).body[1]];
     });
 
-  for (let i = 0; i < translated.body.length; i++) {
-    const node = translated.body[i];
-    if (node.type === 'VariableDeclaration' && node.declarations?.[0].init?.type === 'ObjectExpression') {
-      const { id, init } = node.declarations[0];
-      node.declarations[0].init = nodes.logical('||', parse(`${recorderName}.${id.name}`).body[0].expression, init);
+  if (moduleName.includes('lively.morphic/config.js')) {
+    for (let i = 0; i < translated.body.length; i++) {
+      const node = translated.body[i];
+      if (node.type === 'VariableDeclaration' && node.declarations?.[0].init?.type === 'ObjectExpression') {
+        const { id, init } = node.declarations[0];
+        node.declarations[0].init = nodes.logical('||', parse(`${recorderName}.${id.name}`).body[0].expression, init);
+      }
     }
   }
 
