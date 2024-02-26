@@ -1386,7 +1386,7 @@ class PropChangeReconciliation extends Reconciliation {
     }
 
     const tabSize = 2;
-    const indentDepth = (specNode.properties[0].start - specNode.start - 2) / tabSize;
+    const indentDepth = specNode.properties.length > 0 ? (specNode.properties[0].start - specNode.start - 2) / tabSize : 1;
     const subSpec = this.getSubSpecForTarget();
 
     if (prop === 'master') {
