@@ -123,7 +123,7 @@ export default class ExportLookup {
     if (cache[moduleId]) {
       let result = cache[moduleId].rawExports;
       return excludedPackageURLs.includes(result.packageURL) ||
-          excludeFns.some(fn => fn(result.packageURL))
+          excludeFns.some(fn => fn(moduleId))
         ? null
         : cache[moduleId];
     }
@@ -146,7 +146,7 @@ export default class ExportLookup {
     };
 
     if (excludedPackageURLs.includes(packageURL) ||
-     excludeFns.some(fn => fn(packageURL))) return null;
+     excludeFns.some(fn => fn(moduleId))) return null;
 
     try {
       let format = mod.format();
