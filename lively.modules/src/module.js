@@ -704,7 +704,7 @@ class ModuleInterface {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async imports () { return query.imports(await this.scope()); }
-  async exports () { return query.exports(await this.scope()); }
+  async exports () { return query.exports(await this.scope()).filter(exp => exp.local !== '__esModule'); }
 
   async addImports (specs) {
     let source = await this.source();

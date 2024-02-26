@@ -159,7 +159,7 @@ export default class ExportLookup {
         let moduleRecord = mod._recorder;
         result.exports = [];
         for (let key of mod._frozenModule ? moduleRecord.__module_exports__ : obj.keys(moduleRecord)) {
-          if (['__useDefault', 'default', '__module_hash__', '__module_exports__'].includes(key)) continue;
+          if (['__useDefault', 'default', '__module_hash__', '__module_exports__', '__esModule'].includes(key)) continue;
           result.exports.push({ exported: key, local: key, type: 'id' });
         }
       }
