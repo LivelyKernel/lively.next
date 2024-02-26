@@ -200,7 +200,7 @@ class ModuleInterface {
     const meta = this.metadata();
     if (meta && meta.load.format) return meta.load.format;
     if (this._source) return detectModuleFormat(this._source);
-    return 'global';
+    return this._frozenModule ? 'esm' : 'global';
   }
 
   setFormat (format) {
