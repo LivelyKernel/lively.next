@@ -607,6 +607,28 @@ describe('component -> source reconciliation', function () {
       expect(updatedSource).to.include('textAndAttributes: [\'yo bro!blubber\', null]');
     });
 
+    it('correctly reconciles text attributes when deleting trailing parts', async () => {
+      const m = ComponentT.submorphs[0];
+      m.readOnly = false;
+      ComponentT.withMetaDo({ reconcileChanges: true }, () => {
+        m.textAndAttributes = ['This is the ', null, 'lively.next', {
+          fontWeight: '500'
+        }, ' impressum.', null];
+      });
+      await ComponentD._changeTracker.onceChangesProcessed();
+      ComponentT.withMetaDo({ reconcileChanges: true }, () => {
+        m.deleteText({
+          start: { row: 0, column: m.documentEndPosition.column - 1 },
+          end: m.documentEndPosition
+        });
+      });
+      await ComponentD._changeTracker.onceChangesProcessed();
+      const updatedSource = await getSource();
+      expect(updatedSource).to.include(`textAndAttributes: ['This is the ', null, 'lively.next', {
+      fontWeight: '500'
+    }, ' impressum', null]`);
+    });
+
     it('properly reconciles embedded morphs', async () => {
       ComponentA.withMetaDo({ reconcileChanges: true }, () => {
         ComponentA.get('some submorph').addMorph({
