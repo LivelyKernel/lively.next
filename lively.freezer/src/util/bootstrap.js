@@ -151,6 +151,8 @@ async function fastLoadPackages (progress) {
   await System.import('lively.freezer');
   extractModules('lively.freezer');
 
+  extractModules('lively.user');
+
   // extract any esm modules that have been loaded on the go
   extractEsmModules();
 }
