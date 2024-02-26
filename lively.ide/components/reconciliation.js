@@ -1534,23 +1534,19 @@ class TextChangeReconciliation extends PropChangeReconciliation {
     const textAttrProp = getProp(specNode, 'textAndAttributes');
     if (!textAttrProp) return {};
     const { textAndAttributes } = this.target;
-    const attr = this.target.textAttributeAt(range.start);
-    const attrIndex = textAndAttributes.indexOf(attr);
-    const stringNode = textAttrProp.value.elements[attrIndex - 1];
-    // determine the range of the text attribute pair
-    let attributeStart = 0;
-    let i = 0;
-    while (textAndAttributes[i + 1] !== attr) {
-      attributeStart += textAndAttributes[i].length;
-      i += 2;
-      if (i >= textAndAttributes.length) break;
+    let stringIndex = 0; let j = 0;
+    const startIndex = this.target.positionToIndex(range.start);
+    while (startIndex > stringIndex + textAndAttributes[j].length) {
+      stringIndex += textAndAttributes[j].length;
+      j += 2;
     }
-    return { attributeStart, stringNode };
+    const stringNode = textAttrProp.value.elements[j];
+    return { attributeStart: stringIndex, stringNode };
   }
 
   patchPropIn (specNode, propName, textAttrsAsExpr) {
     const { modId } = this.getDescriptorContext();
-    const { args, selector } = this.change;
+    const { args, selector, undo } = this.change;
 
     const defaultPatch = () => {
       this.modulesToLint.add(modId);
@@ -1562,7 +1558,7 @@ class TextChangeReconciliation extends PropChangeReconciliation {
     const [changedRange, attrReplacement] = args;
 
     if (selector === 'replace') {
-      const isDeletion = attrReplacement[0] === '' && attrReplacement[1] === null;
+      const isDeletion = attrReplacement.length == 0 || attrReplacement[0] === '' && attrReplacement[1] === null;
       const isInsertion = !isDeletion && attrReplacement[0].length > 0;
       const { attributeStart, stringNode } = this.getAstNodeAndAttributePositionInRange(specNode, changedRange);
 
@@ -1571,7 +1567,7 @@ class TextChangeReconciliation extends PropChangeReconciliation {
       const insertionStartIndex = this.target.positionToIndex(changedRange.start);
       if (isDeletion) {
         const insertionEndIndex = this.target.positionToIndex(changedRange.end);
-        const deleteCharacters = insertionEndIndex - insertionStartIndex;
+        const deleteCharacters = undo.args[1][0].length;
         const deletionIndexInSource = stringNode.start + insertionStartIndex - attributeStart + 1;
         this.addChangesToModule(modId, [{ action: 'replace', start: deletionIndexInSource, end: deletionIndexInSource + deleteCharacters, lines: [''] }]);
         return this;
