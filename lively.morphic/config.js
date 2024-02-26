@@ -86,6 +86,7 @@ const config = {
       ignoredPackages: [
         'lively.web', 'no group',
         url => url.includes('lively.morphic/objectdb') ||
+               url.includes('lively.morphic/inspector') ||
                url.includes('lively.next-node_modules') ||
                url.includes('node_modules') ||
                url.includes('custom-npm-modules') ||
