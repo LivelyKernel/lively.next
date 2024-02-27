@@ -405,12 +405,13 @@ function handleTextAndAttributes (aMorph, exported, styleProto, path, masterInSc
     if (styleProto?.textString !== aMorph.textString &&
         !obj.equals(styleProto?.textAndAttributes, aMorph.textAndAttributes)) {
       exported.textAndAttributes = aMorph.textAndAttributes.map((ea, i) => {
-        return ea && ea.isMorph
-          ? serializeSpec(ea, { // eslint-disable-line no-use-before-define
+        if (ea && ea.isMorph) {
+          return serializeSpec(ea, { // eslint-disable-line no-use-before-define
             ...opts,
             path: path ? path + '.textAndAttributes.' + i : 'textAndAttributes.' + i
-          })
-          : ea;
+          });
+        }
+        return ea;
       });
     }
     if (exposeMasterRefs && masterInScope?.managesMorph(aMorph.name)) {
@@ -422,7 +423,7 @@ function handleTextAndAttributes (aMorph, exported, styleProto, path, masterInSc
     // all of the above work is then discarded basically...
     if (asExpression && exported.textAndAttributes) {
       // properly serialize some of the attributes such as fontColor
-      exported.textAndAttributes = getArrayExpression('textAndAttributes', aMorph.textAndAttributes, path, opts);
+      exported.textAndAttributes = getArrayExpression('textAndAttributes', aMorph.textAndAttributes.map(ea => typeof ea === 'string' ? JSON.stringify(ea).slice(1, -1) : ea), path, opts);
     }
   }
 
