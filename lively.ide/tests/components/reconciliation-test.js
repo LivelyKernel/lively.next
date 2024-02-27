@@ -597,14 +597,14 @@ describe('component -> source reconciliation', function () {
     it('correctly replaces other text attributes, in case they are previously present', async () => {
       ComponentT.withMetaDo({ reconcileChanges: true }, () => {
         ComponentT.submorphs[0].textString += 'lol';
-        ComponentT.submorphs[1].textString += 'blubber';
+        ComponentT.submorphs[1].textString += '\nblubber';
       });
       await ComponentD._changeTracker.onceChangesProcessed();
       const updatedSource = await getSource();
       expect(updatedSource).not.to.include('textString: \'yo bro!blubber\'');
       expect(updatedSource).not.to.include('value: \'hello worldlol\'');
       expect(updatedSource).to.include('textAndAttributes: [\'hello worldlol\', null]');
-      expect(updatedSource).to.include('textAndAttributes: [\'yo bro!blubber\', null]');
+      expect(updatedSource).to.include('textAndAttributes: [\'yo bro!\\nblubber\', null]');
     });
 
     it('correctly reconciles text attributes when deleting trailing parts', async () => {

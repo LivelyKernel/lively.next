@@ -1567,7 +1567,7 @@ class TextChangeReconciliation extends PropChangeReconciliation {
       const insertionStartIndex = this.target.positionToIndex(changedRange.start);
       if (isDeletion) {
         const insertionEndIndex = this.target.positionToIndex(changedRange.end);
-        const deleteCharacters = undo.args[1][0].length;
+        const deleteCharacters = JSON.stringify(undo.args[1][0]).slice(1, -1).length;
         const deletionIndexInSource = stringNode.start + insertionStartIndex - attributeStart + 1;
         this.addChangesToModule(modId, [{ action: 'replace', start: deletionIndexInSource, end: deletionIndexInSource + deleteCharacters, lines: [''] }]);
         return this;
@@ -1575,7 +1575,11 @@ class TextChangeReconciliation extends PropChangeReconciliation {
 
       if (isInsertion) {
         const insertionIndexInSource = stringNode.start + insertionStartIndex - attributeStart + 1;
-        this.addChangesToModule(modId, [{ action: 'insert', start: insertionIndexInSource, lines: [attrReplacement[0]] }]);
+        this.addChangesToModule(modId, [{
+          action: 'insert',
+          start: insertionIndexInSource,
+          lines: [JSON.stringify(attrReplacement[0]).slice(1, -1)]
+        }]);
         return this;
       }
     }
