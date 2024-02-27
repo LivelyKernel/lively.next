@@ -370,12 +370,18 @@ export class Project {
     const currUserName = currUser.login;
 
     // GH Pages is possible for non-private repositories in any case
-    if (!this.config.lively.repositoryIsPrivate) this.config.lively.canUsePages = true;
+    if (!this.config.lively.repositoryIsPrivate){
+      this.config.lively.canUsePages = true;
+      return;
+    }
+
     // Each time the repository is saved by its owner, check if they have a non-free plan, allowing to use GH Pages on private repositories
     if (this.repoOwner === currUserName && this.config.lively.repositoryIsPrivate) {
       if (currUser.plan.name !== 'free') this.config.lively.canUsePages = true;
       else this.config.lively.canUsePages = false;
+      return;
     }
+
     if (this.config.lively.repoBelongsToOrg) {
       const checkOrgPlanCmd = runCommand(`curl -L \
         -H "Accept: application/vnd.github+json" \
@@ -385,7 +391,10 @@ export class Project {
       `, { l2lClient: ShellClientResource.defaultL2lClient });
       await checkOrgPlanCmd.whenDone();
       // In case the command errors out, we just set the value to false to be on the save side
-      if (checkOrgPlanCmd.exitCode !== 0) this.config.lively.canUsePages = false;
+      if (checkOrgPlanCmd.exitCode !== 0) {
+        this.config.lively.canUsePages = false;
+        return;
+      }
       else {
         const planName = (JSON.parse(checkOrgPlanCmd.stdout))?.plan?.name;
         if (planName && planName!== 'free') this.config.lively.canUsePages = true;
