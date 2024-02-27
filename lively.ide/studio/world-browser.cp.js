@@ -359,7 +359,7 @@ class ProjectVersionViewer extends WorldVersionViewer {
       await localRepo.runCommand('git reset --hard').whenDone();
     }
     spinner.visible = false;
-    this.owner.showVersions();
+    this.owner.openEntity();
   }
 }
 
@@ -996,7 +996,7 @@ class ProjectPreviewModel extends WorldPreviewModel {
       _project: { },
       expose: {
         get () {
-          return ['_project', 'displayPreview', 'hideVersions', 'showVersions'];
+          return ['_project', 'displayPreview', 'hideVersions', 'openEntity'];
         }
       }
     };
