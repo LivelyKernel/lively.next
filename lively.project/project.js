@@ -387,7 +387,8 @@ export class Project {
       // In case the command errors out, we just set the value to false to be on the save side
       if (checkOrgPlanCmd.exitCode !== 0) this.config.lively.canUsePages = false;
       else {
-        if ((JSON.parse(checkOrgPlanCmd.stdout)).plan.name !== 'free') this.config.lively.canUsePages = true;
+        const planName = (JSON.parse(checkOrgPlanCmd.stdout))?.plan?.name;
+        if (planName && planName!== 'free') this.config.lively.canUsePages = true;
         else this.config.lively.canUsePages = false;
       }
     }
