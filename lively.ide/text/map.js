@@ -13,7 +13,7 @@ export default class TextMap extends Canvas {
 
   static get properties () {
     return {
-      textMorph: {},
+      textMorph: { serialize: false },
       relativeBoundsInTextMorph: {},
       extent: { defaultValue: pt(60, 50) },
       markers: {},
