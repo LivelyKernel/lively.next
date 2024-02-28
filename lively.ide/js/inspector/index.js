@@ -255,26 +255,38 @@ export class PropertyControl extends DraggableTreeLabel {
     connect(this, 'update', this, 'toggleFoldableValue');
   }
 
-  static renderGrabbableKey (args) {
-    const { keyString, target } = args;
+  static renderGrabbableKey (args, isDraggable = true) {
+    const { keyString, target, value } = args;
+    isDraggable = target.isMorph && isDraggable;
+    const dragHandlers = {
+      onDragStart: (evt) => {
+        evt.state.draggedProp = part(DraggedProp, {
+          sourceObject: target,
+          control: this.baseControl(args)
+        });
+        evt.state.draggedProp.openInWorld();
+        connect(evt.hand, 'update', evt.state.draggedProp, 'update');
+      },
+
+      onDrag: () => {},
+
+      onDragEnd: (evt) => {
+        disconnect(evt.hand, 'update', evt.state.draggedProp, 'update');
+        evt.state.draggedProp.applyToTarget(evt);
+      }
+    };
     return [
+      ...isDraggable
+        ? Icon.textAttribute('mi-drag_indicator', {
+          verticalAlign: 'bottom',
+          fontSize: 16,
+          opacity: 0.5,
+          ...isDraggable ? dragHandlers : {}
+        })
+        : [],
       `${keyString}:`, {
-        nativeCursor: '-webkit-grab',
-        onDragStart: (evt) => {
-          evt.state.draggedProp = new DraggedProp({
-            sourceObject: target,
-            control: this.baseControl(args)
-          });
-          evt.state.draggedProp.openInWorld();
-          connect(evt.hand, 'update', evt.state.draggedProp, 'update');
-        },
-
-        onDrag: () => {},
-
-        onDragEnd: (evt) => {
-          disconnect(evt.hand, 'update', evt.state.draggedProp, 'update');
-          evt.state.draggedProp.applyToTarget(evt);
-        }
+        'vertical-align': 'top',
+        ...isDraggable ? dragHandlers : {}
       }
     ];
   }
@@ -294,7 +306,7 @@ export class PropertyControl extends DraggableTreeLabel {
     return [
       ...this.renderGrabbableKey(args),
       ` ${value ? (value.valueOf ? value.valueOf() : value) : 'Not set'}`, {
-        nativeCursor: 'pointer', onMouseDown: handler
+        onMouseDown: handler
       },
       ...Icon.textAttribute('angle-down', {
         paddingTop: '4px', paddingLeft: '4px', opacity: 0.7, onMouseDown: handler
@@ -325,7 +337,7 @@ export class PropertyControl extends DraggableTreeLabel {
     };
     return [
       ...this.renderGrabbableKey(args),
-      ` ${valueString}`, { fontColor: Color.black, nativeCursor: 'pointer', onMouseDown: handler }
+      ` ${valueString}`, { fontColor: Color.black, onMouseDown: handler }
     ];
   }
 
@@ -360,7 +372,6 @@ export class PropertyControl extends DraggableTreeLabel {
       widgetState.min = spec.min !== undefined ? spec.min : -Infinity;
       widgetState.max = spec.max !== undefined ? spec.max : Infinity;
     }
-
     const handler = async (evt) => {
       const editor = part(parameterizedNumberPopupLight({
         title: keyString,
@@ -379,7 +390,7 @@ export class PropertyControl extends DraggableTreeLabel {
         node.rerender();
       });
     };
-    const attrs = { nativeCursor: 'pointer', onMouseDown: handler, fontColor: NUMBER_COLOR };
+    const attrs = { onMouseDown: handler, fontColor: NUMBER_COLOR };
     return [
       ...this.renderGrabbableKey(args),
       ...node._inputMorph
@@ -405,7 +416,7 @@ export class PropertyControl extends DraggableTreeLabel {
     };
     return [
       ...this.renderGrabbableKey(args),
-       `${value ? value.toFilterCss() : 'No Shadow'}`, { nativeCursor: 'pointer', onMouseDown: handler }
+       `${value ? value.toFilterCss() : 'No Shadow'}`, { onMouseDown: handler }
     ];
   }
 
@@ -422,7 +433,7 @@ export class PropertyControl extends DraggableTreeLabel {
         node.rerender();
       });
     };
-    const attrs = { nativeCursor: 'pointer', onMouseDown: handler };
+    const attrs = { onMouseDown: handler };
     return [...this.renderGrabbableKey(args),
       ' pt(', { ...attrs },
             `${value.x.toFixed()}`, { fontColor: NUMBER_COLOR, ...attrs },
@@ -455,7 +466,7 @@ export class PropertyControl extends DraggableTreeLabel {
         hasFixedPosition: true
       });
       editor.solidOnly = !gradientEnabled;
-      editor.focusOnMorph(target, value);
+      editor.focusOnMorph(target, value.valueOf ? value.valueOf() : value);
       await editor.fadeIntoWorld(evt.positionIn(target.world()));
       inspector.openWidget = editor;
       connect(editor, 'value', (fill) => {
@@ -476,14 +487,14 @@ export class PropertyControl extends DraggableTreeLabel {
         paddingRight: '5px'
       },
      `${value ? (value.valueOf ? value.valueOf() : valueString) : 'No Color'}`, {
-       nativeCursor: 'pointer', onMouseDown: handler
+       onMouseDown: handler
      }];
   }
 
   static renderItSomehow (args) {
     const { valueString } = args;
     return [
-      ...this.renderGrabbableKey(args),
+      ...this.renderGrabbableKey(args, false),
       ` ${valueString}`, {}
     ];
   }
