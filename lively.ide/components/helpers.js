@@ -101,6 +101,9 @@ export function convertToExpression (aMorph, opts = {}) {
 }
 
 export function getTextAttributesExpr (textMorph) {
+  if (textMorph.textString === '') {
+    return { __expr__: '[\'\', null]', bindings: {} };
+  }
   const expr = convertToExpression(textMorph);
   const rootPropNode = getPropertiesNode(parse('(' + expr.__expr__ + ')'));
   let { start, end } = getProp(rootPropNode, 'textAndAttributes').value; // eslint-disable-line no-use-before-define

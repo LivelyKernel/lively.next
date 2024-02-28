@@ -1536,7 +1536,7 @@ class TextChangeReconciliation extends PropChangeReconciliation {
     const { textAndAttributes } = this.target;
     let stringIndex = 0; let j = 0;
     const startIndex = this.target.positionToIndex(range.start);
-    while (startIndex > stringIndex + textAndAttributes[j].length) {
+    while (j < textAndAttributes.length && startIndex > stringIndex + textAndAttributes[j].length) {
       stringIndex += textAndAttributes[j].length;
       j += 2;
     }
