@@ -321,6 +321,7 @@ export function serializeNestedProp (name, val, serializerContext, members = ['t
     serializedVal = getExpression(name, val[members[0]], serializerContext);
   } else {
     for (const mem of members) {
+      if (typeof val[mem] === 'undefined') continue;
       serializedVal[mem] = exprSerializer.embedValue(val[mem], asExpression && nestedExpressions);
     }
   }
