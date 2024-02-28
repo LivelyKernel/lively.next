@@ -1462,7 +1462,7 @@ export class PolicyApplicator extends StylePolicy {
     if (currSpec) return currSpec;
 
     // spec could not be found, so we prepare for inserting a spec
-    currSpec = submorph.master || { };
+    currSpec = submorph.master || submorph.spec(true);
     currSpec.name = submorph.name;
     if (this.parent && !this.mentionedByParents(targetName)) {
       // if we have a parent policy, this means we are derived
