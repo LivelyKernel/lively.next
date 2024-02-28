@@ -9,9 +9,9 @@ import DefaultTheme from '../../themes/default.js';
 import { DropDownSelector } from 'lively.components/widgets.js';
 import { InteractiveMorphSelector, MorphHighlighter } from 'lively.halos';
 import { ensureDefaultImports, generateReferenceExpression } from './helpers.js';
-import { InstructionWidget } from './ui.cp.js';
+import { InstructionWidget, DraggedProp } from './ui.cp.js';
 import { ColorPicker } from '../../styling/color-picker.cp.js';
-import { ShadowPopup, PositionPopupLight, PaddingPopup, parameterizedNumberPopupLight } from '../../studio/controls/popups.cp.js';
+import { ShadowPopupLight, PositionPopupLight, PaddingPopup, parameterizedNumberPopupLight } from '../../studio/controls/popups.cp.js';
 
 ensureDefaultImports();
 
@@ -38,76 +38,6 @@ const inspectorCommands = [
   }
 
 ];
-
-class DraggedProp extends Morph {
-  static get properties () {
-    return {
-      control: {},
-      sourceObject: {},
-      borderColor: { defaultValue: Color.rgb(169, 204, 227) },
-      fill: { defaultValue: Color.rgb(235, 245, 251).withA(0.8) },
-      borderWidth: { defaultValue: 2 },
-      borderRadius: { defaultValue: 4 },
-      submorphs: {
-        after: ['control'],
-        initialize () {
-          const { control } = this;
-          if (!control) return this.submorphs = [];
-          this.height = 22;
-          this.submorphs = [control];
-          control.top = 0;
-          control.fontSize = 14;
-          if (typeof control.relayout === 'function') { control.relayout(); }
-          this.width = control.width + 20;
-          this.adjustOrigin(pt(10, 10));
-        }
-      }
-    };
-  }
-
-  applyToTarget (evt) {
-    const { currentTarget: target, control } = this;
-    this.remove();
-    MorphHighlighter.removeHighlighters(evt.world);
-    if (!target) return;
-
-    if (!target.isText || target.editorModeName !== 'js') {
-      // normal apply prop
-      if ('propertyValue' in control) { target[control.keyString] = control.propertyValue; }
-      return;
-    }
-
-    // rk 2017-10-01 FIXME this is a hack to get droppable code in...
-    // this needs to go somewhere else and needs a better UI, at least
-    const editor = target;
-    const toObject = editor.evalEnvironment.context;
-    const textPos = editor.textPositionFromPoint(editor.localize(evt.position));
-    let expr = generateReferenceExpression(this.sourceObject, { fromMorph: toObject });
-    if (control.keyString) expr += '.' + control.keyString;
-    editor.insertTextAndSelect(expr, textPos);
-    editor.focus();
-  }
-
-  update (evt) {
-    const handPosition = evt.hand.globalPosition;
-    let target = this.morphBeneath(handPosition);
-    if (!target) return;
-    if (target === this.morphHighlighter) {
-      target = target.morphBeneath(handPosition);
-    }
-    while ([target, ...target.ownerChain()].find(m => !m.visible)) {
-      target = target.morphBeneath(handPosition);
-    }
-    if (target !== this.currentTarget) {
-      this.currentTarget = target;
-      if (this.morphHighlighter) this.morphHighlighter.deactivate();
-      if (target.isWorld) return;
-      this.morphHighlighter = MorphHighlighter.for($world, target);
-      this.morphHighlighter.show();
-    }
-    this.position = handPosition;
-  }
-}
 
 class DraggableTreeLabel extends Label {
   static get properties () {
@@ -140,7 +70,7 @@ class DraggableTreeLabel extends Label {
   get inspector () { return this.owner.owner; }
 
   onDragStart (evt) {
-    this.draggedProp = new DraggedProp({
+    this.draggedProp = part(DraggedProp, {
       sourceObject: this.inspector.targetObject,
       control: this.copy()
     });

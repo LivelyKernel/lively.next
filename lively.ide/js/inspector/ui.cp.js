@@ -1,4 +1,4 @@
-import { GridLayout, config, morph, Text, Icon, Label, component, part } from 'lively.morphic';
+import { GridLayout, Morph, TilingLayout, config, morph, Text, Icon, Label, component, part } from 'lively.morphic';
 import { pt, rect, Color } from 'lively.graphics';
 import { DarkButton, SystemButton } from 'lively.components/buttons.cp.js';
 import { SearchField } from 'lively.components/inputs.cp.js';
@@ -7,6 +7,94 @@ import { DropDownListModel } from 'lively.components/list.js';
 import { DarkList } from 'lively.components/list.cp.js';
 import { PropertyTree } from './context.js';
 import { LabeledCheckboxLight } from 'lively.components';
+import { MorphHighlighter } from 'lively.halos';
+import { generateReferenceExpression } from './helpers.js';
+
+class DraggedPropMorph extends Morph {
+  static get properties () {
+    return {
+      control: {
+        after: ['submorphs'],
+        set (control) {
+          this.setProperty('control', control);
+          if (!control) return this.submorphs = [];
+          this.submorphs = [control];
+          control.fontSize = 14;
+          if (typeof control.relayout === 'function') { control.relayout(); }
+        }
+      },
+      sourceObject: {}
+    };
+  }
+
+  applyToTarget (evt) {
+    const { currentTarget: target, control } = this;
+    this.remove();
+    MorphHighlighter.removeHighlighters(evt.world);
+    if (!target) return;
+
+    if (!target.isText || target.editorModeName !== 'js') {
+      // normal apply prop
+      if ('propertyValue' in control) { target[control.keyString] = control.propertyValue; }
+      return;
+    }
+
+    // rk 2017-10-01 FIXME this is a hack to get droppable code in...
+    // this needs to go somewhere else and needs a better UI, at least
+    const editor = target;
+    const toObject = editor.evalEnvironment.context;
+    const textPos = editor.textPositionFromPoint(editor.localize(evt.position));
+    let expr = generateReferenceExpression(this.sourceObject, { fromMorph: toObject });
+    if (control.keyString) expr += '.' + control.keyString;
+    editor.insertTextAndSelect(expr, textPos);
+    editor.focus();
+  }
+
+  update (evt) {
+    const handPosition = evt.hand.globalPosition;
+    let target = this.morphBeneath(handPosition);
+    if (!target) return;
+    if (target === this.morphHighlighter) {
+      target = target.morphBeneath(handPosition);
+    }
+    while ([target, ...target.ownerChain()].find(m => !m.visible)) {
+      target = target.morphBeneath(handPosition);
+    }
+    if (target !== this.currentTarget) {
+      this.currentTarget = target;
+      if (this.morphHighlighter) this.morphHighlighter.deactivate();
+      if (target.isWorld) return;
+      this.morphHighlighter = MorphHighlighter.for($world, target);
+      this.morphHighlighter.show();
+    }
+    this.position = handPosition;
+  }
+}
+
+export const DraggedProp = component({
+  type: DraggedPropMorph,
+  clipMode: 'hidden',
+  origin: pt(10, 10),
+  extent: pt(151.3, 41.9),
+  fill: Color.rgba(255, 255, 251, 0.8),
+  borderWidth: 2,
+  borderColor: Color.rgb(169, 204, 227),
+  borderRadius: 4,
+  layout: new TilingLayout({
+    align: 'right',
+    hugContentsHorizontally: true,
+    hugContentsVertically: true,
+    padding: rect(5, 0, 0, 5)
+  }),
+  submorphs: [{
+    type: Text,
+    name: 'some placeholer control',
+    dynamicCursorColoring: true,
+    fill: Color.rgba(255, 255, 255, 0),
+    position: pt(25.3, 12.6),
+    textAndAttributes: ['I am a control!', null]
+  }]
+});
 
 const InstructionWidget = component({
   type: Text,
