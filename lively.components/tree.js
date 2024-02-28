@@ -176,8 +176,10 @@ export class Tree extends Text {
   recoverOriginalLine (row) {
     let attrs = this.document.getTextAndAttributesOfLine(row);
     for (let i = 0; i < attrs.length; i++) {
-      let fontColor = this._originalColor[i];
-      if (!fontColor || obj.isString(attrs[i])) continue;
+      if (obj.isString(attrs[i])) continue;
+      let fontColor = attrs[i]?.actualColor;
+      if (attrs[i]?.isSelected) attrs[i].isSelected = false;
+      if (!fontColor) continue;
       if (attrs[i]) { attrs[i].fontColor = fontColor; } else { attrs[i] = { fontColor }; }
     }
     this.document.setTextAndAttributesOfLine(row, attrs);
@@ -185,12 +187,10 @@ export class Tree extends Text {
 
   renderSelectedLine (row) {
     let attrs = this.document.getTextAndAttributesOfLine(row);
-    const colorBackup = new Array(attrs.length);
-    colorBackup.row = row;
     for (let i = 0; i < attrs.length; i++) {
       if ((i % 2) === 0) {
         if (attrs[i] && attrs[i].isMorph) {
-          colorBackup[i] = attrs[i] ? attrs[i].fontColor || this.nonSelectionFontColor : null;
+          attrs[i].actualColor = attrs[i] ? attrs[i].fontColor || this.nonSelectionFontColor : null;
           attrs[i].fontColor = this.selectionFontColor;
           attrs[i].isSelected = true;
           continue;
@@ -198,16 +198,14 @@ export class Tree extends Text {
           continue;
         }
       }
-      const prevBackup = this._originalColor?.row === row && this._originalColor[i]?.fontColor;
-      colorBackup[i] = (attrs[i] ? (attrs[i]?.isSelected ? prevBackup : attrs[i].fontColor) : null) || this.nonSelectionFontColor;
       if (attrs[i]) {
+        attrs[i].actualColor = (attrs[i]?.isSelected ? attrs[i].actualColor : attrs[i].fontColor) || this.nonSelectionFontColor;
         attrs[i].fontColor = this.selectionFontColor;
         attrs[i].isSelected = true;
       } else {
-        attrs[i] = { fontColor: this.selectionFontColor, isSelected: true };
+        attrs[i] = { fontColor: this.selectionFontColor, actualColor: this.nonSelectionFontColor, isSelected: true };
       }
     }
-    this._originalColor = colorBackup;
     this.document.setTextAndAttributesOfLine(row, attrs);
     /*
       rms: 22.11.22: Since we are meddling around with internal
