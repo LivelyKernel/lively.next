@@ -82,7 +82,7 @@ export class ComponentSelectionControl extends ViewModel {
     this.control?.closePopup();
     this._componentBrowserPopup = part(ComponentBrowserPopupDark, { hasFixedPosition: true, viewModel: { selectionMode: true } });
 
-    const closestComponent = this.component || this.control.targetMaster;
+    const closestComponent = this.component || this.control?.targetMaster;
 
     if (closestComponent) {
       const descr = new ExpressionSerializer().deserializeExprObj(closestComponent.__serialize__());
