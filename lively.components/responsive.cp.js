@@ -90,7 +90,6 @@ const BreakpointHorizontal = component({
     align: 'right',
     axis: 'column',
     axisAlign: 'center',
-    orderByIndex: true,
     spacing: 5
   }),
   nativeCursor: 'grab',
@@ -98,7 +97,6 @@ const BreakpointHorizontal = component({
   submorphs: [{
     type: Label,
     name: 'user agent icon',
-    fixedHeight: true,
     extent: pt(21.7, 36.4),
     fontSize: 30.108,
     reactsToPointer: false,
@@ -129,12 +127,12 @@ const BreakpointHorizontal = component({
     submorphs: [{
       type: Arrow,
       name: 'breakpoint pin',
-      origin: pt(6.9, -2.1),
+      origin: pt(0.7, 1.3),
       borderColor: Color.rgb(0, 0, 0),
       borderWidth: 2,
       extent: pt(16.9, 16.6),
       fill: Color.transparent,
-      position: pt(8.3, 5.1),
+      position: pt(13.3, 3.3),
       reactsToPointer: false,
       rotation: 0.7853981633974483,
       startMarker: {
@@ -164,7 +162,8 @@ const BreakpointVertical = component(BreakpointHorizontal, {
   }),
   extent: pt(135, 40),
   submorphs: [{
-    name: 'user agent icon'
+    name: 'user agent icon',
+    fixedHeight: false
   }, {
     name: 'pixel view',
     padding: rect(10, 0, 0, 0)
@@ -175,7 +174,7 @@ const BreakpointVertical = component(BreakpointHorizontal, {
     submorphs: [{
       name: 'breakpoint pin',
       origin: pt(-3.8, -4),
-      position: pt(-0.5, -6.4),
+      position: pt(16.9, 0.7),
       vertices: [({ position: pt(0, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(16.9, 16.6), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })]
     }]
   }]
