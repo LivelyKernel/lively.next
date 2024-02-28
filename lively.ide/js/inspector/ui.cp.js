@@ -205,6 +205,7 @@ const SystemInspector = component({
   }), part(DarkDropDownList, {
     viewModel: {
       listAlign: 'top',
+      smartDropDown: false,
       label: 'this -> target',
       listMaster: SmallList,
       listOffset: pt(0, -5)
