@@ -282,7 +282,7 @@ export class PropertyControl extends DraggableTreeLabel {
   static renderEnumControl (args) {
     const { value, spec: { values }, keyString, target, node, tree } = args;
     const handler = async (evt) => {
-      const menu = target.world().openWorldMenu(evt, values.map(v => ({
+      const menu = await target.world().openWorldMenu(evt, values.map(v => ({
         string: v.toString(),
         action: () => {
           target[keyString] = v;
