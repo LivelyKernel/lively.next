@@ -31,7 +31,7 @@ export class BorderControlModel extends PropertySectionModel {
         get () {
           if (!this.targetMorph) return false;
           const { top, left, bottom, right } = this.targetMorph.borderColor;
-          return this.updateDirectly && arr.uniqBy([top, left, bottom, right], (a, b) => a.equals(b)).length > 1;
+          return this.updateDirectly && arr.uniqBy([top, left, bottom, right], (a, b) => a?.equals(b)).length > 1;
         }
       },
       hasMixedStyle: {
@@ -56,7 +56,7 @@ export class BorderControlModel extends PropertySectionModel {
           return [
             ...super.prototype.bindings,
             {
-              model: 'border color input',
+              target: 'border color input',
               signal: 'color',
               handler: 'confirm'
             },
@@ -66,7 +66,7 @@ export class BorderControlModel extends PropertySectionModel {
               handler: 'confirm'
             },
             {
-              model: 'border style selector',
+              target: 'border style selector',
               signal: 'selection',
               handler: 'confirm'
             },
@@ -232,7 +232,7 @@ export class BorderControlModel extends PropertySectionModel {
       });
     } else {
       updateBorder();
-      signal(this, 'value', border);
+      signal(this.view, 'value', border);
     }
   }
 }
@@ -263,7 +263,7 @@ export class BorderPopupWindow extends PopupModel {
             signal: 'onMouseDown',
             handler: 'selectBorderSide'
           }, {
-            model: 'border control',
+            target: 'border control',
             signal: 'value',
             handler: 'updateBorder'
           }];
