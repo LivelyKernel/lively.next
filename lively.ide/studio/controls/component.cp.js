@@ -110,7 +110,7 @@ export class ComponentSelectionControl extends ViewModel {
 
   activate () {
     if (this.component) {
-      this.ui.componentNameRef.input = this.component[Symbol.for('lively-module-meta')].exportedName;
+      this.ui.componentNameRef.input = this.component[Symbol.for('lively-module-meta')]?.exportedName;
     }
     if (this.view.master.getState() !== 'immutable') this.view.master.setState(null);
   }

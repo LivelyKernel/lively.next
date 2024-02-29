@@ -1015,7 +1015,9 @@ export class ComponentBrowserModel extends ViewModel {
   async showComponentInFilesView (aComponentDescriptor) {
     const { treeData: td, _selectedNode: n } = this.models.componentFilesView;
     if (n && n.componentObject === aComponentDescriptor) return;
-    const url = System.decanonicalize(aComponentDescriptor[Symbol.for('lively-module-meta')].moduleId);
+    const meta = aComponentDescriptor[Symbol.for('lively-module-meta')];
+    if (!meta) return;
+    const url = System.decanonicalize(meta.moduleId);
     await this.withoutUpdates(() => this.models.componentFilesView.setExpandedPath(node => {
       if (node === td.root) return true;
       if (node.url) {
