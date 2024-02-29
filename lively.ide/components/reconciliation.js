@@ -1308,7 +1308,9 @@ class PropChangeReconciliation extends Reconciliation {
   }
 
   getResponsiblePolicyFor (target) {
-    return this.descriptor.stylePolicy.getSubPolicyFor(target) || this.descriptor.stylePolicy;
+    const policy = this.descriptor.stylePolicy.getSubPolicyFor(target) || this.descriptor.stylePolicy;
+    if (!policy.isPolicy) return this.descriptor.stylePolicy;
+    return policy;
   }
 
   get propValueDiffersFromParent () {
@@ -1358,7 +1360,8 @@ class PropChangeReconciliation extends Reconciliation {
         // we can be sure, that the subSpec *is not* itself a policy
         // because in that case, that other policy would be called to
         // get the enclosing spec...
-        const parentSpec = responsiblePolicy.getSubSpecCorrespondingTo(target.owner);
+        let parentSpec = responsiblePolicy.getSubSpecCorrespondingTo(target.owner);
+        if (parentSpec.isPolicy) parentSpec = parentSpec.spec;
         parentSpec.submorphs[parentSpec.submorphs.indexOf(subSpec)] = PolicyApplicator.for(target, {
           ...subSpec,
           master: newValue
