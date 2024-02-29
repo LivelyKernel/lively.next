@@ -422,7 +422,7 @@ export class StylePolicy {
   get respondsToClick () {
     if (this._clickMaster) return true;
     if (this._localComponentStates && Object.values(this._localComponentStates).find(policy => policy.respondsToClick)) return true;
-    return !!this.parent?.respondsToClick;
+    return !!this.parent?.respondsToClick || !!this._autoMaster?.respondsToClick;
   }
 
   /**
@@ -480,7 +480,7 @@ export class StylePolicy {
   get respondsToHover () {
     if (this._hoverMaster) return true;
     if (this._localComponentStates && Object.values(this._localComponentStates).find(policy => policy.respondsToHover)) return true;
-    return !!this.parent?.respondsToHover;
+    return !!this.parent?.respondsToHover || !!this._autoMaster?.respondsToHover;
   }
 
   _getSpecAsExpression (opts = {}) {
