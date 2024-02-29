@@ -1,6 +1,7 @@
 /* global fetch */
 import { currentUserToken } from 'lively.user';
 import { default as libsod } from 'esm://cache/libsodium-wrappers';
+import { resource } from 'lively.resources';
 
 // TODO: This could all use some sensible error handling -lh 15.02.2024
 
@@ -34,15 +35,12 @@ export class GitHubAPIWrapper {
   }
 
   static async listActionSecrets (repoOwner, repoName) {
-    const res = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/actions/secrets`, {
-      method: 'GET',
+    const secretData = await resource(`https://api.github.com/repos/${repoOwner}/${repoName}/actions/secrets`, {
       headers: {
         Authorization: `Bearer ${currentUserToken()}`,
         'X-GitHub-Api-Version': '2022-11-28'
       }
-    });
-
-    const secretData = await res.json();
+    }).makeProxied().readJson();
     return secretData.secrets.map(s => s.name);
   }
 
@@ -115,7 +113,7 @@ export class GitHubAPIWrapper {
         'X-GitHub-Api-Version': '2022-11-28'
       }
     });
-    }
+  }
 
   static async listGithubBranches (repoOwner, repoName) {
     const token = currentUserToken();
