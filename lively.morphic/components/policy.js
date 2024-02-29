@@ -1231,6 +1231,8 @@ export class PolicyApplicator extends StylePolicy {
       newPolicy = new this({}, args);
     } else if (arr.isSubset(obj.keys(args), ['auto', 'hover', 'click', 'states', 'breakpoints'])) {
       newPolicy = new this({}, { auto: parent, ...args });
+    } else {
+      newPolicy = new this(args);
     }
 
     return newPolicy;
