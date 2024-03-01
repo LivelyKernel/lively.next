@@ -474,7 +474,7 @@ class ProjectSavePrompt extends AbstractPromptModel {
   }
 
   async viewDidLoad () {
-    const { promptTitle, diffButton, branchInput } = this.ui;
+    const { promptTitle, branchInput } = this.ui;
     this.view.visible = false;
     const li = $world.showLoadingIndicatorFor(null, 'Setting up Save operation...');
     const dependencies = await this.project.generateFlatDependenciesList();
@@ -486,10 +486,18 @@ class ProjectSavePrompt extends AbstractPromptModel {
     await this.project.saveConfigData();
     if (await this.project.hasRemoteConfigured()) this.project.regeneratePipelines();
     li.remove();
-    this.view.visible = true; 
+    this.view.visible = true;
   }
 
-  async resolve () {
+  forceResolve () {
+    this.resolve(true);
+  }
+
+  async resolve (force) {
+    if (!force && this.ui.description.isFocused()) {
+      this.ui.description.insertText('\n');
+      return;
+    }
     await fun.guardNamed('resolve-project-saving', async () => {
       this.disableButtons();
 
@@ -519,6 +527,22 @@ class ProjectSavePrompt extends AbstractPromptModel {
       else $world.setStatusMessage('Save unsuccessful', StatusMessageError);
       super.resolve(success);
     })();
+  }
+
+  get commands () {
+    return super.commands.concat([
+      { name: 'forceResolve', exec: () => this.forceResolve() }
+    ]);
+  }
+
+  get keybindings () {
+    return super.keybindings.concat([,
+      {
+        keys: 'Enter',
+        command: 'resolve'
+      },
+      { keys: 'Ctrl-Enter', command: 'forceResolve' }
+    ]);
   }
 }
 
