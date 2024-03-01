@@ -472,7 +472,8 @@ class InspectionNode {
   }
 
   display (inspector) {
-    const { keyString, valueString } = this;
+    let { keyString, valueString } = this;
+    if (keyString === 'owner') keyString = '  owner';
     if (!this.interactive) return `${keyString}: ${valueString}`;
     if (!this._propertyWidget) {
       this._propertyWidget = inspector.renderDraggableTreeLabel({
