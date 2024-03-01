@@ -8,6 +8,7 @@ import { SearchField } from 'lively.components/inputs.cp.js';
 import { getClassName } from 'lively.serializer2';
 import { arr, num, obj, fun } from 'lively.lang';
 import { connect } from 'lively.bindings';
+import { TitleWrapper } from './world-browser.cp.js';
 
 export class MorphPanelModel extends ViewModel {
   static get properties () {
@@ -503,7 +504,7 @@ const MorphNode = component({
     axisAlign: 'center',
     orderByIndex: true,
     padding: rect(10, 0, 0, 0),
-    resizePolicies: [['name label', {
+    resizePolicies: [['name wrapper', {
       height: 'fill',
       width: 'fill'
     }]],
@@ -527,17 +528,23 @@ const MorphNode = component({
       fontSize: 16,
       fontFamily: 'Material Icons'
     }]
-  }, part(PropLabel, {
-    name: 'name label',
-    lineHeight: 2.5,
-    fixedWidth: true,
-    fixedHeight: true,
+  }, {
+    type: TitleWrapper,
+    fill: Color.transparent,
+    name: 'name wrapper',
     clipMode: 'hidden',
-    reactsToPointer: false,
-    master: PropLabel,
-    padding: rect(0),
-    textAndAttributes: ['some text morph', null]
-  }), {
+    maxLength: Infinity,
+    submorphs: [
+      part(PropLabel, {
+        name: 'name label',
+        lineHeight: 2.5,
+        clipMode: 'hidden',
+        reactsToPointer: false,
+        padding: rect(0),
+        textAndAttributes: ['some text morph', null]
+      })
+    ]
+  }, {
     type: Label,
     name: 'visibility icon',
     fill: Color.rgba(229, 231, 233, 0),
