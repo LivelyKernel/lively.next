@@ -420,6 +420,8 @@ export class SearchWidgetModel extends ViewModel {
         return;
       }
 
+      if (this.input.length < 3) return;
+
       const opts = { start: { column: 0, row: 0 }, caseSensitive: this.state.caseMode };
       let found = new TextSearcher(this.target).searchForAll({ needle: this.input, ...opts });
 
