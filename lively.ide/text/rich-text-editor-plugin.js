@@ -45,6 +45,7 @@ export class RichTextPlugin extends EditorPlugin {
       textAndAttributes: Icon.textAttribute('ti-icons')
     });
     const iconButtonHolder = new Morph({
+      epiMorph: true,
       fill: Color.rgb(30, 30, 30).withA(0.95),
       borderRadius: 3,
       nativeCursor: 'pointer',
