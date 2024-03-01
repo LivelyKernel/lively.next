@@ -8,7 +8,7 @@ import { DarkColorPicker } from '../dark-color-picker.cp.js';
 import { PopupWindow } from '../../styling/shared.cp.js';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { DefaultNumberWidget, DarkNumberWidget } from '../../value-widgets.cp.js';
-import { LabeledCheckbox } from 'lively.components';
+import { LabeledCheckboxOnDark, LabeledCheckboxLight } from 'lively.components';
 
 export class PopupModel extends ViewModel {
   static get properties () {
@@ -518,14 +518,8 @@ const ShadowPopup = component(DarkPopupWindow, {
         padding: rect(15, 0, -10, 0)
       }),
       position: pt(6.2, 9.5),
-      submorphs: [part(LabeledCheckbox, {
+      submorphs: [part(LabeledCheckboxOnDark, {
         name: 'fast shadow checkbox',
-        submorphs: [
-          {
-            name: 'label',
-            master: PropLabel
-          }
-        ],
         viewModel: { label: 'Show behind transparent areas' }
       })]
     }]
@@ -744,13 +738,7 @@ const ShadowPopupLight = component(ShadowPopup, {
           submorphs: [
             {
               name: 'fast shadow checkbox',
-              borderColor: Color.gray, // why is this not taking effect?
-              fill: Color.rgb(66, 165, 245),
-              fontColor: Color.white
-            },
-            {
-              name: 'prop label',
-              fontColor: Color.rgb(66, 73, 73)
+              master: LabeledCheckboxLight
             }
           ]
         }

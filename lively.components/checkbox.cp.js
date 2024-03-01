@@ -212,6 +212,16 @@ export const LabeledCheckbox = component({
   }]
 });
 
+export const LabeledCheckboxOnDark = component(LabeledCheckbox, {
+  name: 'labeled checkbox on dark ground',
+  submorphs: [
+    {
+      name: 'label',
+      fontColor: Color.rgb(255, 255, 255)
+    }
+  ]
+});
+
 export const LabeledCheckboxLight = component({
   defaultViewModel: LabeledCheckboxModel,
   name: 'labeled checkbox',
