@@ -441,6 +441,7 @@ export class PropertyControl extends DraggableTreeLabel {
         baseFactor: widgetState.baseFactor,
         floatingPoint: widgetState.floatingPoint
       }));
+      editor.epiMorph = true;
       await editor.fadeIntoWorld(evt.positionIn(target.world()));
       inspector.openWidget = editor;
       connect(editor, 'value', (num) => {
@@ -463,8 +464,7 @@ export class PropertyControl extends DraggableTreeLabel {
     const { keyString, value, target, node, tree } = args;
     const inspector = tree.owner;
     const handler = async (evt) => {
-      // if already open, return
-      const editor = part(ShadowPopup, { hasFixedPosition: true });
+      const editor = part(ShadowPopupLight, { hasFixedPosition: true });
       editor.shadowValue = target[keyString];
       await editor.fadeIntoWorld(evt.positionIn(target.world()));
       inspector.openWidget = editor;

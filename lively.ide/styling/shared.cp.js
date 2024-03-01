@@ -62,6 +62,7 @@ const PopupWindow = component({
   clipMode: 'hidden',
   draggable: true,
   dropShadow: new ShadowObject({ rotation: 34, color: Color.rgba(0, 0, 0, 0.16), blur: 12 }),
+  epiMorph: true,
   extent: pt(241, 547),
   fill: Color.white,
   hasFixedPosition: true,
