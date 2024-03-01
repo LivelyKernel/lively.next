@@ -1,6 +1,6 @@
 import { TilingLayout, without, Icon, Morph, ShadowObject, Label, component, add, ViewModel, part } from 'lively.morphic';
 import { Color, Point, rect, Rectangle, pt } from 'lively.graphics';
-import { PropertyLabel, PropertyLabelLight, PropertyLabelActiveLight, PropertyLabelHoveredLight, PropLabel, AddButton, DarkNumberIconWidget, DarkPopupWindow, DarkThemeList, EnumSelector, PropertyLabelActive, PropertyLabelHovered } from '../shared.cp.js';
+import { PropertyLabel, PropertyLabelLight, PropertyLabelActiveLight, PropertyLabelHoveredLight, DarkNumberIconWidget, DarkPopupWindow, DarkThemeList, EnumSelector, PropertyLabelActive, PropertyLabelHovered } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
 import { num, string, arr } from 'lively.lang';
 import { signal } from 'lively.bindings';
@@ -904,7 +904,6 @@ export const PaddingControlsLight = component({
 );
 
 export const PaddingControlsDark = component(PaddingControlsLight, {
-  master: PaddingControlsDark,
   submorphs: [
     {
       name: 'padding all',
