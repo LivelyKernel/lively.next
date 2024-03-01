@@ -157,7 +157,7 @@ function getEventState (targetMorph, breakpointStore, localComponentStates) {
   const isClicked = eventDispatcher && isHovered && eventDispatcher.isMorphClicked(targetMorph); // bool
   const breakpointComponent = breakpointStore?.getMatchingBreakpointMaster(targetMorph);
   return {
-    breakpointMaster: breakpointComponent?.stylePolicy,
+    breakpointMaster: !breakpointComponent?.isPolicy ? breakpointComponent?.stylePolicy : breakpointComponent,
     mode,
     isHovered,
     isClicked,
@@ -746,8 +746,8 @@ export class StylePolicy {
         }, index);
       };
 
-      const overriddenMaster = this._autoMaster;
-      const partitioningPolicy = overriddenMaster || this;
+      const overriddenMaster = this._autoMaster; // FIXME: what legitimizes the exceptional role of the _autoMaster?
+      const partitioningPolicy = this;
 
       const mergeSpecs = (parentSpec, localSpec) => {
         if (localSpec.textAndAttributes && parentSpec.textAndAttributes &&
@@ -1110,12 +1110,16 @@ export class StylePolicy {
     const click = _clickMaster?.getSubSpecFor(submorphName);
     const hover = _hoverMaster?.getSubSpecFor(submorphName);
     const breakpoints = partitioningPolicy._breakpointStore?.getConfig();
+    for (let bp of breakpoints || []) {
+      const policy = bp[1]?.isComponentDescriptor ? bp[1].stylePolicy : bp[1];
+      bp[1] = policy.getSubSpecFor(submorphName);
+    }
     let states;
     for (let state in _localComponentStates) {
       if (!states) states = {};
       states[state] = _localComponentStates[state].getSubSpecFor(submorphName);
     }
-    const statePartitionedInline = !!(click || hover || states);
+    const statePartitionedInline = !!(click || hover || states || breakpoints);
     if (!statePartitionedInline) return this;
     return new this.constructor(this.spec, {
       auto, click, hover, states, statePartitionedInline, breakpoints
