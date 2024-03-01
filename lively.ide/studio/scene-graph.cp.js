@@ -275,7 +275,8 @@ export class MorphNodeModel extends ViewModel {
             { signal: 'onGrab', handler: 'onGrab', override: true },
             { signal: 'onHoverIn', handler: 'showControls' },
             { signal: 'onHoverOut', handler: 'hideControls' },
-            { target: 'visibility icon', signal: 'onMouseDown', handler: 'toggleVisibility' }
+            { target: 'visibility icon', signal: 'onMouseDown', handler: 'toggleVisibility' },
+            { target: 'layoutable toggle', signal: 'onMouseDown', handler: 'toggleLayoutability' }
           ];
         }
       }
@@ -296,6 +297,13 @@ export class MorphNodeModel extends ViewModel {
     this.refresh();
   }
 
+  toggleLayoutability () {
+    this.target.withMetaDo({ reconcileChanges: true }, () => {
+      this.target.isLayoutable = !this.target.isLayoutable;
+    });
+    this.refresh();
+  }
+
   showControls () {
     this.ui.visibilityIcon.visible = true;
   }
@@ -307,7 +315,7 @@ export class MorphNodeModel extends ViewModel {
   async refresh () {
     const target = this.target;
     if (!target) return;
-    const { morphIcon, layoutIndicator, nameLabel, visibilityIcon } = this.ui;
+    const { morphIcon, layoutIndicator, nameLabel, visibilityIcon, layoutableToggle } = this.ui;
     const icon = this.getIcon(target);
     let indicatorVisibility = false;
     let indicatorRot = 0;
@@ -324,6 +332,10 @@ export class MorphNodeModel extends ViewModel {
       nameLabel.textString = target.name;
       nameLabel.fit();
     }
+    if (layoutableToggle.visible = !!target.owner?.layout) {
+      layoutableToggle.value = target.isLayoutable ? Icon.textAttribute('ti-layout') : Icon.textAttribute('ti-layout-off');
+    }
+
     visibilityIcon.value = [
       target.visible ? '\ue8f4' : '\ue8f5', {
         fontSize: 16,
@@ -559,7 +571,7 @@ const MorphNode = component({
   }, {
     type: Label,
     name: 'layout indicator',
-    padding: rect(4,1,0,0),
+    padding: rect(4, 1, 0, 0),
     rotation: num.toRadians(90.0),
     fill: Color.rgba(229, 231, 233, 0),
     fontColor: Color.rgb(208, 208, 208),
@@ -569,6 +581,20 @@ const MorphNode = component({
     textAndAttributes: ['\ue8e9', {
       fontSize: 16,
       fontFamily: 'Material Icons'
+    }]
+  }, {
+    type: Label,
+    name: 'layoutable toggle',
+    fill: Color.rgba(229, 231, 233, 0),
+    fontColor: Color.rgb(208, 208, 208),
+    fontFamily: '"Material Icons"',
+    fontSize: 16,
+    nativeCursor: 'pointer',
+    padding: rect(4, 1, 0, 0),
+    position: pt(-13, 24),
+    textAndAttributes: ['', {
+      fontFamily: 'Tabler Icons',
+      fontWeight: '900'
     }]
   }
   ]
