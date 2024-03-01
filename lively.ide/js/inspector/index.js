@@ -283,7 +283,7 @@ export class PropertyControl extends DraggableTreeLabel {
           opacity: 0.5,
           ...isDraggable ? dragHandlers : {}
         })
-        : [],
+        : ['  ', null],
       `${keyString}:`, {
         'vertical-align': 'top',
         ...isDraggable ? dragHandlers : {}
