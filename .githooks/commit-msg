@@ -18,7 +18,8 @@ test -n "$(grep -E '^.*: [[:upper:]].*+$' <<< "$firstLine")" && {
         printf >&2 "❌  Do not use upper case letter to start your commit message.\n"
         exit 1
 }
-
+firstLine=${firstLine//\'/\\\'}
+firstLine=${firstLine//\"/\\\"}
 length=$(node -e "const {emojifiedLength} = require('./scripts/commit-msg-length-emojis.js'); console.log(emojifiedLength('$firstLine'))")
 
 test $length -lt 74 || {
