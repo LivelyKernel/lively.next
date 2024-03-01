@@ -366,8 +366,14 @@ class ProjectVersionViewer extends WorldVersionViewer {
 export class TitleWrapper extends Morph {
   static get properties () {
     return {
+      maxLength: { defaultValue: 18 },
       title: {
         derived: true,
+        get () {
+          let title = this.getProperty('title');
+          if (!title) title = this.submorphs[0]?.textString;
+          return title;
+        },
         set (title) {
           this.setProperty('title', title);
           if (title) { this.submorphs[0].textString = string.truncate(title, 18, '...'); }
@@ -438,7 +444,7 @@ export class TitleWrapper extends Morph {
   stopShowingFullTitle () {
     if (!this.title) return;
     const title = this.submorphs[0];
-    title.textString = string.truncate(this.title, 18, '...');
+    title.textString = string.truncate(this.title, this.maxLength, '...');
     this.stopStepping('updateTitle');
     this._hoverDelta = 0;
     title.left = 0;
