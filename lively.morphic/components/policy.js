@@ -913,7 +913,10 @@ export class StylePolicy {
       }
       if (modelClass) specOrPolicy.viewModel = new modelClass(modelParams);
 
-      if (!specOrPolicy.isPolicy) return sanitizeSpec(specOrPolicy);
+      if (!specOrPolicy.isPolicy) {
+        if (asComponent) delete specOrPolicy.epiMorph; // ensure this flag does not interfere with component editing
+        return sanitizeSpec(specOrPolicy);
+      }
 
       return specOrPolicy;
     };
