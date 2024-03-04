@@ -119,6 +119,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
       }
       this.targetMorph.layout = layout.with(changes);
     });
+    this.targetMorph.world()?.sceneGraph?.refresh();
   }
 
   toggleWrapping () {
@@ -165,7 +166,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
       if (!layout || layout.name() !== 'Tiling') { this.targetMorph.layout = new TilingLayout(); }
     });
     this.update();
-
+    this.targetMorph.world()?.sceneGraph?.refresh();
     signal(this.view, 'layout changed');
   }
 
@@ -182,6 +183,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
         this.targetMorph.layout = undefined;
         layoutableSubmorphs.forEach(m => m.position = m.position);
       });
+      this.targetMorph.world()?.sceneGraph?.refresh();
     }
     this.popup = false;
 
