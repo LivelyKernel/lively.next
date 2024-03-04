@@ -365,6 +365,8 @@ export class InteractiveTree extends Tree {
   relayoutContainers () {
     this.env.forceUpdate();
     const selectedIndex = this.selectedIndex;
+    this.anchors.forEach(a => this._addedNodes?.has(a._embeddedMorph) && a.updateEmbeddedMorph());
+    this._addedNodes = new Set();
     for (let { node, i } of this.treeData.asListWithIndexAndDepth()) {
       if (!node.container) continue;
       if (!this.isLineVisible(i)) continue;
@@ -554,7 +556,11 @@ export class SceneGraphTree extends InteractiveTree {
       const res = {
         name: m.name,
         isCollapsed: true,
-        getContainer: () => this.renderContainerFor(m),
+        getContainer: () => {
+          const c = this.renderContainerFor(m);
+          this._addedNodes?.add(c);
+          return c;
+        },
         visible: true,
         children
       };
