@@ -608,7 +608,7 @@ const commands = [
       const alias = Object.keys(config.ide.modes.aliases).reduce((inverted, ea) =>
         Object.assign(inverted, { [config.ide.modes.aliases[ea]]: ea }), {});
 
-      if (opts.askForMode) {
+      if (opts.askForMode || (!opts.language && !opts.mode)) {
         const workspaceLanguages = Object.keys(workspaceModules).concat('javascript console');
         ({ selected: [language] } = await world.filterableListPrompt(
           'Open workspace for...', workspaceLanguages));
@@ -1001,7 +1001,7 @@ const commands = [
 
       await Promise.all(jsModules.map(ea => {
         const loc = { packageName: ea.package, moduleName: ea.url };
-        return world.execCommand('open browser', loc)
+        return world.execCommand('open browser', loc);
       }));
 
       if (nonJsModules.length) { await Promise.all(nonJsModules.map(({ url }) => world.execCommand('open file', { url }))); }
@@ -1259,7 +1259,7 @@ const commands = [
           $world.get('user flap').show();
           return;
         }
-        const li = $world.showLoadingIndicatorFor(null, 'Setting up Save operation...')
+        const li = $world.showLoadingIndicatorFor(null, 'Setting up Save operation...');
         await $world.openedProject.saveConfigData();
         if (!(await $world.openedProject.hasUncommitedChanges())) {
           $world.setStatusMessage('All changes are saved. Nothing to do.', StatusMessageConfirm);
