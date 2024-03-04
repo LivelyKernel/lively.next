@@ -283,6 +283,10 @@ export class MorphNodeModel extends ViewModel {
     };
   }
 
+  viewDidLoad () {
+    this.hideControls();
+  }
+
   onContextMenu (evt) {
     this.target.onContextMenu({
       targetMorph: this.target,
