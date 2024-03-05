@@ -308,13 +308,13 @@ export class PaddingControlsModel extends ViewModel {
       paddingTop, paddingRight, paddingBottom, paddingLeft
     } = this.ui;
     if (paddingAll.visible) {
-      signal(this.view, 'paddingChanged', rect(paddingAll.number, paddingAll.number, 0, 0));
+      signal(this, 'paddingChanged', rect(paddingAll.number, paddingAll.number, 0, 0));
 
       paddingLeft.number = paddingRight.number = paddingTop.number = paddingBottom.number = paddingAll.number;
     }
 
     if (multiPaddingControl.visible) {
-      signal(this.view, 'paddingChanged', Rectangle.inset(paddingLeft.number, paddingTop.number, paddingRight.number, paddingBottom.number));
+      signal(this, 'paddingChanged', Rectangle.inset(paddingLeft.number, paddingTop.number, paddingRight.number, paddingBottom.number));
 
       if (paddingTop.number === paddingLeft.number && paddingTop.number === paddingRight.number && paddingTop.number === paddingBottom.number) paddingAll.number = paddingLeft.number;
       else paddingAll.setMixed();
@@ -331,7 +331,7 @@ export class PaddingPopupModel extends PopupModel {
     return {
       expose: {
         get () {
-          return ['isPropertiesPanelPopup', 'close', 'startPadding'];
+          return ['isPropertiesPanelPopup', 'close', 'startPadding', 'paddingChanged'];
         }
       },
       bindings: {
@@ -354,7 +354,7 @@ export class PaddingPopupModel extends PopupModel {
   }
 
   paddingChanged (padding) {
-    signal(this.view, 'paddingChanged', padding);
+    signal(this, 'paddingChanged', padding);
   }
 }
 

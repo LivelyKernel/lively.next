@@ -274,7 +274,7 @@ export class ColorPickerModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['solidOnly', 'focusOnMorph', 'toggleHalos', 'isHaloItem', 'close', 'isPropertiesPanelPopup', 'isColorPicker', 'withColor', 'switchMode', 'value', 'closeWithClick'];
+          return ['solidOnly', 'focusOnMorph', 'toggleHalos', 'isHaloItem', 'close', 'isPropertiesPanelPopup', 'isColorPicker', 'withColor', 'switchMode', 'value', 'closeWithClick', 'colorEntered'];
         }
       },
       bindings: {
@@ -565,7 +565,7 @@ export class ColorEncoderModel extends ViewModel {
     const hexOpacity = this.ui.hexOpacityControl;
     const c = Color.rgbHex(hexInput.input).withA(hexOpacity.number);
     this.currentColor = [...c.toHSB(), c.a];
-    signal(this.view, 'colorEntered', this.currentColor);
+    signal(this, 'colorEntered', this.currentColor);
   }
 
   confirmRGB () {
@@ -575,7 +575,7 @@ export class ColorEncoderModel extends ViewModel {
     const aInput = this.ui.opacityControl;
     const c = Color.rgba(rInput.number, gInput.number, bInput.number, aInput.number);
     this.currentColor = [...c.toHSB(), c.a];
-    signal(this.view, 'colorEntered', this.currentColor);
+    signal(this, 'colorEntered', this.currentColor);
   }
 
   confirmHSL () {
@@ -584,7 +584,7 @@ export class ColorEncoderModel extends ViewModel {
     const lInput = this.ui.thirdValue;
     const aInput = this.ui.opacityControl;
     this.currentColor = [hInput.number, sInput.number, 1 - lInput.number, aInput.number];
-    signal(this.view, 'colorEntered', this.currentColor);
+    signal(this, 'colorEntered', this.currentColor);
   }
 
   confirmHSB () {
@@ -593,14 +593,14 @@ export class ColorEncoderModel extends ViewModel {
     const bInput = this.ui.thirdValue;
     const aInput = this.ui.opacityControl;
     this.currentColor = [hInput.number, sInput.number, bInput.number, aInput.number];
-    signal(this.view, 'colorEntered', this.currentColor);
+    signal(this, 'colorEntered', this.currentColor);
   }
 
   confirmCSS () {
     const cssInput = this.ui.cssInput;
     const c = Color.fromString(cssInput.input);
     this.currentColor = [...c.toHSB(), c.a];
-    signal(this.view, 'colorEntered', this.currentColor);
+    signal(this, 'colorEntered', this.currentColor);
   }
 
   selectEncoding (encodingName) {
