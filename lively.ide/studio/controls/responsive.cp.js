@@ -231,9 +231,7 @@ export class ResponsiveControlModel extends PropertySectionModel {
       targetMorph: {},
       targetStylePolicy: {
         get () {
-          let stylePolicy = this.targetMorph?.master;
-          if (stylePolicy?.overriddenMaster) stylePolicy = stylePolicy.overriddenMaster;
-          return stylePolicy;
+          return this.targetMorph?.master;
         }
       },
       expose: {
@@ -251,7 +249,7 @@ export class ResponsiveControlModel extends PropertySectionModel {
   }
 
   update () {
-    const bpStore = this.targetStylePolicy?.getBreakpointStore();
+    const bpStore = this.detectBreakpointStore();
     if (!bpStore) {
       this.ui.controls.submorphs = [];
       return;
@@ -286,6 +284,22 @@ export class ResponsiveControlModel extends PropertySectionModel {
     this.ui.controls.submorphs.forEach(m => m.update(this.targetMorph));
   }
 
+  detectBreakpointStore () {
+    let stylePolicy = this.targetStylePolicy;
+    let bpStore;
+
+    while (true) {
+      bpStore = stylePolicy?.getBreakpointStore();
+      if (bpStore) {
+        break;
+      }
+      if (stylePolicy?.parent) stylePolicy = stylePolicy.parent;
+      else break;
+    }
+
+    return bpStore;
+  }
+
   focusOn (aMorph) {
     if (this.targetMorph) {
       disconnect(this.targetMorph, 'breakpoint removed', this, 'update');
@@ -298,7 +312,7 @@ export class ResponsiveControlModel extends PropertySectionModel {
     epiConnect(this.targetMorph, 'breakpoint added', this, 'update');
     epiConnect(this.targetMorph, 'breakpoint changed', this, 'refreshFromTarget');
     epiConnect(this.targetMorph, 'extent', this, 'refreshFromTarget');
-    if (this.targetStylePolicy?._breakpointStore) this.activate();
+    if (this.detectBreakpointStore()) this.activate();
     else this.deactivate();
   }
 
@@ -306,9 +320,10 @@ export class ResponsiveControlModel extends PropertySectionModel {
     super.activate();
     let policy = this.targetStylePolicy;
     if (!policy) {
-      const proceed = await this.world().confirm({title:
+      const proceed = await this.world().confirm({
+        title:
         'Missing Base Style',
-        text:'The morph you want to configure a responsive design for, is not associated with any master component that defines its "base" style. In order to proceed you need to select a master component to serve as the base style.'
+        text: 'The morph you want to configure a responsive design for, is not associated with any master component that defines its "base" style. In order to proceed you need to select a master component to serve as the base style.'
       }, {
         customize: (prompt) => {
           prompt.addStyleClass('Halo');
@@ -324,7 +339,7 @@ export class ResponsiveControlModel extends PropertySectionModel {
       this.targetMorph.position = pos;
     }
     this.ui.controls.visible = true;
-    if (!policy._breakpointStore) {
+    if (!this.detectBreakpointStore()) {
       policy.setBreakpoints([[pt(0, 0), policy.parent]]);
       this.refreshChangeTrackers();
       this.world().execCommand('show responsive halo for', { target: this.targetMorph });

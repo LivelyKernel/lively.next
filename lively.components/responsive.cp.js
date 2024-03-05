@@ -256,13 +256,20 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
         get () { return this.store?._verticalBreakpoints || [0]; }
       },
       store: {
-        get () { return this.targetStylePolicy?._breakpointStore; }
+        get () {
+          let policy = this.targetStylePolicy;
+          let bpStore;
+          while (!bpStore) {
+            bpStore = policy?._breakpointStore;
+            if (policy?.parent) policy = policy.parent;
+            else break;
+          }
+          return bpStore;
+        }
       },
       targetStylePolicy: {
         get () {
-          let stylePolicy = this.target.master;
-          if (stylePolicy.overriddenMaster) stylePolicy = stylePolicy.overriddenMaster;
-          return stylePolicy;
+          return this.target.master;
         }
       },
       sliders: { get () { return this.view.getAllNamed(/slider/); } },
@@ -315,7 +322,10 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
 
   ensureStore () {
     if (!this.target.master) this.target.master = new PolicyApplicator({ breakpoints: [] });
-    if (!this.store) this.targetStylePolicy._breakpointStore = new BreakpointStore();
+
+    if (!this.targetStylePolicy._breakpointStore) {
+      this.targetStylePolicy._breakpointStore = this.store?.copy() || new BreakpointStore();
+    }
   }
 
   focusOn (target) {
@@ -480,6 +490,7 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
   }
 
   onSliderDrag (slider, dragDelta) {
+    this.ensureStore();
     const { orientation } = slider;
     const breakpointAccessor = orientation + 'Breakpoints';
     const axis = orientation === 'horizontal' ? 'x' : 'y';
