@@ -463,6 +463,7 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
     this.store.addHorizontalBreakpoint(horizontalBreakpointControl.width);
     this.update();
     signal(this.target, 'breakpoint added');
+    this.target.master.updateSplitPolicies();
     this.refreshChangeTrackers();
   }
 
@@ -472,6 +473,7 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
     this.store.addVerticalBreakpoint(verticalBreakpointControl.width);
     this.update();
     signal(this.target, 'breakpoint added');
+    this.target.master.updateSplitPolicies();
     this.refreshChangeTrackers();
   }
 
@@ -479,6 +481,7 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
     this.store.removeHorizontalBreakpoint(idx);
     this.update();
     signal(this.target, 'breakpoint removed');
+    this.target.master.updateSplitPolicies();
     this.refreshChangeTrackers();
   }
 
@@ -486,6 +489,7 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
     this.store.removeVerticalBreakpoint(idx);
     this.update();
     signal(this.target, 'breakpoint removed');
+    this.target.master.updateSplitPolicies();
     this.refreshChangeTrackers();
   }
 
@@ -505,6 +509,7 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
     this.relayout();
     signal(this.target, 'breakpoint changed');
     this.refreshChangeTrackers();
+    this.target.master.updateSplitPolicies();
     this.target.master.applyIfNeeded(true);
   }
 
