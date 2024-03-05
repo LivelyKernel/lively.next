@@ -181,6 +181,10 @@ export class BreakpointStore {
     this._breakpointMasters = [[null]];
   }
 
+  copy () {
+    return BreakpointStore.from(this.getConfig());
+  }
+
   static from (breakpointSpec) {
     const store = new this();
     const vbps = store._verticalBreakpoints;
