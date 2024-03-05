@@ -61,7 +61,7 @@ export class UserFlapModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['updateNetworkIndicator', 'showUserData', 'onLogin', 'showLoggedInUser', 'showGuestUser', 'toggleLoadingAnimation', 'login', 'update'];
+          return ['updateNetworkIndicator', 'showUserData', 'onLogin', 'onLogout', 'showLoggedInUser', 'showGuestUser', 'toggleLoadingAnimation', 'login', 'update'];
         }
       }
     };
@@ -228,7 +228,7 @@ export class UserFlapModel extends ViewModel {
 
     this.showUserData();
 
-    signal(this.view, 'onLogin');
+    signal(this, 'onLogin');
     rightUserLabel.tooltip = 'Logout';
     leftUserLabel.tooltip = '';
     rightUserLabel.nativeCursor = 'pointer';
@@ -269,7 +269,7 @@ export class UserFlapModel extends ViewModel {
     }
     clearAllUserData();
     this.showGuestUser();
-    signal(this.view, 'onLogout');
+    signal(this, 'onLogout');
     $world.setStatusMessage('Logged out. No git operations possible.');
   }
 

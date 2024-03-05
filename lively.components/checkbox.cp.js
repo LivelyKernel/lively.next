@@ -46,7 +46,7 @@ class CheckboxModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['isCheckbox', 'enable', 'disable', 'trigger', 'checked'];
+          return ['isCheckbox', 'enable', 'disable', 'trigger', 'onChecked'];
         }
       },
       bindings: {
@@ -76,7 +76,7 @@ class CheckboxModel extends ViewModel {
   trigger () {
     if (!this.active) return;
     this.checked = !this.checked;
-    signal(this.view, 'checked', this.checked);
+    signal(this, 'onChecked', this.checked);
   }
 
   viewDidLoad () {
@@ -143,7 +143,7 @@ export class LabeledCheckboxModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['isCheckbox', 'checked', 'active', 'label', 'enable', 'disable'];
+          return ['isCheckbox', 'checked', 'onChecked', 'active', 'label', 'enable', 'disable'];
         }
       },
       bindings: {
@@ -174,7 +174,7 @@ export class LabeledCheckboxModel extends ViewModel {
   trigger () {
     if (!this.active) return;
     this.checked = !this.checked;
-    signal(this.view, 'checked', this.checked);
+    signal(this, 'onChecked', this.checked);
   }
 
   disable () {

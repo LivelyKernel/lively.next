@@ -23,7 +23,7 @@ class BreakpointEntryModel extends ViewModel {
       componentSelectionEnabled: { defaultValue: true },
       component: {},
       targetMorph: {},
-      expose: { get () { return ['update', 'getBreakpointSpec']; } },
+      expose: { get () { return ['update', 'getBreakpointSpec', 'component changed']; } },
       targetStylePolicy: {
         get () {
           let stylePolicy = this.targetMorph.master;
@@ -94,7 +94,7 @@ class BreakpointEntryModel extends ViewModel {
 
   confirm (selectedComponent) {
     this.component = selectedComponent;
-    signal(this.view, 'component changed', selectedComponent);
+    signal(this, 'component changed', selectedComponent);
   }
 }
 
@@ -187,7 +187,7 @@ class ComponentSelectionPopupModel extends PopupModel {
 
   confirm () {
     this.component = this.ui.componentControls.component;
-    signal(this.view, 'component changed', this.component);
+    signal(this, 'component changed', this.component);
   }
 }
 
