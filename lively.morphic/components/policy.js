@@ -2,7 +2,7 @@ import { arr, grid, string, tree, promise, obj } from 'lively.lang';
 import { pt } from 'lively.graphics';
 import { morph, getDefaultValuesFor, sanitizeFont, getStylePropertiesFor, getDefaultValueFor } from '../helpers.js';
 import { withSuperclasses } from 'lively.classes/util.js';
-import { ExpressionSerializer, serializeSpec } from 'lively.serializer2';
+import { ExpressionSerializer, serializeSpec, mergeBindings } from 'lively.serializer2';
 import { Text, Label, Morph } from 'lively.morphic';
 import { Icons } from '../text/icons.js';
 
@@ -204,7 +204,6 @@ export class BreakpointStore {
       if (!componentDescriptor) return null;
       const y = this._verticalBreakpoints[row];
       const x = this._horizontalBreakpoints[col];
-      if (y === 0 && x === 0) return null;
       return [pt(x, y), componentDescriptor];
     }).flat());
   }
@@ -214,7 +213,7 @@ export class BreakpointStore {
     const bindings = { 'lively.graphics': ['pt'] };
     const masterStrings = this.getConfig().map(([pos, componentDescriptor]) => {
       const expr = componentDescriptor.__serialize__();
-      Object.assign(bindings, expr.bindings); // FIXME: this is not a proper bindings merge
+      mergeBindings(expr.bindings, bindings);
       return `[${pos.toString()}, ${expr.__expr__}]`;
     });
     if (masterStrings.length === 0) return;
@@ -380,6 +379,7 @@ export class StylePolicy {
         this._localComponentStates[state] = states[state]?.isComponentDescriptor ? states[state].stylePolicy : states[state];
       }
     }
+    return this;
   }
 
   get isPolicy () { return true; }
@@ -518,9 +518,9 @@ export class StylePolicy {
     if (masterConfigExpr) masterConfigExpr.__expr__ = 'master: ' + masterConfigExpr.__expr__;
     const specExpression = this._getSpecAsExpression();
     const bindings = { 'lively.morphic/components/policy.js': [klassName] };
-    if (parentExpr) Object.assign(bindings, parentExpr.bindings);
-    if (masterConfigExpr) Object.assign(bindings, masterConfigExpr.bindings);
-    Object.assign(bindings, specExpression.bindings);
+    if (parentExpr) mergeBindings(parentExpr.bindings, bindings);
+    if (masterConfigExpr) mergeBindings(masterConfigExpr.bindings, bindings);
+    mergeBindings(specExpression.bindings, bindings);
     // now we technically also need to properly serialize the spec into an expression...
     return {
       __expr__: `new ${klassName}(${specExpression.__expr__}, ${parentExpr?.__expr__ || 'null'})`,
@@ -573,11 +573,7 @@ export class StylePolicy {
         else {
           printed = expr.__expr__;
           if (!printed) continue;
-          Object.entries(expr.bindings || {}).forEach(([binding, imports]) => {
-            if (bindings[binding]) {
-              bindings[binding] = arr.uniq([...bindings[binding], ...imports]);
-            } else bindings[binding] = imports;
-          });
+          mergeBindings(expr.bindings, bindings);
         }
         __expr__ += `${name}: ${printed},\n`;
       }
@@ -658,6 +654,7 @@ export class StylePolicy {
       }
       spec = obj.dissoc(spec, ['master']);
     }
+
     const ensureStylePoliciesInStandalone = (spec) => {
       return tree.mapTree(spec, (node, submorphs) => {
         if (node.props) {
@@ -847,6 +844,19 @@ export class StylePolicy {
   }
 
   /**
+   * This is called in response to changes in either breakpoints or component states.
+   * Any adustments in those warrant a update in the partitioned "split" policies that
+   * sit in the next level.
+   */
+  updateSplitPolicies () {
+    tree.mapTree(this.spec, (node, submorphs) => {
+      if (node.isPolicy) {
+        node.splitBy(this, node.name, true); // in-place update
+      }
+    }, node => node?.submorphs || []);
+  }
+
+  /**
    * Creates a new morph from the fully synthesized spec.
    * @returns { Morph } The new morph based off the sully synthesized spec.
    */
@@ -954,7 +964,7 @@ export class StylePolicy {
       mode,
       breakpointMaster,
       stateMaster
-    } = getEventState(targetMorph, this.getBreakpointStore(), this._localComponentStates);
+    } = getEventState(targetMorph, this._breakpointStore, this._localComponentStates);
 
     if (stateMaster) return stateMaster;
 
@@ -1105,7 +1115,7 @@ export class StylePolicy {
     return this.getSubSpecCorrespondingTo(aMorph);
   }
 
-  splitBy (partitioningPolicy, submorphName) {
+  splitBy (partitioningPolicy, submorphName, inPlace = false) {
     const {
       _autoMaster, parent, _clickMaster, _hoverMaster,
       _localComponentStates
@@ -1125,6 +1135,11 @@ export class StylePolicy {
     }
     const statePartitionedInline = !!(click || hover || states || breakpoints);
     if (!statePartitionedInline) return this;
+    if (inPlace) {
+      return this.applyConfiguration({
+        auto, click, hover, states, statePartitionedInline, breakpoints
+      });
+    }
     return new this.constructor(this.spec, {
       auto, click, hover, states, statePartitionedInline, breakpoints
     });

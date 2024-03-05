@@ -789,11 +789,7 @@ function asSerializableExpression (aMorph, exported, isRoot, path, masterInScope
   if (__expr__) {
     for (const exprId in nestedExpressions) {
       __expr__ = __expr__.replace('\"' + exprId + '\"', nestedExpressions[exprId].__expr__);
-      Object.entries(nestedExpressions[exprId].bindings || {}).forEach(([binding, imports]) => {
-        if (bindings[binding]) {
-          bindings[binding] = arr.uniq([...bindings[binding], ...imports]);
-        } else bindings[binding] = imports;
-      });
+      mergeBindings(nestedExpressions[exprId].bindings, bindings);
     }
     if (!isRoot && exposeMasterRefs && aMorph.master) {
       const exprId = string.newUUID();
@@ -802,6 +798,14 @@ function asSerializableExpression (aMorph, exported, isRoot, path, masterInScope
     }
     return { __expr__, bindings };
   }
+}
+
+export function mergeBindings (from, to) {
+  Object.entries(from || {}).forEach(([binding, imports]) => {
+    if (to[binding]) {
+      to[binding] = arr.uniq([...to[binding], ...imports]);
+    } else to[binding] = imports;
+  });
 }
 
 /**
