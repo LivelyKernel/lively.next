@@ -258,12 +258,16 @@ export class ComponentControlModel extends PropertySectionModel {
     // the parent is always preserved, since we can not alter the structural inheritance here
     if (this.targetMorph.master) {
       const previousMasterConfig = this.targetMorph.master.getConfig() || {};
+      const bps = previousMasterConfig.breakpoints;
+      if (bps) bps[0][1] = autoComponentSelection.component;
       this.targetMorph.master.applyConfiguration({
         ...previousMasterConfig,
-        auto: autoComponentSelection.component,
+        // also insert the breakpoint [0] if present
+        ...bps ? { breakpoints: bps } : { auto: autoComponentSelection.component },
         hover: hoverComponentSelection.component,
         click: clickComponentSelection.component
       });
+      this.targetMorph.master.updateSplitPolicies();
       const policy = this.targetMorph.master.copy();
       policy.attach(this.targetMorph);
       policy.apply(this.targetMorph);
@@ -287,6 +291,10 @@ export class ComponentControlModel extends PropertySectionModel {
     let stylePolicy = this.targetMorph.master;
     let autoMaster, hoverMaster, clickMaster;
     while (true) {
+      if (stylePolicy._breakpointStore) {
+        autoMaster = stylePolicy._breakpointStore._breakpointMasters[0][0];
+        break;
+      }
       if (stylePolicy._autoMaster) {
         autoMaster = stylePolicy._autoMaster;
         if (autoMaster[Symbol.for('lively-module-meta')]?.path.length > 0) {
