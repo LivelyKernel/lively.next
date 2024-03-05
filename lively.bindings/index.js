@@ -574,6 +574,16 @@ function once (sourceObj, attrName, targetObj, targetMethodName, spec) {
 
 function signal (sourceObj, attrName, newVal) {
   if (!sourceObj) return;
+  if (sourceObj.isViewModel && sourceObj.expose?.includes('attrName')) {
+    const connections = sourceObj.view.attributeConnections;
+    if (connections) {
+      const oldVal = sourceObj.view[attrName];
+      for (let i = 0, len = connections.length; i < len; i++) {
+        const c = connections[i];
+        if (c.getSourceAttrName() === attrName) c.update(newVal, oldVal);
+      }
+    }
+  }
   const connections = sourceObj.attributeConnections;
   if (!connections) return;
   const oldVal = sourceObj[attrName];

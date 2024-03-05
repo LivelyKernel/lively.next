@@ -159,6 +159,10 @@ export class ViewModel {
     return this.view ? `<${getClassName(this)} - ${this.view.name}>` : `<Unattached ${getClassName(this)}>`;
   }
 
+  get isViewModel () {
+    return true;
+  }
+
   static get properties () {
     return {
       view: {
