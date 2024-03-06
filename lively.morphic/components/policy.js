@@ -1470,9 +1470,6 @@ export class PolicyApplicator extends StylePolicy {
     let currSpec = this.getSubSpecFor(targetName);
     if (currSpec) return currSpec;
 
-    // spec could not be found, so we prepare for inserting a spec
-    currSpec = submorph.master || submorph.spec(true);
-    currSpec.name = submorph.name;
     if (this.parent && !this.mentionedByParents(targetName)) {
       // if we have a parent policy, this means we are derived
       // and if none of our parents mentioned a morph with this name
@@ -1481,6 +1478,11 @@ export class PolicyApplicator extends StylePolicy {
       // something is wrong.
       if (!wrapAsAdded) return currSpec;
     }
+
+    // spec could not be found, so we prepare for inserting a spec
+    currSpec = submorph.master || submorph.spec(true);
+    currSpec.name = submorph.name;
+
     const parentSpecOrPolicy = this.ensureSubSpecFor(submorph.owner);
     let parentSpec;
     if (parentSpecOrPolicy.isPolicy) parentSpec = parentSpecOrPolicy.spec;
