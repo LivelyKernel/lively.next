@@ -324,7 +324,16 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
     if (!this.target.master) this.target.master = new PolicyApplicator({ breakpoints: [] });
 
     if (!this.targetStylePolicy._breakpointStore) {
+      let policy = this.targetStylePolicy;
+      let overriddenLayout;
+      while (this.store && policy._breakpointStore !== this.store) {
+        policy = policy.parent;
+        overriddenLayout = policy?.spec.layout;
+        if (overriddenLayout || !policy?.parent) break;
+      }
       this.targetStylePolicy._breakpointStore = this.store?.copy() || new BreakpointStore();
+      // also carry over any overridden layout policies if present up till the breakpoint policy
+      if (overriddenLayout) this.targetStylePolicy.spec.layout = overriddenLayout.copy();
     }
   }
 
