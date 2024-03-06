@@ -60,7 +60,7 @@ export class ListItemMorph extends Label {
   }
 
   alreadyDisplayingItem (item, goalWidth) {
-    if (this._gloalWidth !== goalWidth) {
+    if (this._goalWidth !== goalWidth) {
       this._goalWidth = goalWidth;
       return false;
     }
