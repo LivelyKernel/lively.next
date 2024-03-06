@@ -15,9 +15,10 @@ export class ComponentSelectionControl extends ViewModel {
     return {
       control: {},
       component: {},
+      moduleInfo: {},
       editable: { defaultValue: false },
       stateName: { defaultValue: 'AUTO' },
-      expose: { get () { return ['component', 'stateName', 'closePopup', 'control']; } },
+      expose: { get () { return ['component', 'stateName', 'closePopup', 'control', 'moduleInfo']; } },
       bindings: {
         get () {
           return [{
@@ -83,9 +84,14 @@ export class ComponentSelectionControl extends ViewModel {
     this._componentBrowserPopup = part(ComponentBrowserPopupDark, { hasFixedPosition: true, viewModel: { selectionMode: true } });
 
     const closestComponent = this.component || this.control?.targetMaster;
-
     if (closestComponent) {
       const descr = new ExpressionSerializer().deserializeExprObj(closestComponent.__serialize__());
+      this._componentBrowserPopup.browse(descr);
+    } else if (this.moduleInfo) {
+      const descr = new ExpressionSerializer().deserializeExprObj({
+        __expr__: this.moduleInfo.exportedName,
+        bindings: { [this.moduleInfo.moduleId]: [this.moduleInfo.exportedName] }
+      });
       this._componentBrowserPopup.browse(descr);
     }
     once(this._componentBrowserPopup, 'close', this, 'closePopup');
@@ -288,6 +294,7 @@ export class ComponentControlModel extends PropertySectionModel {
   }
 
   update () {
+    const meta = this.targetMorph[Symbol.for('lively-module-meta')];
     let stylePolicy = this.targetMorph.master;
     let autoMaster, hoverMaster, clickMaster;
     while (true) {
@@ -335,10 +342,13 @@ export class ComponentControlModel extends PropertySectionModel {
     this.withoutBindingsDo(() => {
       autoComponentSelection.master.setState(canChangeAuto ? null : 'immutable');
       autoComponentSelection.component = autoMaster;
+      autoComponentSelection.moduleInfo = meta;
       hoverComponentSelection.master.setState(canChangeHover ? null : 'immutable');
       hoverComponentSelection.component = hoverMaster;
+      hoverComponentSelection.moduleInfo = meta;
       clickComponentSelection.master.setState(canChangeClick ? null : 'immutable');
       clickComponentSelection.component = clickMaster;
+      clickComponentSelection.moduleInfo = meta;
     });
   }
 
