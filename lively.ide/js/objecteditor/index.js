@@ -280,7 +280,7 @@ export class ObjectEditorModel extends ViewModel {
             const { view } = this;
             const { success, reason, warnings } = await this.doSave();
             if (warnings && warnings.length > 0) {
-              view.setStatusMessage(['Saved with warnings:'].concat(warnings.map(warning => `"${warning.message}" on line ${warning.line}`)).join('\n'), StatusMessageWarning, 5000, { isCompact: false });
+              view.setStatusMessage(['Saved with warnings:'].concat(warnings.map(warning => `"${warning.message}" on line ${warning.line}`)).join('\n'), warnings.some(w => w.severity === 2) ? StatusMessageError : StatusMessageWarning, 5000, { isCompact: false });
               return true;
             }
             view.setStatusMessage(
