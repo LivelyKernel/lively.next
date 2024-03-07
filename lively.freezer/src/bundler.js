@@ -3,8 +3,18 @@ import { resource } from 'lively.resources';
 import * as ast from 'lively.ast';
 import * as classes from 'lively.classes';
 import { arr, string, Path, fun, obj } from 'lively.lang';
-import { es5Transpilation, replaceImportedNamespaces, replaceExportedVarDeclarations, ensureComponentDescriptors } from 'lively.source-transform';
-import { rewriteToCaptureTopLevelVariables, insertCapturesForFunctionDeclarations, insertCapturesForExportedImports } from 'lively.source-transform/capturing.js';
+import {
+  es5Transpilation,
+  replaceImportedNamespaces,
+  replaceExportedVarDeclarations,
+  ensureComponentDescriptors,
+  replaceExportedNamespaces,
+} from 'lively.source-transform';
+import {
+  rewriteToCaptureTopLevelVariables,
+  insertCapturesForFunctionDeclarations,
+  insertCapturesForExportedImports,
+} from 'lively.source-transform/capturing.js';
 import config from 'lively.morphic/config.js'; // can be imported without problems in nodejs
 import { GlobalInjector } from 'lively.modules/src/import-modification.js';
 import {
@@ -616,7 +626,10 @@ export default class LivelyRollup {
     let defaultExport = '';
     if (this.captureModuleScope) {
       instrumented = replaceExportedVarDeclarations(parsed, recorderName, normalizedId);
-      if (this.isResurrectionBuild) instrumented = await replaceImportedNamespaces(instrumented, id, this);
+      if (this.isResurrectionBuild) {
+        instrumented = await replaceImportedNamespaces(instrumented, id, this);
+        instrumented = await replaceExportedNamespaces(instrumented, id, this);
+      }
       instrumented = tfm(instrumented, captureObj, opts);
       instrumented = insertCapturesForExportedImports(instrumented, { captureObj });
       instrumented = insertCapturesForFunctionDeclarations(instrumented, {
