@@ -174,7 +174,7 @@ export class RichTextControlModel extends ViewModel {
     const { targetMorph } = this;
     if (!targetMorph) return;
     const sel = targetMorph.selection;
-    if (sel && !sel.isEmpty() && !this.globalMode) cb({ ...obj.select(targetMorph, this.styledProps), ...targetMorph.getStyleInRange(sel, true) });
+    if (sel && !sel.isEmpty() && !this.globalMode) cb({ ...obj.select(targetMorph, this.styledProps), ...targetMorph.getStyleInRange(sel) });
     else cb(targetMorph);
   }
 
@@ -314,7 +314,8 @@ export class RichTextControlModel extends ViewModel {
   }
 
   updateFontWeightChoices (forFont) {
-    const supportedFontWeights = availableFonts().find(f => sanitizeFont(f.name) === sanitizeFont(forFont)).supportedWeights.map(fontWeight => fontWeightToString(fontWeight));
+    const fontEntry = availableFonts().find(f => sanitizeFont(f.name) === sanitizeFont(forFont));
+    const supportedFontWeights = fontEntry?.supportedWeights.map(fontWeight => fontWeightToString(fontWeight)) || [];
     this.models.fontWeightSelector.items = supportedFontWeights.length > 0 ? supportedFontWeights : [400, 700].map(fontWeight => fontWeightToString(fontWeight));
   }
 
