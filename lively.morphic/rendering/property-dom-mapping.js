@@ -25,7 +25,7 @@ const propsToDelete = [
   'order',
   'overflow',
   'width', 'height',
-  'top', 'left', 'position',
+  'top', 'left', 'right', 'bottom', 'position',
   'margin-left',
   'margin-right',
   'grid-template-rows',
