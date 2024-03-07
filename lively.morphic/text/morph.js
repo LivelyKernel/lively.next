@@ -3513,7 +3513,7 @@ export class Text extends Morph {
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // copy as html
-    if (true || !this.editorPlugin) { // WIP
+    if (!this.editorPlugin || this.editorPlugin.shortName === 'richText') {
       try {
         const textAndAttributes = this.textAndAttributesInRange(this.selection.range);
         const defaultTextStyle = this.defaultTextStyle;
@@ -3561,12 +3561,13 @@ export class Text extends Morph {
       textData = evt.domEvt.clipboardData.getData('text');
     } catch (err) { console.warn(err); }
 
-    if (!this.editorPlugin) { // "rich text" paste
+    if (!this.editorPlugin || this.editorPlugin.shortName === 'richText') { // "rich text" paste
       try {
         const raw = evt.domEvt.clipboardData.getData('application/x-lively-text');
         lvData = raw && JSON.parse(raw);
         const attrs = lvData.textAndAttributes;
         for (let i = 0; i < attrs.length; i = i + 2) {
+          if (attrs[i + 1]?.fontColor) attrs[i + 1].fontColor = Color.fromLiteral(attrs[i + 1].fontColor);
           if (typeof attrs[i] === 'string') continue;
           attrs[i] = deserializeMorph(attrs[i], { reinitializeIds: true });
         }
