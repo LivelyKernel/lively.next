@@ -80,22 +80,23 @@ export class ComponentSelectionControl extends ViewModel {
   }
 
   async selectComponent () {
-    this.control?.closePopup();
-    this._componentBrowserPopup = part(ComponentBrowserPopupDark, { hasFixedPosition: true, viewModel: { selectionMode: true } });
+    await $world.withLoadingIndicatorDo(async () => {
+      this.control?.closePopup();
+      this._componentBrowserPopup = part(ComponentBrowserPopupDark, { hasFixedPosition: true, viewModel: { selectionMode: true } });
 
-    const closestComponent = this.component || this.control?.targetMaster;
-    if (closestComponent) {
-      const descr = new ExpressionSerializer().deserializeExprObj(closestComponent.__serialize__());
-      this._componentBrowserPopup.browse(descr);
-    } else if (this.moduleInfo) {
-      const descr = new ExpressionSerializer().deserializeExprObj({
-        __expr__: this.moduleInfo.exportedName,
-        bindings: { [this.moduleInfo.moduleId]: [this.moduleInfo.exportedName] }
-      });
-      this._componentBrowserPopup.browse(descr);
-    }
-    once(this._componentBrowserPopup, 'close', this, 'closePopup');
-
+      const closestComponent = this.component || this.control?.targetMaster;
+      if (closestComponent) {
+        const descr = new ExpressionSerializer().deserializeExprObj(closestComponent.__serialize__());
+        await this._componentBrowserPopup.browse(descr);
+      } else if (this.moduleInfo) {
+        const descr = new ExpressionSerializer().deserializeExprObj({
+          __expr__: this.moduleInfo.exportedName,
+          bindings: { [this.moduleInfo.moduleId]: [this.moduleInfo.exportedName] }
+        });
+        await this._componentBrowserPopup.browse(descr);
+      }
+      once(this._componentBrowserPopup, 'close', this, 'closePopup');
+    }, $world, 'Opening Component Browser...');
     const selectedComponent = await this._componentBrowserPopup.activate();
     if (selectedComponent) {
       this.component = selectedComponent;
