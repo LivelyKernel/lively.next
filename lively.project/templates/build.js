@@ -34,7 +34,7 @@ const build = await rollup({
       ],
       resolver
     }),
-    jsonPlugin({ exclude: [/https\:\/\/jspm.dev\/.*\.json/, /esm\:\/\/cache\/.*\.json/]}),
+    jsonPlugin({ exclude: [/https\\\:\\\/\\\/jspm.dev\\\/.*\\\.json/, /esm\\\:\\\/\\\/cache\\\/.*\\\.json/]}),
     babel({
      babelHelpers: 'bundled', 
      presets: [PresetEnv]
