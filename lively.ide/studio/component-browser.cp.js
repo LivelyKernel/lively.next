@@ -890,7 +890,6 @@ export class ComponentBrowserModel extends ViewModel {
       componentFilesView.treeData.collapse(selectedModule, false);
       componentFilesView.treeData.display(selectedModule);
     }
-    await this.view.whenRendered();
   }
 
   onRefresh (change) {
