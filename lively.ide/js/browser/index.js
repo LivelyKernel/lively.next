@@ -1990,7 +1990,8 @@ export class BrowserModel extends ViewModel {
     if (warnings.length > 0) {
       const warningStrings = warnings.map(warning => `"${warning.message}" on line ${warning.line}`);
       const warningMessage = ['Saved with warnings:'].concat(warningStrings).join('\n');
-      metaInfoText.showWarning(warningMessage);
+      if (warnings.some(w => w.severity === 2)) metaInfoText.showError(warningMessage);
+      else metaInfoText.showWarning(warningMessage);
       await promise.delay(5000);
       if (metaInfoText.master.getState() == 'warning') metaInfoText.showSaved(); // only if we are not default yet
       return;
