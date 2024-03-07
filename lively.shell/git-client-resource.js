@@ -234,7 +234,17 @@ export default class GitShellResource extends ShellClientResource {
   async pushRepo () {
     let cmd = this.runCommand('git push origin --all');
     await cmd.whenDone();
-    if (cmd.exitCode !== 0) throw Error('Error pushing to remote');
+    // --all has the downside of trying to push all branches at once. In the case we have an outdated branch locally, pushing that will fail.
+    // In this case, we get exitCode 1 and just need to make sure that the branch for which pushing failed is not the current one.
+    // We use --all since it allows us to skip all manual setup regarding the tracking branch, its name, etc.
+    if (cmd.exitCode === 1){
+      const currentBranch = await this.branchName();
+      const branchRegex = new RegExp(`\[rejected\]\s+${currentBranch} `, 'm');
+      const currentBranchRejected = cmd.stderr.match(branchRegex);
+      if (currentBranchRejected) throw Error('Error pushing to remote');
+    } else if (cmd.exitCode !== 0) {
+      throw Error('Error pushing to remote');
+    }; 
     cmd = this.runCommand('git push origin --tags');
     await cmd.whenDone();
     if (cmd.exitCode !== 0) throw Error('Error pushing tags to remote');
