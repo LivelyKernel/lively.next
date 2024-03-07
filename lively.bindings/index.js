@@ -574,7 +574,7 @@ function once (sourceObj, attrName, targetObj, targetMethodName, spec) {
 
 function signal (sourceObj, attrName, newVal) {
   if (!sourceObj) return;
-  if (sourceObj.isViewModel && sourceObj.expose?.includes('attrName')) {
+  if (sourceObj.isViewModel && sourceObj.expose?.includes(attrName)) {
     const connections = sourceObj.view.attributeConnections;
     if (connections) {
       const oldVal = sourceObj.view[attrName];
