@@ -20,6 +20,10 @@ class LandingPageWorld extends LivelyWorld {
     // noop
   }
 
+  onContextMenu (evt) {
+    evt.stop();
+  }
+
   onLoad () {
     // noop
   }
