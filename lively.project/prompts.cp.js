@@ -39,15 +39,12 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
                 this.view.remove();
               }
             },
-            { target: 'test check', signal: 'checked', handler: (val) => this.ui.testModeSelector.enabled = val },
-            { target: 'build check', signal: 'checked', handler: (val) => this.ui.buildModeSelector.enabled = val },
-            { target: 'deploy check', signal: 'checked', handler: (val) => { if (this.project.canDeployToPages) this.ui.deployModeSelector.enabled = val; } },
             { target: 'ok button', signal: 'fire', handler: 'resolve' },
             {
               target: 'visibility selector',
               signal: 'selectionChanged',
               handler: async (visibility) => {
-                const { spinner, visibilitySelector, deployCheck, deployModeSelector } = this.ui;
+                const { spinner, visibilitySelector, deployModeSelector } = this.ui;
                 spinner.opacity = 1;
                 visibilitySelector.enabled = false;
                 const res = await this.project.changeRepositoryVisibility(visibility);
@@ -57,10 +54,8 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
                 }
                 await this.project.checkPagesSupport();
                 if (this.project.canDeployToPages) {
-                  deployCheck.enable();
                   deployModeSelector.enabled = true;
                 } else {
-                  deployCheck.disable();
                   deployModeSelector.enabled = false;
                 }
                 spinner.opacity = 0;
@@ -76,12 +71,8 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
   }
 
   resolve () {
-    const { testCheck, buildCheck, deployCheck, testModeSelector, buildModeSelector, deployModeSelector } = this.ui;
+    const { testModeSelector, buildModeSelector, deployModeSelector } = this.ui;
     const conf = this.project.config.lively;
-
-    conf.testActionEnabled = testCheck.checked;
-    conf.buildActionEnabled = buildCheck.checked;
-    conf.deployActionEnabled = deployCheck.checked;
 
     conf.testOnPush = testModeSelector.selectedItem === 'push';
     conf.buildOnPush = buildModeSelector.selectedItem === 'push';
@@ -90,7 +81,7 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
   }
 
   viewDidLoad () {
-    const { testCheck, buildCheck, deployCheck, testModeSelector, buildModeSelector, deployModeSelector, visibilitySelector } = this.ui;
+    const { testModeSelector, buildModeSelector, deployModeSelector, visibilitySelector } = this.ui;
 
     if (lively.isInOfflineMode) visibilitySelector.enabled = false;
 
@@ -99,15 +90,9 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
     if (conf.repositoryIsPrivate) {
       visibilitySelector.selectedItem = 'private';
       if (!this.project.canDeployToPages) {
-        deployCheck.disable();
         deployModeSelector.enabled = false;
       }
     }
-
-    testCheck.checked = conf.testActionEnabled;
-    buildCheck.checked = conf.buildActionEnabled;
-    deployCheck.checked = conf.deployActionEnabled;
-
     if (conf.testOnPush) testModeSelector.select('push');
     if (conf.buildOnPush) buildModeSelector.select('push');
     if (conf.deployOnPush) deployModeSelector.select('push');
@@ -548,13 +533,11 @@ class ProjectSavePrompt extends AbstractPromptModel {
 
 export const ProjectSettingsPrompt = component(LightPrompt, {
   defaultViewModel: ProjectSettingsPromptModel,
-  extent: pt(385, 244),
+  extent: pt(550, 357),
   layout: new TilingLayout({
     align: 'center',
     axis: 'column',
     axisAlign: 'center',
-    hugContentsHorizontally: true,
-    hugContentsVertically: true,
     orderByIndex: true,
     padding: rect(15, 15, 0, 0),
     spacing: 16
@@ -573,10 +556,11 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
       spacing: 20
     }),
     fill: Color.transparent,
-    extent: pt(327.5, 105.5),
+    extent: pt(487, 105.5),
     submorphs: [
       {
         name: 'ci settings',
+        extent: pt(285.5, 10),
         fill: Color.rgba(255, 255, 255, 0),
         layout: new TilingLayout({
           align: 'center',
@@ -611,16 +595,16 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
               fill: Color.transparent,
               borderWidth: 0,
               extent: pt(195.5, 28.5),
-              submorphs: [
-                part(LabeledCheckboxLight, {
-                  name: 'test check',
-                  viewModel: { label: 'Run Tests Remotely:' }
-                }),
-                { extent: pt(64, 12), fill: Color.transparent, borderWidth: 0 }]
+              submorphs: [{
+                type: Label,
+                name: 'test label',
+                textString: 'Run Tests Remotely:'
+              },
+              { extent: pt(64, 12), fill: Color.transparent, borderWidth: 0 }]
             }, part(ModeSelector, {
               name: 'test mode selector',
               viewModel: {
-                items: [{ text: 'Manually', name: 'manual' }, { text: 'On each push to `main` branch', name: 'push' }],
+                items: [{ text: 'Only Manually', name: 'manual' }, { text: 'Also on each push to `main` branch', name: 'push' }],
                 tooltips: ['Only run tests when triggered manually on GitHub', 'Run each time a push to the projects main branch is performed.']
               }
             })]
@@ -645,16 +629,16 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
               borderWidth: 0,
               extent: pt(195.5, 28.5),
               submorphs: [
-                part(LabeledCheckboxLight,
-                  {
-                    name: 'build check',
-                    viewModel: { label: 'Build Project Remotely:' }
-                  }),
+                {
+                  type: Label,
+                  name: 'build check',
+                  textString: 'Build Project Remotely:'
+                },
                 { extent: pt(47.5, 12), fill: Color.transparent, borderWidth: 0 }]
             }, part(ModeSelector, {
               name: 'build mode selector',
               viewModel: {
-                items: [{ text: 'Manually', name: 'manual' }, { text: 'On each push to `main` branch', name: 'push' }],
+                items: [{ text: 'Only Manually', name: 'manual' }, { text: 'Also on each push to `main` branch', name: 'push' }],
                 tooltips: ['Only run build when triggered manually on GitHub', 'Run each time a push to the projects main branch is performed.']
               }
             })]
@@ -678,18 +662,18 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
               fill: Color.transparent,
               borderWidth: 0,
               extent: pt(195.5, 28.5),
-              submorphs: [part(LabeledCheckboxLight,
-                {
-                  name: 'deploy check',
-                  viewModel: { label: 'Deploy Build to GitHub Pages:' }
-                }),
+              submorphs: [{
+                type: Label,
+                name: 'deploy label',
+                textString: 'Deploy Build to GitHub Pages:'
+              },
               part(InformIconOnLight, { viewModel: { information: 'Deploying to GitHub Pages is only available for public repositories or with a paid GitHub plan.' } })
               ]
             },
             part(ModeSelector, {
               name: 'deploy mode selector',
               viewModel: {
-                items: [{ text: 'Manually', name: 'manual' }, { text: 'On each push to `main` branch', name: 'push' }],
+                items: [{ text: 'Only Manually', name: 'manual' }, { text: 'Also on each push to `main` branch', name: 'push' }],
                 tooltips: ['Only deploy when triggered manually on GitHub', 'Deploy each time a push to the projects main branch is performed.']
               }
             })]
@@ -710,11 +694,14 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
             type: Label,
             textString: 'Repository Settings',
             fontSize: 15,
-            fontWeight: '600'
+            fontWeight: '600',
+            padding: {
+              left: 200
+            }
           }, {
             name: 'row 12',
             fill: Color.rgba(255, 255, 255, 0),
-            extent: pt(480, 42),
+            extent: pt(520, 42),
             layout: new TilingLayout({
               axisAlign: 'center',
               orderByIndex: true,
