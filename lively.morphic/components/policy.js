@@ -1476,6 +1476,10 @@ export class PolicyApplicator extends StylePolicy {
     }
   }
 
+  overrideProp (target, prop) {
+    this.getSubSpecFor(target.name)[prop] = skippedValue;
+  }
+
   /**
    * Scans the master component derivation chain in order to
    * determine the path to the sub spec that is then created

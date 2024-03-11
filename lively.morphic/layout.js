@@ -211,9 +211,27 @@ class Layout {
     }
   }
 
+  getAffectedPolicy () {
+    let curr = this.container;
+    while (curr && !curr.master) curr = curr.owner;
+    if (curr?.master?.managesMorph(this.container)) {
+      return curr.master;
+    }
+  }
+
   affectsLayout (submorph, { prop, value, prevValue }) {
     return ['position', 'scale', 'rotation', 'isLayoutable', 'extent'].includes(prop) &&
            !obj.equals(value, prevValue);
+  }
+
+  onConfigUpdate () {
+    this.apply();
+    if (this.renderViaCSS && !this._configChanged) {
+      this._configChanged = true;
+      this.layoutableSubmorphs.forEach(m => m.makeDirty());
+      if (this.container) { this.container.renderingState.hasCSSLayoutChange = true; }
+    }
+    this.getAffectedPolicy()?.overrideProp(this.container, 'layout');
   }
 
   onSubmorphChange (submorph, change) {
@@ -313,15 +331,6 @@ export class TilingLayout extends Layout {
 
   inspect (pointerId) {
     // return new TilingLayoutHalo(this.container, pointerId);
-  }
-
-  onConfigUpdate () {
-    this.apply();
-    if (this.renderViaCSS && !this._configChanged) {
-      this._configChanged = true;
-      this.layoutableSubmorphs.forEach(m => m.makeDirty());
-      if (this.container) { this.container.renderingState.hasCSSLayoutChange = true; }
-    }
   }
 
   __serialize__ () {
@@ -1305,15 +1314,6 @@ export class ConstraintLayout extends Layout {
   set renderViaCSS (active) {
     this._renderViaCSS = active;
     this.onConfigUpdate();
-  }
-
-  onConfigUpdate () {
-    this.apply();
-    if (this.renderViaCSS && !this._configChanged) {
-      this._configChanged = true;
-      this.layoutableSubmorphs.forEach(m => m.makeDirty());
-      if (this.container) { this.container.renderingState.hasCSSLayoutChange = true; }
-    }
   }
 
   addContainerCSS (containerMorph, style) {
