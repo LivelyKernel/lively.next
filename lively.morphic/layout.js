@@ -17,7 +17,7 @@ class Layout {
     this.container = container;
     this.manualUpdate = manualUpdate;
     this.reactToSubmorphAnimations = reactToSubmorphAnimations || false;
-    this.onScheduleApply = onScheduleApply || ((submorph, animation, change) => {});
+    this.onScheduleApply = onScheduleApply || ((submorph, animation, change) => {}); // eslint-disable-line no-unused-vars
     if (layoutOrder) {
       this.layoutOrder = layoutOrder;
       this.layoutOrderSource = JSON.stringify(String(layoutOrder));
@@ -259,7 +259,7 @@ class Layout {
     this.lastAnim = { duration, easing };
   }
 
-  apply (animated) {
+  apply (animated) { // eslint-disable-line no-unused-vars
     if (this.active) return;
     this.active = true;
     this.submorphsChanged = false;
@@ -267,11 +267,11 @@ class Layout {
     this.active = false;
   }
 
-  resizesMorphVertically (aMorph) {
+  resizesMorphVertically (aMorph) { // eslint-disable-line no-unused-vars
     return false;
   }
 
-  resizesMorphHorizontally (aMorph) {
+  resizesMorphHorizontally (aMorph) { // eslint-disable-line no-unused-vars
     return false;
   }
 
@@ -329,13 +329,9 @@ export class TilingLayout extends Layout {
 
   name () { return 'Tiling'; }
 
-  inspect (pointerId) {
-    // return new TilingLayoutHalo(this.container, pointerId);
-  }
-
   __serialize__ () {
     // fixme: serialize padding as rect
-    const rectSerializer = (anObject, ignoreSignal, continueInspect) => {
+    const rectSerializer = (anObject, ignoreSignal) => {
       if (anObject && anObject.isRectangle) { return anObject.toString(); } else return ignoreSignal;
     };
     return {
@@ -507,7 +503,7 @@ export class TilingLayout extends Layout {
     }
     if (!this._policiesSynthesized && this.config.resizePolicies) {
       spec.resizePolicies = [...this.config.resizePolicies];
-      if (spec.resizePolicies.length == 0) delete spec.resizePolicies;
+      if (spec.resizePolicies.length === 0) delete spec.resizePolicies;
     }
     return spec;
   }
@@ -719,7 +715,7 @@ export class TilingLayout extends Layout {
    * Invoked once a new morph is added to the container.
    * @override
    */
-  onSubmorphAdded (submorph, animation) {
+  onSubmorphAdded (submorph) {
     if (!this._resizePolicies.get(submorph)) {
       this.setResizePolicyFor(submorph, {
         width: 'fixed', height: 'fixed'
@@ -820,9 +816,8 @@ export class TilingLayout extends Layout {
   /**
    * Update the container based on extent of the corresponding DOM node.
    * @params { HTMLRect } contentRect - The bounding client rect of the node found in the dom.
-   * @params { Boolean } makeDirty - Wether or not to update the morph
    */
-  updateContainerViaDom (node, makeDirty = false) {
+  updateContainerViaDom (node) {
     const { container, hugContentsVertically, hugContentsHorizontally } = this;
     if (!node && !(node = this.getNodeFor(container))) return;
     const width = Math.round(node.offsetWidth);
@@ -956,7 +951,7 @@ export class TilingLayout extends Layout {
     this.measureAfterRender(morph);
   }
 
-  adjustMargin (margin, submorph) {
+  adjustMargin (margin) {
     const { container, axis } = this;
     const isVertical = axis === 'column';
     if (isVertical) {
@@ -966,7 +961,7 @@ export class TilingLayout extends Layout {
     }
   }
 
-  computeOffset (aSubmorph) {
+  computeOffset () {
     const { container, axis } = this;
     const offset = { top: 0, bottom: 0, left: 0, right: 0 };
     const isVertical = axis === 'column';
@@ -1224,7 +1219,7 @@ export class TilingLayout extends Layout {
       });
     }
 
-    axisToPositions.forEach(([_, ...morphOffsets], i) => {
+    axisToPositions.forEach(([_, ...morphOffsets], i) => { // eslint-disable-line no-unused-vars
       morphOffsets.forEach(([m, offset]) => {
         const pos = isHorizontal ? pt(offset, breadthOffsets[i]) : pt(breadthOffsets[i], offset);
         this.changePropertyAnimated(m, posAccessor, pos, animate);
@@ -1316,7 +1311,7 @@ export class ConstraintLayout extends Layout {
     this.onConfigUpdate();
   }
 
-  addContainerCSS (containerMorph, style) {
+  addContainerCSS (containerMorph, style) { // eslint-disable-line no-unused-vars
     // container css is not really affected, since the constraint layout only
     // controls the submorphs
     this._configChanged = false;
@@ -1420,7 +1415,7 @@ export class ConstraintLayout extends Layout {
   }
 
   updateSubmorphViaDom (morph, node, makeDirty = false) {
-    const { visible, borderWidth } = this.container;
+    const { borderWidth } = this.container;
     const newPosX = Math.floor(node.offsetLeft) + borderWidth.left;
     const newPosY = Math.floor(node.offsetTop) + borderWidth.top;
     const newWidth = Math.floor(node.offsetWidth);
@@ -1491,7 +1486,7 @@ export class ConstraintLayout extends Layout {
 
   get __dont_serialize__ () { return [...super.__dont_serialize__, 'extentDelta', 'lastExtent']; }
 
-  __after_deserialize__ (snapshot, ref) {
+  __after_deserialize__ (snapshot, ref) { // eslint-disable-line no-unused-vars
     const { _submorphSettings, container } = this;
     const map = this.constraintLayoutSettingsForMorphs || new WeakMap();
     this.extentDelta = pt(0, 0);
@@ -1521,7 +1516,7 @@ export class ConstraintLayout extends Layout {
     config.topProportion = config.top / this.container.height * 100;
   }
 
-  onSubmorphChange (submorph, change, x, y) {
+  onSubmorphChange (submorph, change) {
     if (change.prop === 'name') {
       const settings = this.constraintLayoutSettingsForMorphs.get(submorph);
       if (settings) this.changeSettingsFor(submorph, settings, true);
