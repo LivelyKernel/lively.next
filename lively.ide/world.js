@@ -29,7 +29,7 @@ import { Halo, MorphHighlighter, GridLayoutHalo } from 'lively.halos';
 import { Window, Menu } from 'lively.components';
 import { completions, runEval } from 'lively.vm';
 import { getClassName, serialize } from 'lively.serializer2';
-import { StatusMessageDefault, StatusMessageConfirm, StatusMessageError } from 'lively.halos/components/messages.cp.js';
+import { StatusMessageDefault, StatusMessageConfirm, StatusMessageError, StatusMessageWarning } from 'lively.halos/components/messages.cp.js';
 import { part } from 'lively.morphic';
 
 import worldCommands from './world-commands.js';
@@ -1049,7 +1049,10 @@ export class LivelyWorld extends World {
 
   setStatusMessage (message, StatusMessageComponent, delay = 5000, optStyle = {}) {
     if (!StatusMessageComponent) StatusMessageComponent = StatusMessageDefault;
-    console[StatusMessageComponent === StatusMessageError ? 'error' : 'log'](message); // eslint-disable-line no-console
+    let consoleFunc = 'log'
+    if (StatusMessageComponent === StatusMessageError) consoleFunc = 'error';
+    if (StatusMessageComponent === StatusMessageWarning) consoleFunc = 'warn';
+    console[consoleFunc](message); // eslint-disable-line no-console
     return config.verboseLogging
       ? this.openStatusMessage(part(StatusMessageComponent, { epiMorph: true, viewModel: { message }, hasFixedPosition: true, width: 300, ...optStyle }), delay)
       : null;
