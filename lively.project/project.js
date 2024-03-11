@@ -417,7 +417,7 @@ export class Project {
     await this.addMissingProjectDependencies();
     // We use author here, as owner can also be an org.
     // This assumes, that the author of org projects has sufficient rights (admin) to retrieve secrets.
-    if ($world.currentUser === this.config.author.name){
+    if (currentUsername() === this.config.author.name) {
       if (remoteConfigured && !lively.isInOfflineMode) await this.setupDependencyPermissions();
     } else {
       console.warn('Dependency permissions might not be setup correctly. To ensure working dependencies remotely, the owner of the project needs to save it.');
