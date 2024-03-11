@@ -74,6 +74,10 @@ export function wrapModuleResolution (System) {
   if (!System['METADATA']._originalMetadata) {
     System._loads = {};
     const { proxy: wrappedMetadata, revoke } = Proxy.revocable(System['METADATA'], {
+      set: function (target, key, mod) {
+        if (typeof target[key] === 'undefined') { target[key] = mod; }
+        return true;
+      },
       deleteProperty: function (target, key, mod) {
         System.REGISTER_INTERNAL.records[key].metadata = target[key];
         delete target[key];
