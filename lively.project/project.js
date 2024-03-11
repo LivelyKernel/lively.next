@@ -520,8 +520,6 @@ export class Project {
 
     // OPINIONATED DEFAULTS
     const livelyConfig = config.lively;
-    livelyConfig.testActionEnabled = true;
-    livelyConfig.buildActionEnabled = false;
     livelyConfig.testOnPush = true;
     livelyConfig.buildOnPush = false;
     livelyConfig.deployOnPush = false;
@@ -614,29 +612,16 @@ export class Project {
     const livelyConfig = this.config.lively;
 
     pipelineFile = join(this.url, '.github/workflows/ci-tests.yml');
-    if (livelyConfig.testActionEnabled) {
-      content = await this.fillPipelineTemplate(workflowDefinition, livelyConfig.testOnPush);
-      await (await resource(pipelineFile).ensureExistance()).write(content);
-    } else {
-      if ((await resource(pipelineFile).exists())) await resource(pipelineFile).remove();
-    }
+    content = await this.fillPipelineTemplate(workflowDefinition, livelyConfig.testOnPush);
+    await (await resource(pipelineFile).ensureExistance()).write(content);
 
     pipelineFile = join(this.url, '.github/workflows/build-upload-action.yml');
-    if (livelyConfig.buildActionEnabled) {
-      content = await this.fillPipelineTemplate(buildRemoteScript, livelyConfig.buildOnPush);
-      await (await resource(pipelineFile).ensureExistance()).write(content);
-    } else {
-      if ((await resource(pipelineFile).exists())) await resource(pipelineFile).remove();
-    }
+    content = await this.fillPipelineTemplate(buildRemoteScript, livelyConfig.buildOnPush);
+    await (await resource(pipelineFile).ensureExistance()).write(content);
 
     pipelineFile = join(this.url, '.github/workflows/deploy-pages-action.yml');
-    if (!livelyConfig.hasOwnProperty('deployActionEnabled')) livelyConfig.deployActionEnabled = this.canDeployToPages;
-    if (livelyConfig.deployActionEnabled && this.canDeployToPages) {
-      content = await this.fillPipelineTemplate(deployScript, livelyConfig.deployOnPush);
-      await (await resource(pipelineFile).ensureExistance()).write(content);
-    } else {
-      if ((await resource(pipelineFile).exists())) await resource(pipelineFile).remove();
-    }
+    content = await this.fillPipelineTemplate(deployScript, livelyConfig.deployOnPush);
+    await (await resource(pipelineFile).ensureExistance()).write(content);
   }
 
   async fillPipelineTemplate (workflowDefinition, triggerOnPush = false) {
