@@ -2,7 +2,6 @@ import { ViewModel, part, TilingLayout, Label, component } from 'lively.morphic'
 import { Color, rect } from 'lively.graphics';
 import { signal } from 'lively.bindings';
 import { pt } from 'lively.graphics/geometry-2d.js';
-import { PolicyApplicator } from 'lively.morphic/components/policy.js';
 
 export const CheckboxChecked = component({
   name: 'checkbox/checked',
@@ -46,7 +45,7 @@ class CheckboxModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['isCheckbox', 'enable', 'disable', 'trigger', 'onChecked'];
+          return ['isCheckbox', 'enable', 'disable', 'trigger', 'checked'];
         }
       },
       bindings: {
