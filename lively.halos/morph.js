@@ -2347,6 +2347,9 @@ export default class Halo extends Morph {
     const world = this.world();
     if (world.propertiesPanel) { world.propertiesPanel.clearFocus(); }
     if (world.sceneGraph) { world.sceneGraph.clearFocus(); }
+    if (this.target.isComponent) {
+      this.target._changeTracker?.componentDescriptor.stopEditSession();
+    }
     this.remove();
   }
 
