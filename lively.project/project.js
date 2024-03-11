@@ -370,7 +370,7 @@ export class Project {
     const currUserName = currUser.login;
 
     // GH Pages is possible for non-private repositories in any case
-    if (!this.config.lively.repositoryIsPrivate){
+    if (!this.config.lively.repositoryIsPrivate) {
       this.config.lively.canUsePages = true;
       return;
     }
@@ -393,11 +393,9 @@ export class Project {
       // In case the command errors out, we just set the value to false to be on the save side
       if (checkOrgPlanCmd.exitCode !== 0) {
         this.config.lively.canUsePages = false;
-        return;
-      }
-      else {
+      } else {
         const planName = (JSON.parse(checkOrgPlanCmd.stdout))?.plan?.name;
-        if (planName && planName!== 'free') this.config.lively.canUsePages = true;
+        if (planName && planName !== 'free') this.config.lively.canUsePages = true;
         else this.config.lively.canUsePages = false;
       }
     }
