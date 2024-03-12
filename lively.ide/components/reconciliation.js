@@ -579,7 +579,7 @@ export function applyModuleChanges (reconciliation, scope, system, sourceEditor 
  */
 export class Reconciliation {
   static ensureNamesInSourceCode (componentDescriptor) {
-    new EnsureNamesReconciliation(componentDescriptor).reconcile().applyChanges();
+    new EnsureNamesReconciliation(componentDescriptor).reconcile().applyChanges(); // eslint-disable-line no-use-before-define
   }
 
   static perform (componentDescriptor, change) {
@@ -1348,7 +1348,7 @@ class PropChangeReconciliation extends Reconciliation {
     const responsiblePolicy = this.getResponsiblePolicyFor(target);
     if (!newValue) {
       // clear all of the fields here
-      if (subSpec == responsiblePolicy.spec) responsiblePolicy.reset(); // assumes it is a policy
+      if (subSpec === responsiblePolicy.spec) responsiblePolicy.reset(); // assumes it is a policy
     }
     if (newValue) {
       // then we want to replace the sub spec with a policy (in case the spec is not a policy)
@@ -1504,6 +1504,16 @@ class RenameReconciliation extends PropChangeReconciliation {
         browser.searchForModuleAndSelect(newModId);
       });
     }
+
+    this.postApply();
+  }
+
+  postApply () {
+    const { owner } = this.renamedMorph;
+    const affectedLayout = owner?.layout;
+    if (affectedLayout?.layoutableSubmorphs.includes(this.renamedMorph)) {
+      affectedLayout.handleRenamingOf(this.renamedMorph);
+    }
   }
 }
 
@@ -1561,7 +1571,7 @@ class TextChangeReconciliation extends PropChangeReconciliation {
     const [changedRange, attrReplacement] = args;
 
     if (selector === 'replace') {
-      const isDeletion = attrReplacement.length == 0 || attrReplacement[0] === '' && attrReplacement[1] === null;
+      const isDeletion = attrReplacement.length === 0 || attrReplacement[0] === '' && attrReplacement[1] === null;
       const isInsertion = !isDeletion && attrReplacement[0].length > 0;
       const { attributeStart, stringNode } = this.getAstNodeAndAttributePositionInRange(specNode, changedRange);
 
