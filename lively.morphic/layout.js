@@ -742,6 +742,12 @@ export class TilingLayout extends Layout {
     this.container.renderingState.cssLayoutToMeasureWith = this.container.layout;
   }
 
+  handleRenamingOf (submorph) {
+    this._policiesSynthesized = true;
+    this.container.layout = this.copy();
+    this.container.renderingState.cssLayoutToMeasureWith = this.container.layout;
+  }
+
   /**
    * Attempt an immediate measure of the morph's rendered node
    * to retrieve bounds from the DOM. If not possible, defer to
@@ -1543,6 +1549,10 @@ export class ConstraintLayout extends Layout {
     }
 
     return super.onSubmorphChange(submorph, change);
+  }
+
+  handleRenamingOf (submorph) {
+    this.container.layout = this.copy();
   }
 
   settingsFor (morph) {
@@ -3168,6 +3178,10 @@ export class GridLayout extends Layout {
     if (this.renderViaCSS) {
       if (submorph.isLayoutable && submorph.owner === this.container) { this.measureAfterRender(submorph); }
     } else super.onSubmorphResized(submorph, change);
+  }
+
+  handleRenamingOf (submorph) {
+    this.container.layout = this.copy();
   }
 
   /**
