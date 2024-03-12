@@ -84,7 +84,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
     if (!prop || prop === 'targetMorph') this.update();
   }
 
-  update (prop) {
+  update () {
     this.withoutBindingsDo(() => {
       const {
         miniLayoutPreview, vertical, horizontal,
@@ -103,7 +103,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
       } else {
         totalPaddingInput.number = layout.padding.top();
       }
-      if (prop === 'wrapping') wrapSubmorphsCheckbox.checked = layout.wrapSubmorphs;
+      wrapSubmorphsCheckbox.checked = layout.wrapSubmorphs;
     });
   }
 
