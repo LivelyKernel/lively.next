@@ -86,12 +86,12 @@ export { A, B, C, D, X, T };
 let ComponentA, ComponentB, ComponentC, ComponentD, ComponentX, ComponentT,
   A, B, C, D, X, T;
 
+let testDir = 'local://component-reconciliation-test/';
+
 async function getSource () {
   // delete testComponentModule._source;
   return await module(System, testDir + 'project1/test.cp.js').source();
 }
-
-let testDir = 'local://component-reconciliation-test/';
 
 let project1Dir = testDir + 'project1/';
 let project1 = {
