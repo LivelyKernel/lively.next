@@ -419,7 +419,7 @@ export class Project {
       if (remoteConfigured && !lively.isInOfflineMode) await this.setupDependencyPermissions();
     } else {
       console.warn('Dependency permissions might not be setup correctly. To ensure working dependencies remotely, the owner of the project needs to save it.');
-    };
+    }
     if (!this.configFile) {
       throw Error('No config file found. Should never happen.');
     }
@@ -467,44 +467,42 @@ export class Project {
   }
 
   async bindAgainstCurrentLivelyVersion (knownCompatibleVersion, onlyLoadNotOpen = false) {
-    const doesCommitExists = this.gitResource.runCommand(`git cat-file commit ${knownCompatibleVersion}`).whenDone().exitCode;
-    if (doesCommitExists) {
-      const { comparison } = await lively.checkedProjectVersionRelation || await VersionChecker.checkVersionRelation(knownCompatibleVersion, true);
-      const comparisonBetweenVersions = VersionChecker.parseHashComparison(comparison);
-      if (comparisonBetweenVersions > 0 && onlyLoadNotOpen) {
-        console.warn('A loaded project expects a different lively version than the one currently running.');
-        return;
+    const { comparison } = await lively.checkedProjectVersionRelation || await VersionChecker.checkVersionRelation(knownCompatibleVersion, true);
+    const comparisonBetweenVersions = VersionChecker.parseHashComparison(comparison);
+    if (comparisonBetweenVersions > 0 && onlyLoadNotOpen) {
+      console.warn('A loaded project expects a different lively version than the one currently running.');
+      return;
+    }
+    switch (comparisonBetweenVersions) {
+      case (0): {
+        if (!onlyLoadNotOpen) $world.setStatusMessage('Already using the latest lively version. All good!', StatusMessageConfirm);
+        return 'SUCCESS';
       }
-      switch (comparisonBetweenVersions) {
-        case (0): {
-          if (!onlyLoadNotOpen) $world.setStatusMessage('Already using the latest lively version. All good!', StatusMessageConfirm);
-          return 'SUCCESS';
-        }
-        case (1): {
-          const confirmed = await $world.confirm('This changes the required version of lively.next for this project.\n Are you sure you want to proceed?');
-          if (!confirmed) {
-            $world.setStatusMessage('Changing the required version of lively.next has been canceled.', StatusMessageError);
-            return 'CANCELED';
-          } else {
-            $world.setStatusMessage(`Updated the required version of lively.next for ${this.name}.`, StatusMessageConfirm);
-            const currentCommit = await VersionChecker.currentLivelyVersion(true);
-            this.config.lively.boundLivelyVersion = currentCommit;
-            await this.saveConfigData();
-            return 'UPDATED';
-          }
-        }
-        case (-1):
-        case (2) : {
-          $world.setStatusMessage(`You do not have the version of lively.next necessary to open this project. Please get version ${knownCompatibleVersion} of lively.next`, StatusMessageError);
-          return 'OUTDATED';
+      case (1): {
+        const confirmed = await $world.confirm('This changes the required version of lively.next for this project.\n Are you sure you want to proceed?');
+        if (!confirmed) {
+          $world.setStatusMessage('Changing the required version of lively.next has been canceled.', StatusMessageError);
+          return 'CANCELED';
+        } else {
+          $world.setStatusMessage(`Updated the required version of lively.next for ${this.name}.`, StatusMessageConfirm);
+          const currentCommit = await VersionChecker.currentLivelyVersion(true);
+          this.config.lively.boundLivelyVersion = currentCommit;
+          await this.saveConfigData();
+          return 'UPDATED';
         }
       }
-    } else {
-      $world.setStatusMessage(`The required version of lively.next ${this.name} has been overwritten. ${this.name} has been upgraded to use the latest version available to you.`, StatusMessageWarning);
-      const currentCommit = await VersionChecker.currentLivelyVersion(true);
-      this.config.lively.boundLivelyVersion = currentCommit;
-      await this.saveConfigData();
-      return 'UPDATED';
+      case (-1):
+      case (2): {
+        $world.setStatusMessage(`You do not have the version of lively.next necessary to open this project. Please get version ${knownCompatibleVersion} of lively.next`, StatusMessageError);
+        return 'OUTDATED';
+      }
+      case (3) : {
+        $world.setStatusMessage(`The required version of lively.next ${this.name} has been overwritten. ${this.name} has been upgraded to use the latest version available to you.`, StatusMessageWarning);
+        const currentCommit = await VersionChecker.currentLivelyVersion(true);
+        this.config.lively.boundLivelyVersion = currentCommit;
+        await this.saveConfigData();
+        return 'UPDATED';
+      }
     }
   }
 
