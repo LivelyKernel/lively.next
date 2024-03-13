@@ -33,9 +33,10 @@ class ProgressIndicatorModel extends ViewModel {
     this.ui.progressStatus.textString = 'Loading ' + packageName;
     const maxWidth = this.ui.progressBarWrapper.width;
     const goalWidth = (packagesToLoad.indexOf(packageName) + 1) / packagesToLoad.length * maxWidth;
-    this.ui.progressFill.animate({
-      width: goalWidth, duration: 500
-    });
+    // this.ui.progressFill.animate({
+    //   width: goalWidth, duration: 500
+    // });
+    this.ui.progressFill.width = goalWidth;
   }
 }
 
