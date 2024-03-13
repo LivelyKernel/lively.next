@@ -85,7 +85,6 @@ export async function fetchResource (proceed, load) {
       label: 'loading module',
       status: load.name.replace(System.baseURL, '')
     });
-    await promise.delay(500);
     // force the renderer
     if (System._loadingIndicator) {
       $world.env.forceUpdate();
