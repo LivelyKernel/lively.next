@@ -1477,7 +1477,8 @@ export class PolicyApplicator extends StylePolicy {
   }
 
   overrideProp (target, prop) {
-    this.getSubSpecFor(target.name)[prop] = skippedValue;
+    const spec = this.getSubSpecFor(target.name);
+    if (spec) spec[prop] = skippedValue;
   }
 
   /**
