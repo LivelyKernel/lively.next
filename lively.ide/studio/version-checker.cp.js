@@ -215,6 +215,7 @@ class VersionChecker extends Morph {
    * Returns 2 when both compared versions are diverged.
    */
   static parseHashComparison (comparison) {
+    if (comparison === '') return 3;
     comparison = comparison.replace('\n', '').split('\t');
     const numberOfUniqueCommitsOnRemote = parseInt(comparison[0]);
     const numberOfUniqueCommitsLocal = parseInt(comparison[1]);
@@ -246,7 +247,7 @@ class VersionChecker extends Morph {
   indicateOfflineMode (offline) {
     if (!offline) return;
     const { status } = this.ui;
-    status.textAndAttributes = status.textAndAttributes.concat([' (results might be outdated in offline mode)', null]); 
+    status.textAndAttributes = status.textAndAttributes.concat([' (results might be outdated in offline mode)', null]);
   }
 
   showEven (version, offline) {
