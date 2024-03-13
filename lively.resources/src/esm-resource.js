@@ -1,3 +1,4 @@
+// global process
 import { Resource } from 'lively.resources';
 import { resource } from 'lively.resources';
 import { string } from 'lively.lang';
@@ -45,6 +46,8 @@ export class ESMResource extends Resource {
     const [res, created] = await this.findOrCreatePathStructure(pathStructure);
 
     if (!created) {
+      let hit; let shortName = res.url.replace(this.getBaseURL(), '');
+      if (typeof lively !== 'undefined' && (hit = lively.memory_esm?.get(shortName))) return await hit.blob.text();
       module = await res.read();
     } else {
       module = await resource((baseUrl + id)).read();
@@ -53,9 +56,10 @@ export class ESMResource extends Resource {
     return module;
   }
 
-  getBaseURL() {
-    return typeof System !== 'undefined' && System?.baseURL || typeof process !== 'undefined' && 'file://' + process?.env.lv_next_dir
+  getBaseURL () {
+    return typeof System !== 'undefined' && System?.baseURL || typeof process !== 'undefined' && 'file://' + process?.env.lv_next_dir;
   }
+
   async findOrCreatePathStructure (pathElements) {
     const cachePath = string.joinPath(this.getBaseURL(), '/esm_cache/');
 
@@ -78,7 +82,8 @@ export class ESMResource extends Resource {
     if (runningCreation) await runningCreation;
 
     const res = resource(cachePath + fullPath);
-    const isExisting = await res.exists();
+    const shortName = 'esm_cache/' + fullPath;
+    const isExisting = typeof lively !== 'undefined' && !!lively.memory_esm?.get(shortName) || await res.exists();
     if (isExisting) return [res, false];
 
     for (let elem of pathElements) {

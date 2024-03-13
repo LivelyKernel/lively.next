@@ -9,6 +9,7 @@ import { install as installHook } from 'lively.modules/src/hooks.js';
 import { updateBundledModules } from 'lively.modules/src/module.js';
 import { Project } from 'lively.project/project.js';
 import { pathForBrowserHistory } from 'lively.morphic/helpers.js';
+import untar from 'esm://cache/js-untar';
 
 lively.modules = modulePackage; // temporary modules package used for bootstrapping
 
@@ -190,6 +191,7 @@ async function shallowReloadModulesIfNeeded (modulesToCheck, moduleHashes, R) {
   return arr.uniq(modsToReload);
 }
 
+const baseURL = window.SYSTEM_BASE_URL || document.location.origin; // usually the server is located at the origin, but this can be overridden via this window var
 function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false || window.FORCE_FAST_LOAD) {
   lively.wasFastLoaded = fastLoad;
   // for loading an instrumented version of the packages comprising the lively.system
@@ -197,17 +199,18 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
     .then(async function () {
       // fixme: still expensive fetching of index.js files when registering each package on deserialization
       // fixme: freeze halos, components and lively.ide stuff to further speed up performance
-      await progress?.whenRendered();
       // before resetting systemjs, load all frozen modules
       if (fastLoad) {
         const timeToLoadBundle = await promise.timeToRun(await fastLoadPackages(progress));
         logInfo('Loading bundles:', timeToLoadBundle + 'ms');
+      } else {
+        lively.memory_esm = await untar(await resource(baseURL).join('compressed-sources').beBinary(true).read());
+        lively.memory_esm = new Map(lively.memory_esm.map(ea => [ea.name, ea]));
       }
     })
     .then(async function () {
       // setup system
       let ts = Date.now();
-      const baseURL = window.SYSTEM_BASE_URL || document.location.origin; // usually the server is located at the origin, but this can be overridden via this window var
       const oldSystem = lively.FreezerRuntime.oldSystem = window.System;
       let initBaseURL = oldSystem.baseURL;
       if (initBaseURL.endsWith('/')) {

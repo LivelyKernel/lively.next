@@ -1,8 +1,11 @@
-/* global System, process */
-
+/* global System, process, Buffer */
 import { resource } from 'lively.resources';
 import { string, fun } from 'lively.lang';
 import * as child from 'node:child_process';
+const tar = System._nodeRequire('tar-fs');
+import stream from 'stream';
+import util from 'util';
+import zlib from 'zlib';
 
 const COMPRESSABLE_URLS = [
   'components_cache'
@@ -31,6 +34,34 @@ const jsDavPlugins = {};
     jsDavPlugins.browser = System._nodeRequire('jsDAV/lib/DAV/plugins/browser.js');
   } catch (err) { console.error('cannot load jsdav:', err); } finally { console.log = log; }
 })();
+
+// use Node.js Writable, otherwise load polyfill
+let Writable = stream.Writable;
+
+let memStore = { };
+
+/* Writable memory stream */
+function WMStrm (key, options) {
+  // allow use without new operator
+  if (!(this instanceof WMStrm)) {
+    return new WMStrm(key, options);
+  }
+  Writable.call(this, options); // init super
+  this.key = key; // save key
+  memStore[key] = new Buffer(''); // empty
+}
+util.inherits(WMStrm, Writable);
+
+WMStrm.prototype._write = function (chunk, enc, cb) {
+  // our memory store stores things in buffers
+  let buffer = (Buffer.isBuffer(chunk))
+    ? chunk // already is Buffer use it
+    : new Buffer(chunk, enc); // string, convert
+
+  // concat to the buffer already there
+  memStore[this.key] = Buffer.concat([memStore[this.key], buffer]);
+  cb();
+};
 
 export default class LivelyDAVPlugin {
   constructor () {
@@ -114,6 +145,31 @@ export default class LivelyDAVPlugin {
     }
     this.server.baseUri = path + '/';
     req.url = path + req.url;
+
+    if (req.url === '/compressed-sources') {
+      res.setHeader('Content-Encoding', 'gzip');
+      if (memStore.zipFile) {
+        res.write(memStore.zipFile, 'binary');
+        res.end(null, 'binary');
+        return;
+      }
+      let zipFile = new WMStrm('zipFile');
+      const cachedDirs = ['esm_cache', 'lively.morphic', 'lively.lang', 'lively.bindings', 'lively.ast', 'lively.source-transform', 'lively.classes', 'lively.vm', 'lively.resources', 'lively.storage', 'lively.storage', 'lively.notifications', 'lively.modules', 'lively-system-interface', 'lively.installer', 'lively.serializer2', 'lively.graphics', 'lively.keyboard', 'lively.changesets', 'lively.2lively', 'lively.git', 'lively.traits', 'lively.components', 'lively.ide', 'lively.headless', 'lively.freezer', 'lively.collab', 'lively.project', 'lively.user'];
+
+      const excludedDirs = ['lively.morphic/objectdb', 'lively.morphic/assets', 'lively.morphic/web', 'lively.ast/dist', 'lively.classes/build', 'lively.ide/jsdom.worker.js', 'lively.headless/chrome-data-dir', 'lively.freezer/landing-page', 'lively.freezer/loading-screen', 'lively.modules/dist'];
+      tar.pack(System.baseURL.replace('file://', ''), {
+        ignore (name) {
+          if (excludedDirs.find(path => name.includes(path))) return true;
+          else return false;
+        },
+        entries: cachedDirs
+      }).pipe(zlib.Gzip()).pipe(zipFile);
+      zipFile.on('finish', () => {
+        res.write(memStore.zipFile, 'binary');
+        res.end(null, 'binary');
+      });
+      return;
+    }
 
     if (req.url == '/__JS_FILE_HASHES__') {
       res.writeHead(200, { 'content-type': 'application/json' });
