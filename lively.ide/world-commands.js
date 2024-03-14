@@ -1252,29 +1252,31 @@ const commands = [
   {
     name: 'save world or project',
     exec: async (world, args, _, evt) => {
-      let saved;
-      if ($world.openedProject) {
-        if (!isUserLoggedIn()) {
-          $world.setStatusMessage('Log in using GitHub to save a project.', StatusMessageError);
-          $world.get('user flap').show();
-          return;
-        }
-        const li = $world.showLoadingIndicatorFor(null, 'Setting up Save operation...');
-        await $world.openedProject.saveConfigData();
-        if (!(await $world.openedProject.hasUncommitedChanges())) {
-          $world.setStatusMessage('All changes are saved. Nothing to do.', StatusMessageConfirm);
+      fun.guardNamed('save world or project', async () => {
+        let saved;
+        if ($world.openedProject) {
+          if (!isUserLoggedIn()) {
+            $world.setStatusMessage('Log in using GitHub to save a project.', StatusMessageError);
+            $world.get('user flap').show();
+            return;
+          }
+          const li = $world.showLoadingIndicatorFor(null, 'Setting up Save operation...');
+          await $world.openedProject.saveConfigData();
+          if (!(await $world.openedProject.hasUncommitedChanges())) {
+            $world.setStatusMessage('All changes are saved. Nothing to do.', StatusMessageConfirm);
+            li.remove();
+            return;
+          }
           li.remove();
-          return;
+          saved = await $world.openPrompt(part(SaveProjectDialog, { viewModel: { project: $world.openedProject } }));
+        } else { // in case there is another morph implementing save...
+          const relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
+          if (relayed) return relayed;
+          args = { confirmOverwrite: true, showSaveDialog: true, moduleManager: modules, ...args };
+          saved = await interactivelySaveWorld(world, args);
         }
-        li.remove();
-        saved = await $world.openPrompt(part(SaveProjectDialog, { viewModel: { project: $world.openedProject } }));
-      } else { // in case there is another morph implementing save...
-        const relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
-        if (relayed) return relayed;
-        args = { confirmOverwrite: true, showSaveDialog: true, moduleManager: modules, ...args };
-        saved = await interactivelySaveWorld(world, args);
-      }
-      return saved;
+        return saved;
+      })();
     }
   },
 
