@@ -8,12 +8,12 @@ import {
   replaceImportedNamespaces,
   replaceExportedVarDeclarations,
   ensureComponentDescriptors,
-  replaceExportedNamespaces,
+  replaceExportedNamespaces
 } from 'lively.source-transform';
 import {
   rewriteToCaptureTopLevelVariables,
   insertCapturesForFunctionDeclarations,
-  insertCapturesForExportedImports,
+  insertCapturesForExportedImports
 } from 'lively.source-transform/capturing.js';
 import config from 'lively.morphic/config.js'; // can be imported without problems in nodejs
 import { GlobalInjector } from 'lively.modules/src/import-modification.js';
@@ -74,16 +74,16 @@ const baseURL = typeof System !== 'undefined' ? System.baseURL : ensureFolder(pr
  * @param { function } warn - The custom error function to utilize for logging the warning.
  */
 export function customWarn (warning, warn, bundler) {
+  if (warning.code === 'UNRESOLVED_IMPORT') {
+    // add the import to the source map to link to empty
+    arr.pushIfNotIncluded(bundler.excludedModules, warning.source);
+  }
   if (!bundler.verbose) return;
   switch (warning.code) {
     case 'THIS_IS_UNDEFINED':
     case 'EVAL':
     case 'MODULE_LEVEL_DIRECTIVE':
       return;
-    case 'UNRESOLVED_IMPORT':
-      // add the import to the source map to link to empty
-      arr.pushIfNotIncluded(bundler.excludedModules, warning.source);
-      break;
     case 'CIRCULAR_DEPENDENCY':
       bundler.resolver.setStatus({ status: warning.message });
       return;
