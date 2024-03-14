@@ -863,7 +863,7 @@ export class Project {
     const availableDeps = (await Project.listAvailableProjects()).map(proj => ({ name: proj.name, version: proj.version }));
     let currentDeps = this.config.lively.projectDependencies.slice();
 
-    const filesInPackage = await resource(this.url).asDirectory().dirList('infinity');
+    const filesInPackage = await resource(this.url).asDirectory().dirList('infinity',{exclude: r => r.url.includes('node_modules')});
     const jsFilesInPackage = filesInPackage.filter(p => p.url.endsWith('.js') && !p.url.includes('/build'));
     for (let jsFile of jsFilesInPackage) {
       const content = await jsFile.read();
@@ -883,7 +883,7 @@ export class Project {
     let usedDeps = [];
     const currentDeps = this.config.lively.projectDependencies;
 
-    const filesInPackage = await resource(this.url).asDirectory().dirList('infinity');
+    const filesInPackage = await resource(this.url).asDirectory().dirList('infinity', {exclude: r => r.url.includes('node_modules')});
     const jsFilesInPackage = filesInPackage.filter(p => p.url.endsWith('.js') && !p.url.includes('/build'));
     for (let jsFile of jsFilesInPackage) {
       const content = await jsFile.read();
