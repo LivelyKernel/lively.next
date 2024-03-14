@@ -926,14 +926,16 @@ export class TilingLayout extends Layout {
         margin.left = 0;
         margin.right = 0;
       } else {
-        style.width = 'unset';
+        // style.width = 'unset';
+        style.width = `calc(100% + ${margin.offset}px)`;
         style['flex-grow'] = 1;
         style['flex-shrink'] = 1;
       } // let flex handle that
     }
     if (this.getResizeHeightPolicyFor(morph) === 'fill') {
       if (isVertical) {
-        style.height = 'unset';
+        style.height = `calc(100% + ${margin.offset}px)`;
+        // style.height = 'unset';
         style['flex-grow'] = 1; // let flex handle that
         style['flex-shrink'] = 1;
       } else {
