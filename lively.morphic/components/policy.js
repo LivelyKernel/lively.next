@@ -1283,7 +1283,7 @@ export class PolicyApplicator extends StylePolicy {
    * @param { Morph } targetMorph - The root morph of the hierarchy.
    */
   apply (targetMorph, previousTarget) {
-    targetMorph.withMetaDo({ metaInteraction: true }, () => {
+    targetMorph.withMetaDo({ metaInteraction: true, reconcileChanges: false }, () => {
       this.withSubmorphsInScopeDo(targetMorph, morphInScope => {
         let submorphName = null;
         if (morphInScope !== targetMorph) submorphName = morphInScope.name;
