@@ -74,9 +74,18 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
     const { testModeSelector, buildModeSelector, deployModeSelector } = this.ui;
     const conf = this.project.config.lively;
 
-    conf.testOnPush = testModeSelector.selectedItem === 'push';
-    conf.buildOnPush = buildModeSelector.selectedItem === 'push';
-    conf.deployOnPush = deployModeSelector.selectedItem === 'push';
+    if (conf.testOnPush !== (testModeSelector.selectedItem === 'push')){
+      conf.testOnPush = testModeSelector.selectedItem === 'push';
+      this.project.config.hasUnsavedChanges = true;
+    }
+    if (conf.buildOnPush !== (buildModeSelector.selectedItem === 'push')){
+      conf.buildOnPush = buildModeSelector.selectedItem === 'push';
+      this.project.config.hasUnsavedChanges = true;
+    }
+    if (conf.deployOnPush !== (deployModeSelector.selectedItem === 'push')){
+      conf.deployOnPush = deployModeSelector.selectedItem === 'push';
+      this.project.config.hasUnsavedChanges = true;
+    }
     super.resolve(true);
   }
 

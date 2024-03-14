@@ -111,13 +111,16 @@ export class Project {
   }
 
   async changeRepositoryVisibility (visibility) {
+    const oldValue = this.config.lively.repositoryIsPrivate; 
     this.config.lively.repositoryIsPrivate = visibility === 'private';
+    if (this.config.lively.repositoryIsPrivate !== oldValue) this.config.hasUnsavedChanges = true;
     return await this.gitResource.changeRemoteVisibility(currentUserToken(), this.name, this.repoOwner, visibility);
   }
 
   constructor (name, opts = { author: 'anon', description: '', repoOwner: 'anon' }) {
     const { author, description, repoOwner } = opts;
     this.config = {
+      hasUnsavedChanges: true,
       name: name ? repoOwner + '--' + name : 'new world',
       author: {
         // TODO: We could enhance this by utilizing more of the user data GitHub provides for us
@@ -371,14 +374,21 @@ export class Project {
 
     // GH Pages is possible for non-private repositories in any case
     if (!this.config.lively.repositoryIsPrivate) {
+      if (!this.config.lively.canUsePages) this.config.hasUnsavedChanges = true;
       this.config.lively.canUsePages = true;
       return;
     }
 
     // Each time the repository is saved by its owner, check if they have a non-free plan, allowing to use GH Pages on private repositories
     if (this.repoOwner === currUserName && this.config.lively.repositoryIsPrivate) {
-      if (currUser.plan.name !== 'free') this.config.lively.canUsePages = true;
-      else this.config.lively.canUsePages = false;
+      if (currUser.plan.name !== 'free') {
+        if (!this.config.lively.canUsePages) this.config.hasUnsavedChanges = true;
+        this.config.lively.canUsePages = true;
+      }
+      else {
+        if (this.config.lively.canUsePages) this.config.hasUnsavedChanges = true;
+        this.config.lively.canUsePages = false;
+      }
       return;
     }
 
@@ -392,11 +402,18 @@ export class Project {
       await checkOrgPlanCmd.whenDone();
       // In case the command errors out, we just set the value to false to be on the save side
       if (checkOrgPlanCmd.exitCode !== 0) {
+        if (this.config.lively.canUsePages) this.config.hasUnsavedChanges = true;
         this.config.lively.canUsePages = false;
       } else {
         const planName = (JSON.parse(checkOrgPlanCmd.stdout))?.plan?.name;
-        if (planName && planName !== 'free') this.config.lively.canUsePages = true;
-        else this.config.lively.canUsePages = false;
+        if (planName && planName !== 'free') {
+          if (!this.config.lively.canUsePages) this.config.hasUnsavedChanges = true;
+          this.config.lively.canUsePages = true;
+        }
+        else {
+          if (this.config.lively.canUsePages) this.config.hasUnsavedChanges = true;
+          this.config.lively.canUsePages = false;
+        }
       }
     }
   }
@@ -407,6 +424,7 @@ export class Project {
    * Called when a project gets saved.
    */
   async saveConfigData () {
+    if (!this.config.hasUnsavedChanges) return;
     const remoteConfigured = await this.hasRemoteConfigured();
     // Update for the case that a user changed its plan since the last save.
     if (remoteConfigured) await this.checkPagesSupport();
@@ -424,8 +442,10 @@ export class Project {
       throw Error('No config file found. Should never happen.');
     }
     try {
+      delete this.config.hasUnsavedChanges;
       await this.configFile.write(JSON.stringify(this.config, null, 2));
     } catch (e) {
+      this.config.hasUnsavedChanges = true;
       throw Error('Error writing config file', { cause: e });
     }
   }
@@ -464,6 +484,7 @@ export class Project {
   increaseVersion (increaseLevel = 'patch') {
     const version = semver.coerce(this.config.version);
     this.config.version = semver.inc(version, increaseLevel);
+    this.config.hasUnsavedChanges = true;
   }
 
   async bindAgainstCurrentLivelyVersion (knownCompatibleVersion, onlyLoadNotOpen = false) {
@@ -487,6 +508,7 @@ export class Project {
           $world.setStatusMessage(`Updated the required version of lively.next for ${this.name}.`, StatusMessageConfirm);
           const currentCommit = await VersionChecker.currentLivelyVersion(true);
           this.config.lively.boundLivelyVersion = currentCommit;
+          this.config.hasUnsavedChanges = true;
           await this.saveConfigData();
           return 'UPDATED';
         }
@@ -500,6 +522,7 @@ export class Project {
         $world.setStatusMessage(`The required version of lively.next ${this.name} has been overwritten. ${this.name} has been upgraded to use the latest version available to you.`, StatusMessageWarning);
         const currentCommit = await VersionChecker.currentLivelyVersion(true);
         this.config.lively.boundLivelyVersion = currentCommit;
+        this.config.hasUnsavedChanges = true;
         await this.saveConfigData();
         return 'UPDATED';
       }
@@ -521,6 +544,7 @@ export class Project {
     livelyConfig.testOnPush = true;
     livelyConfig.buildOnPush = false;
     livelyConfig.deployOnPush = false;
+    this.config.hasUnsavedChanges = true;
   }
 
   async create (withRemote = false, gitHubUser, priv) {
@@ -850,6 +874,7 @@ export class Project {
       });
     }
     currentDeps = arr.uniqBy(currentDeps, obj.equals);
+    if (!obj.equals(currentDeps, this.config.lively.projectDependencies)) this.config.hasUnsavedChanges = true;
     this.config.lively.projectDependencies = currentDeps;
     return currentDeps;
   }
@@ -866,6 +891,7 @@ export class Project {
         if (content.includes(dep.name)) usedDeps.push(dep);
       });
     }
+    if (!obj.equals(this.config.lively.projectDependencies), usedDeps) this.config.hasUnsavedChanges = true;
     this.config.lively.projectDependencies = usedDeps;
     return usedDeps;
   }
