@@ -742,10 +742,11 @@ export class TilingLayout extends Layout {
     this.container.renderingState.cssLayoutToMeasureWith = this.container.layout;
   }
 
-  handleRenamingOf (submorph) {
-    this._policiesSynthesized = true;
-    this.container.layout = this.copy();
-    this.container.renderingState.cssLayoutToMeasureWith = this.container.layout;
+  handleRenamingOf (oldName, newName) {
+    this.config.resizePolicies = this.config.resizePolicies.map(([target, policy]) => {
+      if (target === oldName) return [newName, policy];
+      else return [target, policy];
+    });
   }
 
   /**
@@ -1552,7 +1553,7 @@ export class ConstraintLayout extends Layout {
   }
 
   handleRenamingOf (submorph) {
-    this.container.layout = this.copy();
+    // nothing to be done any more
   }
 
   settingsFor (morph) {
@@ -3181,7 +3182,7 @@ export class GridLayout extends Layout {
   }
 
   handleRenamingOf (submorph) {
-    this.container.layout = this.copy();
+    // nothing to be done any more
   }
 
   /**

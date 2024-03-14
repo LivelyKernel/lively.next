@@ -1,4 +1,4 @@
-import { obj } from 'lively.lang';
+import { obj, promise } from 'lively.lang';
 import module from 'lively.modules/src/module.js';
 import { connect } from 'lively.bindings';
 import { Reconciliation } from './reconciliation.js';
@@ -137,7 +137,8 @@ export class ComponentChangeTracker {
    */
   async processChangeInComponent (change) {
     if (this.ignoreChange(change)) return;
-    Reconciliation.perform(this.componentDescriptor, change);
+    this._finishPromise = promise.deferred();
+    Promise.resolve(Reconciliation.perform(this.componentDescriptor, change)).then(() => this._finishPromise.resolve());
     this.componentDescriptor.makeDirty();
     this.componentDescriptor.refreshDependants();
   }

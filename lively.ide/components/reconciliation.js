@@ -1454,16 +1454,20 @@ class RenameReconciliation extends PropChangeReconciliation {
    * @returns { PropChangeReconciliation } The reconciliator object.
    */
   handleRenaming (interactiveDescriptor, local = true) {
+    this._backups.push(interactiveDescriptor.ensureComponentDefBackup());
     let subSpec = this.getSubSpecForTarget(interactiveDescriptor);
     if (!local) {
       // only proceed to patch the subSpec, if we are really derived!
       if (subSpec?.__wasAddedToDerived__) subSpec = false;
     }
+
     if (subSpec) {
       subSpec.name = string.decamelize(this.newName); // rename the spec object, since it is present
       const specNode = this.getNodeForTargetInSource(interactiveDescriptor);
       if (specNode) this.patchPropIn(specNode, 'name', this.getExpressionOfValue());
     }
+
+    this.patchOwnerLayoutIfNeeded(interactiveDescriptor);
 
     // renaming is a structural change and requires propagation of the changes
     interactiveDescriptor.withDerivedComponentsDo(derivedDescr => {
@@ -1473,7 +1477,19 @@ class RenameReconciliation extends PropChangeReconciliation {
     return this;
   }
 
+  patchOwnerLayoutIfNeeded (interactiveDescriptor) {
+    const { parsedComponent } = this.getDescriptorContext(interactiveDescriptor);
+    const affectedPolicy = getMorphNode(parsedComponent, this.target.owner);
+    const parentNode = getPropertiesNode(affectedPolicy, this.target.owner);
+    const parentSpec = interactiveDescriptor.stylePolicy.getSubSpecFor(!this.target.owner?.isComponent ? this.owner.name : null);
+    if (parentSpec?.layout && parentNode) {
+      parentSpec.layout.handleRenamingOf(this.oldName, this.newValue);
+      this.patchPropIn(parentNode, 'layout', parentSpec.layout.__serialize__());
+    }
+  }
+
   reconcile () {
+    this._backups = [];
     if (this.withinDerivedComponent(this.renamedMorph)) {
       throw new Error('Cannot rename a morph that has not been introduced in this component! Please rename the morph in the component it originated from.');
     }
@@ -1486,6 +1502,7 @@ class RenameReconciliation extends PropChangeReconciliation {
   }
 
   async applyChanges () {
+    await Promise.all(this._backups);
     super.applyChanges();
     if (this.renameComponent) {
       const newMorph = await renameComponent(this.renamedMorph, this.newName, this.System);
@@ -1503,16 +1520,6 @@ class RenameReconciliation extends PropChangeReconciliation {
 
         browser.searchForModuleAndSelect(newModId);
       });
-    }
-
-    this.postApply();
-  }
-
-  postApply () {
-    const { owner } = this.renamedMorph;
-    const affectedLayout = owner?.layout;
-    if (affectedLayout?.layoutableSubmorphs.includes(this.renamedMorph)) {
-      affectedLayout.handleRenamingOf(this.renamedMorph);
     }
   }
 }
