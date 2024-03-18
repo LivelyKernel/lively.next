@@ -436,7 +436,7 @@ export class PackageTreeData extends TreeData {
     `);
       if (gitIgnoreContents) { gitignore.push(...gitIgnoreContents.split('\n')); }
     }
-    const files = await this.systemInterface.resourcesOfPackage(selectedPkg.url, ['assets', 'objectdb', '.git', ...gitignore]);
+    const files = await this.systemInterface.resourcesOfPackage(selectedPkg.url, ['node_modules', 'build', 'assets', 'objectdb', '.git', ...gitignore]);
     await this.systemInterface.getPackage(selectedPkg.url);
     const loadedModules = {};
     files.forEach(file => {
