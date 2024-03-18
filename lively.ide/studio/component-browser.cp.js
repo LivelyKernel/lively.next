@@ -723,6 +723,54 @@ export class ExportIndicator extends Morph {
   }
 }
 
+const SearchComponentsNotice = component({
+  extent: pt(663.7, 592.1),
+  layout: new TilingLayout({
+    axis: 'column',
+    axisAlign: 'center',
+    orderByIndex: true
+  }),
+  fill: Color.rgba(255, 255, 255, 0),
+  submorphs: [
+    {
+      type: Text,
+      name: 'component box',
+      extent: pt(164, 231),
+      dropShadow: new ShadowObject({ color: Color.rgba(0, 0, 0, 0.16), blur: 15, fast: false }),
+      fontColor: Color.rgba(0, 0, 0, 0.25),
+      fontSize: 164,
+      fontWeight: 700,
+      position: pt(-5, 26),
+      textAndAttributes: ['', {
+        fontFamily: 'Tabler Icons',
+        fontWeight: '900'
+      }]
+
+    }, {
+      type: 'text',
+      name: 'notice',
+      textAlign: 'center',
+      fixedWidth: true,
+      fontColor: Color.rgba(0, 0, 0, 0.25),
+      dropShadow: new ShadowObject({ color: Color.rgba(0, 0, 0, 0.16), blur: 15, fast: false }),
+      fontSize: 34,
+      fontWeight: 700,
+      lineWrapping: 'by-words',
+      textAndAttributes: ['Begin searching to display components...', null],
+      extent: pt(354.6, 191)
+    }]
+});
+
+const SearchComponentsNoticeDark = component(SearchComponentsNotice, {
+  submorphs: [{
+    name: 'component box',
+    fontColor: Color.rgba(255, 255, 255, 0.25)
+  }, {
+    name: 'notice',
+    fontColor: Color.rgba(255, 255, 255, 0.25)
+  }]
+});
+
 export class ComponentBrowserModel extends ViewModel {
   static get properties () {
     return {
@@ -1475,54 +1523,6 @@ const ProjectSectionDark = component(ProjectSection, {
     name: 'project title',
     fontColor: Color.rgb(204, 204, 204),
     borderColor: Color.rgb(130, 130, 130)
-  }]
-});
-
-const SearchComponentsNotice = component({
-  extent: pt(663.7, 592.1),
-  layout: new TilingLayout({
-    axis: 'column',
-    axisAlign: 'center',
-    orderByIndex: true
-  }),
-  fill: Color.rgba(255, 255, 255, 0),
-  submorphs: [
-    {
-      type: Text,
-      name: 'component box',
-      extent: pt(164, 231),
-      dropShadow: new ShadowObject({ color: Color.rgba(0, 0, 0, 0.16), blur: 15, fast: false }),
-      fontColor: Color.rgba(0, 0, 0, 0.25),
-      fontSize: 164,
-      fontWeight: 700,
-      position: pt(-5, 26),
-      textAndAttributes: ['', {
-        fontFamily: 'Tabler Icons',
-        fontWeight: '900'
-      }]
-
-    }, {
-      type: 'text',
-      name: 'notice',
-      textAlign: 'center',
-      fixedWidth: true,
-      fontColor: Color.rgba(0, 0, 0, 0.25),
-      dropShadow: new ShadowObject({ color: Color.rgba(0, 0, 0, 0.16), blur: 15, fast: false }),
-      fontSize: 34,
-      fontWeight: 700,
-      lineWrapping: 'by-words',
-      textAndAttributes: ['Begin searching to display components...', null],
-      extent: pt(354.6, 191)
-    }]
-});
-
-const SearchComponentsNoticeDark = component(SearchComponentsNotice, {
-  submorphs: [{
-    name: 'component box',
-    fontColor: Color.rgba(255, 255, 255, 0.25)
-  }, {
-    name: 'notice',
-    fontColor: Color.rgba(255, 255, 255, 0.25)
   }]
 });
 
