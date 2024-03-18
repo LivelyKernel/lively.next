@@ -188,12 +188,13 @@ export class PropertiesPanelModel extends ViewModel {
     this.ui.backgroundControl.visible = true;
     this.models.backgroundControl.onRefresh();
     this.toggleDefaultControls(false);
-    // fixme: clear any open popups
+
     this.models.effectsControl.deactivate();
     this.models.fillControl.deactivate();
     this.models.borderControl.targetMorph = null;
     this.models.borderControl.deactivate();
     this.models.textControl.deactivate();
+    this.models.layoutControl.deactivate();
 
     this.models.componentControl.closePopup();
     this.models.componentStatesControl.closePopup();
