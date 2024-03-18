@@ -1587,7 +1587,11 @@ class TextChangeReconciliation extends PropChangeReconciliation {
       }
 
       if (isInsertion) {
-        const insertionIndexInSource = stringNode.start + insertionStartIndex - attributeStart + 1;
+        let insertionIndexInSource = stringNode.start + insertionStartIndex - attributeStart + 1;
+        // Count numbers of newlines that come **before** the insertion. As those are two characters in the module source (\n),
+        // we need to account for each of them with an additional character.
+        const lineBreakOffset = (stringNode.value.slice(0, insertionStartIndex).match(/\n/g) || []).length;
+        insertionIndexInSource += lineBreakOffset;
         this.addChangesToModule(modId, [{
           action: 'insert',
           start: insertionIndexInSource,
