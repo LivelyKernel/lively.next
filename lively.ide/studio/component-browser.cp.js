@@ -355,7 +355,7 @@ class MasterComponentTreeData extends TreeData {
   async listComponentFilesInDir (folderLocation) {
     const resources = (await resource(folderLocation).dirList(1, {
       exclude: (res) => {
-        if (res.name() === 'assets' || res.name() === 'tests') return true;
+        if (res.name() === 'assets' || res.name() === 'tests' || res.name() === 'node_modules') return true;
         return !((res.url.endsWith('.cp.js') || res.isDirectory()) && !res.name().startsWith('.'));
       }
     }));
@@ -1202,7 +1202,7 @@ export class ComponentBrowserModel extends ViewModel {
       const componentModules = Array.from(await Promise.all(rootUrls.map(url => {
         return resource(url).dirList(10, {
           exclude: (file) => {
-            return file.isFile() && (!file.url.endsWith('cp.js') || file.url.includes('tests'));
+            return file.isFile() && (!file.url.endsWith('cp.js') || file.url.includes('tests') || file.url.includes('node_modules'));
           }
         });
       }))).flat().filter(file => file.url.endsWith('cp.js'))
