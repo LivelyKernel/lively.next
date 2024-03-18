@@ -185,7 +185,8 @@ export class AutoLayoutControlModel extends PropertySectionModel {
       });
       this.targetMorph.world()?.sceneGraph?.refresh();
     }
-    this.popup = false;
+    this.popup = null;
+    this.closePopup();
 
     signal(this.view, 'layout changed');
   }
@@ -204,7 +205,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
   }
 
   closePopup () {
-    this.popup.close();
+    this.popup?.close();
     this.popup = null;
     this.update();
   }
