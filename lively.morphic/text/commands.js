@@ -185,13 +185,15 @@ const commands = [
     name: 'delete',
     doc: 'Delete the character following the cursor or the selection.',
     exec: function (morph) {
-      const sel = morph.selection;
       if (morph.rejectsInput()) return false;
-      if (sel.isEmpty()) sel.growRight(1);
-      sel.text = '';
-      sel.collapse();
-      if (morph.activeMark) morph.activeMark = null;
-      return true;
+      return morph.withMetaDo({ reconcileChanges: true }, () => {
+        const sel = morph.selection;
+        if (sel.isEmpty()) sel.growRight(1);
+        sel.text = '';
+        sel.collapse();
+        if (morph.activeMark) morph.activeMark = null;
+        return true;
+      })
     }
   },
 
