@@ -1,5 +1,5 @@
 /* global System */
-import { arr, promise, obj, chain, fun } from 'lively.lang';
+import { arr, obj, chain, fun } from 'lively.lang';
 import { query, parse, walk } from 'lively.ast';
 import { pt, Color } from 'lively.graphics';
 
@@ -275,8 +275,18 @@ export default class TestRunner extends HTMLMorph {
   }
 
   async onLoad () {
-    // on deserialization
-    await System.import('mocha-es6');
+    const { value: isInstalled } = await this.systemInterface.runEval(`
+    const g = typeof global !== 'undefined' ? global : window;
+   !!g.Mocha && !!g.chai
+    `, { targetModule: 'lively://lively.ide/test-runner' });
+    if (isInstalled) return;
+    await this.systemInterface.importPackage('mocha-es6');
+    await this.systemInterface.runEval(`
+    const g = typeof global !== 'undefined' ? global : window;
+    const promise = await System.import('lively.lang/promise.js')
+    promise.waitFor(30 * 1000, () =>  !!g.Mocha && !!g.chai);
+  `, { targetModule: 'lively://lively.ide/test-runner' });
+
     await this.whenEnvReady();
     resource(document.URL).query().runAllTests && this.runAllTests();
     this.update();
