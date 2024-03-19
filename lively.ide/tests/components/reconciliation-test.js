@@ -684,6 +684,36 @@ describe('component -> source reconciliation', function () {
       name: 'justin'
     }), null]`, 'reconciles embedded morphs if assigned via text and attributes');
     });
+
+    it('properly reconciles insertion and deletions of newlines', async () => {
+      const textMorph = ComponentB.get('some submorph');
+      textMorph.readOnly = false;
+      textMorph.execCommand('insertstring', { string: 'hello' });
+      textMorph.execCommand('insertstring', { string: '\n' });
+      textMorph.execCommand('insertstring', { string: 'r' });
+      textMorph.execCommand('insertstring', { string: '\n' });
+      textMorph.execCommand('insertstring', { string: 'o' });
+
+      await ComponentB._changeTracker.onceChangesProcessed();
+      let updatedSource = await getSource();
+      expect(updatedSource).includes('[\'hello\\nr\\no\', null]', 'newlines are inserted at the correct places in the source');
+
+      textMorph.execCommand('delete backwards');
+      textMorph.execCommand('delete backwards');
+      await ComponentB._changeTracker.onceChangesProcessed();
+      updatedSource = await getSource();
+      expect(updatedSource).includes('[\'hello\\nr\', null]', 'newlines are deleted at the correct places in the source');
+    });
+
+    it('properly reconciles deletion with DEL key', async () => {
+      const textMorph = ComponentT.get('another greeter');
+      textMorph.readOnly = false;
+      textMorph.cursorPosition = { column: 0, row: 0 };
+      textMorph.execCommand('delete');
+      await ComponentT._changeTracker.onceChangesProcessed();
+      let updatedSource = await getSource();
+      expect(updatedSource).includes('\'o bro!\'', 'forward deletion to work');
+    });
   });
 
   describe('updating derived components', () => {
