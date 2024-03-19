@@ -244,6 +244,7 @@ class Layout {
         this.container.renderingState.hasCSSLayoutChange = true;
       }
     }
+    if (this._initializingPolicies) return;
     this.getAffectedPolicy()?.overrideProp(this.container, 'layout');
   }
 
@@ -356,7 +357,9 @@ export class TilingLayout extends Layout {
   }
 
   attach () {
+    this._initializingPolicies = true;
     this.initializeResizePolicies();
+    this._initializingPolicies = false;
     super.attach();
     this.measureAfterRender(this.container);
   }
@@ -503,7 +506,11 @@ export class TilingLayout extends Layout {
    */
   getSpec () {
     if (!this.container) return this.sanitizeConfig(this.config);
-    if (Array.isArray(this._resizePolicies)) { this.initializeResizePolicies(); }
+    if (Array.isArray(this._resizePolicies)) {
+      this._initializingPolicies = true;
+      this.initializeResizePolicies();
+      this._initializingPolicies = false;
+    }
     let {
       axis, align, axisAlign, spacing, orderByIndex, resizePolicies,
       reactToSubmorphAnimations, renderViaCSS, padding, wrapSubmorphs,
@@ -1074,7 +1081,10 @@ export class TilingLayout extends Layout {
   ensureResizePolicies (layoutableSubmorphs) {
     if (!layoutableSubmorphs.every(m => this._resizePolicies.has(m))) {
       this._resizePolicies = this.config.resizePolicies;
+      const before = this._initializingPolicies;
+      this._initializingPolicies = true;
       this.initializeResizePolicies();
+      this._initializingPolicies = before;
     }
   }
 

@@ -1203,10 +1203,14 @@ export class StylePolicy {
    */
   isResizedByLayout (aSubmorph) {
     const layout = aSubmorph.owner && aSubmorph.owner.layout;
-    if (!layout) return false;
-    if (layout.resizePolicies) {
-      const heightPolicy = layout.getResizeHeightPolicyFor(aSubmorph);
-      const widthPolicy = layout.getResizeWidthPolicyFor(aSubmorph);
+    let heightPolicy = 'fixed'; let widthPolicy = 'fixed';
+    if (aSubmorph.isText) {
+      if (!aSubmorph.fixedHeight) heightPolicy = 'hug';
+      if (!aSubmorph.fixedWidth) widthPolicy = 'hug';
+    }
+    if (layout?.resizePolicies) {
+      if (heightPolicy !== 'hug') heightPolicy = layout.getResizeHeightPolicyFor(aSubmorph);
+      if (widthPolicy !== 'hug') widthPolicy = layout.getResizeWidthPolicyFor(aSubmorph);
       if (heightPolicy === 'fill' || widthPolicy === 'fill') return { widthPolicy, heightPolicy };
     }
     return false;
