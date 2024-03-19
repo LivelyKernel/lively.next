@@ -1577,20 +1577,23 @@ class TextChangeReconciliation extends PropChangeReconciliation {
 
       if (!stringNode) return defaultPatch();
 
-      const insertionStartIndex = this.target.positionToIndex(changedRange.start);
+      const manipulationStartIndex = this.target.positionToIndex(changedRange.start);
       if (isDeletion) {
-        const insertionEndIndex = this.target.positionToIndex(changedRange.end);
+        let deletionIndexInSource = stringNode.start + manipulationStartIndex - attributeStart + 1;
+        // Count numbers of newlines that come **before** the deletion. As those are two characters in the module source (\n),
+        // we need to account for each of them with an additional character.
+        const lineBreakOffset = (stringNode.value.slice(0, manipulationStartIndex).match(/\n/g) || []).length;
+        deletionIndexInSource += lineBreakOffset;
         const deleteCharacters = JSON.stringify(undo.args[1][0]).slice(1, -1).length;
-        const deletionIndexInSource = stringNode.start + insertionStartIndex - attributeStart + 1;
         this.addChangesToModule(modId, [{ action: 'replace', start: deletionIndexInSource, end: deletionIndexInSource + deleteCharacters, lines: [''] }]);
         return this;
       }
 
       if (isInsertion) {
-        let insertionIndexInSource = stringNode.start + insertionStartIndex - attributeStart + 1;
+        let insertionIndexInSource = stringNode.start + manipulationStartIndex - attributeStart + 1;
         // Count numbers of newlines that come **before** the insertion. As those are two characters in the module source (\n),
         // we need to account for each of them with an additional character.
-        const lineBreakOffset = (stringNode.value.slice(0, insertionStartIndex).match(/\n/g) || []).length;
+        const lineBreakOffset = (stringNode.value.slice(0, manipulationStartIndex).match(/\n/g) || []).length;
         insertionIndexInSource += lineBreakOffset;
         this.addChangesToModule(modId, [{
           action: 'insert',
