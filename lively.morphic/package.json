@@ -47,7 +47,8 @@
       "jsdiff": "esm://cache/jsdiff",
       "dom-to-image": "esm://cache/dom-to-image",
       "bowser": "esm://cache/bowser@1.4.1",
-      "webfontloader": "esm://cache/webfontloader"
+      "webfontloader": "esm://cache/webfontloader",
+      "yoga-layout": "esm://cache/yoga-layout"
     }
   },
   "scripts": {
