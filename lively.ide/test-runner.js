@@ -786,12 +786,10 @@ export default class TestRunner extends HTMLMorph {
       historyId: 'lively.morphic-test-runner-load-tests-module-hist'
     });
 
-    const i = LoadingIndicator.open('running tests');
     try {
       for (const { url, nameInPackage } of selected) {
-        i.label = `Running ${nameInPackage}`;
         await this.runTestFile(url);
       }
-    } finally { i.remove(); }
+    } finally { /* noop */ }
   }
 }
