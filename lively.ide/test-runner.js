@@ -770,8 +770,9 @@ export default class TestRunner extends HTMLMorph {
       });
 
     // if (!pkg) return null
-
+    const li = LoadingIndicator.open('Finding Testmodules in Package');
     const tests = await findTestModulesInPackage(sys, pkg.url);
+    li.remove();
     const testItems = tests.map(url => {
       const nameInPackage = url.slice(pkg.url.length);
       return {
