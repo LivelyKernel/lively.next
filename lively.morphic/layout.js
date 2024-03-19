@@ -389,7 +389,7 @@ export class TilingLayout extends Layout {
     this._resizePolicies = new WeakMap();
     if (Array.isArray(resizePolicies)) {
       resizePolicies.map(([morphName, policy]) => {
-        const m = layoutableSubmorphs.find(m => m.name === morphName);
+        const m = this.container.submorphs.find(m => m.name === morphName);
         if (m) this.setResizePolicyFor(m, policy);
         arr.remove(layoutableSubmorphs, m);
       });
