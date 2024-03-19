@@ -207,7 +207,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
    * via a policy derived from this one.
    */
   refreshDependants (dependants = this.getDependants()) {
-    dependants.forEach(m => m.master.applyIfNeeded(true));
+    dependants.forEach(m => m.master?.applyIfNeeded(true));
   }
 
   async withDerivedComponentsDo (cb) {
