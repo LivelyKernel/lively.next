@@ -329,7 +329,7 @@ export class TilingLayout extends Layout {
     this._justifySubmorphs = props.justifySubmorphs || 'packed';
     this._hugContentsVertically = props.hugContentsVertically || false;
     this._hugContentsHorizontally = props.hugContentsHorizontally || false;
-    this._orderByIndex = props.orderByIndex || false;
+    this._orderByIndex = props.orderByIndex || true;
     this._wrapSubmorphs = false;
     if (typeof props.wrapSubmorphs !== 'undefined') {
       this._wrapSubmorphs = props.wrapSubmorphs;
