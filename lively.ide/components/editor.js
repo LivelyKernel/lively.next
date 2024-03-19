@@ -160,9 +160,12 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   async reset () {
     const dependants = this.stylePolicy._dependants;
     await replaceComponentDefinition(this._backupComponentDef, this.componentName, this.targetModule);
+    delete this._backupComponentDef;
     this._dirty = false;
     this.stylePolicy._dependants = dependants;
-    // FIXME: carry over dependents for now
+    await this.withDerivedComponentsDo(async cb => {
+      await cb.reset();
+    });
   }
 
   /**
@@ -207,9 +210,9 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
     dependants.forEach(m => m.master.applyIfNeeded(true));
   }
 
-  withDerivedComponentsDo (cb) {
+  async withDerivedComponentsDo (cb) {
     if (!this.stylePolicy._dependants) return;
-    [...this.stylePolicy._dependants.values()].forEach(expr => {
+    for (let expr of [...this.stylePolicy._dependants.values()]) {
       const policyOrDescr = exprSerializer.deserializeExpr(expr);
       // this will most often reference an inline policy,
       // and not the actual component descriptor
@@ -217,8 +220,8 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
       if (policyOrDescr[metaSymbol]?.path?.length > 0) {
         descr = module(this.System, policyOrDescr[metaSymbol].moduleId).recorder[policyOrDescr[metaSymbol].exportedName];
       } else descr = policyOrDescr;
-      if (descr) cb(InteractiveComponentDescriptor.ensureInteractive(descr));
-    });
+      if (descr) await cb(InteractiveComponentDescriptor.ensureInteractive(descr));
+    }
   }
 
   /**
