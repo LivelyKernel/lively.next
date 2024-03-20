@@ -916,7 +916,7 @@ class EditHaloItem extends RoundHaloItem {
       this.halo.remove();
       targetToEdit = await world.multipleChoicePrompt({
         title: 'Edit View or Morph?',
-        text:  'The selected morph is attached to a view model. Please select which one you would like to edit.'
+        text: 'The selected morph is attached to a view model. Please select which one you would like to edit.'
       }, {
         choices: new Map([[
           [...Icon.textAttribute('database', {
@@ -1150,11 +1150,11 @@ class ComponentHaloItem extends RoundHaloItem {
         const newName = await world.prompt({
           title: 'Name Collision',
           text: ['The name of\n', defaultStyle,
-          morphToBeRenamed.toString(), {
-            ...defaultStyle, fontStyle: 'italic', fontWeight: 'bold'
-          },
-          '\nis not unique within the submorph hierachy of\n', { ...defaultStyle },
-          target.name, { ...defaultStyle, fontStyle: 'italic', fontWeight: 'bold' },
+            morphToBeRenamed.toString(), {
+              ...defaultStyle, fontStyle: 'italic', fontWeight: 'bold'
+            },
+            '\nis not unique within the submorph hierachy of\n', { ...defaultStyle },
+            target.name, { ...defaultStyle, fontStyle: 'italic', fontWeight: 'bold' },
           `\nThere ${nonUniqueMorphs.length > 2 ? 'are ' + (nonUniqueMorphs.length - 1) + ' other morphs' : 'is one other morph'} with the exact same name located in this component.`, defaultStyle,
           ' Duplicate names can cause errors when applying styles to derived morphs of this master component, so it is essential that there is no name ambiguity. Please enter a new name for this or the other conflicting morphs:', defaultStyle]
         }, {
@@ -1881,9 +1881,9 @@ export default class Halo extends Morph {
     }];
   }
 
-  removeIfDetached () {
+  removeIfDetached (newOwner) {
     setTimeout(() => {
-      if (!this.target.owner) this.remove();
+      if (!newOwner || !this.target.owner) this.remove();
     });
   }
 
