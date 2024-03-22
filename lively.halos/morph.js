@@ -1883,6 +1883,9 @@ export default class Halo extends Morph {
 
   removeIfDetached (newOwner) {
     setTimeout(() => {
+      if (this.target.undoInProgress?.name === 'grab-halo') {
+        return;
+      }
       if (!newOwner || !this.target.owner) this.remove();
     });
   }
