@@ -1747,10 +1747,7 @@ export class Morph {
    */
   onOwnerChanged (newOwner) {
     delete this._ownerChain;
-    this.withAllSubmorphsDo(m => {
-      m._yogaNode?.free();
-      delete m._yogaNode;
-   });
+    this.layout?.onOwnerChanged(newOwner);
   }
 
   async fadeOut (duration = 1000) {
