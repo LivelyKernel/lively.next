@@ -67,10 +67,6 @@ class Layout {
     const submorphNode = this.getNodeFor(layoutableSubmorph);
     if (!layoutableSubmorph.isLayoutable) return;
     this.onDomResize(submorphNode, layoutableSubmorph);
-    if (layoutableSubmorph._correctRender) {
-      layoutableSubmorph._correctRender(submorphNode);
-      delete layoutableSubmorph._correctRender;
-    }
   }
 
   copy () { return new this.constructor(this); }
@@ -752,6 +748,8 @@ export class TilingLayout extends Layout {
    * the layoutable submorphs from there.
    */
   onDomResize (node, morph) {} // eslint-disable-line no-unused-vars
+
+  measureSubmorph () {} // do nothing
 
   onContainerResized (morph) {} // eslint-disable-line no-unused-vars
 
