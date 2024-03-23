@@ -178,9 +178,10 @@ export class ChangeManager {
     // and resulting in an endless loop which shows visible jiggle of text.
     const isScrollChange = change.prop === 'scroll';
     const isStaticText = !morph.document;
+    const skipRender = this.defaultMeta.skipRender;
     const scrollingStaticText = isStaticText && isScrollChange;
 
-    if ((isDocumentChange || isUpdatingChange) && !scrollingStaticText) morph.makeDirty();
+    if ((isDocumentChange || isUpdatingChange) && !scrollingStaticText && !skipRender) morph.makeDirty();
 
     const grouping = arr.last(this.changeGroupStack);
     if (grouping && grouping.consumesChanges()) {

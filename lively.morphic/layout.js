@@ -813,36 +813,28 @@ export class TilingLayout extends Layout {
     const newHeight = node.getComputedHeight();
     const heightPolicy = this.getResizeHeightPolicyFor(morph);
     const widthPolicy = this.getResizeWidthPolicyFor(morph);
-    let updateTransform = false; let signalExtent = false;
+
     if (newPosX !== morph.position.x || newPosY !== morph.position.y) {
-      morph._morphicState.position = pt(newPosX, newPosY);
-      updateTransform = true;
-      signal(morph, 'position', morph.position);
+      morph.withMetaDo({ isLayoutAction: true, skipRender: true }, () => morph.position = pt(newPosX, newPosY));
     }
-    // also update the extent if the resize policy is not fixed!
+
     if (widthPolicy === 'fill' && String(newWidth) !== 'NaN' && newWidth !== morph.width) {
-      morph.withMetaDo({ isLayoutAction: true }, () => morph.width = newWidth);
+      morph.withMetaDo({ isLayoutAction: true, skipRender: false }, () => {
+        morph.width = newWidth;
+      });
     }
     if (heightPolicy === 'fill' && String(newHeight) !== 'NaN' && newHeight !== morph.height) {
-      morph.withMetaDo({ isLayoutAction: true }, () => morph.height = newHeight);
+      morph.withMetaDo({ isLayoutAction: true, skipRender: false }, () => morph.height = newHeight);
     }
 
-    if (signalExtent) {
-      signal(morph, 'extent', morph.extent);
-    }
-
-    if (updateTransform && morph.layout && morph.layout.name() === 'Constraint') {
+    if (morph.layout && morph.layout.name() === 'Constraint') {
       morph.layout.applyRequests = true;
       morph.layout.forceLayout();
     }
 
     if (morph.layout && morph.layout.name() === 'Tiling') {
+      // we also need to compute the layout here actually
       morph.layout.updateContainerBounds();
-    }
-
-    if (updateTransform) {
-      // trigger the halo if needed
-      morph.updateTransform();
     }
   }
 
