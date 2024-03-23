@@ -1445,6 +1445,14 @@ export class PolicyApplicator extends StylePolicy {
     return [this.targetMorph, ...this.targetMorph.ownerChain()].find(m => m.isComponent && !m.viewModel?.view);
   }
 
+  isCurrentlyAnimated (aMorph) {
+    while (aMorph) {
+      if (aMorph.master?._animating) return true;
+      aMorph = aMorph.owner;
+    }
+    return false;
+  }
+
   /**
    * Callback that is invoked once a morph that is managed by the applicator changes.
    * In general this means that if the change is a style property, we override this style prop locally.
@@ -1454,10 +1462,7 @@ export class PolicyApplicator extends StylePolicy {
   onMorphChange (changedMorph, change) {
     if (change.meta?.metaInteraction ||
         !this.targetMorph ||
-        !![
-          changedMorph,
-          ...changedMorph.ownerChain()
-        ].find(m => m.master?._animating)
+        this.isCurrentlyAnimated(changedMorph)
     ) return;
     if (changedMorph._isDeserializing) return;
     if (this.isStaleComponentContext) return;
