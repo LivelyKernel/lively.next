@@ -124,7 +124,7 @@ export class MorphPanelModel extends ViewModel {
         $world.addMorph(view, tb.view);
       });
       view.topRight = bounds.topLeft();
-      view.withAnimationDo(() => {
+      $world.withAnimationDo(() => {
         view.opacity = 1;
         view.topLeft = bounds.topLeft();
         if (versionViewer) versionViewer.relayout();
@@ -136,7 +136,7 @@ export class MorphPanelModel extends ViewModel {
       this.ui.sceneGraph.refresh();
     } else {
       this.detachFromWorld($world);
-      await view.withAnimationDo(() => {
+      await $world.withAnimationDo(() => {
         view.opacity = 0;
         view.topRight = bounds.topLeft();
         if (versionViewer) versionViewer.relayout();
