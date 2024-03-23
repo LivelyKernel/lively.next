@@ -408,11 +408,11 @@ export class TilingLayout extends Layout {
   scheduleApply (submorph, animation, change = {}) {
     if (change.prop === 'extent' &&
         !change.meta?.isLayoutAction &&
-        this.renderViaCSS &&
-        (this.hugContentsVertically || this.hugContentsHorizontally)) {
-      this.container.renderingState.cssLayoutToMeasureWith = this;
+        this.renderViaCSS
+    ) {
+      this.computeBoundsOfEntireLayoutComposition();
+      this.updateContainerBounds();
     }
-
     super.scheduleApply(submorph, animation, change);
   }
 
@@ -740,6 +740,10 @@ export class TilingLayout extends Layout {
     this.onConfigUpdate();
   }
 
+  get embeddedInTiling () {
+    return this.container.owner?.layout?.name() === 'Tiling';
+  }
+
   /**************
    * CSS LAYOUT *
    **************/
@@ -766,6 +770,14 @@ export class TilingLayout extends Layout {
       delete m._yogaNode;
     });
   }
+
+  onContainerRender () {
+    super.onContainerRender();
+    if (this.renderViaCSS) {
+      this.computeBoundsOfEntireLayoutComposition();
+    }
+  }
+
   /**
    * Invoked once a new morph is added to the container.
    * @override
@@ -907,7 +919,6 @@ export class TilingLayout extends Layout {
       if (updateTransform) container.updateTransform();
     }
 
-    // this happens at a time where the yoga nodes are not fully initialized yet
     this.layoutableSubmorphs.forEach(m => {
       if (!m._yogaNode) return;
       this.updateSubmorphBounds(m);
@@ -916,9 +927,15 @@ export class TilingLayout extends Layout {
 
   addSubmorphCSS (morph, style) {
     style['z-index'] = this.container.submorphs.indexOf(morph);
-    const node = this.updateSubmorphNode(morph);
+    let node = morph._yogaNode;
+    if (!node) {
+      node = this.updateSubmorphNode(morph);
+    }
+    if (!node._computedMargin) {
+      node = this.updateSubmorphNode(morph);
+    }
     if (!morph.isLayoutable) return;
-    const margin = node._computedMargin;
+    let margin = node._computedMargin;
     const { axis, layoutableSubmorphs } = this;
     const isVertical = axis === 'column';
 
@@ -982,12 +999,34 @@ export class TilingLayout extends Layout {
     return offset;
   }
 
+  computeBoundsOfEntireLayoutComposition (force = false) {
+    if (!this.container.needsRerender() &&
+        this.noLayoutActionNeeded &&
+        this.container._yogaNode ||
+        !this.container.visible) {
+      return;
+    }
+    if (!force && this.embeddedInTiling) return;
+
+    this.updateContainerNode();
+    this.container.submorphs.forEach(m => {
+      if (m.layout?.name() === 'Tiling') {
+        m.layout.computeBoundsOfEntireLayoutComposition(true);
+      }
+      this.updateSubmorphNode(m);
+    });
+    this.updateContainerNode();
+    this.refreshBoundsCache();
+  }
+
   addContainerCSS (containerMorph, style) {
     const {
       axis, hugContentsHorizontally, hugContentsVertically,
       wrapSubmorphs, justifySubmorphs
     } = this;
-    const node = this.updateContainerNode();
+    let node = containerMorph._yogaNode;
+    if (!node) node = this.updateContainerNode();
+
     if (containerMorph.visible) {
       style.display = 'flex';
     }
@@ -1259,11 +1298,9 @@ export class TilingLayout extends Layout {
 
     super.apply(animate);
     this.active = true;
-    const containerNode = this.updateContainerNode();
-    this.layoutableSubmorphs.forEach(m => {
-      this.updateSubmorphNode(m);
-    });
-    this.ensureLayoutComputed(this.container);
+
+    this.computeBoundsOfEntireLayoutComposition(true);
+    const containerNode = this.container._yogaNode;
 
     const containerBounds = containerNode.getComputedLayout();
     this.changePropertyAnimated(this.container, 'width', containerBounds.width, animate);
