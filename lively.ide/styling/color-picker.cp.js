@@ -124,15 +124,20 @@ const HexEncoder = component({
   extent: pt(140, 25),
   fill: Color.rgb(189, 195, 199),
   layout: new TilingLayout({
-    axisAlign: 'center',
     align: 'center',
+    axisAlign: 'center',
+    padding: rect(1, 1, 0, 0),
+    resizePolicies: [['hex input', {
+      height: 'fixed',
+      width: 'fill'
+    }]],
     spacing: 1
   }),
   submorphs: [
     part(DefaultNumberWidget, {
       name: 'hex opacity control',
       dropShadow: false,
-      extent: pt(40, 23),
+      extent: pt(45, 23),
       borderRadius: 0,
       viewModel: {
         floatingPoint: false,
@@ -164,14 +169,28 @@ const ThreeValEncoder = component({
   layout: new TilingLayout({
     align: 'center',
     axisAlign: 'center',
+    padding: rect(1, 1, 0, 0),
+    resizePolicies: [['opacity control', {
+      height: 'fill',
+      width: 'fixed'
+    }], ['first value', {
+      height: 'fill',
+      width: 'fixed'
+    }], ['second value', {
+      height: 'fill',
+      width: 'fixed'
+    }], ['third value', {
+      height: 'fill',
+      width: 'fixed'
+    }]],
     spacing: 1
   }),
   submorphs: [
     part(DefaultNumberWidget, {
       name: 'opacity control',
+      width: 45,
       borderRadius: 0,
       dropShadow: false,
-      extent: pt(44, 22),
       viewModel: {
         max: 1,
         min: 0,
@@ -265,7 +284,7 @@ const CssEncoder = component({
     extent: pt(138, 23),
     padding: rect(5, 3, -5, -3),
     fontColor: Color.rgb(40, 116, 166),
-    fill: Color.white,
+    fill: Color.white
   })]
 });
 
