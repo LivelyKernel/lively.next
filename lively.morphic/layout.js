@@ -203,6 +203,8 @@ class Layout {
     this.scheduleApply(submorph, animation);
   }
 
+  onOwnerChanged (newOwner) {}
+
   onChange ({ selector, args, prop, value, prevValue, meta }) {
     const anim = this.reactToSubmorphAnimations && meta && meta.animation;
     const submorph = args && args[0];
@@ -753,6 +755,15 @@ export class TilingLayout extends Layout {
 
   onContainerResized (morph) {} // eslint-disable-line no-unused-vars
 
+  onOwnerChanged (newOwner) {
+    this.container._yogaNode?.free();
+    delete this.container._yogaNode;
+    delete this.layoutableSubmorphBounds;
+    this.container.submorphs.forEach(m => {
+      m._yogaNode?.free();
+      delete m._yogaNode;
+    });
+  }
   /**
    * Invoked once a new morph is added to the container.
    * @override
