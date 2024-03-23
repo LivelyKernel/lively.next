@@ -32,7 +32,7 @@ class Layout {
       this.layoutOrder = layoutOrder;
       this.layoutOrderSource = JSON.stringify(String(layoutOrder));
     }
-    this.spacing = spacing || 0;
+    this._spacing = spacing || 0;
     this._padding = !padding ? Rectangle.inset(0) : typeof padding === 'number' ? Rectangle.inset(padding) : Rectangle.fromLiteral(padding);
   }
 
@@ -232,6 +232,10 @@ class Layout {
            !obj.equals(value, prevValue);
   }
 
+  get isLayoutAction () {
+    return this.container?.env.changeManager.defaultMeta.isLayoutAction;
+  }
+
   onConfigUpdate () {
     this.apply();
     if (!this._configChanged) {
@@ -243,7 +247,7 @@ class Layout {
       }
     }
     if (this._initializingPolicies) return;
-    this.getAffectedPolicy()?.overrideProp(this.container, 'layout');
+    if (!this.isLayoutAction) this.getAffectedPolicy()?.overrideProp(this.container, 'layout');
   }
 
   onSubmorphChange (submorph, change) {
@@ -768,8 +772,10 @@ export class TilingLayout extends Layout {
    */
   onSubmorphAdded (submorph) {
     if (!this._resizePolicies.get(submorph)) {
-      this.setResizePolicyFor(submorph, {
-        width: 'fixed', height: 'fixed'
+      submorph.withMetaDo({ isLayoutAction: true }, () => {
+        this.setResizePolicyFor(submorph, {
+          width: 'fixed', height: 'fixed'
+        });
       });
     }
   }
