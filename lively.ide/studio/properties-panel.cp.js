@@ -100,7 +100,7 @@ export class PropertiesPanelModel extends ViewModel {
         $world.addMorph(view, topBar.view);
       });
       view.topLeft = bounds.topRight();
-      view.withAnimationDo(() => {
+      $world.withAnimationDo(() => {
         view.opacity = 1,
         view.topRight = bounds.topRight();
         zoomIndicator?.relayout();
@@ -112,7 +112,7 @@ export class PropertiesPanelModel extends ViewModel {
       this.attachToWorld($world);
     } else {
       this.detachFromWorld($world);
-      await view.withAnimationDo(() => {
+      await $world.withAnimationDo(() => {
         view.opacity = 0,
         view.topLeft = bounds.topRight();
         zoomIndicator?.relayout();
