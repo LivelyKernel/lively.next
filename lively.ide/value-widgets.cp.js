@@ -271,7 +271,7 @@ const DefaultNumberWidget = component({
     orderByIndex: true,
     resizePolicies: [['value', {
       height: 'fixed',
-      width: 'fill'
+      width: 'fixed'
     }]]
   }),
   submorphs: [
@@ -280,7 +280,7 @@ const DefaultNumberWidget = component({
       name: 'value',
       fill: Color.transparent,
       extent: pt(53.6, 24),
-      fixedWidth: true,
+      fixedWidth: false,
       selectable: true,
       readOnly: true,
       fontColor: Color.rgb(40, 116, 166),
