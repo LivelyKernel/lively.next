@@ -149,10 +149,10 @@ class Layout {
   }
 
   get noLayoutActionNeeded () {
-    return !this.submorphBoundsChanged &&
-            !this.boundsChanged(this.container) &&
+    return !this.submorphsChanged &&
             !this.extentChanged(this.container) &&
-            !this.submorphsChanged;
+            !this.boundsChanged(this.container) &&
+            !this.submorphBoundsChanged;
   }
 
   get __dont_serialize__ () { return ['lastAnim', 'animationPromise']; }
