@@ -368,15 +368,8 @@ export class TilingLayout extends Layout {
 
   ensureLayoutComputed (curr) {
     const origNode = this.ensureYogaNodeFor(curr);
-    while (curr.owner?._yogaNode && curr.isLayoutable) curr = curr.owner;
-    try {
-      curr._yogaNode.calculateLayout();
-    } catch (err) {
-      // the node needs to be replaced
-      curr._yogaNode.free();
-      delete curr._yogaNode;
-      this.ensureYogaNodeFor(curr);
-    }
+    while (curr.owner?._yogaNode && curr.owner.layout && curr.isLayoutable) curr = curr.owner;
+    curr._yogaNode.calculateLayout();
     return origNode;
   }
 
