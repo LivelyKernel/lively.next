@@ -2540,8 +2540,9 @@ export class Morph {
   }
 
   applyLayoutIfNeeded () {
-    for (let i = 0; i < this.submorphs.length; i++) { this.submorphs[i].applyLayoutIfNeeded(); }
+    if (!this.needsRerender()) return;
     this.layout && !this.layout.manualUpdate && this.layout.onContainerRender();
+    for (let i = 0; i < this.submorphs.length; i++) { this.submorphs[i].applyLayoutIfNeeded(); }
   }
 
   requestMasterStyling () {
