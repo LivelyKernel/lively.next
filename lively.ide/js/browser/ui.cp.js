@@ -16,11 +16,21 @@ import { withAllViewModelsDo, PolicyApplicator } from 'lively.morphic/components
 import { module } from 'lively.modules/index.js';
 import { getEligibleSourceEditorsFor } from '../../components/helpers.js';
 
-async function positionForAnchor (context, anchor) {
+async function positionForAnchor (context, anchor, morphToPosition) {
   if (!context?.isText) return;
   if (context.renderingState.needsRerender) context.env.forceUpdate();
+  const paddingToCode = 5;
   const bounds = context.charBoundsFromTextPosition(anchor.position);
-  return bounds.rightCenter().addXY(5, 0);
+  let pos = bounds.rightCenter().addXY(paddingToCode, 0);
+  if (pos.x + morphToPosition.width > context.width) {
+    // in this case we need to get the screen line range
+    const startPos = context.charBoundsFromTextPosition({ row: anchor.position.row, column: 0 });
+    pos = bounds.topRight()
+      .withY(startPos.top() - morphToPosition.height / 2)
+      .withX(context.width - morphToPosition.width)
+      .addXY(paddingToCode, 0);
+  }
+  return pos;
 }
 
 function ensureAnchor (control) {
@@ -141,7 +151,7 @@ class ComponentEditControlModel extends ViewModel {
       view.bottom = -10;
       return;
     }
-    view.leftCenter = await positionForAnchor(editor, anchor);
+    view.leftCenter = await positionForAnchor(editor, anchor, view);
   }
 
   resetComponentDef () {
@@ -204,7 +214,7 @@ class ComponentEditControlModel extends ViewModel {
     const {
       componentMorph,
       editor,
-      view,
+      view
     } = this;
     await fun.guardNamed('collapse-' + componentMorph.id, async () => {
       const halos = $world.halos();
@@ -419,7 +429,7 @@ class ComponentEditButtonMorph extends Morph {
       return;
     }
 
-    this.leftCenter = await positionForAnchor(editor, anchor);
+    this.leftCenter = await positionForAnchor(editor, anchor, this);
   }
 
   reset () {
