@@ -734,6 +734,7 @@ export class TilingLayout extends Layout {
   }
 
   get embeddedInTiling () {
+    if (!this.container.isLayoutable) return false;
     return this.container.owner?.layout?.name() === 'Tiling';
   }
 
