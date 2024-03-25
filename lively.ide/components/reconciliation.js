@@ -1534,6 +1534,8 @@ class TextChangeReconciliation extends PropChangeReconciliation {
     const { target: textMorph } = this.change;
     const { requiredBindings, modId } = this.getDescriptorContext();
     const specNode = this.getNodeForTargetInSource();
+    const styleSpec = this.getSubSpecForTarget();
+    styleSpec.textAndAttributes = textMorph.textAndAttributes;
     if (!specNode) {
       this.uncollapseSubmorphHierarchy();
       return this;
