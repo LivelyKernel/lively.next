@@ -28,14 +28,13 @@ describe('number widget', () => {
   beforeEach(() => createMorphicEnv());
   afterEach(() => destroyMorphicEnv());
 
-  it('it fits bounds to content', async () => {
+  it('it scales down the number to the space available', async () => {
     field = part(DefaultNumberWidget, {
-      autofit: true, number: 0.5, min: 0, max: 1, floatingPoint: true
+      viewModel: { autofit: true, number: 1234345345 }
     }).openInWorld();
-    let valueContainer = field.getSubmorphNamed('value');
     await field.whenRendered();
-    expect(valueContainer.fixedWidth).to.be.true;
-    expect(field.width).approximately(valueContainer.width + 20, .5);
+    let valueContainer = field.getSubmorphNamed('value');
+    expect(valueContainer.scale).lessThan(1);
     expect(field.height).greaterThan(valueContainer.height);
     expect(field.width).approximately(field.getSubmorphNamed('button holder').right, .5);
   });
@@ -49,9 +48,6 @@ describe('number widget', () => {
     await field.whenRendered();
     expect(field.width).equals(100, 'field has width');
     expect(field.height).equals(25, 'filed has height');
-    expect(valueContainer.fixedWidth).to.be.true;
-    // all the other invariants apply as well
-    expect(field.width).approximately(valueContainer.width + 20, .5, 'value container stretches across field');
     expect(field.width).equals(field.getSubmorphNamed('button holder').right, 'buttons aligned correctly');
   });
 
