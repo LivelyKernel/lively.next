@@ -1,13 +1,9 @@
-/* global System, it, xit, describe, beforeEach, afterEach */
+/* global it, describe, beforeEach, afterEach */
 import { expect } from 'mocha-es6';
 import { Text } from '../../text/morph.js';
 import { Rectangle, Color, pt } from 'lively.graphics';
 import { obj, promise } from 'lively.lang';
 import { Range } from '../../text/range.js';
-
-let inBrowser = System.get('@system-env').browser
-  ? it
-  : (title) => { console.warn(`Test ${title} is currently only supported in a browser`); return xit(title); };
 
 const defaultStyle = {
   fontFamily: 'IBM Plex Mono',
@@ -78,19 +74,22 @@ describe('text rendering', () => {
 
   it('can resize on content change', async () => {
     sut.clipMode = 'visible';
-    sut.lineWrapping: 'no-wrap';
+    sut.lineWrapping = 'no-wrap';
     sut.fixedWidth = false;
     let padLeft = sut.padding.left();
     let padRight = sut.padding.right();
-    let { width: cWidth } = sut.textLayout.defaultCharExtent(sut);
-    sut.textString = 'Hello hello';
+    await sut.whenRendered();
 
-    sut.env.forceUpdate();
+    let { width: cWidth } = sut.textLayout.defaultCharExtent(sut);
+
+    sut.textString = 'Hello hello';
+    await sut.whenRendered();
+
     let expectedWidth = sut.textString.length * cWidth + padLeft + padRight;
-    expect(sut.width).within(expectedWidth - 1, expectedWidth + 1);
+    expect(sut.extent.x).within(expectedWidth - 1, expectedWidth + 1);
 
     sut.textString = 'foo';
-    sut.env.forceUpdate();
+    await sut.whenRendered();
     expectedWidth = 3 * cWidth + padLeft + padRight;
     expect(sut.width).within(expectedWidth - 1, expectedWidth + 1);
   });
@@ -99,7 +98,7 @@ describe('text rendering', () => {
     let style_a = { fontSize: 12, fontStyle: 'italic' };
     let style_b = { fontSize: 14, fontWeight: 'bold' };
 
-    inBrowser('renders styles', async () => {
+    it('renders styles', async () => {
       sut.addTextAttribute(style_a, Range.create(0, 1, 0, 3));
       sut.addTextAttribute(style_b, Range.create(0, 2, 0, 4));
 
@@ -113,7 +112,7 @@ describe('text rendering', () => {
       let styles = Array.from(chunks).map(ea => {
         let jsStyle = sut.env.domEnv.window.getComputedStyle(
           ea.nodeType === ea.TEXT_NODE ? ea.parentNode : ea);
-        let fontFamily = jsStyle.getPropertyValue('font-family');
+        let fontFamily = jsStyle.getPropertyValue('font-family').slice(1, -1); // clean up duplicate double quotes
         let fontSize = parseInt(jsStyle.getPropertyValue('font-size').slice(0, -2));
         let fontWeight = jsStyle.getPropertyValue('font-weight');
         let fontStyle = jsStyle.getPropertyValue('font-style');
@@ -136,7 +135,7 @@ describe('text rendering', () => {
       expect(printStyleNormalized(styles[4])).equals(printStyleNormalized(obj.dissoc(defaultStyle, ['fontColor', 'fixedCharacterSpacing'])));
     });
 
-    inBrowser('renders css classes', async () => {
+    it('renders css classes', async () => {
       sut.addTextAttribute({ textStyleClasses: ['class1', 'class2'] }, Range.create(0, 1, 0, 2));
       await promise.delay(20);
 
@@ -144,7 +143,7 @@ describe('text rendering', () => {
       expect(chunks[1].className).equals('class1 class2');
     });
 
-    inBrowser('links', async () => {
+    it('links', async () => {
       sut.addTextAttribute({ link: 'http://foo' }, Range.create(0, 0, 0, 5));
       await promise.delay(20);
       let chunks = getRenderedTextNodes(sut)[0].childNodes;
@@ -153,7 +152,7 @@ describe('text rendering', () => {
   });
 
   describe('visible line detection', () => {
-    inBrowser('determines last and first full visible line based on padding and scroll', () => {
+    it('determines last and first full visible line based on padding and scroll', async () => {
       let { width: w, height: h } = sut.textLayout.defaultCharExtent(sut);
       Object.assign(sut, {
         textString: '111111\n222222\n333333\n444444\n555555',
@@ -166,13 +165,16 @@ describe('text rendering', () => {
       });
 
       let l = sut.textLayout;
-      sut.env.forceUpdate();
+
+      sut.env.forceUpdate(sut);
+      await promise.delay(50);
       expect(l.firstFullVisibleLine(sut)).equals(0);
       expect(l.lastFullVisibleLine(sut)).equals(2);
 
       sut.scroll = sut.scroll.addXY(0, padding.top() + h);
 
-      sut.env.forceUpdate();
+      sut.env.forceUpdate(sut);
+      await promise.delay(50);
 
       expect(l.firstFullVisibleLine(sut)).equals(1);
       expect(l.lastFullVisibleLine(sut)).equals(3);
