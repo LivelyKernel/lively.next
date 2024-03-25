@@ -5,7 +5,7 @@
 import { expect } from 'mocha-es6';
 import { Morph, morph, TilingLayout, GridLayout, MorphicEnv } from '../index.js';
 import { pt, Rectangle, Point, Color, rect } from 'lively.graphics';
-import { arr } from 'lively.lang';
+import { arr, fun } from 'lively.lang';
 import { ConstraintLayout } from '../layout.js';
 
 let world, m, env, grid, layout;
@@ -81,6 +81,49 @@ describe('layout', () => {
         expect(m2.position).equals(m1.topRight);
         expect(m3.position).equals(m2.topRight);
       });
+    });
+
+    it('immediately updates the bounds regardless of CSS or JS mode', () => {
+      const [m1, m2, m3] = m.submorphs;
+      m.layout = new TilingLayout({
+        renderViaCSS: false,
+        axis: 'column',
+        resizePolicies: [
+          ['m1', { width: 'fill', height: 'fixed' }],
+          ['m2', { width: 'fixed', height: 'fixed' }],
+          ['m3', { width: 'fixed', height: 'fill' }]
+        ]
+      });
+      m.extent = pt(400, 400);
+      m.applyLayoutIfNeeded();
+      expect(m1.bounds()).equals(pt(0, 0).extent(pt(400, 75)));
+      expect(m2.bounds()).equals(pt(0, 75).extent(pt(50, 50)));
+      expect(m3.bounds()).equals(pt(0, 125).extent(pt(100, 400 - 125)));
+    });
+
+    it('properly handles the case of various nested tiling layouts and their bounds computation', () => {
+      const [m1, m2, m3] = m.submorphs;
+      m2.submorphs = [
+        { name: 'sub1', extent: pt(100, 100), fill: Color.random() },
+        { name: 'sub2', extent: pt(100, 100), fill: Color.random() },
+        { name: 'sub3', extent: pt(100, 100), fill: Color.random() }
+      ];
+      const [sub1, sub2, sub3] = m3.submorphs;
+      m2.layout = new TilingLayout({
+        renderViaCSS: true,
+        axisAlign: 'center',
+        align: 'center'
+      });
+      m.layout = new TilingLayout({
+        renderViaCSS: true,
+        axis: 'column',
+        resizePolicies: [
+          ['m2', { width: 'fill', height: 'fixed' }]
+        ]
+      });
+      m.extent = pt(400, 400);
+      m.applyLayoutIfNeeded();
+      expect(m3.top).equals(175);
     });
 
     it('does not incorrectly assign margins to submorphs that are incorrect', () => {
