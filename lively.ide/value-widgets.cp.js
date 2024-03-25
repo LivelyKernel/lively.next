@@ -34,8 +34,6 @@ export class NumberWidgetModel extends ViewModel {
       autofit: {
         // if set to true, this will shrink the displayed value to
         // fit into the current bounds of the number input
-        // FIXME: is currently broken, since the text bounds logic breaks
-        //        once we start scaling the text
         defaultValue: false
       },
       number: {
@@ -95,7 +93,6 @@ export class NumberWidgetModel extends ViewModel {
       isSelected: {
         set (selected) {
           if (this.getProperty('isSelected') !== selected) {
-            // fixme: style sheets should restore the initial value, once a rule no longer applies
             const { view } = this;
             if (selected) {
               view.addStyleClass('selected');
@@ -111,7 +108,7 @@ export class NumberWidgetModel extends ViewModel {
 
       spaceToDisplay: {
         get () {
-          if (this.ui.up) return this.ui.up.left;
+          if (this.ui.buttonHolder) return this.view.width - this.ui.buttonHolder.width - 10;
           return this.view.width;
         }
       },
@@ -243,13 +240,20 @@ export class NumberWidgetModel extends ViewModel {
     value.textString = valueString;
     if (this.autofit && valueString.length > 0) {
       if (!this._digitWidth) {
-        this._digitWidth = value.textBounds().width / value.textString.length;
+        value.textString = '0';
+        value.env.forceUpdate(value);
+        this._digitWidth = value.textBounds().width - (value.padding.left() - value.padding.right()) * .5;
+        value.textString = valueString;
       }
       const p = Math.min(this.spaceToDisplay / (valueString.length * this._digitWidth), 1);
       value.scale = p;
     } else {
       if (value.scale < 1) value.scale = 1;
     }
+  }
+
+  viewDidLoad () {
+    this.onRefresh('number');
   }
 
   onRefresh (prop) {
@@ -268,7 +272,7 @@ const DefaultNumberWidget = component({
   clipMode: 'hidden',
   layout: new TilingLayout({
     axisAlign: 'center',
-    orderByIndex: true,
+    justifySubmorphs: 'spaced',
     resizePolicies: [['value', {
       height: 'fixed',
       width: 'fixed'

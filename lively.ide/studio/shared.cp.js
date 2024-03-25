@@ -170,6 +170,12 @@ class DarkNumberIconWidgetModel extends NumberWidgetModel {
 const DarkNumberIconWidget = component(DarkNumberWidget, {
   name: 'number input',
   defaultViewModel: DarkNumberIconWidgetModel,
+  layout: new TilingLayout({
+    align: 'right',
+    axisAlign: 'center',
+    justifySubmorphs: 'spaced',
+    padding: rect(0, 0, 5, 0)
+  }),
   borderRadius: 2,
   dropShadow: false,
   extent: pt(72, 22),
