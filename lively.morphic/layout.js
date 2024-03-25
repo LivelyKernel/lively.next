@@ -237,7 +237,7 @@ class Layout {
   }
 
   onConfigUpdate () {
-    this.apply();
+    this.scheduleApply();
     if (!this._configChanged) {
       this._configChanged = true;
       this.layoutableSubmorphs.forEach(m => m.makeDirty());
