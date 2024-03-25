@@ -608,6 +608,7 @@ export class Text extends Morph {
             this.stealFocus = false;
           }
           this.setProperty('selectionMode', mode);
+          this.setupSelectionColorCSSRuleForColor(this.selectionColor);
         }
       },
 
@@ -655,7 +656,11 @@ export class Text extends Morph {
         defaultValue: Color.rgba(212, 230, 241, 0.8),
         isStyleProp: true,
         doc: 'Changes the color of lively selections.',
-        after: ['defaultTextStyle']
+        after: ['defaultTextStyle'],
+        set (val) {
+          this.setupSelectionColorCSSRuleForColor(val);
+          this.setProperty('selectionColor', val);
+        }
       },
 
       cursorColor: {
@@ -906,6 +911,16 @@ export class Text extends Morph {
       }
 
     };
+  }
+
+  setupSelectionColorCSSRuleForColor (color) {
+    const rules = document.styleSheets[0].cssRules;
+    let idx = 0;
+    for (const rule of rules) {
+      if (rule.selectorText === `#${this.id} > div > .line > span::selection`) document.styleSheets[0].deleteRule(idx);
+      idx++;
+    }
+    if (this.selectionMode === 'native') document.styleSheets[0].insertRule(`#${this.id} > div > .line > span::selection { background: #${color.toHexString()}; }`, 0);
   }
 
   renderStyles (styleProps) {

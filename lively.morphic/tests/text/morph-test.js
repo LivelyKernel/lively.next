@@ -1,10 +1,9 @@
-/* global it, describe, beforeEach, afterEach, before */
+/* global it, describe, beforeEach, afterEach, after, before */
 import { Text } from '../../text/morph.js';
 import { expect, chai } from 'mocha-es6';
-import { pt, rect, Color, Rectangle } from 'lively.graphics';
+import { pt, Color, Rectangle } from 'lively.graphics';
 import { expectSelection } from '../test-helpers.js';
 import { Range } from '../../text/range.js';
-import { string } from 'lively.lang';
 
 expectSelection(chai);
 
@@ -20,11 +19,11 @@ const defaultStyle = {
 
 let fontMetric; // eslint-disable-line no-unused-vars
 
-function text (string, props) {
+function text (str, props) {
   let t = new Text({
     name: 'text',
     readOnly: false,
-    textString: string,
+    textString: str,
     extent: pt(100, 100),
     padding: Rectangle.inset(3),
     ...defaultStyle,
@@ -776,5 +775,32 @@ describe('morph inside textAndAttributes', () => {
     expect(sut.document).not.to.be.null;
     sut.env.forceUpdate();
     expect(sut.height).to.equal(2 * lineHeight + sut.padding.top() + sut.padding.bottom(), 'text bounds match when interactive');
+  });
+});
+
+describe('selection color', () => {
+  let textmorph;
+
+  before(() => textmorph = new Text({ textString: 'hello' }).openInWorld());
+  after(() => textmorph.remove());
+
+  const noOfRulesPrev = document.styleSheets[0].cssRules.length;
+  it('does not insert rule for non-native selection', () => {
+    textmorph.selectionColor = Color.green;
+    expect(noOfRulesPrev).to.equal(document.styleSheets[0].cssRules.length);
+  });
+  it('inserts css rule for native selection', () => {
+    textmorph.selectionColor = Color.green;
+    textmorph.selectionMode = 'native';
+    expect(noOfRulesPrev + 1).to.equal(document.styleSheets[0].cssRules.length);
+  });
+  it('removes old rule when changing color', () => {
+    textmorph.selectionColor = Color.lively;
+    expect(noOfRulesPrev + 1).to.equal(document.styleSheets[0].cssRules.length);
+  });
+  it('removes rule when selectionmode is not native', () => {
+    textmorph.readOnly = false;
+    textmorph.selectionMode = 'lively';
+    expect(noOfRulesPrev).to.equal(document.styleSheets[0].cssRules.length);
   });
 });
