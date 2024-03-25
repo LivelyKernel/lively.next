@@ -755,6 +755,7 @@ export class TilingLayout extends Layout {
   onContainerResized (morph) {} // eslint-disable-line no-unused-vars
 
   onOwnerChanged (newOwner) {
+    if (newOwner) return;
     this.container._yogaNode?.free();
     delete this.container._yogaNode;
     delete this.layoutableSubmorphBounds;
