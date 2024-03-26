@@ -310,14 +310,14 @@ export class EditPromptModel extends TextPromptModel {
         name: 'history back',
         exec: (_, arg) => {
           if (this.historyId) {
-            const { editor } = this.ui;
+            const { input } = this.ui;
             const hist = InputLine.getHistory(this.historyId);
             let { items, index } = hist;
             hist.index = --index;
             if (index < 0) hist.index = index = items.length - 1;
-            editor.undoManager.group();
-            editor.textString = items[index];
-            editor.undoManager.group();
+            input.undoManager.group();
+            input.textString = items[index];
+            input.undoManager.group();
           }
           return true;
         }
@@ -347,13 +347,13 @@ export class EditPromptModel extends TextPromptModel {
         name: 'history forward',
         exec: (_, arg) => {
           if (this.historyId) {
-            const { editor } = this.ui;
+            const { input } = this.ui;
             const hist = InputLine.getHistory(this.historyId); let { items, index } = hist;
             hist.index = ++index;
             if (index >= items.length) hist.index = index = 0;
-            editor.undoManager.group();
-            editor.textString = items[index];
-            editor.undoManager.group();
+            input.undoManager.group();
+            input.textString = items[index];
+            input.undoManager.group();
           }
           return true;
         }
@@ -361,12 +361,12 @@ export class EditPromptModel extends TextPromptModel {
     ]);
   }
 
-  focus () { this.ui.editor.focus(); }
+  focus () { this.ui.input.focus(); }
 
   viewDidLoad () {
     const {
       textStyle, input, mode, evalEnvironment, maxWidth,
-      view, ui: { editor }
+      view, ui: { input: editor }
     } = this;
     super.viewDidLoad();
 
@@ -392,9 +392,9 @@ export class EditPromptModel extends TextPromptModel {
       return super.resolve(this.ui.editor.textAndAttributes);
     }
 
-    const { editor } = this.ui;
+    const { input } = this.ui;
 
-    const content = editor.textString.trim();
+    const content = input.textString.trim();
     if (this.historyId) {
       const hist = InputLine.getHistory(this.historyId);
       hist.items = hist.items.filter(ea => ea !== content);
@@ -883,7 +883,7 @@ const EditPrompt = component(ConfirmPrompt, {
   name: 'edit prompt',
   extent: pt(385, 481),
   submorphs: [add({
-    name: 'editor',
+    name: 'input',
     type: Text,
     extent: pt(525.2, 300),
     fontSize: 12,
