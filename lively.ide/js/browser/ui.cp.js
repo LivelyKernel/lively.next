@@ -17,7 +17,7 @@ import { module } from 'lively.modules/index.js';
 import { getEligibleSourceEditorsFor } from '../../components/helpers.js';
 
 async function positionForAnchor (context, anchor, morphToPosition) {
-  if (!context?.isText) return;
+  if (!context?.isText) return morphToPosition.leftCenter;
   if (context.renderingState.needsRerender) context.env.forceUpdate();
   const paddingToCode = 5;
   const bounds = context.charBoundsFromTextPosition(anchor.position);
@@ -27,8 +27,7 @@ async function positionForAnchor (context, anchor, morphToPosition) {
     const startPos = context.charBoundsFromTextPosition({ row: anchor.position.row, column: 0 });
     pos = bounds.topRight()
       .withY(startPos.top() - morphToPosition.height / 2)
-      .withX(context.width - morphToPosition.width)
-      .addXY(paddingToCode, 0);
+      .withX(context.width - morphToPosition.width);
   }
   return pos;
 }
@@ -284,7 +283,8 @@ class ComponentEditControlModel extends ViewModel {
     }
     view.remove();
     if (animated) {
-      const { center } = editButton;
+      await editButton.positionInLine();
+      const center = editButton.center;
       editButton.scale = 1.2;
       editButton.center = center;
       await editButton.animate({
@@ -333,8 +333,8 @@ class ComponentEditButtonMorph extends Morph {
       leftCenter: anchorPoint
     } = this;
     placeholder._initializing = true;
+    await placeholder.positionInLine();
     placeholder.scale = .2;
-    placeholder.leftCenter = anchorPoint;
     this.openInWorld(this.globalPosition);
     this.layout = null;
     const wrapper = this.addMorph({
@@ -349,7 +349,6 @@ class ComponentEditButtonMorph extends Morph {
     await $world.withAnimationDo(() => {
       placeholder.opacity = 1;
       placeholder.scale = 1;
-      placeholder.leftCenter = anchorPoint;
       this.submorphs[0].opacity = 0;
       this.extent = componentMorph.bounds().extent();
       this.center = this.world().visibleBounds().center();
