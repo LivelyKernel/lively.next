@@ -282,14 +282,17 @@ class VersionChecker extends Morph {
 
   async bounceUpdateButton () {
     const { updateButton } = this.ui;
+    if (this._isUpdating) return;
+    this._isUpdating = true;
     await updateButton.animate({
       customTween: p => {
         updateButton.left = bounceEasing(p, 1, 10, 1);
       },
-      easing: (t) => t
+      easing: (t) => t,
+      duration: 1000
     });
-    await updateButton.animate({ left: 0 });
-    setTimeout(this.bounceUpdateButton.bind(this), 2500);
+    this._isUpdating = false;
+    setTimeout(this.bounceUpdateButton.bind(this), 2000);
   }
 
   showAhead (version, offline) {
