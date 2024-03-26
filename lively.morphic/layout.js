@@ -654,8 +654,7 @@ export class TilingLayout extends Layout {
 
   get stretchedHorizontally () {
     const { container } = this;
-    if (
-      container.owner?.layout?.name() === 'Tiling' &&
+    if (container.owner?.layout?.name() === 'Tiling' &&
       container.owner.layout.getResizeWidthPolicyFor(container) === 'fill') return true;
     return false;
   }
@@ -902,12 +901,10 @@ export class TilingLayout extends Layout {
     if (this.container.submorphs.length > 0) {
       let updateTransform = false;
       if (hugContentsVertically && container.height !== height) {
-        // container.height = height;
         container._morphicState.extent = container.extent.withY(height);
         updateTransform = true;
       }
       if (hugContentsHorizontally && container.width !== width) {
-        // container.width = width;
         container._morphicState.extent = container.extent.withX(width);
         updateTransform = true;
       }
@@ -1129,10 +1126,6 @@ export class TilingLayout extends Layout {
     }
   }
 
-  /*************
-   * JS LAYOUT *
-   *************/
-
   updateContainerNode () {
     const {
       axis, padding, _align: align, axisAlign,
@@ -1288,6 +1281,10 @@ export class TilingLayout extends Layout {
     return yogaNode;
   }
 
+  /*************
+   * JS LAYOUT *
+   *************/
+
   apply (animate = false) {
     if (this.active || !this.container || this.renderViaCSS) return;
 
@@ -1308,178 +1305,6 @@ export class TilingLayout extends Layout {
       m.makeDirty();
     });
     this.active = false;
-  }
-
-  oldApply (animate = false) {
-    if (this.active || !this.container || this.renderViaCSS) return;
-
-    this.active = true;
-    super.apply(animate);
-
-    const {
-      container, axis, _align: align, spacing, axisAlign,
-      layoutableSubmorphs, padding, wrapSubmorphs,
-      justifySubmorphs, hugContentsVertically, hugContentsHorizontally
-    } = this;
-    const morphsToLayout = [...layoutableSubmorphs];
-    this.ensureResizePolicies(morphsToLayout);
-    const spaceSubmorphs = justifySubmorphs === 'spaced';
-    const length = this.getOptimalWidth(container);
-    const isHorizontal = axis === 'row';
-    const lengthAccessor = isHorizontal ? 'left' : 'top';
-    const normalizedLengthAccessor = isHorizontal ? 'x' : 'y';
-    const normalizedBreadthAccessor = isHorizontal ? 'y' : 'x';
-    let posAccessor;
-    if (axisAlign === 'left') posAccessor = 'topLeft';
-    if (axisAlign === 'right') posAccessor = 'topRight';
-    if (axisAlign === 'center') posAccessor = isHorizontal ? 'leftCenter' : 'topCenter';
-    let axisToPositions = [];
-    let currentAxis;
-
-    while (morphsToLayout.length) {
-      let remainingLength = length + spacing;
-      let morphsOnAxis = arr.takeWhile(morphsToLayout, m => {
-        const ext = m.bounds().extent();
-        const newLength = remainingLength - (Math.round(ext[normalizedLengthAccessor]) + spacing);
-        if (wrapSubmorphs && newLength < 0) return false;
-        remainingLength = newLength;
-        return true;
-      });
-
-      if (morphsOnAxis.length > 0) morphsToLayout.splice(0, morphsOnAxis.length);
-      else {
-        morphsOnAxis = [morphsToLayout.shift()];
-        remainingLength = 0;
-      }
-
-      // adjust width/height based on resize policy
-      // this.wrapSubmorphs = false
-      let fixedHeight = padding.top() + padding.bottom() - this.spacing;
-      let fixedWidth = padding.left() + padding.right() - this.spacing;
-      let numDynamic = 0;
-
-      if (hugContentsVertically) {
-        const huggedHeight = container.submorphBounds(m => layoutableSubmorphs.includes(m) && this.getResizeHeightPolicyFor(m) === 'fixed').height + padding.top() + padding.bottom();
-        this.changePropertyAnimated(container, 'height', huggedHeight, animate);
-      }
-
-      if (hugContentsHorizontally) {
-        const huggedWidth = container.submorphBounds(m => layoutableSubmorphs.includes(m) && this.getResizeWidthPolicyFor(m) === 'fixed').width + padding.left() + padding.right();
-        this.changePropertyAnimated(container, 'width', huggedWidth, animate);
-      }
-
-      morphsOnAxis.forEach(m => {
-        if (isHorizontal) {
-          fixedWidth += this.spacing;
-          if (this.getResizeHeightPolicyFor(m) === 'fill') {
-            m.height = container.height - padding.top() - padding.bottom();
-          }
-          if (this.getResizeWidthPolicyFor(m) === 'fixed') {
-            fixedWidth += m.width;
-          } else numDynamic++;
-        }
-        if (!isHorizontal) {
-          fixedHeight += this.spacing;
-          if (this.getResizeWidthPolicyFor(m) === 'fill') {
-            m.width = container.width - padding.left() - padding.right();
-          }
-          if (this.getResizeHeightPolicyFor(m) === 'fixed') {
-            fixedHeight += m.height;
-          } else numDynamic++;
-        }
-        this.forceLayoutsOfMorph(m);
-      });
-
-      // make the morphs occupy the flexible width remaining that fill in the direction of the axis
-      morphsOnAxis.forEach(m => {
-        if (isHorizontal && this.getResizeWidthPolicyFor(m) === 'fill') {
-          m.width = Math.max(0, container.width - fixedWidth) / numDynamic;
-        }
-        if (!isHorizontal && this.getResizeHeightPolicyFor(m) === 'fill') {
-          m.height = Math.max(0, container.height - fixedHeight) / numDynamic;
-        }
-      });
-
-      let offset;
-
-      axisToPositions.push(currentAxis = [
-        arr.max(morphsOnAxis.map(m => m.bounds().extent()[normalizedBreadthAccessor]))
-      ]);
-
-      if (spaceSubmorphs) {
-        let startPadding, endPadding;
-        if (isHorizontal) {
-          startPadding = padding.left();
-          endPadding = padding.right();
-        } else {
-          startPadding = padding.top();
-          endPadding = padding.bottom();
-        }
-        offset = startPadding;
-        const totalLength = container.extent[normalizedLengthAccessor] - startPadding - endPadding;
-        const emptySpace = totalLength - arr.sum(morphsOnAxis.map(m => m.bounds().extent()[normalizedLengthAccessor]));
-        const bufferSpace = emptySpace / Math.max(1, morphsOnAxis.length - 1);
-        for (const m of morphsOnAxis) {
-          currentAxis.push([m, offset]);
-          offset = offset + m.bounds().extent()[normalizedLengthAccessor] + bufferSpace;
-        }
-      } else {
-        switch (align) {
-          case 'left':
-            offset = padding[lengthAccessor](); break;
-          case 'center':
-            offset = remainingLength / 2 + padding[lengthAccessor](); break;
-          case 'right':
-            offset = remainingLength + padding[lengthAccessor](); break; // ???
-        }
-
-        for (const m of morphsOnAxis) {
-          currentAxis.push([m, num.roundTo(offset, 1)]);
-          offset = offset + spacing + m.bounds().extent()[normalizedLengthAccessor];
-        }
-      }
-    }
-
-    let breadthOffsets = [];
-    let currentOffset;
-
-    if (this.axisAlign === 'center') {
-      let totalBreadth = -spacing;
-      axisToPositions.forEach(([axisBreadth]) => totalBreadth += axisBreadth + spacing);
-      currentOffset = container.extent[normalizedBreadthAccessor] / 2 - totalBreadth / 2;
-      axisToPositions.map(([axisBreadth]) => {
-        breadthOffsets.push(currentOffset + axisBreadth / 2);
-        currentOffset += axisBreadth + spacing;
-      });
-    }
-
-    if (this.axisAlign === 'right') {
-      currentOffset = container.extent[normalizedBreadthAccessor] - (isHorizontal ? padding.bottom() : padding.right());
-      axisToPositions = axisToPositions.reverse();
-      axisToPositions.map(([axisBreadth]) => {
-        breadthOffsets.push(currentOffset);
-        currentOffset -= axisBreadth + spacing;
-      });
-    }
-
-    if (this.axisAlign === 'left') {
-      currentOffset = isHorizontal ? padding.top() : padding.left();
-      axisToPositions.map(([axisBreadth]) => {
-        breadthOffsets.push(currentOffset);
-        currentOffset += spacing;
-        currentOffset += axisBreadth;
-      });
-    }
-
-    axisToPositions.forEach(([_, ...morphOffsets], i) => { // eslint-disable-line no-unused-vars
-      morphOffsets.forEach(([m, offset]) => {
-        const pos = isHorizontal ? pt(offset, breadthOffsets[i]) : pt(breadthOffsets[i], offset);
-        this.changePropertyAnimated(m, posAccessor, pos, animate);
-      });
-    });
-
-    this.active = false;
-    this.forceLayoutsInNextLevel();
   }
 
   forceLayout () {
