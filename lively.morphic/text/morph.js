@@ -1675,7 +1675,7 @@ export class Text extends Morph {
 
   get commands () {
     if (!(this.document && this.textLayout)) return [editingCommand];
-    return this.pluginCollect('getCommands', (this._commands || []).concat(textCommands));
+    return this.pluginCollect('getCommands', (this._commands || []).concat(textCommands).concat([editingCommand]));
   }
 
   execCommand (commandOrName, args, count, evt) {
