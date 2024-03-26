@@ -1572,6 +1572,14 @@ export class BrowserModel extends ViewModel {
     }
   }
 
+  async isComponentEntity (entity) {
+    if (!this.selectedModule.name?.endsWith('.cp.js')) return false;
+    const res = await this.systemInterface.runEval(entity.name + '?.isComponentDescriptor', {
+      targetModule: this.selectedModule.url
+    });
+    return res.value;
+  }
+
   async onCodeEntitySelected (entity) {
     if (!entity) return;
     const { sourceEditor } = this.ui;
@@ -1579,8 +1587,10 @@ export class BrowserModel extends ViewModel {
       const moduleType = this.selectedModule.type;
       const start = sourceEditor.indexToPosition(moduleType === 'js' ? entity.node.start : entity.start);
       const end = sourceEditor.indexToPosition(moduleType === 'js' ? entity.node.end : entity.end);
+      const isComponent = await this.isComponentEntity(entity);
       sourceEditor.cursorPosition = start;
       sourceEditor.flash({ start, end }, { id: 'codeentity', time: 1000, fill: Color.rgb(200, 235, 255) });
+      if (isComponent) start.row -= 2; // ensure component edit button not covered by meta info
       sourceEditor.centerRange({ start, end });
       sourceEditor.scrollDown(-60);
     }
