@@ -920,7 +920,7 @@ export class Text extends Morph {
       if (rule.selectorText === `#${this.id} > div > .line > span::selection`) document.styleSheets[0].deleteRule(idx);
       idx++;
     }
-    if (this.selectionMode === 'native') document.styleSheets[0].insertRule(`#${this.id} > div > .line > span::selection { background: #${color.toHexString()}; }`, 0);
+    if (this.selectionMode === 'native') document.styleSheets[0].insertRule(`#${this.id} > div > .line > span::selection { background: ${color.toCSSString()}; }`, 0);
   }
 
   renderStyles (styleProps) {
