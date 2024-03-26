@@ -59,23 +59,23 @@ export class ListItemMorph extends Label {
     };
   }
 
-  alreadyDisplayingItem (item, goalWidth) {
+  alreadyDisplayingItem (item, goalWidth, itemIndex) {
     if (this._goalWidth !== goalWidth) {
       this._goalWidth = goalWidth;
       return false;
     }
-    if (item.label) return obj.equals(item.label, this.textAndAttributes);
-    if (item.string) return this.textString === item.string;
-    return false;
+    if (itemIndex !== this.itemIndex) return false;
+    if (item.value) { if (item.label && !obj.equals(item.label, this.textAndAttributes)) return false; }
+    if (item.string && this.textString !== item.string) return false;
+    return true;
   }
 
   displayItem (item, itemIndex, goalWidth, itemHeight, pos, isSelected = false, style) {
-    if (this.alreadyDisplayingItem(item, goalWidth) &&
+    if (this.alreadyDisplayingItem(item, goalWidth, itemIndex) &&
         isSelected === this.isSelected &&
         (!item.fontFamily || item.fontFamily === this.fontFamily)) return;
     const itemMorph = item.morph;
     const label = itemMorph ? '' : (item.label || item.string || 'no item.string');
-
     if (item.annotation) {
       this.valueAndAnnotation = { value: label, annotation: item.annotation };
     } else if (typeof label === 'string') this.textAndAttributes = label;
@@ -756,21 +756,27 @@ export class List extends Morph {
       const padBottom = padding.bottom();
       const padRight = padding.right();
       const firstItemIndex = Math.max(0, Math.floor((top) / itemHeight));
-      const lastItemIndex = Math.min(items.length, firstItemIndex + (height / itemHeight) + 2);
+      const lastItemIndex = Math.min(items.length, firstItemIndex + Math.floor(height / itemHeight) + 2);
       let maxWidth = 0;
       const goalWidth = width - (padLeft + padRight);
 
       // try to keep itemIndexes in the items that were initially assigned to them
       let rest, upper, lower;
 
+      // if we determine some of the itemMorphs need to be removed, we do this BEFORE
+
+      if (itemMorphs.length > lastItemIndex - firstItemIndex) {
+        itemMorphs = listItemContainer.submorphs = itemMorphs.slice(0, lastItemIndex - firstItemIndex);
+      }
       itemMorphs = arr.sortBy(itemMorphs, m => m.itemIndex);
       [upper, rest] = arr.partition(itemMorphs, m => m.itemIndex < firstItemIndex);
       [lower, rest] = arr.partition(rest, m => m.itemIndex > lastItemIndex - 1);
+
       itemMorphs = [...lower, ...rest, ...upper];
 
       let borderOffsetForHeight = 0;
       for (let i = 0; i < lastItemIndex - firstItemIndex; i++) {
-        const itemIndex = firstItemIndex + i;
+        const itemIndex = firstItemIndex + i; // wrap around
         const item = items[itemIndex];
 
         if (!item) {
@@ -811,8 +817,6 @@ export class List extends Morph {
 
         maxWidth = Math.max(maxWidth, itemMorph.width);
       }
-
-      itemMorphs.slice(lastItemIndex - firstItemIndex).forEach(ea => ea.remove());
 
       const totalItemHeight = Math.max(padTop + padBottom + itemHeight * items.length + borderOffsetForHeight, this.height);
       listItemContainer.setBounds(pt(padLeft, padTop).subXY(0, top).extent(pt(this.width, totalItemHeight)));
