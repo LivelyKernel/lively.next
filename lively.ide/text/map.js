@@ -90,6 +90,7 @@ export default class TextMap extends Canvas {
 
   get measure () {
     let { width, height, textMorph } = this;
+    if (!textMorph) return;
     let { document: doc } = textMorph;
     let heightPerLine = Math.min(2, height / doc.lines.length);
     let widthPerChar = 0.5;
@@ -99,9 +100,11 @@ export default class TextMap extends Canvas {
   update () {
     let {
       context: ctx,
-      textMorph,
-      measure: { width, height, heightPerLine, widthPerChar }
+      textMorph
     } = this;
+    const measure = this.measure;
+    if (!measure) return;
+    let { width, height, heightPerLine, widthPerChar } = measure;
     function highlightRange (range, color, fullLine = false) {
       let { start, end } = range;
       let selHeight = Math.max((end.row - start.row + 1) * heightPerLine, 1);
