@@ -359,9 +359,7 @@ export class TilingLayout extends Layout {
   }
 
   attach () {
-    this._initializingPolicies = true;
     this.initializeResizePolicies();
-    this._initializingPolicies = false;
     super.attach();
     this.measureAfterRender(this.container);
   }
@@ -377,9 +375,13 @@ export class TilingLayout extends Layout {
     return aMorph._yogaNode || (aMorph._yogaNode = Yoga.Node.create());
   }
 
-  initializeResizePolicies () {
+  initializeResizePolicies (_initializingPoliciesAfterwards = false) {
+    this._initializingPolicies = true;
     const resizePolicies = this._resizePolicies;
-    if (resizePolicies && !Array.isArray(resizePolicies)) return;
+    if (resizePolicies && !Array.isArray(resizePolicies)) {
+      this._initializingPolicies = _initializingPoliciesAfterwards;
+      return;
+    }
     const { layoutableSubmorphs } = this;
     this._resizePolicies = new WeakMap();
     if (Array.isArray(resizePolicies)) {
@@ -396,6 +398,7 @@ export class TilingLayout extends Layout {
         });
       });
     }
+    this._initializingPolicies = _initializingPoliciesAfterwards;
   }
 
   scheduleApply (submorph, animation, change = {}) {
@@ -502,9 +505,7 @@ export class TilingLayout extends Layout {
   getSpec () {
     if (!this.container) return this.sanitizeConfig(this.config);
     if (Array.isArray(this._resizePolicies)) {
-      this._initializingPolicies = true;
       this.initializeResizePolicies();
-      this._initializingPolicies = false;
     }
     let {
       axis, align, axisAlign, spacing, orderByIndex, resizePolicies,
@@ -1119,10 +1120,7 @@ export class TilingLayout extends Layout {
   ensureResizePolicies (layoutableSubmorphs) {
     if (!layoutableSubmorphs.every(m => this._resizePolicies.has(m))) {
       this._resizePolicies = this.config.resizePolicies;
-      const before = this._initializingPolicies;
-      this._initializingPolicies = true;
-      this.initializeResizePolicies();
-      this._initializingPolicies = before;
+      this.initializeResizePolicies(this._initializingPolicies);
     }
   }
 
