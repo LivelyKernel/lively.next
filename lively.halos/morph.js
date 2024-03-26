@@ -2128,6 +2128,10 @@ export default class Halo extends Morph {
         this.target.extent = bounds.insetByRect(offsetRect).extent();
       } else {
         this.target.setBounds(bounds.insetByRect(offsetRect));
+        if (this.target.isText) {
+          if (offsetRect.width) this.target.fixedWidth = true;
+          if (offsetRect.height) this.target.fixedHeight = true;
+        }
         if (this.target.isPolygon || this.target.isPath) {
         // refrain from adjusting origin
           this.target.moveBy(this.target.origin.negated());
