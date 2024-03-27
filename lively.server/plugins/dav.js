@@ -114,6 +114,9 @@ export default class LivelyDAVPlugin {
       this.fileHashes[file.url.replace(System.baseURL, '/').replace('/esm_cache', 'esm://cache')] = string.hashCode(await file.read());
     }
     console.log('[lively.server] finished file hash map');
+    console.log('[lively.server] creating library snapshot...');
+    await this.compressLibraryCode();
+    console.log('[lively.server] finished library snapshot');
   }
 
   compressLibraryCode () {
