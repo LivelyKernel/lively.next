@@ -1478,9 +1478,6 @@ const WorldBrowser = component({
     }], ['close button', {
       x: 'fixed',
       y: 'move'
-    }], ['open playground button', {
-      x: 'fixed',
-      y: 'move'
     }]]
   }),
   position: pt(1182.2, 536.7),
@@ -1615,6 +1612,7 @@ const WorldBrowser = component({
               reactToSubmorphAnimations: false,
               submorphSettings: []
             }),
+            fixedWidth: true,
             selectionColor: Color.rgba(64, 196, 255, .4),
             fontSize: 20,
             submorphs: [
