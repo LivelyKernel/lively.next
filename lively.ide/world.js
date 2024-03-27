@@ -170,6 +170,7 @@ export class LivelyWorld extends World {
   getPrompts () { return this.submorphs.filter(ea => ea.isPrompt); }
 
   openInWindow (morph, opts = { title: morph.name, name: 'window for ' + morph.name }) {
+    morph.applyLayoutIfNeeded();
     const win = new Window({
       ...opts,
       extent: morph.extent.addXY(0, 25),
