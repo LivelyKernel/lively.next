@@ -428,9 +428,11 @@ export class Project {
     const remoteConfigured = await this.hasRemoteConfigured();
     // Update for the case that a user changed its plan since the last save.
     if (remoteConfigured) await this.checkPagesSupport();
+    
+    const filesInPackage = await resource(this.url).asDirectory().dirList('infinity',{exclude: r => r.url.includes('node_modules') || r.url.includes('.git')});
+    await this.removeUnusedProjectDependencies(filesInPackage);
+    await this.addMissingProjectDependencies(filesInPackage);
 
-    await this.removeUnusedProjectDependencies();
-    await this.addMissingProjectDependencies();
     // We use author here, as owner can also be an org.
     // This assumes, that the author of org projects has sufficient rights (admin) to retrieve secrets.
     if (currentUsername() === this.config.author.name) {
@@ -859,11 +861,11 @@ export class Project {
     this.dependencyMap = null;
   }
 
-  async addMissingProjectDependencies () {
+  async addMissingProjectDependencies (alreadyRetrievedFiles = false) {
     const availableDeps = (await Project.listAvailableProjects()).map(proj => ({ name: proj.name, version: proj.version }));
     let currentDeps = this.config.lively.projectDependencies.slice();
 
-    const filesInPackage = await resource(this.url).asDirectory().dirList('infinity',{exclude: r => r.url.includes('node_modules')});
+    const filesInPackage = alreadyRetrievedFiles || await resource(this.url).asDirectory().dirList('infinity',{exclude: r => r.url.includes('node_modules') || r.url.includes('.git')});
     const jsFilesInPackage = filesInPackage.filter(p => p.url.endsWith('.js') && !p.url.includes('/build'));
     for (let jsFile of jsFilesInPackage) {
       const content = await jsFile.read();
@@ -879,11 +881,11 @@ export class Project {
     return currentDeps;
   }
 
-  async removeUnusedProjectDependencies () {
+  async removeUnusedProjectDependencies (alreadyRetrievedFiles = false) {
     let usedDeps = [];
     const currentDeps = this.config.lively.projectDependencies;
 
-    const filesInPackage = await resource(this.url).asDirectory().dirList('infinity', {exclude: r => r.url.includes('node_modules')});
+    const filesInPackage = alreadyRetrievedFiles || await resource(this.url).asDirectory().dirList('infinity',{exclude: r => r.url.includes('node_modules') || r.url.includes('.git')});
     const jsFilesInPackage = filesInPackage.filter(p => p.url.endsWith('.js') && !p.url.includes('/build'));
     for (let jsFile of jsFilesInPackage) {
       const content = await jsFile.read();
