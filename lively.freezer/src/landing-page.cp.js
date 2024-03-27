@@ -261,7 +261,7 @@ class WorldAligningLandigPageUIElements extends ViewModel {
 
   get bindings () {
     return [
-      { target: 'user flap', signal: 'extent', handler: 'relayout' }
+      { target: 'top side', signal: 'extent', handler: 'relayout' }
     ];
   }
 
@@ -360,7 +360,7 @@ export async function main () {
   config.ide.studio.canvasModeEnabled = false;
 
   part(LandingPage, { respondsToVisibleWindow: true }).openInWorld().relayout();
-  part(LandingPageUI, { respondsToVisibleWindow: true }).openInWorld();
+  part(LandingPageUI, { respondsToVisibleWindow: true }).openInWorld().relayout();
 }
 
 export const TITLE = 'lively.next';
