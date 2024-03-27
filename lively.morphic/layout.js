@@ -366,7 +366,7 @@ export class TilingLayout extends Layout {
 
   ensureLayoutComputed (curr) {
     const origNode = this.ensureYogaNodeFor(curr);
-    while (curr.owner?._yogaNode && curr.owner.layout && curr.isLayoutable) curr = curr.owner;
+    while (curr.owner?._yogaNode && curr.owner.layout?.name() === 'Tiling' && curr.isLayoutable) curr = curr.owner;
     curr._yogaNode.calculateLayout();
     return origNode;
   }
