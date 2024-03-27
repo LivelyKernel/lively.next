@@ -1,6 +1,6 @@
 /* global System, process, Buffer */
 import { resource } from 'lively.resources';
-import { string, fun } from 'lively.lang';
+import { string, promise, fun } from 'lively.lang';
 import * as child from 'node:child_process';
 const tar = System._nodeRequire('tar-fs');
 import stream from 'stream';
@@ -10,6 +10,8 @@ import zlib from 'zlib';
 const COMPRESSABLE_URLS = [
   'components_cache'
 ];
+
+const compression = 'gzip'; // 'gzip';
 
 // FIXME...
 let DavHandler; let FsTree;
@@ -114,6 +116,30 @@ export default class LivelyDAVPlugin {
     console.log('[lively.server] finished file hash map');
   }
 
+  compressLibraryCode () {
+    if (this._curr) {
+      console.log('[lively.server] already compressing library code!');
+      return this._curr.promise;
+    }
+    const res = this._curr = promise.deferred();
+    let compressedLibrary = new WMStrm('compressedLibrary');
+    const cachedDirs = ['esm_cache', 'lively.morphic', 'lively.lang', 'lively.bindings', 'lively.ast', 'lively.source-transform', 'lively.classes', 'lively.vm', 'lively.resources', 'lively.storage', 'lively.storage', 'lively.notifications', 'lively.modules', 'lively-system-interface', 'lively.installer', 'lively.serializer2', 'lively.graphics', 'lively.keyboard', 'lively.changesets', 'lively.2lively', 'lively.git', 'lively.traits', 'lively.components', 'lively.ide', 'lively.headless', 'lively.freezer', 'lively.collab', 'lively.project', 'lively.user'];
+
+    const excludedDirs = ['lively.morphic/objectdb', 'lively.morphic/assets', 'lively.morphic/web', 'lively.ast/dist', 'lively.classes/build', 'lively.ide/jsdom.worker.js', 'lively.headless/chrome-data-dir', 'lively.freezer/landing-page', 'lively.freezer/loading-screen', 'lively.modules/dist'];
+    tar.pack(System.baseURL.replace('file://', ''), {
+      ignore (name) {
+        if (excludedDirs.find(path => name.includes(path))) return true;
+        else return false;
+      },
+      entries: cachedDirs
+    }).pipe(compression === 'brotli' ? zlib.BrotliCompress() : zlib.Gzip()).pipe(compressedLibrary);
+    console.log('waiting for result');
+    compressedLibrary.on('finish', () => {
+      res.resolve(compressedLibrary);
+    });
+    return res.promise;
+  }
+
   patchServerForJsDAV (server, thenDo) {
     // this is what jsDAV expects...
     server.tree = FsTree.new(this.options.rootDirectory);
@@ -147,27 +173,12 @@ export default class LivelyDAVPlugin {
     req.url = path + req.url;
 
     if (req.url === '/compressed-sources') {
-      res.setHeader('Content-Encoding', 'gzip');
-      if (memStore.zipFile) {
-        res.write(memStore.zipFile, 'binary');
-        res.end(null, 'binary');
-        return;
+      res.setHeader('Content-Encoding', compression === 'brotli' ? 'br' : 'gzip');
+      if (!memStore.compressedLibrary) {
+        await this.compressLibraryCode();
       }
-      let zipFile = new WMStrm('zipFile');
-      const cachedDirs = ['esm_cache', 'lively.morphic', 'lively.lang', 'lively.bindings', 'lively.ast', 'lively.source-transform', 'lively.classes', 'lively.vm', 'lively.resources', 'lively.storage', 'lively.storage', 'lively.notifications', 'lively.modules', 'lively-system-interface', 'lively.installer', 'lively.serializer2', 'lively.graphics', 'lively.keyboard', 'lively.changesets', 'lively.2lively', 'lively.git', 'lively.traits', 'lively.components', 'lively.ide', 'lively.headless', 'lively.freezer', 'lively.collab', 'lively.project', 'lively.user'];
-
-      const excludedDirs = ['lively.morphic/objectdb', 'lively.morphic/assets', 'lively.morphic/web', 'lively.ast/dist', 'lively.classes/build', 'lively.ide/jsdom.worker.js', 'lively.headless/chrome-data-dir', 'lively.freezer/landing-page', 'lively.freezer/loading-screen', 'lively.modules/dist'];
-      tar.pack(System.baseURL.replace('file://', ''), {
-        ignore (name) {
-          if (excludedDirs.find(path => name.includes(path))) return true;
-          else return false;
-        },
-        entries: cachedDirs
-      }).pipe(zlib.Gzip()).pipe(zipFile);
-      zipFile.on('finish', () => {
-        res.write(memStore.zipFile, 'binary');
-        res.end(null, 'binary');
-      });
+      res.write(memStore.compressedLibrary, 'binary');
+      res.end(null, 'binary');
       return;
     }
 
