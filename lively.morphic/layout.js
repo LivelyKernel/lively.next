@@ -900,16 +900,12 @@ export class TilingLayout extends Layout {
     // revert to the original
 
     if (this.container.submorphs.length > 0) {
-      let updateTransform = false;
       if (hugContentsVertically && container.height !== height) {
-        container._morphicState.extent = container.extent.withY(height);
-        updateTransform = true;
+        container.withMetaDo({ isLayoutAction: true, skipRender: true }, () => container.height = height);
       }
       if (hugContentsHorizontally && container.width !== width) {
-        container._morphicState.extent = container.extent.withX(width);
-        updateTransform = true;
+        container.withMetaDo({ isLayoutAction: true, skipRender: true }, () => container.width = width);
       }
-      if (updateTransform) container.updateTransform();
     }
 
     this.layoutableSubmorphs.forEach(m => {
