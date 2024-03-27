@@ -1208,7 +1208,7 @@ export default class Document {
       new Line({ parent: null, width: 0, height: 0, textAndAttributes: ea }));
   }
 
-  getTextAndAttributesOfLine (row) { return this.getLine(row).textAndAttributes; }
+  getTextAndAttributesOfLine (row) { return this.getLine(row)?.textAndAttributes; }
 
   setTextAndAttributesOfLine (row, attrs) {
     const line = this.getLine(row);

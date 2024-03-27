@@ -2356,7 +2356,10 @@ export class Text extends Morph {
     if (resetLayout) this.invalidateTextLayout(false, false);
     if (this.document) {
       for (let i of arr.range(range.start.row, range.end.row, 1)) {
-        this.document.lines[i].lineNeedsRerender = true;
+        const line = this.document.lines[i];
+        const potentiallyChangedTAs = this.document.getTextAndAttributesOfLine(i);
+        if (obj.isArray(potentiallyChangedTAs) && potentiallyChangedTAs.find(m => m?.doit)) { this.needsDocument = true; }
+        line.lineNeedsRerender = true;
       }
     }
     this.makeDirty();
