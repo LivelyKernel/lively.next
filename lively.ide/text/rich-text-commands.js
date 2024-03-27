@@ -102,12 +102,14 @@ export const interactiveCommands = [
     name: 'increase font size',
     scrollCursorIntoView: false,
     exec: function (morph) {
-      const defaultFontSize = morph.fontSize;
-      changeAttributeInSelectionOrMorph(morph, 'fontSize', oldSize => {
-        oldSize = oldSize || defaultFontSize;
-        return oldSize + (oldSize >= 18 ? 2 : 1);
+      morph.withMetaDo({ reconcileChanges: true }, () => {
+        const defaultFontSize = morph.fontSize;
+        changeAttributeInSelectionOrMorph(morph, 'fontSize', oldSize => {
+          oldSize = oldSize || defaultFontSize;
+          return oldSize + (oldSize >= 18 ? 2 : 1);
+        });
+        return true;
       });
-      return true;
     }
   },
 
@@ -115,15 +117,15 @@ export const interactiveCommands = [
     name: 'decrease font size',
     scrollCursorIntoView: false,
     exec: function (morph) {
-      // morph.keepPosAtSameScrollOffsetWhile(() => morph.fontSize--);
+      morph.withMetaDo({ reconcileChanges: true }, () => {
+        const defaultFontSize = morph.fontSize;
+        changeAttributeInSelectionOrMorph(morph, 'fontSize', oldSize => {
+          oldSize = oldSize || defaultFontSize;
+          return oldSize - (oldSize <= 18 ? 1 : 2);
+        });
 
-      const defaultFontSize = morph.fontSize;
-      changeAttributeInSelectionOrMorph(morph, 'fontSize', oldSize => {
-        oldSize = oldSize || defaultFontSize;
-        return oldSize - (oldSize <= 18 ? 1 : 2);
+        return true;
       });
-
-      return true;
     }
   },
 
@@ -131,18 +133,20 @@ export const interactiveCommands = [
     name: 'change font',
     scrollCursorIntoView: false,
     exec: async function (morph) {
-      const fonts = availableFonts().map(font => font.name);
+      morph.withMetaDo({ reconcileChanges: true }, async () => {
+        const fonts = availableFonts().map(font => font.name);
 
-      const res = await $world.listPrompt('choose font', fonts, {
-        requester: morph,
-        preselect: fonts.indexOf(morph.fontFamily),
-        historyId: 'lively.morpic/text-change-font-hist'
+        const res = await $world.listPrompt('choose font', fonts, {
+          requester: morph,
+          preselect: fonts.indexOf(morph.fontFamily),
+          historyId: 'lively.morpic/text-change-font-hist'
+        });
+
+        if (res.status !== 'accepted') return false;
+
+        morph.fontFamily = res.selected[0];
+        return true;
       });
-
-      if (res.status !== 'accepted') return false;
-      
-      morph.fontFamily = res.selected[0];
-      return true;
     }
   },
 
@@ -151,18 +155,20 @@ export const interactiveCommands = [
     scrollCursorIntoView: false,
     exec: async function (morph, args = {}) {
       let link;
-      if (!args.hasOwnProperty('link')) {
-        const sel = morph.selection;
-        const { link: oldLink } = morph.getStyleInRange(sel);
-        link = await morph.world().prompt('Set link', {
-          input: oldLink || 'https://',
-          historyId: 'lively.morphic-rich-text-link-hist'
-        });
-        if (!link) return;
-      }
-      morph.undoManager.group();
-      morph.setStyleInRange({ link: link || undefined }, sel);
-      morph.undoManager.group();
+      morph.withMetaDo({ reconcileChanges: true }, async () => {
+        if (!args.hasOwnProperty('link')) {
+          const sel = morph.selection;
+          const { link: oldLink } = morph.getStyleInRange(sel);
+          link = await morph.world().prompt('Set link', {
+            input: oldLink || 'https://',
+            historyId: 'lively.morphic-rich-text-link-hist'
+          });
+          if (!link) return;
+        }
+        morph.undoManager.group();
+        morph.setStyleInRange({ link: link || undefined }, sel);
+        morph.undoManager.group();
+      });
     }
   },
 
@@ -182,19 +188,21 @@ export const interactiveCommands = [
         });
 
       morph.undoManager.group();
-      if (!newDoitCode) {
-        morph.removeTextAttribute({
-          doit: null,
-          nativeCursor: '',
-          textDecoration: ''
-        }, sel);
-      } else {
-        morph.addTextAttribute({
-          doit: { code: newDoitCode },
-          nativeCursor: 'pointer',
-          textDecoration: 'underline'
-        }, sel);
-      }
+      morph.withMetaDo({ reconcileChanges: true }, () => {
+        if (!newDoitCode) {
+          morph.removeTextAttribute({
+            doit: null,
+            nativeCursor: '',
+            textDecoration: ''
+          }, sel);
+        } else {
+          morph.addTextAttribute({
+            doit: { code: newDoitCode },
+            nativeCursor: 'pointer',
+            textDecoration: 'underline'
+          }, sel);
+        }
+      });
       morph.undoManager.group();
     }
   },
@@ -203,13 +211,15 @@ export const interactiveCommands = [
     name: 'reset text style',
     scrollCursorIntoView: false,
     exec: function (morph, args = {}) {
-      morph.undoManager.group();
-      const range = !args.onlySelection && morph.selection.isEmpty()
-        ? morph.documentRange
-        : morph.selection.range;
-      morph.setStyleInRange(null, range);
-      morph.undoManager.group();
-      return true;
+      morph.withMetaDo({ reconcileChanges: true }, async () => {
+        morph.undoManager.group();
+        const range = !args.onlySelection && morph.selection.isEmpty()
+          ? morph.documentRange
+          : morph.selection.range;
+        morph.setStyleInRange(null, range);
+        morph.undoManager.group();
+        return true;
+      });
     }
   }
 ];
