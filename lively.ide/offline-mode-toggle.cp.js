@@ -8,7 +8,7 @@ class OfflineToggleModel extends ToggleModel {
     else this.active = false;
 
     // FIXME: this is unfortunate and should be prevented somehow
-    await this.ui.label.whenFontLoaded();
+    await document.fonts.ready;
     delete this.ui.label._cachedBounds;
     this.ui.label.fit();
   }
