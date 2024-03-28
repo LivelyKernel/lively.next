@@ -1939,6 +1939,9 @@ export default class Renderer {
    * @returns {Rectangle} The actual bounds of `morph` when rendered into the DOM.
    */
   measureStaticTextBoundsFor (morph) {
+
+    morph._measuringTextBox = true;
+
     if (!morph.renderingState.needsRemeasure && morph._cachedBounds) return morph._cachedBounds;
 
     let node = this.getNodeForMorph(morph);
@@ -1987,6 +1990,9 @@ export default class Renderer {
       morph._cachedBounds = bounds;
       morph.renderingState.needsRemeasure = false;
     }
+
+   morph._measuringTextBox = false;
+
     return bounds;
   }
 
