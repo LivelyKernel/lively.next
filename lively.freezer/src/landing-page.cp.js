@@ -269,7 +269,6 @@ class WorldAligningLandigPageUIElements extends ViewModel {
     this.view.position = pt(0, 0);
     $world._cachedWindowBounds = null;
     document.body.style.overflowY = 'hidden';
-    // await this.view.whenRendered();
     this.ui.topSide.topRight = $world.visibleBounds().insetBy(10).topRight();
     this.ui.fastLoadToggler.bottomRight = $world.visibleBounds().insetBy(10).bottomRight();
     return this.view;

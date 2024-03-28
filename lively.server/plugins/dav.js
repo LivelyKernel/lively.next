@@ -11,7 +11,7 @@ const COMPRESSABLE_URLS = [
   'components_cache'
 ];
 
-const compression = 'gzip'; // 'gzip';
+const compression = 'gzip'; // can be either 'gzip' or 'brotli' where 'brotli' takes drastically longer to compress but yields slightly smaller bundles;
 
 // FIXME...
 let DavHandler; let FsTree;
