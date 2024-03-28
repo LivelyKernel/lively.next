@@ -1968,6 +1968,7 @@ export default class Renderer {
     this.placeholder.appendChild(textNode);
     const domMeasure = this.placeholder.getBoundingClientRect();
     textNode.style.removeProperty('width');
+    textNode.style.removeProperty('height');
     textNode.style.removeProperty('position');
     const bounds = new Rectangle(domMeasure.x, domMeasure.y, Math.ceil(domMeasure.width), Math.ceil(domMeasure.height));
 
