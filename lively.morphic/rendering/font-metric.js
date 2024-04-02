@@ -340,6 +340,7 @@ class DOMTextMeasure {
         fontStyle,
         textDecoration,
         textStyleClasses,
+        lineHeight,
 
         paddingLeft, paddingRight, paddingTop, paddingBottom,
         width, height, clipMode, lineWrapping, textAlign
@@ -351,6 +352,7 @@ class DOMTextMeasure {
         fontStyle,
         textDecoration,
         textStyleClasses,
+        lineHeight,
         paddingLeft, paddingRight, paddingTop, paddingBottom,
         width, height, clipMode, lineWrapping, textAlign
       ].join('-');
@@ -364,6 +366,7 @@ class DOMTextMeasure {
           textDecoration,
           textStyleClasses
         },
+        lineHeight,
         paddingLeft, paddingRight, paddingTop, paddingBottom,
         width, height, clipMode, lineWrapping, textAlign
       } = styleOpts;
@@ -374,6 +377,7 @@ class DOMTextMeasure {
         fontStyle,
         textDecoration,
         textStyleClasses,
+        lineHeight,
         paddingLeft, paddingRight, paddingTop, paddingBottom,
         width, height, clipMode, lineWrapping, textAlign
       ].join('-');
