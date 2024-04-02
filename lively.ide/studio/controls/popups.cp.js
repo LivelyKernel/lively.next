@@ -457,10 +457,9 @@ const ShadowPopup = component(DarkPopupWindow, {
       viewModel: { min: 0 },
       submorphs: [{
         name: 'interactive label',
-        textAndAttributes: ['\ue3a5', {
-          fontSize: 14,
-          fontFamily: 'Material Icons'
-        }]
+        fontSize: 14,
+        fontFamily: 'Material Icons',
+        textAndAttributes: ['\ue3a5', null]
       }],
       tooltip: 'Shadow blur'
     }),
@@ -482,10 +481,9 @@ const ShadowPopup = component(DarkPopupWindow, {
       viewModel: { min: 0 },
       submorphs: [{
         name: 'interactive label',
-        textAndAttributes: ['\ue3e0', {
-          fontSize: 14,
-          fontFamily: 'Material Icons'
-        }]
+        fontSize: 14,
+        fontFamily: 'Material Icons',
+        textAndAttributes: ['\ue3e0', null]
       }],
       tooltip: 'Shadow spread'
     })]
@@ -530,6 +528,16 @@ const ShadowPopup = component(DarkPopupWindow, {
 
 const NumberWidgetLight = component(DefaultNumberWidget, {
   name: 'number widget/light',
+  layout: new TilingLayout({
+    align: 'center',
+    axisAlign: 'center',
+    justifySubmorphs: 'spaced',
+    padding: rect(0, 0, 5, 0),
+    resizePolicies: [['value', {
+      height: 'fixed',
+      width: 'fixed'
+    }]]
+  }),
   borderColor: Color.rgbHex('CCCCCC'),
   borderRadius: 2,
   borderWidth: 1,
@@ -566,10 +574,9 @@ const NumberPopupLight = component(PopupWindow, {
       position: pt(11.3, 14),
       submorphs: [{
         name: 'interactive label',
-        textAndAttributes: ['', {
-          fontSize: 14,
-          fontFamily: 'Material Icons'
-        }]
+        fontSize: 14,
+        fontFamily: 'Material Icons',
+        textAndAttributes: ['', null]
       }],
       tooltip: 'Object Blur'
     })]
@@ -791,10 +798,9 @@ export const PaddingControlsLight = component({
           fontColor: Color.rgba(101, 135, 139),
           padding: rect(8, 0, -1, 0),
           lineHeight: 1,
-          textAndAttributes: ['\ue22f', {
-            fontSize: 16,
-            fontFamily: 'Material Icons'
-          }]
+          fontSize: 16,
+          fontFamily: 'Material Icons',
+          textAndAttributes: ['\ue22f', null]
         }, 'value'),
         { name: 'value', fontSize: 14, width: 60 }]
     }),
@@ -828,10 +834,9 @@ export const PaddingControlsLight = component({
               fontColor: Color.rgb(101, 135, 139),
               fontFamily: 'Material Icons',
               padding: rect(7, 5, 0, 0),
-              textAndAttributes: ['\ue25a', {
-                fontSize: 16,
-                fontFamily: 'Material Icons'
-              }]
+              fontSize: 16,
+              fontFamily: 'Material Icons',
+              textAndAttributes: ['\ue25a', null]
             }
           ]
         },
@@ -896,10 +901,8 @@ export const PaddingControlsLight = component({
       },
       tooltip: 'Toggle independent Fields per Direction',
       fontFamily: 'Material Icons',
-      textAndAttributes: ['', {
-        fontFamily: 'Material Icons',
-        fontSize: 18
-      }]
+      fontSize: 18,
+      textAndAttributes: ['', null]
     })
   ]
 }
@@ -1040,10 +1043,9 @@ const BlurPopup = component(DarkPopupWindow, {
       position: pt(11.3, 14),
       submorphs: [{
         name: 'interactive label',
-        textAndAttributes: ['', {
-          fontSize: 14,
-          fontFamily: 'Material Icons'
-        }]
+        fontSize: 14,
+        fontFamily: 'Material Icons',
+        textAndAttributes: ['', null]
       }],
       tooltip: 'Object Blur'
     })]
@@ -1077,10 +1079,9 @@ const OpacityPopup = component(DarkPopupWindow, {
       tooltip: 'Object opacity',
       submorphs: [{
         name: 'interactive label',
-        textAndAttributes: ['\ue91c', {
-          fontSize: 14,
-          fontFamily: 'Material Icons'
-        }]
+        fontSize: 14,
+        fontFamily: 'Material Icons',
+        textAndAttributes: ['\ue91c', null]
       }]
     })]
   })]

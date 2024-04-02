@@ -441,40 +441,36 @@ const BorderPopup = component(DarkPopupWindow, {
             name: 'left border',
             tooltip: 'Configure Left Border',
             padding: rect(4, 4, 0, 0),
-            textAndAttributes: ['\ue22e', {
-              fontSize: 20,
-              fontFamily: 'Material Icons'
-            }]
+            fontSize: 20,
+            fontFamily: 'Material Icons',
+            textAndAttributes: ['\ue22e', null]
           }),
           part(AddButton, {
             name: 'top border',
             tooltip: 'Configure Top Border',
             master: { states: { active: PropertyLabelActive }, hover: PropertyLabelHovered },
             padding: rect(4, 4, 0, 0),
-            textAndAttributes: ['\ue232', {
-              fontSize: 20,
-              fontFamily: 'Material Icons'
-            }]
+            fontSize: 20,
+            fontFamily: 'Material Icons',
+            textAndAttributes: ['\ue232', null]
           }),
           part(AddButton, {
             master: { states: { active: PropertyLabelActive }, hover: PropertyLabelHovered },
             name: 'right border',
             tooltip: 'Configure Right Border',
             padding: rect(4, 4, 0, 0),
-            textAndAttributes: ['\ue230', {
-              fontSize: 20,
-              fontFamily: 'Material Icons'
-            }]
+            fontSize: 20,
+            fontFamily: 'Material Icons',
+            textAndAttributes: ['\ue230', null]
           }),
           part(AddButton, {
             master: { states: { active: PropertyLabelActive }, hover: PropertyLabelHovered },
             name: 'bottom border',
             tooltip: 'Configure Bottom Border',
             padding: rect(4, 4, 0, 0),
-            textAndAttributes: ['\ue229', {
-              fontSize: 20,
-              fontFamily: 'Material Icons'
-            }]
+            fontSize: 20,
+            fontFamily: 'Material Icons',
+            textAndAttributes: ['\ue229', null]
           })
         ]
       }, part(BorderControlElements, { name: 'border control', viewModelClass: BorderControlModel, viewModel: { updateDirectly: false } })]
@@ -533,10 +529,9 @@ const BorderControl = component(PropertySection, {
         name: 'more button',
         tooltip: 'Open Advanced Settings',
         padding: rect(6, 4, 0, 0),
-        textAndAttributes: ['', {
-          fontSize: 18,
-          fontFamily: 'Material Icons'
-        }]
+        fontSize: 18,
+        fontFamily: 'Material Icons',
+        textAndAttributes: ['', null]
       }))
     ]
   }))
