@@ -182,6 +182,7 @@ export class StatusMessage extends ViewModel {
   }
 
   async expand () {
+    const extraPadding = 100;
     if (!this.expandable) return;
     if (this.sliding) await this.sliding;
     const world = this.view.world();
@@ -193,11 +194,13 @@ export class StatusMessage extends ViewModel {
     Object.assign(text, { lineWrapping: 'no-wrap', clipMode: 'auto', readOnly: true, reactsToPointer: true });
     if (this.expandedContent) text.value = this.expandedContent;
     text.env.forceUpdate();
+    delete text.renderingState.renderedTextAndAttributes; // force remeasure, needsRemeasure does not cut it for text with document
     text.invalidateTextLayout(true, true);
+    text.env.forceUpdate(); // this really needs to be called twice holy moly
     let ext = text.textBounds().extent();
-    const visibleBounds = world.visibleBounds();
-    if (ext.y > visibleBounds.extent().y) ext.y = visibleBounds.extent().y - 200;
-    if (ext.x > visibleBounds.extent().x) ext.x = visibleBounds.extent().x - 200;
+    const visibleBounds = world.visibleBoundsExcludingTopBar().insetBy(extraPadding);
+    if (ext.y > visibleBounds.extent().y) ext.y = visibleBounds.height;
+    if (ext.x > visibleBounds.extent().x) ext.x = visibleBounds.width;
 
     // FIXME: this should not be needed to split apart
     //        also no manual invocation of the layout should be needed
