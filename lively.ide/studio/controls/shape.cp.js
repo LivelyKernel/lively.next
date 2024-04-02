@@ -1,7 +1,7 @@
 import { Color, Rectangle, pt, rect } from 'lively.graphics';
 import { TilingLayout, Label, ViewModel, add, without, part, component } from 'lively.morphic';
 import { string, num } from 'lively.lang';
-import { DarkNumberIconWidget, PropertyLabel, PropertyLabelActive, DarkThemeList, EnumSelector, PropertyLabelHovered, AddButton } from '../shared.cp.js';
+import { DarkNumberIconWidget, PropertyLabelActive, DarkThemeList, EnumSelector, AddButton } from '../shared.cp.js';
 import { disconnect, epiConnect } from 'lively.bindings';
 
 const FILL_ICON = '\ue5d7';
@@ -509,9 +509,7 @@ const ShapeControl = component({
         fontSize: 13,
         fontFamily: 'IBM Plex Mono',
         padding: rect(8, 0, -1, 0),
-        textAndAttributes: ['X', {
-          textStyleClasses: ['']
-        }]
+        textAndAttributes: ['X', null]
       }]
     }), part(DarkNumberIconWidget, {
       name: 'y input',
@@ -527,9 +525,7 @@ const ShapeControl = component({
         padding: rect(7, 0, 0, 0),
         fontFamily: 'IBM Plex Mono',
         fontSize: 13,
-        textAndAttributes: ['Y', {
-          textStyleClasses: ['']
-        }]
+        textAndAttributes: ['Y', null]
       }]
     }), { opacity: 0, name: 'buffer after position', width: 25 },
     part(DarkNumberIconWidget, {
@@ -546,10 +542,9 @@ const ShapeControl = component({
         lineHeight: 1,
         padding: rect(0, 4, 0, -4),
         rotation: -1.57,
+        fontSize: 18,
         fontFamily: 'Material Icons',
-        textAndAttributes: ['', {
-          fontSize: 18
-        }]
+        textAndAttributes: ['', null]
       }]
     }),
     part(DarkNumberIconWidget, {
@@ -565,7 +560,8 @@ const ShapeControl = component({
         name: 'interactive label',
         padding: rect(3, 3, -3, -3),
         fontFamily: 'Material Icons',
-        textAndAttributes: [FIXED_ICON, { fontSize: 18 }]
+        fontSize: 18,
+        textAndAttributes: [FIXED_ICON, null]
       }]
     }), part(AddButton, {
       master: { states: { active: PropertyLabelActive } },
@@ -611,9 +607,8 @@ const ShapeControl = component({
           nativeCursor: 'pointer',
           rotation: -1.5707963267948966,
           reactsToPointer: false,
-          textAndAttributes: [FIXED_ICON, {
-            fontSize: 16
-          }]
+          fontSize: 18,
+          textAndAttributes: [FIXED_ICON, null]
         }, 'label'),
         { name: 'label', fontSize: 12, fontColor: Color.rgb(178, 235, 242) }]
     }),
@@ -652,10 +647,9 @@ const ShapeControl = component({
         fontFamily: 'Material Icons',
         nativeCursor: 'pointer',
         reactsToPointer: false,
-        lineHeight: 1,
-        textAndAttributes: [FIXED_ICON, {
-          fontSize: 16
-        }]
+        lineHeight: 1.4,
+        fontSize: 18,
+        textAndAttributes: [FIXED_ICON, null]
       }, 'label'),
       { name: 'label', fontSize: 12, fontColor: Color.rgb(178, 235, 242) }]
     }), { opacity: 0, name: 'buffer', width: 25 },
@@ -689,19 +683,17 @@ const ShapeControl = component({
         name: 'interactive label',
         fontFamily: 'Material Icons',
         lineHeight: 1,
-        textAndAttributes: ['\ue920', {
-          fontSize: 16
-        }]
+        fontSize: 16,
+        textAndAttributes: ['\ue920', null]
       }]
     }), part(AddButton, {
       master: { states: { active: PropertyLabelActive } },
       name: 'independent corner toggle',
       tooltip: 'Independent Border Radius per Corner',
       padding: rect(3, 3, 0, 0),
-      textAndAttributes: ['\ue5d0', {
-        fontSize: 18,
-        fontFamily: 'Material Icons'
-      }]
+      fontSize: 18,
+      fontFamily: 'Material Icons',
+      textAndAttributes: ['\ue5d0', null]
     }),
     {
       name: 'multi radius container',
@@ -732,9 +724,8 @@ const ShapeControl = component({
               fontColor: Color.rgb(178, 235, 242),
               fontFamily: 'Material Icons',
               padding: rect(2, 2, 0, -2),
-              textAndAttributes: ['', {
-                fontSize: 16
-              }]
+              fontSize: 16,
+              textAndAttributes: ['', null]
             }
           ]
         },
@@ -810,9 +801,8 @@ const ShapeControl = component({
         lineHeight: 1,
         padding: rect(6, 0, -6, 0),
         reactsToPointer: false,
-        textAndAttributes: ['', {
-          fontSize: 16
-        }]
+        fontSize: 16,
+        textAndAttributes: ['', null]
       }, 'label'), { name: 'label', fontColor: Color.rgb(178, 235, 242) }]
     })]
 });
