@@ -1,4 +1,4 @@
-/* global System, global, self */
+/* global System, global, self, OffscreenCanvas */
 import { obj } from 'lively.lang';
 
 function ensureElementMounted (element, parentEl) {
@@ -307,6 +307,7 @@ class DOMTextMeasure {
     el.className = 'dom-measure' + (debug ? ' debug' : '');
     this.setMeasureNodeStyles(el.style, true);
     parentEl.insertBefore(el, parentEl.firstChild);
+    this.canvas = new OffscreenCanvas(256, 256);
     return this;
   }
 
@@ -382,6 +383,16 @@ class DOMTextMeasure {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // interface
 
+  measureTextWidthInCanvas (morph, str) {
+    const ctx = this.canvas.getContext('2d');
+    const style = `${morph.fontStyle} ${morph.fontWeight} ${morph.fontSize}px ${morph.fontFamily}`;
+    ctx.font = style;
+    ctx.letterSpacing = '0px';
+    ctx.textRendering = 'geometricPrecision';
+    const { width } = ctx.measureText(str);
+    return width;
+  }
+
   defaultCharExtent (morph, styleOpts, rendertTextLayerFn) {
     let styleKey;
     if (styleOpts) styleKey = this.generateStyleKey(styleOpts);
@@ -399,13 +410,9 @@ class DOMTextMeasure {
       morph,
       rendertTextLayerFn, styleOpts, styleKey,
       textNode => {
-        const spanW = doc.createElement('span');
-        spanW.className = 'line';
-        spanW.style.whiteSpace = 'pre';
-        textNode.appendChild(spanW);
-        spanW.textContent = testStringW;
-        const { width } = spanW.getBoundingClientRect();
+        const width = this.measureTextWidthInCanvas(morph, testStringW);
 
+        console.time('DOM measure');
         const spanH = doc.createElement('span');
         spanH.className = 'line';
         spanH.style.whiteSpace = 'pre';
@@ -413,8 +420,8 @@ class DOMTextMeasure {
         spanH.textContent = testStringH;
         const { height } = spanH.getBoundingClientRect();
 
-        textNode.removeChild(spanW);
         textNode.removeChild(spanH);
+        console.timeEnd('DOM measure');
         return this.defaultCharWidthHeightCache[styleKey] = {
           width: width / testStringW.length,
           height: Math.ceil(height / 4)
