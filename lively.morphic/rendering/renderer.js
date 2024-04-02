@@ -1951,6 +1951,18 @@ export default class Renderer {
     if (morph.debug) textNode.append(...this.renderDebugLayer(morph));
   }
 
+  tryToMeasureViaCanvas (morph) {
+    if (morph.lineWrapping !== 'no-wrap' ||
+        morph.hasMixedTextAttributes('fontFamily') ||
+        morph.hasMixedTextAttributes('fontSize') ||
+       !morph.allFontsLoaded() ||
+       document.fonts.status !== 'loaded') return false;
+    const env = morph.env;
+    const { height } = env.fontMetric.defaultCharExtent(morph, null, env.renderer.textLayerNodeFunctionFor(morph));
+    const width = morph.env.fontMetric._domMeasure.measureTextWidthInCanvas(morph, morph.textString);
+    return pt(0, 0).extent(pt(width + morph.padding.left() + morph.padding.right(), height + morph.padding.top() + morph.padding.bottom()));
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // TEXTRENDERING - MEASURING AFTER RENDER
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -1964,6 +1976,15 @@ export default class Renderer {
     morph._measuringTextBox = true;
 
     if (!morph.renderingState.needsRemeasure && morph._cachedBounds) return morph._cachedBounds;
+
+    const fastBounds = this.tryToMeasureViaCanvas(morph);
+    if (fastBounds) {
+      if (morph.allFontsLoaded()) {
+        morph._cachedBounds = fastBounds;
+        morph.renderingState.needsRemeasure = false;
+      }
+      return fastBounds;
+    }
 
     let node = this.getNodeForMorph(morph);
     if (!node) node = this.renderMorph(morph);
