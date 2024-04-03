@@ -2,6 +2,7 @@
 import { expect } from 'mocha-es6';
 import { pt, rect, Color, Rectangle } from 'lively.graphics';
 import { Text } from '../../text/morph.js';
+import { charBoundsOfLineViaCanvas } from '../../rendering/font-metric.js';
 
 const padding = Rectangle.inset(5);
 
@@ -11,7 +12,7 @@ async function text (string, props) {
   t = new Text({
     name: 'text',
     readOnly: false,
-    textString: string,
+    value: string,
     fontSize: 10,
     fontFamily: 'IBM Plex Mono',
     extent: pt(100, 100),
@@ -251,6 +252,30 @@ describe('text layout', function () {
       t.lineWrapping = 'by-chars';
       const range = t.screenLineRange({ row: 0, column: 5 });
       expect(range).deep.equals({ start: { row: 0, column: 4 }, end: { row: 0, column: 6 } });
+    });
+  });
+
+  describe('canvas line bounds measuring', () => {
+    it("can properly measure the line's character bounds via the canvas", () => {
+      text(['hello linus', { fontSize: 40 }, ' this is some smaller font', { fontSize: 12 }], { fontFamily: 'IBM Plex Sans' });
+      const bounds = charBoundsOfLineViaCanvas(t.document.getLine(0), t, t.env.renderer.textLayerNodeFunctionFor(t));
+      expect(bounds[0].width).closeTo(22.7, 1);
+      expect(bounds[0].height).closeTo(55, 1);
+      expect(bounds[15].width).closeTo(5.8, 1);
+      expect(bounds[15].height).closeTo(55, 1); // all height are the same as the tallest of the line
+      expect(bounds[15].x).closeTo(200.7, 1);
+      expect(bounds[15].y).equals(0); // we always fill the bounds up to the line
+    });
+
+    it("can properly measure the line's character bounds via the canvas if line is wrapped", () => {
+      text(['hello linus', { fontSize: 40 }, ' this is some smaller font', { fontSize: 12 }], { fontFamily: 'IBM Plex Sans', lineWrapping: 'by-words', width: 250 });
+      let bounds = charBoundsOfLineViaCanvas(t.document.getLine(0), t, t.env.renderer.textLayerNodeFunctionFor(t));
+      expect(bounds[20].width).closeTo(5.8, 1);
+      expect(bounds[20].height).closeTo(17, 1);
+      expect(bounds[20].x).closeTo(0, 1);
+      expect(bounds[20].y).closeTo(55, 1);
+      t.lineWrapping = 'by-chars';
+      bounds = charBoundsOfLineViaCanvas(t.document.getLine(0), t, t.env.renderer.textLayerNodeFunctionFor(t));
     });
   });
 });
