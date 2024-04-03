@@ -198,13 +198,13 @@ input:placeholder {
 
 .newtext-text-layer.wrap-by-words {
   white-space: pre-wrap;
-  overflow-wrap: break-word;
+  word-break: break-word;
   max-width: 100%;
 }
 
 .newtext-text-layer.only-wrap-by-words {
   white-space: pre-wrap;
-  overflow-wrap: break-all;
+  word-break: normal;
   max-width: 100%;
 }
 
