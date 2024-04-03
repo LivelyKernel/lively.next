@@ -941,8 +941,13 @@ const commands = [
     name: 'open browser',
     progressIndicator: 'opening browser...',
     handlesLoadingIndicator: true,
-    exec: async (world, args = { packageName: 'lively.morphic', moduleName: 'morph.js', scroll: pt(0, 0), reuse: false }, _, evt) => {
+    exec: async (world, args, _, evt) => {
       const loadingIndicator = world.commandHandler.progressIndicator;
+      if (!args) {
+        args = world.openedProject
+          ? { packageName: $world.openedProject.fullName, moduleName: 'index.js', scroll: pt(0, 0), reuse: false }
+          : { packageName: 'lively.morphic', moduleName: 'morph.js', scroll: pt(0, 0), reuse: false };
+      }
 
       // in case there is another morph implementing open browser...
       const relayed = evt && world.relayCommandExecutionToFocusedMorph(evt);
