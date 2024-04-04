@@ -1,5 +1,6 @@
 /* global System, global, self, OffscreenCanvas */
-import { obj } from 'lively.lang';
+import { obj, arr } from 'lively.lang';
+import { pt, rect } from 'lively.graphics';
 
 function ensureElementMounted (element, parentEl) {
   if (!element.isConnected) {
@@ -251,8 +252,8 @@ export default class FontMetric {
     return this._domMeasure.computeCharBBoxes(
       morph,
       line,
-      (offsetX = 0),
-      (offsetY = 0),
+      offsetX,
+      offsetY,
       null,
       rendertTextLayerFn,
       renderLineFn,
@@ -392,9 +393,83 @@ class DOMTextMeasure {
     const style = `${morph.fontStyle} ${morph.fontWeight} ${morph.fontSize}px ${morph.fontFamily}`;
     ctx.font = style;
     ctx.letterSpacing = '0px';
-    ctx.textRendering = 'geometricPrecision';
+    ctx.textRendering = 'optimizeSpeed';
     const { width } = ctx.measureText(str);
     return width;
+  }
+
+  getEmptySpaceOfMorph (textMorph) {
+    return textMorph.width - textMorph.padding.left() - textMorph.padding.right() - textMorph.borderWidthLeft - textMorph.borderWidthRight;
+  }
+
+  measureCharWidthsInCanvas (morph, str, styleOpts = {}, measuringState) {
+    const ctx = this.canvas.getContext('2d');
+    const style = `${styleOpts.fontStyle || morph.fontStyle} ${styleOpts.fontWeight || morph.fontWeight} ${styleOpts.fontSize || morph.fontSize}px ${styleOpts.fontFamily || morph.fontFamily}`;
+    const styleKey = `${style} ls:${morph.letterSpacing}`;
+    let cache;
+    if (!this.lineBBoxCache[styleKey]) cache = this.lineBBoxCache[styleKey] = [];
+    else cache = this.lineBBoxCache[styleKey];
+    ctx.font = style;
+    ctx.letterSpacing = `${styleOpts.letterSpacing || morph.letterSpacing}px`;
+    ctx.textRendering = 'optimizeSpeed';
+    const result = [];
+    for (let i = 0; i < str.length; i++) {
+      const code = str.charCodeAt(i);
+      if (code === 32 && measuringState.trailingWhitespaces.length == 0) {
+        measuringState.currentWord = [];
+        measuringState.wordLength = 0;
+        measuringState.emptySpaceForWord = measuringState.emptySpace;
+      }
+      let hit = cache[code];
+      if (!hit) {
+        hit = cache[code] = ctx.measureText(str[i]).width;
+      }
+
+      const tmp = [hit, measuringState.virtualRow];
+      measuringState.wordLength += hit;
+      if (code !== 32) {
+        measuringState.currentWord.push(tmp);
+      } else if (measuringState.currentWord.length == 0) measuringState.trailingWhitespaces.push(tmp);
+
+      switch (morph.lineWrapping) {
+        case 'only-by-words':
+          if (Math.ceil(measuringState.emptySpaceForWord) < Math.floor(measuringState.wordLength) - 1 && code !== 32) {
+            measuringState.virtualRow++;
+            measuringState.currentWord.forEach(entry => entry[1] = measuringState.virtualRow);
+            measuringState.emptySpace = this.getEmptySpaceOfMorph(morph) - measuringState.wordLength;
+            measuringState.trailingWhitespaces.forEach(b => b[0] = 0);
+            // if this happens to early, other traling whitespaces are not flattened
+            measuringState.trailingWhitespaces = [];
+            break;
+          }
+          measuringState.emptySpace -= hit;
+          break;
+        case 'by-words':
+          if (Math.floor(measuringState.wordLength) < morph.width) {
+            if (Math.ceil(measuringState.emptySpaceForWord) < Math.floor(measuringState.wordLength) - 1 && code !== 32) {
+              measuringState.virtualRow++;
+              measuringState.currentWord.forEach(entry => entry[1] = measuringState.virtualRow);
+              measuringState.emptySpace = this.getEmptySpaceOfMorph(morph) - measuringState.wordLength;
+              measuringState.trailingWhitespaces.forEach(b => b[0] = 0);
+              measuringState.trailingWhitespaces = [];
+              break;
+            }
+            measuringState.emptySpace -= hit;
+            break;
+          }
+        case 'by-chars':
+          if (Math.ceil(measuringState.emptySpace) < Math.floor(hit)) {
+            measuringState.virtualRow++;
+            measuringState.emptySpace = this.getEmptySpaceOfMorph(morph) - hit;
+            tmp[1] = measuringState.virtualRow;
+            break;
+          }
+          measuringState.emptySpace -= hit;
+      }
+      // take into account the available free space and the wrapping style
+      result.push(tmp);
+    }
+    return result;
   }
 
   defaultCharExtent (morph, styleOpts, rendertTextLayerFn) {
@@ -420,6 +495,7 @@ class DOMTextMeasure {
         const spanH = doc.createElement('span');
         spanH.className = 'line';
         spanH.style.whiteSpace = 'pre';
+        if (styleOpts?.fontSize) spanH.style.fontSize = `${styleOpts.fontSize}px`;
         textNode.appendChild(spanH);
         spanH.textContent = testStringH;
         const { height } = spanH.getBoundingClientRect();
@@ -474,9 +550,13 @@ class DOMTextMeasure {
             renderTextLayerFn);
         }
         if (!result) {
-          result = charBoundsOfLine(line, lineNode, // eslint-disable-line no-use-before-define
-            offsetX - textNodeOffsetLeft,
-            offsetY - textNodeOffsetTop);
+          if (morph.measureLineViaCanvas) {
+            result = charBoundsOfLineViaCanvas(line, morph, renderTextLayerFn);
+          } else {
+            result = charBoundsOfLine(line, lineNode, // eslint-disable-line no-use-before-define
+              offsetX - textNodeOffsetLeft,
+              offsetY - textNodeOffsetTop);
+          }
         }
 
         if (actualTextNode) actualTextNode.style.transform = '';
@@ -574,6 +654,71 @@ function charBoundsOfBigMonospacedLine (morph, line, lineNode, offsetX = 0, offs
     x = x + width;
   }
 
+  return result;
+}
+
+export function charBoundsOfLineViaCanvas (line, textMorph, renderTextLayerFn) {
+  const characterBounds = [];
+  const { textAndAttributes } = line;
+  const currentTopLeft = pt(0, 0);
+  const measure = textMorph.env.fontMetric._domMeasure;
+  const isWrapping = textMorph.lineWrapping !== 'no-wrap';
+  const emptySpace = measure.getEmptySpaceOfMorph(textMorph);
+  const measuringState = {
+    currentWord: [],
+    trailingWhitespaces: [],
+    wordLength: 0,
+    virtualRow: 0, // in case of wrapped lines, we have multiple virtual rows
+    emptySpace,
+    emptySpaceForWord: emptySpace
+  };
+  for (let i = 0; i < textAndAttributes.length; i += 2) {
+    const textOrMorph = textAndAttributes[i];
+    const attrs = textAndAttributes[i + 1] || {};
+    if (textOrMorph.isMorph) {
+      if (isWrapping && measuringState.emptySpace < textMorph.width) {
+        measuringState.emptySpace = measure.getEmptySpaceOfMorph(textMorph);
+        measuringState.virtualRow += 1;
+      }
+      characterBounds.push([textOrMorph.height, [textOrMorph.width, measuringState.virtualRow]]);
+    } else if (typeof textOrMorph === 'string') {
+      const style = { ...textMorph.defaultTextStyle, ...attrs };
+      measure.measureCharWidthsInCanvas(textMorph, textOrMorph, attrs, measuringState).forEach((res) => {
+        const { height } = measure.defaultCharExtent(textMorph, style, renderTextLayerFn);
+        characterBounds.push([height, res]);
+      });
+    } else {
+      console.log('Can not measure', textOrMorph);
+    }
+  }
+  // synthesize the character bounds
+  const boundsPerInnerLine = arr.groupBy(characterBounds, b => b[1][1]);
+  const result = [];
+  let innerLineOffset = 0;
+  for (let row in boundsPerInnerLine) {
+    let currentOffset, direction;
+    const rowBounds = boundsPerInnerLine[row];
+    const totalWidthOfRow = arr.sum(rowBounds.map(b => b[1][0]));
+    const heightOfRow = arr.max(rowBounds.map(b => b[0]));
+    switch (textMorph.textAlign) {
+      case 'right':
+        currentOffset = Math.max(0, textMorph.width - totalWidthOfRow);
+        break;
+      case 'center':
+        currentOffset = Math.max(0, (textMorph.width - totalWidthOfRow) / 2);
+        break;
+      case 'left':
+      default:
+        currentOffset = 0;
+    }
+    result.push(...rowBounds.map(b => {
+      const charBounds = pt(currentOffset, innerLineOffset).extent(pt(b[1][0], heightOfRow));
+      currentOffset += b[1][0];
+      return charBounds;
+    }));
+    innerLineOffset += heightOfRow;
+  }
+  if (result.length == 0) result.push(rect(0, 0, 0, 0));
   return result;
 }
 
