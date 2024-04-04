@@ -146,11 +146,7 @@ export class RadioButton extends Morph {
         after: ['indicator'],
         defaultValue: false,
         set (bool) {
-          this.getMaster(bool).then(async auto => {
-            this.master = {
-              auto
-            };
-          });
+          this.master?.setState(bool ? 'selected' : null);
           this.setProperty('selected', !!bool);
         }
       },
@@ -171,11 +167,6 @@ export class RadioButton extends Morph {
         }
       }
     };
-  }
-
-  async getMaster (selected) {
-    const { ChoiceButtonSelected, ChoiceButtonUnselected } = await System.import('lively.components/prompts.cp.js');
-    return selected ? ChoiceButtonSelected : ChoiceButtonUnselected;
   }
 
   reset () {
@@ -229,6 +220,7 @@ export class RadioButton extends Morph {
 export class RadioButtonGroup extends Morph {
   static get properties () {
     return {
+      buttonMaster: {}, // optional master to style the radio buttons
       choices: {
         derived: true,
         defaultValue: [],
@@ -293,7 +285,7 @@ export class RadioButtonGroup extends Morph {
   }
 
   addButton (morph, optValue) {
-    const button = new RadioButton({ name: 'button ' + (this.submorphs.length + 1) });
+    const button = new RadioButton({ master: this.buttonMaster, name: 'button ' + (this.submorphs.length + 1) });
     button.reset();
     button.morph = morph;
     if (optValue !== undefined) {
