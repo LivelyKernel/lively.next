@@ -1321,7 +1321,7 @@ export default class Renderer {
       if (row > morph.renderingState.lastVisibleRow + bufferOffset) break; // selected lines after the visible ones
 
       // selected lines (rows) that are visible
-      charBounds = textLayout.charBoundsOfRow(morph, row).map(Rectangle.fromLiteral);
+      charBounds = textLayout.charBoundsOfRow(morph, row).map(r => r.isRectangle ? r : Rectangle.fromLiteral(r));
       isFirstLine = row === selection.start.row;
 
       // This correctly finds wrapped lines spanning over three or more lines in all known cases.
@@ -1340,8 +1340,8 @@ export default class Renderer {
         for (let rect of charBounds) {
           // A charrect is contained in the larger one, if it starts at the same height/below the larger one and ends above or at the same height.
           if (rect === tallestCharRect) continue;
-          if (((rect.y + rect.height) >= (tallestCharRect.y + tallestCharRect.height)) &&
-             (rect.y >= tallestCharRect.y)) {
+          if (rect.bottom() > tallestCharRect.bottom() &&
+              rect.top() > tallestCharRect.top()) {
             isWrapped = true;
             // As soon as we found one, we can stop, as we know for sure that we are wrapped.
             break;

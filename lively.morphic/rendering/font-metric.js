@@ -413,6 +413,13 @@ class DOMTextMeasure {
     ctx.letterSpacing = `${styleOpts.letterSpacing || morph.letterSpacing}px`;
     ctx.textRendering = 'optimizeSpeed';
     const result = [];
+    if (styleOpts.paddingLeft) {
+      const offset = [Number.parseFloat(styleOpts.paddingLeft), measuringState.virtualRow];
+      offset.isOffset = true;
+      measuringState.currentWord.push(offset);
+      measuringState.wordLength += offset[0];
+      result.push(offset);
+    }
     for (let i = 0; i < str.length; i++) {
       const code = str.charCodeAt(i);
       if (code === 32 && measuringState.trailingWhitespaces.length == 0) {
@@ -468,6 +475,13 @@ class DOMTextMeasure {
       }
       // take into account the available free space and the wrapping style
       result.push(tmp);
+    }
+    if (styleOpts.paddingRight) {
+      const offset = [Number.parseFloat(styleOpts.paddingRight), measuringState.virtualRow];
+      offset.isOffset = true;
+      measuringState.currentWord.push(offset);
+      measuringState.wordLength += offset[0];
+      result.push(offset);
     }
     return result;
   }
@@ -676,7 +690,7 @@ export function charBoundsOfLineViaCanvas (line, textMorph, renderTextLayerFn) {
     const textOrMorph = textAndAttributes[i];
     const attrs = textAndAttributes[i + 1] || {};
     if (textOrMorph.isMorph) {
-      if (isWrapping && measuringState.emptySpace < textMorph.width) {
+      const morphWidth = textOrMorph.width + Number.parseFloat(attrs.paddingLeft || '0') + Number.parseFloat(attrs.paddingRight || '0');
         measuringState.emptySpace = measure.getEmptySpaceOfMorph(textMorph);
         measuringState.virtualRow += 1;
       }
@@ -714,8 +728,9 @@ export function charBoundsOfLineViaCanvas (line, textMorph, renderTextLayerFn) {
     result.push(...rowBounds.map(b => {
       const charBounds = pt(currentOffset, innerLineOffset).extent(pt(b[1][0], heightOfRow));
       currentOffset += b[1][0];
+      if (b[1].isOffset) return false; // skip since it is not a char bound but just a padding
       return charBounds;
-    }));
+    }).filter(Boolean));
     innerLineOffset += heightOfRow;
   }
   if (result.length == 0) result.push(rect(0, 0, 0, 0));
