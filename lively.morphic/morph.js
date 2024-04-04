@@ -1649,7 +1649,7 @@ export class Morph {
 
       submorph.withAllSubmorphsDo(ea => ea.onOwnerChanged(this));
 
-      if (this.world() && submorph._requestMasterStyling) {
+      if (submorph._requestMasterStyling) {
         submorph.master && submorph.master.applyIfNeeded(true);
         submorph._requestMasterStyling = false;
       }
