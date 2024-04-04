@@ -841,6 +841,12 @@ const MultipleChoicePrompt = component(ConfirmPrompt, {
   name: 'multiple choice prompt',
   submorphs: [add({
     type: RadioButtonGroup,
+    buttonMaster: {
+      auto: ChoiceButtonUnselected,
+      states: {
+        selected: ChoiceButtonSelected
+      }
+    },
     layout: new TilingLayout({
       axis: 'column',
       hugContentsVertically: true,
