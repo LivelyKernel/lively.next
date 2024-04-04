@@ -123,8 +123,8 @@ export function addTransform (morph, style) {
   }
   if ((owner && owner.isText && !owner.layout?.renderViaCSS) || promoteToCompositionLayer) {
     style.transform = (promoteToCompositionLayer ? `translate(${x}px, ${y}px)` : `translate(${x}px, ${y}px)`);
-    style.top = owner.layout?.renderViaCSS ? '0px' : '';
-    style.left = owner.layout?.renderViaCSS ? '0px' : '';
+    style.top = owner?.layout?.renderViaCSS ? '0px' : '';
+    style.left = owner?.layout?.renderViaCSS ? '0px' : '';
   } else {
     style.transform = '';
     style.top = `${y}px`;
