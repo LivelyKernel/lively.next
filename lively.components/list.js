@@ -628,6 +628,11 @@ export class List extends Morph {
 
   onChange (change) {
     const { prop } = change;
+    if (prop === 'extent') {
+      if (this.itemHeight * this.items.length < this.height) {
+        this.itemScroll = pt(0, 0);
+      }
+    }
     const styleProps = [
       'fontFamily', 'fontColor', 'fontSize', 'padding',
       'selectionFontColor', 'selectionColor',
