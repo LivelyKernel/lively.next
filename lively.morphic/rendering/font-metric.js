@@ -733,7 +733,7 @@ export function charBoundsOfLineViaCanvas (line, textMorph, renderTextLayerFn) {
     }).filter(Boolean));
     innerLineOffset += heightOfRow;
   }
-  if (result.length == 0) result.push(rect(0, 0, 0, 0));
+  if (result.length === 0) result.push(rect(0, 0, 1, metric.defaultLineHeight(textMorph)));
   return result;
 }
 
