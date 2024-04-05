@@ -1959,9 +1959,10 @@ export default class Renderer {
        !morph.allFontsLoaded() ||
        document.fonts.status !== 'loaded') return false;
     const env = morph.env;
-    const { height } = env.fontMetric.defaultCharExtent(morph, null, env.renderer.textLayerNodeFunctionFor(morph));
+    const height = env.fontMetric.defaultLineHeight(morph);
+    const totalHeight = height * morph.textString.split('\n').length;
     const width = morph.env.fontMetric._domMeasure.measureTextWidthInCanvas(morph, morph.textString);
-    return pt(0, 0).extent(pt(width + morph.padding.left() + morph.padding.right(), height + morph.padding.top() + morph.padding.bottom()));
+    return pt(0, 0).extent(pt(width + morph.padding.left() + morph.padding.right(), totalHeight + morph.padding.top() + morph.padding.bottom()));
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
