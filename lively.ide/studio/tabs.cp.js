@@ -274,7 +274,7 @@ class TabContentContainerModel extends ViewModel {
     };
   }
 
-  onDrop (evt) {
+  onDrop (evt) { // eslint-disable-line no-unused-vars
     const content = this.view.submorphs[0];
     if (content) { this.view.owner.addContentToSelectedTab(content); }
   }
@@ -518,7 +518,9 @@ class TabsModel extends ViewModel {
         defaultTabMaster,
         clickedTabMaster,
         hoveredTabMaster,
-        selectedTabMaster
+        selectedTabMaster,
+        renameable,
+        closeable
       },
       // This is necessary due to a bug where, if we override viewModel properties,
       // custom masters are discarded from the component definition
