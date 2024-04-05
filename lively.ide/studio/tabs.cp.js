@@ -433,7 +433,7 @@ class TabsModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['addContentToSelectedTab', 'addTab', 'selectedTab', 'keybindings', 'commands', 'tabs', 'loadFromSpec'];
+          return ['addContentToSelectedTab', 'addTab', 'selectedTab', 'keybindings', 'commands', 'tabs', 'loadFromConfig'];
         }
       },
       bindings: {
@@ -481,24 +481,24 @@ class TabsModel extends ViewModel {
   }
 
   /**
-   * Takes an array of tabspecs and recreates the therein specified tabs.
+   * Takes an array of tabconfigs and recreates the therein specified tabs.
    * I.e. this method will open new tabs, set their contents, captions,...
    * Previous state of the tab system will be silently discarded, i.e. without triggering connections.
-   * @param {Object[]} spec - An array of tab specs.
+   * @param {Object[]} config - An array of taconfigecs.
    */
-  loadFromSpec (configs) {
+  loadFromConfig (configs) {
     for (let tab of this.tabs) {
       tab.closeSilently();
     }
 
-    for (let tabSpec of configs) {
-      this.addTab(tabSpec.caption,
-        tabSpec.content,
-        tabSpec.selected,
-        tabSpec.hasMorphicContent,
-        tabSpec.selected,
-        tabSpec.closeable,
-        tabSpec.renameable);
+    for (let tabConfig of configs) {
+      this.addTab(tabConfig.caption,
+        tabConfig.content,
+        tabConfig.selected,
+        tabConfig.hasMorphicContent,
+        tabConfig.selected,
+        tabConfig.closeable,
+        tabConfig.renameable);
     }
   }
 
