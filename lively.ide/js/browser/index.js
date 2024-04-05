@@ -2201,7 +2201,7 @@ export class BrowserModel extends ViewModel {
       config: this.browseSpec(),
       history: this.state.history
     };
-    if (prev.caption.includes('Browser Tab')) prev.caption = `[${prev.content.packageName}]${prev.content.moduleName ? '- ' + prev.content.moduleName : ''}`;
+    prev.caption = `[${prev.content.config.packageName}]${prev.content.config.moduleName ? '- ' + prev.content.config.moduleName : ''}`;
 
     // restore the editor tab from the tab we switched to
     // if the tab was newly created populate the editor state with fresh data
