@@ -598,7 +598,7 @@ export class BrowserModel extends ViewModel {
             'focus',
             'keybindings',
             'browse',
-            'browserFromSpec',
+            'browserFromConfig',
             'browseSnippetForSelection',
             'commands',
             'systemInterface',
@@ -702,7 +702,7 @@ export class BrowserModel extends ViewModel {
     });
     stringifiedSpec = '[' + stringifiedSpec.join(',') + ']';
     return {
-      __expr__: `let b = part(SystemBrowser); b.browserFromSpec(${stringifiedSpec}); b;`,
+      __expr__: `let b = part(SystemBrowser); b.browserFromConfig(${stringifiedSpec}); b;`,
       bindings: {
         'lively.morphic': ['part'],
         'lively.ide/js/browser/ui.cp.js': ['SystemBrowser'],
@@ -1059,23 +1059,23 @@ export class BrowserModel extends ViewModel {
 
   browserSpec () {
     this.ui.tabs.selectedTab.content = {
-      spec: this.browseSpec(),
+      config: this.browseSpec(),
       history: this.state.history
     };
 
     let tabs = this.ui.tabs.tabs;
-    let tabsSpec = tabs.map(tab => tab.config);
-    return tabsSpec;
+    let tabsConfig = tabs.map(tab => tab.config);
+    return tabsConfig;
   }
 
-  browserFromSpec (tabSpecs) {
+  browserFromConfig (tabConfigs) {
     noUpdate(() => {
-      this.ui.tabs.loadFromSpec(tabSpecs);
+      this.ui.tabs.loadFromConfig(tabConfigs);
     });
     const curr = this.ui.tabs.selectedTab;
     this.state.history = curr.content.history;
     this.refreshHistoryButtons();
-    this.browse(curr.content.spec);
+    this.browse(curr.content.config);
     return this.view;
   }
 
@@ -2197,28 +2197,30 @@ export class BrowserModel extends ViewModel {
 
     // save the current editor state associated with the tab we just left
     prev.content = {
-      spec: this.browseSpec(),
+      config: this.browseSpec(),
       history: this.state.history
     };
-    if (prev.caption.includes('Browser Tab')) prev.caption = `[${prev.content.packageName}]${prev.content.mdouleName ? '- ' + prev.content.moduleName : ''}`;
+    if (prev.caption.includes('Browser Tab')) prev.caption = `[${prev.content.packageName}]${prev.content.moduleName ? '- ' + prev.content.moduleName : ''}`;
 
     // restore the editor tab from the tab we switched to
     // if the tab was newly created populate the editor state with fresh data
     if (!curr.content) {
       curr.content = {
-        spec: { packageName: 'lively.morphic', moduleName: 'morph.js', scroll: pt(0, 0) },
+        config: $world.openedProject
+          ? { packageName: $world.openedProject.fullName, moduleName: 'index.js', scroll: pt(0, 0) }
+          : { packageName: 'lively.morphic', moduleName: 'morph.js', scroll: pt(0, 0) },
         history: {
           left: [],
           right: [],
           navigationInProgress: null
         }
       };
-      curr.caption = '[lively.morphic] - morph.js';
+      curr.caption = $world.openedProject ? `[${$world.openedProject.fullName}] - index.js` : '[lively.morphic] - morph.js';
     }
     const loading = LoadingIndicator.open('Preparing Editor');
     this.state.history = curr.content.history;
     this.refreshHistoryButtons();
-    await this.browse(curr.content.spec);
+    await this.browse(curr.content.config);
     loading.remove();
   }
 
