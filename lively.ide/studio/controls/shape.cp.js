@@ -360,6 +360,7 @@ export class ShapeControlModel extends ViewModel {
           target.withMetaDo({ reconcileChanges: true }, () => {
             target.fixedWidth = false;
           });
+          target.fit();
         } else {
           target.layout.hugContentsHorizontally = true;
           target.layout.wrapSubmorphs = false;
@@ -436,6 +437,7 @@ export class ShapeControlModel extends ViewModel {
           target.withMetaDo({ reconcileChanges: true }, () => {
             target.fixedHeight = false;
           });
+          target.fit();
         } else {
           target.layout.hugContentsVertically = true;
           target.layout.wrapSubmorphs = false;
