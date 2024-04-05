@@ -909,6 +909,14 @@ export const PaddingControlsDark = component(PaddingControlsLight, {
   submorphs: [
     {
       name: 'padding all',
+      layout: new TilingLayout({
+        axisAlign: 'center',
+        justifySubmorphs: 'spaced',
+        resizePolicies: [['value', {
+          height: 'fixed',
+          width: 'fill'
+        }]]
+      }),
       borderWidth: 0,
       master: DarkNumberWidget,
       dropShadow: null,
@@ -917,7 +925,11 @@ export const PaddingControlsDark = component(PaddingControlsLight, {
         lineHeight: 1,
         fontColor: Color.rgba(178, 235, 242, 0.4976)
       },
-      { name: 'value', fontSize: 14 }]
+      {
+        name: 'value',
+        fixedWidth: true,
+        fontSize: 14
+      }]
     },
     {
       name: 'multi padding control',
@@ -977,6 +989,7 @@ export const PaddingControlsDark = component(PaddingControlsLight, {
     {
       name: 'independent padding toggle',
       padding: rect(2, 2),
+      fontSize: 18, // FIXME: this is incorrectly removed when reconciling, although there are local masters
       master: {
         auto: PropertyLabel,
         hover: PropertyLabelHovered,
