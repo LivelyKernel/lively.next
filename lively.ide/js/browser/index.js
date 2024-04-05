@@ -2221,6 +2221,8 @@ export class BrowserModel extends ViewModel {
     const loading = LoadingIndicator.open('Preparing Editor');
     this.state.history = curr.content.history;
     this.refreshHistoryButtons();
+
+    delete this.state.selectedModule;
     await this.browse(curr.content.config);
     loading.remove();
   }
