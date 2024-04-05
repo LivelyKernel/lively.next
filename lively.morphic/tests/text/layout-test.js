@@ -184,8 +184,8 @@ describe('text layout', function () {
       await text('abcdef\n1234567\n');
       t.extent = pt(4 * w, 100);
       expect(t.lineCount()).equals(3);
-      expect(t.charBoundsFromTextPosition({ row: 0, column: 5 }).roundTo(-1)).equals(rect(padl + w * 5, padt - .5, w, h).roundTo(-1), 'not wrapped: text pos => pixel pos');
-      expect(t.textPositionFromPoint(pt(padl + 2 * w + 1, padt + h))).deep.equals({ column: 2, row: 1 }, 'not wrapped: pixel pos => text pos');
+      expect(t.charBoundsFromTextPosition({ row: 0, column: 5 }).roundTo(-1)).equals(rect(padl + w * 5, padt, w, h).roundTo(-1), 'not wrapped: text pos => pixel pos');
+      expect(t.textPositionFromPoint(pt(padl + 2 * w + 1, padt + h + 1))).deep.equals({ column: 2, row: 1 }, 'not wrapped: pixel pos => text pos');
 
       t.lineWrapping = 'by-chars';
       t.env.forceUpdate();
@@ -258,7 +258,7 @@ describe('text layout', function () {
   describe('canvas line bounds measuring', () => {
     it("can properly measure the line's character bounds via the canvas", () => {
       text(['hello linus', { fontSize: 40 }, ' this is some smaller font', { fontSize: 12 }], { fontFamily: 'IBM Plex Sans' });
-      const bounds = charBoundsOfLineViaCanvas(t.document.getLine(0), t, t.env.renderer.textLayerNodeFunctionFor(t));
+      const bounds = charBoundsOfLineViaCanvas(t.document.getLine(0), t, t.env.fontMetric, t.env.fontMetric._domMeasure);
       expect(bounds[0].width).closeTo(22.7, 1);
       expect(bounds[0].height).closeTo(55, 1);
       expect(bounds[15].width).closeTo(5.8, 1);
@@ -269,13 +269,15 @@ describe('text layout', function () {
 
     it("can properly measure the line's character bounds via the canvas if line is wrapped", () => {
       text(['hello linus', { fontSize: 40 }, ' this is some smaller font', { fontSize: 12 }], { fontFamily: 'IBM Plex Sans', lineWrapping: 'by-words', width: 250 });
-      let bounds = charBoundsOfLineViaCanvas(t.document.getLine(0), t, t.env.renderer.textLayerNodeFunctionFor(t));
+      let bounds = charBoundsOfLineViaCanvas(t.document.getLine(0), t, t.env.fontMetric, t.env.fontMetric._domMeasure);
       expect(bounds[20].width).closeTo(5.8, 1);
       expect(bounds[20].height).closeTo(17, 1);
       expect(bounds[20].x).closeTo(0, 1);
       expect(bounds[20].y).closeTo(55, 1);
       t.lineWrapping = 'by-chars';
-      bounds = charBoundsOfLineViaCanvas(t.document.getLine(0), t, t.env.renderer.textLayerNodeFunctionFor(t));
+      bounds = charBoundsOfLineViaCanvas(t.document.getLine(0), t, t.env.fontMetric, t.env.fontMetric._domMeasure);
+      expect(bounds[20].y).closeTo(0, 1);
+      expect(bounds[25].y).closeTo(55, 1);
     });
   });
 });
