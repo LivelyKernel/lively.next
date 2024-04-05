@@ -945,7 +945,7 @@ const commands = [
       const loadingIndicator = world.commandHandler.progressIndicator;
       if (!args) {
         args = world.openedProject
-          ? { packageName: $world.openedProject.fullName, moduleName: $world.openedProject.config.main, scroll: pt(0, 0), reuse: false }
+          ? { packageName: $world.openedProject.fullName, moduleName: $world.openedProject.config.main || 'index.js', scroll: pt(0, 0), reuse: false }
           : { packageName: 'lively.morphic', moduleName: 'morph.js', scroll: pt(0, 0), reuse: false };
       }
 
