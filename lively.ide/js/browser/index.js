@@ -774,6 +774,7 @@ export class BrowserModel extends ViewModel {
       if (tabs.visible) tabs.top = headerButtonsHeight;
       columnView.height = verticalResizer.top - headerButtonsHeight - tabsOffset;
     }
+    tabs.applyLayoutIfNeeded();
     smiley.center = sourceEditor.center;
     this.repositionComponentEditButtons();
   }
