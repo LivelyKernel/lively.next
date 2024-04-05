@@ -2207,7 +2207,7 @@ export class BrowserModel extends ViewModel {
     if (!curr.content) {
       curr.content = {
         config: $world.openedProject
-          ? { packageName: $world.openedProject.fullName, moduleName: 'index.js', scroll: pt(0, 0) }
+          ? { packageName: $world.openedProject.fullName, moduleName: $world.openedProject.config.main, scroll: pt(0, 0) }
           : { packageName: 'lively.morphic', moduleName: 'morph.js', scroll: pt(0, 0) },
         history: {
           left: [],
