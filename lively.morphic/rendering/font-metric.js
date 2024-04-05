@@ -122,7 +122,7 @@ export default class FontMetric {
     let {
       fontFamily, fontSize, fontWeight,
       fontStyle, textDecoration,
-      textStyleClasses, transform
+      textStyleClasses, transform, lineHeight
     } = style;
     const el = this.element;
     if (transform) transform = transform.inverse();
@@ -133,6 +133,7 @@ export default class FontMetric {
       fontWeight,
       fontStyle,
       textDecoration,
+      lineHeight,
       transform: transform,
       fontSize: fontSize + 'px'
     });
@@ -203,10 +204,11 @@ export default class FontMetric {
   sizeFor (style, string = '', forceCache = false) {
     // Select style properties relevant to individual character size
     const {
-      fontFamily, fontSize,
+      fontFamily, fontSize, lineHeight,
       fontWeight, fontStyle, textDecoration, textStyleClasses
     } = style;
     const relevantStyle = {
+      lineHeight,
       fontFamily,
       fontSize,
       fontWeight,
@@ -217,8 +219,7 @@ export default class FontMetric {
 
     if (!forceCache && string.length > 1) return this.measure(relevantStyle, string);
 
-    const className = textStyleClasses ? textStyleClasses.join(' ') : '';
-    const styleKey = [fontFamily, fontSize, fontWeight, fontStyle, textDecoration, className].join('-');
+    const styleKey = this._domMeasure.generateStyleKey(style);
 
     if (!this.charMap[styleKey]) { this.charMap[styleKey] = {}; }
     if (!this.charMap[styleKey][string]) { this.charMap[styleKey][string] = this.measure(relevantStyle, string); }
