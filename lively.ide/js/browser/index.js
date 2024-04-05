@@ -2207,7 +2207,7 @@ export class BrowserModel extends ViewModel {
     if (!curr.content) {
       curr.content = {
         config: $world.openedProject
-          ? { packageName: $world.openedProject.fullName, moduleName: $world.openedProject.config.main, scroll: pt(0, 0) }
+          ? { packageName: $world.openedProject.fullName, moduleName: $world.openedProject.config.main || 'index.js', scroll: pt(0, 0) }
           : { packageName: 'lively.morphic', moduleName: 'morph.js', scroll: pt(0, 0) },
         history: {
           left: [],
@@ -2215,7 +2215,7 @@ export class BrowserModel extends ViewModel {
           navigationInProgress: null
         }
       };
-      curr.caption = $world.openedProject ? `[${$world.openedProject.fullName}] - index.js` : '[lively.morphic] - morph.js';
+      curr.caption = $world.openedProject ? `[${$world.openedProject.fullName}] - ${$world.openedProject.config.main || 'index.js'}` : '[lively.morphic] - morph.js';
     }
     const loading = LoadingIndicator.open('Preparing Editor');
     this.state.history = curr.content.history;
