@@ -1191,7 +1191,7 @@ export class BrowserModel extends ViewModel {
     const columnView = this.ui.columnView;
     const td = columnView.treeData;
     await columnView.setExpandedPath(n => {
-      return n === td.root || n.ur === p.address + '/';
+      return n === td.root || n.url === p.address + '/';
     }, td.root, false);
 
     if (selectPackageNode) {
