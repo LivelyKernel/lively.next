@@ -1664,6 +1664,7 @@ export default class Renderer {
   renderTextAndAttributes (node, morph) {
     const textNode = morph.renderingState.textLayer;
     if (!textNode) return;
+    textNode.style['font-kerning'] = morph.document ? 'none' : 'auto';
     if (!morph.document) {
       textNode.replaceChildren(...this.renderWholeText(morph));
     } else {
