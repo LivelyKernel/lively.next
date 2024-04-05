@@ -1186,6 +1186,7 @@ export class Text extends Morph {
       textChange = selector === 'replace';
       if (textChange && (!this.fixedHeight || !this.fixedWidth)) { enforceFit = true; }
       hardLayoutChange = selector === 'addTextAttribute';
+      if (textChange || hardLayoutChange) delete this._allFontsLoaded;
       // displacementChange = !this._displacing && textChange;
     } else {
       switch (prop) {
@@ -1207,11 +1208,14 @@ export class Text extends Morph {
         case 'letterSpacing':
         case 'tabWidth': if (wraps) hardLayoutChange = true; break;
         case 'fontFamily':
+          delete this._allFontsLoaded;
         case 'fontSize':
         case 'lineHeight':
         case 'textAlign':
         case 'fontWeight':
+          delete this._allFontsLoaded;
         case 'fontStyle':
+          delete this._allFontsLoaded;
         case 'textStyleClasses':
         case 'fixedWidth':
           hardLayoutChange = change.prevValue !== change.value;
