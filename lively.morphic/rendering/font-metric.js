@@ -312,6 +312,18 @@ class DOMTextMeasure {
     return this;
   }
 
+  getMeasuringState (textMorph) {
+    const emptySpace = this.getEmptySpaceOfMorph(textMorph);
+    return {
+      currentWord: [],
+      trailingWhitespaces: [],
+      wordLength: 0,
+      virtualRow: 0, // in case of wrapped lines, we have multiple virtual rows
+      emptySpace,
+      emptySpaceForWord: emptySpace
+    };
+  }
+
   uninstall () {
     const el = this.element;
     if (!el) return;
@@ -403,7 +415,9 @@ class DOMTextMeasure {
   }
 
   measureCharWidthsInCanvas (morph, str, styleOpts = {}, measuringState) {
+    const writeToCache = document.fonts.status === 'loaded' && morph.allFontsLoaded();
     const ctx = this.canvas.getContext('2d');
+    const lineWrapping = styleOpts.lineWrapping || morph.lineWrapping;
     const style = `${styleOpts.fontStyle || morph.fontStyle} ${styleOpts.fontWeight || morph.fontWeight} ${styleOpts.fontSize || morph.fontSize}px ${styleOpts.fontFamily || morph.fontFamily}`;
     const styleKey = `${style} ls:${morph.letterSpacing}`;
     let cache;
@@ -420,44 +434,53 @@ class DOMTextMeasure {
       measuringState.wordLength += offset[0];
       result.push(offset);
     }
+    const emptySpace = this.getEmptySpaceOfMorph(morph);
     for (let i = 0; i < str.length; i++) {
       const code = str.charCodeAt(i);
-      if (code === 32 && measuringState.trailingWhitespaces.length == 0) {
+      if (code === 32 && measuringState.currentWord.length > 0) {
         measuringState.currentWord = [];
         measuringState.wordLength = 0;
         measuringState.emptySpaceForWord = measuringState.emptySpace;
+        measuringState.trailingWhitespaces = [];
       }
       let hit = cache[code];
       if (!hit) {
-        hit = cache[code] = ctx.measureText(str[i]).width;
+        const metrics = ctx.measureText(str[i]);
+        hit = metrics.width;
+        if (writeToCache) cache[code] = hit;
       }
 
       const tmp = [hit, measuringState.virtualRow];
       measuringState.wordLength += hit;
       if (code !== 32) {
         measuringState.currentWord.push(tmp);
-      } else if (measuringState.currentWord.length == 0) measuringState.trailingWhitespaces.push(tmp);
+      } else if (measuringState.currentWord.length === 0) measuringState.trailingWhitespaces.push(tmp);
 
-      switch (morph.lineWrapping) {
+      switch (lineWrapping) {
         case 'only-by-words':
-          if (Math.ceil(measuringState.emptySpaceForWord) < Math.floor(measuringState.wordLength) - 1 && code !== 32) {
+          if (measuringState.emptySpaceForWord < measuringState.wordLength && code !== 32) {
             measuringState.virtualRow++;
             measuringState.currentWord.forEach(entry => entry[1] = measuringState.virtualRow);
-            measuringState.emptySpace = this.getEmptySpaceOfMorph(morph) - measuringState.wordLength;
-            measuringState.trailingWhitespaces.forEach(b => b[0] = 0);
-            // if this happens to early, other traling whitespaces are not flattened
+            measuringState.trailingWhitespaces.forEach(b => {
+              measuringState.wordLength -= b[0];
+              b[0] = 0;
+            });
+            measuringState.emptySpace = emptySpace - measuringState.wordLength;
             measuringState.trailingWhitespaces = [];
             break;
           }
           measuringState.emptySpace -= hit;
           break;
         case 'by-words':
-          if (Math.floor(measuringState.wordLength) < morph.width) {
-            if (Math.ceil(measuringState.emptySpaceForWord) < Math.floor(measuringState.wordLength) - 1 && code !== 32) {
+          if (measuringState.wordLength < morph.width) {
+            if (measuringState.emptySpaceForWord < measuringState.wordLength && code !== 32) {
               measuringState.virtualRow++;
               measuringState.currentWord.forEach(entry => entry[1] = measuringState.virtualRow);
-              measuringState.emptySpace = this.getEmptySpaceOfMorph(morph) - measuringState.wordLength;
-              measuringState.trailingWhitespaces.forEach(b => b[0] = 0);
+              measuringState.trailingWhitespaces.forEach(b => {
+                measuringState.wordLength -= b[0];
+                b[0] = 0;
+              });
+              measuringState.emptySpace = emptySpace - measuringState.wordLength;
               measuringState.trailingWhitespaces = [];
               break;
             }
@@ -465,11 +488,18 @@ class DOMTextMeasure {
             break;
           }
         case 'by-chars':
-          if (Math.ceil(measuringState.emptySpace) < Math.floor(hit)) {
+          if (measuringState.emptySpace < hit) {
             measuringState.virtualRow++;
-            measuringState.emptySpace = this.getEmptySpaceOfMorph(morph) - hit;
+            measuringState.emptySpace = emptySpace;
+            if (measuringState.currentWord.length <= 1) measuringState.trailingWhitespaces.forEach(b => b[0] = 0); // too many are injected
+            measuringState.trailingWhitespaces = [];
             tmp[1] = measuringState.virtualRow;
-            break;
+          }
+          if (measuringState.emptySpace === emptySpace &&
+              measuringState.currentWord.length === 0 &&
+              measuringState.virtualRow > 0 &&
+              code === 32) {
+            tmp[0] = hit = 0;
           }
           measuringState.emptySpace -= hit;
       }
@@ -674,32 +704,24 @@ function charBoundsOfBigMonospacedLine (morph, line, lineNode, offsetX = 0, offs
 export function charBoundsOfLineViaCanvas (line, textMorph, renderTextLayerFn) {
   const characterBounds = [];
   const { textAndAttributes } = line;
-  const currentTopLeft = pt(0, 0);
-  const measure = textMorph.env.fontMetric._domMeasure;
+  const metric = textMorph.env.fontMetric;
+  const measure = metric._domMeasure;
   const isWrapping = textMorph.lineWrapping !== 'no-wrap';
-  const emptySpace = measure.getEmptySpaceOfMorph(textMorph);
-  const measuringState = {
-    currentWord: [],
-    trailingWhitespaces: [],
-    wordLength: 0,
-    virtualRow: 0, // in case of wrapped lines, we have multiple virtual rows
-    emptySpace,
-    emptySpaceForWord: emptySpace
-  };
+  const measuringState = measure.getMeasuringState(textMorph);
   for (let i = 0; i < textAndAttributes.length; i += 2) {
     const textOrMorph = textAndAttributes[i];
     const attrs = textAndAttributes[i + 1] || {};
     if (textOrMorph.isMorph) {
       const morphWidth = textOrMorph.width + Number.parseFloat(attrs.paddingLeft || '0') + Number.parseFloat(attrs.paddingRight || '0');
+      if (isWrapping && measuringState.emptySpace < morphWidth) {
         measuringState.emptySpace = measure.getEmptySpaceOfMorph(textMorph);
         measuringState.virtualRow += 1;
       }
-      characterBounds.push([textOrMorph.height, [textOrMorph.width, measuringState.virtualRow]]);
+      characterBounds.push([textOrMorph.height, [morphWidth, measuringState.virtualRow]]);
     } else if (typeof textOrMorph === 'string') {
       const style = { ...textMorph.defaultTextStyle, ...attrs };
       measure.measureCharWidthsInCanvas(textMorph, textOrMorph, attrs, measuringState).forEach((res) => {
-        const { height } = measure.defaultCharExtent(textMorph, style, renderTextLayerFn);
-        characterBounds.push([height, res]);
+        characterBounds.push([metric.defaultLineHeight(style), res]);
       });
     } else {
       console.log('Can not measure', textOrMorph);
