@@ -297,6 +297,7 @@ class DOMTextMeasure {
     this.maxLineBBoxCacheCount = debug ? 1 : 3000;
     this.lineBBoxCacheCount = 0;
     this.lineBBoxCache = {};
+    this.canvasCompatibility = {};
 
     this.maxTextlayerNodeCacheCount = debug ? 1 : 30;
     this.textlayerNodeCacheCount = 0;
@@ -342,6 +343,22 @@ class DOMTextMeasure {
     style.whiteSpace = 'pre';
     style.font = 'inherit';
     style.overflow = isRoot && !this.debug ? 'hidden' : 'visible';
+  }
+
+  canBeMeasuredViaCanvas (aMorph) {
+    if (!aMorph.allFontsLoaded()) return false;
+    const { fontFamily, fontWeight, fontStyle } = aMorph;
+    const key = `${fontFamily}-${fontWeight}-${fontStyle}`;
+    if (key in this.canvasCompatibility) return this.canvasCompatibility[key];
+
+    // determine wether or not a font does some werid shit with letter spacing
+    const errorMargin = 3;
+    // this.env.fontMetric._domMeasure.canvasCompatibility = {}
+    const testString = 'Lorem ipsum dolor sit amet.';
+    const style = { fontFamily, fontSize: 20, fontWeight, fontStyle, lineWrapping: 'no-wrap' };
+    const totalLength = this.measureTextWidthInCanvas(style, testString);
+    const subBounds = this.measureCharWidthsInCanvas(aMorph, testString, style, this.getMeasuringState(aMorph));
+    return this.canvasCompatibility[key] = Math.abs(totalLength - arr.sum(subBounds.map(b => b[0]))) < errorMargin;
   }
 
   generateStyleKey (styleOpts) {
@@ -585,7 +602,8 @@ class DOMTextMeasure {
         }
 
         let result;
-        if (line.stringSize > 10000) {
+        const measureOnCanvas = this.canBeMeasuredViaCanvas(morph);
+        if (line.stringSize > 1000 && !measureOnCanvas) {
           result = charBoundsOfBigMonospacedLine( // eslint-disable-line no-use-before-define
             morph,
             line,
@@ -595,9 +613,10 @@ class DOMTextMeasure {
             renderTextLayerFn);
         }
         if (!result) {
-          if (morph.measureLineViaCanvas) {
+          if (measureOnCanvas) {
             result = charBoundsOfLineViaCanvas(line, morph, renderTextLayerFn);
-          } else {
+          }
+          if (!result) {
             result = charBoundsOfLine(line, lineNode, // eslint-disable-line no-use-before-define
               offsetX - textNodeOffsetLeft,
               offsetY - textNodeOffsetTop);
