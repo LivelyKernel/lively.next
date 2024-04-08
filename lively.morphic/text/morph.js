@@ -924,7 +924,7 @@ export class Text extends Morph {
   }
 
   renderStyles (styleProps) {
-    if (this.document) {
+    if (this.document && this.isClip()) {
       styleProps.overflow = 'hidden';
     }
     return styleProps;

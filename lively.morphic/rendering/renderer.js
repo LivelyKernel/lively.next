@@ -566,7 +566,7 @@ export default class Renderer {
       this.updateNodeScrollFromMorph(morph);
     }
 
-    if (morph.isText && (morph.document || morph.needsDocument)) node.style.overflow = 'hidden';
+    if (morph.isText && (morph.document || morph.needsDocument) && morph.isClip()) node.style.overflow = 'hidden';
     rs.needsRerender = false;
     rs.scrollChanged = false;
   }
@@ -843,7 +843,7 @@ export default class Renderer {
       const scrollWrapper = this.scrollWrapperFor(morph);
       const textLayerNode = node.querySelector(`#${morph.id}textLayer`);
 
-      node.style.overflow = 'hidden';
+      node.style.overflow = morph.isClip() ? 'hidden' : 'visible';
       scrollWrapper.appendChild(textLayerNode);
       node.appendChild(scrollLayer);
       node.appendChild(scrollWrapper);
@@ -1939,7 +1939,6 @@ export default class Renderer {
    * @returns {Rectangle} The actual bounds of `morph` when rendered into the DOM.
    */
   measureStaticTextBoundsFor (morph) {
-
     morph._measuringTextBox = true;
 
     if (!morph.renderingState.needsRemeasure && morph._cachedBounds) return morph._cachedBounds;
@@ -1991,7 +1990,7 @@ export default class Renderer {
       morph.renderingState.needsRemeasure = false;
     }
 
-   morph._measuringTextBox = false;
+    morph._measuringTextBox = false;
 
     return bounds;
   }
