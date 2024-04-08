@@ -110,7 +110,7 @@ export class ShadowPopupModel extends PopupModel {
         shadowColorInput, title, footer
       } = this.ui;
 
-      fastShadowCheckbox.checked = this.fastShadow;
+      fastShadowCheckbox.checked = !this.fastShadow; // makes sense due to the text of the label in the control
 
       const p = Point.polar(this.shadowValue.distance, num.toRadians(this.shadowValue.rotation));
       xOffset.number = p.x;
