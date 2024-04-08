@@ -210,8 +210,7 @@ export default class Renderer {
     }
 
     if (morph.isText) {
-      const textLayerNode = node.querySelector('.actual');
-      morph._animationQueue.startTextAnimationsFor(textLayerNode);
+      morph._animationQueue.startTextAnimationsFor(morph.renderingState.textLayer);
     }
 
     morph._animationQueue.startAnimationsFor(node);
@@ -308,16 +307,17 @@ export default class Renderer {
   installWrapperNodeFor (morph, node, fixChildNodes = false) {
     if (morph.isPolygon) this.renderPolygonClipMode(morph, this.submorphWrapperNodeFor(morph));
 
-    const wrapped = node.querySelector(`#submorphs-${morph.id}`);
-    if (!wrapped) {
-      const wrapperNode = this.submorphWrapperNodeFor(morph);
+    let wrapperNode = morph.renderingState.submorphNode;
+    if (!wrapperNode) {
+      this.submorphWrapperNodeFor(morph);
+      wrapperNode = morph.renderingState.submorphNode;
       if (morph.isText && morph.document) {
-        let scrollWrapper = node.querySelector('.scrollWrapper');
+        const scrollWrapper = morph.renderingState.scrollWrapper;
         if (!scrollWrapper) {
           morph.renderingState.needsScrollLayerAdded = true;
           this.handleScrollLayer(node, morph);
-          scrollWrapper = node.querySelector('.scrollWrapper');
         }
+        // As we use `keyed` to patch these nodes, handling references to the currently mounted ones would probably cause more trouble than benefit.
         const markerNode = scrollWrapper.querySelector('.newtext-marker-layer') || null;
         scrollWrapper.insertBefore(wrapperNode, markerNode);
       } else if (!morph.isPath) node.appendChild(wrapperNode); // normal morphs
@@ -332,9 +332,9 @@ export default class Renderer {
       return wrapperNode;
     } else {
       let { borderWidthLeft, borderWidthTop, origin: { x: oX, y: oY } } = morph;
-      wrapped.style.setProperty('left', `${oX - (morph.isPath ? 0 : borderWidthLeft)}px`);
-      wrapped.style.setProperty('top', `${oY - (morph.isPath ? 0 : borderWidthTop)}px`);
-      return wrapped;
+      wrapperNode.style.setProperty('left', `${oX - (morph.isPath ? 0 : borderWidthLeft)}px`);
+      wrapperNode.style.setProperty('top', `${oY - (morph.isPath ? 0 : borderWidthTop)}px`);
+      return wrapperNode;
     }
   }
 
@@ -347,22 +347,20 @@ export default class Renderer {
    * @param {Morph} morph - Morph of which the submorphs should be unwrapped.
    */
   unwrapSubmorphNodesIfNecessary (node, morph) {
+    let children = Array.from(node.children);
     // do nothing if submorph nodes are not wrapped
     // e.g. in case we have had a css layout already, this can be skipped
-    let children = Array.from(node.children);
-    const wrapped = children.some(c => c.getAttribute('id') && c.getAttribute('id').includes('submorphs'));
-    if (wrapped) {
+    const wrapperNode = morph.renderingState.submorphNode;
+    if (wrapperNode) {
       if (!morph.isPath) {
         node.append(...node.lastChild.childNodes);
-        children = Array.from(node.children);
-        children.forEach((n) => {
-          if (n.getAttribute('id') && n.getAttribute('id').includes('submorphs')) n.remove();
-        });
+        wrapperNode.remove();
+        delete morph.renderingState.submorphNode;
       } else {
-        const wrapperNode = node.firstChild.nextSibling;
         let children = Array.from(wrapperNode.children);
         children.forEach((n) => node.insertBefore(n, node.lastChild));
         wrapperNode.remove();
+        delete morph.renderingState.submorphNode;
       }
     }
   }
@@ -418,16 +416,21 @@ export default class Renderer {
           if (n.tagName !== 'svg') n.remove();
         });
       } else if (morph.isText && morph.document) {
-        const scrollWrapper = node.querySelector('.scrollWrapper');
         // we need to keep markers, selections, syntax errors etc. around
-        scrollWrapper.childNodes.forEach(n => {
-          if (!n.className) n.remove();
-          if (n.classList.contains('morph')) n.remove();
+        morph.renderingState.scrollWrapper.childNodes.forEach(n => {
+          if (n.id === `submorphs-${morph.id}`) {
+            n.remove();
+            delete morph.renderingState.submorphNode;
+          }
+          else if (!n.className) n.remove();
+          else if (n.classList.contains('morph')) n.remove();
         });
       } else {
-        if (!this.isComposite(morph)) node.replaceChildren();
-        else {
-          const submorphsNode = node.querySelector(`#submorphs-${morph.id}`);
+        if (!this.isComposite(morph)) {
+          node.replaceChildren();
+          delete morph.renderingState.submorphNode;
+        } else {
+          const submorphsNode = morph.renderingState.submorphNode;
           submorphsNode?.replaceChildren();
         }
       }
@@ -594,6 +597,7 @@ export default class Renderer {
     let { borderWidthLeft, borderWidthTop, origin: { x: oX, y: oY } } = morph;
 
     const node = this.doc.createElement('div');
+    morph.renderingState.submorphNode = node;
     node.setAttribute('id', 'submorphs-' + morph.id);
     node.style.setProperty('position', 'absolute');
     node.style.setProperty('left', `${oX - (morph.isPath ? 0 : borderWidthLeft)}px`);
@@ -642,7 +646,7 @@ export default class Renderer {
     let { x, y } = morph.scroll.roundTo(1);
 
     if (morph.isText && morph.document) {
-      const scrollLayer = node.querySelector('.scrollLayer');
+      const { scrollLayer } = morph.renderingState;
       if (!scrollLayer) return;
       scrollLayer.scrollTop = y;
       scrollLayer.scrollLeft = x;
@@ -746,14 +750,14 @@ export default class Renderer {
    * @returns {Node} The DOM node for `morph`, with text layer etc.
    */
   nodeForText (morph) {
-    let scrollLayerNode;
     const node = this.doc.createElement('div');
 
     const textLayer = this.textLayerNodeFor(morph);
+    morph.renderingState.textLayer = textLayer;
     morph.renderingState.nodeStyleProps = morph.styleObject();
 
     /*
-      The scrollLayer is mecessary for Text that can be interactively edited.
+      The scrollLayer is necessary for Text that can be interactively edited.
       For performance reasons, we do not render all lines in this case, but only the ones that are visible.
       This means, that when scrolling in such a morph, the lines (divs) are exchanged/updated.
       For some reason, changing the subnodes of a DOM node that is simultaneously scrolled will lead to unsmooth scrolling.
@@ -761,15 +765,16 @@ export default class Renderer {
       Since for non-interactive text all lines are rendered once, this trick is not needed there.
     */
     if (morph.document) {
-      scrollLayerNode = this.renderScrollLayer(morph);
-      node.appendChild(scrollLayerNode);
+      this.renderScrollLayer(morph);
+      node.appendChild(morph.renderingState.scrollLayer);
       const textLayerForFontMeasure = this.textLayerNodeFor(morph);
       textLayerForFontMeasure.id = morph.id + 'font-measure';
       textLayerForFontMeasure.classList.remove('actual');
       textLayerForFontMeasure.classList.add('font-measure');
       node.appendChild(textLayerForFontMeasure);
-
-      const scrollWrapper = this.scrollWrapperFor(morph);
+      morph.renderingState.fontMeasureNode = textLayerForFontMeasure;
+      this.scrollWrapperFor(morph);
+      const scrollWrapper = morph.renderingState.scrollWrapper
       node.appendChild(scrollWrapper);
       scrollWrapper.appendChild(textLayer);
     } else node.appendChild(textLayer);
@@ -804,6 +809,7 @@ export default class Renderer {
     subnode.style.height = Math.max(morph.document.height, morph.height) - scrollBarOffset.y + verticalPaddingOffset + 'px';
 
     node.appendChild(subnode);
+    morph.renderingState.scrollLayer = node;
     return node;
   }
 
@@ -819,6 +825,7 @@ export default class Renderer {
     scrollWrapper.style.width = '100%',
     scrollWrapper.style.height = '100%',
     scrollWrapper.style.transform = `translate(${-morph.scroll.x}px, ${-morph.scroll.y}px)`;
+    morph.renderingState.scrollWrapper = scrollWrapper;
     return scrollWrapper;
   }
 
@@ -835,13 +842,15 @@ export default class Renderer {
 
     if (morph.renderingState.needsScrollLayerAdded) {
       const goalScroll = node.scrollTop;
-      if (node.querySelector('.scrollWrapper')) {
+      if (morph.renderingState.scrollWrapper) {
         delete morph.renderingState.needsScrollLayerAdded;
         return;
       }
-      const scrollLayer = this.renderScrollLayer(morph);
-      const scrollWrapper = this.scrollWrapperFor(morph);
-      const textLayerNode = node.querySelector(`#${morph.id}textLayer`);
+      this.renderScrollLayer(morph);
+      this.scrollWrapperFor(morph);
+      const textLayerNode = morph.renderingState.textLayer;
+      const scrollLayer = morph.renderingState.scrollLayer;
+      const scrollWrapper = morph.renderingState.scrollWrapper;
 
       node.style.overflow = morph.isClip() ? 'hidden' : 'visible';
       scrollWrapper.appendChild(textLayerNode);
@@ -853,6 +862,7 @@ export default class Renderer {
 
       let lineFound = false;
       let currentOffset = 0; let lineNumber = 0;
+      // As we use `keyed` to patch these nodes, handling references to the currently mounted ones would probably cause more trouble than benefit.
       node.querySelectorAll('.line').forEach((line) => {
         if (currentOffset >= goalScroll) lineFound = true;
         if (lineFound) return;
@@ -862,15 +872,17 @@ export default class Renderer {
       morph.renderingState.adaptScrollAfterDocumentAddition = lineNumber;
     } else if (morph.renderingState.needsScrollLayerRemoved) {
       this.removeTextSpecialsFromDOMFor(node, morph);
-      if (!node.querySelector('.scrollWrapper')) {
+      const scrollWrapper = morph.renderingState.scrollWrapper;
+      if (!scrollWrapper) {
         delete morph.renderingState.needsScrollLayerRemoved;
         return;
       }
 
-      node.querySelector('.scrollLayer').remove();
-      const wrapper = node.querySelector('.scrollWrapper');
-      Array.from(wrapper.children).forEach(c => node.append(c));
-      wrapper.remove();
+      morph.renderingState.scrollLayer.remove();
+      delete morph.renderingState.scrollLayer;
+      Array.from(scrollWrapper.children).forEach(c => node.append(c));
+      scrollWrapper.remove();
+      delete morph.renderingState.scrollWrapper;
       delete morph.renderingState.needsScrollLayerRemoved;
       morph.renderingState.adaptScrollAfterDocumentRemoval = morph.renderingState.firstVisibleRow;
     }
@@ -884,11 +896,14 @@ export default class Renderer {
    * @param {Text} morph
    */
   removeTextSpecialsFromDOMFor (node, morph) {
-    node.querySelector('.newtext-cursor')?.remove();
+    delete morph.renderingState.fillerDiv;
 
-    const selectionNodes = node.querySelectorAll('.selection');
-    selectionNodes.forEach(n => n?.remove());
+    morph.renderingState.cursorNodes.forEach(n => n.remove());
+    morph.renderingState.cursorNodes = [];
 
+    morph.renderingState.selectionNodes.forEach(n => n?.remove());
+    morph.renderingState.selectionNodes = [];
+    // As we use `keyed` to patch these nodes, handling references to the currently mounted ones would probably cause more trouble than benefit.
     const markerNodes = node.querySelectorAll('.newtext-marker-layer');
     markerNodes.forEach(n => n?.remove());
   }
@@ -1275,7 +1290,9 @@ export default class Renderer {
     if (morph.dynamicCursorColoring) cursorColor = morph.textAttributeAt({ row: cursorPosition.row, column: cursorPosition.column - 1 })?.fontColor || morph.fontColor || cursorColor;
 
     const cursorHeight = isReverse ? leadLineHeight : endLineHeight;
+
     const renderedCursor = this.cursor(cursorPos, cursorHeight, cursorVisible, diminished, cursorWidth, cursorColor);
+    morph.renderingState.cursorNodes.push(renderedCursor);
 
     if (obj.equals(selection.start, selection.end)) return [renderedCursor];
 
@@ -1482,6 +1499,7 @@ export default class Renderer {
 
       svgNode.appendChild(pathNode);
       svgs.push(svgNode);
+      morph.renderingState.selectionNodes.push(svgNode);
     }
 
     return svgs;
@@ -1644,16 +1662,18 @@ export default class Renderer {
    * @param {Text} morph - The Text for which the text should be (re)rendered.
    */
   renderTextAndAttributes (node, morph) {
-    const textNode = node.querySelector(`#${morph.id}textLayer`);
+    const textNode = morph.renderingState.textLayer;
     if (!textNode) return;
     if (!morph.document) {
       textNode.replaceChildren(...this.renderWholeText(morph));
     } else {
       if (morph.renderingState.needsLinesToBeCleared) {
+        // As we use `keyed` to patch these nodes, handling references to the currently mounted ones would probably cause more trouble than benefit.
         textNode.querySelectorAll('.line').forEach(l => l.remove());
         morph.renderingState.renderedLines = [];
         delete morph.renderingState.needsLinesToBeCleared;
       }
+      // No need to drastically optimize this
       if (morph.debug) textNode.querySelectorAll('.debug-line, .debug-char, .debug-info').forEach(n => n.remove());
       const linesToRender = this.collectVisibleLinesForRendering(morph, node);
       morph.renderingState.visibleLines = linesToRender;
@@ -1728,9 +1748,11 @@ export default class Renderer {
    */
   patchSelectionLayer (node, morph) {
     if (!node || !node.isConnected) return;
-    node.querySelectorAll('div.newtext-cursor').forEach(c => c.remove());
-    node.querySelectorAll('svg.selection').forEach(s => s.remove());
-    const nodeToAppendTo = !morph.document ? node : node.querySelectorAll('.scrollWrapper')[0];
+    morph.renderingState.cursorNodes.forEach(n => n.remove());
+    morph.renderingState.cursorNodes = [];
+    morph.renderingState.selectionNodes.forEach(n => n.remove());
+    morph.renderingState.selectionNodes = [];
+    const nodeToAppendTo = !morph.document ? node : morph.renderingState.scrollWrapper;
     if (nodeToAppendTo) nodeToAppendTo.append(...this.renderSelectionLayer(morph));
 
     morph.renderingState.selectionRanges = morph.selection._selections.map(s => s.range);
@@ -1743,10 +1765,10 @@ export default class Renderer {
    */
   patchSelectionMode (node, morph) {
     if (morph.selectionMode === 'native') {
-      node.querySelector('.newtext-text-layer.actual').classList.add('selectable');
+      morph.renderingState.textLayer.classList.add('selectable');
     }
     if (morph.selectionMode === 'lively' || morph.selectionMode === 'none') {
-      node.querySelector('.newtext-text-layer.actual').classList.remove('selectable');
+      morph.renderingState.textLayer.classList.remove('selectable');
     }
 
     morph.renderingState.selectionMode = morph.selectionMode;
@@ -1759,21 +1781,20 @@ export default class Renderer {
    */
   patchMarkerLayer (node, morph) {
     if (!node) return;
-    const nodeToAppendTo = !morph.document ? node : node.querySelectorAll('.scrollWrapper')[0];
+    const nodeToAppendTo = !morph.document ? node : morph.renderingState.scrollWrapper;
     if (!nodeToAppendTo) return;
-    const submorphsNode = nodeToAppendTo.querySelector(`#submorphs-${morph.id}`);
-    const textLayerNode = nodeToAppendTo.querySelector(`#${morph.id}textLayer`);
+    const submorphsNode = morph.renderingState.submorphNode;
     const alreadyRenderedMarkers = morph.renderingState.renderedMarkers || [];
     const markersToRender = this.computeMarkerLayer(morph);
-    const selectionNode = nodeToAppendTo.querySelector('.selection');
-    const cursorNode = !submorphsNode ? nodeToAppendTo.querySelector('.newtext-cursor') : null;
+    const selectionNode = morph.renderingState.selectionNodes[0];
+    const cursorNode = !submorphsNode ? morph.renderingState.cursorNodes[0] : null;
     keyed('id',
       nodeToAppendTo,
       alreadyRenderedMarkers,
       markersToRender,
       markerPart => this.renderMarkerPart(...Object.values(markerPart)),
       noOpUpdate,
-      submorphsNode || textLayerNode,
+      submorphsNode || morph.renderingState.textLayer,
       selectionNode || cursorNode
     );
     morph.renderingState.renderedMarkers = markersToRender;
@@ -1787,7 +1808,8 @@ export default class Renderer {
    * @param {Text} morph
    */
   patchLineHeightAndLetterSpacing (node, morph) {
-    node.querySelectorAll('.newtext-text-layer').forEach(node => {
+    [morph.renderingState.textLayerNode, morph.renderingState.fontMeasureNode].forEach(node => {
+      if (!node) return;
       if (morph.letterSpacing) node.style.letterSpacing = morph.letterSpacing;
       else delete node.style.letteSpacing;
       node.style.lineHeight = morph.lineHeight;
@@ -1806,8 +1828,8 @@ export default class Renderer {
    * @param {Number} heightBefore - Height before the visible lines start in pixels.
    */
   updateFillerDIV (morph, node, heightBefore) {
-    const textLayer = node.querySelector(`#${morph.id}textLayer`);
-    const filler = textLayer.querySelector('.newtext-before-filler');
+    const textLayer = morph.renderingState.textLayer;
+    const filler = morph.renderingState.fillerDiv;
     if (filler) {
       filler.style.height = heightBefore + 'px';
     } else {
@@ -1815,6 +1837,7 @@ export default class Renderer {
       spacer.classList.add('newtext-before-filler');
       spacer.style.height = heightBefore + 'px';
       textLayer.insertBefore(spacer, textLayer.firstChild);
+      morph.renderingState.fillerDiv = spacer;
     }
   }
 
@@ -1824,7 +1847,7 @@ export default class Renderer {
    */
   // FIXME: Somehow, the size of the child is unbound, as the document continuously grows when scrolling
   adjustScrollLayerChildSize (node, morph) {
-    const scrollLayer = node.querySelectorAll('.scrollLayer')[0];
+    const scrollLayer = morph.renderingState.scrollLayer;
     if (!scrollLayer) return;
     const horizontalScrollBarVisible = morph.document.width > morph.width;
     const scrollBarOffset = horizontalScrollBarVisible ? morph.scrollbarOffset : pt(0, 0);
@@ -1841,10 +1864,9 @@ export default class Renderer {
    * @param {Text} morph
    */
   scrollScrollLayerFor (node, morph) {
-    const scrollLayer = node.querySelectorAll('.scrollLayer')[0];
-    const scrollWrapper = node.querySelectorAll('.scrollWrapper')[0];
+    const scrollLayer = morph.renderingState.scrollLayer;
 
-    if (scrollLayer && scrollWrapper) {
+    if (scrollLayer && morph.renderingState.scrollWrapper) {
       // FIXME: Introduced to fix "scroll skipping", i.e., a reset of the scroll-position when for example navigating
       // with the code entities listed in the browser columns.
       // There might be an opportunity to shove off a few cycles of redundant work here,
@@ -1853,7 +1875,7 @@ export default class Renderer {
       if (!morph.renderingState.animationAdded) {
         scrollLayer.scrollTop = morph.scroll.y;
         scrollLayer.scrollLeft = morph.scroll.x;
-        scrollWrapper.style.transform = `translate(${-morph.scroll.x}px, ${-morph.scroll.y}px)`;
+        morph.renderingState.scrollWrapper.style.transform = `translate(${-morph.scroll.x}px, ${-morph.scroll.y}px)`;
         morph.renderingState.scroll = morph.scroll;
         this.renderTextAndAttributes(node, morph);
       }
@@ -1869,9 +1891,8 @@ export default class Renderer {
    * @param {Object} newStyle - Style Object which is to be applied to the text layer node.
    */
   patchTextLayerStyleObject (node, morph, newStyle) {
-    const textLayer = node.querySelector(`#${morph.id}textLayer`);
-    const fontMeasureTextLayer = node.querySelector(`#${morph.id}font-measure`);
-    stylepropsToNode(newStyle, textLayer);
+    const fontMeasureTextLayer = morph.renderingState.fontMeasureNode;
+    stylepropsToNode(newStyle, morph.renderingState.textLayer);
     if (fontMeasureTextLayer) stylepropsToNode(newStyle, fontMeasureTextLayer);
     morph.renderingState.nodeStyleProps = newStyle;
     morph.invalidateTextLayout(true, false);
@@ -1886,8 +1907,8 @@ export default class Renderer {
     const oldWrappingClass = lineWrappingToClass(morph.renderingState.lineWrapping);
     const newWrappingClass = morph.fixedWidth ? lineWrappingToClass(morph.lineWrapping) : lineWrappingToClass(false);
 
-    const textLayer = node.querySelector(`#${morph.id}textLayer`);
-    const fontMeasureTextLayer = node.querySelector(`#${morph.id}font-measure`);
+    const textLayer = morph.renderingState.textLayer;
+    const fontMeasureTextLayer = morph.renderingState.fontMeasureNode;
 
     textLayer.classList.remove(oldWrappingClass);
     if (fontMeasureTextLayer) fontMeasureTextLayer.classList.remove(oldWrappingClass);
@@ -1907,7 +1928,7 @@ export default class Renderer {
    * @param {scrollActive} fromMorph - If this is true, we set the correct clipMode according to the Morph. Otherwise, we set hidden.
    */
   patchClipModeForText (node, morph, scrollActive) {
-    const [scrollLayer] = node.querySelectorAll('.scrollLayer');
+    const scrollLayer = morph.renderingState.scrollLayer;
     if (!scrollLayer) return;
 
     if (scrollActive) {
@@ -1924,7 +1945,8 @@ export default class Renderer {
    * @param {Text} morph - The morph for which the debug layer is to be displayed.
    */
   updateDebugLayer (node, morph) {
-    const textNode = node.querySelector(`#${morph.id}textLayer`);
+    const textNode = morph.renderingState.textLayer;
+    // No need to drastically optimize this
     textNode.querySelectorAll('.debug-line, .debug-char, .debug-info').forEach(n => n.remove());
     if (morph.debug) textNode.append(...this.renderDebugLayer(morph));
   }
@@ -1946,8 +1968,7 @@ export default class Renderer {
     let node = this.getNodeForMorph(morph);
     if (!node) node = this.renderMorph(morph);
     else this.renderStylingChanges(morph);
-
-    const textNode = node.querySelector(`#${morph.id}textLayer`);
+    const textNode = morph.renderingState.textLayer;
     const prevParent = textNode.parentNode;
     textNode.remove();
     this.ensurePlaceholder();
