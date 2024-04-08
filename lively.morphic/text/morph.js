@@ -95,8 +95,10 @@ export class Text extends Morph {
             needsFit: true,
             firstVisibleRow: 0,
             lastVisibleRow: 0,
-            heightBefore: 0
-          };
+            heightBefore: 0,
+            cursorNodes: [],
+            selectionNodes: [],
+        };
         }
       },
 
@@ -2854,13 +2856,13 @@ export class Text extends Morph {
     // Although there is a mechanism that patches styleClasses in general in the renderer,
     // we need to apply this styleClass to multiple nodes, because of the decoupling of the content and scroll in our text implementation.
     if (this.renderingState.fixedWidth !== this.fixedWidth) {
-      const textLayer = node.querySelector('.actual');
+      const textLayer = this.renderingState.textLayer;
       if (this.fixedWidth) textLayer.classList.remove('auto-width');
       else textLayer.classList.add('auto-width');
       this.renderingState.fixedWidth = this.fixedWidth;
     }
     if (this.renderingState.fixedHeight !== this.fixedHeight) {
-      const textLayer = node.querySelector('.actual');
+      const textLayer = this.renderingState.textLayer;
       if (this.fixedHeight) textLayer.classList.remove('auto-height');
       else textLayer.classList.add('auto-height');
       this.renderingState.fixedHeight = this.fixedHeight;
@@ -2876,8 +2878,8 @@ export class Text extends Morph {
     }
 
     if (!!this.renderingState.hideScrollbars !== this.hideScrollbars) {
-      const scrollWrapper = node.querySelector('.scrollWrapper');
-      const scrollLayer = node.querySelector('.scrollLayer');
+      const scrollWrapper = this.renderingState.scrollWrapper;
+      const scrollLayer = this.renderingState.scrollLayer;
 
       if (this.hideScrollbars) {
         scrollWrapper?.classList.add('hiddenScrollbar');
