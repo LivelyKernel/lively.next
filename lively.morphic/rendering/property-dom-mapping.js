@@ -13,6 +13,7 @@ const propsToDelete = [
   'gap',
   'background',
   'background-image',
+  'clip-path',
   'place-content',
   'flex-flow', 'flex-grow', 'flex-shrink',
   'align-items', 'align-self',
