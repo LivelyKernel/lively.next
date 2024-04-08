@@ -50,6 +50,8 @@ describe('text rendering', () => {
     let padTop = sut.padding.top();
     let padBot = sut.padding.bottom();
     Object.assign(sut, {
+      fixedWidth: true,
+      fixedHeight: true,
       clipMode: 'auto',
       extent: pt(100, 2 * lineHeight),
       position: pt(0, 0),
@@ -155,6 +157,8 @@ describe('text rendering', () => {
     it('determines last and first full visible line based on padding and scroll', async () => {
       let { width: w, height: h } = sut.textLayout.defaultCharExtent(sut);
       Object.assign(sut, {
+        fixedWidth: true,
+        fixedHeight: true,
         textString: '111111\n222222\n333333\n444444\n555555',
         padding,
         borderWidth: 0,
