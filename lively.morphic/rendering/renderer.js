@@ -2228,7 +2228,7 @@ export default class Renderer {
       path.setAttribute('d', getSvgVertices(morph.vertices));
       path.setAttribute('stroke-width', morph.borderWidth.valueOf() + 1);
       path.setAttribute('stroke-dasharray', path.getTotalLength());
-      secondPath.setAttribute('fill', 'none');
+      path.setAttribute('fill', 'none');
     });
 
     firstPath.setAttribute('stroke', 'black');
