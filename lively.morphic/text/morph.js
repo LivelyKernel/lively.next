@@ -117,7 +117,6 @@ export class Text extends Morph {
         defaultValue: 'visible',
         set (value) {
           this.setProperty('clipMode', value);
-          this.fixedWidth = this.fixedHeight = this.isClip();
         }
       },
 
