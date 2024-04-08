@@ -283,6 +283,8 @@ describe('scroll', () => {
     let padTop = sut.padding.top();
     let padBot = sut.padding.bottom();
     Object.assign(sut, {
+      fixedWidth: true,
+      fixedHeight: true,
       clipMode: 'auto',
       borderWidth: 0,
       extent: pt(100, 2 * lineHeight),
