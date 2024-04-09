@@ -786,7 +786,21 @@ export function charBoundsOfLineViaCanvas (line, textMorph, fontMetric, measure)
     }).filter(Boolean));
     innerLineOffset += heightOfRow;
   }
-  if (result.length === 0) result.push(rect(0, 0, 1, metric.defaultLineHeight(textMorph)));
+  if (result.length === 0) { // empty line
+    let left;
+    switch (textMorph.textAlign) {
+      case 'right':
+        left = Math.max(0, totalWidth - paddedSpace);
+        break;
+      case 'center':
+        left = Math.max(0, (totalWidth - paddedSpace) / 2);
+        break;
+      case 'left':
+      default:
+        left = 0;
+    }
+    result.push(rect(left, 0, 1, fontMetric.defaultLineHeight(textMorph)));
+  }
   return result;
 }
 
