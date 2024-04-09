@@ -302,7 +302,7 @@ class TabContainerModel extends ViewModel {
   static get properties () {
     return {
       expose: {
-        get () { return ['add', 'tabs']; }
+        get () { return ['add', 'tabs', 'scrollTabIntoView']; }
       },
       bindings: {
         get () {
@@ -316,6 +316,15 @@ class TabContainerModel extends ViewModel {
 
   get tabs () {
     return this.ui.tabFlapContainer.submorphs.filter(submorph => submorph.isTab);
+  }
+
+  scrollTabIntoView (i) {
+    const node = this.ui.tabFlapScrollContainer.env.renderer.getNodeForMorph(this.ui.tabFlapScrollContainer);
+    if (!node) return;
+    this.view.whenRendered().then(() => { // before, the maxscroll is too small to make the new tab visible 
+      node.scrollLeft = 1000000; // just force to the right most position
+      this.ui.tabFlapScrollContainer.setProperty('scroll', 1000000);
+    });
   }
 
   add (aTab) {
@@ -538,6 +547,7 @@ class TabsModel extends ViewModel {
     newTab.selected = selectAfterCreation;
 
     this.updateVisibility(false);
+    this.scrollSelectedTabInToView();
     return newTab;
   }
 
@@ -685,6 +695,11 @@ class TabsModel extends ViewModel {
           this.tabs[i + 1 === this.tabs.length ? 0 : i + 1].selected = true;
         }
       }];
+  }
+
+  scrollSelectedTabInToView () {
+    const i = this.tabs.indexOf(this.selectedTab);
+    this.ui.tabContainer.scrollTabIntoView(i);
   }
 }
 
