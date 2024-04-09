@@ -1243,12 +1243,20 @@ export class Text extends Morph {
           hardLayoutChange /* reset line heights */);
       }
 
-      if (!this.document && enforceFit) {
-        this.whenFontLoaded().then(() => this.fit());
+      if (softLayoutChange || hardLayoutChange || textChange) {
+        // instead of just marking them as estimated, check if this morph can
+        // be measured via canvas and if so, directly measure all visible lines now
+        if (this.document && this.world()) this.document.lines.forEach(l => l.hasEstimatedExtent = true);
+        if (this.document && this.env.fontMetric._domMeasure.canBeMeasuredViaCanvas(this)) {
+          for (let line of arr.sortBy(this.whatsVisible.lines, line => -line.width)) {
+            this.env.renderer.updateLineHeightOfNode(this, line);
+          }
+        }
       }
 
-      if (softLayoutChange || hardLayoutChange) {
-        if (this.document && this.world()) this.document.lines.forEach(l => l.hasEstimatedExtent = true);
+      if (enforceFit) {
+        if (this.allFontsLoaded()) this.fit();
+        else this.whenFontLoaded().then(() => this.fit());
       }
 
       // if (displacementChange) {
