@@ -2096,13 +2096,23 @@ export default class Renderer {
    */
   updateLineHeightOfNode (morph, docLine, lineNode, tfm) {
     if (docLine.height === 0 || docLine.hasEstimatedExtent) {
+      if (morph.env.fontMetric._domMeasure.canBeMeasuredViaCanvas(morph)) {
+        const charBounds = morph.env.fontMetric.newManuallyComputeCharBoundsOfLine(morph, docLine);
+        const lineWidth = arr.max(charBounds, r => r.right()).right() - arr.min(charBounds, r => r.left()).left();
+        const lineHeight = arr.max(charBounds, r => r.bottom()).bottom();
+        morph.textLayout.lineCharBoundsCache.set(docLine, charBounds); // override
+        docLine.changeExtent(lineWidth, lineHeight, false);
+        morph.renderingState.needsFit = true;
+        return lineHeight;
+      }
+
       const needsTransformAdjustment = tfm.getScale() !== 1 || tfm.getRotation() !== 0;
       if (needsTransformAdjustment) lineNode.style.transform = tfm.toString();
       const { height: nodeHeight, width: nodeWidth } = lineNode.getBoundingClientRect();
       if (needsTransformAdjustment) lineNode.style.transform = '';
 
       if (nodeHeight && nodeWidth && (docLine.height !== nodeHeight || docLine.width !== nodeWidth) &&
-         morph.fontMetric.isFontSupported(morph._fontFamilyToRender, morph._fontWeightToRender)) {
+        morph.fontMetric.isFontSupported(morph._fontFamilyToRender, morph._fontWeightToRender)) {
         docLine.changeExtent(nodeWidth, nodeHeight, false);
         morph.textLayout.resetLineCharBoundsCacheOfLine(docLine);
         morph.renderingState.needsFit = true;
