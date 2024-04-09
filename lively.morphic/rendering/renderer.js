@@ -1960,8 +1960,10 @@ export default class Renderer {
        document.fonts.status !== 'loaded') return false;
     const env = morph.env;
     const height = env.fontMetric.defaultLineHeight(morph);
-    const totalHeight = height * morph.textString.split('\n').length;
-    const width = morph.env.fontMetric._domMeasure.measureTextWidthInCanvas(morph, morph.textString);
+    const lines = morph.textString.split('\n');
+    const maxLine = arr.max(lines, line => line.length);
+    const totalHeight = height * lines.length;
+    const width = morph.env.fontMetric._domMeasure.measureTextWidthInCanvas(morph, maxLine);
     return pt(0, 0).extent(pt(width + morph.padding.left() + morph.padding.right(), totalHeight + morph.padding.top() + morph.padding.bottom()));
   }
 
