@@ -210,7 +210,7 @@ input:placeholder {
 
 .newtext-text-layer.wrap-by-chars {
   white-space: pre-wrap;
-  word-break: break-all;
+  line-break: anywhere;
   max-width: 100%;
 }
 
