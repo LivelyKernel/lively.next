@@ -1220,34 +1220,24 @@ const SystemBrowser = component({
   name: 'system browser',
   defaultViewModel: BrowserModel,
   layout: new ConstraintLayout({
-    lastExtent: pt(605, 745),
+    lastExtent: {
+      x: 605,
+      y: 745
+    },
     reactToSubmorphAnimations: false,
-    submorphSettings: [
-      ['header buttons', {
-        x: 'resize',
-        y: 'fixed'
-      }],
-      ['column view', {
-        x: 'resize',
-        y: 'fixed'
-      }],
-      ['source editor', {
-        x: 'resize',
-        y: 'resize'
-      }],
-      ['tabs', {
-        x: 'resize',
-        y: 'fixed'
-      }],
-      ['meta info text', {
-        x: 'resize',
-        y: 'fixed'
-      }],
-      ['vertical resizer', {
-        x: 'resize',
-        y: 'fixed'
-      }]
-    ]
+    submorphSettings: [['top side wrapper', {
+      x: 'resize',
+      y: 'fixed'
+    }], ['source editor', {
+      x: 'resize',
+      y: 'resize'
+    }], ['meta info text', {
+      x: 'resize',
+      y: 'fixed'
+    }], ['vertical resizer', {
+      x: 'resize',
+      y: 'fixed'
+    }]]
   }),
   extent: pt(605, 745),
   fill: Color.rgba(0, 0, 0, 0),
@@ -1262,207 +1252,199 @@ const SystemBrowser = component({
     position: pt(254, 456.7),
     textAndAttributes: Icon.textAttribute('smile')
   }, {
-    name: 'header buttons',
-    extent: pt(605, 49.8),
-    fill: Color.rgba(0, 0, 0, 0),
-    layout: new ConstraintLayout({
-      lastExtent: {
-        x: 605,
-        y: 49.79296875
-      },
-      reactToSubmorphAnimations: false,
-      submorphSettings: [
-        ['eval backend button', {
-          x: 'move',
-          y: 'fixed'
-        }],
-        ['add tab', {
-          x: 'fixed',
-          y: 'fixed'
-        }],
-        ['global search', {
-          x: 'fixed',
-          y: 'fixed'
-        }],
-        ['browse modules', {
-          x: 'fixed',
-          y: 'fixed'
-        }],
-        ['go forward', {
-          x: 'fixed',
-          y: 'fixed'
-        }],
-        ['browse history', {
-          x: 'fixed',
-          y: 'fixed'
-        }],
-        ['go back', {
-          x: 'fixed',
-          y: 'fixed'
-        }],
-        ['eval backend chooser wrapper', {
+    name: 'top side wrapper',
+    extent: pt(605, 302.8),
+    fill: Color.transparent,
+    layout: new TilingLayout({
+      align: 'column',
+      axis: 'column',
+      hugContentsVertically: true,
+      resizePolicies: [['header buttons', {
+        height: 'fixed',
+        width: 'fill'
+      }], ['tabs', {
+        height: 'fixed',
+        width: 'fill'
+      }], ['column view', {
+        height: 'fixed',
+        width: 'fill'
+      }]]
+    }),
+    submorphs: [{
+      name: 'header buttons',
+      extent: pt(605, 49.8),
+      fill: Color.rgba(0, 0, 0, 0),
+      layout: new ConstraintLayout({
+        lastExtent: {
+          x: 605,
+          y: 49.8
+        },
+        reactToSubmorphAnimations: false,
+        submorphSettings: [['eval backend chooser wrapper', {
           x: 'move',
           y: 'fixed'
         }]]
-    }),
-    reactsToPointer: false,
-    submorphs: [
-      part(SystemButton, {
-        name: 'go back',
-        borderRadius: {
-          topLeft: 5,
-          topRight: 0,
-          bottomRight: 0,
-          bottomLeft: 5
-        },
-        tooltip: 'Move backwards in history.',
-        extent: pt(35, 26),
-        padding: rect(10, 2, 3, -1),
-        position: pt(7, 12.9),
-        submorphs: [
-          { name: 'label', textAndAttributes: Icon.textAttribute('caret-left'), fontSize: 20, fontColor: Color.rgb(52, 73, 94) }
-        ]
-      }), part(SystemButton, {
-        name: 'browse history',
-        extent: pt(35, 26),
-        borderRadius: 0,
-        padding: rect(10, 5, 0, 0),
-        position: pt(40, 12.9),
-        tooltip: 'Browse navigation history.',
-        submorphs: [
-          { name: 'label', textAndAttributes: Icon.textAttribute('history'), fontSize: 14 }
-        ]
-      }), part(SystemButton, {
-        name: 'go forward',
-        borderRadius: {
-          topLeft: 0,
-          topRight: 5,
-          bottomRight: 5,
-          bottomLeft: 0
-        },
-        tooltip: 'Move forwards in history.',
-        extent: pt(35, 26),
-        padding: rect(15, 2, -5, -1),
-        position: pt(74, 12.9),
-        submorphs: [{
-          name: 'label',
-          fontSize: 20,
-          fontColor: Color.rgb(52, 73, 94),
-          textAndAttributes: Icon.textAttribute('caret-right')
-        }]
-      }), part(SystemButton, {
-        name: 'browse modules',
-        extent: pt(35, 26),
-        borderRadius: {
-          topLeft: 5,
-          topRight: 0,
-          bottomRight: 0,
-          bottomLeft: 5
-        },
-        tooltip: 'Browse loaded modules in the system.',
-        padding: rect(10, 5, 0, 0),
-        position: pt(152, 12),
-        submorphs: [{
-          name: 'label',
-          fontColor: Color.rgb(52, 73, 94),
-          fontSize: 14,
-          textAndAttributes: Icon.textAttribute('list-alt')
-        }]
-      }), part(SystemButton, {
-        name: 'global search',
-        extent: pt(35, 26),
-        borderRadius: {
-          topLeft: 0,
-          topRight: 0,
-          bottomRight: 0,
-          bottomLeft: 0
-        },
-        tooltip: 'Open global code search.',
-        padding: rect(10, 5, 0, 0),
-        position: pt(186, 12),
-        submorphs: [{
-          name: 'label',
-          fontColor: Color.rgb(52, 73, 94),
-          fontSize: 14,
-          textAndAttributes: Icon.textAttribute('search')
-        }]
       }),
-      part(SystemButton, {
-        name: 'add tab',
-        extent: pt(35, 26),
-        tooltip: 'Open up a new browser tab.',
-        borderRadius: {
-          topLeft: 0,
-          topRight: 5,
-          bottomRight: 5,
-          bottomLeft: 0
-        },
-        borderWidth: {
-          left: 0,
-          top: 1,
-          bottom: 1,
-          right: 1
-        },
-        padding: rect(10, 5, 0, 0),
-        position: pt(221, 12),
-        submorphs: [{
-          name: 'label',
-          fontColor: Color.rgb(52, 73, 94),
-          fontSize: 14,
-          textAndAttributes: Icon.textAttribute('plus')
-        }]
-      }),
-      {
-        name: 'eval backend chooser wrapper',
-        extent: pt(252.1, 39),
-        fill: Color.rgba(0, 0, 0, 0),
-        layout: new TilingLayout({
-          axisAlign: 'center',
-          align: 'right',
-          padding: {
-            height: 0,
-            width: 0,
-            x: 15,
-            y: 15
+      reactsToPointer: false,
+      submorphs: [
+        part(SystemButton, {
+          name: 'go back',
+          borderRadius: {
+            topLeft: 5,
+            topRight: 0,
+            bottomRight: 0,
+            bottomLeft: 5
           },
-          spacing: 15
-        }),
-        position: pt(354.8, 5.8),
-        reactsToPointer: false,
-        submorphs: [part(BackendButtonDefault, {
-          defaultViewModel: EvalBackendButtonModel,
-          master: { auto: BackendButtonDefault, click: BackendButtonClicked },
-          name: 'eval backend button',
-          tooltip: 'Select evaluation backend for browser.',
-          padding: rect(5, 4, 0, 0),
-          nativeCursor: 'pointer',
+          tooltip: 'Move backwards in history.',
+          extent: pt(35, 26),
+          padding: rect(10, 2, 3, -1),
+          position: pt(7, 12.9),
+          submorphs: [
+            { name: 'label', textAndAttributes: Icon.textAttribute('caret-left'), fontSize: 20, fontColor: Color.rgb(52, 73, 94) }
+          ]
+        }), part(SystemButton, {
+          name: 'browse history',
+          extent: pt(35, 26),
+          borderRadius: 0,
+          padding: rect(10, 5, 0, 0),
+          position: pt(40, 12.9),
+          tooltip: 'Browse navigation history.',
+          submorphs: [
+            { name: 'label', textAndAttributes: Icon.textAttribute('history'), fontSize: 14 }
+          ]
+        }), part(SystemButton, {
+          name: 'go forward',
+          borderRadius: {
+            topLeft: 0,
+            topRight: 5,
+            bottomRight: 5,
+            bottomLeft: 0
+          },
+          tooltip: 'Move forwards in history.',
+          extent: pt(35, 26),
+          padding: rect(15, 2, -5, -1),
+          position: pt(74, 12.9),
           submorphs: [{
-            type: 'label',
             name: 'label',
-            textAndAttributes: ['local', null]
+            fontSize: 20,
+            fontColor: Color.rgb(52, 73, 94),
+            textAndAttributes: Icon.textAttribute('caret-right')
           }]
-        })]
-      }]
-  }, part(Tabs, {
-    name: 'tabs',
-    extent: pt(605, 32),
-    position: pt(0, 50),
-    viewModel: {
-      showsSingleTab: false,
-      selectedTabMaster: BrowserTabSelected,
-      defaultTabMaster: BrowserTabDefault,
-      clickedTabMaster: BrowserTabClicked,
-      hoveredTabMaster: BrowserTabHovered
-    }
-  }), part(MullerColumnView, {
-    viewModel: { defaultTooltips: true },
-    name: 'column view',
-    extent: pt(605, 221),
-    borderWidthBottom: 1,
-    borderWidthTop: 1,
-    borderColor: Color.rgb(112, 123, 124),
-    position: pt(0, 50)
-  }), {
+        }), part(SystemButton, {
+          name: 'browse modules',
+          extent: pt(35, 26),
+          borderRadius: {
+            topLeft: 5,
+            topRight: 0,
+            bottomRight: 0,
+            bottomLeft: 5
+          },
+          tooltip: 'Browse loaded modules in the system.',
+          padding: rect(10, 5, 0, 0),
+          position: pt(152, 12),
+          submorphs: [{
+            name: 'label',
+            fontColor: Color.rgb(52, 73, 94),
+            fontSize: 14,
+            textAndAttributes: Icon.textAttribute('list-alt')
+          }]
+        }), part(SystemButton, {
+          name: 'global search',
+          extent: pt(35, 26),
+          borderRadius: {
+            topLeft: 0,
+            topRight: 0,
+            bottomRight: 0,
+            bottomLeft: 0
+          },
+          tooltip: 'Open global code search.',
+          padding: rect(10, 5, 0, 0),
+          position: pt(186, 12),
+          submorphs: [{
+            name: 'label',
+            fontColor: Color.rgb(52, 73, 94),
+            fontSize: 14,
+            textAndAttributes: Icon.textAttribute('search')
+          }]
+        }),
+        part(SystemButton, {
+          name: 'add tab',
+          extent: pt(35, 26),
+          tooltip: 'Open up a new browser tab.',
+          borderRadius: {
+            topLeft: 0,
+            topRight: 5,
+            bottomRight: 5,
+            bottomLeft: 0
+          },
+          borderWidth: {
+            left: 0,
+            top: 1,
+            bottom: 1,
+            right: 1
+          },
+          padding: rect(10, 5, 0, 0),
+          position: pt(221, 12),
+          submorphs: [{
+            name: 'label',
+            fontColor: Color.rgb(52, 73, 94),
+            fontSize: 14,
+            textAndAttributes: Icon.textAttribute('plus')
+          }]
+        }),
+        {
+          name: 'eval backend chooser wrapper',
+          extent: pt(252.1, 39),
+          fill: Color.rgba(0, 0, 0, 0),
+          layout: new TilingLayout({
+            axisAlign: 'center',
+            align: 'right',
+            padding: {
+              height: 0,
+              width: 0,
+              x: 15,
+              y: 15
+            },
+            spacing: 15
+          }),
+          position: pt(354.8, 5.8),
+          reactsToPointer: false,
+          submorphs: [part(BackendButtonDefault, {
+            defaultViewModel: EvalBackendButtonModel,
+            master: { auto: BackendButtonDefault, click: BackendButtonClicked },
+            name: 'eval backend button',
+            tooltip: 'Select evaluation backend for browser.',
+            padding: rect(5, 4, 0, 0),
+            nativeCursor: 'pointer',
+            submorphs: [{
+              type: 'label',
+              name: 'label',
+              textAndAttributes: ['local', null]
+            }]
+          })]
+        }]
+    }, part(Tabs, {
+      name: 'tabs',
+      extent: pt(605, 32),
+      position: pt(0, 50),
+      viewModel: {
+        showsSingleTab: false,
+        selectedTabMaster: BrowserTabSelected,
+        defaultTabMaster: BrowserTabDefault,
+        clickedTabMaster: BrowserTabClicked,
+        hoveredTabMaster: BrowserTabHovered
+      }
+    }), part(MullerColumnView, {
+      viewModel: { defaultTooltips: true },
+      name: 'column view',
+      extent: pt(605, 221),
+      borderWidthBottom: 1,
+      borderWidthTop: 1,
+      borderColor: Color.rgb(112, 123, 124),
+      position: pt(0, 50)
+    })
+    ]
+  }, {
     type: Text,
     name: 'source editor',
     readOnly: false,
