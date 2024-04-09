@@ -752,6 +752,16 @@ export function charBoundsOfLineViaCanvas (line, textMorph, fontMetric, measure)
   const boundsPerInnerLine = arr.groupBy(characterBounds, b => b[1][1]);
   const result = [];
   let innerLineOffset = 0;
+  const paddedSpace = textMorph.padding.right() + textMorph.padding.left();
+  let totalWidth = textMorph.width;
+  if (!textMorph.fixedWidth) {
+    // in this case the padding + longest line defines the total width
+    const lineWidth = arr.max(Object.values(boundsPerInnerLine).map(bs => arr.sum(bs.map(b => b[1][0]))));
+    totalWidth = (line.width === textMorph.document.width ? lineWidth : textMorph.document.width) + paddedSpace;
+  } else {
+    totalWidth = Math.max(textMorph.document.width + paddedSpace, totalWidth);
+  }
+
   for (let row in boundsPerInnerLine) {
     let currentOffset, direction;
     const rowBounds = boundsPerInnerLine[row];
@@ -759,10 +769,10 @@ export function charBoundsOfLineViaCanvas (line, textMorph, fontMetric, measure)
     const heightOfRow = arr.max(rowBounds.map(b => b[0]));
     switch (textMorph.textAlign) {
       case 'right':
-        currentOffset = Math.max(0, textMorph.width - totalWidthOfRow);
+        currentOffset = Math.max(0, totalWidth - paddedSpace - totalWidthOfRow);
         break;
       case 'center':
-        currentOffset = Math.max(0, (textMorph.width - totalWidthOfRow) / 2);
+        currentOffset = Math.max(0, (totalWidth - paddedSpace - totalWidthOfRow) / 2);
         break;
       case 'left':
       default:
