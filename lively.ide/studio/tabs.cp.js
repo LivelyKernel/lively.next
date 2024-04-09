@@ -427,13 +427,11 @@ const TabContainer = component({
           fill: Color.transparent,
           borderWidth: 0,
           layout: new TilingLayout({
-            wrapSubmorphs: true,
-            axis: 'column'
+            axis: 'row'
           })
         }
       ]
     }
-    // Comment in to allow for easier manual testing of the tabs
   ]
 });
 
@@ -442,7 +440,7 @@ class TabsModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['addContentToSelectedTab', 'addTab', 'selectedTab', 'keybindings', 'commands', 'tabs', 'loadFromConfig'];
+          return ['addContentToSelectedTab', 'addTab', 'selectedTab', 'keybindings', 'commands', 'tabs', 'loadFromConfig', 'becameVisible', 'becameInvisible'];
         }
       },
       bindings: {
@@ -554,11 +552,11 @@ class TabsModel extends ViewModel {
   updateVisibility (closing) {
     if (!this.showsSingleTab && this.tabs.length > 1) {
       this.view.visible = true;
-      signal(this.view, 'becameVisible');
+      signal(this, 'becameVisible');
     }
     if (!this.showsSingleTab && this.tabs.length === 2 && closing) {
       this.view.visible = false;
-      signal(this.view, 'becameInvisible');
+      signal(this, 'becameInvisible');
     }
   }
 
