@@ -575,6 +575,10 @@ class DOMTextMeasure {
     morph, line, offsetX = 0, offsetY = 0, styleOpts,
     renderTextLayerFn, renderLineFn, fontMetric
   ) {
+    const measureOnCanvas = this.canBeMeasuredViaCanvas(morph);
+    if (measureOnCanvas) {
+      return charBoundsOfLineViaCanvas(line, morph, fontMetric, this);
+    }
     return this.withTextLayerNodeDo(
       morph, renderTextLayerFn, styleOpts,
       styleOpts ? this.generateStyleKey(styleOpts) : this.generateStyleKey(morph),
@@ -602,7 +606,6 @@ class DOMTextMeasure {
         }
 
         let result;
-        const measureOnCanvas = this.canBeMeasuredViaCanvas(morph);
         if (line.stringSize > 1000 && !measureOnCanvas) {
           result = charBoundsOfBigMonospacedLine( // eslint-disable-line no-use-before-define
             morph,
@@ -614,7 +617,7 @@ class DOMTextMeasure {
         }
         if (!result) {
           if (measureOnCanvas) {
-            result = charBoundsOfLineViaCanvas(line, morph, renderTextLayerFn);
+            result = charBoundsOfLineViaCanvas(line, morph, fontMetric, this);
           }
           if (!result) {
             result = charBoundsOfLine(line, lineNode, // eslint-disable-line no-use-before-define
@@ -721,11 +724,9 @@ function charBoundsOfBigMonospacedLine (morph, line, lineNode, offsetX = 0, offs
   return result;
 }
 
-export function charBoundsOfLineViaCanvas (line, textMorph, renderTextLayerFn) {
+export function charBoundsOfLineViaCanvas (line, textMorph, fontMetric, measure) {
   const characterBounds = [];
   const { textAndAttributes } = line;
-  const metric = textMorph.env.fontMetric;
-  const measure = metric._domMeasure;
   const isWrapping = textMorph.lineWrapping !== 'no-wrap';
   const measuringState = measure.getMeasuringState(textMorph);
   for (let i = 0; i < textAndAttributes.length; i += 2) {
@@ -741,7 +742,7 @@ export function charBoundsOfLineViaCanvas (line, textMorph, renderTextLayerFn) {
     } else if (typeof textOrMorph === 'string') {
       const style = { ...textMorph.defaultTextStyle, ...attrs };
       measure.measureCharWidthsInCanvas(textMorph, textOrMorph, attrs, measuringState).forEach((res) => {
-        characterBounds.push([metric.defaultLineHeight(style), res]);
+        characterBounds.push([fontMetric.defaultLineHeight(style), res]);
       });
     } else {
       console.log('Can not measure', textOrMorph);
