@@ -1522,7 +1522,7 @@ export default class Renderer {
     debugInfo.classList.add('debug-info');
     debugInfo.style.left = (visibleLeft + leftP) + 'px';
     debugInfo.style.top = visibleTop + 'px';
-    debugInfo.style.width = (morph.width - rightP) + 'px';
+    debugInfo.style.width = (morph.width - rightP - leftP) + 'px';
 
     const visibleRowsSpan = this.doc.createElement('span');
     visibleRowsSpan.innerHTML = `visible rows: ${firstVisibleRow} - ${lastVisibleRow}\n` +
@@ -1539,7 +1539,7 @@ export default class Renderer {
       debugLine.classList.add('debug-line');
       debugLine.style.left = (visibleLeft + leftP) + 'px';
       debugLine.style.top = (topP + rowY) + 'px';
-      debugLine.style.width = (morph.width - rightP) + 'px';
+      debugLine.style.width = (morph.width - rightP - leftP) + 'px';
       debugLine.style.height = height + 'px';
 
       const lineSpan = this.doc.createElement('span');
