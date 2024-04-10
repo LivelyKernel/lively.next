@@ -1274,21 +1274,19 @@ const SystemBrowser = component({
       name: 'header buttons',
       extent: pt(605, 49.8),
       fill: Color.rgba(0, 0, 0, 0),
-      layout: new ConstraintLayout({
-        lastExtent: {
-          x: 605,
-          y: 49.8
-        },
-        reactToSubmorphAnimations: false,
-        submorphSettings: [['eval backend chooser wrapper', {
-          x: 'move',
-          y: 'fixed'
+      layout: new TilingLayout({
+        axisAlign: 'center',
+        padding: rect(10, 0, -10, 0),
+        resizePolicies: [['eval backend chooser wrapper', {
+          height: 'fixed',
+          width: 'fill'
         }]]
       }),
       reactsToPointer: false,
       submorphs: [
         part(SystemButton, {
           name: 'go back',
+          clipMode: 'hidden',
           borderRadius: {
             topLeft: 5,
             topRight: 0,
@@ -1304,6 +1302,12 @@ const SystemBrowser = component({
           ]
         }), part(SystemButton, {
           name: 'browse history',
+          borderWidth: {
+            bottom: 1,
+            left: 0,
+            right: 0,
+            top: 1
+          },
           extent: pt(35, 26),
           borderRadius: 0,
           padding: rect(10, 5, 0, 0),
@@ -1314,6 +1318,7 @@ const SystemBrowser = component({
           ]
         }), part(SystemButton, {
           name: 'go forward',
+          clipMode: 'hidden',
           borderRadius: {
             topLeft: 0,
             topRight: 5,
@@ -1330,7 +1335,12 @@ const SystemBrowser = component({
             fontColor: Color.rgb(52, 73, 94),
             textAndAttributes: Icon.textAttribute('caret-right')
           }]
-        }), part(SystemButton, {
+        }), {
+          name: 'spacer',
+          fill: Color.rgba(255, 255, 255, 0),
+          extent: pt(15.1, 45.9),
+          position: pt(-15.2, 19.6)
+        }, part(SystemButton, {
           name: 'browse modules',
           extent: pt(35, 26),
           borderRadius: {
@@ -1350,6 +1360,12 @@ const SystemBrowser = component({
           }]
         }), part(SystemButton, {
           name: 'global search',
+          borderWidth: {
+            bottom: 1,
+            left: 0,
+            right: 1,
+            top: 1
+          },
           extent: pt(35, 26),
           borderRadius: {
             topLeft: 0,
@@ -1397,14 +1413,9 @@ const SystemBrowser = component({
           extent: pt(252.1, 39),
           fill: Color.rgba(0, 0, 0, 0),
           layout: new TilingLayout({
-            axisAlign: 'center',
             align: 'right',
-            padding: {
-              height: 0,
-              width: 0,
-              x: 15,
-              y: 15
-            },
+            axisAlign: 'center',
+            padding: rect(15, 15, 0, 0),
             spacing: 15
           }),
           position: pt(354.8, 5.8),
