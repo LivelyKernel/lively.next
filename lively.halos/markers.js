@@ -10,6 +10,9 @@ import {
 import { once } from 'lively.bindings';
 
 class BoundsMarker extends Morph {
+  static get properties () {
+    return { markerColor: { defaultValue: Color.red } };
+  }
   // creates a marker that looks like this:
   // xxxx     xxxx
   // x           x
@@ -19,16 +22,16 @@ class BoundsMarker extends Morph {
   // x           x
   // xxxx     xxxx
 
-  static highlightMorph (morph) {
-    return new this().alignWithMorph(morph);
+  static highlightMorph (morph, color = Color.red) {
+    return new this(color).alignWithMorph(morph);
   }
 
-  static highlightBounds (bounds) {
-    return new this().alignWithBounds(bounds);
+  static highlightBounds (bounds, color = Color.red) {
+    return new this(color).alignWithBounds(bounds);
   }
 
-  constructor () {
-    super({ borderWidth: 0, fill: Color.transparent, reactsToPointer: false, hasFixedPosition: true });
+  constructor (color = Color.red) {
+    super({ borderWidth: 0, fill: Color.transparent, markerColor: color, reactsToPointer: false, hasFixedPosition: true });
   }
 
   get isEpiMorph () {
@@ -42,7 +45,7 @@ class BoundsMarker extends Morph {
   }
 
   createMarkerEdge () {
-    const b = morph({ fill: Color.red, reactsToPointer: false, borderRadius: 10 });
+    const b = morph({ fill: this.markerColor, reactsToPointer: false, borderRadius: 10 });
     return b;
   }
 
@@ -140,8 +143,8 @@ async function showInLoop (world, marker, rect) {
   marker.fadeOut(2000);
 }
 
-function showRect (world, rect, loop) {
-  const marker = BoundsMarker.highlightBounds(rect);
+function showRect (world, rect, loop, color) {
+  const marker = BoundsMarker.highlightBounds(rect, color);
   if (loop) return showInLoop(world, marker, rect);
   return showThenHide(world, marker);
 }
@@ -160,14 +163,14 @@ function showLine (world, line, delay = 3000) {
   return path;
 }
 
-export function show (target, loop = false) {
+export function show (target, loop = false, color = Color.red) {
   const world = MorphicEnv.default().world;
 
   if (target === null || target === undefined) target = String(target);
-  if (target.isMorph) return showRect(target.world(), target.globalBounds().translatedBy(world.scroll.negated()), loop);
-  if (target.isPoint) return showRect(world, new Rectangle(target.x - 5, target.y - 5, 10, 10));
+  if (target.isMorph) return showRect(target.world(), target.globalBounds().translatedBy(world.scroll.negated()), loop, color);
+  if (target.isPoint) return showRect(world, new Rectangle(target.x - 5, target.y - 5, 10, 10), color);
   if (target.isLine) return showLine(world, target);
-  if (target.isRectangle) return showRect(world, target);
+  if (target.isRectangle) return showRect(world, target, color);
   if (typeof Element !== 'undefined' && target instanceof Element) { return showRect(world, Rectangle.fromElement(target)); }
   if (
     typeof target === 'number' ||
