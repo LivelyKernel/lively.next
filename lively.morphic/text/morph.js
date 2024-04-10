@@ -97,8 +97,8 @@ export class Text extends Morph {
             lastVisibleRow: 0,
             heightBefore: 0,
             cursorNodes: [],
-            selectionNodes: [],
-        };
+            selectionNodes: []
+          };
         }
       },
 
@@ -1197,8 +1197,8 @@ export class Text extends Morph {
           const resizedVertically = delta.y !== 0;
           const horizontalRefitNeeded = !this.fixedWidth && resizedHorizontally;
           const verticalRefitNeeded = !this.fixedHeight && resizedVertically;
-          softLayoutChange = this.fixedWidth && !!this.lineWrapping && resizedHorizontally;
-          enforceFit = softLayoutChange && (horizontalRefitNeeded || verticalRefitNeeded);
+          softLayoutChange = this.fixedWidth && this.lineWrapping !== 'no-wrap' && resizedHorizontally;
+          enforceFit = softLayoutChange || (horizontalRefitNeeded || verticalRefitNeeded);
           if (softLayoutChange) {
             this.requestTextLayoutMeasuring();
           }
@@ -2805,7 +2805,9 @@ export class Text extends Morph {
         this.fixedHeight ? 0 : this.borderWidthTop + this.borderWidthBottom
       );
       if (!this.extent.equals(newExt)) {
-        this.extent = newExt;
+        this.withMetaDo({ isLayoutAction: true }, () => {
+          this.extent = newExt;
+        });
       }
     } else {
       this.whenEnvReady().then(() => {

@@ -351,9 +351,9 @@ class DOMTextMeasure {
     const key = `${fontFamily}-${fontWeight}-${fontStyle}`;
     if (key in this.canvasCompatibility) return this.canvasCompatibility[key];
 
-    // determine wether or not a font does some werid shit with letter spacing
+    // determine wether or not a font does some weird shit with letter spacing
+    // note, that this is a heuristic approximation only
     const errorMargin = 3;
-    // this.env.fontMetric._domMeasure.canvasCompatibility = {}
     const testString = 'Lorem ipsum dolor sit amet.';
     const style = { fontFamily, fontSize: 20, fontWeight, fontStyle, lineWrapping: 'no-wrap' };
     const totalLength = this.measureTextWidthInCanvas(style, testString);
