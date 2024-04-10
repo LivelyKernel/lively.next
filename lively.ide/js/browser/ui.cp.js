@@ -1059,7 +1059,7 @@ const MetaInfoContainerExpanded = component({
       type: Label,
       name: 'file path',
       extent: pt(388.9, 18),
-      clipMode: 'visible',
+      clipMode: 'hidden',
       fontColor: Color.rgb(253, 254, 254),
       fontFamily: 'IBM Plex Mono',
       hideScrollbars: true,
