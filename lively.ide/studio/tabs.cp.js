@@ -302,7 +302,7 @@ class TabContainerModel extends ViewModel {
   static get properties () {
     return {
       expose: {
-        get () { return ['add', 'tabs', 'scrollTabIntoView']; }
+        get () { return ['add', 'tabs', 'scrollToRightmostTab']; }
       },
       bindings: {
         get () {
@@ -318,10 +318,10 @@ class TabContainerModel extends ViewModel {
     return this.ui.tabFlapContainer.submorphs.filter(submorph => submorph.isTab);
   }
 
-  scrollTabIntoView (i) {
+  scrollToRightmostTab () {
     const node = this.ui.tabFlapScrollContainer.env.renderer.getNodeForMorph(this.ui.tabFlapScrollContainer);
     if (!node) return;
-    this.view.whenRendered().then(() => { // before, the maxscroll is too small to make the new tab visible 
+    this.view.whenRendered().then(() => { // before, the maxscroll is too small to make the new tab visible
       node.scrollLeft = 1000000; // just force to the right most position
       this.ui.tabFlapScrollContainer.setProperty('scroll', 1000000);
     });
@@ -545,7 +545,7 @@ class TabsModel extends ViewModel {
     newTab.selected = selectAfterCreation;
 
     this.updateVisibility(false);
-    this.scrollSelectedTabInToView();
+    this.scrollToRightmostTab();
     return newTab;
   }
 
@@ -695,9 +695,8 @@ class TabsModel extends ViewModel {
       }];
   }
 
-  scrollSelectedTabInToView () {
-    const i = this.tabs.indexOf(this.selectedTab);
-    this.ui.tabContainer.scrollTabIntoView(i);
+  scrollToRightmostTab () {
+    this.ui.tabContainer.scrollToRightmostTab();
   }
 }
 
