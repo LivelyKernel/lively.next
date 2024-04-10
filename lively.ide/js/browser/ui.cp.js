@@ -1253,6 +1253,7 @@ const SystemBrowser = component({
     textAndAttributes: Icon.textAttribute('smile')
   }, {
     name: 'top side wrapper',
+    reactsToPointer: false,
     extent: pt(605, 302.8),
     fill: Color.transparent,
     layout: new TilingLayout({
