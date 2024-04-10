@@ -1468,15 +1468,13 @@ const ProjectSection = component({
   layout: new TilingLayout({
     axis: 'column',
     hugContentsVertically: true,
-    orderByIndex: true,
     resizePolicies: [['project title', {
       height: 'fixed',
       width: 'fill'
     }], ['component previews', {
       height: 'fixed',
       width: 'fill'
-    }]],
-    wrapSubmorphs: false
+    }]]
   }),
   borderColor: Color.rgb(23, 160, 251),
   extent: pt(488.6, 154.2),
@@ -1486,6 +1484,7 @@ const ProjectSection = component({
   submorphs: [{
     type: Label,
     name: 'project title',
+    fixedWidth: true,
     borderColor: Color.rgb(215, 219, 221),
     fontColor: Color.rgb(66, 73, 73),
     borderWidthBottom: 2,
