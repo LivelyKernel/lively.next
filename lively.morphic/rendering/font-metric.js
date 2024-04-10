@@ -2,6 +2,9 @@
 import { obj, arr } from 'lively.lang';
 import { pt, rect } from 'lively.graphics';
 
+const VARIATION_SELECTOR = 65039;
+const ZWJ = 8205;
+
 function ensureElementMounted (element, parentEl) {
   if (!element.isConnected) {
     // we assume we are mounted in then body.
@@ -453,19 +456,40 @@ class DOMTextMeasure {
       result.push(offset);
     }
     const emptySpace = this.getEmptySpaceOfMorph(morph);
-    for (let i = 0; i < str.length; i++) {
-      const code = str.charCodeAt(i);
+    let codePoints = []; let i = 0; let charCode;
+    while (i < str.length) {
+      charCode = str.charCodeAt(i);
+      // rms: 12.4.24 the below strategy is brittle but works. subject to change if we run into issues in the future.
+      if ((charCode & 0xF800) === 0xD800) {
+        const multiByteSequence = [charCode, str.charCodeAt(++i)];
+        if (str.charCodeAt(i + 1) === VARIATION_SELECTOR) i++;
+        while (str.charCodeAt(i + 1) === ZWJ) {
+          multiByteSequence.push(
+            str.charCodeAt(++i),
+            str.charCodeAt(++i)); // and the following emoji
+          charCode = str.charCodeAt(i + 1);
+          if ((charCode & 0xF800) === 0xD800) multiByteSequence.push(str.charCodeAt(++i));
+          if (str.charCodeAt(i + 1) === VARIATION_SELECTOR) i++;
+        }
+        codePoints.push(multiByteSequence);
+      } else {
+        codePoints.push(charCode);
+      }
+      ++i;
+    }
+    for (let i = 0; i < codePoints.length; i++) {
+      const code = codePoints[i];
       if (code === 32 && measuringState.currentWord.length > 0) {
         measuringState.currentWord = [];
         measuringState.wordLength = 0;
         measuringState.emptySpaceForWord = measuringState.emptySpace;
         measuringState.trailingWhitespaces = [];
       }
-      let hit = cache[code];
+      let hit = cache[Array.isArray(code) ? code.join(',') : code];
       if (!hit) {
-        const metrics = ctx.measureText(str[i]);
+        const metrics = Array.isArray(code) ? morph.env.fontMetric.measure(morph, code.map(c => String.fromCharCode(c)).join('')) : ctx.measureText(String.fromCharCode(code));
         hit = metrics.width;
-        if (writeToCache) cache[code] = hit;
+        if (writeToCache) cache[Array.isArray(code) ? code.join(',') : code] = hit;
       }
 
       const tmp = [hit, measuringState.virtualRow];
@@ -523,6 +547,7 @@ class DOMTextMeasure {
       }
       // take into account the available free space and the wrapping style
       result.push(tmp);
+      if (Array.isArray(code)) result.push(...arr.genN(code.length - 1, () => [0, measuringState.virtualRow])); // another empty char
     }
     if (styleOpts.paddingRight) {
       const offset = [Number.parseFloat(styleOpts.paddingRight), measuringState.virtualRow];
@@ -552,8 +577,6 @@ class DOMTextMeasure {
       rendertTextLayerFn, styleOpts, styleKey,
       textNode => {
         const width = this.measureTextWidthInCanvas(morph, testStringW);
-
-        console.time('DOM measure');
         const spanH = doc.createElement('span');
         spanH.className = 'line';
         spanH.style.whiteSpace = 'pre';
@@ -563,7 +586,6 @@ class DOMTextMeasure {
         const { height } = spanH.getBoundingClientRect();
 
         textNode.removeChild(spanH);
-        console.timeEnd('DOM measure');
         return this.defaultCharWidthHeightCache[styleKey] = {
           width: width / testStringW.length,
           height: Math.ceil(height / 4)
@@ -577,7 +599,7 @@ class DOMTextMeasure {
   ) {
     const measureOnCanvas = this.canBeMeasuredViaCanvas(morph);
     if (measureOnCanvas) {
-      return charBoundsOfLineViaCanvas(line, morph, fontMetric, this);
+      return charBoundsOfLineViaCanvas(line, morph, fontMetric, this); // eslint-disable-line no-use-before-define
     }
     return this.withTextLayerNodeDo(
       morph, renderTextLayerFn, styleOpts,
@@ -617,7 +639,7 @@ class DOMTextMeasure {
         }
         if (!result) {
           if (measureOnCanvas) {
-            result = charBoundsOfLineViaCanvas(line, morph, fontMetric, this);
+            result = charBoundsOfLineViaCanvas(line, morph, fontMetric, this); // eslint-disable-line no-use-before-define
           }
           if (!result) {
             result = charBoundsOfLine(line, lineNode, // eslint-disable-line no-use-before-define
@@ -745,7 +767,7 @@ export function charBoundsOfLineViaCanvas (line, textMorph, fontMetric, measure)
         characterBounds.push([fontMetric.defaultLineHeight(style), res]);
       });
     } else {
-      console.log('Can not measure', textOrMorph);
+      console.warn('Can not measure', textOrMorph); // eslint-disable-line no-console
     }
   }
   // synthesize the character bounds
@@ -763,7 +785,7 @@ export function charBoundsOfLineViaCanvas (line, textMorph, fontMetric, measure)
   }
 
   for (let row in boundsPerInnerLine) {
-    let currentOffset, direction;
+    let currentOffset;
     const rowBounds = boundsPerInnerLine[row];
     const totalWidthOfRow = arr.sum(rowBounds.map(b => b[1][0]));
     const heightOfRow = arr.max(rowBounds.map(b => b[0]));
