@@ -133,8 +133,8 @@ const commands = [
 
   {
     name: 'show morph',
-    exec: (world, { morph, loop = false }) => {
-      show(morph, loop);
+    exec: (world, { morph, loop = false, color = Color.red }) => {
+      show(morph, loop, color);
     }
   },
 
