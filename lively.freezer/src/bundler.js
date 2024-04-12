@@ -598,6 +598,9 @@ export default class LivelyRollup {
         exports.push(JSON.stringify('__reexport__' + this.normalizedId(await this.resolveId(exp.fromModule, id))));
         continue;
       }
+      if (exp.exported === 'default') {
+        exports.push(JSON.stringify('__default__' + exp.local)); // in order to capture this
+      }
       exports.push(JSON.stringify(exp.exported));
     }
     const localLivelyVar = declsAndRefs.declaredNames.includes('lively');
