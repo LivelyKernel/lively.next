@@ -1178,7 +1178,7 @@ export class Morph {
     return { sort: false, includeDefault: false, properties };
   }
 
-  show (loop, color) { return $world.execCommand('show morph', { morph: this, loop, color }); }
+  show (color, loop) { return $world.execCommand('show morph', { morph: this, loop, color }); }
 
   setStatusMessage (msg, statusMessageComponent, delay, opts) {
     const w = this.world();
