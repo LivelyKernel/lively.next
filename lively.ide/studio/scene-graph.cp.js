@@ -217,7 +217,7 @@ export class NewSceneGraphTree extends SceneGraphTree {
     super.onMouseMove(evt);
     this.highlightLineAtCursor(evt, {
       background: Color.transparent,
-      transform: 'translateY(-2px)',
+      transform: 'translateY(-1px)',
       borderColor: '#B2EBF2',
       borderWidth: '1px',
       borderStyle: 'solid'
