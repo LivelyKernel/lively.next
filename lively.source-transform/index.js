@@ -154,7 +154,8 @@ export function replaceExportedVarDeclarations (translated, recorderName, module
     (exportNamedDeclaration) => {
       const variableDeclaration = exportNamedDeclaration.declaration;
       const exportedVariable = variableDeclaration.declarations?.[0];
-      return [variableDeclaration, parse(`var ${exportedVariable.id.name}; export { ${exportedVariable.id.name} }`).body[1]];
+      const exportExpression = parse(`var ${exportedVariable.id.name}; export { ${exportedVariable.id.name} }`).body[1];
+      return [variableDeclaration, exportExpression]; // pulls the declaration and the export apart
     });
 
   if (moduleName.includes('lively.morphic/config.js')) {

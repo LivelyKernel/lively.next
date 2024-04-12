@@ -286,11 +286,17 @@ class ModuleInterface {
     const moduleExports = arr.compact((await this.exports()).map(m => {
       if (m.local && m.exported !== 'default' && m.local !== m.exported) {
         return '__rename__' + m.local + '->' + m.exported;
+      } else if (m.exported === 'default') {
+        return '__default__' + m.local;
       } else {
         return m.exported;
       }
     }));
-    const newEntries = obj.select(livelyRecord, moduleExports);
+    const newEntries = obj.select(livelyRecord, moduleExports.map(exp => {
+      if (exp.startsWith('__default__')) return exp.replace('__default__', '');
+      if (exp.startsWith('__rename__')) return exp.replace(/->.*/, '').replace('__rename__', '');
+      return exp;
+    }));
     frozenRecord.recorder.__module_exports__ = moduleExports;
     // also inject the new values into the record in order to update the bundle
     Object.assign(frozenRecord.recorder, newEntries);
