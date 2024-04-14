@@ -241,6 +241,7 @@ const SearchField = component({
       styleClasses: ['idle'],
       clipMode: 'hidden',
       fixedHeight: true,
+      fixedWidth: true,
       fontColor: Color.black,
       padding: rect(6, 3, 0, 0),
       submorphs: [
