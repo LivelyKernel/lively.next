@@ -441,6 +441,8 @@ class DOMTextMeasure {
     const lineWrapping = styleOpts.lineWrapping || morph.lineWrapping;
     const style = `${styleOpts.fontStyle || morph.fontStyle} ${styleOpts.fontWeight || morph.fontWeight} ${styleOpts.fontSize || morph.fontSize}px ${styleOpts.fontFamily || morph.fontFamily}`;
     const styleKey = `${style} ls:${morph.letterSpacing}`;
+    const fontMetric = morph.env.fontMetric;
+    const isMonospace = !fontMetric.isProportional(styleOpts.fontFamily || morph.fontFamily);
     let cache;
     if (!this.lineBBoxCache[styleKey]) cache = this.lineBBoxCache[styleKey] = [];
     else cache = this.lineBBoxCache[styleKey];
@@ -487,9 +489,13 @@ class DOMTextMeasure {
       }
       let hit = cache[Array.isArray(code) ? code.join(',') : code];
       if (!hit) {
-        const metrics = Array.isArray(code) ? morph.env.fontMetric.measure(morph, code.map(c => String.fromCharCode(c)).join('')) : ctx.measureText(String.fromCharCode(code));
-        hit = metrics.width;
-        if (writeToCache) cache[Array.isArray(code) ? code.join(',') : code] = hit;
+        if (isMonospace && Array.isArray(code)) {
+          hit = fontMetric.defaultCharExtent(morph).width * 2; // for emojis
+        } else {
+          const metrics = Array.isArray(code) ? fontMetric.measure(morph, code.map(c => String.fromCharCode(c)).join('')) : ctx.measureText(String.fromCharCode(code));
+          hit = metrics.width;
+          if (writeToCache) cache[Array.isArray(code) ? code.join(',') : code] = hit;
+        }
       }
 
       const tmp = [hit, measuringState.virtualRow];
