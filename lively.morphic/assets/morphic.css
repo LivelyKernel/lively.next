@@ -92,10 +92,14 @@ div.text-layer span {
   line-height: normal;
 }
 
+:root {
+  --annotation-spacing: 50%;
+}
+
 .Text .annotation {
   position: relative;
   float: right;
-  top: 50%;
+  top: var(--annotation-spacing);
   text-align: right;
 }
 

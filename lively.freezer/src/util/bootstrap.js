@@ -10,6 +10,12 @@ import { updateBundledModules } from 'lively.modules/src/module.js';
 import { Project } from 'lively.project/project.js';
 import { pathForBrowserHistory } from 'lively.morphic/helpers.js';
 import untar from 'esm://cache/js-untar';
+import bowser from 'bowser';
+
+if (bowser.safari) {
+  let r = document.querySelector(':root');
+  r.style.setProperty('--annotation-spacing', '0%');
+}
 
 lively.modules = modulePackage; // temporary modules package used for bootstrapping
 
