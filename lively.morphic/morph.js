@@ -3484,7 +3484,7 @@ export class Path extends Morph {
       this.renderingState.startMarker = this.startMarker;
     }
 
-    if (!this.clipMode !== this.renderingState.clipMode) {
+    if (this.clipMode !== this.renderingState.clipMode) {
       renderer.renderPolygonClipMode(this);
       this.renderingState.clipMode = this.clipMode;
     }
