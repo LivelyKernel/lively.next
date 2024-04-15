@@ -1050,7 +1050,7 @@ export class LivelyWorld extends World {
 
   setStatusMessage (message, StatusMessageComponent, delay = 5000, optStyle = {}) {
     if (!StatusMessageComponent) StatusMessageComponent = StatusMessageDefault;
-    let consoleFunc = 'log'
+    let consoleFunc = 'log';
     if (StatusMessageComponent === StatusMessageError) consoleFunc = 'error';
     if (StatusMessageComponent === StatusMessageWarning) consoleFunc = 'warn';
     console[consoleFunc](message); // eslint-disable-line no-console
@@ -1097,6 +1097,7 @@ export class LivelyWorld extends World {
 
     return this.withRequesterDo(opts.requester, async (pos) => {
       promptMorph.openInWorld();
+      promptMorph.applyLayoutIfNeeded(); // manually apply layouts now since we do not want to wait for the renderer
       promptMorph.center = pos;
       if (promptMorph.height > visBounds.height) { promptMorph.height = visBounds.height - 5; }
 
