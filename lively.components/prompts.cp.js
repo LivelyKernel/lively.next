@@ -13,10 +13,10 @@ export class AbstractPromptModel extends ViewModel {
       autoRemove: { defaultValue: true },
       answer: { defaultValue: null, derived: true },
       title: {
-        defaultValue: 'A prompt title',
+        defaultValue: 'A prompt title'
       },
       text: {
-        defaultValue: null,
+        defaultValue: null
       },
       isPrompt: {
         get () { return true; }
@@ -102,7 +102,7 @@ export class AbstractPromptModel extends ViewModel {
 export class InformPromptModel extends AbstractPromptModel {
   static get properties () {
     return {
-      lineWrapping: { defaultValue: true },
+      lineWrapping: { defaultValue: 'by-words' },
       bindings: {
         get () {
           return [
@@ -124,7 +124,7 @@ export class ConfirmPromptModel extends AbstractPromptModel {
   static get properties () {
     return {
       forceConfirm: { defaultValue: false },
-      lineWrapping: { defaultValue: true },
+      lineWrapping: { defaultValue: 'by-words' },
       confirmLabel: { defaultValue: 'OK' },
       rejectLabel: { defaultValue: 'CANCEL' },
       bindings: {
@@ -204,7 +204,7 @@ export class MultipleChoicePromptModel extends ConfirmPromptModel {
 export class TextPromptModel extends ConfirmPromptModel {
   static get properties () {
     return {
-      lineWrapping: { defaultValue: true },
+      lineWrapping: { defaultValue: 'by-words' },
       errorMessage: { defaultValue: 'Invalid Input' },
       confirmLabel: { defaultValue: 'OK' },
       rejectLabel: { defaultValue: 'CANCEL' },
