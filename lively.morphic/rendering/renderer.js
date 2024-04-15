@@ -1951,18 +1951,26 @@ export default class Renderer {
   }
 
   tryToMeasureViaCanvas (morph) {
-    if (morph.lineWrapping !== 'no-wrap' ||
-        morph.hasMixedTextAttributes('fontFamily') ||
+    if (morph.hasMixedTextAttributes('fontFamily') ||
         morph.hasMixedTextAttributes('fontSize') ||
        !morph.allFontsLoaded() ||
        document.fonts.status !== 'loaded') return false;
     const env = morph.env;
     const height = env.fontMetric.defaultLineHeight(morph);
-    const lines = morph.textString.split('\n');
-    const maxLine = arr.max(lines, line => line.length);
-    const totalHeight = height * lines.length;
-    const width = morph.env.fontMetric._domMeasure.measureTextWidthInCanvas(morph, maxLine);
-    return pt(0, 0).extent(pt(width + morph.padding.left() + morph.padding.right(), totalHeight + morph.padding.top() + morph.padding.bottom()));
+    if (!morph.fixedWidth) {
+      const lines = morph.textString.split('\n');
+      const maxLine = arr.max(lines, line => line.length);
+      const totalHeight = height * lines.length;
+      const width = morph.env.fontMetric._domMeasure.measureTextWidthInCanvas(morph, maxLine);
+      return pt(0, 0).extent(pt(width + morph.padding.left() + morph.padding.right(), totalHeight + morph.padding.top() + morph.padding.bottom()));
+    } else {
+      const lines = splitTextAndAttributesIntoLines(morph.textAndAttributes);
+      const totalHeight = arr.sum(lines.map(textAndAttributes => {
+        const charBounds = morph.env.fontMetric.newManuallyComputeCharBoundsOfLine(morph, { textAndAttributes });
+        return arr.max(charBounds, r => r.bottom()).bottom();
+      }));
+      return pt(0, 0).extent(morph.extent.withY(morph.padding.top() + morph.padding.bottom() + totalHeight));
+    }
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
