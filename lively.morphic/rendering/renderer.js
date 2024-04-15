@@ -332,7 +332,7 @@ export default class Renderer {
       wrapperNode.style.setProperty('left', `${oX - (morph.isPath ? 0 : borderWidthLeft)}px`);
       wrapperNode.style.setProperty('top', `${oY - (morph.isPath ? 0 : borderWidthTop)}px`);
     }
-    if (morph.isPolygon) this.renderPolygonClipMode(morph, morph.renderingState.submorphNode);
+    if (morph.isPolygon) this.renderPolygonClipMode(morph, node);
     return wrapperNode;
   }
 
@@ -2321,7 +2321,10 @@ export default class Renderer {
     });
   }
 
-  renderPolygonClipMode (morph, submorphNode) {
+  renderPolygonClipMode (morph, node) {
+    const submorphNode = morph.renderingState.submorphNode;
+    node.style.overflow = morph.isClip() ? 'hidden' : 'visible';
+
     if (submorphNode) {
       submorphNode.style.setProperty('overflow', `${morph.clipMode}`);
       if (morph.clipMode !== 'visible') {

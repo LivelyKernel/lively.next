@@ -3485,7 +3485,7 @@ export class Path extends Morph {
     }
 
     if (this.clipMode !== this.renderingState.clipMode) {
-      renderer.renderPolygonClipMode(this, this.renderingState.submorphNode);
+      renderer.renderPolygonClipMode(this, node);
       this.renderingState.clipMode = this.clipMode;
     }
 
