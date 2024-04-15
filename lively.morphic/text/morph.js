@@ -238,14 +238,22 @@ export class Text extends Morph {
         group: 'text',
         isStyleProp: true,
         after: ['clipMode', 'renderingState'],
-        defaultValue: false
+        defaultValue: false,
+        get () {
+          if (this.owner?.layout?.resizesMorphHorizontally(this)) return true;
+          return this.getProperty('fixedWidth');
+        }
       },
 
       fixedHeight: {
         group: 'text',
         isStyleProp: true,
         after: ['clipMode', 'renderingState'],
-        defaultValue: false
+        defaultValue: false,
+        get () {
+          if (this.owner?.layout?.resizesMorphVertically(this)) return true;
+          return this.getProperty('fixedHeight');
+        }
       },
 
       autofit: {
