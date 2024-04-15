@@ -347,7 +347,6 @@ export default class Renderer {
    * @param {Morph} morph - Morph of which the submorphs should be unwrapped.
    */
   unwrapSubmorphNodesIfNecessary (node, morph) {
-    let children = Array.from(node.children);
     // do nothing if submorph nodes are not wrapped
     // e.g. in case we have had a css layout already, this can be skipped
     const wrapperNode = morph.renderingState.submorphNode;
@@ -421,8 +420,7 @@ export default class Renderer {
           if (n.id === `submorphs-${morph.id}`) {
             n.remove();
             delete morph.renderingState.submorphNode;
-          }
-          else if (!n.className) n.remove();
+          } else if (!n.className) n.remove();
           else if (n.classList.contains('morph')) n.remove();
         });
       } else {
@@ -667,7 +665,7 @@ export default class Renderer {
    * @param {Morph} morph - a morph to be rendered.
    * @returns {Node} A `DIV` node.
    */
-  nodeForMorph (morph) {
+  nodeForMorph (morph) { // eslint-disable-line no-unused-vars
     return this.doc.createElement('div');
   }
 
@@ -694,7 +692,7 @@ export default class Renderer {
     return node;
   }
 
-  nodeForImage (morph) {
+  nodeForImage (morph) { // eslint-disable-line no-unused-vars
     const node = this.doc.createElement('div');
     const imageNode = this.doc.createElement('img');
 
@@ -774,7 +772,7 @@ export default class Renderer {
       node.appendChild(textLayerForFontMeasure);
       morph.renderingState.fontMeasureNode = textLayerForFontMeasure;
       this.scrollWrapperFor(morph);
-      const scrollWrapper = morph.renderingState.scrollWrapper
+      const scrollWrapper = morph.renderingState.scrollWrapper;
       node.appendChild(scrollWrapper);
       scrollWrapper.appendChild(textLayer);
     } else node.appendChild(textLayer);
