@@ -412,7 +412,10 @@ export default class Renderer {
         // two SVG nodes are necessary
         // remove everything else, in the case that we have unwrapped submorph nodes
         node.childNodes.forEach(n => {
-          if (n.tagName !== 'svg') n.remove();
+          if (n.tagName !== 'svg') {
+            n.remove();
+            delete morph.renderingState.submorphNode;
+          }
         });
       } else if (morph.isText && morph.document) {
         // we need to keep markers, selections, syntax errors etc. around
