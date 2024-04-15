@@ -305,8 +305,6 @@ export default class Renderer {
    * @param {Boolean} fixChildNodes - Whether or not the nodes that are already children of `node` should be moved into the wrapper node.
    */
   installWrapperNodeFor (morph, node, fixChildNodes = false) {
-    if (morph.isPolygon) this.renderPolygonClipMode(morph, this.submorphWrapperNodeFor(morph));
-
     let wrapperNode = morph.renderingState.submorphNode;
     if (!wrapperNode) {
       this.submorphWrapperNodeFor(morph);
@@ -329,13 +327,13 @@ export default class Renderer {
           if (n !== wrapperNode && n !== wrapperNode.parentElement) { wrapperNode.appendChild(n); }
         });
       }
-      return wrapperNode;
     } else {
       let { borderWidthLeft, borderWidthTop, origin: { x: oX, y: oY } } = morph;
       wrapperNode.style.setProperty('left', `${oX - (morph.isPath ? 0 : borderWidthLeft)}px`);
       wrapperNode.style.setProperty('top', `${oY - (morph.isPath ? 0 : borderWidthTop)}px`);
-      return wrapperNode;
     }
+    if (morph.isPolygon) this.renderPolygonClipMode(morph, morph.renderingState.submorphNode);
+    return wrapperNode;
   }
 
   /**
@@ -2324,9 +2322,6 @@ export default class Renderer {
   }
 
   renderPolygonClipMode (morph, submorphNode) {
-    if (!submorphNode) {
-      submorphNode = Array.from(this.getNodeForMorph(morph).children).find(n => n.id && n.id.includes('submorphs'));
-    }
     if (submorphNode) {
       submorphNode.style.setProperty('overflow', `${morph.clipMode}`);
       if (morph.clipMode !== 'visible') {
