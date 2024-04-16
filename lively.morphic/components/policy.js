@@ -710,7 +710,7 @@ export class StylePolicy {
           node._needsDerivation = true;
           return node; // this will be derived and replaced later on
         }
-        node = obj.dissoc(node, ['master', 'submorphs', ...getStylePropertiesFor(node.type)]);
+        node = obj.dissoc(node, ['master', 'submorphs', '__wasAddedToDerived__', ...getStylePropertiesFor(node.type)]);
         if (node.textAndAttributes) {
           node.textAndAttributes = node.textAndAttributes.map(textOrAttr => {
             if (textOrAttr?.isPolicy) return new klass({}, textOrAttr);
