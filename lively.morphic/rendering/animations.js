@@ -110,6 +110,7 @@ export class PropertyAnimation {
     this.queue = queue;
     this.morph = morph;
     this.isStyleApplication = config.isStyleApplication;
+    this.metaAtRegistration = { ...morph.env.changeManager.defaultMeta };
     delete config.isStyleApplication;
     if (morph.isPath && 'fill' in config) {
       const fillBefore = morph.fill || Color.transparent; const fillAfter = config.fill;
@@ -438,7 +439,9 @@ export class PropertyAnimation {
             customTween(easingFn(p));
           }));
         if (p >= 1) {
-          customTween(easingFn(1));
+          this.morph.withMetaDo(this.metaAtRegistration, () => {
+            customTween(easingFn(1));
+          });
           return this.finish('css');
         }
         requestAnimationFrame(draw);
