@@ -1314,7 +1314,7 @@ export class Morph {
     const animationConfigs = Object.values(arr.groupBy(changes, change => change.target.id))
       .map((changes) => {
         const animConfig = { ...config };
-        let target;
+        let target; let meta = {};
         // group all of the changes by prop
         Object.values(arr.groupBy(changes, change => change.prop)).forEach(changes => {
           let [change] = changes;
@@ -1330,11 +1330,12 @@ export class Morph {
             change.reverseApply();
           });
           animConfig[change.prop] = change.value;
+          Object.assign(meta, change.meta);
         });
-        return [target, animConfig];
+        return [target, animConfig, meta];
       });
-    await Promise.all(animationConfigs.map(([target, animConfig]) => {
-      return target && target.animate(animConfig);
+    await Promise.all(animationConfigs.map(([target, animConfig, meta]) => {
+      return target?.withMetaDo(meta, () => target.animate(animConfig));
     }));
   }
 
