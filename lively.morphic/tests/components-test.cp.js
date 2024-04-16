@@ -1,3 +1,4 @@
+/* global xit */
 /* global describe, it, afterEach */
 import { expect } from 'mocha-es6';
 import { Color, pt } from 'lively.graphics';
@@ -580,7 +581,6 @@ describe('spec based components', () => {
           ]
         },
         {
-          __wasAddedToDerived__: true,
           name: 'bar'
         }
       ]
