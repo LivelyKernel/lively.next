@@ -350,6 +350,7 @@ class ComponentEditButtonMorph extends Morph {
       placeholder.opacity = 1;
       placeholder.scale = 1;
       this.submorphs[0].opacity = 0;
+      componentMorph.applyLayoutIfNeeded();
       this.extent = componentMorph.bounds().extent();
       this.center = this.world().visibleBounds().center();
       this.submorphs[0].center = this.extent.scaleBy(.5);
@@ -432,7 +433,8 @@ class ComponentEditButtonMorph extends Morph {
   }
 
   reset () {
-    this.master = ComponentEditButton; // reset the overridden props
+    // reset the overridden props
+    this.master = ComponentEditButton; // eslint-disable-line no-use-before-define
     this.submorphs = [this.submorphs[0]]; // just keep the label
   }
 
