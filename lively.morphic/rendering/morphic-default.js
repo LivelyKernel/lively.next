@@ -191,9 +191,6 @@ function defaultStyle (morph) {
   //          that render themselves based on the current extent in the model.
   // now we can render the other dom props
   const domStyle = styleProps(morph);
-  const maskedProps = morph._animationQueue.maskedProps('css');
-
-  if ('background-image' in maskedProps) delete domStyle.background;
 
   if (clipMode !== 'visible') {
     domStyle.overflow = clipMode;
@@ -208,7 +205,6 @@ function defaultStyle (morph) {
     domStyle['overflow-anchor'] = 'none';
   }
 
-  Object.assign(domStyle, maskedProps);
   domStyle.position = 'absolute';
   domStyle['pointer-events'] = reactsToPointer ? 'auto' : 'none';
   domStyle.cursor = nativeCursor;
