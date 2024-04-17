@@ -59,11 +59,6 @@ export class AnimationQueue {
     this.animations = [];
   }
 
-  maskedProps (type) {
-    const l = this.animations.length;
-    return l > 0 ? obj.merge(this.animations.map(a => a.getAnimationProps(type)[0])) : {};
-  }
-
   get animationsActive () {
     const node = this.morph.env.renderer.getNodeForMorph(this.morph);
     return node?.getAnimations().length > 0;
