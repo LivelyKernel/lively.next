@@ -33,6 +33,7 @@
       "semver": "esm://cache/semver",
       "rollup": "esm://cache/rollup@2.68.0",
       "@rollup/plugin-json": "esm://cache/@rollup/plugin-json",
+      "bowser": "esm://cache/bowser@1.4.1",
       "@rollup/plugin-commonjs": {
         "~node": "esm://cache/@rollup/plugin-commonjs"
       },
