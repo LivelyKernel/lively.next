@@ -29,6 +29,7 @@ export class ListItemMorph extends Label {
       fixedWidth: { defaultValue: true },
       fixedHeight: { defaultValue: true },
       nativeCursor: { defaultValue: 'auto' },
+      epiMorph: { defaultValue: true },
       fill: {
         derived: true,
         get () {
