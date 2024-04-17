@@ -1564,6 +1564,10 @@ export class ConstraintLayout extends Layout {
     }
   }
 
+  equals (other) {
+    return obj.equals(this.getSpec(), other.getSpec());
+  }
+
   getSpec () {
     if (!this.container) return this.config;
     const submorphSettings = [];
