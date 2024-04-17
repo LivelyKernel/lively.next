@@ -1528,30 +1528,20 @@ export class ConstraintLayout extends Layout {
     const verticallyResized = ['resize', 'scale'].includes(y);
     if (newPosX !== morph.position.x ||
         newPosY !== morph.position.y) {
-      if (makeDirty) {
+      morph.withMetaDo({ skipRender: true }, () => {
         morph.position = pt(newPosX, newPosY);
-      } else {
-        morph._morphicState.position = pt(newPosX, newPosY);
-        updateTransform = true;
-        signal(morph, 'position', morph.position); // still notify connections
-      }
+      });
     }
     // also update the extent if the resize policy is not fixed!
     if (newWidth !== morph.width && horizontallyResized) {
-      if (makeDirty) morph.width = newWidth;
-      else {
-        morph._morphicState.extent = morph.extent.withX(newWidth);
-        updateTransform = true;
-        signal(morph, 'extent', morph.extent);
-      }
+      morph.withMetaDo({ skipRender: true }, () => {
+        morph.width = newWidth;
+      });
     }
     if (newHeight !== morph.height && verticallyResized) {
-      if (makeDirty) morph.height = newHeight;
-      else {
-        morph._morphicState.extent = morph.extent.withY(newHeight);
-        updateTransform = true;
-        signal(morph, 'extent', morph.extent); // does not update the halo!
-      }
+      morph.withMetaDo({ skipRender: true }, () => {
+        morph.height = newHeight;
+      });
     }
 
     if (morph.layout && morph.layout.renderViaCSS) {
