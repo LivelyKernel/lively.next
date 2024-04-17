@@ -1254,12 +1254,11 @@ const SystemBrowser = component({
   }, {
     name: 'top side wrapper',
     reactsToPointer: false,
-    extent: pt(605, 302.8),
+    extent: pt(605, 270.4),
     fill: Color.transparent,
     layout: new TilingLayout({
       align: 'column',
       axis: 'column',
-      hugContentsVertically: true,
       resizePolicies: [['header buttons', {
         height: 'fixed',
         width: 'fill'
@@ -1267,7 +1266,7 @@ const SystemBrowser = component({
         height: 'fixed',
         width: 'fill'
       }], ['column view', {
-        height: 'fixed',
+        height: 'fill',
         width: 'fill'
       }]]
     }),
@@ -1493,7 +1492,7 @@ const SystemBrowser = component({
     // fixme: implement with view model...?
     type: HorizontalResizer,
     name: 'vertical resizer',
-    scalingAbove: ['column view'],
+    scalingAbove: ['top side wrapper'],
     scalingBelow: ['source editor'],
     fixed: ['meta info text'],
     extent: pt(605, 8.7),
