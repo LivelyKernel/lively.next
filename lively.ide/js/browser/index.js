@@ -36,7 +36,6 @@ import lint from '../linter.js';
 
 import { mdCompiler } from '../../md/compiler.js';
 import MarkdownEditorPlugin from '../../md/editor-plugin.js';
-import LESSEditorPlugin from '../../css/less/editor-plugin.js';
 
 import { ColumnListDefault, ColumnListDark } from 'lively.components/muller-columns.cp.js';
 import { joinPath } from 'lively.lang/string.js';
@@ -55,7 +54,7 @@ export const COLORS = {
   js: Color.rgb(46, 204, 113),
   json: Color.rgb(128, 139, 150),
   md: Color.rgb(142, 68, 173),
-  less: Color.rgbHex('1D365E'),
+  css: Color.rgbHex('1D365E'),
   cp: Color.rgbHex('E67E22'),
   html: Color.rgbHex('0091EA')
 };
@@ -173,9 +172,6 @@ export class PackageTreeData extends TreeData {
           break;
         case 'directory':
           displayedName = this.displayDirectory(name, !isCollapsed);
-          break;
-        case 'less':
-          displayedName = this.displayLess(name, isSelected);
           break;
         case 'css':
           displayedName = this.displayCSS(name, isSelected);
@@ -322,19 +318,10 @@ export class PackageTreeData extends TreeData {
     ];
   }
 
-  displayLess (less, isSelected) {
-    return [
-      ...Icon.textAttribute('less', {
-        fontColor: isSelected ? Color.white : COLORS.less
-      }),
-      ' ' + less, null
-    ];
-  }
-
   displayCSS (css, isSelected) {
     return [
       ...Icon.textAttribute('css3-alt', {
-        fontColor: isSelected ? Color.white : COLORS.less
+        fontColor: isSelected ? Color.white : COLORS.css,
       }),
       ' ' + css, null
     ];
@@ -1490,7 +1477,6 @@ export class BrowserModel extends ViewModel {
       case 'json': Mode = JSONEditorPlugin; break;
       case 'jsx': Mode = JSXEditorPlugin; break;
       case 'md': Mode = MarkdownEditorPlugin; break;
-      case 'less': Mode = LESSEditorPlugin; break;
       case 'css': Mode = CSSEditorPlugin; break;
       case 'html': Mode = HTMLEditorPlugin; break;
     }
@@ -1940,12 +1926,6 @@ export class BrowserModel extends ViewModel {
           await system.packageConfChange(content, module.url);
           this.updatePackageDependencies();
         } else {
-          if (ext === 'less') {
-            // notify dependent html morphs that are mounted in the world
-            $world.getSubmorphsByStyleClassName('HTMLMorph').forEach(html => {
-              html.updateLessIfNeeded();
-            });
-          }
           if (ext === 'md') {
             // the preview does not get unset when it is closed
             // we thus need to check whether the window that contains the preview is currently member of the world
@@ -2546,9 +2526,9 @@ export class BrowserModel extends ViewModel {
     const textStyle = { fontSize: 16, fontWeight: 'normal' };
     if (!selectedNodeInDir) return;
     if (this.isModule(selectedNodeInDir)) {
-      // if is .md or .less, just remove the file
+      // if is .md or .json, just remove the file
       // else remove module!
-      if (selectedNodeInDir.url.match(/(\.md|\.less|\.json)$/)) {
+      if (selectedNodeInDir.url.match(/(\.md|\.json)$/)) {
         await this.execCommand('remove module');
       } else {
         await this.execCommand('remove module', { mod: selectedNodeInDir });
