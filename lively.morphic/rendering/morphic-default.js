@@ -31,8 +31,9 @@ export function defaultAttributes (morph) {
  * @param {Node} node - The node in which `morph` is rendered into the DOM.
  * @returns {Node} `morph`'s DOM node with applied styling attributes.
  */
-export function applyStylingToNode (morph, node) {
-  let styleProps = defaultStyle(morph);
+export function applyStylingToNode (morph, node, animation) {
+  if (morph._animationQueue.animationsActive) animation = true; // TODO:
+  let styleProps = defaultStyle(morph, animation);
 
   if (typeof morph.renderStyles === 'function') {
     styleProps = morph.renderStyles(styleProps);
@@ -175,7 +176,7 @@ export class ShadowObject {
   }
 }
 
-function defaultStyle (morph) {
+function defaultStyle (morph, animation) {
   const { reactsToPointer, nativeCursor, clipMode } = morph;
   const layoutStyle = {};
   // this also performs measure of the actual morphs height, so do that before rendering the style props
@@ -190,7 +191,7 @@ function defaultStyle (morph) {
   //          instead the correct answer lies in the model. This is a problem for morphs like the ellipse morph
   //          that render themselves based on the current extent in the model.
   // now we can render the other dom props
-  const domStyle = styleProps(morph);
+  const domStyle = styleProps(morph, animation);
 
   if (clipMode !== 'visible') {
     domStyle.overflow = clipMode;

@@ -303,7 +303,7 @@ export class PropertyAnimation {
     const { morph } = this;
     const { isPath, isPolygon, isText } = morph;
     const props = {};
-    props.css = styleProps(this.morph);
+    props.css = styleProps(this.morph, true);
     if (isPath) props.path = addPathAttributes(morph, {});
     if (isPolygon) props.polygon = addPathAttributes(morph, {});
     if (isText) props.text = morph.styleObject();

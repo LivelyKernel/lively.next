@@ -1,8 +1,7 @@
 /* eslint-disable no-use-before-define */
-import { Color } from 'lively.graphics';
-import { string, num } from 'lively.lang';
+import { Color, pt } from 'lively.graphics';
+import { num } from 'lively.lang';
 import { defaultAttributes } from './morphic-default';
-import bowser from 'bowser';
 
 const propsToDelete = [
   'padding-left',
@@ -33,7 +32,21 @@ const propsToDelete = [
   'grid-template-columns',
   'will-change',
   'filter',
-  'z-index'
+  'z-index',
+  'perspective',
+  'transform-origin',
+  'border-left-style',
+  'border-right-style',
+  'border-bottom-style',
+  'border-top-style',
+  'border-left-width',
+  'border-right-width',
+  'border-bottom-width',
+  'border-top-width',
+  'border-top-color',
+  'border-right-color',
+  'border-bottom-color',
+  'border-left-color'
 ];
 
 /**
@@ -51,6 +64,7 @@ export function stylepropsToNode (styleProps, node) {
   }
   for (let prop in styleProps) {
     if (previousStyleProps[prop] === styleProps[prop]) continue;
+    if (prop === 'background') debugger;
     node.style[prop] = styleProps[prop];
   }
   node._previousStyleProps = styleProps;
@@ -88,21 +102,21 @@ export function lineWrappingToClass (lineWrapping) {
   return 'no-wrapping';
 }
 
-export function styleProps (morph) {
+export function styleProps (morph, animation) {
+  if (morph._animationQueue.animationsActive) animation = true; // TODO:
   const style = {};
-  addFill(morph, style);
+  addFill(morph, style, animation);
   addTransform(morph, style);
   addTransformOrigin(morph, style);
   addDisplay(morph, style);
   addExtentStyle(morph, style);
-  addBorder(morph, style);
-  addBorderRadius(morph, style);
+  addBorder(morph, style, animation);
+  addBorderRadius(morph, style, animation);
   addShadowStyle(morph, style);
   if (morph.grayscale) style.filter = `${style.filter || ''} grayscale(${100 * morph.grayscale}%)`;
   if (morph.blur) style.filter = `${style.filter || ''} blur(${morph.blur}px)`;
-  if (morph.opacity != null) style.opacity = morph.opacity;
+  style.opacity = morph.opacity;
   if (morph.draggable && !morph.isWorld) style['touch-action'] = 'none';
-  // on ios touch-action is an undocumented html attribute and can not be set via css
   return style;
 }
 
@@ -112,7 +126,8 @@ export function canBePromotedToCompositionLayer (morph) {
         !(morph.isLayoutable && morph.owner?.layout?.renderViaCSS);
 }
 
-export function addTransform (morph, style) {
+export function addTransform (morph, style, animation) {
+  if (morph.layout) animation = true;
   const { position, origin, scale, rotation, flipped, tilted, perspective, owner } = morph;
   let x = (position.x - origin.x - (morph._skipWrapping && owner ? owner.borderWidthLeft : 0));
   let y = (position.y - origin.y - (morph._skipWrapping && owner ? owner.borderWidthTop : 0));
@@ -128,37 +143,83 @@ export function addTransform (morph, style) {
     style.left = owner?.layout?.renderViaCSS ? '0px' : '';
   } else {
     style.transform = '';
-    style.top = `${y}px`;
-    style.left = `${x}px`;
+    if (y !== 0 || animation) style.top = `${y}px`; else delete style.top;
+    if (x !== 0 || animation) style.left = `${x}px`; else delete style.left;
   }
-  style.transform += ` rotate(${rotation.toFixed(3)}rad) scale(${scale.toFixed(5)},${scale.toFixed(5)})`;
-  if (perspective) style.perspective = `${perspective}px`;
+  if (rotation !== 0 || animation)style.transform += ` rotate(${rotation.toFixed(3)}rad)`;
+  if (scale !== 1 || animation) style.transform += ` scale(${scale.toFixed(5)},${scale.toFixed(5)})`;
+  if (perspective) style.perspective = `${perspective}px`; else delete style.perspective;
   if (flipped) style.transform += ` rotateY(${flipped * 180}deg)`;
   if (tilted) style.transform += ` rotateX(${tilted * 180}deg)`;
 }
 
-function addTransformOrigin (morph, style) {
+function addTransformOrigin (morph, style, animation) {
   const { origin } = morph;
-  if (origin) style['transform-origin'] = `${origin.x}px ${origin.y}px`;
+  if (!pt(0, 0).equals(origin) || animation || morph.scale !== 0) style['transform-origin'] = `${origin.x}px ${origin.y}px`;
+  else delete style['transform-origin'];
 }
 
 function addDisplay (morph, style) {
   const { visible } = morph;
-  if (visible != null) style.display = visible ? '' : 'none';
+  if (visible != null) style.display = visible ? '' : 'none'; else delete style.display;
 }
 
-function addBorderRadius (morph, style) {
+function addBorderRadius (morph, style, animation) {
   const { borderRadiusTopLeft, borderRadiusTopRight, borderRadiusBottomRight, borderRadiusBottomLeft } = morph;
+  if ([borderRadiusTopLeft, borderRadiusTopRight, borderRadiusBottomRight, borderRadiusBottomLeft].every(v => v === 0) && !animation) {
+    delete style['border-radius'];
+    return;
+  }
   style['border-radius'] = `${borderRadiusTopLeft}px ${borderRadiusTopRight}px ${borderRadiusBottomRight}px ${borderRadiusBottomLeft}px`;
 }
 
-function addBorder (morph, style) {
+function addBorder (morph, style, animation) {
   const {
     borderWidthLeft, borderColorLeft, borderStyleLeft,
     borderWidthRight, borderColorRight, borderStyleRight, borderColor,
     borderWidthBottom, borderColorBottom, borderStyleBottom,
     borderWidthTop, borderColorTop, borderStyleTop
   } = morph;
+  if (((borderStyleLeft === 'none' &&
+      borderStyleRight === 'none' &&
+      borderStyleTop === 'none' &&
+      borderStyleBottom === 'none') ||
+      (borderWidthLeft === 0 &&
+      borderWidthRight === 0 &&
+      borderWidthTop === 0 &&
+      borderWidthBottom === 0)) &&
+     !animation) {
+    delete style['border-left-color'];
+    delete style['border-bottom-color'];
+    delete style['border-right-color'];
+    delete style['border-top-color'];
+    delete style['border-top-width'];
+    delete style['border-bottom-width'];
+    delete style['border-right-width'];
+    delete style['border-left-width'];
+    delete style['border-top-style'];
+    delete style['border-bottom-style'];
+    delete style['border-right-style'];
+    delete style['border-left-style'];
+    return;
+  }
+
+  if (((borderStyleLeft === 'hidden' &&
+      borderStyleRight === 'hidden' &&
+      borderStyleTop === 'hidden' &&
+      borderStyleBottom === 'hidden') ||
+      (borderColorLeft?.a === 0 &&
+      borderColorRight?.a === 0 &&
+      borderColorTop?.a === 0 &&
+      borderColorBottom?.a === 0)) &&
+     !animation) {
+    delete style['border-left-color'];
+    delete style['border-bottom-color'];
+    delete style['border-right-color'];
+    delete style['border-top-color'];
+    return;
+  }
+
   style['border-left-style'] = `${borderStyleLeft}`;
   style['border-right-style'] = `${borderStyleRight}`;
   style['border-bottom-style'] = `${borderStyleBottom}`;
@@ -174,12 +235,13 @@ function addBorder (morph, style) {
   if (borderColor && borderColor.isGradient) style['border-image'] = borderColor.toString();
 }
 
-function addFill (morph, style) {
+function addFill (morph, style, animation) {
   const { fill } = morph;
-  if (!fill) {
-    style.background = Color.transparent.toString();
+  if ((!fill || fill.a === 0) && !animation) {
+    delete style.background;
     return;
   }
+
   if (fill.isGradient) {
     // we need to set the background color to something
     // that does not interfere with the opaque fill.

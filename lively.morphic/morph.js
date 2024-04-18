@@ -16,6 +16,7 @@ import CommandHandler from './CommandHandler.js';
 import KeyHandler, { findKeysForPlatform } from './events/KeyHandler.js';
 import { TargetScript } from './ticking.js';
 import { copyMorph } from './serialization.js';
+import { applyStylingToNode } from './rendering/morphic-default.js';
 
 import { PolicyApplicator } from './components/policy.js';
 
@@ -1298,6 +1299,11 @@ export class Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   async animate (config) {
+    if (this.env.renderer) {
+      const node = this.env.renderer.getNodeForMorph(this);
+      if (node) applyStylingToNode(this, node, true);
+    }
+
     this.renderingState.animationAdded = true;
     const anim = this._animationQueue.registerAnimation(config);
     this.makeDirty();
