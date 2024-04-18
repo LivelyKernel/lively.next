@@ -555,7 +555,6 @@ export const AssetBrowserDark = component({
         padding: rect(1, 1, 0, 0),
         textAndAttributes: ['', {
           fontFamily: 'Font Awesome',
-          fontWeight: '900',
           lineHeight: 1.2,
         }]
       }, part(InputLineDefault, {

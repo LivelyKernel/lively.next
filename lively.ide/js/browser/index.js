@@ -113,10 +113,10 @@ export class DirectoryControls extends Morph {
     const menu = await this.world().openWorldMenu(evt, [
       { title: 'Select file type:' },
       { isDivider: true },
-      [[...Icon.textAttribute('js-square', { ...style, fontColor: COLORS.js, fontWeight: 400 }), '  Javascript'], () => { type = 'js'; }],
-      [[...Icon.textAttribute('shapes', { ...style, fontColor: COLORS.cp, fontWeight: 900 }), '  Component'], () => { type = 'cp.js'; }],
-      [[...Icon.textAttribute('gear', { ...style, fontColor: COLORS.json, fontWeight: 900 }), ' JSON'], () => { type = 'json'; }],
-      [[...Icon.textAttribute('markdown', { ...style, fontColor: COLORS.md, fontWeight: 400 }), ' Markdown'], () => { type = 'md'; }],
+      [[...Icon.textAttribute('js-square', { ...style, fontColor: COLORS.js, fontWeight: '400' }), '  Javascript'], () => { type = 'js'; }],
+      [[...Icon.textAttribute('shapes', { ...style, fontColor: COLORS.cp, fontWeight: '900' }), '  Component'], () => { type = 'cp.js'; }],
+      [[...Icon.textAttribute('gear', { ...style, fontColor: COLORS.json, fontWeight: '900' }), ' JSON'], () => { type = 'json'; }],
+      [[...Icon.textAttribute('markdown', { ...style, fontColor: COLORS.md, fontWeight: '400' }), ' Markdown'], () => { type = 'md'; }],
     ]);
     await menu.whenFinished();
     if (!type) return;
@@ -282,7 +282,7 @@ export class PackageTreeData extends TreeData {
   displayDirectory (dir, isOpen) {
     return [
       ...Icon.textAttribute(isOpen ? 'folder-open' : 'folder', {
-        fontWeight: 400
+        fontWeight: '400'
       }),
       ' ' + dir, null
     ];
@@ -303,7 +303,7 @@ export class PackageTreeData extends TreeData {
     return [
       ...Icon.textAttribute('gear', {
         fontColor: isSelected ? Color.white : COLORS.json,
-        fontWeight: 900
+        fontWeight: '900'
       }),
       ' ' + json, null
     ];
@@ -331,7 +331,7 @@ export class PackageTreeData extends TreeData {
     return [
       ...Icon.textAttribute('file-code', {
         fontColor: isSelected ? Color.white : COLORS.html,
-        fontWeight: 900
+        fontWeight: '900'
       }),
       ' ' + html + ' ', null
     ];

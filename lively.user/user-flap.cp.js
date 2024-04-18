@@ -378,7 +378,7 @@ export const UserFlap = component({
       fontSize: 18,
       textAndAttributes: ['To proceed, login with', null, ' ', {
         fontFamily: 'Font Awesome Brands',
-        fontWeight: 400
+        fontWeight: '400'
       }]
     }]
   })

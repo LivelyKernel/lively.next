@@ -207,7 +207,7 @@ const DefaultWindowInactive = component(DefaultWindow, {
               }]
           }, {
             name: 'window title',
-            fontWeight: 400
+            fontWeight: '400'
           }
         ]
       }]

@@ -1302,7 +1302,7 @@ class CopyHaloItem extends RoundHaloItem {
   }
 
   static label () {
-    return RoundHaloItem.makeLabel('clone', { fontWeight: 400 });
+    return RoundHaloItem.makeLabel('clone', { fontWeight: '400' });
   }
 
   init (hand) {
