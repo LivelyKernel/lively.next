@@ -193,7 +193,7 @@ class MasterComponentTreeData extends TreeData {
     }
     return [
       ...Icon.textAttribute(isOpen ? 'folder-open' : 'folder', {
-        textStyleClasses: ['far']
+        fontWeight: 400
       }),
       ' ' + dir, null
     ];
