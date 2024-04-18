@@ -338,7 +338,7 @@ const FontListEntry = component({
       name: 'font edit',
       fontSize: 15,
       textAndAttributes: ['', {
-        fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+        fontFamily: 'Font Awesome',
         fontWeight: '900'
       }, ' ', {}],
       tooltip: 'Configure font properties',
@@ -562,7 +562,7 @@ const FontConfigurationPopup = component(DarkPopupWindow, {
             position: pt(13.6, 8),
             tooltip: 'Defines the name under which the font is going to be available throughout the project.',
             textAndAttributes: ['Font Name  ', null, '', {
-              fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+              fontFamily: 'Font Awesome',
               fontWeight: '900'
             }, ' ', {}]
           }, part(TextInput, {
@@ -596,7 +596,7 @@ const FontConfigurationPopup = component(DarkPopupWindow, {
             position: pt(11.6, 1.9),
             tooltip: 'Defines the style this font file covers. For instance different font styles may be partitioned in different font files.',
             textAndAttributes: ['Font Style  ', null, '', {
-              fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+              fontFamily: 'Font Awesome',
               fontWeight: '900'
             }, ' ', {}]
           }, part(EnumSelector, {
@@ -638,7 +638,7 @@ const FontConfigurationPopup = component(DarkPopupWindow, {
             fixedWidth: true,
             tooltip: 'A single fontweight or a range of fontweights for which to use this font file. For most cases, the default value will suffice.',
             textAndAttributes: ['Font Weight  ', null, '', {
-              fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+              fontFamily: 'Font Awesome',
               fontWeight: '900'
             }, ' ', {}]
           }, {
@@ -711,7 +711,7 @@ const FontConfigurationPopup = component(DarkPopupWindow, {
             position: pt(44.6, 31.4),
             tooltip: 'A list of unicode code-points for which to use this font. If empty, this font-file will be used for all code-points. Usually, this is the warranted behavior.',
             textAndAttributes: ['Unicode Range  ', null, '', {
-              fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+              fontFamily: 'Font Awesome',
               fontWeight: '900'
             }, ' ', {}]
           },

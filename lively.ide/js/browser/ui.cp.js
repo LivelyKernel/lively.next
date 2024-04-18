@@ -467,7 +467,7 @@ const ComponentEditButtonDefault = component({
       fontWeight: 'bold',
       fontSize: 12,
       textAndAttributes: ['Edit Component  ', {}, '', {
-        fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+        fontFamily: 'Font Awesome',
         fontWeight: '900',
         paddingTop: '2px'
       }]
@@ -1053,7 +1053,7 @@ const MetaInfoContainerExpanded = component({
       fontWeight: 'bold',
       padding: rect(10, 4, 0, 0),
       textAndAttributes: ['Error ', null, '', {
-        fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+        fontFamily: 'Font Awesome',
         fontWeight: '900',
         paddingTop: '3px'
       }]
@@ -1149,7 +1149,7 @@ const MetaInfoContainerExpanded = component({
       part(EmbeddedIcon, {
         name: 'close button',
         textAndAttributes: ['Close ', null, '', {
-          fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+          fontFamily: 'Font Awesome',
           fontWeight: '900',
           paddingTop: '1px'
         }]
@@ -1157,7 +1157,7 @@ const MetaInfoContainerExpanded = component({
       part(EmbeddedIcon, {
         name: 'open in workspace',
         textAndAttributes: ['Open in workspace ', null, '', {
-          fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+          fontFamily: 'Font Awesome',
           fontWeight: '900',
           paddingTop: '2px'
         }]

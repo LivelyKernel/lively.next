@@ -58,7 +58,7 @@ export class FillControlModel extends ViewModel {
     sourceDescription.textString = 'Enter URL';
     sourceDescription.tooltip = '';
     confirmImageButton.textAndAttributes = ['', {
-      fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+      fontFamily: 'Font Awesome',
       fontSize: 18,
       fontWeight: '900'
     }];

@@ -1028,7 +1028,7 @@ class ProjectPreviewModel extends WorldPreviewModel {
     timestamp.value = project.isFork
       ? [
           '', {
-            fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+            fontFamily: 'Font Awesome',
             fontSize: 13,
             fontWeight: '900',
             paddingTop: '1px'
@@ -1348,7 +1348,7 @@ const ProjectIcon = component({
     padding: rect(1, 1, 0, 0),
     position: pt(98.5, 21),
     textAndAttributes: ['', {
-      fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+      fontFamily: 'Font Awesome',
       fontWeight: '900'
     }, ' ', {}]
   }, add({

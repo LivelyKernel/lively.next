@@ -114,11 +114,10 @@ export class DirectoryControls extends Morph {
     const menu = await this.world().openWorldMenu(evt, [
       { title: 'Select file type:' },
       { isDivider: true },
-      [[...Icon.textAttribute('js-square', { ...style, fontColor: COLORS.js }), '  Javascript'], () => { type = 'js'; }],
-      [[...Icon.textAttribute('shapes', { ...style, fontColor: COLORS.cp }), '  Component'], () => { type = 'cp.js'; }],
-      [[...Icon.textAttribute('code', { ...style, fontColor: COLORS.json }), ' JSON'], () => { type = 'json'; }],
-      [[...Icon.textAttribute('markdown', { ...style, fontColor: COLORS.md }), ' Markdown'], () => { type = 'md'; }],
-      [[...Icon.textAttribute('less', { ...style, fontColor: COLORS.less }), ' Less (CSS)'], () => { type = 'less'; }]
+      [[...Icon.textAttribute('js-square', { ...style, fontColor: COLORS.js, fontWeight: 400 }), '  Javascript'], () => { type = 'js'; }],
+      [[...Icon.textAttribute('shapes', { ...style, fontColor: COLORS.cp, fontWeight: 900 }), '  Component'], () => { type = 'cp.js'; }],
+      [[...Icon.textAttribute('gear', { ...style, fontColor: COLORS.json, fontWeight: 900 }), ' JSON'], () => { type = 'json'; }],
+      [[...Icon.textAttribute('markdown', { ...style, fontColor: COLORS.md, fontWeight: 400 }), ' Markdown'], () => { type = 'md'; }],
     ]);
     await menu.whenFinished();
     if (!type) return;
@@ -297,7 +296,8 @@ export class PackageTreeData extends TreeData {
     return [
       ...Icon.textAttribute(mod.endsWith('.cp.js') ? 'shapes' : 'js-square', {
         fontColor: isSelected ? Color.white : mod.endsWith('.cp.js') ? COLORS.cp : COLORS.js,
-        opacity: isLoaded ? 1 : 0.5
+        opacity: isLoaded ? 1 : 0.5,
+        fontWeight: mod.endsWith('.cp.js') ? 900 : 400
       }),
       ' ' + string.truncate(mod, 24, '…'), null
     ];
@@ -305,8 +305,9 @@ export class PackageTreeData extends TreeData {
 
   displayJson (json, isSelected) {
     return [
-      ...Icon.textAttribute('cog', {
-        fontColor: isSelected ? Color.white : COLORS.json
+      ...Icon.textAttribute('gear', {
+        fontColor: isSelected ? Color.white : COLORS.json,
+        fontWeight: 900
       }),
       ' ' + json, null
     ];
@@ -315,7 +316,7 @@ export class PackageTreeData extends TreeData {
   displayMarkdown (md, isSelected) {
     return [
       ...Icon.textAttribute('markdown', {
-        fontColor: isSelected ? Color.white : COLORS.md
+        fontColor: isSelected ? Color.white : COLORS.md,
       }),
       ' ' + md, null
     ];
@@ -342,7 +343,8 @@ export class PackageTreeData extends TreeData {
   displayHTML (html, isSelected) {
     return [
       ...Icon.textAttribute('file-code', {
-        fontColor: isSelected ? Color.white : COLORS.html
+        fontColor: isSelected ? Color.white : COLORS.html,
+        fontWeight: 900
       }),
       ' ' + html + ' ', null
     ];

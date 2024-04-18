@@ -219,7 +219,7 @@ const SaveWorldDialog = component(DarkPrompt, {
             fixedWidth: true,
             reactsToPointer: false,
             textAndAttributes: ['Change DB ', null, '', {
-              fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+              fontFamily: 'Font Awesome',
               fontWeight: '900'
             }, ' ', {
               fontColor: Color.rgb(204, 204, 204),
