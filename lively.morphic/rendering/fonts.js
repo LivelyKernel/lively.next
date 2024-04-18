@@ -38,7 +38,11 @@ export const DEFAULT_FONTS = [
   },
   {
     name: 'Font Awesome',
-    supportedWeights: []
+    supportedWeights: [400, 900]
+  },
+  {
+    name: 'Font Awesome Brands',
+    supportedWeights: [400]
   },
   {
     name: 'Gideon Roman',
