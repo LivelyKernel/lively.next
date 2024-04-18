@@ -468,7 +468,6 @@ const ComponentEditButtonDefault = component({
       fontSize: 12,
       textAndAttributes: ['Edit Component  ', {}, '', {
         fontFamily: 'Font Awesome',
-        fontWeight: '900',
         paddingTop: '2px'
       }]
 
@@ -658,7 +657,7 @@ const BrowserTabHovered = component(BrowserTabSelected, {
     name: 'horizontal container',
     submorphs: [{
       name: 'tab caption',
-      fontWeight: 400
+      fontWeight: '400'
     }]
   }]
 });
@@ -1054,7 +1053,6 @@ const MetaInfoContainerExpanded = component({
       padding: rect(10, 4, 0, 0),
       textAndAttributes: ['Error ', null, '', {
         fontFamily: 'Font Awesome',
-        fontWeight: '900',
         paddingTop: '3px'
       }]
     }, {
@@ -1150,7 +1148,6 @@ const MetaInfoContainerExpanded = component({
         name: 'close button',
         textAndAttributes: ['Close ', null, '', {
           fontFamily: 'Font Awesome',
-          fontWeight: '900',
           paddingTop: '1px'
         }]
       }),
@@ -1158,7 +1155,6 @@ const MetaInfoContainerExpanded = component({
         name: 'open in workspace',
         textAndAttributes: ['Open in workspace ', null, '', {
           fontFamily: 'Font Awesome',
-          fontWeight: '900',
           paddingTop: '2px'
         }]
       })]

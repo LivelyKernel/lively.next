@@ -1060,8 +1060,7 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
         fontSize: 16,
         fontColor: Color.rgb(255, 108, 0),
         textAndAttributes: ['', {
-          fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
-          fontWeight: '900'
+          fontFamily: 'Font Awesome',
         }, ' ', {}, 'At least one of the dependencies of this project is not available remotely!', null],
         borderColor: Color.rgb(23, 160, 251),
         dynamicCursorColoring: true,

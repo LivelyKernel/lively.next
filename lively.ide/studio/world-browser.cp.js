@@ -1399,9 +1399,8 @@ const ProjectPreviewTile = component(WorldPreviewTile, {
         name: 'timestamp',
         nativeCursor: 'text',
         textAndAttributes: ['', {
-          fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+          fontFamily: 'Font Awesome',
           fontSize: 13,
-          fontWeight: '900',
           paddingTop: '1px'
         }, ' robin.schreiber', {
           fontSize: 13,

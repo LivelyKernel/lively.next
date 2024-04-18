@@ -242,7 +242,6 @@ export class Tree extends Text {
         paddingTop: (this.fontSize / 10) + 'px',
         paddingRight: (this.fontSize / 8) + 'px',
         fontFamily: 'Font Awesome',
-        fontWeight: 900
       };
       if (!this.treeData.isLeaf(nodes[i].node)) {
         containerTextAndAttributes[j + 2] = this.treeData.isCollapsed(nodes[i].node) ? ' \uf0da ' : ' \uf0d7 ';
@@ -283,7 +282,7 @@ export class Tree extends Text {
     }
     containerTextAndAttributes.push(' ', {
       fontSize: this.fontSize * 1.3,
-      fontWeight: 400
+      fontWeight: '400'
     });
     containerTextAndAttributes = containerTextAndAttributes.filter(v => typeof v !== 'undefined');
     return nodes.length > 1 ? containerTextAndAttributes : [];

@@ -30,10 +30,15 @@ export class Icon {  static makeLabel(iconName, props = {prefix: "", suffix: ""}
       if (Icons[iconName].iconSet === 'tabler icons') return 'Tabler Icons';
       if (Icons[iconName].iconSet === 'material icons') return 'Material Icons';
     }();
-      delete attrs.textStyleClasses;
+      const textAttributes = { fontFamily, ...attrs };
+      if (!textAttributes.fontWeight) {
+        // Ensure we have the officially supported font weights when no other option is specified
+        if (fontFamily === 'Font Awesome') textAttributes.fontWeight = '900';
+        if (fontFamily === 'Font Awesome Brands') textAttributes.fontWeight = '400';
+      }
+
     return [
-      Icons[iconName].code || `icon ${iconName} not found`,
-        { fontFamily, fontWeight: 400, ...attrs }
+      Icons[iconName].code || `icon ${iconName} not found`, textAttributes
       ]
     }
 
