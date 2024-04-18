@@ -897,7 +897,7 @@ export function serializeSpec (morph, opts = {}) {
   gatherConnectionInfo(morph, path, subopts);
   traverseSubmorphs(morph, exported, path, styleProto, subopts); // needs to be done before we handle text attributes
   handleSpecProps(morph, exported, styleProto, path, masterInScope, subopts);
-  handleTextAndAttributes(morph, exported, styleProto, path, masterInScope, subopts);
+  if (!skipAttributes.includes('textAndAttributes')) handleTextAndAttributes(morph, exported, styleProto, path, masterInScope, subopts);
 
   if (root && keepConnections) {
     insertConnections(exported, subopts);
