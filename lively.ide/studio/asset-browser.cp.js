@@ -554,10 +554,9 @@ export const AssetBrowserDark = component({
         fixedWidth: true,
         padding: rect(1, 1, 0, 0),
         textAndAttributes: ['', {
-          fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+          fontFamily: 'Font Awesome',
           fontWeight: '900',
           lineHeight: 1.2,
-          textStyleClasses: ['fas']
         }]
       }, part(InputLineDefault, {
         name: 'search input',
@@ -585,7 +584,7 @@ export const AssetBrowserDark = component({
         lineHeight: 2,
         padding: rect(1, 1, 9, 0),
         textAndAttributes: ['', {
-          fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+          fontFamily: 'Font Awesome',
           fontWeight: '900',
           lineHeight: 1
         }]
@@ -649,7 +648,7 @@ export const AssetBrowserDark = component({
                 fontColor: Color.white,
                 textAndAttributes: ['', {
                   fontColor: Color.white,
-                  fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+                  fontFamily: 'Font Awesome',
                   fontWeight: '900',
                   lineHeight: 1
                 }, ' Upload', {
@@ -676,7 +675,7 @@ export const AssetBrowserDark = component({
                 fill: Color.transparent,
                 fontColor: Color.white,
                 textAndAttributes: ['', {
-                  fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+                  fontFamily: 'Font Awesome',
                   fontWeight: '900',
                   lineHeight: 1
                 }, ' Delete', {
@@ -700,7 +699,7 @@ export const AssetBrowserDark = component({
             fontColor: Color.white,
             textAndAttributes: ['', {
               fontColor: Color.rgb(74, 214, 87),
-              fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+              fontFamily: 'Font Awesome',
               fontWeight: '900',
               lineHeight: 1
             }, ' Use', {

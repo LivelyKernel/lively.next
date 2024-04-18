@@ -376,9 +376,9 @@ export const UserFlap = component({
     submorphs: [{
       name: 'label',
       fontSize: 18,
-      fontWeight: 900,
       textAndAttributes: ['To proceed, login with', null, ' ', {
-        fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"'
+        fontFamily: 'Font Awesome Brands',
+        fontWeight: 400
       }]
     }]
   })

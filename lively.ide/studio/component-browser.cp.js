@@ -1495,7 +1495,7 @@ const ProjectSection = component({
     textAndAttributes: ['Project Name', {
     }, '  ', {
     }, '', {
-      fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+      fontFamily: 'Font Awesome',
       fontWeight: '900',
       nativeCursor: 'pointer',
       paddingTop: '3px'
@@ -1575,7 +1575,7 @@ const ComponentBrowser = component({
       fixedWidth: true,
       padding: rect(1, 1, 0, 0),
       textAndAttributes: ['', {
-        fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+        fontFamily: 'Font Awesome',
         fontWeight: '900',
         lineHeight: 1.2
       }]
@@ -1605,7 +1605,7 @@ const ComponentBrowser = component({
       lineHeight: 2,
       padding: rect(1, 1, 9, 0),
       textAndAttributes: ['', {
-        fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+        fontFamily: 'Font Awesome',
         fontWeight: '900',
         lineHeight: 1
       }]
@@ -1690,7 +1690,7 @@ const ComponentBrowser = component({
         name: 'label',
         textAndAttributes: ['', {
           fontColor: Color.rgb(74, 174, 79),
-          fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+          fontFamily: 'Font Awesome',
           fontWeight: '900',
           lineHeight: 1
         }, ' Open', {
@@ -1823,7 +1823,7 @@ const ComponentBrowserPopupDark = component(ComponentBrowserPopup, {
             fontColor: Color.rgb(255, 255, 255),
             textAndAttributes: ['', {
               fontColor: Color.rgbHex('B2EBF2'),
-              fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+              fontFamily: 'Font Awesome',
               fontWeight: '900',
               lineHeight: 1
             }, ' Edit', {
@@ -1837,7 +1837,7 @@ const ComponentBrowserPopupDark = component(ComponentBrowserPopup, {
             name: 'label',
             textAndAttributes: ['', {
               fontColor: Color.rgbHex('B2EBF2'),
-              fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+              fontFamily: 'Font Awesome',
               fontWeight: '900',
               lineHeight: 1
             }, ' Import', {
@@ -1893,7 +1893,7 @@ const ComponentError = component({
       padding: rect(1, 1, 0, 0),
       position: pt(-19.7, -13.6),
       textAndAttributes: ['', {
-        fontFamily: '"Font Awesome 5 Free", "Font Awesome 5 Brands"',
+        fontFamily: 'Font Awesome',
         fontWeight: '900',
         lineHeight: 1
       }]

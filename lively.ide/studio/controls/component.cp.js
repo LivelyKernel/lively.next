@@ -177,7 +177,7 @@ export const ComponentSelection = component({
     tooltip: 'Select Component',
     padding: rect(4, 4, 0, 0),
     textAndAttributes: ['', {
-      fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+      fontFamily: 'Font Awesome',
       fontWeight: '900'
     }]
   }),
@@ -203,7 +203,7 @@ export const CustomStateComponentSelection = component(ComponentSelection, {
       padding: rect(4, 2, 0, 2),
       tooltip: 'Remove this custom component state.',
       textAndAttributes: ['', {
-        fontFamily: '"Font Awesome 6 Free", "Font Awesome 6 Brands"',
+        fontFamily: 'Font Awesome',
         fontWeight: '900'
       }]
     }
