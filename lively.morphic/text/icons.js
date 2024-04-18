@@ -23,7 +23,7 @@ export class Icon {  static makeLabel(iconName, props = {prefix: "", suffix: ""}
     });
   }
 
-  static textAttribute(iconName, attrs = {}) {    let isFar = attrs.textStyleClasses && attrs.textStyleClasses.includes('far');
+  static textAttribute(iconName, attrs = {}) {
     const fontFamily = function () {
       if (Icons[iconName].iconSet === 'font awesome brands')  return "Font Awesome Brands";
       if (Icons[iconName].iconSet === 'font awesome')  return "Font Awesome";
@@ -33,7 +33,8 @@ export class Icon {  static makeLabel(iconName, props = {prefix: "", suffix: ""}
       delete attrs.textStyleClasses;
     return [
       Icons[iconName].code || `icon ${iconName} not found`,
-       {fontFamily, fontWeight: isFar ? '400' : '900', ...attrs}]
+        { fontFamily, fontWeight: 400, ...attrs }
+      ]
     }
 
   static setIcon(label, iconName) {     label.textAndAttributes = this.textAttribute(iconName);

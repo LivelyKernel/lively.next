@@ -283,7 +283,7 @@ export class Tree extends Text {
     }
     containerTextAndAttributes.push(' ', {
       fontSize: this.fontSize * 1.3,
-      textStyleClasses: ['far']
+      fontWeight: 400
     });
     containerTextAndAttributes = containerTextAndAttributes.filter(v => typeof v !== 'undefined');
     return nodes.length > 1 ? containerTextAndAttributes : [];

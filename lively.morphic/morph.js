@@ -3713,8 +3713,8 @@ export class Path extends Morph {
   }
 
   menuItems () {
-    const checked = Icon.textAttribute('check-square', { textStyleClasses: ['far'] });
-    const unchecked = Icon.textAttribute('square', { textStyleClasses: ['far'] });
+    const checked = Icon.textAttribute('check-square', { fontWeight: 400 });
+    const unchecked = Icon.textAttribute('square', { fontWeight: 400 });
     unchecked[1].paddingRight = '7px';
     checked[1].paddingRight = '5px';
     return [

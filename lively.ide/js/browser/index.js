@@ -286,7 +286,7 @@ export class PackageTreeData extends TreeData {
   displayDirectory (dir, isOpen) {
     return [
       ...Icon.textAttribute(isOpen ? 'folder-open' : 'folder', {
-        textStyleClasses: ['far']
+        fontWeight: 400
       }),
       ' ' + dir, null
     ];
