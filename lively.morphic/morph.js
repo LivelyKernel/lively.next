@@ -955,8 +955,7 @@ export class Morph {
         if (descr.readOnly ||
             descr.derived ||
             descr.isComponent ||
-            (descr.hasOwnProperty('serialize') && !descr.serialize) ||
-            obj.equals(this[key], defaults[key])) {
+            (descr.hasOwnProperty('serialize') && !descr.serialize)) {
           continue;
         }
         propsToSerialize.push(key);
