@@ -377,7 +377,14 @@ function getStyleProto (morph, opts) {
     // if any of the above cases are true, we do not take into account the component state
     styleProto = policy?.synthesizeSubSpec(target, scopeMorph, prevMasterInScope?.targetMorph);
     while (styleProto?.isPolicyApplicator) {
-      styleProto = styleProto.synthesizeSubSpec(null, scopeMorph, prevMasterInScope?.targetMorph);
+      policy = styleProto;
+      styleProto = policy.synthesizeSubSpec(null, scopeMorph, prevMasterInScope?.targetMorph);
+    }
+
+    const localSpec = masterInScope.getSubSpecFor(target);
+    for (let prop in localSpec) {
+      if (localSpec[prop] !== Symbol.for('lively.skip-property')) continue;
+      styleProto[prop] = Symbol.for('lively.skip-property');
     }
   }
   return styleProto;
@@ -514,21 +521,24 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
   const {
     skipAttributes, skipUnchangedFromDefault,
     valueTransform, keepConnections, objToPath,
-    onlyIncludeStyleProps, asExpression
+    onlyIncludeStyleProps, asExpression, skipUnchangedFromMaster
   } = opts;
   const { properties } = morph.propertiesAndPropertySettings();
 
   for (const name in morph.spec(skipUnchangedFromDefault)) {
     let v = morph[name];
     let styleProtoVal = styleProto?.[name];
-    if (styleProtoVal?.isDefault) styleProtoVal = styleProtoVal.value;
+
+    if (styleProtoVal?.isDefaultValue) styleProtoVal = styleProtoVal.value;
+    if (name !== 'name' && skipUnchangedFromMaster && obj.equals(v, styleProtoVal)) continue;
     if (masterInScope &&
         !morph.__only_serialize__.includes(name) &&
         !(name === 'name' && asExpression)) continue;
     if (name === 'textAndAttributes') continue;
 
     // store away just in case
-    const val = valueTransform(name, v, morph);
+    let val = valueTransform(name, v, morph, styleProtoVal);
+
     if (keepConnections && val && typeof val === 'object' && !Array.isArray(val) && !val.isMorph) {
       objToPath.set(val, path ? path + '.' + name : name);
     }
@@ -592,6 +602,7 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
     }
     if (val && val.__serialize__) {
       if (styleProtoVal !== undefined &&
+          val !== Symbol.for('lively.skip-property') &&
           getExpression(name, val, { ...opts, asExpression: false }) ===
           getExpression(name, valueTransform(name, styleProtoVal, morph), { ...opts, asExpression: false })) continue;
       exported[name] = getExpression(name, val, opts);
