@@ -207,6 +207,19 @@ export default class ExpressionSerializer {
   }
 }
 
+export function mergeBindings (from, to) {
+  Object.entries(from || {}).forEach(([binding, imports]) => {
+    if (to[binding]) {
+      to[binding] = arr.uniq([...to[binding], ...imports]);
+    } else to[binding] = imports;
+  });
+}
+
+function isCustomObject (val) {
+  return val && !obj.isString(val) && !obj.isNumber(val) &&
+         properties.allOwnPropertiesOrFunctions(val).length > 0;
+}
+
 /*
  22.06.19 rms:
  The following two functions are helpers that allow us to convert non cyclical morph hierarchies
@@ -234,6 +247,22 @@ function getExpression (name, val, ctx) {
     } else val = val.__expr__ ? exprSerializer.exprStringEncode(val) : val;
   } catch (e) {
     console.log(`[export to JSON] failed converting ${name} to serialized expression`); // eslint-disable-line no-console
+  }
+  return val;
+}
+
+function handleCustomObject (name, val, path, subopts) {
+  val = { ...val }; // prevent in place modification
+  for (const prop in val) {
+    if (val[prop] && val[prop].isMorph) {
+      val[prop] = serializeSpec(val[prop], { // eslint-disable-line no-use-before-define
+        ...subopts,
+        path: path ? path + '.' + name + '.' + prop : name + '.' + prop
+      });
+    }
+    if (val[prop] && val[prop].__serialize__) {
+      val[prop] = getExpression(name + '.' + prop, val[prop], subopts);
+    }
   }
   return val;
 }
@@ -484,27 +513,6 @@ function traverseSubmorphs (morph, exported, path, styleProto, subopts) {
     });
   }
   if (exported.submorphs?.length === 0) delete exported.submorphs;
-}
-
-function isCustomObject (val) {
-  return val && !obj.isString(val) && !obj.isNumber(val) &&
-         properties.allOwnPropertiesOrFunctions(val).length > 0;
-}
-
-function handleCustomObject (name, val, path, subopts) {
-  val = { ...val }; // prevent in place modification
-  for (const prop in val) {
-    if (val[prop] && val[prop].isMorph) {
-      val[prop] = serializeSpec(val[prop], { // eslint-disable-line no-use-before-define
-        ...subopts,
-        path: path ? path + '.' + name + '.' + prop : name + '.' + prop
-      });
-    }
-    if (val[prop] && val[prop].__serialize__) {
-      val[prop] = getExpression(name + '.' + prop, val[prop], subopts);
-    }
-  }
-  return val;
 }
 
 /**
@@ -809,14 +817,6 @@ function asSerializableExpression (aMorph, exported, isRoot, path, masterInScope
     }
     return { __expr__, bindings };
   }
-}
-
-export function mergeBindings (from, to) {
-  Object.entries(from || {}).forEach(([binding, imports]) => {
-    if (to[binding]) {
-      to[binding] = arr.uniq([...to[binding], ...imports]);
-    } else to[binding] = imports;
-  });
 }
 
 /**
