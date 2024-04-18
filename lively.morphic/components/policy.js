@@ -17,7 +17,7 @@ export function sanitizeSpec (spec) {
   return spec;
 }
 
-export function standardValueTransform (key, val, aMorph) {
+export function standardValueTransform (key, val, aMorph, protoVal) {
   if (val && val.isPoint) return val.roundTo(0.1);
   if (key === 'label' || key === 'textAndAttributes') {
     let hit;
@@ -493,7 +493,7 @@ export class StylePolicy {
       keepFunctions: false,
       exposeMasterRefs: true,
       dropMorphsWithNameOnly: true,
-      skipUnchangedFromDefault: true,
+      skipUnchangedFromDefault: false, // if true, this will lead to incorrect specs
       skipUnchangedFromMaster: true,
       onlyIncludeStyleProps: true,
       valueTransform: standardValueTransform,
@@ -516,7 +516,17 @@ export class StylePolicy {
     const parentExpr = this.parent?.__serialize__();
     let masterConfigExpr = this.getConfigAsExpression();
     if (masterConfigExpr) masterConfigExpr.__expr__ = 'master: ' + masterConfigExpr.__expr__;
-    const specExpression = this._getSpecAsExpression();
+    const specExpression = this._getSpecAsExpression({
+      skipAttributes: ['textAndAttributes'], // this avoids overly large expressions, which include text information that is not of concern for applying a style
+      valueTransform: (key, val, target, protoVal) => {
+        // in order to properly store information about
+        // overridden properties within the expression we
+        // directly embedd the overriden prop symbols in the expression
+        if (protoVal === Symbol.for('lively.skip-property')) return Symbol.for('lively.skip-property');
+        if (key === 'submorphs') return val.filter(m => !m.isEpiMorph);
+        else return standardValueTransform(key, val, target, protoVal);
+      }
+    });
     const bindings = { 'lively.morphic/components/policy.js': [klassName] };
     if (parentExpr) mergeBindings(parentExpr.bindings, bindings);
     if (masterConfigExpr) mergeBindings(masterConfigExpr.bindings, bindings);
