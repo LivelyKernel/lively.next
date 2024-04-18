@@ -138,16 +138,24 @@ export class TopBarModel extends ViewModel {
         get () {
           return [
             { target: 'save button', signal: 'onMouseDown', handler: (evt) => { if (this.ui.saveButton === evt.targetMorphs[0]) $world.execCommand('save world or project'); } },
-            { target: 'text mode button', signal: 'onMouseDown', handler: () => this.setEditMode('Text') },
-            { target: 'shape mode button', signal: 'onMouseDown', handler: () => this.setEditMode('Shape') },
+            { target: 'text mode button', signal: 'onMouseDown', handler: 'setEditMode', converter: () => 'Text' },
+            { target: 'shape mode button', signal: 'onMouseDown', handler: 'setEditMode', converter: () => 'Shape' },
             { target: 'shape mode button', signal: 'dropDownTriggered', handler: 'shapeMenu' },
             { target: 'save button', signal: 'dropDownTriggered', handler: 'saveMenu' },
             { target: 'hand or halo mode button', signal: 'dropDownTriggered', handler: 'cursorMenu' },
             { target: 'hand or halo mode button', signal: 'onMouseDown', handler: 'cursorMode' },
-            { target: 'open asset browser', signal: 'onMouseDown', handler: () => this.browseAssets() },
-            { target: 'open component browser', signal: 'onMouseDown', handler: () => this.interactivelyLoadComponent() },
-            { target: 'canvas mode button', signal: 'onMouseDown', handler: (evt) => { if (this.ui.canvasModeButton === evt.targetMorphs[0]) this.toggleMiniMap(null); } },
-            { target: 'canvas mode button', signal: 'dropDownTriggered', handler: () => this.canvasMenu() },
+            { target: 'open asset browser', signal: 'onMouseDown', handler: 'browseAssets' },
+            { target: 'open component browser', signal: 'onMouseDown', handler: 'interactivelyLoadComponent' },
+            {
+              target: 'canvas mode button',
+              signal: 'onMouseDown',
+              handler: 'toggleMiniMap',
+              updater: `($upd, evt) => {
+                if (canvasModeButton === evt.targetMorphs[0]) $upd(null);
+              }`,
+              varMapping: { canvasModeButton: this.ui.canvasModeButton }
+            },
+            { target: 'canvas mode button', signal: 'dropDownTriggered', handler: 'canvasMenu' },
             { signal: 'onKeyDown', handler: 'onKeyDown' },
             { signal: 'onKeyUp', handler: 'onKeyUp' }
           ];
