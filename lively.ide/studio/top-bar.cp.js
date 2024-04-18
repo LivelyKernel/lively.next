@@ -618,7 +618,7 @@ export class TopBarModel extends ViewModel {
     const target = this.primaryTarget || $world;
     if (target._yieldedShape) {
       if (!target._yieldedShape.owner && evt.state.absDragDelta.r() > 10) target.addMorph(target._yieldedShape);
-      target._yieldedShape.setBounds(Rectangle.fromAny(evt.position, this._shapeCreationStartPos).scaleBy(1 / $world.scaleFactor));
+      target._yieldedShape.setBounds(Rectangle.fromAny(evt.positionIn(target), this._shapeCreationStartPos).scaleBy(1 / $world.scaleFactor));
 
       Object.assign(
         target._sizeTooltip, {
