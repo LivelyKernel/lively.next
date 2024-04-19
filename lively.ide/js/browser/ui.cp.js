@@ -1155,6 +1155,7 @@ const MetaInfoContainerExpanded = component({
         name: 'open in workspace',
         textAndAttributes: ['Open in workspace ', null, '', {
           fontFamily: 'Font Awesome',
+          fontWeight: '900',
           paddingTop: '2px'
         }]
       })]

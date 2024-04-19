@@ -241,7 +241,8 @@ export class Tree extends Text {
         fontColor: Color.transparent,
         paddingTop: (this.fontSize / 10) + 'px',
         paddingRight: (this.fontSize / 8) + 'px',
-        fontFamily: 'Font Awesome',
+        fontWeight: '900',
+        fontFamily: 'Font Awesome'
       };
       if (!this.treeData.isLeaf(nodes[i].node)) {
         containerTextAndAttributes[j + 2] = this.treeData.isCollapsed(nodes[i].node) ? ' \uf0da ' : ' \uf0d7 ';
