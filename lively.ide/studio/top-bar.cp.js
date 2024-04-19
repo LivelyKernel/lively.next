@@ -137,7 +137,7 @@ export class TopBarModel extends ViewModel {
       bindings: {
         get () {
           return [
-            { target: 'save button', signal: 'onMouseDown', handler: (evt) => { if (this.ui.saveButton === evt.targetMorphs[0]) $world.execCommand('save world or project'); } },
+            { target: 'save button', signal: 'onMouseDown', handler: 'onSaveButtonClicked' },
             { target: 'text mode button', signal: 'onMouseDown', handler: 'setEditMode', converter: () => 'Text' },
             { target: 'shape mode button', signal: 'onMouseDown', handler: 'setEditMode', converter: () => 'Shape' },
             { target: 'shape mode button', signal: 'dropDownTriggered', handler: 'shapeMenu' },
@@ -149,11 +149,7 @@ export class TopBarModel extends ViewModel {
             {
               target: 'canvas mode button',
               signal: 'onMouseDown',
-              handler: 'toggleMiniMap',
-              updater: `($upd, evt) => {
-                if (canvasModeButton === evt.targetMorphs[0]) $upd(null);
-              }`,
-              varMapping: { canvasModeButton: this.ui.canvasModeButton }
+              handler: 'onCanvasModeClicked'
             },
             { target: 'canvas mode button', signal: 'dropDownTriggered', handler: 'canvasMenu' },
             { signal: 'onKeyDown', handler: 'onKeyDown' },
@@ -254,6 +250,10 @@ export class TopBarModel extends ViewModel {
         this.setEditMode('Text');
         break;
     }
+  }
+
+  onSaveButtonClicked (evt) {
+    if (this.ui.saveButton === evt.targetMorphs[0]) $world.execCommand('save world or project');
   }
 
   // only works for shapes that are created via drag as of now
@@ -407,6 +407,10 @@ export class TopBarModel extends ViewModel {
 
   colorTopbarButton (button, active) {
     button.master.setState(active ? 'selected' : null);
+  }
+
+  onCanvasModeClicked (evt) {
+    if (this.ui.canvasModeButton === evt.targetMorphs[0]) this.toggleMiniMap(null);
   }
 
   toggleMiniMap (forceState) {
