@@ -656,7 +656,7 @@ export class FieldPickerModel extends ViewModel {
           const { width, height } = this.view;
           const s = this.saturation; const b = this.brightness;
           if (s === undefined || b === undefined) return pt(0, 0);
-          return pt(width * s, height * (1 - b));
+          return pt(num.s, height * (1 - b));
         },
         set ({ x: light, y: dark }) {
           // translate the pos to a new hsv value
@@ -735,13 +735,15 @@ class AbstractSlider extends ViewModel {
 
   onMouseDown ($onMouseDown, evt) {
     const sliderWidth = this.ui.slider.width;
-    this.sliderPosition = pt(evt.positionIn(this.view).x - sliderWidth / 2, 0);
+    const maxX = this.view.width - sliderWidth / 2;
+    this.sliderPosition = pt(num.clamp(evt.positionIn(this.view).x - sliderWidth / 2, 0, maxX), 0);
     this.confirm();
   }
 
   onDrag ($onDrag, evt) {
     const sliderWidth = this.ui.slider.width;
-    this.sliderPosition = pt(evt.positionIn(this.view).x - sliderWidth / 2, 0);
+    const maxX = this.view.width - sliderWidth / 2;
+    this.sliderPosition = pt(num.clamp(evt.positionIn(this.view).x - sliderWidth / 2, 0, maxX), 0);
     this.confirm();
   }
 
@@ -762,13 +764,15 @@ export class OpacityPickerModel extends AbstractSlider {
         derived: true,
         get () {
           const view = this.view;
-          const w = view.width - 10;
-          return pt(5 + w * this.alpha, view.height / 2);
+          const sliderWidth = this.ui.slider.width;
+          const w = view.width - sliderWidth;
+          return pt(sliderWidth / 2 + w * this.alpha, view.height / 2);
         },
         set (pos) {
           if (!this.view) return;
           const view = this.view;
-          const w = view.width - 10;
+          const sliderWidth = this.ui.slider.width;
+          const w = view.width - sliderWidth / 2;
           this.alpha = num.clamp(pos.x / w, 0, 1);
         }
       }
@@ -800,13 +804,15 @@ export class HuePickerModel extends AbstractSlider {
         derived: true,
         get () {
           const view = this.view;
-          const w = view.width - 10;
-          return pt(5 + w * (this.hue / 360), view.height / 2);
+          const sliderWidth = this.ui.slider.width;
+          const w = view.width - sliderWidth;
+          return pt(sliderWidth / 2 + w * (this.hue / 360), view.height / 2);
         },
         set (pos) {
           if (!this.view) return;
           const view = this.view;
-          const w = view.width - 10;
+          const sliderWidth = this.ui.slider.width;
+          const w = view.width - sliderWidth / 2;
           this.hue = Math.max(0, Math.min((pos.x / w) * 360, 359));
         }
       }
