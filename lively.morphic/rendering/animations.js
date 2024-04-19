@@ -452,7 +452,7 @@ export class PropertyAnimation {
       let startTime;
       const scrollState = this.morph.env.eventDispatcher.eventState;
       const { promise: p, resolve } = promise.deferred();
-      const scrollNode = this.morph.isText && this.morph.document ? node.querySelectorAll('.scrollLayer')[0] : node;
+      const scrollNode = this.morph.isText && this.morph.document ? this.morph.renderingState.scrollLayer : node;
       const interpolateScrollX = this.interpolate('scrollLeft', scrollNode.scrollLeft, scroll.x);
       const interpolateScrollY = this.interpolate('scrollTop', scrollNode.scrollTop, scroll.y);
       const easingFn = stringToEasing(this.easing);

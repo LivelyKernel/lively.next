@@ -270,7 +270,7 @@ export default class FontMetric {
 
 function textlayerNodeForFontMeasure (morph) {
   let node = $world.env.renderer.getNodeForMorph(morph);
-  if (node && node.isConnected) return node.querySelector(`#${morph.id}font-measure`);
+  if (node && node.isConnected) return morph.renderingState.fontMeasureNode;
   return null;
 }
 
@@ -614,7 +614,7 @@ class DOMTextMeasure {
         let lineNode, nodeForMorph, actualTextNode;
 
         nodeForMorph = $world.env.renderer.getNodeForMorph(morph);
-        actualTextNode = nodeForMorph && nodeForMorph.querySelector(`#${morph.id}textLayer`);
+        actualTextNode = nodeForMorph && morph.renderingState.fontMeasureNode
         const dataRowId = String(line.row);
         lineNode = actualTextNode && Array.from(actualTextNode.children).find(n => n.getAttribute('data-row') === dataRowId);
 
