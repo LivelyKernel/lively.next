@@ -103,6 +103,7 @@ class ProjectBranch extends Morph {
           this.layout = new TilingLayout({ axis: 'column', align: 'left', wrapSubmorphs: true, spacing: 5, padding: Rectangle.inset(10, 5, 10, 5) });
         }
       },
+
       submorphs: {
         initialize () {
           this.submorphs = [
@@ -110,7 +111,7 @@ class ProjectBranch extends Morph {
               type: Label,
               extent: pt(30, 30),
               name: 'preview',
-              textAndAttributes: ['', { fontFamily: 'Font Awesome' }],
+              textAndAttributes: Icon.textAttribute('code-branch'),
               textAlign: 'right',
               fontSize: 20,
               reactsToPointer: false
@@ -132,11 +133,11 @@ class ProjectBranch extends Morph {
   update () {
     const { branchName, isCheckedOut, isLocal, isRemote, isDefaultBranch } = this;
     this.getSubmorphNamed('commit info').textAndAttributes = [
-      `${isDefaultBranch ? ' ' : ''}`, { fontFamily: 'Font Awesome' },
+      `${isDefaultBranch ? ' ' : ''}`, { fontFamily: 'Font Awesome', fontWeight: '900' },
       `${branchName} `, { fontWeight: 'bold' },
-      `${isCheckedOut ? '\n' : '\n'}`, { fontFamily: 'Font Awesome' },
-      `${isLocal ? ' ' : ''}`, { fontFamily: 'Font Awesome' },
-      `${isRemote ? ' ' : ''}`, { fontFamily: 'Font Awesome' }
+      `${isCheckedOut ? '\n' : '\n'}`, { fontFamily: 'Font Awesome', fontWeight: '400' },
+      `${isLocal ? ' ' : ''}`, { fontFamily: 'Font Awesome', fontWeight: '900' },
+      `${isRemote ? ' ' : ''}`, { fontFamily: 'Font Awesome Brands', fontWeight: '400' }
     ];
     this.getSubmorphNamed('preview').fontColor = this.selected ? Color.white : Color.black;
     this.getSubmorphNamed('commit info').fontColor = this.selected ? Color.white.withA(.9) : Color.darkGray;

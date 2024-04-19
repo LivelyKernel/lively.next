@@ -463,8 +463,8 @@ class ProjectSavePrompt extends AbstractPromptModel {
     const currStatus = this.ui.secondRow.visible;
     this.ui.secondRow.visible = !currStatus;
     this.ui.advancedToggler.textAndAttributes = currStatus
-      ? ['', { fontFamily: 'Font Awesome' }, ' Show Advanced Options', null]
-      : ['', { fontFamily: 'Font Awesome' }, ' Show Advanced Options', { fontWeight: 700 }];
+      ? ['', { fontFamily: 'Font Awesome', fontWeight: '900' }, ' Show Advanced Options', null]
+      : ['', { fontFamily: 'Font Awesome', fontWeight: '900' }, ' Show Advanced Options', { fontWeight: 700 }];
   }
 
   async viewDidLoad () {
@@ -1061,6 +1061,7 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
         fontColor: Color.rgb(255, 108, 0),
         textAndAttributes: ['', {
           fontFamily: 'Font Awesome',
+          fontWeight: '900'
         }, ' ', {}, 'At least one of the dependencies of this project is not available remotely!', null],
         borderColor: Color.rgb(23, 160, 251),
         dynamicCursorColoring: true,
@@ -1083,7 +1084,7 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
             type: Label,
             fontSize: 15,
             fontColor: Color.white,
-            textAndAttributes: ['', { fontFamily: 'Font Awesome' }, ' Show Advanced Options', null]
+            textAndAttributes: ['', { fontFamily: 'Font Awesome', fontWeight: '900' }, ' Show Advanced Options', null]
           }, {
             name: 'second row',
             extent: pt(450, 0),

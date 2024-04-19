@@ -1,5 +1,5 @@
 /* global FormData */
-import { component, easings, morph, Text, Label, Image, part, add, TilingLayout, ViewModel } from 'lively.morphic';
+import { component, Icon, easings, morph, Text, Label, Image, part, add, TilingLayout, ViewModel } from 'lively.morphic';
 
 import { pt, Color } from 'lively.graphics';
 import { DarkPopupWindow } from './shared.cp.js';
@@ -553,10 +553,9 @@ export const AssetBrowserDark = component({
         cursorWidth: 1.5,
         fixedWidth: true,
         padding: rect(1, 1, 0, 0),
-        textAndAttributes: ['', {
-          fontFamily: 'Font Awesome',
-          lineHeight: 1.2,
-        }]
+        textAndAttributes: Icon.textAttribute('magnifying-glass', {
+          lineHeight: 1.2
+        })
       }, part(InputLineDefault, {
         name: 'search input',
         dropShadow: null,
