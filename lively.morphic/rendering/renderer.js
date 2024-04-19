@@ -552,7 +552,7 @@ export default class Renderer {
 
     applyStylingToNode(morph, node);
     if (morph.patchSpecialProps) {
-      morph.patchSpecialProps(node, this, () => applyStylingToNode(morph, node)); // super expensive for text
+      morph.patchSpecialProps(node, this, applyStylingToNode); // super expensive for text
     }
 
     // FIXME: order of these two is important, in an ideal case the styleClass application should not kill other CSS classes

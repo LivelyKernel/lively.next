@@ -2932,7 +2932,7 @@ export class Text extends Morph {
          this.textAndAttributes.find(ta => ta && ta.isMorph && ta.renderingState.needsRerender)) {
         renderer.renderTextAndAttributes(node, this);
         renderer.patchSelectionLayer(node, this);
-        if (patchStyle) patchStyle(); // the adjusted extent needs to be updated
+        if (patchStyle) patchStyle(this, node); // the adjusted extent needs to be updated
       }
       if (!obj.equals(this.renderingState.markers, this.markers) ||
           scrollChanged) {
