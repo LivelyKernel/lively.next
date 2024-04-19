@@ -1312,6 +1312,7 @@ export class Morph {
     const affectedMorphs = new Set(this.withAllSubmorphsSelect(Boolean));
     const animationConfigs = Object.values(arr.groupBy(changes, change => change.target.id))
       .map((changes) => {
+        changes = changes.filter((change) => change.target.styleProperties.includes(change.prop))
         const animConfig = { ...config };
         let target; let meta = {};
         // group all of the changes by prop
