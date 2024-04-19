@@ -74,15 +74,15 @@ class ProjectSettingsPromptModel extends AbstractPromptModel {
     const { testModeSelector, buildModeSelector, deployModeSelector } = this.ui;
     const conf = this.project.config.lively;
 
-    if (conf.testOnPush !== (testModeSelector.selectedItem === 'push')){
+    if (conf.testOnPush !== (testModeSelector.selectedItem === 'push')) {
       conf.testOnPush = testModeSelector.selectedItem === 'push';
       this.project.config.hasUnsavedChanges = true;
     }
-    if (conf.buildOnPush !== (buildModeSelector.selectedItem === 'push')){
+    if (conf.buildOnPush !== (buildModeSelector.selectedItem === 'push')) {
       conf.buildOnPush = buildModeSelector.selectedItem === 'push';
       this.project.config.hasUnsavedChanges = true;
     }
-    if (conf.deployOnPush !== (deployModeSelector.selectedItem === 'push')){
+    if (conf.deployOnPush !== (deployModeSelector.selectedItem === 'push')) {
       conf.deployOnPush = deployModeSelector.selectedItem === 'push';
       this.project.config.hasUnsavedChanges = true;
     }
@@ -439,14 +439,7 @@ class ProjectSavePrompt extends AbstractPromptModel {
         get () {
           return [
             { target: 'ok button', signal: 'fire', handler: 'resolve' },
-            {
-              target: 'cancel button',
-              signal: 'fire',
-              handler: () => {
-                this.view.remove();
-                this.terminalWindow?.close();
-              }
-            },
+            { target: 'cancel button', signal: 'fire', handler: 'cancelSave' },
             { target: 'advanced toggler', signal: 'onMouseDown', handler: 'toggleAdvancedUI' },
             { target: 'minor check', signal: 'checked', handler: (status) => this.increaseMinor = status },
             { target: 'major check', signal: 'checked', handler: (status) => this.increaseMajor = status },
@@ -481,6 +474,12 @@ class ProjectSavePrompt extends AbstractPromptModel {
     if (await this.project.hasRemoteConfigured()) this.project.regeneratePipelines();
     li.remove();
     this.view.visible = true;
+  }
+
+  cancelSave () {
+    this.view.remove();
+    this.terminalWindow?.close();
+    this.reject();
   }
 
   forceResolve () {
