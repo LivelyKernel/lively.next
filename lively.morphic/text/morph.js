@@ -2767,15 +2767,20 @@ export class Text extends Morph {
     if (deltaY) this.scroll = this.scroll.addXY(0, -deltaY);
   }
 
+  get canBeMeasuredViaCanvas () {
+    return this.env.fontMetric._domMeasure.canBeMeasuredViaCanvas(this);
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // text layout related
 
   fit () {
     if (
-      this._isDeserializing ||
-      !this.world() && !this.document ||
-      !this.visible ||
-      this.ownerChain().some(m => !m.visible) ||
+      !this.canBeMeasuredViaCanvas &&
+        (this._isDeserializing ||
+        !this.world() && !this.document ||
+        !this.visible ||
+        this.ownerChain().some(m => !m.visible)) ||
       !this.allFontsLoaded()
     ) {
       return;
