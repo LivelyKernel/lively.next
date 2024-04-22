@@ -642,7 +642,6 @@ export class WorldBrowserModel extends ViewModel {
   }
 
   viewDidLoad () {
-    this.ui.noWorldWarning.center = this.view.innerBounds().center();
     this.displayItems();
     this.onRefresh('showCloseButton');
   }
@@ -694,8 +693,7 @@ export class WorldBrowserModel extends ViewModel {
     if (!this.previews) return;
     fun.debounceNamed('update item list', 150, () => {
       this.ui.worldList.items = this.sortAndFilterPreviews(this.previews);
-      if (this.ui.worldList.items.length === 0) {
-        this.ui.noWorldWarning.center = this.view.innerBounds().center();
+      if (this.previews.length === 0) {
         this.ui.noWorldWarning.animate({
           visible: true, duration: 300
         });
@@ -706,7 +704,6 @@ export class WorldBrowserModel extends ViewModel {
   async displayItems () {
     this.reset();
     const { loadingIndicator } = this.ui;
-    loadingIndicator.position = pt(this.view.width / 2 - loadingIndicator.width / 2, this.view.height / 2 - loadingIndicator.height / 2);
     loadingIndicator.animate({
       opacity: 1, duration: 300
     });
@@ -1458,15 +1455,18 @@ const WorldBrowser = component({
   clipMode: 'hidden',
   draggable: true,
   dropShadow: new ShadowObject({ color: Color.rgba(0, 0, 0, 0.52), blur: 15 }),
-  extent: pt(870, 570),
+  extent: pt(880.3, 570),
   fill: Color.rgb(112, 123, 124),
   layout: new ConstraintLayout({
     lastExtent: {
-      x: 870,
+      x: 880.3,
       y: 570
     },
     reactToSubmorphAnimations: false,
-    submorphSettings: [['world list', {
+    submorphSettings: [['no world warning', {
+      x: 'center',
+      y: 'center'
+    }], ['world list', {
       x: 'resize',
       y: 'resize'
     }], ['fader top', {
@@ -1478,6 +1478,9 @@ const WorldBrowser = component({
     }], ['close button', {
       x: 'fixed',
       y: 'move'
+    }], ['loading indicator', {
+      x: 'center',
+      y: 'center'
     }]]
   }),
   position: pt(1182.2, 536.7),
@@ -1486,17 +1489,20 @@ const WorldBrowser = component({
     type: Label,
     name: 'no world warning',
     visible: false,
+    extent: pt(531.3, 42.5),
+    fixedHeight: true,
+    fixedWidth: true,
     fontColor: Color.rgb(189, 195, 199),
     fontSize: 30,
     fontWeight: 'bold',
-    position: pt(170.8, 265.5),
+    position: pt(174.2, 261.5),
     reactsToPointer: false,
     textAndAttributes: ['There are no projects yet. Create one!', null]
   }, {
     type: GrowingWorldList,
     name: 'world list',
     clipMode: 'hidden',
-    extent: pt(869.6, 568.7),
+    extent: pt(879.7,580),
     fill: Color.rgba(46, 75, 223, 0),
     items: [],
     scrollContainer: null,
@@ -1506,7 +1512,6 @@ const WorldBrowser = component({
       fill: Color.transparent,
       layout: new TilingLayout({
         align: 'center',
-        hugContentsVertically: true,
         orderByIndex: true,
         padding: rect(0, 0, 0, 30),
         reactToSubmorphAnimations: true,
@@ -1532,7 +1537,7 @@ const WorldBrowser = component({
       justifySubmorphs: 'spaced',
       padding: rect(20, 0, 0, 0)
     }),
-    extent: pt(870.0000, 60.0000),
+    extent: pt(881.6, 60),
     fill: new LinearGradient({
       stops: [{ offset: 0, color: Color.rgb(112, 123, 124) }, { offset: 1, color: Color.rgba(112, 123, 124, 0) }],
       vector: rect(0, 0, 0, 1)
@@ -1633,7 +1638,7 @@ const WorldBrowser = component({
     }]
   }, {
     name: 'fader bottom',
-    extent: pt(871.9, 63.9),
+    extent: pt(880.3,63.9),
     fill: new LinearGradient({
       stops: [
         { offset: 0, color: Color.rgb(112, 123, 124) },
@@ -1665,7 +1670,7 @@ const WorldBrowser = component({
     extent: pt(90.5, 10),
     fill: Color.rgba(0, 0, 0, 0.36),
     opacity: 1,
-    position: pt(353.5, 253),
+    position: pt(355.7, 260.3),
     submorphs: [
       part(Spinner, {
         name: 'loading spinner',
