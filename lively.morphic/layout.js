@@ -1,4 +1,4 @@
-import { pt, Color, Rectangle, rect } from 'lively.graphics';
+import { pt, Rectangle, rect } from 'lively.graphics';
 import { arr, promise, Closure, num, obj, fun } from 'lively.lang';
 import { once, signal } from 'lively.bindings';
 import { loadYoga } from 'yoga-layout';
@@ -1380,10 +1380,6 @@ export class ConstraintLayout extends Layout {
     delete this.spacing;
   }
 
-  attach () {
-    super.attach();
-  }
-
   scheduleApply (submorph, animation, change = {}) {
     if (change.prop === 'extent' &&
         !change.meta?.isLayoutAction &&
@@ -1412,6 +1408,9 @@ export class ConstraintLayout extends Layout {
     this.onConfigUpdate();
   }
 
+  set lastExtent (ext) { this._lastExtent = ext; this.onConfigUpdate(); }
+  get lastExtent () { return this._lastExtent; }
+
   addContainerCSS (containerMorph, style) { // eslint-disable-line no-unused-vars
     // container css is not really affected, since the constraint layout only
     // controls the submorphs
@@ -1420,6 +1419,7 @@ export class ConstraintLayout extends Layout {
 
   ensureConfigForMorph (aMorph) {
     if (!this._morphConfigurations) this._morphConfigurations = new Map();
+    if (!this.lastExtent) this.refreshBoundsCache();
     let config = this._morphConfigurations.get(aMorph);
     if (config) return config;
 
@@ -1771,6 +1771,7 @@ export class ConstraintLayout extends Layout {
   }
 
   apply (animate = false, requireExtentChange = true) {
+    if (!this.lastExtent) this.refreshBoundsCache();
     this.layoutableSubmorphs.forEach(m => this.ensureConfigForMorph(m));
     const { container, active, extentDelta: { x: deltaX, y: deltaY }, renderViaCSS } = this;
     const { extent } = container || {};
