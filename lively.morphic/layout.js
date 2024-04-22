@@ -1422,20 +1422,25 @@ export class ConstraintLayout extends Layout {
     if (!this._morphConfigurations) this._morphConfigurations = new Map();
     let config = this._morphConfigurations.get(aMorph);
     if (config) return config;
+
+    aMorph.applyLayoutIfNeeded();
     config = this.getConfigFor(aMorph);
     this._morphConfigurations.set(aMorph, config);
     return config;
   }
 
   getConfigFor (aMorph) {
+    const { x: lastWidth, y: lastHeight } = this.lastExtent.subPt(this.extentDelta);
     const left = aMorph.position.x;
     const top = aMorph.position.y;
-    const right = this.container.width - (aMorph.position.x + aMorph.width);
-    const bottom = this.container.height - (aMorph.position.y + aMorph.height);
-    const leftProportion = left / this.container.width * 100;
-    const rightProportion = right / this.container.width * 100;
-    const topProportion = top / this.container.height * 100;
-    const bottomProportion = bottom / this.container.height * 100;
+    const right = lastWidth - (aMorph.position.x + aMorph.width);
+    const bottom = lastHeight - (aMorph.position.y + aMorph.height);
+    const leftProportion = left / lastWidth * 100;
+    const rightProportion = right / lastWidth * 100;
+    const topProportion = top / lastHeight * 100;
+    const bottomProportion = bottom / lastHeight * 100;
+    const leftCenterProportion = (left + aMorph.width / 2) / lastWidth * 100;
+    const topCenterProportion = (top + aMorph.height / 2) / lastHeight * 100;
     return {
       left,
       top,
@@ -1444,7 +1449,9 @@ export class ConstraintLayout extends Layout {
       leftProportion,
       rightProportion,
       topProportion,
-      bottomProportion
+      bottomProportion,
+      leftCenterProportion,
+      topCenterProportion
     };
   }
 
@@ -1456,7 +1463,8 @@ export class ConstraintLayout extends Layout {
     const border = this.container.borderWidth;
     const {
       left, top, right, bottom,
-      leftProportion, rightProportion, topProportion, bottomProportion
+      leftProportion, rightProportion, topProportion, bottomProportion,
+      topCenterProportion, leftCenterProportion
     } = this.ensureConfigForMorph(aMorph);
 
     switch (x) {
@@ -1473,7 +1481,7 @@ export class ConstraintLayout extends Layout {
         style.right = right - border.right + 'px';
         break;
       case 'center':
-        style.left = `calc(${leftProportion}% - ${aMorph.width / 2}px)`;
+        style.left = `calc(${leftCenterProportion}% - ${aMorph.width / 2}px)`;
         break;
       case 'scale':
         style.width = 'auto';
@@ -1496,7 +1504,7 @@ export class ConstraintLayout extends Layout {
         style.bottom = bottom - border.bottom + 'px';
         break;
       case 'center':
-        style.top = `calc(${topProportion}% - ${aMorph.height / 2}px)`;
+        style.top = `calc(${topCenterProportion}% - ${aMorph.height / 2}px)`;
         break;
       case 'scale':
         style.height = 'auto';
@@ -1603,14 +1611,16 @@ export class ConstraintLayout extends Layout {
     this.constraintLayoutSettingsForMorphs = map;
   }
 
-  adjustConfigViaExtentDelta (config, delta) {
+  adjustConfigViaExtentDelta (config, delta, submorph) {
     config.right -= delta.x;
     config.bottom -= delta.y;
     config.rightProportion = config.right / this.container.width * 100;
     config.bottomProportion = config.bottom / this.container.height * 100;
+    config.topCenterProportion = (config.top + submorph.height / 2) / this.container.height * 100;
+    config.leftCenterProportion = (config.left + submorph.width / 2) / this.container.width * 100;
   }
 
-  adjustConfigViaPositionDelta (config, delta) {
+  adjustConfigViaPositionDelta (config, delta, submorph) {
     config.left += delta.x;
     config.right -= delta.x;
     config.top += delta.y;
@@ -1619,6 +1629,8 @@ export class ConstraintLayout extends Layout {
     config.bottomProportion = config.bottom / this.container.height * 100;
     config.leftProportion = config.left / this.container.width * 100;
     config.topProportion = config.top / this.container.height * 100;
+    config.topCenterProportion = (submorph.position.y + submorph.height / 2) / this.container.height * 100;
+    config.leftCenterProportion = (submorph.position.x + submorph.width / 2) / this.container.width * 100;
   }
 
   onSubmorphChange (submorph, change) {
@@ -1632,7 +1644,7 @@ export class ConstraintLayout extends Layout {
       else {
         let config = this._morphConfigurations?.get(submorph);
         if (config) {
-          this.adjustConfigViaExtentDelta(config, change.value.subPt(change.prevValue));
+          this.adjustConfigViaExtentDelta(config, change.value.subPt(change.prevValue), submorph);
         }
       }
     }
@@ -1642,7 +1654,7 @@ export class ConstraintLayout extends Layout {
       else {
         let config = this._morphConfigurations?.get(submorph);
         if (config) {
-          this.adjustConfigViaPositionDelta(config, change.value.subPt(change.prevValue));
+          this.adjustConfigViaPositionDelta(config, change.value.subPt(change.prevValue), submorph);
         }
       }
     }
@@ -1749,8 +1761,6 @@ export class ConstraintLayout extends Layout {
     }
 
     this.forceLayoutsInNextLevel();
-
-    // this.lastExtent = extent;
     this.active = false;
   }
 
