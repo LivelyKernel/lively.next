@@ -702,12 +702,14 @@ export class WorldBrowserModel extends ViewModel {
   }
 
   async displayItems () {
-    this.reset();
     const { loadingIndicator } = this.ui;
-    loadingIndicator.animate({
-      opacity: 1, duration: 300
-    });
+    if (!loadingIndicator.visible) {
+      await loadingIndicator.animate({
+        visible: true, duration: 300
+      });
+    }
     let entities = this.playgroundsMode ? await this.db.latestCommits('world') : await Project.listAvailableProjects();
+    this.reset();
     // Filter out the project that is opened anyways.
     if ($world && $world.openedProject) entities = entities.filter(availableProject => availableProject._projectName !== $world.openedProject.name);
     this.previews = entities.map(entity => {
@@ -732,10 +734,11 @@ export class WorldBrowserModel extends ViewModel {
 
       return placeholder;
     });
-
-    await loadingIndicator.animate({
-      opacity: 0, duration: 300
-    });
+    fun.debounceNamed('hide-ld-' + loadingIndicator.id, 300, () => {
+      loadingIndicator.animate({
+        visible: false, duration: 300
+      });
+    })();
     this.updateList();
   }
 
