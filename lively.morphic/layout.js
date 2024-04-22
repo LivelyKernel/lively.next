@@ -1523,51 +1523,98 @@ export class ConstraintLayout extends Layout {
     });
   }
 
+  computePositionFromConfig (config, horizontalPolicy, verticalPolicy, submorph) {
+    let left, top;
+    switch (horizontalPolicy) {
+      case 'fixed':
+      case 'resize':
+        // does not affect position
+        left = config.left;
+        break;
+      case 'scale':
+        left = config.leftProportion / 100 * this.container.width;
+        break;
+      case 'move':
+        left = this.container.width - submorph.width - config.right;
+        break;
+      case 'center':
+        left = config.leftCenterProportion / 100 * this.container.width - submorph.width / 2;
+        break;
+    }
+
+    switch (verticalPolicy) {
+      case 'fixed':
+      case 'resize':
+        // does not affect position
+        top = config.top;
+        break;
+      case 'scale':
+        top = config.topProportion / 100 * this.container.height;
+        break;
+      case 'move':
+        top = this.container.height - submorph.height - config.bottom;
+        break;
+      case 'center':
+        top = config.topCenterProportion / 100 * this.container.height - submorph.height / 2;
+        break;
+    }
+
+    return pt(left, top);
+  }
+
+  computeExtentFromConfig (config, horizontalPolicy, verticalPolicy, submorph) {
+    let width, height;
+
+    switch (horizontalPolicy) {
+      case 'move':
+      case 'fixed':
+      case 'center':
+        // does not affect width
+        width = submorph.width;
+        break;
+      case 'resize':
+        width = this.container.width - config.left - config.right;
+        break;
+      case 'scale':
+        width = (1 - (config.leftProportion + config.rightProportion) / 100) * this.container.width;
+        break;
+    }
+
+    switch (verticalPolicy) {
+      case 'move':
+      case 'fixed':
+      case 'center':
+        // does not affect height
+        height = submorph.height;
+        break;
+      case 'resize':
+        height = this.container.height - config.top - config.bottom;
+        break;
+      case 'scale':
+        height = (1 - (config.topProportion + config.bottomProportion) / 100) * this.container.height;
+        break;
+    }
+
+    return pt(width, height);
+  }
+
   updateSubmorphViaDom (morph, node, makeDirty = false) {
-    const { borderWidth } = this.container;
-    const newPosX = Math.floor(node.offsetLeft) + borderWidth.left;
-    const newPosY = Math.floor(node.offsetTop) + borderWidth.top;
-    const newWidth = Math.floor(node.offsetWidth);
-    const newHeight = Math.floor(node.offsetHeight);
     const { x, y } = this.settingsFor(morph);
-    let updateTransform = false;
-    const horizontallyResized = ['resize', 'scale'].includes(x);
-    const verticallyResized = ['resize', 'scale'].includes(y);
-    if (newPosX !== morph.position.x ||
-        newPosY !== morph.position.y) {
-      if (makeDirty) {
-        morph.position = pt(newPosX, newPosY);
-      } else {
-        morph._morphicState.position = pt(newPosX, newPosY);
-        updateTransform = true;
-        signal(morph, 'position', morph.position); // still notify connections
-      }
-    }
-    // also update the extent if the resize policy is not fixed!
-    if (newWidth !== morph.width && horizontallyResized) {
-      if (makeDirty) morph.width = newWidth;
-      else {
-        morph._morphicState.extent = morph.extent.withX(newWidth);
-        updateTransform = true;
-        signal(morph, 'extent', morph.extent);
-      }
-    }
-    if (newHeight !== morph.height && verticallyResized) {
-      if (makeDirty) morph.height = newHeight;
-      else {
-        morph._morphicState.extent = morph.extent.withY(newHeight);
-        updateTransform = true;
-        signal(morph, 'extent', morph.extent); // does not update the halo!
-      }
-    }
+    const config = this.ensureConfigForMorph(morph);
+
+    if (morph.layout) morph.makeDirty();
+    morph.applyLayoutIfNeeded();
+
+    morph.withMetaDo({ skipRender: true, isLayoutAction: true }, () => {
+      morph.position = this.computePositionFromConfig(config, x, y, morph);
+    });
+
+    morph.withMetaDo({ skipRender: true, isLayoutAction: true }, () => {
+      morph.extent = this.computeExtentFromConfig(config, x, y, morph);
+    });
 
     if (morph.layout && morph.layout.renderViaCSS) {
       morph.layout.onDomResize(node, morph);
-    }
-
-    if (updateTransform) {
-      // trigger the halo if needed
-      morph.updateTransform();
     }
   }
 
