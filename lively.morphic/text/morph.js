@@ -2768,7 +2768,7 @@ export class Text extends Morph {
   }
 
   get canBeMeasuredViaCanvas () {
-    return this.env.fontMetric._domMeasure.canBeMeasuredViaCanvas(this);
+    return this.env.fontMetric?._domMeasure.canBeMeasuredViaCanvas(this);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
