@@ -1049,6 +1049,10 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
       axisAlign: 'center',
       hugContentsVertically: true,
       padding: rect(11, 11, 0, 0),
+      resizePolicies: [['advanced holder', {
+        height: 'fixed',
+        width: 'fill'
+      }]],
       spacing: 5
     }),
     extent: pt(455.5, 333),
@@ -1073,9 +1077,16 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
       }, 'fourth row'), add(
         {
           name: 'advanced holder',
+          clipMode: 'hidden',
           extent: pt(10, 0),
           layout: new TilingLayout({
-            axis: 'column'
+            axis: 'column',
+            hugContentsVertically: true,
+            resizePolicies: [['second row', {
+              height: 'fixed',
+              width: 'fill'
+            }]],
+            spacing: 5
           }),
           fill: Color.transparent,
           submorphs: [{
@@ -1083,7 +1094,13 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
             type: Label,
             fontSize: 15,
             fontColor: Color.white,
-            textAndAttributes: ['', { fontFamily: 'Font Awesome', fontWeight: '900' }, ' Show Advanced Options', null]
+            textAndAttributes: ['', {
+              fontFamily: 'Font Awesome',
+              fontWeight: '900'
+            }, ' ', null, 'Show Advanced Options', {
+              fontSize: 16
+            }]
+
           }, {
             name: 'second row',
             extent: pt(450, 0),
@@ -1093,6 +1110,13 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
               align: 'right',
               axis: 'column',
               padding: rect(0, 15, 0, -15),
+              resizePolicies: [['branch row', {
+                height: 'fixed',
+                width: 'fill'
+              }], ['diff button', {
+                height: 'fixed',
+                width: 'fill'
+              }]],
               spacing: 11
             }),
             position: pt(-146, 28),
@@ -1178,6 +1202,10 @@ export const SaveProjectDialog = component(SaveWorldDialog, {
               fill: Color.rgba(255, 255, 255, 0),
               layout: new TilingLayout({
                 axisAlign: 'center',
+                resizePolicies: [['branch input', {
+                  height: 'fixed',
+                  width: 'fill'
+                }]],
                 spacing: 10
               }),
               position: pt(-79, 22),
