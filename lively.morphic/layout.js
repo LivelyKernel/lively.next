@@ -1382,7 +1382,6 @@ export class ConstraintLayout extends Layout {
 
   attach () {
     super.attach();
-    this.layoutableSubmorphs.forEach(m => this.ensureConfigForMorph(m));
   }
 
   scheduleApply (submorph, animation, change = {}) {
@@ -1713,6 +1712,7 @@ export class ConstraintLayout extends Layout {
   }
 
   apply (animate = false, requireExtentChange = true) {
+    this.layoutableSubmorphs.forEach(m => this.ensureConfigForMorph(m));
     const { container, active, extentDelta: { x: deltaX, y: deltaY }, renderViaCSS } = this;
     const { extent } = container || {};
     if (active || !container || (requireExtentChange && deltaX === 0 && deltaY === 0) || renderViaCSS) { return; }
