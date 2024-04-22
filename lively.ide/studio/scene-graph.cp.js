@@ -45,8 +45,10 @@ export class MorphPanelModel extends ViewModel {
 
   showHaloFor (node) {
     if (!node) return;
+    const target = node.container.target;
+    if (target.isText && target.tmpEdit) return; // do not break interactive edit mode by forcing halo
     this.world().halos().forEach(h => h.remove());
-    this.world().showHaloFor(node.container.target);
+    this.world().showHaloFor(target);
   }
 
   relayout () {
