@@ -3621,8 +3621,10 @@ export class Text extends Morph {
     lvData && this.undoManager.group();
 
     sels.forEach(sel => {
-      if (lvData) this.replace(sel.range, lvData.textAndAttributes, false, true, true);
-      else sel.text = textData;
+      this.withMetaDo({ reconcileChanges: true }, () => {
+        if (lvData) this.replace(sel.range, lvData.textAndAttributes, false, true, true);
+        else sel.text = textData;
+      });
       this.saveMark(sel.start);
       sel.collapseToEnd();
     });
