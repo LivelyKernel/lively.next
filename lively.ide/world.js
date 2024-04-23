@@ -1477,16 +1477,6 @@ export class LivelyWorld extends World {
     //   items.push(['connect...', connectItems]);
     // }
 
-    items.push(['export to HTML', async function () {
-      const { generateHTML } = await System.import('lively.morphic/rendering/html-generator.js');
-      new HTMLMorph({
-        name: 'exported-' + morph.name,
-        html: await generateHTML(morph, null, {
-          isFragment: true, addStyles: false
-        })
-      }).openInWorld();
-    }]);
-
     items.push(['Remove Morph', () => self.abandon(true)]);
     items.push(['Rename Morph', async () => {
       const newName = await $world.prompt('Enter new Name for Morph', { input: self.name });
