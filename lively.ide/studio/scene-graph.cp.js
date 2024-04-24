@@ -312,10 +312,12 @@ export class MorphNodeModel extends ViewModel {
 
   showControls () {
     this.ui.visibilityIcon.visible = true;
+    this.ui.nameWrapper.startShowingFullTitle();
   }
 
   hideControls () {
     this.ui.visibilityIcon.visible = !this.target.visible;
+    this.ui.nameWrapper.stopShowingFullTitle();
   }
 
   async refresh () {
@@ -549,6 +551,8 @@ const MorphNode = component({
   }, {
     type: TitleWrapper,
     fill: Color.transparent,
+    reactsToPointer: false,
+    acceptsDrops: false,
     name: 'name wrapper',
     clipMode: 'hidden',
     maxLength: Infinity,
