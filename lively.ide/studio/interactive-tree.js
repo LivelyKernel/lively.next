@@ -469,7 +469,7 @@ export class SceneGraphTree extends InteractiveTree {
     if (node === this._previewNode) return false; // preview does not represent a real morph
     if (this.treeData.root === node) {
       return !obj.equals(
-        this.treeData.root.children.map(m => m.container?.target.id),
+        arr.without(this.treeData.root.children, this._previewNode).map(m => m.container?.target.id),
         this.target.submorphs.filter(m => !this.ignoreMorph(m)).id);
     }
     if (node.container.nameNeedsUpdate) return true;
