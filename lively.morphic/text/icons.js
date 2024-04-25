@@ -45,6 +45,12 @@ export class Icon {  static makeLabel(iconName, props = {prefix: "", suffix: ""}
   static setIcon(label, iconName) {     label.textAndAttributes = this.textAttribute(iconName);
   }
 
+  static lookup(char) {
+    return Object.entries(Icons).find(([key, { code }]) => {
+      if (code === char) return true;
+    })?.[0];
+  }
+
 }
 
 export var Icons = {
