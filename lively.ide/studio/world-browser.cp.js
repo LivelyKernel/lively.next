@@ -672,6 +672,7 @@ export class WorldBrowserModel extends ViewModel {
   reset () {
     this.ui.worldList.items = [];
     this.ui.noWorldWarning.visible = false;
+    this.ui.noMatchWarning.visible = false;
     this.previews = [];
   }
 
@@ -691,13 +692,19 @@ export class WorldBrowserModel extends ViewModel {
 
   updateList () {
     if (!this.previews) return;
-    fun.debounceNamed('update item list', 150, () => {
+    fun.debounceNamed('update item list' + this.view.id, 150, () => {
       this.ui.worldList.items = this.sortAndFilterPreviews(this.previews);
+
       if (this.previews.length === 0) {
         this.ui.noWorldWarning.animate({
           visible: true, duration: 300
         });
+        return;
       } else this.ui.noWorldWarning.visible = false;
+
+      if (this.ui.worldList.items.length === 0) {
+        this.ui.noMatchWarning.animate({ visible: true, duration: 300 });
+      } else this.ui.noMatchWarning.visible = false;
     })();
   }
 
@@ -1469,6 +1476,9 @@ const WorldBrowser = component({
     submorphSettings: [['no world warning', {
       x: 'center',
       y: 'center'
+    }], ['no match warning', {
+      x: 'center',
+      y: 'center'
     }], ['world list', {
       x: 'resize',
       y: 'resize'
@@ -1501,11 +1511,26 @@ const WorldBrowser = component({
     position: pt(174.2, 261.5),
     reactsToPointer: false,
     textAndAttributes: ['There are no projects yet. Create one!', null]
-  }, {
+  },
+  {
+    type: Label,
+    name: 'no match warning',
+    visible: false,
+    extent: pt(400.9, 42.5),
+    fixedHeight: true,
+    fixedWidth: true,
+    fontColor: Color.rgb(189, 195, 199),
+    fontSize: 30,
+    fontWeight: 'bold',
+    position: pt(244.6, 259.8),
+    reactsToPointer: false,
+    textAndAttributes: ['No matching projects found.', null]
+  },
+  {
     type: GrowingWorldList,
     name: 'world list',
     clipMode: 'hidden',
-    extent: pt(879.7,580),
+    extent: pt(879.7, 580),
     fill: Color.rgba(46, 75, 223, 0),
     items: [],
     scrollContainer: null,
@@ -1641,7 +1666,7 @@ const WorldBrowser = component({
     }]
   }, {
     name: 'fader bottom',
-    extent: pt(880.3,63.9),
+    extent: pt(880.3, 63.9),
     fill: new LinearGradient({
       stops: [
         { offset: 0, color: Color.rgb(112, 123, 124) },
