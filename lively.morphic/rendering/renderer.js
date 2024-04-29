@@ -1954,8 +1954,7 @@ export default class Renderer {
   tryToMeasureViaCanvas (morph) {
     if (morph.hasMixedTextAttributes('fontFamily') ||
         morph.hasMixedTextAttributes('fontSize') ||
-       !morph.allFontsLoaded() ||
-       document.fonts.status !== 'loaded') return false;
+       !morph.allFontsLoaded()) return false;
     const env = morph.env;
     const height = env.fontMetric.defaultLineHeight(morph);
     if (!morph.fixedWidth) {
