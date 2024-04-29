@@ -2526,19 +2526,22 @@ export class BrowserModel extends ViewModel {
     const textStyle = { fontSize: 16, fontWeight: 'normal' };
     if (!selectedNodeInDir) return;
     if (this.isModule(selectedNodeInDir)) {
+      let removed = false;
       // if is .md or .json, just remove the file
       // else remove module!
       if (selectedNodeInDir.url.match(/(\.md|\.json)$/)) {
-        await this.execCommand('remove module');
+        removed = await this.execCommand('remove module');
       } else {
-        await this.execCommand('remove module', { mod: selectedNodeInDir });
+        removed = await this.execCommand('remove module', { mod: selectedNodeInDir });
       }
       // clear the module
-      this.deactivateEditor();
-      this.world()
-        .withAllSubmorphsSelect(m =>
-          m.isBrowser && m.selectedModule?.url === selectedNodeInDir.url)
-        .forEach(m => m.getWindow().close(false));
+      if (removed) {
+        this.deactivateEditor();
+        this.world()
+          .withAllSubmorphsSelect(m =>
+            m.isBrowser && m.selectedModule?.url === selectedNodeInDir.url)
+          .forEach(m => m.getWindow().close(false));
+      }
       return;
     }
     if (selectedNodeInDir.type === 'directory') {
