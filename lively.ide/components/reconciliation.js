@@ -1555,15 +1555,16 @@ class TextChangeReconciliation extends PropChangeReconciliation {
   getAstNodeAndAttributePositionInRange (specNode, range) {
     const textAttrProp = getProp(specNode, 'textAndAttributes');
     if (!textAttrProp) return {};
-    const { textAndAttributes } = this.target;
-    let stringIndex = 0; let j = 0;
+    const { textAndAttributes, textString } = this.target;
+    if (textString.length === 0) return {}; // entire document got deleted
+    let attributeStart = 0; let j = 0;
     const startIndex = this.target.positionToIndex(range.start);
-    while (j < textAndAttributes.length && startIndex > stringIndex + textAndAttributes[j].length) {
-      stringIndex += textAndAttributes[j].length;
+    while (j < textAndAttributes.length && startIndex > attributeStart + textAndAttributes[j].length) {
+      attributeStart += textAndAttributes[j].length;
       j += 2;
     }
     const stringNode = textAttrProp.value.elements[j];
-    return { attributeStart: stringIndex, stringNode };
+    return { attributeStart, stringNode };
   }
 
   patchPropIn (specNode, propName, textAttrsAsExpr) {
@@ -1589,11 +1590,17 @@ class TextChangeReconciliation extends PropChangeReconciliation {
       const manipulationStartIndex = this.target.positionToIndex(changedRange.start);
       if (isDeletion) {
         let deletionIndexInSource = stringNode.start + manipulationStartIndex - attributeStart + 1;
+        const deletedTextAndAttrs = undo.args[1];
+        if (deletedTextAndAttrs.length > 2) {
+          // deletion of multiple text and attributes is too complex to reconcile efficiently
+          // perform the default patch instead;
+          return defaultPatch();
+        }
         // Count numbers of newlines that come **before** the deletion. As those are two characters in the module source (\n),
         // we need to account for each of them with an additional character.
         const lineBreakOffset = (stringNode.value.slice(0, manipulationStartIndex).match(/\n/g) || []).length;
         deletionIndexInSource += lineBreakOffset;
-        const deleteCharacters = JSON.stringify(undo.args[1][0]).slice(1, -1).length;
+        const deleteCharacters = JSON.stringify(deletedTextAndAttrs[0]).slice(1, -1).length;
         this.addChangesToModule(modId, [{ action: 'replace', start: deletionIndexInSource, end: deletionIndexInSource + deleteCharacters, lines: [''] }]);
         return this;
       }
