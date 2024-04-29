@@ -641,12 +641,12 @@ export class WorldBrowserModel extends ViewModel {
     this.view.remove();
   }
 
-  viewDidLoad () {
-    this.displayItems();
+  async viewDidLoad () {
+    await this.displayItems();
     this.onRefresh('showCloseButton');
   }
 
-  modeChanged (mode) {
+  async modeChanged (mode) {
     const label = this.ui.newProjectButton.submorphs[0];
     if (mode === 'Playgrounds') {
       this.playgroundsMode = true;
@@ -662,7 +662,7 @@ export class WorldBrowserModel extends ViewModel {
       this.ui.openSnapshotButton.reactsToPointer = false;
       this.ui.openSnapshotButton.opacity = 0;
     }
-    this.displayItems();
+    await this.displayItems();
   }
 
   beforePublish () {
@@ -993,7 +993,7 @@ export class WorldPreviewModel extends ViewModel {
 
   async confirmDelete () {
     await MorphicDB.default.commit({ ...this._commit, content: undefined, snapshot: null });
-    this._worldBrowser.displayItems();
+    await this._worldBrowser.displayItems();
   }
 }
 
@@ -1065,7 +1065,7 @@ class ProjectPreviewModel extends WorldPreviewModel {
   async confirmDelete (deleteRepo) {
     const { _projectName, _projectOwner } = this._project;
     await Project.deleteProject(_projectName, _projectOwner, currentUserToken(), deleteRepo);
-    this._worldBrowser.displayItems();
+    await this._worldBrowser.displayItems();
   }
 }
 
