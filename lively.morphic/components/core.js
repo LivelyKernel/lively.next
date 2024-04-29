@@ -133,6 +133,18 @@ export class ComponentDescriptor {
   derive (props) {
     return this.stylePolicy.instantiate(props);
   }
+
+  async loadAllFonts () {
+    const usedFonts = [];
+    this.derive().withAllSubmorphsDo(m => {
+      if (m.isText) {
+        usedFonts.push(...m.usedFonts());
+      }
+    });
+    for (let fontFace of usedFonts) {
+      await document.fonts.load(fontFace);
+    }
+  }
 }
 
 /**
@@ -635,7 +647,7 @@ export function component (masterComponentOrProps, overriddenProps) {
   }
 }
 
-const prevDescriptorClass = typeof prevComponent !== 'undefined' && prevComponent.DescriptorClass;
+const prevDescriptorClass = typeof prevComponent !== 'undefined' && prevComponent.DescriptorClass; // eslint-disable-line no-use-before-define
 const prevComponent = component;
 if (!component.DescriptorClass) component.DescriptorClass = prevDescriptorClass || ComponentDescriptor;
 component.System = System;
