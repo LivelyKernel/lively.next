@@ -433,7 +433,7 @@ export default class HTTPFileBrowser extends Morph {
             part(SystemButton, { name: 'openFileButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('edit', { fontWeight: '400' }) }], tooltip: 'open selected file' }),
             part(SystemButton, { name: 'addDirectoryButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('folder', { fontWeight: '400' }) }], tooltip: 'add directory' }),
             part(SystemButton, { name: 'addFileButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('file', { fontWeight: '400' }) }], tooltip: 'add file' }),
-            part(SystemButton, { name: 'renameFileButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('clone', { fontWeight: '400' }) }], tooltip: 'rename selected file' }),
+            part(SystemButton, { name: 'renameFileButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('mi-drive_file_rename_outline', { fontWeight: '400' }) }], tooltip: 'rename selected file' }),
             part(SystemButton, { name: 'deleteFileButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('trash-alt', { fontWeight: '400' }) }], tooltip: 'delete selected file' })
           ];
 
