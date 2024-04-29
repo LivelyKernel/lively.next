@@ -247,7 +247,7 @@ export default function browserCommands (browser) {
           await system.interactivelyRemoveModule(browser, m.url || m.name || m.id);
         } catch (e) {
           if (e !== 'Canceled') browser.showError(`Error while trying to load modules:\n${e.stack || e}`);
-          return true;
+          return false;
         }
 
         await browser.updateModuleList(m);
