@@ -62,6 +62,7 @@ class WorldLandingPage extends Morph {
   }
 
   async showWorldList () {
+    await WorldBrowser.loadAllFonts(); // force the fonts to be loaded
     const dashboard = this.getSubmorphNamed('a project browser') ||
           this.addMorph(part(WorldBrowser, {
             name: 'a project browser',
