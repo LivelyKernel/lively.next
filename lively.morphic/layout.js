@@ -1244,7 +1244,7 @@ export class TilingLayout extends Layout {
       bounds = rect(0, 0, submorph.width, submorph.height);
     } else {
       // this can lead to false conclusions if we are configured to fit vertically or horizontally
-      bounds = submorph.submorphBounds().union(submorph.innerBounds());
+      bounds = submorph.submorphBounds(m => m.visible).union(submorph.innerBounds());
     }
 
     if (submorph.scale !== 1) {
