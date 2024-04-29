@@ -1,4 +1,4 @@
-import { pt, Rectangle, rect } from 'lively.graphics';
+import { pt, Point, Rectangle, rect } from 'lively.graphics';
 import { arr, promise, Closure, num, obj, fun } from 'lively.lang';
 import { once, signal } from 'lively.bindings';
 import { loadYoga } from 'yoga-layout';
@@ -1408,7 +1408,12 @@ export class ConstraintLayout extends Layout {
     this.onConfigUpdate();
   }
 
-  set lastExtent (ext) { this._lastExtent = ext; this.onConfigUpdate(); }
+  set lastExtent (ext) {
+    ext = ext ? Point.fromLiteral(ext) : ext;
+    this._lastExtent = ext;
+    this.onConfigUpdate();
+  }
+
   get lastExtent () { return this._lastExtent; }
 
   addContainerCSS (containerMorph, style) { // eslint-disable-line no-unused-vars
