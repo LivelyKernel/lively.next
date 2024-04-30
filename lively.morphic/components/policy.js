@@ -637,6 +637,69 @@ export class StylePolicy {
     return candidate;
   }
 
+  generateBaseSpecFromLocal (spec) {
+    const klass = this.constructor;
+    return tree.mapTree(spec, (node, submorphs) => {
+      if (node.props) {
+        if (!node.props.name) { node.props.name = this.generateUniqueNameFor(node); }
+      } else if (!node.name && node !== spec) { node.name = this.generateUniqueNameFor(node); }
+      if (node.isPolicy) return node.copy(); // duplicate the node to prevent in place modification or the original spec
+      if (node.master) {
+        return new klass({ ...node, submorphs }, null);
+      }
+      // The way styles are calculated right now is that we check if there is a autoMaster and if no
+      // autoMaster is present (which is rare) we proceed to utilize the default value dictated by the morph class.
+      // It may make sense to further dig for more "appropriate" default values by taking a look at other masters
+      // such as the ones found in the breakpoints or the custom states.
+      const defaultProps = !this._autoMaster?.managesMorph(node !== spec ? node.name : null) && getDefaultValuesFor(node.type || Morph) || {};
+
+      for (let prop in defaultProps) {
+        defaultProps[prop] = { isDefaultValue: true, value: defaultProps[prop] };
+      }
+
+      if (node.textAndAttributes) {
+        return {
+          ...defaultProps,
+          ...node,
+          submorphs,
+          textAndAttributes: node.textAndAttributes.map(textOrAttr => {
+            if (textOrAttr?.__isSpec__) {
+              return this.generateBaseSpecFromLocal(textOrAttr);
+            }
+            return textOrAttr;
+          })
+        };
+      }
+      // also insert the default values here if not defined
+      return { ...defaultProps, ...node, submorphs };
+    }, node => node.submorphs || []);
+  }
+
+  generateBaseSpecFromParent () {
+    const klass = this.constructor;
+    return tree.mapTree(this.parent.spec, (node, submorphs) => {
+      if (node.COMMAND === 'add') {
+        node = node.props;
+        if (!node.name) { node.name = this.generateUniqueNameFor(node); }
+      }
+      if (node.COMMAND === 'remove') return null; // drop specs that are removed
+
+      if (node.isPolicy) {
+        node._needsDerivation = true;
+        return node; // this will be derived and replaced later on
+      }
+      node = obj.dissoc(node, ['master', 'submorphs', '__wasAddedToDerived__', ...getStylePropertiesFor(node.type)]);
+      if (node.textAndAttributes) {
+        node.textAndAttributes = node.textAndAttributes.map(textOrAttr => {
+          if (textOrAttr?.isPolicy) return new klass({}, textOrAttr);
+          return textOrAttr;
+        });
+      }
+      if (submorphs.length > 0) node.submorphs = arr.compact(submorphs);
+      return node;
+    }, node => node.submorphs || node.props?.submorphs || []); // get the fully collapsed spec
+  }
+
   /**
    * The main purpose of this method is to properly initialize style policies within our spec in order to reify
    * what is called "inline policies".
@@ -665,73 +728,15 @@ export class StylePolicy {
       spec = obj.dissoc(spec, ['master']);
     }
 
-    const ensureStylePoliciesInStandalone = (spec) => {
-      return tree.mapTree(spec, (node, submorphs) => {
-        if (node.props) {
-          if (!node.props.name) { node.props.name = this.generateUniqueNameFor(node); }
-        } else if (!node.name && node !== spec) { node.name = this.generateUniqueNameFor(node); }
-        if (node.isPolicy) return node.copy(); // duplicate the node to prevent in place modification or the original spec
-        if (node.master) {
-          return new klass({ ...node, submorphs }, null);
-        }
-        // The way styles are calculated right now is that we check if there is a autoMaster and if no
-        // autoMaster is present (which is rare) we proceed to utilize the default value dictated by the morph class.
-        // It may make sense to further dig for more "appropriate" default values by taking a look at other masters
-        // such as the ones found in the breakpoints or the custom states.
-        const defaultProps = !this._autoMaster?.managesMorph(node !== spec ? node.name : null) && getDefaultValuesFor(node.type || Morph) || {};
-
-        for (let prop in defaultProps) {
-          defaultProps[prop] = { isDefaultValue: true, value: defaultProps[prop] };
-        }
-
-        if (node.textAndAttributes) {
-          return {
-            ...defaultProps,
-            ...node,
-            submorphs,
-            textAndAttributes: node.textAndAttributes.map(textOrAttr => {
-              if (textOrAttr?.__isSpec__) {
-                return ensureStylePoliciesInStandalone(textOrAttr);
-              }
-              return textOrAttr;
-            })
-          };
-        }
-        // also insert the default values here if not defined
-        return { ...defaultProps, ...node, submorphs };
-      }, node => node.submorphs || []);
-    };
-    // scan this.spec and detect overridden/set master props
-    // or further refined style policies
     if (!this.parent) {
-      return ensureStylePoliciesInStandalone(spec);
+      return this.generateBaseSpecFromLocal(spec);
     }
 
     if (this.parent) {
       // we need to traverse the spec and the parent's build spec simultaneously
-      const baseSpec = tree.mapTree(this.parent.spec, (node, submorphs) => {
-        if (node.COMMAND === 'add') {
-          node = node.props;
-          if (!node.name) { node.name = this.generateUniqueNameFor(node); }
-        }
-        if (node.COMMAND === 'remove') return null; // drop specs that are removed
-
-        if (node.isPolicy) {
-          node._needsDerivation = true;
-          return node; // this will be derived and replaced later on
-        }
-        node = obj.dissoc(node, ['master', 'submorphs', '__wasAddedToDerived__', ...getStylePropertiesFor(node.type)]);
-        if (node.textAndAttributes) {
-          node.textAndAttributes = node.textAndAttributes.map(textOrAttr => {
-            if (textOrAttr?.isPolicy) return new klass({}, textOrAttr);
-            return textOrAttr;
-          });
-        }
-        if (submorphs.length > 0) node.submorphs = arr.compact(submorphs);
-        return node;
-      }, node => node.submorphs || node.props?.submorphs || []); // get the fully collapsed spec
-
       const toBeReplaced = new WeakMap();
+      const baseSpec = this.generateBaseSpecFromParent();
+
       function replace (node, replacement) {
         toBeReplaced.set(node, replacement);
       }
@@ -748,7 +753,7 @@ export class StylePolicy {
         // insert add command directly into the baseSpec
         const index = before ? parent.submorphs.indexOf(before) : parent.submorphs.length;
         if (!toBeAdded.isPolicyApplicator) {
-          toBeAdded = ensureStylePoliciesInStandalone(toBeAdded);
+          toBeAdded = this.generateBaseSpecFromLocal(toBeAdded);
         }
         if (!toBeAdded.name) toBeAdded.name = this.generateUniqueNameFor(toBeAdded);
         arr.pushAt(parent.submorphs, {
