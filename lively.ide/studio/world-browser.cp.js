@@ -1423,36 +1423,11 @@ const ProjectPreviewTile = component(WorldPreviewTile, {
   }, {
     type: ProjectVersionViewer,
     name: 'version container',
-    fill: Color.rgb(253, 254, 254),
-    draggable: true,
-    extent: pt(515.7, 365.6),
-    grabbable: true,
-    position: pt(0, 0),
-    layoutable: false,
-    submorphs: [{
-      type: MorphList,
-      name: 'version list',
-      clipMode: 'hidden',
-      master: SystemList,
-      extent: pt(475.6, 285),
-      itemHeight: 45,
-      padding: rect(1, 1, 0, -1),
-      position: pt(20.1, 16.8),
-      touchInput: false
-    }, part(Spinner, {
-      name: 'version list spinner',
-      viewModel: { color: 'black' },
-      extent: pt(55.3, 66.9),
-      position: pt(244, 166.1),
-      scale: 0.5,
-      visible: false,
-      reactsToPointer: false
-    }), without('revert button'), {
+    submorphs: [without('revert button'), {
       name: 'visit button',
       submorphs: [{
         name: 'label',
         textAndAttributes: ['USE', null]
-
       }]
     }]
   }]
