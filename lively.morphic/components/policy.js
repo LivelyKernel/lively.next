@@ -775,14 +775,14 @@ export class StylePolicy {
             return localAttr;
           });
         }
-        // ensure the presence of all nodes
+
+        // up to here everything regarding the root is done.
+        // last thing we do is carry over the name, if nothing was provided
+        // for convenience sake
         if (localSpec === spec) {
           if (!localSpec.name && parentSpec.name) localSpec.name = parentSpec.name;
           return;
         }
-        if (localSpec.isPolicy) {
-          return parentSpec && replace(parentSpec, localSpec.splitBy(partitioningPolicy, parentSpec.name));
-        } // do not tweak root
 
         let localMaster = localSpec.master;
         const overridden = overriddenMaster?.synthesizeSubSpec(localSpec.name);
