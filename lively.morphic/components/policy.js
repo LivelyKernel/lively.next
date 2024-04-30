@@ -766,6 +766,13 @@ export class StylePolicy {
       const partitioningPolicy = this;
 
       const mergeSpecs = (parentSpec, localSpec) => {
+        // handle viewModel
+        const parentViewModel = parentSpec.spec?.viewModel || parentSpec.viewModel;
+        if (parentViewModel && localSpec.viewModel) {
+          localSpec.viewModel = obj.deepMerge(parentViewModel, localSpec.viewModel);
+        }
+
+        // handle text and attribute merging
         if (localSpec.textAndAttributes && parentSpec.textAndAttributes &&
             localSpec.textAndAttributes.length === parentSpec.textAndAttributes.length) {
           localSpec.textAndAttributes = arr.zip(
@@ -812,11 +819,7 @@ export class StylePolicy {
 
       mergeInHierarchy(baseSpec, spec, mergeSpecs, true, handleRemove, handleAdd);
 
-      if (baseSpec.viewModel && spec.viewModel) {
-        spec.viewModel = obj.deepMerge(baseSpec.viewModel, spec.viewModel);
-      }
-
-      // post process
+      // afterwards perform the replacement of nodes as requested by the replace() fn
       const finalSpec = tree.mapTree(baseSpec, (node, submorphs) => {
         if (toBeReplaced.has(node)) return toBeReplaced.get(node);
         else {
@@ -838,6 +841,7 @@ export class StylePolicy {
       return {
         ...obj.dissoc(baseSpec, ['master', 'submorphs', ...getStylePropertiesFor(baseSpec.type)]),
         ...spec,
+        ...finalSpec.viewModel ? { viewModel: finalSpec.viewModel } : {},
         submorphs: finalSpec.submorphs || []
       };
     }
