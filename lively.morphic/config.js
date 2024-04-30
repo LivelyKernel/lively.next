@@ -42,7 +42,7 @@ function parseURLQuery () {
 }
 
 const config = {
-
+  hideScrollbarsInWorldBrowser: false,
   onloadURLQuery: parseURLQuery(),
 
   /* browser support 2 ways to render shadows:
