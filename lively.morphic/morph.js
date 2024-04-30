@@ -2795,6 +2795,9 @@ export class Image extends Morph {
       },
       clipMode: {
         defaultValue: 'auto'
+      },
+      sizeToAspectRatio: {
+        defaultValue: true
       }
     };
   }
@@ -2861,6 +2864,11 @@ export class Image extends Morph {
     if (this.tooltip && this.renderingState.tooltip !== this.tooltip) {
       node.firstChild.alt = this.tooltip;
       this.renderingState.tooltip = this.tooltip;
+    }
+    if (this.renderingState.sizeToAspectRatio !== this.sizeToAspectRatio) {
+      if (this.sizeToAspectRatio) node.firstChild.style['object-fit'] = 'contain';
+      else node.firstChild.style['object-fit'] = 'fill';
+      this.renderingState.sizeToAspectRatio = this.sizeToAspectRatio;
     }
   }
 
