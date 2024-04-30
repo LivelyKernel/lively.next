@@ -734,6 +734,8 @@ export class StylePolicy {
 
     if (this.parent) {
       // we need to traverse the spec and the parent's build spec simultaneously
+      const overriddenMaster = this._autoMaster;
+      const partitioningPolicy = this;
       const toBeReplaced = new WeakMap();
       const baseSpec = this.generateBaseSpecFromParent();
 
@@ -761,9 +763,6 @@ export class StylePolicy {
           props: toBeAdded
         }, index);
       };
-
-      const overriddenMaster = this._autoMaster; // FIXME: what legitimizes the exceptional role of the _autoMaster?
-      const partitioningPolicy = this;
 
       const mergeSpecs = (parentSpec, localSpec) => {
         // handle viewModel
@@ -798,7 +797,7 @@ export class StylePolicy {
 
         let localMaster = localSpec.master;
         const overridden = overriddenMaster?.synthesizeSubSpec(localSpec.name);
-        localMaster = overridden?.isPolicy && overridden || localMaster;
+        if (!localMaster) localMaster = overridden?.isPolicy && overridden;
         delete parentSpec._needsDerivation;
         if (localMaster && parentSpec.isPolicy) {
           // rms 13.7.22 OK to get rid of the descriptor here,
