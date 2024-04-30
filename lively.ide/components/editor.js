@@ -159,7 +159,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
    */
   async reset () {
     const dependants = this.stylePolicy._dependants;
-    await replaceComponentDefinition(this._backupComponentDef, this.componentName, this.targetModule);
+    if (this._backupComponentDef) { await replaceComponentDefinition(this._backupComponentDef, this.componentName, this.targetModule); }
     delete this._backupComponentDef;
     this._dirty = false;
     this.stylePolicy._dependants = dependants;
