@@ -803,14 +803,14 @@ export class StylePolicy {
           // rms 13.7.22 OK to get rid of the descriptor here,
           // since we are "inside" of a def which is reevaluated on change anyways.
           localMaster = localMaster.isComponentDescriptor ? localMaster.stylePolicy : localMaster; // ensure the local master
-          return replace(parentSpec, new klass({ ...localSpec, master: localMaster }, parentSpec).splitBy(partitioningPolicy, parentSpec.name));
+          return replace(parentSpec, new klass({ ...localSpec, master: localMaster }, parentSpec));
         }
         if (parentSpec.isPolicy) { // we did not introduce a master and just adjusted stuff
           return replace(parentSpec, new klass(localSpec, parentSpec).splitBy(partitioningPolicy, parentSpec.name)); // insert a different style policy that has the correct overrides
         }
         if (localMaster) { // parent spec is not a policy, and we introduced a master here
           localMaster = localMaster.isComponentDescriptor ? localMaster.stylePolicy : localMaster; // ensure the local master
-          return replace(parentSpec, new klass({ ...localSpec, master: localMaster }, this.parent.extractStylePolicyFor(parentSpec.name)).splitBy(partitioningPolicy, parentSpec.name));
+          return replace(parentSpec, new klass({ ...localSpec, master: localMaster }, this.parent.extractStylePolicyFor(parentSpec.name)));
         }
 
         Object.assign(parentSpec, obj.dissoc(localSpec, ['submorphs'])); // just apply the current local spec
