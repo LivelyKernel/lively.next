@@ -487,7 +487,7 @@ export function insertMorphExpression (parsedComponent, sourceCode, newOwner, ad
  * @param { Morph } hiddenMorph - The morph with the change we need to uncover in the component definition.
  * @returns { string } The transformed source code.
  */
-export function uncollapseSubmorphHierarchy (sourceCode, parsedComponent, hiddenMorph, hiddenSubmorphExpr = false) {
+export function uncollapseSubmorphHierarchy (sourceCode, parsedComponent, hiddenMorph, hiddenSubmorphExpr = false, skipMaster = true) {
   let nextVisibleParent = hiddenMorph;
   const idx = hiddenMorph.owner.submorphs.indexOf(hiddenMorph);
   const nextSibling = idx !== -1 && hiddenMorph.owner.submorphs[idx + 1];
@@ -501,12 +501,14 @@ export function uncollapseSubmorphHierarchy (sourceCode, parsedComponent, hidden
   } while (!propertiesNode);
 
   const masterInScope = arr.findAndGet(morphToExpand.ownerChain(), m => m.master);
+  const skipAttributes = [...DEFAULT_SKIPPED_ATTRIBUTES, 'type'];
+  if (skipMaster) skipAttributes.push('master');
   const uncollapsedHierarchyExpr = convertToExpression(morphToExpand, {
     onlyInclude: ownerChain,
     exposeMasterRefs: false,
     uncollapseHierarchy: true,
     masterInScope, // ensures no props are listed that are not overridden
-    skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES, 'master', 'type'],
+    skipAttributes,
     valueTransform: (key, val, aMorph) => {
       if (hiddenSubmorphExpr && aMorph === hiddenMorph && key === 'submorphs') {
         return [hiddenSubmorphExpr];
@@ -669,10 +671,10 @@ export class Reconciliation {
     this.changesByModule.push([moduleName, newChanges]);
   }
 
-  uncollapseSubmorphHierarchy (hiddenSubmorphExpr = false) {
+  uncollapseSubmorphHierarchy (hiddenSubmorphExpr = false, skipMaster = true) {
     const hiddenMorph = this.target;
     const { modId, sourceCode, parsedComponent, requiredBindings } = this.getDescriptorContext();
-    const { changes, needsLinting, bindings } = uncollapseSubmorphHierarchy(sourceCode, parsedComponent, hiddenMorph, hiddenSubmorphExpr);
+    const { changes, needsLinting, bindings } = uncollapseSubmorphHierarchy(sourceCode, parsedComponent, hiddenMorph, hiddenSubmorphExpr, skipMaster);
     requiredBindings.push(...Object.entries(bindings));
     if (needsLinting) this.modulesToLint.add(modId);
     this.addChangesToModule(modId, changes);
@@ -1385,7 +1387,7 @@ class PropChangeReconciliation extends Reconciliation {
     if (!specNode) {
       // what if we have not yet processed the add call?
       if (!this.isDerived) return this;
-      return this.uncollapseSubmorphHierarchy();
+      return this.uncollapseSubmorphHierarchy(false, prop !== 'master');
     }
 
     const tabSize = 2;
