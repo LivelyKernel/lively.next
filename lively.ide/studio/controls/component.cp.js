@@ -301,7 +301,7 @@ export class ComponentControlModel extends PropertySectionModel {
     while (true) {
       if (stylePolicy._breakpointStore) {
         autoMaster = stylePolicy._breakpointStore._breakpointMasters[0][0];
-        break;
+        if (autoMaster) break;
       }
       if (stylePolicy._autoMaster) {
         autoMaster = stylePolicy._autoMaster;
