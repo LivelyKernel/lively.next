@@ -163,7 +163,7 @@ class MasterComponentTreeData extends TreeData {
    */
   displayPackage (pkg, isSelected) {
     if (isSelected && !this.root.browser._pauseUpdates) {
-      this.root.browser.reset();
+      this.root.browser.reset(false);
     }
     const isOpenedProject = pkg.url === $world.openedProject?.package.url;
     return [
@@ -189,7 +189,7 @@ class MasterComponentTreeData extends TreeData {
    */
   displayDirectory (dir, isOpen) {
     if (isOpen && !this.root.browser._pauseUpdates) {
-      this.root.browser.reset();
+      this.root.browser.reset(false);
     }
     return [
       ...Icon.textAttribute(isOpen ? 'folder-open' : 'folder', {
@@ -962,9 +962,9 @@ export class ComponentBrowserModel extends ViewModel {
 
   get systemInterface () { return localInterface; }
 
-  reset () {
+  reset (resetScroll = true) {
     this.ui.masterComponentList.submorphs = [];
-    this.ui.componentFilesView.scroll = pt(0, 0);
+    if (resetScroll) this.ui.componentFilesView.scroll = pt(0, 0);
   }
 
   async activate (pos = false) {
