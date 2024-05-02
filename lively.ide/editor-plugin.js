@@ -345,7 +345,9 @@ export default class EditorPlugin {
 
     // insert pair
     const undo = morph.undoManager.ensureNewGroup(morph);
-    morph.insertText(string + openPairs[string]);
+    morph.withMetaDo({ reconcileChanges: true }, () => {
+      morph.insertText(string + openPairs[string]);
+    });
     morph.undoManager.group(undo);
     sel.goLeft(1);
     return true;
