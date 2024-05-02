@@ -2332,6 +2332,11 @@ export default class Halo extends Morph {
     if (!this.changingName) { this.buttonControls.map(b => b.onKeyUp(evt)); }
   }
 
+  onMouseWheel (evt) {
+    const { deltaX, deltaY } = evt.domEvt;
+    this.world().scrollWorld(deltaX, deltaY);
+  }
+
   indicateLooseMovement (active) {
     this.borderBox.borderStyle = active ? 'dotted' : 'solid';
   }
