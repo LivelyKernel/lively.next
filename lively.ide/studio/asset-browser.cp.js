@@ -226,6 +226,7 @@ class AssetBrowserModel extends ViewModel {
     if (this._promise) {
       this._promise.resolve(this.selectedAsset.imageUrl);
       this.container.remove();
+      signal(this.view.owner, 'close'); // clear blocking of windowed asset browsers
     } else {
       const image = new Image({ imageUrl: this.selectedAsset.imageUrl });
       image.determineNaturalExtent().then((extent) => {
