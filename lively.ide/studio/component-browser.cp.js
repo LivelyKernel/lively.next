@@ -1002,7 +1002,10 @@ export class ComponentBrowserModel extends ViewModel {
   async editSelectedComponent () {
     const selectedComponent = this.getSelectedComponent();
     const editableComponent = await selectedComponent.component.edit();
-    if (editableComponent) editableComponent.openInWorld();
+    if (editableComponent) {
+      editableComponent.applyLayoutIfNeeded();
+      editableComponent.openInWorld();
+    }
   }
 
   toggleBusyState (active) {
