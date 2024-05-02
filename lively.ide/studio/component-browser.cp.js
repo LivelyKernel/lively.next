@@ -866,6 +866,7 @@ export class ComponentBrowserModel extends ViewModel {
         handler: 'ensureButtonControls'
       },
       {
+        target: /component files view|master component list/,
         signal: 'onMouseUp',
         handler: 'ensureComponentEntitySelected'
       },
@@ -1063,8 +1064,14 @@ export class ComponentBrowserModel extends ViewModel {
   }
 
   async showComponentInFilesView (aComponentDescriptor) {
-    const { treeData: td, _selectedNode: n } = this.models.componentFilesView;
+    const { treeData: td, _selectedNode: n, lists } = this.models.componentFilesView;
     if (n && n.componentObject === aComponentDescriptor) return;
+    const lastList = arr.last(lists);
+    const itemToSelect = lastList?.items.find(item => item.value.componentObject === aComponentDescriptor);
+    if (itemToSelect) {
+      this.models.componentFilesView.selectNode(itemToSelect.value, false);
+      return;
+    }
     const meta = aComponentDescriptor[Symbol.for('lively-module-meta')];
     if (!meta) return;
     const url = System.decanonicalize(meta.moduleId);
