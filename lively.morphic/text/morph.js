@@ -631,7 +631,7 @@ export class Text extends Morph {
         after: ['defaultTextStyle'],
         set (fontFamily) {
           if (!availableFonts().map(f => sanitizeFont(f.name)).includes(sanitizeFont(fontFamily))) {
-            $world.logError('Invalid Font Name!');
+            $world.logError(`Invalid Font Name: ${fontFamily} on morph ${this.name}!`);
           }
           this.setProperty('fontFamily', sanitizeFont(fontFamily));
           document.fonts.load(`${this.fontStyle} ${this.fontWeight} 12px ${fontFamily}`)
