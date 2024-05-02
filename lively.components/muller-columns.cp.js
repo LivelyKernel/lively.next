@@ -422,6 +422,8 @@ export class MullerColumnViewModel extends ViewModel {
         currentList.selection = selectedFile;
         currentList.focus();
       });
+    } else {
+      currentList.update();
     }
     this.relayout();
   }

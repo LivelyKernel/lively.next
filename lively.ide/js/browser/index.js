@@ -116,7 +116,7 @@ export class DirectoryControls extends Morph {
       [[...Icon.textAttribute('js-square', { ...style, fontColor: COLORS.js, fontWeight: '400' }), '  Javascript'], () => { type = 'js'; }],
       [[...Icon.textAttribute('shapes', { ...style, fontColor: COLORS.cp, fontWeight: '900' }), '  Component'], () => { type = 'cp.js'; }],
       [[...Icon.textAttribute('gear', { ...style, fontColor: COLORS.json, fontWeight: '900' }), ' JSON'], () => { type = 'json'; }],
-      [[...Icon.textAttribute('markdown', { ...style, fontColor: COLORS.md, fontWeight: '400' }), ' Markdown'], () => { type = 'md'; }],
+      [[...Icon.textAttribute('markdown', { ...style, fontColor: COLORS.md, fontWeight: '400' }), ' Markdown'], () => { type = 'md'; }]
     ]);
     await menu.whenFinished();
     if (!type) return;
@@ -312,7 +312,7 @@ export class PackageTreeData extends TreeData {
   displayMarkdown (md, isSelected) {
     return [
       ...Icon.textAttribute('markdown', {
-        fontColor: isSelected ? Color.white : COLORS.md,
+        fontColor: isSelected ? Color.white : COLORS.md
       }),
       ' ' + md, null
     ];
@@ -321,7 +321,7 @@ export class PackageTreeData extends TreeData {
   displayCSS (css, isSelected) {
     return [
       ...Icon.textAttribute('css3-alt', {
-        fontColor: isSelected ? Color.white : COLORS.css,
+        fontColor: isSelected ? Color.white : COLORS.css
       }),
       ' ' + css, null
     ];
@@ -445,7 +445,7 @@ export class PackageTreeData extends TreeData {
     const loadedModules = await this.getLoadedModuleUrls(gitIgnoreExists);
     return files.map(file => {
       if (!this.showHiddenFolders && file.type === 'directory' && file.name[0] === '.') return false;
-      Object.assign(file, loadedModules[file.url] || {});
+      Object.assign(file, loadedModules[file.url] || {}, { isDirty: true });
       return file;
     }).filter(Boolean);
   }
