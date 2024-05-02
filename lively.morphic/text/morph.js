@@ -630,11 +630,15 @@ export class Text extends Morph {
         isDefaultTextStyleProp: true,
         after: ['defaultTextStyle'],
         set (fontFamily) {
-          if (!availableFonts().map(f => sanitizeFont(f.name)).includes(sanitizeFont(fontFamily))) {
-            $world.logError(`Invalid Font Name: ${fontFamily} on morph ${this.name}!`);
+          let sanitizedFontFamily;
+          if (fontFamily in config.fonts.genericFonts) sanitizedFontFamily = sanitizeFont(config.fonts.genericFonts[fontFamily]);
+          else sanitizedFontFamily = sanitizeFont(fontFamily);
+
+          if (!availableFonts().map(f => sanitizeFont(f.name)).includes(sanitizedFontFamily)) {
+            $world.logError(`Invalid Font Name: ${sanitizedFontFamily} on morph ${this.name}!`);
           }
-          this.setProperty('fontFamily', sanitizeFont(fontFamily));
-          document.fonts.load(`${this.fontStyle} ${this.fontWeight} 12px ${fontFamily}`)
+          this.setProperty('fontFamily', sanitizedFontFamily);
+          document.fonts.load(`${this.fontStyle} ${this.fontWeight} 12px ${sanitizedFontFamily}`)
             .then(() => {
               this._fontFamilyToRender = this.fontFamily;
             });
