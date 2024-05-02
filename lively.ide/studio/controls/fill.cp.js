@@ -25,11 +25,18 @@ export class FillControlModel extends ViewModel {
             { target: 'confirm image button', signal: 'onMouseDown', handler: 'confirmImage' },
             { signal: 'onMouseDown', handler: 'onMouseDown' },
             { target: 'remote asset check', signal: 'checked', handler: 'remoteAssetChecked' },
+            { target: 'aspect ratio check', signal: 'checked', handler: 'aspectRatioChecked' },
             { target: 'source description', signal: 'onKeyDown', handler: 'confirmImage' }
           ];
         }
       }
     };
+  }
+
+  aspectRatioChecked (checked) {
+    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+      this.targetMorph.sizeToAspectRatio = checked;
+    });
   }
 
   remoteAssetChecked () {
@@ -173,6 +180,7 @@ export class FillControlModel extends ViewModel {
     const { isImage, fill } = this.targetMorph;
     this.ui.fillColorInput.setColor(fill);
     if (isImage) {
+      this.withoutBindingsDo(() => this.ui.aspectRatioCheck.checked = this.targetMorph.sizeToAspectRatio);
       this.ui.imageContainer.imageUrl = this.targetMorph.imageUrl;
       // fixme: autofit the image preview
     }
@@ -213,7 +221,6 @@ const FillControl = component(PropertySection, {
       justifySubmorphs: 'spaced',
       padding: rect(20, 1, -10, 1)
     }),
-    height: 25,
     submorphs: [
       {
         name: 'bottom wrapper',
@@ -223,7 +230,8 @@ const FillControl = component(PropertySection, {
           axisAlign: 'center',
           padding: rect(12, 10, 18, 0),
           spacing: 5,
-          wrapSubmorphs: true
+          wrapSubmorphs: true,
+          hugContentsVertically: true
         }),
         fill: Color.transparent,
         submorphs: [
@@ -258,7 +266,18 @@ const FillControl = component(PropertySection, {
             name: 'remote asset check',
             extent: pt(56.0000, 10.0000),
             viewModel: {
-              label: 'Use remote image?'
+              label: 'Use remote image'
+            },
+            submorphs: [{
+              name: 'label',
+              fontColor: Color.rgb(180, 224, 232)
+            }]
+          }),
+          part(LabeledCheckbox, {
+            name: 'aspect ratio check',
+            extent: pt(56.0000, 10.0000),
+            viewModel: {
+              label: 'Keep aspect ratio of image'
             },
             submorphs: [{
               name: 'label',
