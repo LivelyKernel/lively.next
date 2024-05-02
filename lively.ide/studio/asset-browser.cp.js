@@ -531,6 +531,7 @@ export const AssetBrowserDark = component({
       })]
     }, {
       name: 'search input wrapper',
+      fill: Color.rgb(66, 73, 73),
       extent: pt(440.0000, 42.6000),
       layout: new TilingLayout({
         axisAlign: 'center',
@@ -549,7 +550,7 @@ export const AssetBrowserDark = component({
         name: 'search icon',
         extent: pt(17.5, 18),
         fontSize: 18,
-        fontColor: Color.rgba(0, 0, 0, 0.5),
+        fontColor: Color.rgb(204, 204, 204),
         cursorWidth: 1.5,
         fixedWidth: true,
         padding: rect(1, 1, 0, 0),
@@ -570,14 +571,14 @@ export const AssetBrowserDark = component({
       }), part(Spinner, {
         name: 'spinner',
         opacity: .7,
-        viewModel: { color: 'black' },
+        viewModel: { color: 'white' },
         visible: false
       }), {
         type: Text,
         name: 'search clear button',
-        nativeCursor: 'pointer',
         visible: false,
-        fontColor: Color.rgba(0, 0, 0, 0.5),
+        nativeCursor: 'pointer',
+        fontColor: Color.rgba(255, 255, 255, 0.5),
         fontSize: 25,
         lineHeight: 2,
         padding: rect(1, 1, 9, 0),
@@ -772,6 +773,19 @@ export const AssetBrowserLight = component(AssetBrowserDark, {
       ]
     },
     {
+      name: 'search input wrapper',
+      fill: Color.rgb(255, 255, 255),
+      submorphs: [{
+        name: 'search icon',
+        fontColor: Color.rgb(102, 102, 102)
+      }, {
+        name: 'spinner',
+        viewModel: { color: 'black' }
+      }, {
+        name: 'search clear button',
+        fontColor: Color.rgba(0, 0, 0, 0.5)
+      }]
+    }, {
       name: 'assets',
       fill: Color.rgb(238, 238, 238)
     }, {
