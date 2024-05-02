@@ -567,7 +567,7 @@ export const AssetBrowserDark = component({
         fill: Color.rgba(255, 255, 255, 0),
         padding: rect(6, 4, -4, 2),
         position: pt(11.9, 3.8),
-        placeholder: 'Search for components...'
+        placeholder: 'Search for assets...'
       }), part(Spinner, {
         name: 'spinner',
         opacity: .7,
