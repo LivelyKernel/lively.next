@@ -372,6 +372,7 @@ class MasterComponentTreeData extends TreeData {
         if (res.url.endsWith('.cp.js') && (await this.getComponentsInModule(res.url)).length === 0) return;
       }
       return {
+        isDirty: true, // ensure proper rendering
         isCollapsed: true,
         name: res.name(),
         size: res.size,
