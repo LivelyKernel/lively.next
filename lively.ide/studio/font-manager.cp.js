@@ -338,8 +338,8 @@ const FontListEntry = component({
       name: 'font edit',
       fontSize: 15,
       textAndAttributes: ['', {
-        fontFamily: 'Font Awesome',
-        fontWeight: '900'
+        fontFamily: 'Font Awesome Brands',
+        fontWeight: '400'
       }, ' ', {}],
       tooltip: 'Configure font properties',
       padding: rect(6, 1, -2, 1),
