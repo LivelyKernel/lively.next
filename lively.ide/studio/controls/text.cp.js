@@ -114,6 +114,13 @@ export class RichTextControlModel extends ViewModel {
           };
         };
 
+        const shortcutFonts = [{ name: 'Mono' }, { name: 'Sans Serif' }, { name: 'Serif' }];
+        const shortcutFontItems = shortcutFonts.map(fontItemCreator);
+        shortcutFontItems[2].style = {
+          borderWidth: { bottom: 5, top: 0, left: 0, right: 0, top: 0 },
+          borderStyle: { bottom: 'double', top: 'none', left: 'none', right: 'none', top: 'none' }
+        };
+
         if ($world.openedProject) {
           const projectFontItems = $world.openedProject.projectFonts.map(fontItemCreator);
           if (projectFontItems.length > 0) {
@@ -122,8 +129,8 @@ export class RichTextControlModel extends ViewModel {
               borderStyle: { bottom: 'double', top: 'none', left: 'none', right: 'none', top: 'none' }
             };
           }
-          this.models.fontFamilySelector.items = projectFontItems.concat(DEFAULT_FONTS.map(fontItemCreator));
-        } else this.models.fontFamilySelector.items = DEFAULT_FONTS.map(fontItemCreator);
+          this.models.fontFamilySelector.items = projectFontItems.concat(shortcutFontItems).concat(DEFAULT_FONTS.map(fontItemCreator));
+        } else this.models.fontFamilySelector.items = shortcutFontItems.concat(DEFAULT_FONTS.map(fontItemCreator));
 
         fontFamilySelector.selection = text.fontFamily?.replace(/^"(.*)"$/, '$1');
         if (text.fontFamilyMixed || this.globalMode && text.hasMixedTextAttributes('fontFamily')) fontFamilySelector.setMixed();
