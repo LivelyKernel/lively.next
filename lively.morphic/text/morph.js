@@ -2793,10 +2793,6 @@ export class Text extends Morph {
 
       if (fixedHeight && fixedWidth) return;
       if (!this.textLayout) return; /* not init'ed yet */
-      let synth;
-      if (this.master && (synth = this.master.synthesizeSubSpec())) {
-        if (synth.extent?.isPoint) return;
-      }
 
       const textBounds = this.textBounds().outsetByRect(this.padding);
       this.withMetaDo({ metaInteraction: true }, () => {
