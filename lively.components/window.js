@@ -240,6 +240,7 @@ export default class Window extends Morph {
     resizer.position = pt(0, 0);
 
     // title
+    title.applyLayoutIfNeeded();
     title.textBounds().width < labelBounds.width - 2 * buttonOffset
       ? (title.center = labelBounds.center())
       : (title.leftCenter = minLabelBounds.leftCenter());
