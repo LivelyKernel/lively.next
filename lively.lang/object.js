@@ -21,13 +21,14 @@ import { deepEquals as arrayDeepEquals, isSubset } from './array.js';
  * @param { object } object - The object to generate a stringified representation for.
  * @returns { string } The stringified, formatted representation of the object.
  */
-function print (object) {
+function print (object, quote = '\"') {
   if (object && Array.isArray(object)) { return '[' + object.map(print) + ']'; }
   if (typeof object !== 'string') { return String(object); }
   let result = String(object);
   result = result.replace(/\n/g, '\\n\\\n');
   result = result.replace(/(")/g, '\\$1');
-  result = '\"' + result + '\"';
+  result = result.replace(/(')/g, '\\$1');
+  result = quote + result + quote;
   return result;
 }
 
@@ -352,7 +353,7 @@ function inspect (object, options, depth) {
     case String:
     case Boolean:
     case RegExp:
-    case Number: return print(object);
+    case Number: return print(object, options.quote || '"');
   }
 
   if (typeof object.serializeExpr === 'function') { return object.serializeExpr(); }

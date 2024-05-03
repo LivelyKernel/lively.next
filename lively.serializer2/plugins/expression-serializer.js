@@ -451,10 +451,11 @@ function handleTextAndAttributes (aMorph, exported, styleProto, path, masterInSc
         delete exported.textAndAttributes;
       }
     }
+
     // all of the above work is then discarded basically...
     if (asExpression && exported.textAndAttributes) {
       // properly serialize some of the attributes such as fontColor
-      exported.textAndAttributes = getArrayExpression('textAndAttributes', aMorph.textAndAttributes.map(ea => typeof ea === 'string' ? JSON.stringify(ea).slice(1, -1) : ea), path, opts);
+      exported.textAndAttributes = getArrayExpression('textAndAttributes', aMorph.textAndAttributes, path, opts);
     }
   }
 
@@ -754,6 +755,7 @@ function asSerializableExpression (aMorph, exported, isRoot, path, masterInScope
   if (isRoot && (!exposeMasterRefs || !aMorph.master)) {
     // replace the nestedExpressions after stringification
     __expr__ = `morph(${obj.inspect(exported, {
+        quote: "'",
         keySorter: (a, b) => {
           if (a === 'name' || a === 'type') return -1;
           if (a === 'submorphs') return 1;
@@ -780,6 +782,7 @@ function asSerializableExpression (aMorph, exported, isRoot, path, masterInScope
           }
           return val;
         },
+        quote: "'",
         keySorter: (a, b) => {
           if (a === 'name' || a === 'type' || a === 'tooltip') return -1;
           else return 0;
