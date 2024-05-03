@@ -227,43 +227,58 @@ const FillControl = component(PropertySection, {
         clipMode: 'hidden',
         extent: pt(235.0000, 62.5000),
         layout: new TilingLayout({
-          axisAlign: 'center',
-          padding: rect(12, 10, 18, 0),
-          spacing: 5,
-          wrapSubmorphs: true,
-          hugContentsVertically: true
+          axis: 'column',
+          hugContentsVertically: true,
+          padding: rect(12, 0, -12, 0),
+          resizePolicies: [['image cell wrapper', {
+            height: 'fixed',
+            width: 'fill'
+          }]],
+          spacing: 7
         }),
         fill: Color.transparent,
         submorphs: [
           {
-            name: 'image cell',
-            fill: Color.transparent,
-            clipMode: 'hidden',
-            extent: pt(22.0000, 22.0000),
-            submorphs: [{
-              type: Image,
-              name: 'image container',
-              reactsToPointer: false,
-              extent: pt(20, 20),
-              naturalExtent: pt(48, 48),
-              position: pt(1, 1)
-            }]
-          },
-          part(TextInput, {
-            name: 'source description',
-            padding: rect(2, 2, 0, 0),
-            width: 130,
-            placeholder: null,
-            textAndAttributes: ['ddf', null]
-          }), part(AddButton, {
-            name: 'confirm image button',
-            tooltip: 'Change image',
-            textAndAttributes: ['', {
-              fontFamily: 'Tabler Icons',
-              fontSize: 18,
-              fontWeight: '900'
-            }]
-          }), part(LabeledCheckbox, {
+            name: 'image cell wrapper',
+            fill: Color.rgba(255, 255, 255, 0),
+            layout: new TilingLayout({
+              align: 'center',
+              axisAlign: 'center',
+              justifySubmorphs: 'spaced',
+              padding: rect(0, 0, 30, 0)
+            }),
+            submorphs: [
+              {
+                name: 'image cell',
+                fill: Color.transparent,
+                clipMode: 'hidden',
+                extent: pt(22.0000, 22.0000),
+                submorphs: [{
+                  type: Image,
+                  name: 'image container',
+                  reactsToPointer: false,
+                  extent: pt(20, 20),
+                  naturalExtent: pt(48, 48),
+                  position: pt(1, 1)
+                }]
+              },
+              part(TextInput, {
+                name: 'source description',
+                padding: rect(2, 2, 0, 0),
+                width: 130,
+                placeholder: null,
+                textAndAttributes: ['ddf', null]
+              }), part(AddButton, {
+                name: 'confirm image button',
+                tooltip: 'Change image',
+                textAndAttributes: ['', {
+                  fontFamily: 'Tabler Icons',
+                  fontSize: 18,
+                  fontWeight: '900'
+                }]
+              })
+            ]
+          }, part(LabeledCheckbox, {
             name: 'remote asset check',
             extent: pt(56.0000, 10.0000),
             viewModel: {
