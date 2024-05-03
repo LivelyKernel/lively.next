@@ -331,6 +331,7 @@ export class LivelyWorld extends World {
   }
 
   scrollWorld (dx, dy) {
+    if (!config.ide.studio.canvasModeEnabled) return;
     this.offsetX += dx;
     this.offsetY += dy;
 
