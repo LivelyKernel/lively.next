@@ -251,6 +251,7 @@ const FillControl = component(PropertySection, {
           },
           part(TextInput, {
             name: 'source description',
+            padding: rect(2, 2, 0, 0),
             width: 130,
             placeholder: null,
             textAndAttributes: ['ddf', null]
