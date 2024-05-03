@@ -1,5 +1,5 @@
 import { pt, rect, Color } from 'lively.graphics';
-import { TilingLayout, Icon, ViewModel, part, add, component } from 'lively.morphic';
+import { TilingLayout, config, Icon, ViewModel, part, add, component } from 'lively.morphic';
 import { obj } from 'lively.lang';
 import {
   EnumSelector,
@@ -316,8 +316,10 @@ export class RichTextControlModel extends ViewModel {
 
   changeFontFamily (fontFamily) {
     if (this.globalMode) this.targetMorph.removePlainTextAttribute('fontFamily');
-    this.confirm('fontFamily', sanitizeFont(fontFamily.name));
-    this.updateFontWeightChoices(fontFamily.name);
+    if (fontFamily.name in config.fonts.genericFonts) fontFamily = sanitizeFont(config.fonts.genericFonts[fontFamily.name]);
+    else fontFamily = sanitizeFont(fontFamily.name);
+    this.confirm('fontFamily', fontFamily);
+    this.updateFontWeightChoices(fontFamily);
   }
 
   updateFontWeightChoices (forFont) {
