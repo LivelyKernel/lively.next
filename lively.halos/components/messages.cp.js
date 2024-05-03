@@ -49,7 +49,6 @@ const StatusMessageDefault = component({
     axis: 'column',
     orderByIndex: true,
     hugContentsVertically: true,
-    renderViaCSS: false,
     reactToSubmorphAnimations: true,
     resizePolicies: [
       ['horizontal float', { height: 'fixed', width: 'fill' }],
@@ -66,7 +65,6 @@ const StatusMessageDefault = component({
       axisAlign: 'center',
       orderByIndex: true,
       padding: rect(10, 5, -5, 0),
-      renderViaCSS: false,
       reactToSubmorphAnimations: true,
       resizePolicies: [
         ['message title', { height: 'fill', width: 'fill' }],
