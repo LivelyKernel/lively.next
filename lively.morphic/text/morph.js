@@ -1186,7 +1186,7 @@ export class Text extends Morph {
 
   onChange (change) {
     const { prop, selector, meta } = change;
-    const wraps = this.lineWrapping;
+    const wraps = this.lineWrapping !== 'no-wrap';
     let textChange = false;
     let viewChange = false;
     let softLayoutChange = false;
@@ -2780,6 +2780,7 @@ export class Text extends Morph {
 
   fit () {
     if (
+      this.env.changeManager.defaultMeta.doNotFit ||
       !this.canBeMeasuredViaCanvas &&
         (this._isDeserializing ||
         !this.world() && !this.document ||
