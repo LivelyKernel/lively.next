@@ -1456,7 +1456,8 @@ export class PolicyApplicator extends StylePolicy {
    * @param { function } cb - The callback function to invoke for each of the morphs in the scope.
    */
   withSubmorphsInScopeDo (parentOfScope, cb) {
-    return parentOfScope.withAllSubmorphsDoExcluding(cb, m => parentOfScope !== m && (m.master || m.isComponent));
+    const topToBottom = parentOfScope.withAllSubmorphsDoExcluding((m) => m, m => parentOfScope !== m && (m.master || m.isComponent));
+    return topToBottom.reverse().map(cb);
   }
 
   get isStaleComponentContext () {
