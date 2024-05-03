@@ -256,7 +256,7 @@ const FillControl = component(PropertySection, {
             textAndAttributes: ['ddf', null]
           }), part(AddButton, {
             name: 'confirm image button',
-            tooltip: 'Add an asset to this project',
+            tooltip: 'Change image',
             textAndAttributes: ['', {
               fontFamily: 'Tabler Icons',
               fontSize: 18,
