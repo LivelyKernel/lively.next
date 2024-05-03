@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* global WeakMap */
 import { arr, obj } from 'lively.lang';
 import { signal } from 'lively.bindings';
@@ -153,9 +154,9 @@ export class ChangeManager {
   }
 
   addMethodCallChangeDoing (spec, morph, doFn) {
-    let { target, selector, args, undo } = spec;
+    let { target, selector, args, undo, meta = {} } = spec;
     if (!undo) undo = () => console.warn(`No undo recorded for ${target}.${selector}`);
-    const change = new MethodCallChange(target, selector, args, undo, this.defaultMeta);
+    const change = new MethodCallChange(target, selector, args, undo, { ...this.defaultMeta, ...meta });
     morph.groupChangesWhile(change, doFn);
     return change;
   }
@@ -246,8 +247,8 @@ export class ChangeManager {
     // based on change listeners
     const id = obj.newKeyIn(this.changeRecorders, optName + '__change_recorder_' + Date.now());
     const listener = optFilter
-      ? change => optFilter(change) && recorder.changes.push(change)
-      : change => recorder.changes.push(change);
+      ? change => optFilter(change) && recorder.changes.push(change) // eslint-disable-line no-use-before-define
+      : change => recorder.changes.push(change); // eslint-disable-line no-use-before-define
     let recorder = this.changeRecorders[id] = { id, filter: optFilter, changes: [], listener };
 
     this.addChangeListener(listener);
