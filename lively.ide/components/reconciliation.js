@@ -1601,10 +1601,15 @@ class TextChangeReconciliation extends PropChangeReconciliation {
         }
         // Count numbers of newlines that come **before** the deletion. As those are two characters in the module source (\n),
         // we need to account for each of them with an additional character.
-        const lineBreakOffset = (stringNode.value.slice(0, manipulationStartIndex).match(/\n/g) || []).length;
+        const lineBreakOffset = (stringNode.value.slice(0, manipulationStartIndex - attributeStart).match(/\n|\"|\'/g) || []).length;
         deletionIndexInSource += lineBreakOffset;
-        const deleteCharacters = JSON.stringify(deletedTextAndAttrs[0]).slice(1, -1).length;
-        this.addChangesToModule(modId, [{ action: 'replace', start: deletionIndexInSource, end: deletionIndexInSource + deleteCharacters, lines: [''] }]);
+        const deleteCharacters = JSON.stringify(deletedTextAndAttrs[0]).slice(1, -1).replaceAll("'", "\\'").length;
+        this.addChangesToModule(modId, [{
+          action: 'replace',
+          start: deletionIndexInSource,
+          end: deletionIndexInSource + deleteCharacters,
+          lines: ['']
+        }]);
         return this;
       }
 
@@ -1612,12 +1617,12 @@ class TextChangeReconciliation extends PropChangeReconciliation {
         let insertionIndexInSource = stringNode.start + manipulationStartIndex - attributeStart + 1;
         // Count numbers of newlines that come **before** the insertion. As those are two characters in the module source (\n),
         // we need to account for each of them with an additional character.
-        const lineBreakOffset = (stringNode.value.slice(0, manipulationStartIndex).match(/\n/g) || []).length;
+        const lineBreakOffset = (stringNode.value.slice(0, manipulationStartIndex - attributeStart).match(/\n|\"|\'/g) || []).length;
         insertionIndexInSource += lineBreakOffset;
         this.addChangesToModule(modId, [{
           action: 'insert',
           start: insertionIndexInSource,
-          lines: [JSON.stringify(attrReplacement[0]).slice(1, -1)]
+          lines: [JSON.stringify(attrReplacement[0]).slice(1, -1).replaceAll("'", "\\'")]
         }]);
         return this;
       }
