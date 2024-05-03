@@ -1554,13 +1554,13 @@ class TextChangeReconciliation extends PropChangeReconciliation {
     return this;
   }
 
-  getAstNodeAndAttributePositionInRange (specNode, range) {
+  getAstNodeAndAttributePositionInRange (specNode, pos, textAndAttributes) {
     const textAttrProp = getProp(specNode, 'textAndAttributes');
     if (!textAttrProp) return {};
-    const { textAndAttributes, textString } = this.target;
-    if (textString.length === 0) return {}; // entire document got deleted
+    if (this.target.textAndAttributes.length !== textAndAttributes.length) return {}; // attributes got added or deleted
+    if (this.target.textString.length === 0) return {}; // entire document got deleted
     let attributeStart = 0; let j = 0;
-    const startIndex = this.target.positionToIndex(range.start);
+    const startIndex = this.target.positionToIndex(pos);
     while (j < textAndAttributes.length && startIndex > attributeStart + textAndAttributes[j].length) {
       attributeStart += textAndAttributes[j].length;
       j += 2;
@@ -1571,8 +1571,9 @@ class TextChangeReconciliation extends PropChangeReconciliation {
 
   patchPropIn (specNode, propName, textAttrsAsExpr) {
     const { modId } = this.getDescriptorContext();
-    const { args, selector, undo } = this.change;
-
+    const { args, selector, undo, meta } = this.change;
+    const { prevTextAndAttributes } = meta;
+    delete meta.prevTextAndAttributes; // delete this huge array in order to save memory
     const defaultPatch = () => {
       this.modulesToLint.add(modId);
       return super.patchPropIn(specNode, propName, textAttrsAsExpr);
@@ -1585,7 +1586,7 @@ class TextChangeReconciliation extends PropChangeReconciliation {
     if (selector === 'replace') {
       const isDeletion = attrReplacement.length === 0 || attrReplacement[0] === '' && attrReplacement[1] === null;
       const isInsertion = !isDeletion && attrReplacement[0].length > 0;
-      const { attributeStart, stringNode } = this.getAstNodeAndAttributePositionInRange(specNode, changedRange);
+      const { attributeStart, stringNode } = this.getAstNodeAndAttributePositionInRange(specNode, isDeletion ? changedRange.end : changedRange.start, prevTextAndAttributes);
 
       if (!stringNode) return defaultPatch();
 
