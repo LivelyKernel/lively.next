@@ -36,6 +36,8 @@ class Layout {
     this._padding = !padding ? Rectangle.inset(0) : typeof padding === 'number' ? Rectangle.inset(padding) : Rectangle.fromLiteral(padding);
   }
 
+  get isLayout () { return true; }
+
   hasEmbeddedContainer () {
     if (this.container?.owner?.isText) return false;
     return this.container.owner?.embeddedMorphMap?.has(this.container);
@@ -105,7 +107,7 @@ class Layout {
   }
 
   equals (otherLayout) {
-    return otherLayout.name() === this.name();
+    return otherLayout?.isLayout && otherLayout.name() === this.name();
   }
 
   get layoutableSubmorphs () {
@@ -340,7 +342,7 @@ export class TilingLayout extends Layout {
   }
 
   equals (other) {
-    return this.__serialize__().__expr__ === (other && other.__serialize__().__expr__);
+    return super.equals(other) && this.__serialize__().__expr__ === (other && other.__serialize__().__expr__);
   }
 
   name () { return 'Tiling'; }
@@ -1624,7 +1626,7 @@ export class ConstraintLayout extends Layout {
   }
 
   equals (other) {
-    return obj.equals(this.getSpec(), other.getSpec());
+    return super.equals(other) && obj.equals(this.getSpec(), other.getSpec());
   }
 
   getSpec () {
