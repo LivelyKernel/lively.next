@@ -455,7 +455,9 @@ function handleTextAndAttributes (aMorph, exported, styleProto, path, masterInSc
     // all of the above work is then discarded basically...
     if (asExpression && exported.textAndAttributes) {
       // properly serialize some of the attributes such as fontColor
-      exported.textAndAttributes = getArrayExpression('textAndAttributes', aMorph.textAndAttributes, path, opts);
+      exported.textAndAttributes = getArrayExpression('textAndAttributes', aMorph.textAndAttributes.map(attr => {
+        return typeof attr === 'string' ? attr.replaceAll('\n', '\\n') : attr;
+      }), path, opts);
     }
   }
 
