@@ -276,4 +276,4 @@ const SystemWindowDark = component(DarkWindow, {
   master: { states: { inactive: DarkWindowInactive } }
 });
 
-export { DefaultWindow, DarkWindow, DefaultWindowInactive, DarkWindowInactive, SystemWindow };
+export { DefaultWindow, DarkWindow, DefaultWindowInactive, DarkWindowInactive, SystemWindow, SystemWindowDark };
