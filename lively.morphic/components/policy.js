@@ -561,6 +561,7 @@ export class StylePolicy {
     } = this;
     const bpStore = this._breakpointStore;
     if (!arr.compact([auto, click, hover, ...obj.values(states)]).every(c => c[Symbol.for('lively-module-meta')])) return;
+    if (this.statePartitionedInline) return;
     const masters = [];
     const bindings = {};
     if (auto) masters.push(['auto', auto.__serialize__()]);
