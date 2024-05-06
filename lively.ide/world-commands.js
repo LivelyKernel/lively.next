@@ -214,7 +214,7 @@ const commands = [
         (opts.prependItems || []).concat(items),
         {
           historyId: 'lively.morphic-select morph',
-          onSelection: sel => {
+          onSelection: function (sel) {
             if (this.lastSelectionHalo) this.lastSelectionHalo.remove();
             if (sel && sel.show && lastSelected !== sel) {
               this.lastSelectionHalo = sel.show();
