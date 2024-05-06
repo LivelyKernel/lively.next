@@ -781,7 +781,7 @@ export class Line extends TreeNode {
     this._textAttributes = null;
     this.width = spec.width;
     this.height = spec.height;
-    this.hasEstimatedExtent = false;
+    this.hasEstimatedExtent = true;
     this.modeState = null;
 
     this.lineNeedsRerender = true;
