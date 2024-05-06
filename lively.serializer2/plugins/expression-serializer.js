@@ -813,7 +813,7 @@ function asSerializableExpression (aMorph, exported, isRoot, path, masterInScope
   }
   if (__expr__) {
     for (const exprId in nestedExpressions) {
-      __expr__ = __expr__.replace('\"' + exprId + '\"', nestedExpressions[exprId].__expr__);
+      __expr__ = __expr__.replace('\'' + exprId + '\'', nestedExpressions[exprId].__expr__);
       mergeBindings(nestedExpressions[exprId].bindings, bindings);
     }
     if (!isRoot && exposeMasterRefs && aMorph.master) {
