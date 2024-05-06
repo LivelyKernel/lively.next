@@ -544,7 +544,7 @@ export class StylePolicy {
       _localComponentStates: states
     } = this;
 
-    const breakpoints = this.getBreakpointStore()?.getConfig();
+    const breakpoints = this._breakpointStore?.getConfig();
     const spec = {};
     if (auto) spec.auto = auto;
     if (click) spec.click = click;
