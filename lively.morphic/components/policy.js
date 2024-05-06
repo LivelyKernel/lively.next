@@ -559,7 +559,7 @@ export class StylePolicy {
       _autoMaster: auto, _clickMaster: click, _hoverMaster: hover,
       _localComponentStates: states
     } = this;
-    const bpStore = this.getBreakpointStore();
+    const bpStore = this._breakpointStore;
     if (!arr.compact([auto, click, hover, ...obj.values(states)]).every(c => c[Symbol.for('lively-module-meta')])) return;
     const masters = [];
     const bindings = {};
