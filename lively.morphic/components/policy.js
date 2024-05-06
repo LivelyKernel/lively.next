@@ -768,7 +768,7 @@ export class StylePolicy {
         // handle viewModel
         const parentViewModel = parentSpec.spec?.viewModel || parentSpec.viewModel;
         if (parentViewModel && localSpec.viewModel) {
-          localSpec.viewModel = obj.deepMerge(parentViewModel, localSpec.viewModel);
+          parentSpec.viewModel = obj.deepMerge(parentViewModel, localSpec.viewModel);
         }
 
         // handle text and attribute merging
