@@ -216,7 +216,7 @@ describe('object', function () {
       expect(inspect(obj1)).to.equal(
         '{\n' +
          '  bar: [2, {\n' +
-         "      x: \"'test'\"\n" +
+         "      x: \"\\'test\\'\"\n" +
          '    }],\n' +
          '  baz: "--baz getter--",\n' +
          '  foo: 23,\n' +
