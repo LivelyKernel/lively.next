@@ -946,7 +946,7 @@ export class ComponentBrowserModel extends ViewModel {
     super.onRefresh(change);
     this.ui.behaviorToggle.checked = this.importAlive;
     this.handleColumnViewVisibility();
-    this.ui.editButton.visible = !this.selectionMode && config.ide.studio.componentEditViaComponentBrowser;
+    this.ui.editButton.visible = !this.isPopupModel && !this.selectionMode && config.ide.studio.componentEditViaComponentBrowser;
     this.ui.behaviorToggle.visible = !this.selectionMode;
     this.ui.importButton.visible = !this.selectionMode;
     this.ui.selectionButton.visible = this.selectionMode;
@@ -971,7 +971,7 @@ export class ComponentBrowserModel extends ViewModel {
   async activate (pos = false) {
     this._refreshOnLoaded = subscribe('lively.modules/moduleloaded', () => this.refresh(), System);
     this._refreshOnChanged = subscribe('lively.modules/modulechanged', () => this.refresh(), System);
-    this.ui.editButton.visible = config.ide.studio.componentEditViaComponentBrowser;
+    this.ui.editButton.visible = !this.isPopupModel && config.ide.studio.componentEditViaComponentBrowser;
     this._promise = promise.deferred();
     this.ui.searchInput.focus();
     this.ensureButtonControls();
@@ -1349,6 +1349,10 @@ export class ComponentBrowserModel extends ViewModel {
 }
 
 class ComponentBrowserPopupModel extends ComponentBrowserModel {
+  get isPopupModel () {
+    return true;
+  }
+
   get bindings () {
     return [
       ...super.bindings,
@@ -1820,6 +1824,7 @@ const ComponentBrowserPopupDark = component(ComponentBrowserPopup, {
         },
         {
           name: 'behavior toggle',
+          visible: false,
           master: LabeledCheckbox,
           submorphs: [{
             name: 'label',
@@ -1829,6 +1834,7 @@ const ComponentBrowserPopupDark = component(ComponentBrowserPopup, {
         }, {
           name: 'edit button',
           master: ButtonDarkDefault,
+          visible: false,
           submorphs: [{
             name: 'label',
             fontColor: Color.rgb(255, 255, 255),
@@ -1843,6 +1849,7 @@ const ComponentBrowserPopupDark = component(ComponentBrowserPopup, {
           }]
         }, {
           name: 'import button',
+          visible: false,
           master: ButtonDarkDefault,
           submorphs: [{
             name: 'label',
