@@ -536,7 +536,6 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
   for (const name in morph.spec(skipUnchangedFromDefault)) {
     let v = morph[name];
     let styleProtoVal = styleProto?.[name];
-    const isSkipped = skipAttributes.includes(name);
 
     if (styleProtoVal?.isDefaultValue) styleProtoVal = styleProtoVal.value;
     if (name !== 'name' && skipUnchangedFromMaster && obj.equals(v, styleProtoVal)) continue;
@@ -568,7 +567,7 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
       continue;
     }
     if (name !== 'name' && styleProto && obj.equals(v, styleProtoVal)) continue;
-    if (!isSkipped && name === 'master') {
+    if (name === 'master') {
       // this should only print masters that are actually overridden or have been
       // applied to morphs that previously did not have any masters (after the fact application)
       // The first case is easily detectable. The second case is tricky, since that is not
@@ -589,7 +588,7 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
       if (masterInScope?.isResizedByLayout(morph)) continue;
     }
     if (name === 'submorphs' || name === 'type') continue;
-    if (isSkipped || name.startsWith('_')) continue;
+    if (skipAttributes.includes(name) || name.startsWith('_')) continue;
     if (name === 'metadata' && Path('commit.__serialize__').get(val)) {
       exported[name] = { ...val, commit: getExpression(name + '.commit', val.commit, opts) };
       continue;
