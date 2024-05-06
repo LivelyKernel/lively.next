@@ -1655,6 +1655,49 @@ export default class Renderer {
   }
 
   /**
+   * Measures the lines that are visible via canvas and updates their extent
+   * accordingly. The visibility of each line is computed based on the render state and
+   * extent of the morph.
+   * @param {type} morph - The morph to measure the lines of.
+   */
+  measureVisibleLinesViaCanvas (morph) {
+    const { firstVisibleRow } = morph.renderingState;
+    let currentHeight = 0;
+    for (let line of morph.document.lines.slice(firstVisibleRow)) {
+      if (line.hasEstimatedExtent) {
+        this.updateLineHeightOfNode(morph, line);
+      }
+      currentHeight += line.height;
+      if (currentHeight > morph.height) break;
+    }
+  }
+
+  /**
+   * Measure the lines that have actually been rendered by gathering
+   * the bounds information from the DOM nodes themselves.
+   * Since large text morphs usually only render a subset of all lines
+   * the consideration of ONLY rendered lines is an effective filter
+   * for minimizing the amount of measuring in order to keep the
+   * performance impact low.
+   * @param {Morph} morph - The morph to measure the lines of.
+   * @param { DOMNode } textNode - The text layer node of the rendered text morph.
+   * @param { DOMNode } morphNode - The morph node of the rendered text morph.
+   */
+  measureRenderedLinesViaDOM (morph, textNode, morphNode) {
+    let moveTextNodeBack = false;
+    let prevParent = null;
+    if (!morphNode.isConnected) {
+      moveTextNodeBack = true;
+      prevParent = textNode.parentNode;
+      this.ensurePlaceholder();
+      this.placeholder.className = 'Text';
+      this.placeholder.appendChild(textNode);
+    }
+    this.updateExtentsOfLines(textNode, morph); // if canvas is supported, we can perform that beforehand
+    if (moveTextNodeBack) prevParent.insertBefore(textNode, prevParent.firstChild);
+  }
+
+  /**
    * Takes care of creating and/or updating the necessary nodes to display a Texts text.
    * Reconciles LineNodes when e.g. a new Line is inserted between already existing ones and takes care of updating existing lines that have been changed.
    * @param {Node} node - The DOM Node of `morph`
@@ -1664,6 +1707,12 @@ export default class Renderer {
     const textNode = morph.renderingState.textLayer;
     if (!textNode) return;
     textNode.style['font-kerning'] = morph.document ? 'none' : 'auto';
+    const canvasSupported = morph.env.fontMetric._domMeasure.canBeMeasuredViaCanvas(morph);
+
+    if (morph.document && canvasSupported) {
+      this.measureVisibleLinesViaCanvas(morph);
+    }
+
     if (!morph.document) {
       textNode.replaceChildren(...this.renderWholeText(morph));
     } else {
@@ -1704,18 +1753,9 @@ export default class Renderer {
       }
       morph.renderingState.renderedLines = linesToRender.map(l => ({ row: l.row }));
     }
-    if (morph.document) {
-      let moveTextNodeBack = false;
-      let prevParent = null;
-      if (!node.isConnected) {
-        moveTextNodeBack = true;
-        prevParent = textNode.parentNode;
-        this.ensurePlaceholder();
-        this.placeholder.className = 'Text';
-        this.placeholder.appendChild(textNode);
-      }
-      this.updateExtentsOfLines(textNode, morph);
-      if (moveTextNodeBack) prevParent.insertBefore(textNode, prevParent.firstChild);
+
+    if (morph.document && !canvasSupported) {
+      this.measureRenderedLinesViaDOM(morph, textNode, node);
     }
 
     let inlineMorphUpdated = false;
