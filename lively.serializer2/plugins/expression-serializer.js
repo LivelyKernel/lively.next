@@ -585,6 +585,7 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
     }
     if (name === 'extent') {
       if (morph.isText && !morph.fixedWidth && !morph.fixedWidth) continue;
+      if (morph.layout?.hugContentsVertically && morph.layout?.hugContentsHorizontally) continue;
       if (masterInScope?.isResizedByLayout(morph)) continue;
     }
     if (name === 'submorphs' || name === 'type') continue;
