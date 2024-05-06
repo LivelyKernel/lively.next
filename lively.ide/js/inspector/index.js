@@ -813,7 +813,7 @@ export class Inspector extends ViewModel {
     this.closeOpenWidget();
     let newTarget;
     if (this.view.env.eventDispatcher.isKeyPressed('Shift')) {
-      [newTarget] = await $world.execCommand('select morph', { justReturn: true });
+      [newTarget] = await $world.execCommand('select morph', { filterFn: (m) => $world.morphsInWorldWithSubmorphs.concat([$world]).includes(m), justReturn: true });
     } else {
       this.toggleSelectionInstructions(true);
       newTarget = await InteractiveMorphSelector.selectMorph();
