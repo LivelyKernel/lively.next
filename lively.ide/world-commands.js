@@ -199,7 +199,7 @@ const commands = [
                     fontWeight: isObjectPackage ? 'bolder' : 'normal',
                     fontStyle: isObjectPackage ? 'normal' : 'italic',
                     fontFamily: 'Inconsolata',
-                    fontSize: 16
+                    fontSize: 14
                   }, isObjectPackage ? ' [Object Class]' : '', {
                     opacity: 0.5
                   }],
