@@ -364,7 +364,7 @@ export default class Window extends Morph {
   }
 
   resizeBy (dist) {
-    super.resizeBy(dist);
+    super.resizeBy(dist.roundTo(1));
     this.relayoutWindowControls();
   }
 
@@ -387,7 +387,7 @@ export default class Window extends Morph {
       delta.y * y,
       delta.x * width,
       delta.y * height);
-    this.setBounds(this.startBounds.insetByRect(offsetRect));
+    this.setBounds(this.startBounds.insetByRect(offsetRect).roundTo(1));
 
     this.relayoutResizer();
   }
