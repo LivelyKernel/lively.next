@@ -125,7 +125,7 @@ export class ListItemMorph extends Label {
       // this is faster:
       if (item.autoFit) itemMorph.width = goalWidth;
       const width = itemMorph ? Math.max(itemMorph.width, goalWidth) : goalWidth;
-      const height = itemHeight + this.borderWidth.bottom + this.borderWidth.top; // itemMorph ? Math.max(itemMorph.height, itemHeight) : itemHeight;
+      const height = itemHeight + this.borderWidth.bottom + this.borderWidth.top;
       this.extent = pt(width, height);
     }
 
@@ -780,7 +780,8 @@ export class List extends Morph {
 
       itemMorphs = [...lower, ...rest, ...upper];
 
-      let borderOffsetForHeight = 0;
+      // retrieve border offset of item(s) that are already scrolled out of view but still affect the positioning of subsequent item morphs
+      let borderOffsetForHeight = arr.sum(items.slice(0, firstItemIndex).map(item => (item.style?.borderWidth?.bottom || 0) + (item.style?.borderWidth?.top || 0)));
       for (let i = 0; i < lastItemIndex - firstItemIndex; i++) {
         const itemIndex = firstItemIndex + i; // wrap around
         const item = items[itemIndex];
