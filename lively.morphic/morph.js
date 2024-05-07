@@ -581,7 +581,9 @@ export class Morph {
 
       scrollbarOffset: {
         group: 'styling',
-        defaultValue: pt(15, 15)
+        get () {
+          return pt(config.scrollbarOffset, config.scrollbarOffset);
+        }
       },
 
       styleClasses: {

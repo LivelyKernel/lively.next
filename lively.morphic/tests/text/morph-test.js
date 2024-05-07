@@ -290,9 +290,9 @@ describe('scroll', () => {
       extent: pt(100, 2 * lineHeight),
       textString: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].join('\n')
     });
-    expect(sut.scrollExtent.x).equals(100 + 15, 'scrollExtent x not as expected');
+    expect(sut.scrollExtent.x).equals(100 + sut.scrollbarOffset.x, 'scrollExtent x not as expected');
     expect(sut.scrollExtent.y).closeTo(
-      sut.document.lines.length * lineHeight + padTop + padBot + 15, 3,
+      sut.document.lines.length * lineHeight + padTop + padBot + sut.scrollbarOffset.x, 3,
       'scrollExtent y not as expected');
     sut.cursorPosition = { column: 0, row: 3 };
     sut.scrollCursorIntoView();
