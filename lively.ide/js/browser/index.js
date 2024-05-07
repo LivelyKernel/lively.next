@@ -1435,6 +1435,7 @@ export class BrowserModel extends ViewModel {
           m.isLoaded = true;
           await this.updateModuleList();
           this.state.moduleUpdateInProgress = null;
+          this.state.selectedModule = m;
           await this.selectModuleNamed(m.url);
           m = this.selectedModule;
           if (deferred) { this.state.moduleUpdateInProgress = deferred.promise; }
@@ -1452,6 +1453,7 @@ export class BrowserModel extends ViewModel {
 
       m.isLoaded = true;
       this.updateModuleList();
+      this.state.selectedModule = m;
     } finally {
       this.reviveFrozenModuleIfNeeded();
       if (deferred) {
