@@ -1001,23 +1001,18 @@ export class TilingLayout extends Layout {
     } else {
       margin.offset = container.borderWidthTop + container.borderWidthBottom;
     }
+    if (container.verticalScrollbarVisible || container.horizontalScrollbarVisible) margin.offset = margin.offset + container.scrollbarOffset.x;
   }
 
   computeOffset () {
     const { container, axis } = this;
     const offset = { top: 0, bottom: 0, left: 0, right: 0 };
-    const isVertical = axis === 'column';
-    if (isVertical) {
-      offset.top = container.borderWidthTop;
-      offset.bottom = container.borderWidthBottom;
-      offset.left = container.borderWidthLeft;
-      offset.right = container.borderWidthRight;
-    } else {
-      offset.left = container.borderWidthLeft;
-      offset.right = container.borderWidthRight;
-      offset.top = container.borderWidthTop;
-      offset.bottom = container.borderWidthBottom;
-    }
+
+    offset.top = container.borderWidthTop;
+    offset.bottom = container.borderWidthBottom;
+    offset.left = container.borderWidthLeft;
+    offset.right = container.borderWidthRight;
+
     return offset;
   }
 
