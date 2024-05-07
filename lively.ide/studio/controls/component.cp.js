@@ -263,7 +263,7 @@ export class ComponentControlModel extends PropertySectionModel {
     const { autoComponentSelection, hoverComponentSelection, clickComponentSelection } = this.ui;
     const pos = this.targetMorph.position;
     // the parent is always preserved, since we can not alter the structural inheritance here
-    if (this.targetMorph.master) {
+    if (this.targetMorph.master && !this.targetMorph.master.statePartitionedInline) {
       const previousMasterConfig = this.targetMorph.master.getConfig() || {};
       const bps = previousMasterConfig.breakpoints;
       if (bps) bps[0][1] = autoComponentSelection.component;
