@@ -41,8 +41,23 @@ function parseURLQuery () {
   return options;
 }
 
+function detectScrollbarWidth () {
+  if (typeof document === 'undefined') return 0; // run outside of browser
+  let scrollDiv = document.createElement('div');
+  scrollDiv.className = 'scrollbar-measure';
+  document.body.appendChild(scrollDiv);
+
+  // Get the scrollbar width
+  let scrollbarWidth = scrollDiv.offsetWidth - scrollDiv.clientWidth;
+
+  // Delete the DIV
+  document.body.removeChild(scrollDiv);
+  return scrollbarWidth;
+}
+
 const config = {
   hideScrollbarsInWorldBrowser: false,
+  scrollbarOffset: detectScrollbarWidth(),
   onloadURLQuery: parseURLQuery(),
 
   /* browser support 2 ways to render shadows:

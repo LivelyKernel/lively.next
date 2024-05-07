@@ -1,9 +1,11 @@
 /* global it, describe, beforeEach, afterEach,System */
 import { createDOMEnvironment } from '../rendering/dom-helper.js';
-import { morph, MorphicEnv } from '../index.js';
+import { morph, config, MorphicEnv } from '../index.js';
 import { expect } from 'mocha-es6';
 import { pt, Color, rect } from 'lively.graphics';
 import { num, promise } from 'lively.lang';
+
+const HTMLScrollbarOffset = pt(config.scrollbarOffset, config.scrollbarOffset);
 
 let env;
 let world, submorph1, submorph2, submorph3, image, ellipse;
@@ -95,7 +97,6 @@ describe('rendering', function () {
 
   describe('scroll', () => {
     it('scroll extent', () => {
-      const HTMLScrollbarOffset = pt(15, 15);
       expect(submorph1.scrollExtent).equals(pt(100, 100).addPt(HTMLScrollbarOffset), '1');
       submorph1.clipMode = 'auto';
       expect(submorph1.scrollExtent).equals(pt(100, 100).addPt(HTMLScrollbarOffset), '2');
@@ -106,7 +107,6 @@ describe('rendering', function () {
     });
 
     it('scroll is bounded', () => {
-      const HTMLScrollbarOffset = pt(15, 15);
       submorph1.clipMode = 'auto';
       submorph2.extent = pt(200, 200);
       submorph1.scroll = pt(100000, 100000);
