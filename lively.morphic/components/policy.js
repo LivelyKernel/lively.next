@@ -1430,10 +1430,11 @@ export class PolicyApplicator extends StylePolicy {
       }
 
       // FIXME: other special cases??
-      if (morphToBeStyled.isText &&
-          !morphToBeStyled.fixedWidth &&
-          !morphToBeStyled.fixedHeight &&
-          propName === 'extent') continue;
+      if (morphToBeStyled.isText && propName === 'extent') {
+        if (!morphToBeStyled.fixedWidth && !morphToBeStyled.fixedHeight) continue;
+        if (!morphToBeStyled.fixedWidth) propValue = propValue.withX(morphToBeStyled.width);
+        if (!morphToBeStyled.fixedHeight) propValue = propValue.withY(morphToBeStyled.height);
+      }
 
       if (['border', 'borderTop', 'borderBottom', 'borderRight', 'borderLeft'].includes(propName)) continue; // handled by sub props;
 
