@@ -1415,7 +1415,7 @@ export class BrowserModel extends ViewModel {
     try {
       const system = this.systemInterface;
 
-      // fixme: actuall perform that in the conext of the module
+      // fixme: actually perform that in the context of the module
       if (this.isTestModule(await system.moduleRead(m.url))) {
         await this.loadES6Mocha();
       }
