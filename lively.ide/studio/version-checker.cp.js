@@ -75,6 +75,9 @@ class VersionChecker extends Morph {
   }
 
   async updateLively () {
+    const proceedTpUpdate = await $world.confirm('Update lively now? This might take a few minutes.');
+    if (!proceedTpUpdate) return;
+
     $world.withAllSubmorphsDo(m => m.blur = 3);
     let li = $world.showLoadingIndicatorFor($world, 'Updating lively');
 
