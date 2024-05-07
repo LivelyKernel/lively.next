@@ -2491,7 +2491,7 @@ export class BrowserModel extends ViewModel {
     const items = left.concat(right).map(loc => ({
       isListItem: true,
       string: loc.module
-        ? loc.module.nameInPackage
+        ? (loc.package ? loc.package.name + ' - ' + loc.module.nameInPackage : loc.module.nameInPackage) 
         : loc.package
           ? loc.package.name || loc.package.address
           : 'strange location',
