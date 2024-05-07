@@ -44,7 +44,7 @@ class BreakpointEntryModel extends ViewModel {
   }
 
   getBreakpointSpec () {
-    const store = this.targetStylePolicy?.getBreakpointStore();
+    const store = !this.targetStylePolicy?.statePartitionedInline && this.targetStylePolicy?.getBreakpointStore();
     if (!store) {
       return;
     }
@@ -53,7 +53,7 @@ class BreakpointEntryModel extends ViewModel {
 
   update (targetMorph) {
     this.targetMorph = targetMorph;
-    const store = this.targetStylePolicy?.getBreakpointStore();
+    const store = !this.targetStylePolicy?.statePartitionedInline && this.targetStylePolicy?.getBreakpointStore();
     if (!store) return;
     const { horizontalPin, verticalPin, configureComponentButton } = this.ui;
     const {
@@ -289,7 +289,7 @@ export class ResponsiveControlModel extends PropertySectionModel {
     let bpStore;
 
     while (true) {
-      bpStore = stylePolicy?.getBreakpointStore();
+      bpStore = !stylePolicy?.statePartitionedInline && stylePolicy?.getBreakpointStore();
       if (bpStore) {
         break;
       }
