@@ -994,6 +994,7 @@ export class ComponentBrowserModel extends ViewModel {
       withAllViewModelsDo(importedComponent, m => m.viewModel.detach());
     }
     importedComponent.openInWorld();
+    importedComponent.world().showHaloFor(importedComponent);
   }
 
   chooseComponent () {
