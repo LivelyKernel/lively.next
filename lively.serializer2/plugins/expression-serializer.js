@@ -575,7 +575,7 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
       // applied to morphs that previously did not have any masters (after the fact application)
       // The first case is easily detectable. The second case is tricky, since that is not
       // reified in the data structur of style policies as of now
-      let val = handleStylePolicy(morph.master, opts);
+      let val = morph.master && handleStylePolicy(morph.master, opts);
       if (val) exported.master = val;
       continue;
     }
