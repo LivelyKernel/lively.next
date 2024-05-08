@@ -771,7 +771,13 @@ export function charBoundsOfLineViaCanvas (line, textMorph, fontMetric, measure)
       if (obj.isString(attrs.fontSize) && attrs.fontSize.endsWith('%')) {
         attrs.fontSize = Number.parseInt(attrs.fontSize) / 100 * textMorph.fontSize;
       }
+      const isMonospace = fontMetric.isProportional(attrs.fontFamily || textMorph.fontFamily);
       const style = { ...textMorph.defaultTextStyle, ...attrs };
+      // For some reason monospaced fonts loose their monospaced-ness when measuring them on the canvas with a non default text style applied such as italics.
+      if (isMonospace) {
+        delete attrs.fontStyle;
+        delete style.fontStyle;
+      }
       measure.measureCharWidthsInCanvas(textMorph, textOrMorph, attrs, measuringState).forEach((res) => {
         characterBounds.push([fontMetric.defaultLineHeight(style), res]);
       });
