@@ -987,7 +987,7 @@ export class PathIndicator extends Morph {
     if (this._currentTransition) {
       this._nextTransition = transition;
       await this._currentTransition; // in the meantime multiple next transitions may pour in
-      this.requestTransition(this._nextTransition); // just animate the last transition that poured in
+      this._nextTransition && this.requestTransition(this._nextTransition); // just animate the last transition that poured in
       this._nextTransition = null;
     } else {
       this._currentTransition = transition();
