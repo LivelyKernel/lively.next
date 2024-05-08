@@ -1435,7 +1435,6 @@ export class BrowserModel extends ViewModel {
           m.isLoaded = true;
           await this.updateModuleList();
           this.state.moduleUpdateInProgress = null;
-          this.state.selectedModule = m;
           await this.selectModuleNamed(m.url);
           m = this.selectedModule;
           if (deferred) { this.state.moduleUpdateInProgress = deferred.promise; }
@@ -2491,7 +2490,7 @@ export class BrowserModel extends ViewModel {
     const items = left.concat(right).map(loc => ({
       isListItem: true,
       string: loc.module
-        ? (loc.package ? loc.package.name + ' - ' + loc.module.nameInPackage : loc.module.nameInPackage) 
+        ? (loc.package ? loc.package.name + ' - ' + loc.module.nameInPackage : loc.module.nameInPackage)
         : loc.package
           ? loc.package.name || loc.package.address
           : 'strange location',
