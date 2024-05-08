@@ -790,8 +790,11 @@ function asSerializableExpression (aMorph, exported, isRoot, path, masterInScope
           else return 0;
         }
       });
-      if (aMorph.master?.parent) {
-        const { exportedName: masterComponentName, moduleId: modulePath, path: relativePath } = aMorph.master.parent[Symbol.for('lively-module-meta')];
+      const parentMeta = aMorph.master?.parent?.[Symbol.for('lively-module-meta')];
+      if (parentMeta) {
+        // if the parent of the master is already a policy that can be found via source
+        // we convert the expression to a derivation expression.
+        const { exportedName: masterComponentName, moduleId: modulePath, path: relativePath } = parentMeta;
         if (relativePath.length === 0) {
           __expr__ = aMorph.master._isOverridden
             ? `morph(${__expr__})`
