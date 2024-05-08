@@ -103,6 +103,7 @@ export class Morph {
         before: ['metadata'],
         after: ['clipMode'],
         group: 'core',
+        defaultValue: null,
         set (args) {
           args = args ? PolicyApplicator.for(this, args) : (args === false ? false : null);
           this.setProperty('master', args);

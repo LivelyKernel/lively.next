@@ -620,9 +620,9 @@ describe('spec based components', () => {
       const m = part(e1);
       const e2Policy = new PolicyApplicator({}, e2);
       const spec = e2Policy.asBuildSpec();
-      expect(m.get('bob').master).to.be.undefined;
+      expect(m.get('bob').master).to.be.null;
       e2Policy.apply(m, true);
-      expect(m.get('bob').master).not.to.be.undefined;
+      expect(m.get('bob').master).not.to.be.null;
       expect(m.get('bob').master.parent).to.eql(spec.submorphs[1].master.parent, 'point to the same style policy');
       expect(m.master).not.to.eql(spec.master, 'does not set the root master automatically (still e1)');
     });
@@ -778,10 +778,10 @@ describe('components', () => {
 
     t1c.master.apply(t1c, true);
 
-    expect(T1.stylePolicy._autoMaster).not.to.be.undefined;
-    expect(t1c.get('bob').master).not.to.be.undefined;
+    expect(T1.stylePolicy._autoMaster).not.to.be.null;
+    expect(t1c.get('bob').master).not.to.be.null;
     expect(t1c.get('bob').fill).to.eql(Color.red);
-    expect(t1c.get('bob').master.synthesizeSubSpec(null).fill).not.to.be.undefined;
+    expect(t1c.get('bob').master.synthesizeSubSpec(null).fill).not.to.be.null;
     expect(t1c.get('alice').fill).to.eql(Color.blue);
 
     let inst = part(T1);
