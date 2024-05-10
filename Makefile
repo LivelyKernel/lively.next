@@ -1,4 +1,4 @@
-.PHONY: clear-esm-cache clear-headless-cache start install hooks loading-screen landing-page clear-freezer-dir
+.PHONY: clear-esm-cache clear-headless-cache start install hooks loading-screen landing-page clear-freezer-dir clean clean-install
 clear-esm-cache:
 	rm -rf esm_cache
 	mkdir esm_cache
@@ -30,3 +30,11 @@ clear-freezer-dir:
 
 hooks:
 	git config --local core.hooksPath $(shell pwd)/.githooks
+
+clean: clear-freezer-dir clear-headless-cache clear-esm-cache
+	rm -rf lively.server/.module_cache
+	rm -rf custom-npm-modules/*
+	rm -rf lively.next-node_modules/*
+
+clean-install: clean
+	./install.sh
