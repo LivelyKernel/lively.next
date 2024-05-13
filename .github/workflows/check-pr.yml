@@ -30,7 +30,6 @@ jobs:
         with:
           path: | 
             lively.next-node_modules/
-            .puppeteer-browser-cache/
           key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json') }}
       - name: Install `lively.next`
         run: |
@@ -44,7 +43,6 @@ jobs:
         with:
           path: |
             lively.next-node_modules/
-            .puppeteer-browser-cache/           
           key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json') }}
       - name: Check if Bundled Artifacts are up to Date 
         run:  ./scripts/check-build-status.py
