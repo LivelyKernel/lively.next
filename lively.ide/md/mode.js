@@ -182,7 +182,6 @@ defineMode('markdown', function (cmCfg, modeCfg) {
       state.f = state.inline;
       return getType(state);
     } else if (stream.eat('>')) {
-      debugger;
       state.quote = sol ? 1 : state.quote + 1;
       if (modeCfg.highlightFormatting) state.formatting = 'quote';
       stream.eatSpace();
@@ -743,7 +742,7 @@ defineMode('markdown', function (cmCfg, modeCfg) {
 
         if (stream.match(/^\s*$/, true)) {
           blankLine(state);
-          return null;
+          return state;
         }
 
         state.prevLine = state.thisLine;
