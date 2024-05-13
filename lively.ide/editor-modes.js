@@ -183,13 +183,16 @@ function tokenizeLines (mode, lines, _startState, newLineFn, recordFn) {
 
 function tokenizeLine (mode, line, state, recordFn) {
   let { text } = line;
-  if (!text) return state;
   let stream = new StringStream(text, 2/* indent...FIXME */);
   state = line.modeState = typeof mode.copyState === 'function'
     ? mode.copyState(state)
     : copyState(mode, state);
   let tokens = []; let prevLine = line.prevLine();
   state._string = text;
+  if (text === '' && mode.blankLine){ 
+    mode.blankLine(state);
+    return state;
+  }
   while (!stream.eol()) {
     let name = mode.token(stream, state);
     recordFn(name, state, stream.start, stream.pos, stream, line, mode);
