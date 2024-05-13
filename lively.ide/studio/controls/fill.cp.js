@@ -113,7 +113,7 @@ export class FillControlModel extends ViewModel {
     this.targetMorph = target;
     this.ui.imageControl.visible = !!target.isImage;
     if (target.isImage) {
-      this.updateImageInfo(target.imageUrl, false);
+      this.updateImageInfo(target.imageUrl);
     }
     this.models.fillColorInput.targetMorph = target;
     this.update();
