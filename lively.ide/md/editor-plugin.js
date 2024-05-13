@@ -193,7 +193,9 @@ export default class MarkdownEditorPlugin extends CodeMirrorEnabledEditorPlugin 
         for (let i = 0; i < lineTokens.length; i = i + 5) {
           let startColumn = lineTokens[i];
           let endColumn = lineTokens[i + 1];
-          let tokens = (lineTokens[i + 2] || '').split(' ');
+          let tokens = lineTokens[i + 2];
+          tokens = tokens?.split ? tokens : '';
+          tokens = tokens.split(' ');
           // style = theme[tokens[0]] || theme.default;
 
           let style;
