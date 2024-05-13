@@ -656,7 +656,7 @@ export class FieldPickerModel extends ViewModel {
           const { width, height } = this.view;
           const s = this.saturation; const b = this.brightness;
           if (s === undefined || b === undefined) return pt(0, 0);
-          return pt(num.s, height * (1 - b));
+          return pt(width * s, height * (1 - b));
         },
         set ({ x: light, y: dark }) {
           // translate the pos to a new hsv value
