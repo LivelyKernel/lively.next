@@ -28,6 +28,12 @@ jobs:
           path: |
             lively.next-node_modules/ 
           key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json') }}
+      - name: Cleanup puppeteer to force reinstallation
+        if: ${{ steps.cache-lively-deps.outputs.cache-hit == 'true' }}
+        run: |
+          rm -rf lively.next-node_modules/puppeteer
+          rm -rf lively.next-node_modules/puppeteer-core
+          rm -rf lively.next-node_modules/@puppeteer__SLASH__browsers
       - name: Install `lively.next`
         run: |
           chmod a+x ./install.sh
