@@ -826,10 +826,12 @@ export class TilingLayout extends Layout {
   }
 
   handleRenamingOf (oldName, newName) {
-    this.config.resizePolicies = this.config.resizePolicies.map(([target, policy]) => {
-      if (target === oldName) return [newName, policy];
-      else return [target, policy];
-    });
+    if (this.config.resizePolicies) {
+      this.config.resizePolicies = this.config.resizePolicies.map(([target, policy]) => {
+        if (target === oldName) return [newName, policy];
+        else return [target, policy];
+      });
+    }
   }
 
   /**
