@@ -614,7 +614,7 @@ class DOMTextMeasure {
         let lineNode, nodeForMorph, actualTextNode;
 
         nodeForMorph = $world.env.renderer.getNodeForMorph(morph);
-        actualTextNode = nodeForMorph && morph.renderingState.fontMeasureNode
+        actualTextNode = nodeForMorph && morph.renderingState.fontMeasureNode;
         const dataRowId = String(line.row);
         lineNode = actualTextNode && Array.from(actualTextNode.children).find(n => n.getAttribute('data-row') === dataRowId);
 
@@ -759,7 +759,7 @@ export function charBoundsOfLineViaCanvas (line, textMorph, fontMetric, measure)
   const measuringState = measure.getMeasuringState(textMorph);
   for (let i = 0; i < textAndAttributes.length; i += 2) {
     const textOrMorph = textAndAttributes[i];
-    const attrs = textAndAttributes[i + 1] || {};
+    let attrs = textAndAttributes[i + 1] || {};
     if (textOrMorph.isMorph) {
       const morphWidth = textOrMorph.width + Number.parseFloat(attrs.paddingLeft || '0') + Number.parseFloat(attrs.paddingRight || '0');
       if (isWrapping && measuringState.emptySpace < morphWidth) {
@@ -775,7 +775,7 @@ export function charBoundsOfLineViaCanvas (line, textMorph, fontMetric, measure)
       const style = { ...textMorph.defaultTextStyle, ...attrs };
       // For some reason monospaced fonts loose their monospaced-ness when measuring them on the canvas with a non default text style applied such as italics.
       if (isMonospace) {
-        delete attrs.fontStyle;
+        attrs = obj.dissoc(attrs, ['fontStyle']);
         delete style.fontStyle;
       }
       measure.measureCharWidthsInCanvas(textMorph, textOrMorph, attrs, measuringState).forEach((res) => {
