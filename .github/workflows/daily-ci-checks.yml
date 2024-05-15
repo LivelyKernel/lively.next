@@ -19,34 +19,34 @@ jobs:
           node-version: '20.10'
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Cache `lively.next` dependencies
-        id: cache-lively-deps
-        uses: actions/cache/restore@v3
-        env:
-          cache-name: lively-deps
-        with:
-          path: |
-            lively.next-node_modules/ 
-          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json') }}
-      - name: Cleanup puppeteer to force reinstallation
-        if: ${{ steps.cache-lively-deps.outputs.cache-hit == 'true' }}
-        run: |
-          rm -rf lively.next-node_modules/puppeteer
-          rm -rf lively.next-node_modules/puppeteer-core
-          rm -rf lively.next-node_modules/@puppeteer__SLASH__browsers
+#      - name: Cache `lively.next` dependencies
+#        id: cache-lively-deps
+#        uses: actions/cache/restore@v3
+#        env:
+#          cache-name: lively-deps
+#        with:
+#          path: |
+#            lively.next-node_modules/ 
+#          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json') }}
+#      - name: Cleanup puppeteer to force reinstallation
+#        if: ${{ steps.cache-lively-deps.outputs.cache-hit == 'true' }}
+#        run: |
+#          rm -rf lively.next-node_modules/puppeteer
+#          rm -rf lively.next-node_modules/puppeteer-core
+#          rm -rf lively.next-node_modules/@puppeteer__SLASH__browsers
       - name: Install `lively.next`
         run: |
           chmod a+x ./install.sh
           ./install.sh
-      - name: Cache `lively.next` dependencies
-        if: ${{ steps.cache-lively-deps.outputs.cache-hit != 'true' }}
-        uses: actions/cache/save@v3
-        env:
-          cache-name: lively-deps
-        with:
-          path: |
-            lively.next-node_modules/
-          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json') }}
+#      - name: Cache `lively.next` dependencies
+#        if: ${{ steps.cache-lively-deps.outputs.cache-hit != 'true' }}
+#        uses: actions/cache/save@v3
+#        env:
+#          cache-name: lively-deps
+#        with:
+#          path: |
+#            lively.next-node_modules/
+#          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json') }}
       - name: Run CI Test Script
         run:  ./scripts/test.sh
       - name: Circumvent buggy behavior of GHA Job Summaries
