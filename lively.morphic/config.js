@@ -59,6 +59,7 @@ const config = {
   hideScrollbarsInWorldBrowser: false,
   scrollbarOffset: detectScrollbarWidth(),
   onloadURLQuery: parseURLQuery(),
+  colorScheme: typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
 
   /* browser support 2 ways to render shadows:
 

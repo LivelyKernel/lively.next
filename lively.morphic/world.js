@@ -3,6 +3,7 @@ import bowser from 'bowser';
 import { Rectangle, Color, pt } from 'lively.graphics';
 import { arr, Path, obj } from 'lively.lang';
 import { signal } from 'lively.bindings';
+import { config } from 'lively.morphic';
 
 import { MorphicEnv } from './env.js';
 import { Morph } from './morph.js';
@@ -34,8 +35,7 @@ export class World extends Morph {
       colorScheme: {
         derived: true,
         get () {
-          // place somewhere were it is called less often???
-          return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          return config.colorScheme;
         }
       }
     };
