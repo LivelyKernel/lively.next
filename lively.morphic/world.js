@@ -35,7 +35,7 @@ export class World extends Morph {
       colorScheme: {
         derived: true,
         get () {
-          return config.colorScheme;
+          return config.colorScheme === 'system' ? window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light' : config.colorScheme;
         }
       }
     };
