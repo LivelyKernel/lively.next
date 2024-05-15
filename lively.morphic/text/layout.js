@@ -259,19 +259,24 @@ export default class Layout {
   chunkAtPos (morph, pos) { todo('chunkAtPos'); }
 
   charBoundsOfRow (morph, row) {
-    if (!morph.owner) return [];
     const doc = morph.document;
     const line = doc.getLine(row);
 
     const cached = this.lineCharBoundsCache.get(line);
     if (cached) return cached;
     const { fontMetric } = morph;
+    let charBounds;
 
-    const directRenderLineFn = $world.env.renderer.lineNodeFunctionFor(morph);
-    const directRenderTextLayerFn = $world.env.renderer.textLayerNodeFunctionFor(morph);
+    if (morph.canBeMeasuredViaCanvas) {
+      charBounds = fontMetric.newManuallyComputeCharBoundsOfLine(morph, line);
+    } else {
+      if (!morph.owner) return []; // cannot really measure at this point in time
+      const directRenderLineFn = $world.env.renderer.lineNodeFunctionFor(morph);
+      const directRenderTextLayerFn = $world.env.renderer.textLayerNodeFunctionFor(morph);
 
-    const charBounds = fontMetric.newManuallyComputeCharBoundsOfLine(
-      morph, line, 0, 0, directRenderTextLayerFn, directRenderLineFn);
+      charBounds = fontMetric.newManuallyComputeCharBoundsOfLine(
+        morph, line, 0, 0, directRenderTextLayerFn, directRenderLineFn);
+    }
 
     if (charBounds.find(r => r.width == undefined && r.height == undefined)) {
       // measuring failed, probably due to https://stackoverflow.com/questions/57590718/range-getclientrects-is-returning-0-rectangle-when-used-with-textarea-in-html
