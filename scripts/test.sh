@@ -20,7 +20,6 @@ STARTED_SERVER=0
 FAILURE=0
 
 testfiles=(
-"lively.morphic"
 "lively.lang"
 "lively.resources"
 "lively.bindings"
@@ -34,6 +33,7 @@ testfiles=(
 "lively.modules"
 "lively-system-interface"
 "lively.graphics"
+"lively.morphic"
 "lively.components"
 "lively.ide"
 "lively.halos"
