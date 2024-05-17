@@ -1296,10 +1296,14 @@ export class TilingLayout extends Layout {
       yogaNode.setHeight(submorph.height);
     }
 
-    yogaNode.setMargin(Yoga.EDGE_TOP, margin.top);
-    yogaNode.setMargin(Yoga.EDGE_BOTTOM, margin.bottom);
-    yogaNode.setMargin(Yoga.EDGE_LEFT, margin.left);
-    yogaNode.setMargin(Yoga.EDGE_RIGHT, margin.right);
+    if (this.getResizeHeightPolicyFor(submorph) !== 'fill') {
+      yogaNode.setMargin(Yoga.EDGE_TOP, margin.top);
+      yogaNode.setMargin(Yoga.EDGE_BOTTOM, margin.bottom);
+    }
+    if (this.getResizeWidthPolicyFor(submorph) !== 'fill') {
+      yogaNode.setMargin(Yoga.EDGE_LEFT, margin.left);
+      yogaNode.setMargin(Yoga.EDGE_RIGHT, margin.right);
+    }
     if (yogaNode.getFlexGrow() !== 1) yogaNode.setFlexShrink(0);
     yogaNode._computedMargin = margin;
     return yogaNode;
