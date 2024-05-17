@@ -899,8 +899,8 @@ export class TilingLayout extends Layout {
     const node = this.ensureLayoutComputed(container);
     const isPreliminary = node.getParent() && !node._computedMargin;
 
-    let width = Math.floor(isPreliminary ? container.width : node.getComputedWidth());
-    let height = Math.floor(isPreliminary ? container.height : node.getComputedHeight());
+    let width = (isPreliminary ? container.width : node.getComputedWidth());
+    let height = (isPreliminary ? container.height : node.getComputedHeight());
 
     // fix the ones that where due to fill or fixed policies
     const heightSetting = node.getHeight();
@@ -1203,13 +1203,13 @@ export class TilingLayout extends Layout {
     if (hugContentsHorizontally) {
       yogaNode.setWidthAuto();
     } else if (!stretchedHorizontally) {
-      yogaNode.setWidth(Math.floor(container.width));
+      yogaNode.setWidth(container.width);
     }
 
     if (hugContentsVertically) {
       yogaNode.setHeightAuto();
     } else if (!stretchedVertically) {
-      yogaNode.setHeight(Math.floor(container.height));
+      yogaNode.setHeight(container.height);
     }
 
     this.ensureYogaNodesInSync();
@@ -1280,7 +1280,7 @@ export class TilingLayout extends Layout {
         yogaNode.setFlexGrow(1);
       }
     } else {
-      yogaNode.setWidth(Math.floor(submorph.width));
+      yogaNode.setWidth(submorph.width);
     }
     if (this.getResizeHeightPolicyFor(submorph) === 'fill') {
       if (isVertical) {
@@ -1293,7 +1293,7 @@ export class TilingLayout extends Layout {
         margin.top = 0;
       }
     } else {
-      yogaNode.setHeight(Math.floor(submorph.height));
+      yogaNode.setHeight(submorph.height);
     }
 
     yogaNode.setMargin(Yoga.EDGE_TOP, margin.top);
