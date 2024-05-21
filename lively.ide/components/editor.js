@@ -131,10 +131,12 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   ensureComponentMorphUpToDate (c) {
     if (c?.world()) {
       const sceneGraph = c.world().sceneGraph;
-      const pos = c.globalPosition;
+      const pos = c.position;
+      const prevOwner = c.owner;
       c.remove();
       if (sceneGraph) sceneGraph.refresh();
-      const updatedComponentMorph = this.getComponentMorph().openInWorld(pos);
+      const updatedComponentMorph = prevOwner.addMorph(this.getComponentMorph());
+      updatedComponentMorph.position = pos;
       if (!updatedComponentMorph._changeTracker) {
         new ComponentChangeTracker(updatedComponentMorph, this);
       }
