@@ -93,7 +93,6 @@ async function getSource () {
   return await module(System, testDir + 'project1/test.cp.js').source();
 }
 
-let project1Dir = testDir + 'project1/';
 let project1 = {
   'test.cp.js': initSource,
   'package.json': '{"name": "project1", "main": "test.cp.js"}'
