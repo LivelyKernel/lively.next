@@ -6,9 +6,11 @@
 import { MorphicEnv } from 'lively.morphic';
 import { World } from 'lively.morphic';
 import { pt } from 'lively.graphics';
+import { ensureYoga } from 'lively.morphic/layout.js';
 
 // fixme: what to do to make IDE worlds load? They require components before $world is a thing yet....
 export async function renderFrozenPart (node = document.body) {
+  await ensureYoga();
   prepare();
   if (!MorphicEnv.default().world) {
     let world = window.$world = window.$$world = new WORLD_CLASS({

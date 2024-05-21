@@ -3,11 +3,15 @@ import { arr, promise, Closure, num, obj, fun } from 'lively.lang';
 import { once, signal } from 'lively.bindings';
 import { loadYoga } from 'yoga-layout';
 
-let Yoga;
+let Yoga, _yoga;
 if (!Yoga) {
-  loadYoga().then((l) => {
+  _yoga = loadYoga().then((l) => {
     Yoga = l;
   });
+}
+
+export function ensureYoga () {
+  return _yoga
 }
 
 export function getYoga () { return Yoga; }
