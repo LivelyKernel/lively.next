@@ -26,15 +26,13 @@ export async function getComponentDeclsFromScope (modId, scope) {
 }
 
 export function getEligibleSourceEditorsFor (modId, modSource) {
-  const openBrowsers = $world.withAllSubmorphsSelect(browser =>
-    browser.isBrowser && browser.selectedModule && browser.selectedModule.url === modId);
-  const qualifiedBrowsers = openBrowsers.filter(openBrowser => {
-    if (modSource && openBrowser.hasUnsavedChanges(modSource)) {
-      return false;
-    }
+  const qualifiedEditors = $world.withAllSubmorphsSelect(m => {
+    return m.isText && m.editorPlugin?.evalEnvironment?.targetModule === modId;
+  });
+  return qualifiedEditors.filter(editor => {
+    if (editor.owner.isBrowser && modSource) return !editor.owner.hasUnsavedChanges(modSource);
     return true;
   });
-  return qualifiedBrowsers.map(browser => browser.get('source editor'));
 }
 
 export function getPathFromScopeMaster (m) {
@@ -105,7 +103,7 @@ export function getTextAttributesExpr (textMorph) {
     return { __expr__: '[\'\', null]', bindings: {} };
   }
   const expr = convertToExpression(textMorph);
-  const rootPropNode = getPropertiesNode(parse('(' + expr.__expr__ + ')'));
+  const rootPropNode = getPropertiesNode(parse('(' + expr.__expr__ + ')')); // eslint-disable-line no-use-before-define
   let { start, end } = getProp(rootPropNode, 'textAndAttributes').value; // eslint-disable-line no-use-before-define
   if (expr.__expr__[end - 1] === ',') end--;
   expr.__expr__ = expr.__expr__.slice(start - 1, end);
