@@ -146,7 +146,7 @@ export class Project {
     };
   }
 
-  static async listAvailableProjects () {
+  static async listAvailableProjects (forProjectBrowser = false) {
     const baseURL = (await Project.systemInterface.getConfig()).baseURL;
 
     const packageCache = lively.FreezerRuntime
@@ -162,7 +162,8 @@ export class Project {
       })
     );
     projectsCandidates = projectsCandidates.filter(p => p.url.includes('local_projects'));
-    if (!localStorage.getItem('livelyIncludePartsbinInList')) projectsCandidates = projectsCandidates.filter(p => p._name !== 'LivelyKernel--partsbin');
+    const includePartsbinSetting = localStorage.getItem('livelyIncludePartsbinInList');
+    if (forProjectBrowser && (!includePartsbinSetting || includePartsbinSetting == 'false')) projectsCandidates = projectsCandidates.filter(p => p._name !== 'LivelyKernel--partsbin');
     projectsCandidates.forEach(p => {
       p._projectName = p._name.replace(/.*--/, '');
       p._projectOwner = p._name.replace(/--.*/, '');
@@ -762,7 +763,7 @@ export class Project {
         const projectDir = await Project.projectDirectory(`${depRepoOwner}--${depName}`);
         await evalOnServer(`System.get("@lively-env").packageRegistry.addPackageAt(System.baseURL + 'local_projects/${depRepoOwner}--${depName}')`);
         await PackageRegistry.ofSystem(System).addPackageAt(projectDir);
-        availableProjects = await Project.listAvailableProjects(true);
+        availableProjects = await Project.listAvailableProjects();
       }
       // Add all transitive dependencies from the current dependency to the list.
       // **Note:** Actually, the transitive dependencies of a project could be different in different versions of this project.

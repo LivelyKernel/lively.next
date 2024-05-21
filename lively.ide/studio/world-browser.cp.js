@@ -721,7 +721,7 @@ export class WorldBrowserModel extends ViewModel {
         visible: true, duration: 300
       });
     }
-    let entities = this.playgroundsMode ? await this.db.latestCommits('world') : await Project.listAvailableProjects();
+    let entities = this.playgroundsMode ? await this.db.latestCommits('world') : await Project.listAvailableProjects(true);
     this.reset();
     if (config.hideScrollbarsInWorldBrowser) worldList.clipMode = 'hidden';
     // Filter out the project that is opened anyways.
