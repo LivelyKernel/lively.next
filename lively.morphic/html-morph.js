@@ -1,5 +1,5 @@
-import { promise } from 'lively.lang';
-import { pt } from 'lively.graphics';
+import { promise, arr } from 'lively.lang';
+import { pt, Rectangle } from 'lively.graphics';
 import { Morph } from './morph.js';
 import { addOrChangeCSSDeclaration } from './rendering/dom-helper.js';
 import css from 'esm://cache/css@3.0.0';
@@ -77,6 +77,12 @@ export class HTMLMorph extends Morph {
         readOnly: true,
         get () { return pt(this.domNode.scrollWidth, this.domNode.scrollHeight); }
       },
+      fixedWidth: {
+        defaultValue: true
+      },
+      fixedHeight: {
+        defaultValue: true
+      },
       cssDeclaration: {
         isStyleProp: true,
         set (val) {
@@ -105,6 +111,24 @@ export class HTMLMorph extends Morph {
             background: -webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0%, rgba(242,243,244,1)),color-stop(100%, rgba(229,231,233,1)))">
   <p style="font: bold 40pt Inconsolata, monospace; color: lightgray;">&lt;HTML&#x2F;&gt;</p>
 </div>`;
+  }
+
+  patchSpecialProps (node) {
+    const [wrapperNode] = node.children;
+    const parentPos = Rectangle.fromLiteral(wrapperNode.getBoundingClientRect()).topLeft();
+    this.whenRendered().then(() => {
+      const nodeBounds = [...wrapperNode.children]
+        .map(n => Rectangle.fromLiteral(n.getBoundingClientRect()));
+
+      if (nodeBounds.length == 0) return;
+
+      const newBounds = nodeBounds.reduce((a, b) => {
+        if (!a.isNonEmpty()) return b;
+        return a.translatedBy(parentPos.negated()).union(b);
+      });
+      if (!this.fixedHeight && this.height !== newBounds.height) this.height = newBounds.height;
+      if (!this.fixedWidth && this.width !== newBounds.width) this.width = newBounds.width;
+    });
   }
 
   getNodeForRenderer (renderer) {
