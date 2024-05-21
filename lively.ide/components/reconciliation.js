@@ -565,7 +565,7 @@ export function applyModuleChanges (reconciliation, scope, system, sourceEditor 
 
     if (patchTextMorph) {
       const browser = sourceEditor.owner;
-      if (browser) browser.resetChangedContentIndicator();
+      if (browser?.isBrowser) browser.resetChangedContentIndicator();
     }
     mod.setSource(updatedSource);
   }
