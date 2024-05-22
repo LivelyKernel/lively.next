@@ -1616,7 +1616,6 @@ export class ConstraintLayout extends Layout {
     const { x, y } = this.settingsFor(morph);
     const config = this.ensureConfigForMorph(morph);
 
-    if (morph.layout) morph.makeDirty();
     morph.applyLayoutIfNeeded();
 
     morph.withMetaDo({ skipRender: true, isLayoutAction: true }, () => {
