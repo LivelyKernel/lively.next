@@ -639,7 +639,7 @@ describe('component -> source reconciliation', function () {
               name: 'foo',
               fill: Color.blue
             }), null,
-            'How about a component', { fontWeight: 'bold ' },
+            'How about a component', { fontWeight: 'bold' },
             part(B, { name: 'bar' }), null
           ]
         });
@@ -652,7 +652,7 @@ describe('component -> source reconciliation', function () {
         name: 'foo',
         fill: Color.blue
       }), null, 'How about a component', {
-        fontWeight: 'bold '
+        fontWeight: 'bold'
       }, part(B, {
         name: 'bar'
       }), null]`, 'reconciles added plain morphs');
@@ -666,7 +666,7 @@ describe('component -> source reconciliation', function () {
             name: 'charlie',
             fill: Color.blue
           }), null,
-          'How about a component', { fontWeight: 'bold ' },
+          'How about a component', { fontWeight: 'bold' },
           part(C, { name: 'justin' }), null
         ];
       });
@@ -678,7 +678,7 @@ describe('component -> source reconciliation', function () {
       name: 'charlie',
       fill: Color.blue
     }), null, 'How about a component', {
-      fontWeight: 'bold '
+      fontWeight: 'bold'
     }, part(C, {
       name: 'justin'
     }), null]`, 'reconciles embedded morphs if assigned via text and attributes');
