@@ -671,6 +671,8 @@ const commands = [
         textAndAttributes,
         clipMode: 'auto',
         name,
+        fixedWidth: true,
+        fixedHeight: true,
         extent
       });
       if (rangesAndStyles) { text.setTextAttributesWithSortedRanges(rangesAndStyles); }
@@ -729,7 +731,7 @@ const commands = [
           });
         }
 
-        const win = world.execCommand('open text window', opts);
+        const win = $world.execCommand('open text window', opts);
         const textMorph = win.targetMorph;
         win.extent = extent || pt(300, 200).maxPt(textMorph.textBounds().extent());
 
