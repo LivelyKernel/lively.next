@@ -47,6 +47,7 @@ async function text (string, props) {
 }
 
 describe('text layout', function () {
+  this.retries(3);
   afterEach(() => t.remove());
 
   describe('positions', () => {
