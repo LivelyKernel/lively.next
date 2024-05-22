@@ -11,7 +11,7 @@ if (!Yoga) {
 }
 
 export function ensureYoga () {
-  return _yoga
+  return _yoga;
 }
 
 export function getYoga () { return Yoga; }
@@ -167,11 +167,13 @@ class Layout {
     if (this.applyRequests) {
       this.applyRequests = false;
       if (this.noLayoutActionNeeded) return;
-      this.refreshBoundsCache();
       this.container.withMetaDo({
         isLayoutAction: true,
         animation: this.lastAnim
-      }, () => this.apply(this.lastAnim));
+      }, () => {
+        this.refreshBoundsCache();
+        this.apply(this.lastAnim);
+      });
       this.lastAnim = false;
     }
   }
@@ -246,7 +248,7 @@ class Layout {
     this.scheduleApply();
     if (!this._configChanged) {
       this._configChanged = true;
-      this.layoutableSubmorphs.forEach(m => m.makeDirty());
+      if (!this.isLayoutAction) this.layoutableSubmorphs.forEach(m => m.makeDirty());
       if (this.container) {
         this.container.renderingState.hasStructuralChanges = true;
         this.container.renderingState.hasCSSLayoutChange = true;
