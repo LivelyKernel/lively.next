@@ -1717,6 +1717,7 @@ export class ConstraintLayout extends Layout {
         let config = this._morphConfigurations?.get(submorph);
         if (config) {
           this.adjustConfigViaExtentDelta(config, change.value.subPt(change.prevValue), submorph);
+          this.onConfigUpdate();
         }
       }
     }
@@ -1727,6 +1728,7 @@ export class ConstraintLayout extends Layout {
         let config = this._morphConfigurations?.get(submorph);
         if (config) {
           this.adjustConfigViaPositionDelta(config, change.value.subPt(change.prevValue), submorph);
+          this.onConfigUpdate();
         }
       }
     }
