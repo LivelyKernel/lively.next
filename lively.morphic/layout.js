@@ -1393,10 +1393,19 @@ export class ConstraintLayout extends Layout {
     if (change.prop === 'extent' &&
         !change.meta?.isLayoutAction &&
         this.renderViaCSS) {
-      this.layoutableSubmorphs.forEach(m => this.measureAfterRender(m));
+      this.computeBoundsOfEntireLayoutComposition();
     }
 
     super.scheduleApply(submorph, animation, change);
+  }
+
+  computeBoundsOfEntireLayoutComposition (force = false) {
+    this.layoutableSubmorphs.forEach(m => {
+      this.updateSubmorphBounds(m);
+      if (force && m.layout?.computeBoundsOfEntireLayoutComposition) {
+        m.layout.computeBoundsOfEntireLayoutComposition(force);
+      }
+    });
   }
 
   /**
@@ -1537,14 +1546,9 @@ export class ConstraintLayout extends Layout {
     }
   }
 
-  onDomResize (node, morph) {
-    if (morph === this.container || !this.layoutableSubmorphs.includes(morph)) {
-      return;
-    }
-    morph.withMetaDo({ isLayoutAction: true }, () => {
-      this.updateSubmorphViaDom(morph, node, true);
-    });
-  }
+  measureSubmorph () { }
+
+  onDomResize (node, morph) { }
 
   computePositionFromConfig (config, horizontalPolicy, verticalPolicy, submorph) {
     let left, top;
@@ -1621,7 +1625,7 @@ export class ConstraintLayout extends Layout {
     return pt(width, height);
   }
 
-  updateSubmorphViaDom (morph, node, makeDirty = false) {
+  updateSubmorphBounds (morph) {
     const { x, y } = this.settingsFor(morph);
     const config = this.ensureConfigForMorph(morph);
 
