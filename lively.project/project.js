@@ -289,7 +289,8 @@ export class Project {
 
     loadedProject.config = await loadedProject.configFile.readJson();
 
-    // We reset uncommitted changes in `package.json` above. This should usually only concern the bound lively version or dependencies. We reintroduce those changes here, if necessary.
+    // We reset uncommitted changes in `package.json` above. This should usually only concern the bound lively version or dependencies.
+    // We reintroduce those changes here, if necessary.
     const checkLivelyCompatibility = await loadedProject.bindAgainstCurrentLivelyVersion(loadedProject.config.lively.boundLivelyVersion, onlyLoadNotOpen);
     if (!onlyLoadNotOpen) {
       loadedProject.addMissingProjectDependencies(); // Add dependencies which are directly imported by JS files inside of this project.
@@ -513,6 +514,7 @@ export class Project {
           this.config.lively.boundLivelyVersion = currentCommit;
           this.config.hasUnsavedChanges = true;
           await this.saveConfigData();
+          await this.regeneratePipelines();
           return 'UPDATED';
         }
       }
@@ -527,6 +529,7 @@ export class Project {
         this.config.lively.boundLivelyVersion = currentCommit;
         this.config.hasUnsavedChanges = true;
         await this.saveConfigData();
+        await this.regeneratePipelines();
         return 'UPDATED';
       }
     }
