@@ -124,7 +124,7 @@ export class HTMLMorph extends Morph {
 
       const newBounds = nodeBounds.reduce((a, b) => {
         if (!a.isNonEmpty()) return b;
-        return a.translatedBy(parentPos.negated()).union(b);
+        return a.union(b);
       });
       if (!this.fixedHeight && this.height !== newBounds.height) this.height = newBounds.height;
       if (!this.fixedWidth && this.width !== newBounds.width) this.width = newBounds.width;
