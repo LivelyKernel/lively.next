@@ -1035,7 +1035,7 @@ export class TilingLayout extends Layout {
 
     this.updateContainerNode();
     this.container.submorphs.forEach(m => {
-      if (m.layout?.name() === 'Tiling') {
+      if (m.layout?.computeBoundsOfEntireLayoutComposition) {
         m.layout.computeBoundsOfEntireLayoutComposition(true);
       }
       this.updateSubmorphNode(m);
