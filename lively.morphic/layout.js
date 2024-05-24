@@ -1475,11 +1475,20 @@ export class ConstraintLayout extends Layout {
   addSubmorphCSS (aMorph, style) {
     const { x, y } = this.settingsFor(aMorph);
     const border = this.container.borderWidth;
-    const {
+    const hBorder = border.left + border.right;
+    const vBorder = border.top + border.bottom;
+    let {
       left, top, right, bottom,
       leftProportion, rightProportion, topProportion, bottomProportion,
       topCenterProportion, leftCenterProportion
     } = this.ensureConfigForMorph(aMorph);
+
+    leftCenterProportion *= 1 + hBorder / (this.container.width - hBorder);
+    topCenterProportion *= 1 + vBorder / (this.container.height - vBorder);
+    topProportion *= 1 + hBorder / (this.container.height - hBorder);
+    bottomProportion *= 1 + hBorder / (this.container.height - hBorder);
+    leftProportion *= 1 + vBorder / (this.container.width - vBorder);
+    rightProportion *= 1 + vBorder / (this.container.width - vBorder);
 
     switch (x) {
       case 'fixed':
@@ -1495,12 +1504,12 @@ export class ConstraintLayout extends Layout {
         style.right = right - border.right + 'px';
         break;
       case 'center':
-        style.left = `calc(${leftCenterProportion}% - ${aMorph.width / 2}px)`;
+        style.left = `calc(${leftCenterProportion}% - ${aMorph.width / 2}px - ${border.left}px)`;
         break;
       case 'scale':
         style.width = 'auto';
-        style.left = leftProportion + '%';
-        style.right = rightProportion + '%';
+        style.left = `calc(${leftProportion}% - ${border.left}px)`;
+        style.right = `calc(${rightProportion}% - ${border.right}px)`;
         break;
     }
 
@@ -1518,12 +1527,12 @@ export class ConstraintLayout extends Layout {
         style.bottom = bottom - border.bottom + 'px';
         break;
       case 'center':
-        style.top = `calc(${topCenterProportion}% - ${aMorph.height / 2}px)`;
+        style.top = `calc(${topCenterProportion}% - ${aMorph.height / 2}px - ${border.top}px)`;
         break;
       case 'scale':
         style.height = 'auto';
-        style.top = topProportion + '%';
-        style.bottom = bottomProportion * 100 + '%';
+        style.top = `calc(${topProportion}% - ${border.top}px)`;
+        style.bottom = `calc(${bottomProportion}% - ${border.bottom}px)`;
         break;
     }
   }
