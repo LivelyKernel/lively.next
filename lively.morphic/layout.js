@@ -1644,7 +1644,9 @@ export class ConstraintLayout extends Layout {
   }
 
   equals (other) {
-    return super.equals(other) && obj.equals(this.getSpec(), other.getSpec());
+    return super.equals(other) && obj.equals(
+      obj.dissoc(this.getSpec(), ['lastExtent']),
+      obj.dissoc(other.getSpec(), ['lastExtent']));
   }
 
   getSpec () {
