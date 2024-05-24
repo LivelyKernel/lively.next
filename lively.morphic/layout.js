@@ -1629,8 +1629,6 @@ export class ConstraintLayout extends Layout {
     const { x, y } = this.settingsFor(morph);
     const config = this.ensureConfigForMorph(morph);
 
-    morph.applyLayoutIfNeeded();
-
     morph.withMetaDo({ skipRender: true, isLayoutAction: true }, () => {
       morph.position = this.computePositionFromConfig(config, x, y, morph);
     });
@@ -1639,9 +1637,10 @@ export class ConstraintLayout extends Layout {
       morph.extent = this.computeExtentFromConfig(config, x, y, morph);
     });
 
-    if (morph.layout && morph.layout.renderViaCSS) {
-      morph.layout.onDomResize(node, morph);
-    }
+    config.left = morph.position.x;
+    config.top = morph.position.y;
+    config.bottom = this.container.height - morph.position.y - morph.height;
+    config.right = this.container.width - morph.position.x - morph.width;
   }
 
   equals (other) {
