@@ -317,6 +317,10 @@ export class Color {
     return 'rgba(' + floor(this.r) + ',' + floor(this.g) + ',' + floor(this.b) + ',' + this.a + ')';
   }
 
+  toP3ColorString () {
+    return 'color(display-p3 ' + this.r + ' ' + this.g + ' ' + this.b + ' / ' + this.a + ')';
+  }
+
   toHexString () {
     function floor (x) { return Math.floor(x * 255.99); }
     function addLeadingZero (string) {
@@ -417,6 +421,10 @@ class Gradient {
       parsedStops.push({ offset: Number(offset), color: offsetAndColors[offset] });
     }
     return new this({ stops: parsedStops });
+  }
+
+  toP3ColorString() {
+    return this.toCSSString();
   }
 
   static parse (str) {
@@ -569,7 +577,7 @@ export class LinearGradient extends Gradient {
     // default webkit way of defining gradients
     const deg = num.toDegrees(this.vectorAsAngle()) + 90;
     let str = 'linear-gradient(' + (deg + 'deg,');
-    str += this.stops.map(s => `${s.color.toRGBAString()} ${(s.offset * 100).toFixed() + '%'}`).join(',');
+    str += this.stops.map(s => `${s.color.toP3ColorString()} ${(s.offset * 100).toFixed() + '%'}`).join(',');
     str += ')';
     return str;
   }
@@ -624,7 +632,7 @@ export class RadialGradient extends Gradient {
     const innerCircle = this.focus.scaleBy(100.0);
     const ext = this.bounds.extent();
     let str = `radial-gradient(${ext.x / 2}px ${ext.y / 2}px at ${innerCircle.x}% ${innerCircle.y}%`;
-    for (let i = 0; i < this.stops.length; i++) { str += `,${this.stops[i].color.toRGBAString()} ${(this.stops[i].offset * 100).toFixed() + '%'}`; }
+    for (let i = 0; i < this.stops.length; i++) { str += `,${this.stops[i].color.toP3ColorString()} ${(this.stops[i].offset * 100).toFixed() + '%'}`; }
     str += ')';
     return str;
   }
