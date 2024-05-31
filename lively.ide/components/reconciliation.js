@@ -1481,7 +1481,7 @@ class RenameReconciliation extends PropChangeReconciliation {
     const { parsedComponent } = this.getDescriptorContext(interactiveDescriptor);
     const affectedPolicy = getMorphNode(parsedComponent, this.target.owner);
     const parentNode = getPropertiesNode(affectedPolicy, this.target.owner);
-    const parentSpec = interactiveDescriptor.stylePolicy.getSubSpecFor(!this.target.owner?.isComponent ? this.owner.name : null);
+    const parentSpec = interactiveDescriptor.stylePolicy.getSubSpecFor(!this.target.owner?.isComponent ? this.target.owner : null);
     if (parentSpec?.layout && parentNode) {
       parentSpec.layout.handleRenamingOf(this.oldName, this.newValue);
       this.patchPropIn(parentNode, 'layout', parentSpec.layout.__serialize__());
