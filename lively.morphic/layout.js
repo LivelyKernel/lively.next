@@ -907,9 +907,8 @@ export class TilingLayout extends Layout {
     const { container, hugContentsVertically, hugContentsHorizontally } = this;
     const node = this.ensureLayoutComputed(container);
     const isPreliminary = node.getParent() && !node._computedMargin;
-
-    let width = (isPreliminary ? container.width : node.getComputedWidth());
-    let height = (isPreliminary ? container.height : node.getComputedHeight());
+    let width = isPreliminary ? container.width : node.getComputedWidth();
+    let height = isPreliminary ? container.height : node.getComputedHeight();
 
     // fix the ones that where due to fill or fixed policies
     const heightSetting = node.getHeight();
@@ -974,20 +973,20 @@ export class TilingLayout extends Layout {
 
     if (this.getResizeWidthPolicyFor(morph) === 'fill') {
       if (isVertical) {
-        style.width = `calc(100% + ${margin.offset}px)`;
+        style.width = '100%';
       } else {
-        style.width = `calc(100% + ${margin.offset}px)`;
+        style.width = `calc(100% + ${margin.offsetH - morph.borderWidthLeft - morph.borderWidthRight}px)`;
         style['flex-grow'] = 1;
         style['flex-shrink'] = 1;
       }
     }
     if (this.getResizeHeightPolicyFor(morph) === 'fill') {
       if (isVertical) {
-        style.height = `calc(100% + ${margin.offset}px)`;
+        style.height = `calc(100% + ${margin.offsetV - morph.borderWidthTop - morph.borderWidthBottom}px)`;
         style['flex-grow'] = 1; // let flex handle that
         style['flex-shrink'] = 1;
       } else {
-        style.height = `calc(100% + ${margin.offset}px)`;
+        style.height = '100%';
       }
     }
     style.position = 'relative';
@@ -1006,13 +1005,14 @@ export class TilingLayout extends Layout {
 
   adjustMargin (margin) {
     const { container, axis } = this;
-    const isVertical = axis === 'column';
-    if (isVertical) {
-      margin.offset = container.borderWidthLeft + container.borderWidthRight;
-    } else {
-      margin.offset = container.borderWidthTop + container.borderWidthBottom;
-    }
-    if (container.verticalScrollbarVisible || container.horizontalScrollbarVisible) margin.offset = margin.offset + container.scrollbarOffset.x;
+    margin.offsetH = container.borderWidthLeft + container.borderWidthRight;
+    margin.offsetV = container.borderWidthTop + container.borderWidthBottom;
+    margin.offsetTop = container.borderWidthTop;
+    margin.offsetBottom = container.borderWidthBottom;
+    margin.offsetRight = container.borderWidthRight;
+    margin.offsetLeft = container.borderWidthLeft;
+    if (container.verticalScrollbarVisible) margin.offsetH = margin.offsetH + container.scrollbarOffset.x;
+    if (container.horizontalScrollbarVisible) margin.offsetV = margin.offsetV + container.scrollbarOffset.y;
   }
 
   computeOffset () {
@@ -1239,6 +1239,7 @@ export class TilingLayout extends Layout {
     const { axis } = this;
     const clip = submorph.clipMode !== 'visible';
     const isVertical = axis === 'column';
+    const isHorizontal = !isVertical;
     yogaNode.setOverflow(clip ? Yoga.OVERFLOW_HIDDEN : Yoga.OVERFLOW_VISIBLE);
     this.updateSubmorphBounds(submorph); // in case fill behavior is present
 
@@ -1308,10 +1309,16 @@ export class TilingLayout extends Layout {
     if (this.getResizeHeightPolicyFor(submorph) !== 'fill') {
       yogaNode.setMargin(Yoga.EDGE_TOP, margin.top);
       yogaNode.setMargin(Yoga.EDGE_BOTTOM, margin.bottom);
+    } else if (isVertical) {
+      yogaNode.setMargin(Yoga.EDGE_TOP, -margin.offsetTop);
+      yogaNode.setMargin(Yoga.EDGE_BOTTOM, -margin.offsetBottom);
     }
     if (this.getResizeWidthPolicyFor(submorph) !== 'fill') {
       yogaNode.setMargin(Yoga.EDGE_LEFT, margin.left);
       yogaNode.setMargin(Yoga.EDGE_RIGHT, margin.right);
+    } else if (isHorizontal) {
+      yogaNode.setMargin(Yoga.EDGE_LEFT, -margin.offsetLeft);
+      yogaNode.setMargin(Yoga.EDGE_RIGHT, -margin.offsetRight);
     }
     if (yogaNode.getFlexGrow() !== 1) yogaNode.setFlexShrink(0);
     yogaNode._computedMargin = margin;
