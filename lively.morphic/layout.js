@@ -1,12 +1,15 @@
 import { pt, Point, Rectangle, rect } from 'lively.graphics';
 import { arr, promise, Closure, num, obj, fun } from 'lively.lang';
 import { once, signal } from 'lively.bindings';
-import { loadYoga } from 'yoga-layout';
+import { loadYoga } from 'yoga-layout/dist/src/load.js';
 
-let Yoga, _yoga;
+let Yoga, _yoga, yogaConfig;
 if (!Yoga) {
   _yoga = loadYoga().then((l) => {
     Yoga = l;
+    yogaConfig = Yoga.Config.create();
+    yogaConfig.setPointScaleFactor(1);
+    yogaConfig.setErrata(Yoga.ERRATA_CLASSIC);
   });
 }
 
@@ -393,7 +396,7 @@ export class TilingLayout extends Layout {
   }
 
   ensureYogaNodeFor (aMorph) {
-    return aMorph._yogaNode || (aMorph._yogaNode = Yoga.Node.create());
+    return aMorph._yogaNode || (aMorph._yogaNode = Yoga.Node.create(yogaConfig));
   }
 
   initializeResizePolicies (_initializingPoliciesAfterwards = false) {
