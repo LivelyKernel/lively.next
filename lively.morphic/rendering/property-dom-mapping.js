@@ -167,25 +167,25 @@ function addBorder (morph, style) {
   style['border-right-width'] = `${borderWidthRight}px`;
   style['border-bottom-width'] = `${borderWidthBottom}px`;
   style['border-top-width'] = `${borderWidthTop}px`;
-  style['border-top-color'] = borderColorTop ? borderColorTop.toString() : 'transparent';
-  style['border-right-color'] = borderColorRight ? borderColorRight.toString() : 'transparent';
-  style['border-bottom-color'] = borderColorBottom ? borderColorBottom.toString() : 'transparent';
-  style['border-left-color'] = borderColorLeft ? borderColorLeft.toString() : 'transparent';
-  if (borderColor && borderColor.isGradient) style['border-image'] = borderColor.toString();
+  style['border-top-color'] = borderColorTop ? borderColorTop.toP3ColorString() : 'transparent';
+  style['border-right-color'] = borderColorRight ? borderColorRight.toP3ColorString() : 'transparent';
+  style['border-bottom-color'] = borderColorBottom ? borderColorBottom.toP3ColorString() : 'transparent';
+  style['border-left-color'] = borderColorLeft ? borderColorLeft.toP3ColorString() : 'transparent';
+  if (borderColor && borderColor.isGradient) style['border-image'] = borderColor.toP3ColorString()();
 }
 
 function addFill (morph, style) {
   const { fill } = morph;
   if (!fill) {
-    style.background = Color.transparent.toString();
+    style.background = Color.transparent.toP3ColorString();
     return;
   }
   if (fill.isGradient) {
     // we need to set the background color to something
     // that does not interfere with the opaque fill.
-    style.background = Color.transparent.toString();
-    style['background-image'] = fill.toString();
-  } else style.background = fill.toString();
+    style.background = Color.transparent.toP3ColorString();
+    style['background-image'] = fill.toP3ColorString();
+  } else style.background = fill.toP3ColorString();
 }
 
 function addExtentStyle (morph, style) {
@@ -252,11 +252,11 @@ export function addPathAttributes (morph, style) {
   addSvgBorderStyle(morph, style);
   style['stroke-width'] = borderWidth.valueOf();
   style.fill = fill
-    ? fill.isGradient ? 'url(#gradient-fill' + id + ')' : fill.toString()
+    ? fill.isGradient ? 'url(#gradient-fill' + id + ')' : fill.toP3ColorString()
     : 'transparent';
   style.stroke = borderColor.valueOf().isGradient
     ? 'url(#gradient-borderColor' + id + ')'
-    : borderColor.valueOf().toString();
+    : borderColor.valueOf().toP3ColorString();
   return style;
 }
 

@@ -3012,7 +3012,7 @@ export class Text extends Morph {
     if (textDecoration) style['text-decoration'] = textDecoration;
     if (fontSize) style['font-size'] = fontSize + 'px';
     if (textAlign) style['text-align'] = textAlign;
-    if (fontColor) style.color = String(fontColor);
+    if (fontColor) style.color = fontColor.isColor ? fontColor.toP3ColorString() : String(fontColor);
     if (backgroundColor) style['background-color'] = backgroundColor;
     if (tabWidth !== 8) style['tab-size'] = tabWidth;
 

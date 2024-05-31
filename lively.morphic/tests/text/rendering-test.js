@@ -11,7 +11,7 @@ const defaultStyle = {
   fontWeight: 'normal',
   fontColor: Color.black,
   fontStyle: 'normal',
-  textDecoration: 'none solid rgb(0,0,0)'
+  textDecoration: 'none solid color(display-p3 0 0 0)'
 };
 
 let padding = Rectangle.inset(3);
