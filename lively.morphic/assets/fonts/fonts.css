@@ -826,6 +826,14 @@
 }
 
 @font-face {
+    font-family: 'Noto Emoji Color';
+    src: url('NotoColorEmoji-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
     font-family: 'Noto Emoji';
     src: url('NotoEmoji-SemiBold.woff2') format('woff2');
     font-weight: 600;
