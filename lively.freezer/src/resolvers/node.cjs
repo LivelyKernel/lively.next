@@ -55,7 +55,7 @@ function ensureFileFormat(url) {
 }
 
 function resolveModuleId (moduleName, importer, context = 'systemjs-node') {
-  if (moduleName.startsWith('esm://cache/')) {
+  if (moduleName.startsWith('esm://')) {
     return moduleName;
   }
   if (isAlreadyResolved(moduleName) || moduleName.startsWith('/')) return moduleName; // already fully resolved name
