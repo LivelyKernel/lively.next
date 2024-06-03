@@ -249,19 +249,6 @@ const SystemInspector = component({
     fontSize: 14,
     treeData: {}
   }, {
-    type: Label,
-    master: DarkButton,
-    name: 'terminal toggler',
-    position: pt(7.3, 572.6),
-    isLayoutable: false,
-    extent: pt(27, 19),
-    fontColor: Color.white,
-    nativeCursor: 'pointer',
-    lineHeight: 1,
-    fontSize: 15,
-    padding: rect(4, 2, 0, 0),
-    textAndAttributes: Icon.textAttribute('keyboard')
-  }, {
     name: 'resizer',
     draggable: true,
     fill: Color.rgb(230, 230, 230),
@@ -281,29 +268,66 @@ const SystemInspector = component({
     lineWrapping: 'by-chars',
     padding: rect(4, 2, 0, 0),
     ...config.codeEditor.defaultStyle
-  }, part(DarkButton, {
-    viewModel: {
-      label: { value: 'fix undeclared vars', fontSize: 12 }
-    },
-    name: 'fix import button',
-    position: pt(221.4, 570.8),
-    isLayoutable: false,
-    extent: pt(136, 22),
-    visible: false
-  }), part(DarkDropDownList, {
-    viewModel: {
-      listAlign: 'top',
-      smartDropDown: false,
-      label: 'this -> target',
-      listMaster: SmallList,
-      listOffset: pt(0, -5)
-    },
-    name: 'this binding selector',
-    position: pt(92.2, 571.2),
-    extent: pt(120, 22),
-    isLayoutable: false,
-    visible: false
-  })]
+  },
+  {
+    name: 'editor controls wrapper',
+    extent: pt(365.1, 24.9),
+    layout: new TilingLayout({
+      padding: rect(5, 0, 0, 0),
+      resizePolicies: [['filler', {
+        height: 'fixed',
+        width: 'fill'
+      }]],
+      spacing: 5
+    }),
+    reactsToPointer: false,
+    fill: Color.transparent,
+    submorphs: [
+      {
+        type: Label,
+        master: DarkButton,
+        name: 'terminal toggler',
+        position: pt(7.3, 572.6),
+        extent: pt(27, 19),
+        fontColor: Color.white,
+        nativeCursor: 'pointer',
+        lineHeight: 1,
+        fontSize: 15,
+        padding: rect(4, 2, 0, 0),
+        textAndAttributes: Icon.textAttribute('keyboard')
+      },
+      {
+        name: 'filler',
+        reactsToPointer: false,
+        fill: Color.rgba(255, 255, 255, 0),
+        extent: pt(103.7, 19.1),
+        position: pt(569.6, 716.2)
+      },
+      part(DarkDropDownList, {
+        viewModel: {
+          listAlign: 'top',
+          smartDropDown: false,
+          label: 'this -> target',
+          openListInWorld: true,
+          listMaster: SmallList,
+          listOffset: pt(0, -5)
+        },
+        name: 'this binding selector',
+        position: pt(92.2, 571.2),
+        extent: pt(120, 22),
+        visible: false
+      }),
+      part(DarkButton, {
+        viewModel: {
+          label: { value: 'fix undeclared vars', fontSize: 12 }
+        },
+        name: 'fix import button',
+        position: pt(221.4, 570.8),
+        extent: pt(136, 22),
+        visible: false
+      })
+    ]
+  }]
 });
 
 function openInWindow (modelAttributes) {

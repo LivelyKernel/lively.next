@@ -479,6 +479,7 @@ export class PropertyControl extends DraggableTreeLabel {
       morph({
         fill: value.valueOf ? value.valueOf() : value,
         extent: pt(15, 15),
+        reactsToPointer: false,
         borderColor: Color.gray,
         borderWidth: 1
       }), {
@@ -918,24 +919,19 @@ export class Inspector extends ViewModel {
         fixImportButton,
         terminalToggler: toggler,
         propertyTree: tree,
-        thisBindingSelector
+        thisBindingSelector,
+        editorControlsWrapper
       }, view: { layout }
     } = this;
     layout && layout.forceLayout(); // removes "sluggish" button alignment
-    const togglerBottomLeft = tree.bounds().insetBy(5).bottomLeft();
-    const importBottomRight = tree.bounds().insetBy(5).bottomRight();
-    const bindingBottomRight = importBottomRight.subXY(fixImportButton.width + 10, 0);
+    editorControlsWrapper.width = tree.bounds().width;
 
     toggler.visible = !!this.world();
 
     if (animated.duration) {
-      toggler.animate({ bottomLeft: togglerBottomLeft, ...animated });
-      fixImportButton.animate({ bottomRight: importBottomRight, ...animated });
-      thisBindingSelector.animate({ bottomRight: bindingBottomRight, ...animated });
+      editorControlsWrapper.animate({ bottomLeft: tree.bounds().bottomLeft(), ...animated });
     } else {
-      toggler.bottomLeft = togglerBottomLeft;
-      fixImportButton.bottomRight = importBottomRight;
-      thisBindingSelector.bottomRight = bindingBottomRight;
+      editorControlsWrapper.bottomLeft = tree.bounds().bottomLeft();
     }
   }
 }
