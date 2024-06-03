@@ -141,6 +141,12 @@ export default class ExpressionSerializer {
     return m ? m.record().exports : {};
   }
 
+  async ensureAllBindingsLoaded (exprObj) {
+    for (let binding in exprObj.bindings) {
+      await System.import(this.resolveModule(binding));
+    }
+  }
+
   deserializeExprObj ({ __expr__: source, bindings }) {
     const __boundValues__ = {};
 
