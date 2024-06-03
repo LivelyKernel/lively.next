@@ -996,10 +996,12 @@ export class TilingLayout extends Layout {
     style.top = 'unset';
     style.left = 'unset';
     style.order = layoutableSubmorphs.indexOf(morph); // already handled by the node ordering
-    style['margin-top'] = `${margin.top}px`;
-    style['margin-bottom'] = `${margin.bottom}px`;
-    style['margin-left'] = `${margin.left}px`;
-    style['margin-right'] = `${margin.right}px`;
+    const hasNextSibling = layoutableSubmorphs.length > style.order + 1;
+    const hasPrevSibling = style.order > 0;
+    if (this.axis !== 'column' || hasPrevSibling || this.hugContentsVertically || !this.container.verticalScrollbarVisible) style['margin-top'] = `${margin.top}px`;
+    if (this.axis !== 'column' || hasNextSibling || this.hugContentsVertically || !this.container.verticalScrollbarVisible) { style['margin-bottom'] = `${margin.bottom}px`; }
+    if (this.axis !== 'row' || hasPrevSibling || this.hugContentsHorizontally || !this.container.horizontalScrollbarVisible) style['margin-left'] = `${margin.left}px`;
+    if (this.axis !== 'row' || hasNextSibling || this.hugContentsHorizontally || !this.container.horizontalScrollbarVisible) { style['margin-right'] = `${margin.right}px`; }
     if (Number.parseInt(style['flex-grow']) !== 1) style['flex-shrink'] = 0;
   }
 
