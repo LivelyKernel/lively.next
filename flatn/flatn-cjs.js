@@ -15493,7 +15493,7 @@ const requestMap = {};
 
 class ESMResource extends Resource {
   static normalize (esmUrl) {
-    const id = esmUrl.replace('esm://cache/', '');
+    const id = esmUrl.replaceAll(/esm:\/\/(run|cache)\//g, '');
 
     let pathStructure = id.split('/').filter(Boolean);
 
@@ -15524,8 +15524,9 @@ class ESMResource extends Resource {
   async read () {
     let module;
 
-    const baseUrl = 'https://jspm.dev/';
-    const id = this.url.replace('esm://cache/', '');
+    const id = this.url.replace(/esm:\/\/(run|cache)\//g, '');
+    let baseUrl = 'https://jspm.dev/';
+    if (this.url.startsWith('esm://run/')) baseUrl = 'https://esm.run/';
 
     let pathStructure = ESMResource.normalize(id);
 
