@@ -39,8 +39,9 @@ function text (string, props) {
 
 describeInBrowser('text selection', () => {
   describe('base', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       t = text('hello\nworld');
+      await t.whenFontLoaded();
     });
 
     afterEach(() => t.remove());

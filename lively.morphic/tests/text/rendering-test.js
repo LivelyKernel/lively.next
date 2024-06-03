@@ -38,8 +38,9 @@ function getRenderedTextNodes (morph) {
 let sut;
 
 describe('text rendering', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     sut = text('hello', { position: pt(10.10), fill: Color.gray.lighter(2) }).openInWorld();
+    await sut.whenFontLoaded();
     sut.env.forceUpdate();
   });
 
@@ -154,6 +155,12 @@ describe('text rendering', () => {
   });
 
   describe('visible line detection', () => {
+    beforeEach(async () => {
+      sut = text('hello', { position: pt(10.10), fill: Color.gray.lighter(2) }).openInWorld();
+      await sut.whenFontLoaded();
+      sut.env.forceUpdate();
+    });
+
     it('determines last and first full visible line based on padding and scroll', async () => {
       let { width: w, height: h } = sut.textLayout.defaultCharExtent(sut);
       Object.assign(sut, {
@@ -175,7 +182,7 @@ describe('text rendering', () => {
       expect(l.firstFullVisibleLine(sut)).equals(0);
       expect(l.lastFullVisibleLine(sut)).equals(2);
 
-      sut.scroll = sut.scroll.addXY(0, padding.top() + h);
+      sut.scroll = sut.scroll.addXY(0, padding.top() + h - 1);
 
       sut.env.forceUpdate(sut);
       await promise.delay(50);
