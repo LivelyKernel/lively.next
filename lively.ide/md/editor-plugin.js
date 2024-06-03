@@ -48,7 +48,9 @@ let commands = [
         $world.addMorph(preview.getWindow()).activate();
       }
 
-      preview.renderMarkdown();
+      $world.withRequesterDo(preview.getWindow(), async () => {
+        await $world.withLoadingIndicatorDo(() => preview.renderMarkdown(), preview.getWindow(), 'rendering markdown');
+      });
 
       return preview;
     }
