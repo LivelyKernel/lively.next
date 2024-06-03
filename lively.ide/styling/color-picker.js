@@ -219,6 +219,7 @@ export class ColorPickerModel extends ViewModel {
   static get properties () {
     return {
       isHaloItem: { defaultValue: true },
+      embedded: { defaultValue: false },
       colorMode: {},
       context: {
         serialize: false,
@@ -342,6 +343,7 @@ export class ColorPickerModel extends ViewModel {
   }
 
   close () {
+    if (this.embedded) return; // if embedded cannot be closed
     this.view.remove();
     const { context } = this;
     if (context) context.withTopBarDo(topBar => topBar.setEditMode(topBar.view.recoverMode, true));
@@ -374,7 +376,7 @@ export class ColorPickerModel extends ViewModel {
     const isGradient = ['linearGradient', 'radialGradient'].includes(newMode);
     if (isGradient) noUpdate(() => this.context.halos().forEach(m => m.remove()));
     else {
-      if (this._target) { noUpdate(() => $world.showHaloFor(this._target)); }
+      if (!this.embedded && this._target) { noUpdate(() => $world.showHaloFor(this._target)); }
     }
     this.ui.gradientControl.toggle(isGradient, this);
     this.colorMode = newMode;
