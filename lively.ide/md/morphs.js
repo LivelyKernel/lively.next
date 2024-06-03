@@ -1,8 +1,12 @@
-import { HTMLMorph, Morph } from 'lively.morphic';
+import { HTMLMorph, morph, TilingLayout, Morph } from 'lively.morphic';
 import { mdCompiler } from './compiler.js';
 import { connect } from 'lively.bindings/index.js';
-import { fun } from 'lively.lang/index.js';
-import { rect } from 'lively.graphics/index.js';
+import { fun, promise, obj } from 'lively.lang/index.js';
+import { rect, Color } from 'lively.graphics/index.js';
+import { ExpressionSerializer } from 'lively.serializer2';
+import hljs from 'esm://cache/highlight.js@11.9.0/lib/core';
+import javascript from 'esm://cache/highlight.js@11.9.0/lib/languages/javascript';
+hljs.registerLanguage('javascript', javascript);
 
 export class MarkdownPreviewMorph extends HTMLMorph {
   static get properties () {
@@ -273,20 +277,75 @@ export class MarkdownPreviewMorph extends HTMLMorph {
     fun.throttleNamed('autoRender' + this.id, 300, () => this.renderMarkdown())();
   }
 
-  renderMarkdown (editor = this.markdownEditor) {
+  async renderMarkdown (editor = this.markdownEditor) {
     this.markdownToHTMLPositionMap = null; // reset cache
     let ed = this.markdownEditor;
-    if (ed) {
-      // this.markdownOptions = {...this.markdownOptions, linkedCSS: false}
+    let { markdownSource, markdownOptions } = this;
+    const interactiveMorphs = [...markdownSource.matchAll(/<!--.*__lv_expr__.*-->/g)];
+    const sections = markdownSource.split(/<!--.*__lv_expr__.*-->/);
+    if (ed && !interactiveMorphs.length > 0) {
+      // FIXME: this is due to a rendering bug with HTML morphs
+      this.layout = null;
+      this.env.forceUpdate(this);
+
+      this.submorphs = [];
+      this.env.forceUpdate(this);
       this.html = ed.editorPlugin.renderedMarkdown();
     } else {
-      let { markdownSource, markdownOptions } = this;
-      let html = mdCompiler.compileToHTML(markdownSource, markdownOptions);
-      this.html = html;
+      const blocks = [];
+      const exprSerializer = new ExpressionSerializer();
+
+      while (sections.length > 1 && interactiveMorphs.length > 0) {
+        const expr = interactiveMorphs.shift()[0].match(/(__lv_expr__.*)-->/)[1];
+        const exprObj = exprSerializer.exprStringDecode(expr);
+        await exprSerializer.ensureAllBindingsLoaded(exprObj);
+        blocks.push(sections.shift(), exprSerializer.deserializeExprObj(exprObj));
+      }
+      blocks.push(sections.shift());
+
+      if (blocks.length < 2) {
+        let html = mdCompiler.compileToHTML(markdownSource, markdownOptions);
+        this.html = html;
+        this._smoothScroll = null;
+        // FIXME: this is due to a rendering bug with HTML morphs
+        this.layout = null;
+        this.env.forceUpdate(this);
+
+        this.submorphs = [];
+      } else {
+        const scrollBefore = this.submorphs[0]?.scroll;
+        this.html = '';
+        this.layout = new TilingLayout({ axis: 'column' });
+        this.submorphs = [{
+          fill: Color.transparent,
+          clipMode: 'auto',
+
+          layout: new TilingLayout({ axis: 'column', padding: 15, spacing: 15 }),
+          submorphs: blocks.map(elem => {
+            if (elem.isMorph) return elem;
+            else return morph({ type: 'html', fixedHeight: false, html: mdCompiler.compileToHTML(elem, markdownOptions) });
+          })
+        }];
+        this.layout.setResizePolicyFor(this.submorphs[0], { width: 'fill', height: 'fill' });
+        const res = promise.deferred();
+        setTimeout(async () => {
+          const wrapper = this.submorphs[0];
+          for (let m of wrapper.submorphs) {
+            wrapper.layout.setResizePolicyFor(m, { width: 'fill', padding: 10 });
+            // but we also need to adjust the height of each html morph to fit its contents
+            if (m.isHTMLMorph) {
+              await m.whenRendered();
+              m.height = m.env.renderer.getNodeForMorph(m).children[0].children[1].offsetHeight + 10;
+            }
+          }
+          hljs.highlightAll();
+          if (scrollBefore) wrapper.scroll = scrollBefore;
+          res.resolve(this.html);
+        });
+        return res.promise;
+      }
     }
 
-    this._smoothScroll = null;
-    this.submorphs = [];
     // this.submorphs = this.computeMarkdownToHTMLPositionMap().map((ea, i) => {
     //   return {width: this.width, height: 3, top: ea, fill: Color.orange,
     //                 submorphs: [{type: "text", textString: String(i)}]}
