@@ -182,7 +182,7 @@ function transformImportMeta (parsed, options) {
     if (node.type == 'MetaProperty' && node.meta.name == 'import') {
       return options.classToFunction.currentModuleAccessor
         ? nodes.objectLiteral(['url', nodes.member(options.classToFunction.currentModuleAccessor, 'id')])
-        : parse('({url: eval("_context").id})').body[0].expression;
+        : parse('({url: eval("typeof _context !== \'undefined\' ? _context : {}").id})').body[0].expression;
     }
     return node;
   });
