@@ -53,7 +53,10 @@ function removeSut () {
 }
 
 describe('text attributes', () => {
-  beforeEach(() => sut = text('hello', {}));
+  beforeEach(async () => {
+    sut = text('hello', {})
+    await sut.whenFontLoaded();
+  });
 
   it('addTextAttribute merges style ranges', () => {
     let style_a = { fontSize: 12, fontStyle: 'italic' };
