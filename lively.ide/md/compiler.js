@@ -1,12 +1,30 @@
 import markdownIt from 'esm://cache/markdown-it@12.3.2';
 import markdownCheckbox from 'esm://cache/markdown-it-checkbox@1.1.0';
+import markdownCaption from 'esm://cache/markdown-it-implicit-figures';
 import { string } from 'lively.lang';
+
+function addSourceLineMappingPlugin (md, options = {}) {
+  options = { ...md.options, ...options };
+  if (!options.addSourceLineMapping) return;
+
+  function injectLineNumbers (tokens, idx, options, env, slf) {
+    var mdLine, htmlLine;
+    if (tokens[idx].map && tokens[idx].level === 0) {
+      var [mdLine, htmlLine] = tokens[idx].map;
+      tokens[idx].attrJoin('class', 'markdown-line-marker');
+      tokens[idx].attrSet('data-mdline', String(mdLine));
+      tokens[idx].attrSet('data-htmlline', String(htmlLine));
+    }
+    return slf.renderToken(tokens, idx, options, env, slf);
+  }
+
+  md.renderer.rules.paragraph_open = md.renderer.rules.heading_open = injectLineNumbers;
+}
 
 class MarkdownCompiler {
   compileToHTML (src, options = {}) {
     let { linkedCSS, markdownWrapperTemplate } = options;
-
-    let md = markdownIt(options).use(externalizeLinksPlugin).use(addSourceLineMappingPlugin).use(markdownCheckbox);
+    let md = markdownIt(options).use(externalizeLinksPlugin).use(addSourceLineMappingPlugin).use(markdownCheckbox).use(markdownCaption, { dataType: true, figcaption: true }); // eslint-disable-line no-use-before-define
     let html = md.render(src);
 
     if (markdownWrapperTemplate) { html = string.format(markdownWrapperTemplate, html); }
@@ -21,7 +39,7 @@ class MarkdownCompiler {
   }
 
   parse (editor, options) {
-    let md = markdownIt(options).use(externalizeLinksPlugin).use(markdownCheckbox);
+    let md = markdownIt(options).use(externalizeLinksPlugin).use(markdownCheckbox).use(markdownCaption, { dataType: true, figcaption: true }); // eslint-disable-line no-use-before-define
     let src = editor.textString;
     let parsed = md.parse(editor.textString, {});
     let lines = src.split('\n');
@@ -52,6 +70,20 @@ function externalizeLinksPlugin (md, options = {}) {
   } = options.externalizeLinks;
 
   function externalLinks (state) {
+    function getDomain (href) {
+      let domain = href.split('//')[1];
+      if (domain) {
+        domain = domain.split('/')[0].toLowerCase();
+        return domain || null;
+      }
+      return null;
+    }
+
+    function isInternalLink (href) {
+      let domain = getDomain(href);
+      return domain === null || internalDomains.indexOf(domain) !== -1;
+    }
+
     function applyFilterToTokenHierarchy (token) {
       if (token.children) token.children.map(applyFilterToTokenHierarchy);
 
@@ -73,37 +105,5 @@ function externalizeLinksPlugin (md, options = {}) {
     state.tokens.map(applyFilterToTokenHierarchy);
   }
 
-  function isInternalLink (href) {
-    let domain = getDomain(href);
-    return domain === null || internalDomains.indexOf(domain) !== -1;
-  }
-
-  function getDomain (href) {
-    let domain = href.split('//')[1];
-    if (domain) {
-      domain = domain.split('/')[0].toLowerCase();
-      return domain || null;
-    }
-    return null;
-  }
-
   md.core.ruler.push('external_links', externalLinks);
-}
-
-function addSourceLineMappingPlugin (md, options = {}) {
-  options = { ...md.options, ...options };
-  if (!options.addSourceLineMapping) return;
-
-  function injectLineNumbers (tokens, idx, options, env, slf) {
-    var mdLine, htmlLine;
-    if (tokens[idx].map && tokens[idx].level === 0) {
-      var [mdLine, htmlLine] = tokens[idx].map;
-      tokens[idx].attrJoin('class', 'markdown-line-marker');
-      tokens[idx].attrSet('data-mdline', String(mdLine));
-      tokens[idx].attrSet('data-htmlline', String(htmlLine));
-    }
-    return slf.renderToken(tokens, idx, options, env, slf);
-  }
-
-  md.renderer.rules.paragraph_open = md.renderer.rules.heading_open = injectLineNumbers;
 }
