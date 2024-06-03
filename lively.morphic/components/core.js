@@ -643,7 +643,7 @@ export function component (masterComponentOrProps, overriddenProps) {
   if (masterComponentOrProps) {
     return new PolicyApplicator(props, masterComponentOrProps);
   } else {
-    return props;
+    return new PolicyApplicator(props);
   }
 }
 
