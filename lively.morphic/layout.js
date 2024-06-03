@@ -399,6 +399,15 @@ export class TilingLayout extends Layout {
     return aMorph._yogaNode || (aMorph._yogaNode = Yoga.Node.create(yogaConfig));
   }
 
+  resetYogaNodeFor (aMorph) {
+    if (!aMorph._yogaNode) return;
+    // clear and free the yoga object
+    aMorph._yogaNode.free();
+    delete aMorph._yogaNode;
+    // ensure that the morph gets rendered again, so that yoga is getting re-initialize
+    aMorph.makeDirty();
+  }
+
   initializeResizePolicies (_initializingPoliciesAfterwards = false) {
     this._initializingPolicies = true;
     const resizePolicies = this._resizePolicies;
@@ -728,6 +737,7 @@ export class TilingLayout extends Layout {
       this._policiesSynthesized = true;
       this._resizePolicies.set(aLayoutableSubmorph, policy);
       this.onConfigUpdate();
+      if (!this._initializingPolicies) this.resetYoga();
     }
   }
 
@@ -781,13 +791,21 @@ export class TilingLayout extends Layout {
 
   onOwnerChanged (newOwner) {
     if (newOwner) return;
-    this.container._yogaNode?.free();
-    delete this.container._yogaNode;
+    setTimeout(() => !this.container?.world() && this.resetYoga());
+  }
+
+  resetYoga () {
+    if (!this.container || !this.container._yogaNode) return;
+    this.resetYogaNodeFor(this.container);
     delete this.layoutableSubmorphBounds;
     this.container.submorphs.forEach(m => {
-      m._yogaNode?.free();
-      delete m._yogaNode;
+      if (m.layout?.name() !== 'Tiling') this.resetYogaNodeFor(m);
     });
+    this.container
+      .withAllSubmorphsSelect(m => m.layout?.name() == 'Tiling')
+      .forEach(m => {
+        m.layout.resetYoga();
+      });
   }
 
   onContainerRender () {
@@ -1292,6 +1310,10 @@ export class TilingLayout extends Layout {
         yogaNode.setFlexGrow(1);
       }
     } else {
+      if (isHorizontal) {
+        yogaNode.setFlexGrow(0);
+        yogaNode.setFlexShrink(0);
+      }
       yogaNode.setWidth(submorph.width);
     }
     if (this.getResizeHeightPolicyFor(submorph) === 'fill') {
@@ -1305,6 +1327,10 @@ export class TilingLayout extends Layout {
         margin.top = 0;
       }
     } else {
+      if (isVertical) {
+        yogaNode.setFlexGrow(0);
+        yogaNode.setFlexShrink(0);
+      }
       yogaNode.setHeight(submorph.height);
     }
 
