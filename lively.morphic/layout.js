@@ -661,7 +661,8 @@ export class TilingLayout extends Layout {
     const { container } = this;
     if (
       container.owner?.layout?.name() === 'Tiling' &&
-      container.owner.layout.getResizeHeightPolicyFor(container) === 'fill') return true;
+      container.owner.layout.getResizeHeightPolicyFor(container) === 'fill' &&
+      container.isLayoutable) return true;
     return false;
   }
 
@@ -689,7 +690,8 @@ export class TilingLayout extends Layout {
   get stretchedHorizontally () {
     const { container } = this;
     if (container.owner?.layout?.name() === 'Tiling' &&
-      container.owner.layout.getResizeWidthPolicyFor(container) === 'fill') return true;
+      container.owner.layout.getResizeWidthPolicyFor(container) === 'fill' &&
+      container.isLayoutable) return true;
     return false;
   }
 
