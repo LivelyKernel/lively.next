@@ -1137,7 +1137,7 @@ export class TilingLayout extends Layout {
     const containerNode = this.ensureYogaNodeFor(this.container);
     let i = 0; let resetNodes = layoutableSubmorphs.length !== containerNode.getChildCount();
     for (let m of layoutableSubmorphs) {
-      if (this.ensureYogaNodeFor(m) !== containerNode.getChild(i++)) {
+      if (this.ensureYogaNodeFor(m)?.M.O !== containerNode.getChild(i++)?.M.O) {
         resetNodes = true;
         break;
       }
