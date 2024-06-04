@@ -432,7 +432,9 @@ class DOMTextMeasure {
   }
 
   getEmptySpaceOfMorph (textMorph) {
-    return textMorph.width - textMorph.padding.left() - textMorph.padding.right() - textMorph.borderWidthLeft - textMorph.borderWidthRight;
+    const leftBorder = textMorph.borderStyleLeft !== 'none' ? textMorph.borderWidthLeft : 0;
+    const rightBorder = textMorph.borderStyleRight !== 'none' ? textMorph.borderWidthRight : 0;
+    return textMorph.width - textMorph.padding.left() - textMorph.padding.right() - leftBorder - rightBorder;
   }
 
   measureCharWidthsInCanvas (morph, str, styleOpts = {}, measuringState) {
