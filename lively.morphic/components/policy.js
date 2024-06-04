@@ -1,4 +1,4 @@
-import { arr, grid, string, tree, promise, obj } from 'lively.lang';
+import { arr, fun, grid, string, tree, promise, obj } from 'lively.lang';
 import { pt } from 'lively.graphics';
 import { morph, getDefaultValuesFor, sanitizeFont, getStylePropertiesFor, getDefaultValueFor } from '../helpers.js';
 import { withSuperclasses } from 'lively.classes/util.js';
@@ -273,6 +273,12 @@ export class BreakpointStore {
     });
     return [vbp, hbp];
   }
+
+  getLimitExtent ([v, h]) {
+    const hOffset = this._horizontalBreakpoints[h];
+    const vOffset = this._verticalBreakpoints[v];
+    return pt(hOffset, vOffset);
+  }
 }
 
 /**
@@ -410,6 +416,31 @@ export class StylePolicy {
 
   getMatchingBreakpointMaster (targetMorph) {
     return this.getBreakpointStore()?.getMatchingBreakpointMaster(targetMorph);
+  }
+
+  performSafeBreakpointTransition (targetMorph, previousTarget) {
+    const bpStore = this.getBreakpointStore();
+    if (!bpStore) return;
+    fun.guardNamed('apply-' + targetMorph.id, () => {
+      const currIndex = bpStore.getMatchingBreakpoint(targetMorph);
+      if (targetMorph._lastIndex && !obj.equals(targetMorph._lastIndex, currIndex)) {
+        const limitExtent = bpStore.getLimitExtent(currIndex);
+        const actualExtent = targetMorph.extent;
+        targetMorph.withMetaDo({ metaInteraction: true, reconcileChanges: false, doNotFit: true }, () => {
+          const origLayoutableFlag = targetMorph.isLayoutable;
+          targetMorph.isLayoutable = false; // avoid any resizing interference here
+          targetMorph.extent = limitExtent;
+          targetMorph.applyLayoutIfNeeded(true);
+          // implement the handshake and potential layout switch at exactly this point
+          this.apply(targetMorph, previousTarget);
+          targetMorph.isLayoutable = false;
+          targetMorph.applyLayoutIfNeeded(true);
+          targetMorph.extent = actualExtent;
+          targetMorph.isLayoutable = origLayoutableFlag;
+        });
+      }
+      targetMorph._lastIndex = currIndex;
+    })();
   }
 
   needsBreakpointUpdate (target) {
@@ -1358,6 +1389,7 @@ export class PolicyApplicator extends StylePolicy {
       return this._animating;
     }
     if (!this._animating) {
+      this.performSafeBreakpointTransition(this.targetMorph, previousTarget);
       this.apply(this.targetMorph, previousTarget);
     }
   }
