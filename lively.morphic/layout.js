@@ -239,9 +239,9 @@ class Layout {
     }
   }
 
-  affectsLayout (submorph, { prop, value, prevValue }) {
+  affectsLayout (submorph, { prop, value, prevValue, meta }) {
     return ['position', 'scale', 'rotation', 'isLayoutable', 'extent'].includes(prop) &&
-           !obj.equals(value, prevValue);
+           !obj.equals(value, prevValue) && !meta.metaInteraction;
   }
 
   get isLayoutAction () {
