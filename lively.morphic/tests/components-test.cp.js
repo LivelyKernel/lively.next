@@ -4,7 +4,7 @@ import { expect } from 'mocha-es6';
 import { Color, pt } from 'lively.graphics';
 import { tree, grid } from 'lively.lang';
 import { serialize } from 'lively.serializer2';
-import { ComponentDescriptor, Text, Morph, morph } from 'lively.morphic';
+import { ComponentDescriptor, TilingLayout, Text, Morph, morph } from 'lively.morphic';
 import { component, ViewModel, without, part, add } from '../components/core.js';
 import { StylePolicy, sanitizeSpec, BreakpointStore, PolicyApplicator } from '../components/policy.js';
 import { getDefaultValuesFor } from '../helpers.js';
@@ -954,5 +954,71 @@ describe('breakpoints', () => {
     expect(grid.get(bpStore._breakpointMasters, 0, 1)).equals(d2);
     expect(grid.get(bpStore._breakpointMasters, 1, 0)).equals(d3);
     expect(grid.get(bpStore._breakpointMasters, 1, 2)).equals(null);
+  });
+
+  it('properly applies breakpoints when extent changes', () => {
+    const B1 = ComponentDescriptor.for(() => component({
+      extent: pt(100, 100),
+      submorphs: [
+        { name: 'helen', fill: Color.purple }
+      ]
+    }), {
+      exportedName: 'B1',
+      moduleId
+    });
+    const B2 = ComponentDescriptor.for(() => component({
+      submorphs: [
+        { name: 'helen', fill: Color.green }
+      ]
+    }), {
+      exportedName: 'B2',
+      moduleId
+    });
+    const m = part(B1, {
+      master: { breakpoints: [[pt(200, 0), B2]] }
+    });
+    expect(m.get('helen').fill).to.equal(Color.purple);
+    m.width = 250;
+    m.master.applyIfNeeded(true);
+    expect(m.get('helen').fill).to.equal(Color.green);
+  });
+
+  it('properly respect the limit of the breakpoints', () => {
+    const B3 = ComponentDescriptor.for(() => component({
+      extent: pt(100, 100),
+      layout: new TilingLayout({
+        renderViaCSS: false,
+        resizePolicies: [['helen', { width: 'fill', height: 'fixed' }]]
+      }),
+      submorphs: [
+        { name: 'helen', fill: Color.purple }
+      ]
+    }), {
+      exportedName: 'B3',
+      moduleId
+    });
+    const B4 = ComponentDescriptor.for(() => component({
+      layout: new TilingLayout({
+        renderViaCSS: false
+      }),
+      submorphs: [
+        { name: 'helen', fill: Color.green, width: 200 }
+      ]
+    }), {
+      exportedName: 'B4',
+      moduleId
+    });
+    const m = part(B3, {
+      width: 150,
+      master: { breakpoints: [[pt(200, 0), B4]] }
+    });
+    expect(m.get('helen').width).to.equal(150);
+    m.width = 199;
+    m.master.applyIfNeeded(true);
+    expect(m.get('helen').width).to.equal(199);
+    m.width = 250;
+    m.master.applyIfNeeded(true);
+    expect(m.width).to.equal(250);
+    expect(m.get('helen').width).to.equal(200);
   });
 });
