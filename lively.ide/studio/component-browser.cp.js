@@ -1411,7 +1411,7 @@ const ComponentPreview = component({
   borderColor: Color.transparent,
   borderRadius: 5,
   borderWidth: 2,
-  extent: pt(129.5, 128.4),
+  extent: pt(130, 130),
   fill: Color.transparent,
   draggable: true,
   nativeCursor: 'grab',
