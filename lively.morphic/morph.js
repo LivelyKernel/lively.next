@@ -1362,14 +1362,20 @@ export class Morph {
       : this.innerBounds()).extent().addPt(this.scrollbarOffset);
   }
 
+  get scrollbarVisible () {
+    if (this.clipMode === 'visible' || this.clipMode === 'hidden') return { horizontal: false, vertical: false };
+    if (this.clipMode === 'scroll') return { horizontal: true, vertical: true };
+    const extent = this.extent;
+    const scrollExtent = this.scrollExtent.subPt(this.scrollbarOffset);
+    return { horizontal: scrollExtent.x > extent.x, vertical: scrollExtent.y > extent.y };
+  }
+
   /**
    * Returns whether or not the horizontal scrollbar of this Morphs is visible.
    * TODO: Might return incorrect values for arrangements with submorphs that are not arranged orthogonal to each other.
    */
   get horizontalScrollbarVisible () {
-    const extent = this.extent.x;
-    const scrollExtent = this.scrollExtent.x - this.scrollbarOffset.x;
-    return (scrollExtent > extent && this.clipMode === 'auto') || this.clipMode === 'scroll';
+    return this.scrollbarVisible.horizontal;
   }
 
   /**
@@ -1377,9 +1383,7 @@ export class Morph {
    * TODO: Might return incorrect values for arrangements with submorphs that are not arranged orthogonal to each other.
    */
   get verticalScrollbarVisible () {
-    const extent = this.extent.y;
-    const scrollExtent = this.scrollExtent.y - this.scrollbarOffset.y;
-    return (scrollExtent > extent && this.clipMode === 'auto') || this.clipMode === 'scroll';
+    return this.scrollbarVisible.vertical;
   }
 
   scrollBounds () {
