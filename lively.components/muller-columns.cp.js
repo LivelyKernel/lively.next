@@ -208,7 +208,7 @@ export class MullerColumnViewModel extends ViewModel {
     let scrollBarHeight = 0;
     const { view } = this;
     if (view.scrollExtent.x > view.width + view.scrollbarOffset.x) {
-      scrollBarHeight = 5;
+      scrollBarHeight = view.scrollbarOffset.y;
     }
     this.lists.forEach(list => {
       list.height = view.height - scrollBarHeight - 1;
