@@ -1,9 +1,17 @@
+/* global URL */
 import { component, ViewModel, HTMLMorph } from 'lively.morphic';
 
 class YouTubeEmbedViewModel extends ViewModel {
   static get properties () {
     return {
-      videoURL: {}
+      videoURL: {
+        set (url) {
+          const baseURL = new URL(url);
+          const videoID = baseURL.search.replaceAll('?v=', '');
+          const embedLink = `https://www.youtube.com/embed/${videoID}`;
+          this.setProperty('videoURL', embedLink);
+        }
+      }
     };
   }
 
