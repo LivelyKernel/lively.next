@@ -927,6 +927,7 @@ export class TilingLayout extends Layout {
     const { container, hugContentsVertically, hugContentsHorizontally } = this;
     const node = this.ensureLayoutComputed(container);
     const isPreliminary = node.getParent() && !node._computedMargin;
+    const { scrollbarVisible, scrollbarOffset } = container;
     let width = isPreliminary ? container.width : node.getComputedWidth();
     let height = isPreliminary ? container.height : node.getComputedHeight();
 
@@ -935,10 +936,10 @@ export class TilingLayout extends Layout {
     const widthSetting = node.getWidth();
     const isVisible = this.checkYogaNodeVisible(node);
     if (isVisible && !hugContentsVertically) {
-      node.setHeight(height);
+      node.setHeight(height - (scrollbarVisible.horizontal ? scrollbarOffset.x : 0));
     }
     if (isVisible && !hugContentsHorizontally) {
-      node.setWidth(width);
+      node.setWidth(width - (scrollbarVisible.vertical ? scrollbarOffset.y : 0));
     }
 
     if (hugContentsVertically) {
@@ -951,16 +952,7 @@ export class TilingLayout extends Layout {
       width = node.getComputedWidth();
     }
 
-    if (heightSetting.unit === 2) {
-      node.setHeight(`${heightSetting.value}%`);
-    }
-    if (widthSetting.unit === 2) {
-      node.setWidth(`${widthSetting.value}%`);
-    }
-
-    this.ensureLayoutComputed(container);
-
-    // revert to the original
+    this.ensureLayoutComputed(container); // compute the rest with the fixed setting
 
     if (this.container.submorphs.length > 0) {
       if (hugContentsVertically && container.height !== height) {
@@ -975,6 +967,14 @@ export class TilingLayout extends Layout {
       if (!m._yogaNode) return;
       this.updateSubmorphBounds(m);
     });
+
+    // now reset to the original setting, so that the future fill sizes are computed correctly
+    if (heightSetting.unit === 2) {
+      node.setHeight(`${heightSetting.value}%`);
+    }
+    if (widthSetting.unit === 2) {
+      node.setWidth(`${widthSetting.value}%`);
+    }
   }
 
   addSubmorphCSS (morph, style) {
@@ -989,6 +989,7 @@ export class TilingLayout extends Layout {
     if (!morph.isLayoutable) return;
     let margin = node._computedMargin;
     const { axis, layoutableSubmorphs } = this;
+    const { scrollbarVisible } = this.container;
     const isVertical = axis === 'column';
 
     if (this.getResizeWidthPolicyFor(morph) === 'fill') {
@@ -1018,10 +1019,11 @@ export class TilingLayout extends Layout {
     style.order = layoutableSubmorphs.indexOf(morph); // already handled by the node ordering
     const hasNextSibling = layoutableSubmorphs.length > style.order + 1;
     const hasPrevSibling = style.order > 0;
-    if (this.axis !== 'column' || hasPrevSibling || this.hugContentsVertically || !this.container.verticalScrollbarVisible) style['margin-top'] = `${margin.top}px`;
-    if (this.axis !== 'column' || hasNextSibling || this.hugContentsVertically || !this.container.verticalScrollbarVisible) { style['margin-bottom'] = `${margin.bottom}px`; }
-    if (this.axis !== 'row' || hasPrevSibling || this.hugContentsHorizontally || !this.container.horizontalScrollbarVisible) style['margin-left'] = `${margin.left}px`;
-    if (this.axis !== 'row' || hasNextSibling || this.hugContentsHorizontally || !this.container.horizontalScrollbarVisible) { style['margin-right'] = `${margin.right}px`; }
+
+    if (this.axis !== 'column' || hasPrevSibling || this.hugContentsVertically || !scrollbarVisible.vertical) style['margin-top'] = `${margin.top}px`;
+    if (this.axis !== 'column' || hasNextSibling || this.hugContentsVertically || !scrollbarVisible.vertical) { style['margin-bottom'] = `${margin.bottom}px`; }
+    if (this.axis !== 'row' || hasPrevSibling || this.hugContentsHorizontally || !scrollbarVisible.horizontal) style['margin-left'] = `${margin.left}px`;
+    if (this.axis !== 'row' || hasNextSibling || this.hugContentsHorizontally || !scrollbarVisible.horizontal) { style['margin-right'] = `${margin.right}px`; }
     if (Number.parseInt(style['flex-grow']) !== 1) style['flex-shrink'] = 0;
   }
 
@@ -1033,8 +1035,6 @@ export class TilingLayout extends Layout {
     margin.offsetBottom = container.borderWidthBottom;
     margin.offsetRight = container.borderWidthRight;
     margin.offsetLeft = container.borderWidthLeft;
-    if (container.verticalScrollbarVisible) margin.offsetH = margin.offsetH + container.scrollbarOffset.x;
-    if (container.horizontalScrollbarVisible) margin.offsetV = margin.offsetV + container.scrollbarOffset.y;
   }
 
   computeOffset () {
