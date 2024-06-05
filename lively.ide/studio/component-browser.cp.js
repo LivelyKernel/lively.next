@@ -555,15 +555,7 @@ export class ExportedComponent extends Morph {
 
   select (active) {
     this.isSelected = active;
-    if (active) {
-      this.master = {
-        auto: this.selectedMaster
-      };
-    } else {
-      this.master = {
-        auto: this.defaultMaster
-      };
-    }
+    this.master.setState(active ? 'selected' : null);
   }
 }
 
@@ -627,8 +619,11 @@ export class ProjectEntry extends Morph {
       let preview = previewContainer.submorphs.find(p => p.component === cp);
       if (!preview) {
         preview = part(this.previewMaster, {
-          defaultMaster: this.previewMaster,
-          selectedMaster: this.selectedPreviewMaster
+          master: {
+            states: {
+              selected: this.selectedPreviewMaster
+            }
+          }
         });
         preview.project = this;
         preview.component = cp;
