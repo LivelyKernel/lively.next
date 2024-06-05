@@ -456,13 +456,15 @@ export class ExportedComponent extends Morph {
       const preview = part(this.component, { defaultViewModel: null, name: this.component.componentName });
       const container = this.get('preview container');
       const maxExtent = pt(100, 70);
-      container.clipMode = 'hidden';
+      const padding = -10;
       preview.scale = 1;
       // This is needed since the centering via css layouts gets currently quite
       // confused when transforms are applied (scale, rotation)
       const previewBoundsWrapper = morph({ fill: Color.transparent, reactsToPointer: false, extent: preview.bounds().extent(), submorphs: [preview] });
       preview.topLeft = pt(0, 0);
-      previewBoundsWrapper.scale = Math.min(maxExtent.x / previewBoundsWrapper.bounds().width, maxExtent.y / previewBoundsWrapper.bounds().height);
+      previewBoundsWrapper.scale = Math.min(
+        maxExtent.x / (previewBoundsWrapper.bounds().width - padding),
+        maxExtent.y / (previewBoundsWrapper.bounds().height - padding));
       container.submorphs = [previewBoundsWrapper];
       preview.withAllSubmorphsDo(m => m.reactsToPointer = false);
     } catch (err) {
