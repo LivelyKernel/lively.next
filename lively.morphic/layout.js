@@ -106,7 +106,7 @@ class Layout {
   }
 
   boundsChanged (container) {
-    return !(this.lastBoundsExtent && container.bounds().extent().equals(this.lastBoundsExtent));
+    return container.isClip() ? this.extentChanged(container) : !(this.lastBoundsExtent && container.bounds().extent().equals(this.lastBoundsExtent));
   }
 
   extentChanged (container) {
@@ -158,10 +158,11 @@ class Layout {
   }
 
   get noLayoutActionNeeded () {
-    return !this.submorphsChanged &&
-            !this.extentChanged(this.container) &&
-            !this.boundsChanged(this.container) &&
-            !this.submorphBoundsChanged;
+    const containerNotDisplayed = !this.container.visible || !!this.container.ownerChain().find(m => !m.visible);
+    return (containerNotDisplayed ||
+            !this.container.needsRerender() &&
+            !this.submorphsChanged && // submorphs have not changed
+            !this.submorphBoundsChanged); // submorph bounds have changed
   }
 
   get __dont_serialize__ () { return ['lastAnim', 'animationPromise']; }
@@ -1050,12 +1051,7 @@ export class TilingLayout extends Layout {
   }
 
   computeBoundsOfEntireLayoutComposition (force = false) {
-    if (!this.container.needsRerender() &&
-        this.noLayoutActionNeeded &&
-        this.container._yogaNode ||
-        !this.container.visible) {
-      return;
-    }
+    if (this.noLayoutActionNeeded) return;
     if (!force && this.embeddedInTiling) return;
 
     this.updateContainerNode();
