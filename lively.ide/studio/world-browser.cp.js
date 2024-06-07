@@ -1520,6 +1520,7 @@ const WorldBrowser = component({
         orderByIndex: true,
         padding: rect(0, 0, 0, 30),
         reactToSubmorphAnimations: true,
+        hugContentsVertically: true,
         spacing: 25,
         wrapSubmorphs: true
       }),
