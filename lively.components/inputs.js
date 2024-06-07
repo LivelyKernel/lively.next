@@ -247,7 +247,7 @@ export class InputLine extends Text {
     Additionally, the width of the text morph seems to not be propagated correctly synchronously, which makes a bit of additional space necessary.
     The additional space trie to mitigate clipping.
     */
-    this._errorIcon.right = this.width - 30;
+    this._errorIcon.right = this.width;
   }
 
   clearError () {
