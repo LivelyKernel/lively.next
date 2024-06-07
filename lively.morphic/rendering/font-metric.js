@@ -349,7 +349,7 @@ class DOMTextMeasure {
   }
 
   canBeMeasuredViaCanvas (aMorph) {
-    if (!aMorph.allFontsLoaded()) return false;
+    if (!aMorph.allFontsLoaded() && document.fonts.status !== 'loading') return false;
     const { fontFamily, fontWeight, fontStyle } = aMorph;
     const key = `${fontFamily}-${fontWeight}-${fontStyle}`;
     if (key in this.canvasCompatibility) return this.canvasCompatibility[key];

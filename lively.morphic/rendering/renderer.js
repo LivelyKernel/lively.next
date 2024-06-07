@@ -2030,7 +2030,7 @@ export default class Renderer {
 
     const fastBounds = this.tryToMeasureViaCanvas(morph);
     if (fastBounds) {
-      if (morph.allFontsLoaded()) {
+      if (morph.allFontsLoaded() && document.fonts.status !== 'loading') {
         morph._cachedBounds = fastBounds;
         morph.renderingState.needsRemeasure = false;
       }
@@ -2078,7 +2078,7 @@ export default class Renderer {
     prevParent.appendChild(textNode);
     this.updateNodeScrollFromMorph(morph);
 
-    if (morph.allFontsLoaded()) {
+    if (morph.allFontsLoaded() && document.fonts.status !== 'loading') {
       morph._cachedBounds = bounds;
       morph.renderingState.needsRemeasure = false;
     }
