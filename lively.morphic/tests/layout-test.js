@@ -886,8 +886,12 @@ describe('layout', () => {
       d.extent = pt(100, 100);
       a.applyLayoutIfNeeded();
       b.layout.refreshBoundsCache();
+      b.renderingState.needsRerender = false;
+      b.layout.container.needsRerender();
+      !b.visible || !!b.ownerChain().find(m => !m.visible);
       expect(b.layout.noLayoutActionNeeded).is.true;
       c.scroll = pt(0, -40);
+      b.renderingState.needsRerender = false;
       expect(b.layout.noLayoutActionNeeded).is.true;
     });
 
