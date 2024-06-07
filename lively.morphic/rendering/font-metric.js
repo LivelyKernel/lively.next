@@ -796,7 +796,7 @@ export function charBoundsOfLineViaCanvas (line, textMorph, fontMetric, measure)
   if (!textMorph.fixedWidth) {
     // in this case the padding + longest line defines the total width
     const lineWidth = arr.max(Object.values(boundsPerInnerLine).map(bs => arr.sum(bs.map(b => b[1][0]))));
-    totalWidth = (line.width === textMorph.document.width ? lineWidth : textMorph.document.width) + paddedSpace;
+    if (textMorph.document) totalWidth = (line.width === textMorph.document.width ? lineWidth : textMorph.document.width) + paddedSpace;
   } else {
     totalWidth = Math.max(textMorph.document ? textMorph.document.width + paddedSpace : 0, totalWidth);
   }
