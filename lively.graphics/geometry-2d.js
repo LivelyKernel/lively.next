@@ -1015,6 +1015,7 @@ export class Transform {
     const m = this.copy();
 
     const det = m.a * m.d - m.c * m.b;
+    if (det === 0) throw new Error(this + ' has a determinant of 0 and cannot be inverted!');
     const invdet = 1 / det;
 
     this.a = m.d * invdet;
