@@ -1046,6 +1046,11 @@ export class Transform {
     return value;
   }
 
+  equals (other) {
+    if (!other) return false;
+    return JSON.stringify(this) === JSON.stringify(other);
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // serialization
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
