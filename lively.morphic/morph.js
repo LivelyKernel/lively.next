@@ -1201,6 +1201,8 @@ export class Morph {
     const anim = change.meta && change.meta.animation;
     const { prop, value } = change;
 
+    if (change.prop == 'extent' || change.prop == 'clipMode') delete this._cachedRelativeBounds;
+
     if (prop === 'origin' || prop && prop.includes('borderWidth')) {
       this.renderingState.hasStructuralChanges = true;
     }
@@ -1240,6 +1242,7 @@ export class Morph {
   }
 
   onSubmorphChange (change, submorph) {
+    if (!this.isClip() && ['extent', 'position', 'origin', 'rotation', 'scale', 'clipMode'].includes(change.prop)) delete this._cachedRelativeBounds;
     this.viewModel?.onViewChange(change);
     this.master?.onMorphChange(submorph, change);
     this.layout?.onSubmorphChange(submorph, change);
@@ -1315,7 +1318,7 @@ export class Morph {
     const affectedMorphs = new Set(this.withAllSubmorphsSelect(Boolean));
     const animationConfigs = Object.values(arr.groupBy(changes, change => change.target.id))
       .map((changes) => {
-        changes = changes.filter((change) => change.target.styleProperties.includes(change.prop))
+        changes = changes.filter((change) => change.target.styleProperties.includes(change.prop));
         const animConfig = { ...config };
         let target; let meta = {};
         // group all of the changes by prop
@@ -1444,7 +1447,17 @@ export class Morph {
 
   relativeBounds (other) {
     other = other || this.world();
-    let bounds = this.origin.negated().extent(this.extent);
+
+    const key = other || $world;
+    let tfm; let bounds = this._cachedRelativeBounds?.get(key);
+    try {
+      tfm = this.transformToMorph(key);
+      if (bounds && tfm.equals(bounds[1])) return bounds[0];
+    } catch (err) {
+      // proceed, we probably hat a 0 determinant transform involved
+    }
+
+    bounds = this.origin.negated().extent(this.extent);
 
     if (other) {
       bounds = this.transformRectToMorph(other, bounds);
@@ -1457,6 +1470,9 @@ export class Morph {
         bounds = bounds.union(submorph.relativeBounds(other));
       });
     }
+
+    if (!this._cachedRelativeBounds) this._cachedRelativeBounds = new WeakMap();
+    if (tfm) this._cachedRelativeBounds.set(key, [bounds, tfm]);
 
     return bounds;
   }
@@ -1706,6 +1722,7 @@ export class Morph {
     this._pathDependants = arr.withoutAll(this._pathDependants, morph._pathDependants);
     this.renderingState.hasStructuralChanges = true;
     this.renderingState.hasMorphRemoved = true;
+    if (!this.isClip()) delete this._cachedRelativeBounds;
     this.makeDirty();
   }
 
@@ -1980,7 +1997,7 @@ export class Morph {
       if (this !== m && d === 'up') {
         p.x -= m.scroll.x;
         p.y -= m.scroll.y;
-        if (m.hasFixedPosition && m.owner && m.owner.owner) {
+        if (m.hasFixedPosition && m.owner?.owner) {
           p.x += m.owner.scroll.x;
           p.y += m.owner.scroll.y;
         }
@@ -1989,7 +2006,7 @@ export class Morph {
       if (this !== m && d === 'down') {
         p.x += m.scroll.x;
         p.y += m.scroll.y;
-        if (m.hasFixedPosition && m.owner && m.owner.owner/* i.e. except world */) {
+        if (m.hasFixedPosition && m.owner?.owner/* i.e. except world */) {
           p.x -= m.owner.scroll.x;
           p.y -= m.owner.scroll.y;
         }
