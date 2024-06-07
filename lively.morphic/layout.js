@@ -407,6 +407,7 @@ export class TilingLayout extends Layout {
     delete aMorph._yogaNode;
     // ensure that the morph gets rendered again, so that yoga is getting re-initialize
     aMorph.makeDirty();
+    delete aMorph._lastComputed;
   }
 
   initializeResizePolicies (_initializingPoliciesAfterwards = false) {
@@ -881,10 +882,20 @@ export class TilingLayout extends Layout {
   updateSubmorphBounds (morph) {
     const node = this.ensureYogaNodeFor(morph);
     const isPreliminary = !node._computedMargin;
-    const newPosX = node.getComputedLeft();
-    const newPosY = node.getComputedTop();
-    const newWidth = node.getComputedWidth();
-    const newHeight = node.getComputedHeight();
+    const computed = node.getComputedLayout();
+    const { top: newPosY, left: newPosX, width: newWidth, height: newHeight } = computed;
+
+    const needsUpdate = !(num.roundTo(morph.height, .1) === num.roundTo(newHeight, .1) &&
+        num.roundTo(morph.width, .1) === num.roundTo(newWidth, .1) &&
+        morph.position.y === newPosY &&
+        morph.position.x === newPosX);
+
+    const hash = JSON.stringify(computed);
+    if (morph._lastComputed === hash && !needsUpdate) {
+      return;
+    }
+    if (morph.layout?.name() !== 'Tiling') morph._lastComputed = hash;
+
     const heightPolicy = this.getResizeHeightPolicyFor(morph);
     const widthPolicy = this.getResizeWidthPolicyFor(morph);
 
@@ -927,10 +938,14 @@ export class TilingLayout extends Layout {
   updateContainerBounds () {
     const { container, hugContentsVertically, hugContentsHorizontally } = this;
     const node = this.ensureLayoutComputed(container);
+    const computed = node.getComputedLayout();
+    const hash = JSON.stringify(computed);
+    this.container._lastComputed = hash;
+
     const isPreliminary = node.getParent() && !node._computedMargin;
     const { scrollbarVisible, scrollbarOffset } = container;
-    let width = isPreliminary ? container.width : node.getComputedWidth();
-    let height = isPreliminary ? container.height : node.getComputedHeight();
+    let width = isPreliminary ? container.width : computed.width;
+    let height = isPreliminary ? container.height : computed.height;
 
     // fix the ones that where due to fill or fixed policies
     const heightSetting = node.getHeight();
