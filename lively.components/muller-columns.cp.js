@@ -1,7 +1,7 @@
 import { Color, rect, pt } from 'lively.graphics';
 import { TilingLayout, ViewModel, part, component } from 'lively.morphic';
 import { signal, noUpdate, connect } from 'lively.bindings';
-import { arr } from 'lively.lang';
+import { arr, obj } from 'lively.lang';
 import { DefaultList } from './list.cp.js';
 
 const ColumnListDefault = component(DefaultList, {
@@ -401,6 +401,7 @@ export class MullerColumnViewModel extends ViewModel {
         if (newItems.length === currentItems.length) {
           arr.zip(currentItems, newItems).forEach(([item, value]) => {
             if (!value) return;
+            if (!obj.equals(item.value, value)) value.isDirty = true;
             item.value = value;
             if (item.value.isDirty) {
               item.value.isDirty = false;
