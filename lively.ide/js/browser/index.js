@@ -1998,6 +1998,8 @@ export class BrowserModel extends ViewModel {
     // dependencies.  Most of the time this is undesired as it completely
     // recreates the modules and variables (classes etc) therein, meaining that
     // existing instances might orphan
+    const proceed = await this.cleanupActiveEditSessions();
+    if (!proceed) return null;
     const { selectedModule: m, systemInterface, ui: { sourceEditor } } = this;
     const { scroll, cursorPosition } = sourceEditor;
     if (!m) return null;

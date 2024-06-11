@@ -112,7 +112,7 @@ class ComponentEditControlModel extends ViewModel {
     const proceed = this.editor._confirmedProceed || await this.world().confirm(['Pending Edit Sessions', {}, '\nYou still have some active component edit sessions that are about to be closed. Are you sure you want to proceed?', { fontWeight: 'normal', fontSize: 18 }], { requester: this.editor.owner });
     if (!proceed) return false;
     this.editor._confirmedProceed = true;
-    this.terminateEditSession();
+    await this.terminateEditSession();
     return true;
   }
 
