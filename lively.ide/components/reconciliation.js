@@ -34,6 +34,7 @@ import { isFoldableProp, getDefaultValueFor } from 'lively.morphic/helpers.js';
 import { resource } from 'lively.resources';
 import { ExpressionSerializer } from 'lively.serializer2';
 import { PolicyApplicator } from 'lively.morphic/components/policy.js';
+import { Range } from 'lively.morphic';
 
 export const exprSerializer = new ExpressionSerializer();
 
@@ -1579,11 +1580,13 @@ class TextChangeReconciliation extends PropChangeReconciliation {
 
     if (!args) return defaultPatch();
 
-    const [changedRange, attrReplacement] = args;
+    let [changedRange, attrReplacement] = args;
+    changedRange = Range.fromPositions(changedRange.start, changedRange.end);
 
     if (selector === 'replace') {
       const isDeletion = attrReplacement.length === 0 || attrReplacement[0] === '' && attrReplacement[1] === null;
-      const isInsertion = !isDeletion && attrReplacement[0].length > 0;
+      const isReplacement = !isDeletion && !changedRange.isEmpty() && attrReplacement[0].length > 0;
+      const isInsertion = !isDeletion && !isReplacement && attrReplacement[0].length > 0;
       const { attributeStart, stringNode } = this.getAstNodeAndAttributePositionInRange(specNode, isDeletion ? changedRange.end : changedRange.start, prevTextAndAttributes);
 
       if (!stringNode) return defaultPatch();
@@ -1609,6 +1612,10 @@ class TextChangeReconciliation extends PropChangeReconciliation {
           lines: ['']
         }]);
         return this;
+      }
+
+      if (isReplacement) {
+        return defaultPatch();
       }
 
       if (isInsertion) {
