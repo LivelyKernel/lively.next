@@ -334,10 +334,10 @@ class MasterComponentTreeData extends TreeData {
   async getLoadedComponentFileUrls () {
     const selectedPkg = this.root.subNodes.find(pkg => !pkg.isCollapsed);
     if (!selectedPkg) return {};
-    const files = await resource(selectedPkg.url).dirList(1, {
+    const files = await resource(selectedPkg.url).dirList('infinity', {
       exclude: (res) => {
-        if (res.url.includes('assets')) return true;
-        return !(res.url.endsWith('.cp.js') || res.isDirectory());
+        if (res.url.match(/\.git|\.gitignore|.github|assets|build/)) return true;
+        return !(res.url.endsWith('.cp.js') || res.isDirectory() || !module(res.url).isLoaded());
       }
     });
     if (selectedPkg.name !== 'Popular') {
