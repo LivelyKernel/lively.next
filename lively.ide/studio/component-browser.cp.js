@@ -52,8 +52,9 @@ class MasterComponentTreeData extends TreeData {
     node.isCollapsed = bool;
     node.isDirty = true;
     if (!bool) {
+      const loadedFiles = await this.getLoadedComponentFileUrls();
       if (node.type === 'package') {
-        node.subNodes = await this.listComponentFilesInPackage(node.url);
+        node.subNodes = await this.listComponentFilesInPackage(node.url, loadedFiles);
       }
 
       if (node.children) {
@@ -66,7 +67,7 @@ class MasterComponentTreeData extends TreeData {
       }
 
       if (node.type === 'directory') {
-        node.subNodes = await this.listComponentFilesInDir(node.url);
+        node.subNodes = await this.listComponentFilesInDir(node.url, loadedFiles);
       }
 
       if (node.type === 'cp.js') {
@@ -327,8 +328,8 @@ class MasterComponentTreeData extends TreeData {
     return coll;
   }
 
-  async listComponentFilesInPackage (pkg) {
-    return await this.listComponentFilesInDir(pkg);
+  async listComponentFilesInPackage (pkg, loadedFiles) {
+    return await this.listComponentFilesInDir(pkg, loadedFiles);
   }
 
   async getLoadedComponentFileUrls () {
@@ -352,7 +353,8 @@ class MasterComponentTreeData extends TreeData {
     return loadedModules;
   }
 
-  async listComponentFilesInDir (folderLocation) {
+  async listComponentFilesInDir (folderLocation, loadedFiles) {
+    if (!loadedFiles) loadedFiles = await this.getLoadedComponentFileUrls();
     const resources = (await resource(folderLocation).dirList(1, {
       exclude: (res) => {
         if (res.name() === 'assets' || res.name() === 'tests' || res.name() === 'node_modules') return true;
@@ -365,7 +367,7 @@ class MasterComponentTreeData extends TreeData {
       let type;
       if (res.isDirectory()) {
         type = 'directory';
-        if ((await this.listComponentFilesInDir(res.url)).length === 0) return;
+        if ((await this.listComponentFilesInDir(res.url, loadedFiles)).length === 0) return;
       } else {
         type = 'cp.js';
         if ((await res.read()).match(/['"]skip listing['"];/)) return;
@@ -382,7 +384,6 @@ class MasterComponentTreeData extends TreeData {
       };
     })));
 
-    const loadedFiles = await this.getLoadedComponentFileUrls();
     return files.map(file => {
       file.isLoaded = !!loadedFiles[file.url];
       return file;
