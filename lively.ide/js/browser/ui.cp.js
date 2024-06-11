@@ -77,7 +77,7 @@ class ComponentEditControlModel extends ViewModel {
           return !!this.instanceMorph;
         }
       },
-      isActiveEditSession: { get () { return true; } },
+      isActiveEditSession: { defaultValue: true },
       isComponentControl: { get () { return true; } },
       expose: {
         get () {
@@ -235,6 +235,7 @@ class ComponentEditControlModel extends ViewModel {
         wrapper.center = editor.worldPoint(placeholderPos.subPt(editor.scroll));
       }, { duration: 300, easing: easings.outQuint });
       this.collapse(editor);
+      this.isActiveEditSession = false;
       componentMorph.remove();
       wrapper.remove();
     })();
