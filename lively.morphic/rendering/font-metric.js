@@ -767,6 +767,8 @@ export function charBoundsOfLineViaCanvas (line, textMorph, fontMetric, measure)
       if (isWrapping && measuringState.emptySpace < morphWidth) {
         measuringState.emptySpace = measure.getEmptySpaceOfMorph(textMorph);
         measuringState.virtualRow += 1;
+      } else {
+        measuringState.emptySpace -= morphWidth;
       }
       characterBounds.push([textOrMorph.height, [morphWidth, measuringState.virtualRow]]);
     } else if (typeof textOrMorph === 'string') {
