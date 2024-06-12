@@ -515,7 +515,7 @@ class DOMTextMeasure {
               measuringState.wordLength -= b[0];
               b[0] = 0;
             });
-            measuringState.emptySpace = emptySpace - measuringState.wordLength;
+            measuringState.emptySpaceForWord = measuringState.emptySpace = emptySpace - measuringState.wordLength;
             measuringState.trailingWhitespaces = [];
             break;
           }
@@ -530,7 +530,7 @@ class DOMTextMeasure {
                 measuringState.wordLength -= b[0];
                 b[0] = 0;
               });
-              measuringState.emptySpace = emptySpace - measuringState.wordLength;
+              measuringState.emptySpaceForWord = measuringState.emptySpace = emptySpace - measuringState.wordLength;
               measuringState.trailingWhitespaces = [];
               break;
             }
