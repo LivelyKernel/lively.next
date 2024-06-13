@@ -2349,6 +2349,7 @@ export class Text extends Morph {
     // [range1, attr1, range2, attr2, ...]
     // ranges are expected to be sorted and non-overlapping!!!
     this.document.setTextAttributesWithSortedRanges(textAttributesAndRanges);
+    delete this._allFontsLoaded;
     this.consistencyCheck();
     let i = 0;
     const invariantProps = ['fontColor'];
