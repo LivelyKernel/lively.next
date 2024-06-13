@@ -438,7 +438,6 @@ class DOMTextMeasure {
   }
 
   measureCharWidthsInCanvas (morph, str, styleOpts = {}, measuringState) {
-    const writeToCache = document.fonts.status === 'loaded' && morph.allFontsLoaded();
     const ctx = this.canvas.getContext('2d');
     const lineWrapping = styleOpts.lineWrapping || morph.lineWrapping;
     const style = `${styleOpts.fontStyle || morph.fontStyle} ${styleOpts.fontWeight || morph.fontWeight} ${styleOpts.fontSize || morph.fontSize}px ${styleOpts.fontFamily || morph.fontFamily}`;
@@ -495,6 +494,7 @@ class DOMTextMeasure {
           hit = fontMetric.defaultCharExtent(morph).width * 2; // for emojis
         } else {
           const metrics = Array.isArray(code) ? fontMetric.measure(morph, code.map(c => String.fromCharCode(c)).join('')) : ctx.measureText(String.fromCharCode(code));
+          const writeToCache = document.fonts.status === 'loaded' && morph.allFontsLoaded();
           hit = metrics.width;
           if (writeToCache) cache[Array.isArray(code) ? code.join(',') : code] = hit;
         }
