@@ -776,6 +776,7 @@ export function charBoundsOfLineViaCanvas (line, textMorph, fontMetric, measure)
         attrs.fontSize = Number.parseInt(attrs.fontSize) / 100 * textMorph.fontSize;
       }
       const style = { ...textMorph.defaultTextStyle, ...attrs };
+      style.fontSize = Math.max(style.fontSize, textMorph.fontSize);
       measure.measureCharWidthsInCanvas(textMorph, textOrMorph, attrs, measuringState).forEach((res) => {
         characterBounds.push([fontMetric.defaultLineHeight(style), res]);
       });
