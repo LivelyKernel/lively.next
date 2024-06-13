@@ -2129,7 +2129,7 @@ export default class Renderer {
         actualTextHeight = actualTextHeight + this.updateLineHeightOfNode(morph, line, node, gtfm);
         // if we measured but the font as not been loaded, this is also just an estimate
         line.hasEstimatedExtent = !fontMetric.isFontSupported(morph._fontFamilyToRender, morph._fontWeightToRender);
-        if (!textLayerNode.isConnected) line.hasEstimatedExtent = true;
+        if (!textLayerNode.isConnected || document.fonts.status !== 'loaded') line.hasEstimatedExtent = true;
         line = line.nextLine();
       }
     }
@@ -2147,9 +2147,15 @@ export default class Renderer {
         const charBounds = morph.env.fontMetric.newManuallyComputeCharBoundsOfLine(morph, docLine);
         const lineWidth = arr.max(charBounds, r => r.right()).right() - arr.min(charBounds, r => r.left()).left();
         const lineHeight = arr.max(charBounds, r => r.bottom()).bottom();
-        morph.textLayout.lineCharBoundsCache.set(docLine, charBounds); // override
-        docLine.changeExtent(lineWidth, lineHeight, false);
-        morph.renderingState.needsFit = true;
+        if (document.fonts.status === 'loaded') {
+          morph.textLayout.lineCharBoundsCache.set(docLine, charBounds); // override
+          docLine.changeExtent(lineWidth, lineHeight, false);
+          morph.renderingState.needsFit = true;
+        } else {
+          morph.textLayout.resetLineCharBoundsCacheOfLine(docLine);
+          morph.makeDirty();
+          docLine.hasEstimatedExtent = true;
+        }
         return lineHeight;
       }
 
