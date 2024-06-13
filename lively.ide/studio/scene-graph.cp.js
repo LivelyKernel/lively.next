@@ -538,14 +538,14 @@ const MorphNode = component({
     type: Label,
     name: 'morph icon',
     opacity: 0.4,
-    fontSize: 16,
+    fontSize: 10,
     fill: Color.rgba(229, 231, 233, 0),
     fontColor: Color.rgb(208, 208, 208),
     fontFamily: 'Material Icons',
     reactsToPointer: false,
-    padding: Rectangle.inset(0, 0, 0, 5),
+    padding: rect(0,0,0,3),
     textAndAttributes: ['', {
-      fontSize: 16,
+      fontSize: 10,
       fontFamily: 'Material Icons'
     }]
   }, {
