@@ -62,7 +62,6 @@ export default class Workspace extends Window {
           const sys = this.jsPlugin.systemInterface();
           const btn = this.ui.header.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(
             this, sys ? sys.name : 'local'));
-          connect(btn, 'extent', this, 'relayoutWindowControls');
         }
       },
 

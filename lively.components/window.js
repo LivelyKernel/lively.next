@@ -5,7 +5,7 @@ import {
   morph,
   Morph
 } from 'lively.morphic';
-import { connect, signal } from 'lively.bindings';
+import { connect, noUpdate, signal } from 'lively.bindings';
 import { easings } from 'lively.morphic/rendering/animations.js';
 import { SystemWindow, DefaultWindowInactive } from './window.cp.js';
 
@@ -226,27 +226,17 @@ export default class Window extends Morph {
       this.whenEnvReady().then(() => this.relayoutWindowControls());
       return;
     }
-    const innerB = this.innerBounds();
-    const title = this.ui.windowTitle;
-    const resizer = this.ui.resizer;
-    const labelBounds = innerB.withHeight(25);
-    const header = this.ui.header;
-    const wrapper = this.ui.contentsWrapper;
-    const lastButtonOrWrapper = this.ui.windowControls;
-    const buttonOffset = lastButtonOrWrapper.bounds().right() + 3;
-    const minLabelBounds = labelBounds.withLeftCenter(pt(buttonOffset, labelBounds.height / 2));
+    const { resizer, header, contentsWrapper: wrapper } = this.ui;
 
     // resizer
     resizer.position = pt(0, 0);
 
-    // title
-    title.applyLayoutIfNeeded();
-    title.textBounds().width < labelBounds.width - 2 * buttonOffset
-      ? (title.center = labelBounds.center())
-      : (title.leftCenter = minLabelBounds.leftCenter());
-
     // targetMorph
-    if (!this.minimized && this.targetMorph && this.targetMorph.isLayoutable) { this.targetMorph.setBounds(this.targetMorphBounds()); }
+    noUpdate({ sourceAttribute: 'extent', sourceObj: this.targetMorph }, () => {
+      if (!this.minimized && this.targetMorph && this.targetMorph.isLayoutable) {
+        this.targetMorph.setBounds(this.targetMorphBounds());
+      }
+    });
 
     header.width = this.width;
     wrapper.extent = this.extent;
@@ -389,8 +379,6 @@ export default class Window extends Morph {
       delta.x * width,
       delta.y * height);
     this.setBounds(this.startBounds.insetByRect(offsetRect).roundTo(1));
-
-    this.relayoutResizer();
   }
 
   relayoutResizer () {
