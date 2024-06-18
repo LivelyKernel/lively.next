@@ -138,7 +138,7 @@ export class TopBarModel extends ViewModel {
           this.shapesCreatedViaDrag = [Morph, Ellipse, HTMLMorph, Canvas, Text, Polygon, Path, Image];
         }
       },
-      expose: { get () { return ['relayout', 'attachToTarget', 'setEditMode', 'showCurrentUser', 'showHaloFor', 'colorTopbarButton', 'isTopBar', 'mode']; } },
+      expose: { get () { return ['relayout', 'attachToTarget', 'setEditMode', 'showCurrentUser', 'showHaloFor', 'colorTopbarButton', 'isTopBar', 'mode', 'updateMiniMapIfNeeded']; } },
       bindings: {
         get () {
           return [
@@ -416,6 +416,13 @@ export class TopBarModel extends ViewModel {
 
   onCanvasModeClicked (evt) {
     if (this.ui.canvasModeButton === evt.targetMorphs[0]) this.toggleMiniMap(null);
+  }
+
+  updateMiniMapIfNeeded () {
+    if (this.ui.canvasModeButton.submorphs[0].isActive) {
+      let miniMap = $world.getSubmorphNamed('world mini map');
+      miniMap.drawMorphs();
+    }
   }
 
   toggleMiniMap (forceState) {

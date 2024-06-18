@@ -152,8 +152,8 @@ export class LivelyWorld extends World {
   }
 
   makeDirty () {
-    if (!this.renderingState.needsRerender && this.get('world mini map')) {
-      this.get('world mini map').drawMorphs();
+    if (!this.renderingState.needsRerender) {
+      this.withTopBarDo(tb => tb.updateMiniMapIfNeeded());
     }
     super.makeDirty();
   }
