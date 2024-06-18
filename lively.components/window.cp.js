@@ -122,6 +122,11 @@ const DefaultWindow = component({
     clipMode: 'hidden',
     submorphs: [{
       name: 'header',
+      layout: new TilingLayout({
+        align: 'right',
+        justifySubmorphs: 'spaced',
+        padding: rect(0, 3, 3, -3)
+      }),
       acceptsDrops: false,
       borderColor: Color.rgba(0, 0, 0, 0),
       extent: pt(345.3, 72),
@@ -135,14 +140,7 @@ const DefaultWindow = component({
         extent: pt(69, 27),
         fill: Color.rgba(0, 0, 0, 0),
         layout: new TilingLayout({
-          autoResize: true,
-          orderByIndex: true,
-          padding: {
-            height: 0,
-            width: 0,
-            x: 6,
-            y: 6
-          },
+          padding: rect(6, 2, 0, 4),
           spacing: 6
         }),
         position: pt(-0.6, -0.3),
@@ -169,13 +167,17 @@ const DefaultWindow = component({
       }, {
         type: Label,
         name: 'window title',
+        textAlign: 'center',
         fontColor: Color.rgb(102, 102, 102),
         fontWeight: 'bold',
-        isLayoutable: false,
         nativeCursor: 'pointer',
-        padding: rect(0, 2, 0, -2),
         position: pt(135.2, 6),
         textAndAttributes: ['Window Title', null]
+      }, {
+        fill: Color.transparent,
+        reactsToPointer: false,
+        name: 'buffer',
+        extent: pt(70, 10)
       }]
     }]
   }]

@@ -60,7 +60,7 @@ export default class Workspace extends Window {
             format: 'esm'
           };
           const sys = this.jsPlugin.systemInterface();
-          const btn = this.ui.contentsWrapper.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(
+          const btn = this.ui.header.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(
             this, sys ? sys.name : 'local'));
           connect(btn, 'extent', this, 'relayoutWindowControls');
         }
@@ -185,6 +185,12 @@ export default class Workspace extends Window {
         }
       }
     ].concat(super.commands);
+  }
+
+  buildHeader () {
+    const header = super.buildHeader();
+    header.get('buffer').remove();
+    return header;
   }
 
   get keybindings () {
