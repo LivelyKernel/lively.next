@@ -294,7 +294,7 @@ export class RichTextControlModel extends ViewModel {
   }
 
   toggleQuote () {
-    this.changeAttributeInSelectionOrMorph('quote', quoteActive =>
+    this.confirm('quote', quoteActive =>
       quoteActive === 1 ? 0 : 1);
     this.update();
   }
