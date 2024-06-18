@@ -1440,10 +1440,13 @@ const SystemBrowser = component({
       position: pt(0, 50),
       viewModel: {
         showsSingleTab: false,
-        selectedTabMaster: BrowserTabSelected,
-        defaultTabMaster: BrowserTabDefault,
-        clickedTabMaster: BrowserTabClicked,
-        hoveredTabMaster: BrowserTabHovered
+        defaultTabMaster: component(BrowserTabDefault, {
+          master: {
+            click: BrowserTabClicked,
+            hover: BrowserTabHovered,
+            states: { selected: BrowserTabSelected }
+          }
+        })
       }
     }), part(MullerColumnView, {
       viewModel: { defaultTooltips: true },

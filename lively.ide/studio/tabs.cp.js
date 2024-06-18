@@ -91,24 +91,9 @@ const SelectedTab = component(DefaultTab, {
 class TabModel extends ViewModel {
   static get properties () {
     return {
-      selectedTabMaster: {
-        initialize () {
-          this.selectedTabMaster = SelectedTab;
-        }
-      },
       defaultTabMaster: {
         initialize () {
           this.defaultTabMaster = DefaultTab;
-        }
-      },
-      clickedTabMaster: {
-        initialize () {
-          this.clickedTabMaster = ActiveTab;
-        }
-      },
-      hoveredTabMaster: {
-        initialize () {
-          this.hoveredTabMaster = HoverTab;
         }
       },
       expose: {
@@ -192,15 +177,7 @@ class TabModel extends ViewModel {
   }
 
   setAppearance (isSelected) {
-    let newMaster = {};
-    if (isSelected) {
-      newMaster.auto = this.selectedTabMaster;
-    } else {
-      newMaster.auto = this.defaultTabMaster;
-    }
-    if (!isSelected) newMaster.hover = this.hoveredTabMaster;
-    newMaster.click = this.clickedTabMaster;
-    this.view.master = newMaster;
+    this.view.master.setState(isSelected ? 'selected' : null);
   }
 
   get isTab () {
@@ -251,7 +228,8 @@ const Tab = component(DefaultTab, {
   master: {
     auto: DefaultTab,
     click: ActiveTab,
-    hover: HoverTab
+    hover: HoverTab,
+    states: { selected: SelectedTab }
   }
 });
 
@@ -460,28 +438,10 @@ class TabsModel extends ViewModel {
       showsSingleTab: {
         defaultValue: true
       },
-      selectedTabMaster: {
-        isComponent: true,
-        initialize () {
-          this.selectedTabMaster = SelectedTab;
-        }
-      },
       defaultTabMaster: {
         isComponent: true,
         initialize () {
           this.defaultTabMaster = Tab;
-        }
-      },
-      clickedTabMaster: {
-        isComponent: true,
-        initialize () {
-          this.clickedTabMaster = ActiveTab;
-        }
-      },
-      hoveredTabMaster: {
-        isComponent: true,
-        initialize () {
-          this.hoveredTabMaster = HoverTab;
         }
       }
     };
@@ -516,26 +476,13 @@ class TabsModel extends ViewModel {
     closeable,
     renameable
   ) {
-    const { defaultTabMaster, clickedTabMaster, hoveredTabMaster, selectedTabMaster } = this;
     const newTab = part(this.defaultTabMaster, {
       viewModel: {
         caption,
         content,
         hasMorphicContent,
-        defaultTabMaster,
-        clickedTabMaster,
-        hoveredTabMaster,
-        selectedTabMaster,
         renameable,
         closeable
-      },
-      // This is necessary due to a bug where, if we override viewModel properties,
-      // custom masters are discarded from the component definition
-      // setting it again here solves this problem
-      master: {
-        auto: defaultTabMaster,
-        click: clickedTabMaster,
-        hover: hoveredTabMaster
       }
     });
     this.initializeConnectionsFor(newTab);
