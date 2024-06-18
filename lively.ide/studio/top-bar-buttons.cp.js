@@ -7,7 +7,7 @@ class TopBarButtonModel extends ViewModel {
     return {
       expose: {
         get () {
-          return ['activateButton', 'deactivateButton', 'changeIcon', 'getIcon'];
+          return ['activateButton', 'deactivateButton', 'changeIcon', 'getIcon', 'isActive'];
         }
       },
       opts: {}
@@ -29,6 +29,8 @@ class TopBarButtonModel extends ViewModel {
   deactivateButton () {
     this.view.master.setState(null);
   }
+
+  get isActive () { return this.view.master.getState() === 'selected'; }
 }
 
 export const TopBarButtonUnselected = component({
