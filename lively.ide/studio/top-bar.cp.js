@@ -686,7 +686,7 @@ export class TopBarModel extends ViewModel {
     if (this._showHaloPreview) {
       const { haloFilterFn } = this;
       const target = this.primaryTarget || $world;
-      let morphsContainingPoint = target.morphsContainingPoint(evt.positionIn(target.world()));
+      let morphsContainingPoint = evt.targetMorphs;
       if (evt.type === 'hoverout') {
         morphsContainingPoint = [target];
       }
@@ -790,7 +790,7 @@ export class TopBarModel extends ViewModel {
 
   clearHaloPreviews () {
     this._currentlyHighlighted = null;
-    $world.getSubmorphsByStyleClassName('HaloPreview').forEach(m => m.remove());
+    $world.submorphs.filter(m => m.styleClasses.includes('HaloPreview')).forEach(m => m.remove());
   }
 
   prepareDragSelection (evt) {
