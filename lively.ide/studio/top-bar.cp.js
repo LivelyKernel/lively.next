@@ -64,21 +64,26 @@ export class TopBarModel extends ViewModel {
       },
       primaryTarget: {
         doc: 'A reference to the morph that the top bar considers its primary target',
-        defaultValue: null
+        defaultValue: null,
+        set (target) {
+          delete this._cachedFilterFn;
+          this.setProperty('primaryTarget', target);
+        }
       },
       haloFilterFn: {
         defaultValue: '() => true',
         derived: true,
         set (fnSource) {
+          delete this._cachedFilterFn;
           this.setProperty('haloFilterFn', fnSource);
         },
         get () {
-          return Closure.fromSource(
+          return this._cachedFilterFn || (this._cachedFilterFn = Closure.fromSource(
             this.getProperty('haloFilterFn'),
             {
               target: this.primaryTarget
             }
-          ).asFunction();
+          ).asFunction());
         }
       },
       currentShapeMode: {
