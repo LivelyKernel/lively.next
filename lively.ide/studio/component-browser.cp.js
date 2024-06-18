@@ -430,18 +430,6 @@ export class ExportedComponent extends Morph {
           this.fitPreview();
         }
       },
-      defaultMaster: {
-        isComponent: true,
-        initialize () {
-          this.defaultMaster = ComponentPreview; // eslint-disable-line no-use-before-define
-        }
-      },
-      selectedMaster: {
-        isComponent: true,
-        initialize () {
-          this.selectedMaster = ComponentPreviewSelected; // eslint-disable-line no-use-before-define
-        }
-      },
       component: {
         set (cp) {
           this.setProperty('component', cp);
