@@ -283,7 +283,8 @@ export default class Window extends Morph {
           styleClasses: ['buttonGroup'],
           submorphs: this.buildButtons()
         }),
-        this.buildTitleLabel()
+        this.buildTitleLabel(),
+        { name: 'buffer' }
       ]
     });
   }
