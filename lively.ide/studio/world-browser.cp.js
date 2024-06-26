@@ -808,7 +808,7 @@ export class GrowingWorldList extends Morph {
           scrollContainer.layout && scrollContainer.layout.disable();
           let { bufferTop, bufferBottom } = this.ui;
           arr.withoutAll(scrollContainer.submorphs, [...items, bufferTop, bufferBottom]).forEach(m => m.remove());
-          this.update(true);
+          this.update();
         }
       }
     };
@@ -826,7 +826,7 @@ export class GrowingWorldList extends Morph {
   onChange (change) {
     super.onChange(change);
     if (change.prop === 'extent') {
-      this.update(true);
+      this.update();
     }
   }
 
@@ -835,7 +835,7 @@ export class GrowingWorldList extends Morph {
 
   // add top and bottom buffer
 
-  update (sort) {
+  update () {
     let items = this.items;
     if (!items || items.length === 0) return; // pre-initialize
     let scrollContainer = this.scrollContainer;
@@ -845,7 +845,6 @@ export class GrowingWorldList extends Morph {
     bufferTop = bufferTop || scrollContainer.addMorph({ fill: null, name: 'buffer top', height: 34 });
     bufferBottom = bufferBottom || scrollContainer.addMorph({ fill: null, name: 'buffer bottom', height: 10 });
     bufferTop.width = bufferBottom.width = this.width - 100;
-    scrollContainer.layout.disable();
     // assume that all items have the same width and height and use first element as sample
     let sample = items[0];
     let itemsPerRow = Math.floor(this.width / (sample.width + layoutSpacing));
@@ -862,15 +861,8 @@ export class GrowingWorldList extends Morph {
         item.displayPreview();
       }
     }
-    if (sort) {
-      bufferTop.position = pt(0, 0);
-      items.forEach((m, i) => m.position = pt(i + 1, i + 1));
-      bufferBottom.position = pt(items.length + 2, items.length + 2);
-    }
-    scrollContainer.layout.enable();
-    if (sort || itemsToBeAdded.length > 0) {
+    if (itemsToBeAdded.length > 0) {
       bufferBottom.top = this.submorphBounds().height;
-      scrollContainer.layout.apply();
     }
   }
 }
@@ -1520,6 +1512,7 @@ const WorldBrowser = component({
         orderByIndex: true,
         padding: rect(0, 0, 0, 30),
         reactToSubmorphAnimations: true,
+        hugContentsVertically: true,
         spacing: 25,
         wrapSubmorphs: true
       }),
