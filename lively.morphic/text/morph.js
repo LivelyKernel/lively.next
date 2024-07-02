@@ -1115,7 +1115,8 @@ export class Text extends Morph {
   allFontsLoaded () {
     if (this._allFontsLoaded) return true;
     // cache the result for as long as the font properties are not reset
-    return this._allFontsLoaded = this.usedFonts().every(fontString => this.fontMetric.supportedFontCache.has(fontString) || (document.LIVELY_FONTS_LOADED && document.fonts.check(fontString)));
+    const fm = this.fontMetric;
+    return this._allFontsLoaded = this.usedFonts().every(fontString => fm.supportedFontCache.has(fontString) || (document.LIVELY_FONTS_LOADED && document.fonts.check(fontString) && fm.supportedFontCache.add(fontString) && true));
   }
 
   async whenFontLoaded () {
@@ -2349,6 +2350,7 @@ export class Text extends Morph {
     // [range1, attr1, range2, attr2, ...]
     // ranges are expected to be sorted and non-overlapping!!!
     this.document.setTextAttributesWithSortedRanges(textAttributesAndRanges);
+    delete this._allFontsLoaded;
     this.consistencyCheck();
     let i = 0;
     const invariantProps = ['fontColor'];

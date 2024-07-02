@@ -349,7 +349,7 @@ class DOMTextMeasure {
   }
 
   canBeMeasuredViaCanvas (aMorph) {
-    if (!aMorph.allFontsLoaded()) return false;
+    if (!aMorph.allFontsLoaded() && document.fonts.status !== 'loading') return false;
     const { fontFamily, fontWeight, fontStyle } = aMorph;
     const key = `${fontFamily}-${fontWeight}-${fontStyle}`;
     if (key in this.canvasCompatibility) return this.canvasCompatibility[key];
@@ -438,7 +438,6 @@ class DOMTextMeasure {
   }
 
   measureCharWidthsInCanvas (morph, str, styleOpts = {}, measuringState) {
-    const writeToCache = document.fonts.status === 'loaded' && morph.allFontsLoaded();
     const ctx = this.canvas.getContext('2d');
     const lineWrapping = styleOpts.lineWrapping || morph.lineWrapping;
     const style = `${styleOpts.fontStyle || morph.fontStyle} ${styleOpts.fontWeight || morph.fontWeight} ${styleOpts.fontSize || morph.fontSize}px ${styleOpts.fontFamily || morph.fontFamily}`;
@@ -495,6 +494,7 @@ class DOMTextMeasure {
           hit = fontMetric.defaultCharExtent(morph).width * 2; // for emojis
         } else {
           const metrics = Array.isArray(code) ? fontMetric.measure(morph, code.map(c => String.fromCharCode(c)).join('')) : ctx.measureText(String.fromCharCode(code));
+          const writeToCache = document.fonts.status === 'loaded' && morph.allFontsLoaded();
           hit = metrics.width;
           if (writeToCache) cache[Array.isArray(code) ? code.join(',') : code] = hit;
         }
@@ -515,7 +515,7 @@ class DOMTextMeasure {
               measuringState.wordLength -= b[0];
               b[0] = 0;
             });
-            measuringState.emptySpace = emptySpace - measuringState.wordLength;
+            measuringState.emptySpaceForWord = measuringState.emptySpace = emptySpace - measuringState.wordLength;
             measuringState.trailingWhitespaces = [];
             break;
           }
@@ -530,7 +530,7 @@ class DOMTextMeasure {
                 measuringState.wordLength -= b[0];
                 b[0] = 0;
               });
-              measuringState.emptySpace = emptySpace - measuringState.wordLength;
+              measuringState.emptySpaceForWord = measuringState.emptySpace = emptySpace - measuringState.wordLength;
               measuringState.trailingWhitespaces = [];
               break;
             }
@@ -767,19 +767,16 @@ export function charBoundsOfLineViaCanvas (line, textMorph, fontMetric, measure)
       if (isWrapping && measuringState.emptySpace < morphWidth) {
         measuringState.emptySpace = measure.getEmptySpaceOfMorph(textMorph);
         measuringState.virtualRow += 1;
+      } else {
+        measuringState.emptySpace -= morphWidth;
       }
       characterBounds.push([textOrMorph.height, [morphWidth, measuringState.virtualRow]]);
     } else if (typeof textOrMorph === 'string') {
       if (obj.isString(attrs.fontSize) && attrs.fontSize.endsWith('%')) {
         attrs.fontSize = Number.parseInt(attrs.fontSize) / 100 * textMorph.fontSize;
       }
-      const isMonospace = fontMetric.isProportional(attrs.fontFamily || textMorph.fontFamily);
       const style = { ...textMorph.defaultTextStyle, ...attrs };
-      // For some reason monospaced fonts loose their monospaced-ness when measuring them on the canvas with a non default text style applied such as italics.
-      if (isMonospace) {
-        attrs = obj.dissoc(attrs, ['fontStyle']);
-        delete style.fontStyle;
-      }
+      style.fontSize = Math.max(style.fontSize, textMorph.fontSize);
       measure.measureCharWidthsInCanvas(textMorph, textOrMorph, attrs, measuringState).forEach((res) => {
         characterBounds.push([fontMetric.defaultLineHeight(style), res]);
       });
@@ -796,7 +793,7 @@ export function charBoundsOfLineViaCanvas (line, textMorph, fontMetric, measure)
   if (!textMorph.fixedWidth) {
     // in this case the padding + longest line defines the total width
     const lineWidth = arr.max(Object.values(boundsPerInnerLine).map(bs => arr.sum(bs.map(b => b[1][0]))));
-    totalWidth = (line.width === textMorph.document.width ? lineWidth : textMorph.document.width) + paddedSpace;
+    if (textMorph.document) totalWidth = (line.width === textMorph.document.width ? lineWidth : textMorph.document.width) + paddedSpace;
   } else {
     totalWidth = Math.max(textMorph.document ? textMorph.document.width + paddedSpace : 0, totalWidth);
   }

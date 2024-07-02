@@ -1,5 +1,6 @@
 import { component, part, TilingLayout, ViewModel, Icon } from 'lively.morphic';
 import { Color } from 'lively.graphics';
+import { pt, rect } from 'lively.graphics/geometry-2d.js';
 
 class InformIconModel extends ViewModel {
   static get properties () {
@@ -28,26 +29,33 @@ class InputLineErrorModel extends InformIconModel {
       tooltip: {},
       height: {},
       fontSize: {
-        defaultValue: 20
+        defaultValue: 16
       }
     };
   }
 
   viewDidLoad () {
-    this.ui.errorLabel.textString = this.information + ' ';
+    this.ui.errorLabel.textString = this.information;
     this.ui.exclamationMark.tooltip = this.tooltip;
     this.view.tooltip = this.tooltip;
 
     this.view.height = this.height;
 
-    this.ui.errorLabel.fontSize = this.fontsize;
+    this.ui.errorLabel.fontSize = this.fontSize;
   }
 }
 
 export const InputLineError = component({
   name: 'input line error',
   defaultViewModel: InputLineErrorModel,
-  layout: new TilingLayout({ axisAlign: 'center', hugContentsHorizontally: true, renderViaCSS: false }),
+  extent: pt(100, 10),
+  fill: Color.rgba(255, 255, 255, 0),
+  layout: new TilingLayout({
+    align: 'right',
+    axisAlign: 'center',
+    padding: rect(0, 0, 10, 0),
+    spacing: 5
+  }),
   submorphs: [
     {
       name: 'error label',
@@ -55,7 +63,7 @@ export const InputLineError = component({
       textString: 'an error',
       fontSize: 20,
       fontColor: Color.red,
-      fill: Color.white.withA(0.9)
+      fill: Color.rgba(255, 255, 255, 0)
     },
     part(InformIconOnLight, {
       name: 'exclamation mark',

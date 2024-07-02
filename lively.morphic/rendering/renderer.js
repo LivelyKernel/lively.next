@@ -1992,21 +1992,22 @@ export default class Renderer {
   }
 
   tryToMeasureViaCanvas (morph) {
-    if (morph.hasMixedTextAttributes('fontFamily') ||
-        morph.hasMixedTextAttributes('fontSize') ||
-       !morph.allFontsLoaded()) return false;
-    const env = morph.env;
-    const height = env.fontMetric.defaultLineHeight(morph);
+    if (!morph.allFontsLoaded()) return false;
+    const fm = morph.env.fontMetric;
+    const lines = splitTextAndAttributesIntoLines(morph.textAndAttributes);
+    if (lines.length === 0) lines.push(morph.textAndAttributes);
     if (!morph.fixedWidth) {
-      const lines = morph.textString.split('\n');
-      const maxLine = arr.max(lines, line => line.length);
-      const totalHeight = height * lines.length;
-      const width = morph.env.fontMetric._domMeasure.measureTextWidthInCanvas(morph, maxLine);
+      const maxLine = arr.max(lines, line => line.filter(obj.isString).join('').length);
+      let width = 0;
+      const totalHeight = arr.sum(lines.map(textAndAttributes => {
+        const charBounds = fm.newManuallyComputeCharBoundsOfLine(morph, { textAndAttributes });
+        width = Math.max(width, Math.ceil(arr.max(charBounds, r => r.right()).right()));
+        return arr.max(charBounds, r => r.bottom()).bottom();
+      }));
       return pt(0, 0).extent(pt(width + morph.padding.left() + morph.padding.right(), totalHeight + morph.padding.top() + morph.padding.bottom()));
     } else {
-      const lines = splitTextAndAttributesIntoLines(morph.textAndAttributes);
       const totalHeight = arr.sum(lines.map(textAndAttributes => {
-        const charBounds = morph.env.fontMetric.newManuallyComputeCharBoundsOfLine(morph, { textAndAttributes });
+        const charBounds = fm.newManuallyComputeCharBoundsOfLine(morph, { textAndAttributes });
         return arr.max(charBounds, r => r.bottom()).bottom();
       }));
       return pt(0, 0).extent(morph.extent.withY(morph.padding.top() + morph.padding.bottom() + totalHeight));
@@ -2029,7 +2030,7 @@ export default class Renderer {
 
     const fastBounds = this.tryToMeasureViaCanvas(morph);
     if (fastBounds) {
-      if (morph.allFontsLoaded()) {
+      if (morph.allFontsLoaded() && document.fonts.status !== 'loading') {
         morph._cachedBounds = fastBounds;
         morph.renderingState.needsRemeasure = false;
       }
@@ -2077,7 +2078,7 @@ export default class Renderer {
     prevParent.appendChild(textNode);
     this.updateNodeScrollFromMorph(morph);
 
-    if (morph.allFontsLoaded()) {
+    if (morph.allFontsLoaded() && document.fonts.status !== 'loading') {
       morph._cachedBounds = bounds;
       morph.renderingState.needsRemeasure = false;
     }
@@ -2128,7 +2129,7 @@ export default class Renderer {
         actualTextHeight = actualTextHeight + this.updateLineHeightOfNode(morph, line, node, gtfm);
         // if we measured but the font as not been loaded, this is also just an estimate
         line.hasEstimatedExtent = !fontMetric.isFontSupported(morph._fontFamilyToRender, morph._fontWeightToRender);
-        if (!textLayerNode.isConnected) line.hasEstimatedExtent = true;
+        if (!textLayerNode.isConnected || document.fonts.status !== 'loaded') line.hasEstimatedExtent = true;
         line = line.nextLine();
       }
     }
@@ -2146,9 +2147,15 @@ export default class Renderer {
         const charBounds = morph.env.fontMetric.newManuallyComputeCharBoundsOfLine(morph, docLine);
         const lineWidth = arr.max(charBounds, r => r.right()).right() - arr.min(charBounds, r => r.left()).left();
         const lineHeight = arr.max(charBounds, r => r.bottom()).bottom();
-        morph.textLayout.lineCharBoundsCache.set(docLine, charBounds); // override
-        docLine.changeExtent(lineWidth, lineHeight, false);
-        morph.renderingState.needsFit = true;
+        if (document.fonts.status === 'loaded') {
+          morph.textLayout.lineCharBoundsCache.set(docLine, charBounds); // override
+          docLine.changeExtent(lineWidth, lineHeight, false);
+          morph.renderingState.needsFit = true;
+        } else {
+          morph.textLayout.resetLineCharBoundsCacheOfLine(docLine);
+          morph.makeDirty();
+          docLine.hasEstimatedExtent = true;
+        }
         return lineHeight;
       }
 
