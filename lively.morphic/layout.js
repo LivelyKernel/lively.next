@@ -795,6 +795,10 @@ export class TilingLayout extends Layout {
 
   onOwnerChanged (newOwner) {
     if (newOwner) return;
+    // Resetting Yoga nodes too frequently leads to weird behavior.
+    // This is a heuristic to delay the reset a bit.
+    // Additionally, this is basically a check to differentiate between removing a morph and abandoning it,
+    // so it also has positive performance implications.
     setTimeout(() => !this.container?.world() && this.resetYoga());
   }
 
@@ -806,7 +810,7 @@ export class TilingLayout extends Layout {
       if (m.layout?.name() !== 'Tiling') this.resetYogaNodeFor(m);
     });
     this.container
-      .withAllSubmorphsSelect(m => m.layout?.name() == 'Tiling')
+      .withAllSubmorphsSelect(m => m.layout?.name() === 'Tiling')
       .forEach(m => {
         m.layout.resetYoga();
       });
@@ -1148,6 +1152,7 @@ export class TilingLayout extends Layout {
     const containerNode = this.ensureYogaNodeFor(this.container);
     let i = 0; let resetNodes = layoutableSubmorphs.length !== containerNode.getChildCount();
     for (let m of layoutableSubmorphs) {
+      // These cryptic properties are where we can find unique IDs of the Yoga Nodes
       if (this.ensureYogaNodeFor(m)?.M.O !== containerNode.getChild(i++)?.M.O) {
         resetNodes = true;
         break;
