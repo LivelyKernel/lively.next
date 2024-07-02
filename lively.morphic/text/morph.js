@@ -1261,7 +1261,7 @@ export class Text extends Morph {
         // instead of just marking them as estimated, check if this morph can
         // be measured via canvas and if so, directly measure all visible lines now
         if (this.document && this.world()) this.document.lines.forEach(l => l.hasEstimatedExtent = true);
-        if (this.document && this.env.fontMetric._domMeasure.canBeMeasuredViaCanvas(this)) {
+        if (this.document && this.canBeMeasuredViaCanvas) {
           for (let line of arr.sortBy(this.whatsVisible.lines, line => -line.width)) {
             this.env.renderer.updateLineHeightOfNode(this, line);
           }

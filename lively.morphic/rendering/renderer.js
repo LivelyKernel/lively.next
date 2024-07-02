@@ -1707,7 +1707,7 @@ export default class Renderer {
     const textNode = morph.renderingState.textLayer;
     if (!textNode) return;
     textNode.style['font-kerning'] = morph.document ? 'none' : 'auto';
-    const canvasSupported = morph.env.fontMetric._domMeasure.canBeMeasuredViaCanvas(morph);
+    const canvasSupported = morph.canBeMeasuredViaCanvas;
 
     if (morph.document && canvasSupported) {
       this.measureVisibleLinesViaCanvas(morph);
@@ -2143,7 +2143,7 @@ export default class Renderer {
    */
   updateLineHeightOfNode (morph, docLine, lineNode, tfm) {
     if (docLine.height === 0 || docLine.hasEstimatedExtent) {
-      if (morph.env.fontMetric._domMeasure.canBeMeasuredViaCanvas(morph)) {
+      if (morph.canBeMeasuredViaCanvas) {
         const charBounds = morph.env.fontMetric.newManuallyComputeCharBoundsOfLine(morph, docLine);
         const lineWidth = arr.max(charBounds, r => r.right()).right() - arr.min(charBounds, r => r.left()).left();
         const lineHeight = arr.max(charBounds, r => r.bottom()).bottom();

@@ -605,7 +605,7 @@ class DOMTextMeasure {
     morph, line, offsetX = 0, offsetY = 0, styleOpts,
     renderTextLayerFn, renderLineFn, fontMetric
   ) {
-    const measureOnCanvas = this.canBeMeasuredViaCanvas(morph);
+    const measureOnCanvas = morph.canBeMeasuredViaCanvas;
     if (measureOnCanvas) {
       return charBoundsOfLineViaCanvas(line, morph, fontMetric, this); // eslint-disable-line no-use-before-define
     }
