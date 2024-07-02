@@ -348,8 +348,17 @@ class DOMTextMeasure {
     style.overflow = isRoot && !this.debug ? 'hidden' : 'visible';
   }
 
+  hasTextStyleClasses (aMorph) {
+    const { textAndAttributes } = aMorph;
+    for (let i = 1; i < textAndAttributes.length; i += 2) {
+      if (textAndAttributes[i]?.textStyleClasses) return true;
+    }
+    return false;
+  }
+
   canBeMeasuredViaCanvas (aMorph) {
     if (!aMorph.allFontsLoaded() && document.fonts.status !== 'loading') return false;
+    if (this.hasTextStyleClasses(aMorph) && !aMorph.fixedWidth) return false;
     const { fontFamily, fontWeight, fontStyle } = aMorph;
     const key = `${fontFamily}-${fontWeight}-${fontStyle}`;
     if (key in this.canvasCompatibility) return this.canvasCompatibility[key];
