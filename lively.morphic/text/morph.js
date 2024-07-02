@@ -221,7 +221,8 @@ export class Text extends Morph {
           if (
             !this._measuringTextBox &&
               (!this.fixedWidth || !this.fixedHeight) &&
-              !this._initializing && this.renderingState.needsFit
+              !this._initializing && this.renderingState.needsFit &&
+            !this.env.changeManager.defaultMeta.doNotFit
           ) {
             this._measuringTextBox = true;
             this.withMetaDo({ metaInteraction: true }, () => {
@@ -2823,11 +2824,12 @@ export class Text extends Morph {
         this.fixedWidth ? 0 : this.borderWidthLeft + this.borderWidthRight,
         this.fixedHeight ? 0 : this.borderWidthTop + this.borderWidthBottom
       );
-      if (!this.extent.equals(newExt)) {
-        this.withMetaDo({ isLayoutAction: true }, () => {
+
+      this.withMetaDo({ isLayoutAction: true, doNotFit: true }, () => {
+        if (!this.extent.equals(newExt)) {
           this.extent = newExt;
-        });
-      }
+        }
+      });
     } else {
       this.whenEnvReady().then(() => {
         this.fit();
