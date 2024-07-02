@@ -3836,17 +3836,21 @@ export class Text extends Morph {
   }
 
   textUndo () {
-    const undo = this.undoManager.undo();
-    if (!undo) return; // no undo left
-    const changes = undo.changes.slice().reverse().map(ea => ea.undo);
-    this.selection = this.computeTextRangeForChanges(changes);
+    this.withMetaDo({ reconcileChanges: true }, () => {
+      const undo = this.undoManager.undo();
+      if (!undo) return; // no undo left
+      const changes = undo.changes.slice().reverse().map(ea => ea.undo);
+      this.selection = this.computeTextRangeForChanges(changes);
+    });
   }
 
   textRedo () {
-    const redo = this.undoManager.redo();
-    if (!redo) return; // nothing to redo
-    const changes = redo.changes.slice();
-    this.selection = this.computeTextRangeForChanges(changes);
+    this.withMetaDo({ reconcileChanges: true }, () => {
+      const redo = this.undoManager.redo();
+      if (!redo) return; // nothing to redo
+      const changes = redo.changes.slice();
+      this.selection = this.computeTextRangeForChanges(changes);
+    });
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
