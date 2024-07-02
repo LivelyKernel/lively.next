@@ -774,6 +774,7 @@ const EmbeddedIcon = component(EmbeddedIconDefault, {
 const BrowserDirectoryControls = component({
   type: DirectoryControls,
   name: 'directory controls',
+  acceptsDrops: false,
   borderColor: Color.rgb(23, 160, 251),
   extent: pt(83.2, 30.8),
   fill: Color.rgba(0, 0, 0, 0),
@@ -824,6 +825,7 @@ const BrowserDirectoryControls = component({
 const BrowserPackageControls = component({
   type: PackageControls,
   name: 'browser package controls',
+  acceptsDrops: false,
   borderColor: Color.rgb(23, 160, 251),
   extent: pt(123.4, 30.8),
   fill: Color.rgba(0, 0, 0, 0),
