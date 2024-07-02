@@ -2028,7 +2028,7 @@ export default class Renderer {
 
     if (!morph.renderingState.needsRemeasure && morph._cachedBounds) return morph._cachedBounds;
 
-    const fastBounds = this.tryToMeasureViaCanvas(morph);
+    const fastBounds = morph.canBeMeasuredViaCanvas && this.tryToMeasureViaCanvas(morph);
     if (fastBounds) {
       if (morph.allFontsLoaded() && document.fonts.status !== 'loading') {
         morph._cachedBounds = fastBounds;
