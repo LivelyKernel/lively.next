@@ -114,7 +114,7 @@ export class RichTextControlModel extends ViewModel {
           };
         };
 
-        const shortcutFonts = [{ name: 'Mono' }, { name: 'Sans Serif' }, { name: 'Serif' }];
+        const shortcutFonts = [{ name: 'Monospace' }, { name: 'Sans-Serif' }, { name: 'Serif' }];
         const shortcutFontItems = shortcutFonts.map(fontItemCreator);
         shortcutFontItems[2].style = {
           borderWidth: { bottom: 5, top: 0, left: 0, right: 0, top: 0 },
