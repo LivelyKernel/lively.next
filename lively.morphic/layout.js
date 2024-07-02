@@ -890,11 +890,11 @@ export class TilingLayout extends Layout {
         morph.position.y === newPosY &&
         morph.position.x === newPosX);
 
-    const hash = JSON.stringify(computed);
-    if (morph._lastComputed === hash && !needsUpdate) {
+    const computedStringified = JSON.stringify(computed);
+    if (morph._lastComputed === computedStringified && !needsUpdate) {
       return;
     }
-    if (morph.layout?.name() !== 'Tiling') morph._lastComputed = hash;
+    if (morph.layout?.name() !== 'Tiling') morph._lastComputed = computedStringified;
 
     const heightPolicy = this.getResizeHeightPolicyFor(morph);
     const widthPolicy = this.getResizeWidthPolicyFor(morph);
@@ -939,8 +939,8 @@ export class TilingLayout extends Layout {
     const { container, hugContentsVertically, hugContentsHorizontally } = this;
     const node = this.ensureLayoutComputed(container);
     const computed = node.getComputedLayout();
-    const hash = JSON.stringify(computed);
-    this.container._lastComputed = hash;
+    const computedStringified = JSON.stringify(computed);
+    this.container._lastComputed = computedStringified;
 
     const isPreliminary = node.getParent() && !node._computedMargin;
     const { scrollbarVisible, scrollbarOffset } = container;
