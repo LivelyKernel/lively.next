@@ -2569,7 +2569,7 @@ export class Text extends Morph {
       const currentRangeIndex =
         ranges.length -
         1 -
-        ranges.slice().reverse().findIndex(({ start, end }) => start.column <= pos.column);
+        ranges.slice().reverse().findIndex(({ start }) => start.column <= pos.column);
       let nextRange;
 
       if (n >= 1) {
