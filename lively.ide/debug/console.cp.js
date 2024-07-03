@@ -155,9 +155,18 @@ class LocalJSConsoleModel extends ViewModel {
   static get properties () {
     return {
       logLimit: { defaultValue: 1000 },
+      bindings: {
+        get () {
+          return [
+            { signal: 'keybindings', override: true, handler: 'keybindings' },
+            { signal: 'commands', override: true, handler: 'commands' },
+            { signal: 'menuItems', override: true, handler: 'menuItems' }
+          ];
+        }
+      },
       expose: {
         get () {
-          return ['onWindowClose', 'clear', 'commands', 'menuItems', 'keybindings'];
+          return ['onWindowClose', 'clear'];
         }
       }
     };
@@ -230,27 +239,25 @@ class LocalJSConsoleModel extends ViewModel {
     if (!test) this.error('Assert failed: ' + msg);
   }
 
-  get keybindings () {
-    const viewKeybindings = this.withoutExposedPropsDo(() => this.view.keybindings);
+  keybindings ({ get: viewKeybindings }) {
     return [
-      { keys: { mac: 'Meta-K', win: 'Ctrl-Alt-K' }, command: '[console] clear' },
-      ...viewKeybindings
+      { keys: { mac: 'Meta-Alt-K', win: 'Ctrl-Alt-K' }, command: '[console] clear' },
+      ...viewKeybindings()
     ];
   }
 
-  get commands () {
-    const viewCommands = this.withoutExposedPropsDo(() => this.view.commands);
+  commands ({ get: viewCommands }) {
     return [
       {
         name: '[console] clear',
         exec: () => { this.clear(); return true; }
       },
-      ...viewCommands
+      ...viewCommands()
     ];
   }
 
-  async menuItems () {
-    const viewItems = await this.withoutExposedPropsDo(() => this.view.menuItems());
+  async menuItems ($super) {
+    const viewItems = await $super();
     return [
       { command: '[console] clear', target: this, alias: 'clear' },
       { isDivider: true },
