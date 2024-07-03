@@ -308,7 +308,7 @@ export class ColorPickerModel extends ViewModel {
 
   async triggerEyeDropper () {
     const chosenColor = await new window.EyeDropper().open();
-    this.withColor(Color.fromString(chosenColor.sRGBHex));
+    this.adjustColor(Color.fromString(chosenColor.sRGBHex));
   }
 
   toggleHalos (active) {
