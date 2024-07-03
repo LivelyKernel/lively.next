@@ -257,6 +257,12 @@ export class UserFlapModel extends ViewModel {
       }
     });
     const userData = await userRes.json();
+    // provided token is not valid, purge all data and reset login status throughout user flap 
+    if (userData.status === '401'){
+      this.logout();
+      return false;
+    }
+
     // retrieve the organizations in which the authenticated user is a member
     const orgsForUserRes = await fetch('https://api.github.com/user/orgs', {
       headers: {
@@ -270,6 +276,7 @@ export class UserFlapModel extends ViewModel {
     const orgNames = orgsForUser.map(org => org.login);
     storeCurrentUsersOrganizations(orgNames);
     storeCurrentUser(userData);
+    return true;
   }
 
   logout () {
