@@ -1115,7 +1115,9 @@ export class Text extends Morph {
   allFontsLoaded () {
     if (this._allFontsLoaded) return true;
     // cache the result for as long as the font properties are not reset
-    return this._allFontsLoaded = this.usedFonts().every(fontString => this.fontMetric.supportedFontCache.has(fontString) || (document.LIVELY_FONTS_LOADED && document.fonts.check(fontString)));
+    const fm = this.fontMetric;
+    this._allFontsLoaded = this.usedFonts().every(fontString => fm.supportedFontCache.has(fontString) || (document.LIVELY_FONTS_LOADED && document.fonts.check(fontString) && !!fm.supportedFontCache.add(fontString)));
+    return this._allFontsLoaded;
   }
 
   async whenFontLoaded () {
