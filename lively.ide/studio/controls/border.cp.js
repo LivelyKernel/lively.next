@@ -102,6 +102,7 @@ export class BorderControlModel extends PropertySectionModel {
    */
   focusOn (aMorph) {
     this.targetMorph = aMorph;
+    this.ui.moreButton.visible = !aMorph.isPath;
     if (
       Color.white.equals(this.targetMorph.borderColor.valueOf()) &&
       this.targetMorph.borderWidth.valueOf() === 0 &&
