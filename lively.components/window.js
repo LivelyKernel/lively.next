@@ -399,21 +399,21 @@ export default class Window extends Morph {
       } = resizer;
 
       rightResizer.height = this.height + resizerOutset;
-      rightResizer.bottomRight = this.extent.subXY(resizerOutset, resizerInset + resizerOutset); // fix Y
+      rightResizer.bottomRight = this.extent.subXY(resizerOutset, resizerInset + resizerOutset + 1); // fix Y
 
       bottomRightResizer.bottomRight = this.extent.subXY(resizerOutset, resizerOutset);
 
       leftResizer.height = this.height + resizerOutset;
-      leftResizer.bottomLeft = pt(resizerOutset, this.height - (resizerInset + resizerOutset)); // fix Y
+      leftResizer.bottomLeft = pt(resizerOutset, this.height - resizerOutset - resizerInset - 1); // fix Y
 
       bottomLeftResizer.bottomLeft = pt(resizerOutset, this.height - resizerOutset);
 
       bottomResizer.width = this.width + resizerOutset;
-      bottomResizer.bottomLeft = pt(resizerInset + resizerOutset, this.height - resizerOutset); // fix X
+      bottomResizer.bottomLeft = pt(resizerInset + resizerOutset + 1, this.height - resizerOutset); // fix X
 
       topResizer.width = this.width + resizerOutset;
       topResizer.height = resizerInset;
-      topResizer.bottomLeft = pt(resizerInset + resizerOutset, resizerInset + resizerOutset); // fix X
+      topResizer.bottomLeft = pt(resizerInset + resizerOutset + 1, resizerInset + resizerOutset); // fix X
 
       topLeftResizer.topLeft = pt(resizerOutset, resizerOutset);
 
