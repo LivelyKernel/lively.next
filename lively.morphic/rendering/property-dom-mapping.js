@@ -33,6 +33,7 @@ const propsToDelete = [
   'grid-template-columns',
   'will-change',
   'filter',
+  'backdrop-filter',
   'z-index'
 ];
 
@@ -99,7 +100,12 @@ export function styleProps (morph) {
   addBorderRadius(morph, style);
   addShadowStyle(morph, style);
   if (morph.grayscale) style.filter = `${style.filter || ''} grayscale(${100 * morph.grayscale}%)`;
-  if (morph.blur) style.filter = `${style.filter || ''} blur(${morph.blur}px)`;
+  if (morph.blur) {
+    if (!morph.blur.backdrop) style.filter = `${style.filter || ''} blur(${morph.blur.value || morph.blur}px)`;
+    if (morph.blur.backdrop) {
+      style['backdrop-filter'] = `${style['backdrop-filter'] || ''} blur(${morph.blur.value}px)`;
+    }
+  }
   if (morph.opacity != null) style.opacity = morph.opacity;
   if (morph.draggable && !morph.isWorld) style['touch-action'] = 'none';
   // on ios touch-action is an undocumented html attribute and can not be set via css
