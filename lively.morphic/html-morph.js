@@ -51,7 +51,7 @@ export class HTMLMorph extends Morph {
       },
       domNodeStyle: {
         readOnly: true,
-        get () { return 'position: absolute; width: 100%; height: 100%;'; }
+        get () { return 'position: absolute; width: 100%; height: 100%; left: 0px; top: 0px'; }
       },
       domNode: {
         derived: true, /* FIXME only for dont serialize... */
