@@ -1,9 +1,9 @@
 /* global System */
 import { arr, obj, chain, fun } from 'lively.lang';
 import { query, parse, walk } from 'lively.ast';
-import { pt, Color } from 'lively.graphics';
+import { pt, rect, Color } from 'lively.graphics';
 
-import { HTMLMorph } from 'lively.morphic';
+import { HTMLMorph, TilingLayout } from 'lively.morphic';
 import { connect } from 'lively.bindings';
 import EvalBackendChooser from './js/eval-backend-ui.js';
 
@@ -270,7 +270,6 @@ export default class TestRunner extends HTMLMorph {
   constructor (props) {
     super(props);
     this.reset();
-    connect(this, 'extent', this, 'relayout');
     this.cssDeclaration = testRunnerCSS;
   }
 
@@ -301,13 +300,12 @@ export default class TestRunner extends HTMLMorph {
       loadedTests: [],
       collapsedSuites: {}
     };
-
+    this.layout = new TilingLayout({
+      align: 'right',
+      padding: rect(5, 5, 0, 0)
+    });
     this.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(this, null));
     this.update();
-  }
-
-  relayout () {
-    this.get('eval backend button').topRight = this.innerBounds().insetBy(5).topRight();
   }
 
   setEvalBackend (choice) {
