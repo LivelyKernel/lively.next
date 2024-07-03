@@ -132,6 +132,9 @@ export function getValueExpr (prop, value, depth = 0) {
     value = `num.toRadians(${num.toDegrees(value).toFixed(1)})`;
     bindings['lively.lang'] = ['num'];
   }
+  if (prop === 'blur') {
+    value = `{ backdrop: ${value.backdrop ? 'true' : 'false'}, value: ${value.value} }`;
+  }
   if (prop === 'imageUrl' && $world.openedProject && value.includes($world.openedProject.name)) {
     value = value.replaceAll('"', '');
     value = `projectAsset('${value.split('/').pop()}')`;
