@@ -382,6 +382,10 @@ export class ViewModel {
   clearBindings () {
     noUpdate(() => {
       this.getBindingConnections().forEach(conn => conn.disconnect());
+      // also delete all overridden getter/setters
+      for (let { signal, override } of this.bindings) {
+        if (override && Object.hasOwnProperty(this.view, signal)) { delete this.view[signal]; }
+      }
     });
   }
 
@@ -397,6 +401,34 @@ export class ViewModel {
       try {
         const initConnection = (target) => {
           if (!target) return;
+          let currentGetter = target.__lookupGetter__(signal);
+          let currentSetter = target.__lookupSetter__(signal);
+          if ((currentGetter || currentSetter) && override) {
+            // we are overriding a getter we need to redefine the getter instead of intercepting the method via a connection
+            let descr = Object.getOwnPropertyDescriptor(target.constructor.prototype, signal);
+
+            if (currentGetter) {
+              descr = {
+                ...descr,
+                get: () => {
+                  return this[handler]({ get: currentGetter.bind(target) });
+                }
+              };
+            }
+
+            if (currentSetter) {
+              descr = {
+                ...descr,
+                set: (v) => {
+                  return this[handler]({ set: currentSetter.bind(target) });
+                }
+              };
+            }
+
+            Object.defineProperty(target, signal, descr);
+
+            return;
+          }
           if (obj.isFunction(handler)) {
             epiConnect(target, signal, handler);
             return;
