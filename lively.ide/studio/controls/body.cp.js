@@ -83,6 +83,8 @@ export class BodyControlModel extends PropertySectionModel {
     for (const prop in this.propConfig) { // eslint-disable-line no-use-before-define
       const { resetValue, accessor } = this.propConfig[prop]; // eslint-disable-line no-use-before-define
       if (!obj.equals(resetValue, this.targetMorph[accessor])) {
+        if (prop === 'Background Blur' && !this.targetMorph[accessor]?.backdrop) continue;
+        if (prop === 'Blur' && this.targetMorph[accessor]?.backdrop) continue;
         if (prop === 'Inner shadow' && !this.targetMorph[accessor].inset) continue;
         if (prop === 'Drop shadow' && this.targetMorph[accessor].inset) continue;
         this.addDynamicProperty(prop, false, false);
@@ -251,7 +253,9 @@ export class DynamicPropertyModel extends ViewModel {
    * in order to illustrate what the property controls in the morph's appearance.
    */
   applyDefault () {
-    this.targetMorph[this.accessor] = PROP_CONFIG[this.selectedProp].defaultValue; // eslint-disable-line no-use-before-define
+    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+      this.targetMorph[this.accessor] = PROP_CONFIG[this.selectedProp].defaultValue; // eslint-disable-line no-use-before-define
+    });
   }
 
   /**
@@ -307,8 +311,9 @@ export class DynamicPropertyModel extends ViewModel {
    * Update the current morph to reflect the changes.
    */
   confirm (v) {
+    const { converter } = PROP_CONFIG[this.selectedProp]; // eslint-disable-line no-use-before-define
     this.view.withMetaDo({ reconcileChanges: true }, () => {
-      this.targetMorph[this.accessor] = v;
+      this.targetMorph[this.accessor] = converter ? converter(this.targetMorph, v) : v;
     });
   }
 
@@ -388,6 +393,9 @@ const PROP_CONFIG = {
     defaultModelProps: (target) => {
       return { value: target.opacity };
     },
+    converter: (target, newValue) => {
+      return { ...target.blur, value: newValue };
+    },
     popupComponent: OpacityPopup,
     resetValue: 1,
     defaultValue: 1
@@ -395,11 +403,28 @@ const PROP_CONFIG = {
   Blur: {
     accessor: 'blur',
     defaultModelProps: target => {
-      return { value: target.blur };
+      let { value = target.blur } = target.blur;
+      return { value };
+    },
+    converter: (target, newValue) => {
+      return { ...target.blur, value: newValue, backdrop: false };
     },
     popupComponent: BlurPopup,
     resetValue: 0,
-    defaultValue: 1
+    defaultValue: { value: 1, backdrop: false }
+  },
+  'Background Blur': {
+    accessor: 'blur',
+    defaultModelProps: target => {
+      let { value = target.blur } = target.blur;
+      return { value };
+    },
+    converter: (target, newValue) => {
+      return { ...target.blur, value: newValue, backdrop: true };
+    },
+    popupComponent: BlurPopup,
+    resetValue: 0,
+    defaultValue: { value: 1, backdrop: true }
   },
   Cursor: {
     accessor: 'nativeCursor',

@@ -1035,6 +1035,7 @@ const BlurPopup = component(DarkPopupWindow, {
     fill: Color.rgba(0, 0, 0, 0),
     submorphs: [part(DarkNumberIconWidget, {
       name: 'value input',
+      extent: pt(75.5,22),
       viewModel: {
         min: 0,
         scaleFactor: 100,
