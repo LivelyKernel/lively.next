@@ -29,12 +29,22 @@ function allPropertyDescriptors (obj) {
   return descriptors;
 }
 
+function getPropertyDescriptor (obj, prop) {
+  let proto = obj;
+  let descriptor;
+  while (proto = proto.__proto__) {
+    descriptor = Object.getOwnPropertyDescriptor(obj, prop);
+    if (descriptor) break;
+  }
+  return descriptor;
+}
+
 /**
  * For a given object only returns all the *property or function names*
  * that are directly defined on the object itself. Here we *do not* consider
  * what is defined on any of the prototypes in the prototype chain of the given object.
  * If `predicate` is given, these can further be filtered by a custom condition.
- * @param { Object } obj - The object to collect the property and function names for. 
+ * @param { Object } obj - The object to collect the property and function names for.
  * @param { function(*, string): boolean } [predicate] - The predicate to filter the properties by further.
  * @returns { string[] } The names of all the local properties or functions.
  */
@@ -49,7 +59,7 @@ function allOwnPropertiesOrFunctions (obj, predicate) {
  * For a given object only returns all the *property names*
  * that are directly defined on the object itself. Here we *do not* consider
  * what is defined on any of the prototypes in the prototype chain of the given object.
- * @param { Object } object- The object to collect the property names for. 
+ * @param { Object } object- The object to collect the property names for.
  * @returns { string[] } The names of all the local properties.
  */
 function own (object) {
@@ -84,7 +94,7 @@ function forEachOwn (object, func, context) {
 /**
  * For a given `object` return the name of the property that is equal to `value`.
  * @param { Object } object - The object whose properties to check.
- * @param { * } value - The value to scan the properties for. 
+ * @param { * } value - The value to scan the properties for.
  * @returns { string } The name of the property that stores the same `value`.
  */
 function nameFor (object, value) {
@@ -122,7 +132,7 @@ function ownValues (obj) {
  * For a given `obj` and `predicate` checks wether any property defined for `obj` satisfies the condition
  * defined by `predicate`.
  * @param { Object } obj - The object whose properties to check.
- * @param { function(Object, string): boolean } predicate - The predicate to check the properties for. 
+ * @param { function(Object, string): boolean } predicate - The predicate to check the properties for.
  * @returns { boolean } Wether or not any of the properties of the object satisfies the predicate.
  */
 function any (obj, predicate) {
