@@ -1,4 +1,4 @@
-import { Label, config, Morph } from 'lively.morphic';
+import { Label, ShadowObject, config, Morph } from 'lively.morphic';
 import { obj, promise, fun } from 'lively.lang';
 import { pt, Color, Rectangle } from 'lively.graphics';
 import { Icon } from '../lively.morphic/text/icons';
@@ -7,9 +7,10 @@ export class MenuDivider extends Morph {
   static get properties () {
     return {
       isMenuDevider: { defaultValue: true },
-      fill: { defaultValue: Color.gray.lighter() },
-      extent: { defaultValue: pt(100, 5) },
-      reactsToPointer: { defaultValue: false }
+      fill: { defaultValue: Color.black.withA(.2) },
+      extent: { defaultValue: pt(100, 2) },
+      reactsToPointer: { defaultValue: false },
+      dropShadow: { defaultValue: new ShadowObject({ distance: 0, rotation: 90, color: Color.rgba(0, 0, 0, 0.1), blur: 5, spread: 0 }) }
     };
   }
 }
