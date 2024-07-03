@@ -239,7 +239,14 @@ const Hovered = component({ name: 'marked', extent: pt(10, 14), fill: Color.rgba
 
 const ConstraintMarker = component({
   name: 'constraint marker',
-  master: { auto: Plain, hover: Hovered },
+  layout: new TilingLayout({
+    align: 'center',
+    axisAlign: 'center'
+  }),
+  master: {
+    auto: Plain,
+    hover: Hovered
+  },
   nativeCursor: 'pointer',
   extent: pt(10, 14),
   fill: Color.transparent,
@@ -249,7 +256,7 @@ const ConstraintMarker = component({
     position: pt(4, 2),
     extent: pt(2, 10),
     borderColor: Color.rgb(178, 235, 242),
-    fill: Color.rgb(176, 190, 197)
+    fill: Color.rgb(102, 102, 102)
   }]
 });
 
@@ -287,7 +294,7 @@ const ConstraintsSimulator = component({
       master: { states: { active: ConstraintMarkerActive } },
       name: 'bottom marker',
       tooltip: 'Resize with Bottom Border',
-      position: pt(31.7, 57.5)
+      position: pt(32.7, 56.5)
     }), part(ConstraintMarker, {
       master: { states: { active: ConstraintMarkerActive } },
       name: 'left marker',
@@ -296,7 +303,7 @@ const ConstraintsSimulator = component({
     }), {
       name: 'inner constraints',
       borderWidth: 1,
-      borderColor: Color.rgb(176, 190, 197),
+      borderColor: Color.rgb(102, 102, 102),
       extent: pt(35, 35),
       fill: Color.transparent,
       position: pt(20, 20),
@@ -305,7 +312,7 @@ const ConstraintsSimulator = component({
         name: 'vertical marker',
         tooltip: 'Proportionally Fix Center Vertically',
         height: 19,
-        position: pt(13.3, 9.1),
+        position: pt(12.3, 8.1),
         submorphs: [{ name: 'accent', height: 15 }]
       }), part(ConstraintMarker, {
         master: { states: { active: ConstraintMarkerActive } },
