@@ -187,6 +187,10 @@ export class NewSceneGraphTree extends SceneGraphTree {
     return container;
   }
 
+  onMouseWheel (evt) {
+    this.submorphs.forEach(m => { if (m.isContainer) m.reactsToPointer = false; });
+  }
+
   clearSelection () {
     this.selectedNode = null;
   }
@@ -217,6 +221,7 @@ export class NewSceneGraphTree extends SceneGraphTree {
 
   onMouseMove (evt) {
     super.onMouseMove(evt);
+    this.submorphs.forEach(m => { if (m.isContainer) m.reactsToPointer = true; });
     this.highlightLineAtCursor(evt, {
       background: Color.transparent,
       transform: 'translateY(-1px)',
@@ -543,7 +548,7 @@ const MorphNode = component({
     fontColor: Color.rgb(208, 208, 208),
     fontFamily: 'Material Icons',
     reactsToPointer: false,
-    padding: rect(0,0,0,3),
+    padding: rect(0, 0, 0, 3),
     textAndAttributes: ['', {
       fontSize: 10,
       fontFamily: 'Material Icons'
