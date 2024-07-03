@@ -129,7 +129,9 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
               }
             },
             { target: 'remote url', signal: 'onInputChanged', handler: 'checkValidity', converter: '() => false' },
-            { target: 'project name', signal: 'onInputChanged', handler: 'checkValidity', converter: '() => false' }
+            { target: 'remote url', signal: 'onBlur', handler: 'checkValidity', converter: '() => false' },
+            { target: 'project name', signal: 'onInputChanged', handler: 'checkValidity', converter: '() => false' },
+            { target: 'project name', signal: 'onBlur', handler: 'checkValidity', converter: '() => false' }
           ];
         }
       }
