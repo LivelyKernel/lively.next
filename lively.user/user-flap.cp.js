@@ -50,6 +50,11 @@ export class UserFlapModel extends ViewModel {
       withLoginButton: {
         defaultValue: false
       },
+      setupComplete: {
+        initialize () {
+          this.setupComplete = promise.deferred();
+        }
+      },
       bindings: {
         get () {
           return [
@@ -61,7 +66,7 @@ export class UserFlapModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['updateNetworkIndicator', 'showUserData', 'onLogin', 'onLogout', 'showLoggedInUser', 'showGuestUser', 'toggleLoadingAnimation', 'login', 'update'];
+          return ['setupComplete','updateNetworkIndicator', 'showUserData', 'onLogin', 'onLogout', 'showLoggedInUser', 'showGuestUser', 'toggleLoadingAnimation', 'login', 'update'];
         }
       }
     };
@@ -115,6 +120,11 @@ export class UserFlapModel extends ViewModel {
     const { loginButton, leftUserLabel, rightUserLabel, avatar } = this.ui;
     await leftUserLabel.whenFontLoaded();
     await rightUserLabel.whenFontLoaded();
+
+    if (!isUserLoggedIn() && currentUserToken()) {
+      await this.retrieveGithubUserData();
+    }
+
     if (!isUserLoggedIn()) {
       if (this.withLoginButton) {
         avatar.visible = false;
@@ -133,6 +143,7 @@ export class UserFlapModel extends ViewModel {
       leftUserLabel.nativeCursor = 'auto';
     }
     promise.delay(100).then(() => this.view.animate({ opacity: 1, duration: 300 }));
+    this.setupComplete.resolve();
   }
 
   async login () {
