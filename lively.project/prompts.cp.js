@@ -11,7 +11,7 @@ import { SaveWorldDialog } from 'lively.ide/studio/dialogs.cp.js';
 import { without } from 'lively.morphic/components/core.js';
 import { Label } from 'lively.morphic/text/label.js';
 import { Checkbox, LabeledCheckboxLight } from 'lively.components';
-import { currentUserToken, currentUsersOrganizations, currentUsername } from 'lively.user';
+import { currentUserToken, isUserLoggedIn, currentUsersOrganizations, currentUsername } from 'lively.user';
 import { Project } from 'lively.project';
 import { StatusMessageError, StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
 import { EnumSelector, Spinner } from 'lively.ide/studio/shared.cp.js';
@@ -278,7 +278,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
     if (lively.isInOfflineMode) fromRemoteCheckbox.disable();
     privateCheckbox.disable();
     cancelButton.disable();
-    if (!currentUserToken()) {
+    if (!isUserLoggedIn()) {
       this.waitForLogin();
     } else {
       const li = $world.showLoadingIndicatorFor(this.view);
