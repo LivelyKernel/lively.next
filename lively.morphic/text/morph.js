@@ -831,7 +831,11 @@ export class Text extends Morph {
         isStyleProp: true,
         defaultValue: 'no-wrap',
         before: ['extent'],
-        after: ['document', 'renderingState']
+        after: ['document', 'renderingState'],
+        get () {
+          if (!this.fixedWidth) return 'no-wrap';
+          return this.getProperty('lineWrapping');
+        }
       },
 
       // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
