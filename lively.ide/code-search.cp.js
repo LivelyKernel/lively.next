@@ -61,7 +61,7 @@ export async function doSearch (
 }
 
 export class CodeSearcher extends FilterableList {
-  static inWindow (props = { title: 'code search', targetBrowser: null, systemInterface: null }) {
+  static inWindow (props = { title: 'Global Code Search', targetBrowser: null, systemInterface: null }) {
     let searcher = new this(props);
     let win = new Window({
       ...obj.dissoc(props, ['targetBrowser', 'systemInterface']),
@@ -151,7 +151,7 @@ export class CodeSearcher extends FilterableList {
     noUpdate(() => {
       this.get('search chooser').selection = 'in loaded modules';
     });
-    this.getWindow() && (this.getWindow().title = 'code search');
+    this.getWindow() && (this.getWindow().title = 'Global Code Search');
 
     // initialize connections
     connect(this.get('caseMode'), 'fire', this, 'caseModeToggled', { converter: '() => target.searchModeToggled("case")' });
@@ -168,11 +168,7 @@ export class CodeSearcher extends FilterableList {
     this.caseModeActive = false;
     this.regexModeActive = false;
 
-    [this.get('caseMode'), this.get('regexMode')].forEach(button => button.master = {
-      auto: ModeButtonInactive,
-      hover: ModeButtonInactiveHover,
-      click: ModeButtonInactiveClick
-    });
+    [this.get('caseMode'), this.get('regexMode')].forEach(button => button.master.setState(null));
   }
 
   searchModeToggled (type) {
@@ -186,20 +182,7 @@ export class CodeSearcher extends FilterableList {
       this.regexModeActive = !this.regexModeActive;
       active = this.regexModeActive;
     }
-
-    if (active) {
-      button.master = {
-        auto: ModeButtonActive,
-        hover: ModeButtonActiveHover,
-        click: ModeButtonActiveClick
-      };
-    } else {
-      button.master = {
-        auto: ModeButtonInactive,
-        hover: ModeButtonInactiveHover,
-        click: ModeButtonInactiveClick
-      };
-    }
+    button.master.setState(active ? 'active' : null);
 
     this.searchAgain();
   }
@@ -377,7 +360,7 @@ const ModeButtonDisabled = component(ModeButtonInactive, {
 
 const CodeSearch = component({
   type: CodeSearcher,
-  name: 'code search',
+  name: 'Global Code Search',
   acceptsDrops: false,
   fill: Color.transparent,
   extent: pt(538, 421.5),
@@ -467,7 +450,18 @@ const CodeSearch = component({
         }),
         position: pt(0, 33),
         submorphs: [part(ModeButtonInactive, {
-          master: { click: ModeButtonInactiveClick, hover: ModeButtonInactiveHover },
+          master: {
+            click: ModeButtonInactiveClick,
+            hover: ModeButtonInactiveHover,
+            states: {
+              active: component(ModeButtonActive, {
+                master: {
+                  click: ModeButtonActiveClick,
+                  hover: ModeButtonActiveHover
+                }
+              })
+            }
+          },
           tooltip: 'Search Case Sensitive',
           name: 'caseMode',
           extent: pt(27, 22),
@@ -477,7 +471,18 @@ const CodeSearch = component({
             textAndAttributes: Icon.textAttribute('circle-h')
           }]
         }), part(ModeButtonInactive, {
-          master: { click: ModeButtonInactiveClick, hover: ModeButtonInactiveHover },
+          master: {
+            click: ModeButtonInactiveClick,
+            hover: ModeButtonInactiveHover,
+            states: {
+              active: component(ModeButtonActive, {
+                master: {
+                  click: ModeButtonActiveClick,
+                  hover: ModeButtonActiveHover
+                }
+              })
+            }
+          },
           tooltip: 'Search based on regular expressions.\n\
 Regular expression should be given without quotes or literal mode slashes.',
           name: 'regexMode',
