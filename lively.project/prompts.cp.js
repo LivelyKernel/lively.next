@@ -280,6 +280,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
     if (lively.isInOfflineMode) fromRemoteCheckbox.disable();
     privateCheckbox.disable();
     cancelButton.disable();
+    await this.ui.userFlap.setupComplete;
     if (!isUserLoggedIn()) {
       this.waitForLogin();
     } else {
