@@ -73,7 +73,8 @@ export class UserFlapModel extends ViewModel {
   }
 
   async update () {
-    clearUserData();
+    // deleting the user data explicitly sometimes lead to cases where we had no user data but still kept a token around
+    // just overwrite
     await this.retrieveGithubUserData();
     this.showUserData();
   }
