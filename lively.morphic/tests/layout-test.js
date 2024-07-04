@@ -164,6 +164,44 @@ describe('layout', () => {
       expect(m1.width).to.equal(m1.submorphBounds().width + m1.layout.padding.left() + m1.layout.padding.right());
     });
 
+    it('correctly handles nested fill behavior', () => {
+      env.forceUpdate();
+      let m2; let m3; let m1 = morph({
+        fill: Color.lively,
+        extent: pt(500, 100),
+        name: 'm1',
+        layout: new TilingLayout({
+          resizePolicies: [
+            ['m4', { width: 'fill', height: 'fixed' }],
+            ['m6', { width: 'fill', height: 'fixed' }]
+          ]
+        }),
+        submorphs: [
+          morph({
+            name: 'm4'
+          }),
+          morph({ name: 'm5', width: 100 }),
+          morph({
+            name: 'm6',
+            height: 100,
+            fill: Color.white.withA(.3),
+            layout: new TilingLayout({
+              axisAlign: 'right',
+              axis: 'column'
+            }),
+            submorphs: [
+              m2 = morph({ type: 'ellipse', extent: pt(40, 40) }),
+              m3 = morph({ extent: pt(150, 40) })
+            ]
+          })
+        ]
+      });
+      world.addMorph(m1);
+      env.forceUpdate();
+      expect(m2.right).to.equal(m2.owner.width);
+      expect(m3.right).to.equal(m2.owner.width);
+    });
+
     describe('variations', () => {
       let container;
       beforeEach(() => {
