@@ -1579,11 +1579,9 @@ class TextChangeReconciliation extends PropChangeReconciliation {
     };
 
     if (!args) return defaultPatch();
-
-    let [changedRange, attrReplacement] = args;
-    changedRange = Range.fromPositions(changedRange.start, changedRange.end);
-
     if (selector === 'replace') {
+      let [changedRange, attrReplacement] = args;
+      changedRange = Range.fromPositions(changedRange.start, changedRange.end);
       const isDeletion = attrReplacement.length === 0 || attrReplacement[0] === '' && attrReplacement[1] === null;
       const isReplacement = !isDeletion && !changedRange.isEmpty() && attrReplacement[0].length > 0;
       const isInsertion = !isDeletion && !isReplacement && attrReplacement[0].length > 0;
