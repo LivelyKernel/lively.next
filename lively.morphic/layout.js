@@ -392,7 +392,7 @@ export class TilingLayout extends Layout {
   ensureLayoutComputed (curr) {
     const origNode = this.ensureYogaNodeFor(curr);
     while (curr.owner?._yogaNode && curr.owner.layout?.name() === 'Tiling' && curr.isLayoutable) curr = curr.owner;
-    curr._yogaNode.calculateLayout();
+    curr._yogaNode.calculateLayout(curr.width, curr.height);
     return origNode;
   }
 
@@ -972,7 +972,9 @@ export class TilingLayout extends Layout {
       width = node.getComputedWidth();
     }
 
-    this.ensureLayoutComputed(container); // compute the rest with the fixed setting
+    if (!hugContentsHorizontally && !hugContentsVertically) {
+      node.calculateLayout(width, height);
+    }
 
     if (this.container.submorphs.length > 0) {
       if (hugContentsVertically && container.height !== height) {
