@@ -910,8 +910,8 @@ export class TilingLayout extends Layout {
     let retriggerLayout = false;
 
     if (!isPreliminary && widthPolicy === 'fill' && String(newWidth) !== 'NaN' && newWidth !== morph.width) {
-      const widthBefore = morph.width;
       morph.withMetaDo({ isLayoutAction: true, skipRender: false }, () => morph.width = newWidth);
+      delete node._computedMargin; // margin is invalid after width change
       if (morph.isText && !morph.fixedHeight) {
         retriggerLayout = true;
       }
@@ -921,6 +921,7 @@ export class TilingLayout extends Layout {
     }
     if (!isPreliminary && heightPolicy === 'fill' && String(newHeight) !== 'NaN' && newHeight !== morph.height) {
       morph.withMetaDo({ isLayoutAction: true, skipRender: false }, () => morph.height = newHeight);
+      delete node._computedMargin; // margin invalid after height change
     }
 
     if (retriggerLayout) {
