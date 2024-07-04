@@ -1071,6 +1071,53 @@ export class TilingLayout extends Layout {
     return offset;
   }
 
+  computeMargin (submorph) {
+    let bounds;
+    let originOffset = pt(0, 0);
+
+    // skip the bounds computation if nothing changed there
+    if (submorph.isClip()) {
+      bounds = rect(0, 0, submorph.width, submorph.height);
+    } else {
+      // this can lead to false conclusions if we are configured to fit vertically or horizontally
+      bounds = submorph.submorphBounds(m => m.visible).union(submorph.innerBounds());
+    }
+
+    if (submorph.scale !== 1) {
+      bounds = bounds.withWidth(bounds.width * submorph.scale).withHeight(bounds.height * submorph.scale);
+    }
+
+    if (submorph.rotation !== 0) {
+      // we also need to adjust the bounds themselves...
+      const rotatedBounds = submorph.getInverseTransform().transformRectToRect(bounds);
+      bounds.width = num.roundTo(rotatedBounds.width, 1);
+      bounds.height = num.roundTo(rotatedBounds.height, 1);
+      originOffset = submorph.bounds().topLeft().subPt(submorph.position).negated();
+    }
+
+    const offset = this.computeOffset(submorph);
+
+    const margin = { top: 0, left: 0, bottom: 0, right: 0 };
+
+    margin.top = Math.max(0, -bounds.top()) + originOffset.y - offset.top;
+    margin.bottom = bounds.bottom() - submorph.height - originOffset.y - offset.bottom;
+    margin.left = Math.max(0, -bounds.left()) + originOffset.x - offset.left;
+    margin.right = bounds.right() - submorph.width - originOffset.x - offset.right;
+
+    this.adjustMargin(margin, submorph);
+
+    if (this.getResizeWidthPolicyFor(submorph) === 'fill' && this.axis === 'column') {
+      margin.left = 0;
+      margin.right = 0;
+    }
+    if (this.getResizeHeightPolicyFor(submorph) === 'fill' && this.axis !== 'column') {
+      margin.bottom = 0;
+      margin.top = 0;
+    }
+
+    return margin;
+  }
+
   computeBoundsOfEntireLayoutComposition (force = false) {
     if (this.noLayoutActionNeeded) return;
     if (!force && this.embeddedInTiling) return;
@@ -1276,54 +1323,18 @@ export class TilingLayout extends Layout {
       yogaNode.setDisplay(Yoga.DISPLAY_NONE);
     }
     if (!submorph.isLayoutable) return yogaNode;
-    const { axis } = this;
-    const clip = submorph.clipMode !== 'visible';
-    const isVertical = axis === 'column';
+
+    const isVertical = this.axis === 'column';
     const isHorizontal = !isVertical;
-    yogaNode.setOverflow(clip ? Yoga.OVERFLOW_HIDDEN : Yoga.OVERFLOW_VISIBLE);
+
+    yogaNode.setOverflow(submorph.isClip() ? Yoga.OVERFLOW_HIDDEN : Yoga.OVERFLOW_VISIBLE);
     this.updateSubmorphBounds(submorph); // in case fill behavior is present
 
-    // however hug behavior is not considered above
-
-    let bounds;
-    let originOffset = pt(0, 0);
-
-    // skip the bounds computation if nothing changed there
-    if (clip) {
-      bounds = rect(0, 0, submorph.width, submorph.height);
-    } else {
-      // this can lead to false conclusions if we are configured to fit vertically or horizontally
-      bounds = submorph.submorphBounds(m => m.visible).union(submorph.innerBounds());
-    }
-
-    if (submorph.scale !== 1) {
-      bounds = bounds.withWidth(bounds.width * submorph.scale).withHeight(bounds.height * submorph.scale);
-    }
-
-    if (submorph.rotation !== 0) {
-      // we also need to adjust the bounds themselves...
-      const rotatedBounds = submorph.getInverseTransform().transformRectToRect(bounds);
-      bounds.width = num.roundTo(rotatedBounds.width, 1);
-      bounds.height = num.roundTo(rotatedBounds.height, 1);
-      originOffset = submorph.bounds().topLeft().subPt(submorph.position).negated();
-    }
-
-    const offset = this.computeOffset(submorph);
-
-    const margin = { top: 0, left: 0, bottom: 0, right: 0 };
-
-    margin.top = Math.max(0, -bounds.top()) + originOffset.y - offset.top;
-    margin.bottom = bounds.bottom() - submorph.height - originOffset.y - offset.bottom;
-    margin.left = Math.max(0, -bounds.left()) + originOffset.x - offset.left;
-    margin.right = bounds.right() - submorph.width - originOffset.x - offset.right;
-
-    this.adjustMargin(margin, submorph);
+    const margin = this.computeMargin(submorph);
 
     if (this.getResizeWidthPolicyFor(submorph) === 'fill') {
       if (isVertical) {
         yogaNode.setWidth('100%');
-        margin.left = 0;
-        margin.right = 0;
       } else {
         yogaNode.setWidth('100%');
         yogaNode.setFlexShrink(1);
@@ -1343,8 +1354,6 @@ export class TilingLayout extends Layout {
         yogaNode.setFlexShrink(1);
       } else {
         yogaNode.setHeight('100%');
-        margin.bottom = 0;
-        margin.top = 0;
       }
     } else {
       if (isVertical) {
