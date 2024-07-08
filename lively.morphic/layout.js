@@ -303,18 +303,6 @@ class Layout {
     return false;
   }
 
-  /*
-   * Called from position or extent getter inside a morph
-   * if _askLayoutForBounds is set to true. This is in order
-   * to *defer* expensive measuring of the dom up to the point
-   * where the information is actually needed
-   * (which is when the getter is invoked)
-   * @param { Morph } morph - The layoutable submorph for which to update the bounds for.
-   */
-  updateBoundsFor () {
-
-  }
-
   measureAfterRender (layoutableSubmorph) {
     if (!this.renderViaCSS) return;
     if (layoutableSubmorph.isText) {

@@ -276,13 +276,6 @@ export class Morph {
         set (pos) {
           if (!pos?.isPoint) throw new Error('Invalid value passed to position: ' + pos);
           this.setProperty('position', pos);
-        },
-        get () {
-          let layout;
-          if (layout = this.renderingState.cssLayoutToMeasureWith) {
-            layout.updateBoundsFor(this);
-          }
-          return this.getProperty('position');
         }
       },
 
@@ -313,13 +306,6 @@ export class Morph {
         type: 'Point',
         isStyleProp: true,
         defaultValue: pt(10, 10),
-        get () {
-          let layout;
-          if (layout = this.renderingState.cssLayoutToMeasureWith) {
-            layout.updateBoundsFor(this);
-          }
-          return this.getProperty('extent');
-        },
         set (ext) {
           if (!ext?.isPoint) throw new Error('Invalid value passed to extent: ' + ext);
           const priorExtent = this.extent;
