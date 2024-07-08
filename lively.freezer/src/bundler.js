@@ -818,17 +818,9 @@ export default class LivelyRollup {
   }
 
   generateAssetPreloads () {
-    return arr.compact(arr.uniq(this.projectAssets.map(asset => {
-      // also preload all of the used fonts in the bundle
-      if (asset.newName?.endsWith('.mp4')) {
-        return `<link rel="preload" href="${joinPath('./assets', `${asset.newName}`)}" as="video">`;
-      }
-      if (asset.newName?.endsWith('.mp3')) {
-        return `<link rel="preload" href="${joinPath('./assets', `${asset.newName}`)}" as="audio">`;
-      }
-    }))).concat(this.customFontFiles.map(fontFile => {
+    return arr.compact(arr.uniq(this.customFontFiles.map(fontFile => {
       return `<link rel="preload" href="${joinPath('./assets', `${fontFile.name()}`)}" as="font">`;
-    })).join('\n');
+    }))).join('\n');
   }
 
   async generateIndexHtml (importMap, modules) {
