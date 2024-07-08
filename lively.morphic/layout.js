@@ -728,9 +728,35 @@ export class TilingLayout extends Layout {
     this.onConfigUpdate();
   }
 
-  get embeddedInTiling () {
-    if (!this.container.isLayoutable) return false;
-    return this.container.owner?.layout?.name() === 'Tiling';
+  /**
+   * Invoked once a new morph is added to the container.
+   * @override
+   */
+  onSubmorphAdded (submorph) {
+    if (!this._resizePolicies.get(submorph)) {
+      submorph.withMetaDo({ isLayoutAction: true }, () => {
+        this.setResizePolicyFor(submorph, {
+          width: 'fixed', height: 'fixed'
+        });
+      });
+    }
+  }
+
+  onSubmorphRemoved (submorph) {
+    this._resizePolicies.delete(submorph);
+    // Ensure correct propagation of layout propert and adaption of resizePolicies.
+    if (this.config.resizePolicies) { arr.remove(this.config.resizePolicies, this.config.resizePolicies.find(entry => entry[0] === submorph.name)); }
+    this.container.layout = this.copy();
+    this.container.renderingState.cssLayoutToMeasureWith = this.container.layout;
+  }
+
+  handleRenamingOf (oldName, newName) {
+    if (this.config.resizePolicies) {
+      this.config.resizePolicies = this.config.resizePolicies.map(([target, policy]) => {
+        if (target === oldName) return [newName, policy];
+        else return [target, policy];
+      });
+    }
   }
 
   /**************
@@ -791,59 +817,6 @@ export class TilingLayout extends Layout {
       .forEach(m => {
         m.layout.resetYoga();
       });
-  }
-
-  onContainerRender () {
-    super.onContainerRender();
-    if (this.renderViaCSS) {
-      this.computeBoundsOfEntireLayoutComposition();
-      if (this._retriggerLayout) {
-        delete this._retriggerLayout;
-        this.computeBoundsOfEntireLayoutComposition(true);
-      }
-    }
-  }
-
-  /**
-   * Invoked once a new morph is added to the container.
-   * @override
-   */
-  onSubmorphAdded (submorph) {
-    if (!this._resizePolicies.get(submorph)) {
-      submorph.withMetaDo({ isLayoutAction: true }, () => {
-        this.setResizePolicyFor(submorph, {
-          width: 'fixed', height: 'fixed'
-        });
-      });
-    }
-  }
-
-  /**
-   * Invoked once a morph in the container has changed their bounds.
-   * @override
-   */
-  onSubmorphResized (submorph, change) {
-    if (this.renderViaCSS) {
-      submorph = [submorph, ...submorph.ownerChain()].find(m => m.owner === this.container);
-      if (submorph.isLayoutable) this.tryToMeasureNodeNow(submorph);
-    } else super.onSubmorphResized(submorph, change);
-  }
-
-  onSubmorphRemoved (submorph) {
-    this._resizePolicies.delete(submorph);
-    // Ensure correct propagation of layout propert and adaption of resizePolicies.
-    if (this.config.resizePolicies) { arr.remove(this.config.resizePolicies, this.config.resizePolicies.find(entry => entry[0] === submorph.name)); }
-    this.container.layout = this.copy();
-    this.container.renderingState.cssLayoutToMeasureWith = this.container.layout;
-  }
-
-  handleRenamingOf (oldName, newName) {
-    if (this.config.resizePolicies) {
-      this.config.resizePolicies = this.config.resizePolicies.map(([target, policy]) => {
-        if (target === oldName) return [newName, policy];
-        else return [target, policy];
-      });
-    }
   }
 
   /**
@@ -1166,34 +1139,6 @@ export class TilingLayout extends Layout {
         if (danglingParent = subNode.getParent()) danglingParent.removeChild(subNode);
         containerNode.insertChild(subNode, i++);
       }
-    }
-  }
-
-  hasBoundsConnection (morph) {
-    return morph.attributeConnections && morph.attributeConnections.find(conn => {
-      return ['position', 'extent', 'width', 'height'].includes(conn.sourceAttrName);
-    });
-  }
-
-  delaySubmorphBounds () {
-    this.layoutableSubmorphs.forEach(m => {
-      if (this.hasBoundsConnection(m)) {
-        this.measureAfterRender(m);
-      } else if (m.isEllipse) {
-        // fixme: There is still a rendering glitch which occurs due to the async nature of the virtual dom render  loop
-        this.measureAfterRender(m);
-      } else {
-        m.renderingState.cssLayoutToMeasureWith = this; // only if this is confirmed by a resize observer
-      }
-
-      if (m.layout && m.layout.name() === 'Tiling') m.layout.delaySubmorphBounds();
-    });
-  }
-
-  ensureResizePolicies (layoutableSubmorphs) {
-    if (!layoutableSubmorphs.every(m => this._resizePolicies.has(m))) {
-      this._resizePolicies = this.config.resizePolicies;
-      this.initializeResizePolicies(this._initializingPolicies);
     }
   }
 
