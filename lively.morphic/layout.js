@@ -972,13 +972,30 @@ export class TilingLayout extends Layout {
 
   getSubmorphBoundsViaYoga (submorph) {
     if (!submorph._yogaNode || !submorph.owner.layout) return submorph.bounds();
-    let node = submorph._yogaNode;
+    const node = submorph._yogaNode;
     if (submorph.scale !== 1 || submorph.rotation !== 0) {
       const parentNode = submorph.owner._yogaNode;
       const { width, height } = parentNode.getComputedLayout();
       parentNode.calculateLayout(width, height);
     }
     const { width, height, left, top } = node.getComputedLayout();
+
+    // if we encounter texts, we need to make sure that we can possibly already compute their
+    // text layout synchronously to determine the correct bounds NOW.
+    if (submorph.isText &&
+            submorph.canBeMeasuredViaCanvas &&
+            submorph.lineWrapping !== 'no-wrap' &&
+            (submorph.fixedWidth ? !submorph.fixedHeight : submorph.fixedHeight)) {
+      if (!isNaN(width) && submorph.fixedWidth && Math.round(submorph.width) !== width) {
+        submorph.width = width;
+        submorph.fitIfNeeded();
+      }
+      if (!isNaN(height) && submorph.fixedHeight && Math.round(submorph.height) !== height) {
+        submorph.height = height;
+        submorph.fitIfNeeded();
+      }
+    }
+
     const tfm = submorph.getTransform().copy();
     const { origin } = submorph;
     Object.assign(tfm, {
@@ -1272,6 +1289,16 @@ export class TilingLayout extends Layout {
     const isHorizontal = !isVertical;
 
     yogaNode.setOverflow(submorph.isClip() ? Yoga.OVERFLOW_HIDDEN : Yoga.OVERFLOW_VISIBLE);
+    if (submorph.isText && (!submorph.fixedWidth || !submorph.fixedHeight)) {
+      submorph.withMetaDo({ isLayoutAction: true }, () => {
+        if (submorph.canBeMeasuredViaCanvas) submorph.fitIfNeeded();
+        else {
+          submorph.whenRendered().then(() => {
+            submorph.fitIfNeeded();
+          });
+        }
+      });
+    }
 
     if (this.getResizeWidthPolicyFor(submorph) === 'fill') {
       if (isVertical) {
