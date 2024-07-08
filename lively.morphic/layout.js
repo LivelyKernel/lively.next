@@ -182,6 +182,8 @@ class Layout {
     }
   }
 
+  computeLayout () {}
+
   forceLayoutsOfMorph (m) {
     if (m.layout) { m.layout.forceLayout(); } else { m.submorphs.forEach(m => this.forceLayoutsOfMorph(m)); }
   }
@@ -361,41 +363,7 @@ export class TilingLayout extends Layout {
   attach () {
     this.initializeResizePolicies();
     super.attach();
-    this.measureAfterRender(this.container);
-  }
-
-  retriggerLayoutOfHierarchy () {
-    let curr = this.container;
-    while (
-      curr.owner?._yogaNode &&
-      curr.owner.layout?.name() === 'Tiling' &&
-      curr.isLayoutable &&
-      (curr.clipMode === 'visible' ||
-       curr.layout.hugContentsVertically ||
-       curr.layout.hugContentsHorizontally)
-    ) curr = curr.owner;
-    curr.layout._retriggerLayout = true;
-  }
-
-  ensureLayoutComputed (curr) {
-    const origNode = this.ensureYogaNodeFor(curr);
-    while (curr.owner?._yogaNode && curr.owner.layout?.name() === 'Tiling' && curr.isLayoutable) curr = curr.owner;
-    curr._yogaNode.calculateLayout(curr.width, curr.height);
-    return origNode;
-  }
-
-  ensureYogaNodeFor (aMorph) {
-    return aMorph._yogaNode || (aMorph._yogaNode = Yoga.Node.create(yogaConfig));
-  }
-
-  resetYogaNodeFor (aMorph) {
-    if (!aMorph._yogaNode) return;
-    // clear and free the yoga object
-    aMorph._yogaNode.free();
-    delete aMorph._yogaNode;
-    // ensure that the morph gets rendered again, so that yoga is getting re-initialize
-    aMorph.makeDirty();
-    delete aMorph._lastComputed;
+    this.measureAfterRender(this.container); // no longer needed with yoga??
   }
 
   initializeResizePolicies (_initializingPoliciesAfterwards = false) {
@@ -425,13 +393,14 @@ export class TilingLayout extends Layout {
   }
 
   scheduleApply (submorph, animation, change = {}) {
+    this._alreadyComputed = false;
+
     if (change.prop === 'extent' &&
         !change.meta?.isLayoutAction &&
-        this.renderViaCSS
-    ) {
-      this.computeBoundsOfEntireLayoutComposition();
-      this.updateContainerBounds();
+        this.renderViaCSS) {
+      this.computeLayoutIfNeeded();
     }
+
     super.scheduleApply(submorph, animation, change);
   }
 
@@ -790,6 +759,26 @@ export class TilingLayout extends Layout {
     setTimeout(() => !this.container?.world() && this.resetYoga());
   }
 
+  ensureLayoutComputed (curr) {
+    while (curr.owner?.layout?.name() === 'Tiling' && curr.isLayoutable) curr = curr.owner;
+    curr.layout.computeLayout().calculateLayout();
+    curr.layout.computeLayoutWithMargin().calculateLayout();
+  }
+
+  ensureYogaNodeFor (aMorph) {
+    return aMorph._yogaNode || (aMorph._yogaNode = Yoga.Node.create(yogaConfig));
+  }
+
+  resetYogaNodeFor (aMorph) {
+    if (!aMorph._yogaNode) return;
+    // clear and free the yoga object
+    aMorph._yogaNode.free();
+    delete aMorph._yogaNode;
+    // ensure that the morph gets rendered again, so that yoga is getting re-initialize
+    aMorph.makeDirty();
+    delete aMorph._lastComputed;
+  }
+
   resetYoga () {
     if (!this.container || !this.container._yogaNode) return;
     this.resetYogaNodeFor(this.container);
@@ -863,12 +852,7 @@ export class TilingLayout extends Layout {
    * the next render pass.
    */
   tryToMeasureNodeNow (aSubmorph) {
-    const node = this.getNodeFor(aSubmorph);
-    if (node && this.orderByIndex) { // ordering via dragging does not really work nicely...
-      this.updateSubmorphBounds(aSubmorph);
-    } else {
-      this.measureAfterRender(aSubmorph);
-    }
+    this.updateSubmorphBounds(aSubmorph);
   }
 
   updateSubmorphBounds (morph) {
@@ -886,7 +870,6 @@ export class TilingLayout extends Layout {
     if (morph._lastComputed === computedStringified && !needsUpdate) {
       return;
     }
-    if (morph.layout?.name() !== 'Tiling') morph._lastComputed = computedStringified;
 
     const heightPolicy = this.getResizeHeightPolicyFor(morph);
     const widthPolicy = this.getResizeWidthPolicyFor(morph);
@@ -895,13 +878,12 @@ export class TilingLayout extends Layout {
       morph.withMetaDo({ isLayoutAction: true, skipRender: true }, () => morph.position = pt(newPosX, newPosY));
     }
 
-    let retriggerLayout = false;
-
     if (!isPreliminary && widthPolicy === 'fill' && String(newWidth) !== 'NaN' && newWidth !== morph.width) {
       morph.withMetaDo({ isLayoutAction: true, skipRender: false }, () => morph.width = newWidth);
-      delete node._computedMargin; // margin is invalid after width change
       if (morph.isText && !morph.fixedHeight) {
-        retriggerLayout = true;
+        if (!morph.canBeMeasuredViaCanvas) {
+          console.warn(`The text morph ${morph.id} is set to hug its content vertically but can not measure via canvas. This causes expensive rountrips for the layout on ${this.container.id}.`);
+        }
       }
       if (morph.isText && !morph.fixedWidth) {
         console.warn(`The text morph ${morph.id} is set to hug its contents yet configure to fill the container horizontally!`);
@@ -909,61 +891,21 @@ export class TilingLayout extends Layout {
     }
     if (!isPreliminary && heightPolicy === 'fill' && String(newHeight) !== 'NaN' && newHeight !== morph.height) {
       morph.withMetaDo({ isLayoutAction: true, skipRender: false }, () => morph.height = newHeight);
-      delete node._computedMargin; // margin invalid after height change
     }
 
-    if (retriggerLayout) {
-      this.retriggerLayoutOfHierarchy();
-      return;
-    }
-
-    if (morph.layout && morph.layout.name() === 'Constraint') {
-      morph.layout.applyRequests = true;
-      morph.layout.forceLayout();
-    }
-
-    if (morph.layout && morph.layout.name() === 'Tiling') {
-      // we also need to compute the layout here actually
-      morph.layout.updateContainerBounds();
-    }
+    if (morph.layout?.name() !== 'Tiling') morph._lastComputed = computedStringified;
   }
 
   updateContainerBounds () {
     const { container, hugContentsVertically, hugContentsHorizontally } = this;
-    const node = this.ensureLayoutComputed(container);
+    const node = container._yogaNode;
     const computed = node.getComputedLayout();
     const computedStringified = JSON.stringify(computed);
     this.container._lastComputed = computedStringified;
 
     const isPreliminary = node.getParent() && !node._computedMargin;
-    const { scrollbarVisible, scrollbarOffset } = container;
     let width = isPreliminary ? container.width : computed.width;
     let height = isPreliminary ? container.height : computed.height;
-
-    // fix the ones that where due to fill or fixed policies
-    const heightSetting = node.getHeight();
-    const widthSetting = node.getWidth();
-    const isVisible = this.checkYogaNodeVisible(node);
-    if (isVisible && !hugContentsVertically) {
-      node.setHeight(height - (scrollbarVisible.horizontal ? scrollbarOffset.x : 0));
-    }
-    if (isVisible && !hugContentsHorizontally) {
-      node.setWidth(width - (scrollbarVisible.vertical ? scrollbarOffset.y : 0));
-    }
-
-    if (hugContentsVertically) {
-      node.calculateLayout();
-      height = node.getComputedHeight();
-    }
-
-    if (hugContentsHorizontally) {
-      node.calculateLayout();
-      width = node.getComputedWidth();
-    }
-
-    if (!hugContentsHorizontally && !hugContentsVertically) {
-      node.calculateLayout(width, height);
-    }
 
     if (this.container.submorphs.length > 0) {
       if (hugContentsVertically && container.height !== height) {
@@ -973,29 +915,14 @@ export class TilingLayout extends Layout {
         container.withMetaDo({ isLayoutAction: true, skipRender: true }, () => container.width = width);
       }
     }
-
-    this.layoutableSubmorphs.forEach(m => {
-      if (!m._yogaNode) return;
-      this.updateSubmorphBounds(m);
-    });
-
-    // now reset to the original setting, so that the future fill sizes are computed correctly
-    if (heightSetting.unit === 2) {
-      node.setHeight(`${heightSetting.value}%`);
-    }
-    if (widthSetting.unit === 2) {
-      node.setWidth(`${widthSetting.value}%`);
-    }
   }
 
   addSubmorphCSS (morph, style) {
-    style['z-index'] = this.container.submorphs.indexOf(morph);
     let node = morph._yogaNode;
-    if (!node) {
-      node = this.updateSubmorphNode(morph);
-    }
-    if (!node._computedMargin) {
-      node = this.updateSubmorphNode(morph);
+    if (!node) return; // no yoga no layout
+    style['z-index'] = this.container.submorphs.indexOf(morph);
+    if (!node?._computedMargin) {
+      node._computedMargin = this.defaultMargin();
     }
     if (!morph.isLayoutable) return;
     let margin = node._computedMargin;
@@ -1060,6 +987,14 @@ export class TilingLayout extends Layout {
     return offset;
   }
 
+  defaultMargin () {
+    const margin = {
+      top: 0, bottom: 0, left: 0, right: 0
+    };
+    this.adjustMargin(margin);
+    return margin;
+  }
+
   computeMargin (submorph) {
     let bounds;
     let originOffset = pt(0, 0);
@@ -1107,18 +1042,46 @@ export class TilingLayout extends Layout {
     return margin;
   }
 
-  computeBoundsOfEntireLayoutComposition (force = false) {
-    if (this.noLayoutActionNeeded) return;
-    if (!force && this.embeddedInTiling) return;
-
-    this.updateContainerNode();
-    this.container.submorphs.forEach(m => {
-      if (m.layout?.computeBoundsOfEntireLayoutComposition) {
-        m.layout.computeBoundsOfEntireLayoutComposition(true);
-      }
+  /**
+   * Computes the layout and also updates the bounds of
+   * all the morphs that are included inside a layout composition.
+   * The layout composition stops at the morphs that themselves do
+   * not carry tiling layouts any more and starts at the first morph
+   * in the morph hierarchy that has a tiling layout.
+   * @param {Boolean} [force = false] - Wether or not to capture the entire layout composition.
+   */
+  computeLayout () {
+    this.updateContainerNode(); // updates the layout of container AND submorphs
+    this.layoutableSubmorphs.forEach(m => {
       this.updateSubmorphNode(m);
+      m.layout?.computeLayout();
     });
-    this.updateContainerNode();
+    return this.container._yogaNode;
+  }
+
+  computeLayoutWithMargin () {
+    let didCompute = !!this.container._yogaNode;
+    this.layoutableSubmorphs.forEach(m => {
+      if (m.layout?.name() === 'Tiling') m.layout.computeLayoutWithMargin();
+      this.updateSubmorphMargin(m); // at this point the text layouts may not yet be correct, causing incorrect margin computation
+      didCompute &&= !!m._yogaNode;
+    });
+    this._alreadyComputed = didCompute;
+    return this.container._yogaNode;
+  }
+
+  computeLayoutIfNeeded () {
+    if (this._alreadyComputed && this.container._yogaNode) {
+      return;
+    }
+    this.ensureLayoutComputed(this.container);
+  }
+
+  updateBounds () {
+    this.layoutableSubmorphs.forEach(m => {
+      this.updateSubmorphBounds(m);
+    });
+    this.updateContainerBounds();
     this.refreshBoundsCache();
   }
 
@@ -1128,8 +1091,7 @@ export class TilingLayout extends Layout {
       wrapSubmorphs, justifySubmorphs
     } = this;
     let node = containerMorph._yogaNode;
-    if (!node) node = this.updateContainerNode();
-
+    if (!node) return; // no node to css
     if (containerMorph.visible) {
       style.display = 'flex';
     }
@@ -1298,9 +1260,32 @@ export class TilingLayout extends Layout {
     }
 
     this.ensureYogaNodesInSync();
-    this.updateContainerBounds();
 
     return yogaNode;
+  }
+
+  updateSubmorphMargin (submorph) {
+    const yogaNode = this.ensureYogaNodeFor(submorph);
+    const margin = this.computeMargin(submorph);
+    const isVertical = this.axis === 'column';
+    const isHorizontal = !isVertical;
+
+    if (this.getResizeHeightPolicyFor(submorph) !== 'fill') {
+      yogaNode.setMargin(Yoga.EDGE_TOP, margin.top);
+      yogaNode.setMargin(Yoga.EDGE_BOTTOM, margin.bottom);
+    } else if (isVertical) {
+      yogaNode.setMargin(Yoga.EDGE_TOP, -margin.offsetTop);
+      yogaNode.setMargin(Yoga.EDGE_BOTTOM, -margin.offsetBottom);
+    }
+    if (this.getResizeWidthPolicyFor(submorph) !== 'fill') {
+      yogaNode.setMargin(Yoga.EDGE_LEFT, margin.left);
+      yogaNode.setMargin(Yoga.EDGE_RIGHT, margin.right);
+    } else if (isHorizontal) {
+      yogaNode.setMargin(Yoga.EDGE_LEFT, -margin.offsetLeft);
+      yogaNode.setMargin(Yoga.EDGE_RIGHT, -margin.offsetRight);
+    }
+    if (yogaNode.getFlexGrow() !== 1) yogaNode.setFlexShrink(0);
+    yogaNode._computedMargin = margin;
   }
 
   updateSubmorphNode (submorph) {
@@ -1317,9 +1302,6 @@ export class TilingLayout extends Layout {
     const isHorizontal = !isVertical;
 
     yogaNode.setOverflow(submorph.isClip() ? Yoga.OVERFLOW_HIDDEN : Yoga.OVERFLOW_VISIBLE);
-    this.updateSubmorphBounds(submorph); // in case fill behavior is present
-
-    const margin = this.computeMargin(submorph);
 
     if (this.getResizeWidthPolicyFor(submorph) === 'fill') {
       if (isVertical) {
@@ -1352,22 +1334,6 @@ export class TilingLayout extends Layout {
       yogaNode.setHeight(submorph.height);
     }
 
-    if (this.getResizeHeightPolicyFor(submorph) !== 'fill') {
-      yogaNode.setMargin(Yoga.EDGE_TOP, margin.top);
-      yogaNode.setMargin(Yoga.EDGE_BOTTOM, margin.bottom);
-    } else if (isVertical) {
-      yogaNode.setMargin(Yoga.EDGE_TOP, -margin.offsetTop);
-      yogaNode.setMargin(Yoga.EDGE_BOTTOM, -margin.offsetBottom);
-    }
-    if (this.getResizeWidthPolicyFor(submorph) !== 'fill') {
-      yogaNode.setMargin(Yoga.EDGE_LEFT, margin.left);
-      yogaNode.setMargin(Yoga.EDGE_RIGHT, margin.right);
-    } else if (isHorizontal) {
-      yogaNode.setMargin(Yoga.EDGE_LEFT, -margin.offsetLeft);
-      yogaNode.setMargin(Yoga.EDGE_RIGHT, -margin.offsetRight);
-    }
-    if (yogaNode.getFlexGrow() !== 1) yogaNode.setFlexShrink(0);
-    yogaNode._computedMargin = margin;
     return yogaNode;
   }
 
@@ -1381,9 +1347,9 @@ export class TilingLayout extends Layout {
     super.apply(animate);
     this.active = true;
 
-    this.computeBoundsOfEntireLayoutComposition(true);
+    this.computeLayoutIfNeeded();
     const containerNode = this.container._yogaNode;
-
+    if (!containerNode) { this.active = false; return; }
     const containerBounds = containerNode.getComputedLayout();
     this.changePropertyAnimated(this.container, 'width', containerBounds.width, animate);
     this.changePropertyAnimated(this.container, 'height', containerBounds.height, animate);
@@ -1398,7 +1364,12 @@ export class TilingLayout extends Layout {
   }
 
   forceLayout () {
-    if (!this.renderViaCSS) { super.forceLayout(); }
+    if (!this.renderViaCSS) {
+      super.forceLayout();
+    } else if (!this.noLayoutActionNeeded) {
+      this.computeLayoutIfNeeded();
+      this.updateBounds();
+    }
   }
 
   getMinWidth () {
@@ -1449,18 +1420,17 @@ export class ConstraintLayout extends Layout {
     if (change.prop === 'extent' &&
         !change.meta?.isLayoutAction &&
         this.renderViaCSS) {
-      this.computeBoundsOfEntireLayoutComposition();
+      this.computeLayout();
     }
 
     super.scheduleApply(submorph, animation, change);
   }
 
-  computeBoundsOfEntireLayoutComposition (force = false) {
+  computeLayout () {
+    if (this.noLayoutActionNeeded) return;
     this.layoutableSubmorphs.forEach(m => {
       this.updateSubmorphBounds(m);
-      if (force && m.layout?.computeBoundsOfEntireLayoutComposition) {
-        m.layout.computeBoundsOfEntireLayoutComposition(force);
-      }
+      m.layout?.computeLayout();
     });
   }
 
@@ -3014,7 +2984,6 @@ export class GridLayout extends Layout {
     // If we were disabled as a CSS layout, revert back to that state.
     if (this._revertToCSSOnEnable) {
       this.renderViaCSS = true;
-      this.layoutableSubmorphs.forEach(m => this.tryToMeasureNodeNow(m));
       delete this._revertToCSSOnEnble;
     }
   }
