@@ -894,6 +894,8 @@ export class TilingLayout extends Layout {
     let node = morph._yogaNode;
     if (!node) return; // no yoga no layout
     style['z-index'] = this.container.submorphs.indexOf(morph);
+    style['min-height'] = '0px';
+    style['min-width'] = '0px';
     if (!node?._computedMargin) {
       node._computedMargin = this.defaultMargin();
     }
