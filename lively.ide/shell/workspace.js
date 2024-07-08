@@ -19,8 +19,6 @@ export default class Workspace extends Window {
           this.targetMorph = {
             type: 'text',
             name: 'editor',
-            fixedWidth: true,
-            fixedHeight: true,
             readOnly: false,
             lineWrapping: 'no-wrap',
             textString: '// Enter and evaluate JavaScript code here',

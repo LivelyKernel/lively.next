@@ -383,6 +383,8 @@ const config = {
   codeEditor: {
     defaultTheme: 'default',
     collapseSelection: false,
+    fixedWidth: true,
+    fixedHeight: true,
     search: {
       maxCharsPerLine: 10e3,
       fastHighlightLineCount: 4e3,
