@@ -1,4 +1,4 @@
-import { pt, Point, Rectangle, rect } from 'lively.graphics';
+import { pt, Transform, Point, Rectangle, rect } from 'lively.graphics';
 import { arr, promise, Closure, num, obj, fun } from 'lively.lang';
 import { once, signal } from 'lively.bindings';
 import { loadYoga } from 'yoga-layout/dist/src/load.js';
@@ -970,16 +970,37 @@ export class TilingLayout extends Layout {
     return margin;
   }
 
-  computeMargin (submorph) {
-    let bounds;
-    let originOffset = pt(0, 0);
+  getSubmorphBoundsViaYoga (submorph) {
+    if (!submorph._yogaNode || !submorph.owner.layout) return submorph.bounds();
+    let node = submorph._yogaNode;
+    if (submorph.scale !== 1 || submorph.rotation !== 0) {
+      const parentNode = submorph.owner._yogaNode;
+      const { width, height } = parentNode.getComputedLayout();
+      parentNode.calculateLayout(width, height);
+    }
+    const { width, height, left, top } = node.getComputedLayout();
+    const tfm = submorph.getTransform().copy();
+    const { origin } = submorph;
+    Object.assign(tfm, {
+      e: tfm.a * -origin.x + tfm.c * -origin.y + left,
+      f: tfm.b * -origin.x + tfm.d * -origin.y + top
+    });
+    return tfm.transformRectToRect(rect(0, 0, width, height));
+  }
 
-    // skip the bounds computation if nothing changed there
-    if (submorph.isClip()) {
-      bounds = rect(0, 0, submorph.width, submorph.height);
-    } else {
-      // this can lead to false conclusions if we are configured to fit vertically or horizontally
-      bounds = submorph.submorphBounds(m => m.visible).union(submorph.innerBounds());
+  computeMargin (submorph) {
+    let originOffset = pt(0, 0);
+    const node = submorph._yogaNode;
+    if (!node) return;
+    const computedBounds = node.getComputedLayout();
+    // rms 8.7.24: retrieve bounds from the yoga node, not the morph state.
+    // This allows us to prevent premature backpropagation
+    // into the morph state that can potentially trigger 'stuff' from happening.
+    let bounds = rect(0, 0, computedBounds.width, computedBounds.height);
+    if (!submorph.isClip() && submorph.submorphs.length > 0) {
+      bounds = submorph.submorphs.filter(m => m.visible)
+        .map(m => this.getSubmorphBoundsViaYoga(m))
+        .concat(bounds).reduce((a, b) => a.union(b));
     }
 
     if (submorph.scale !== 1) {
@@ -999,9 +1020,9 @@ export class TilingLayout extends Layout {
     const margin = { top: 0, left: 0, bottom: 0, right: 0 };
 
     margin.top = Math.max(0, -bounds.top()) + originOffset.y - offset.top;
-    margin.bottom = bounds.bottom() - submorph.height - originOffset.y - offset.bottom;
+    margin.bottom = bounds.bottom() - computedBounds.height - originOffset.y - offset.bottom;
     margin.left = Math.max(0, -bounds.left()) + originOffset.x - offset.left;
-    margin.right = bounds.right() - submorph.width - originOffset.x - offset.right;
+    margin.right = bounds.right() - computedBounds.width - originOffset.x - offset.right;
 
     this.adjustMargin(margin, submorph);
 
