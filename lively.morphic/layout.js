@@ -1063,6 +1063,7 @@ export class TilingLayout extends Layout {
       axis, hugContentsHorizontally, hugContentsVertically,
       wrapSubmorphs, justifySubmorphs
     } = this;
+    const { scrollbarVisible, scrollbarOffset } = containerMorph;
     let node = containerMorph._yogaNode;
     if (!node) return; // no node to css
     if (containerMorph.visible) {
@@ -1098,9 +1099,9 @@ export class TilingLayout extends Layout {
     }
 
     style['padding-top'] = `${node.getPadding(Yoga.EDGE_TOP).value}px`;
-    style['padding-left'] = `${node.getPadding(Yoga.EDGE_LEFT).value}px`;
-    style['padding-right'] = `${node.getPadding(Yoga.EDGE_RIGHT).value}px`;
-    style['padding-bottom'] = `${node.getPadding(Yoga.EDGE_BOTTOM).value}px`;
+    style['padding-left'] = `${node.getPadding(Yoga.EDGE_LEFT).value }px`;
+    style['padding-right'] = `${node.getPadding(Yoga.EDGE_RIGHT).value - (scrollbarVisible.vertical ? scrollbarOffset.x : 0)}px`;
+    style['padding-bottom'] = `${node.getPadding(Yoga.EDGE_BOTTOM).value - (scrollbarVisible.horizontal ? scrollbarOffset.y : 0)}px`;
 
     if (hugContentsHorizontally) {
       style.width = 'auto';
@@ -1149,6 +1150,7 @@ export class TilingLayout extends Layout {
       stretchedHorizontally, stretchedVertically,
       wrapSubmorphs, spacing, justifySubmorphs, container
     } = this;
+    const { scrollbarVisible, scrollbarOffset } = container;
     const yogaNode = this.ensureYogaNodeFor(container);
     this._configChanged = false;
     if (container.visible) {
@@ -1189,8 +1191,8 @@ export class TilingLayout extends Layout {
     }
     yogaNode.setPadding(Yoga.EDGE_TOP, padding.top());
     yogaNode.setPadding(Yoga.EDGE_LEFT, padding.left());
-    yogaNode.setPadding(Yoga.EDGE_RIGHT, padding.right());
-    yogaNode.setPadding(Yoga.EDGE_BOTTOM, padding.bottom());
+    yogaNode.setPadding(Yoga.EDGE_RIGHT, padding.right() + (scrollbarVisible.vertical ? scrollbarOffset.x : 0));
+    yogaNode.setPadding(Yoga.EDGE_BOTTOM, padding.bottom() + (scrollbarVisible.vertical ? scrollbarOffset.y : 0));
 
     if (hugContentsHorizontally) {
       yogaNode.setWidthAuto();
