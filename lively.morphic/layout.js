@@ -209,7 +209,7 @@ class Layout {
   computeLayout () {}
 
   forceLayoutsOfMorph (m) {
-    if (m.layout) { m.layout.forceLayout(); } else { m.submorphs.forEach(m => this.forceLayoutsOfMorph(m)); }
+    m.layout?.forceLayout();
   }
 
   forceLayoutsInNextLevel () {
@@ -891,6 +891,7 @@ export class TilingLayout extends Layout {
     }
 
     if (morph.layout?.name() !== 'Tiling') morph._lastComputed = computedStringified;
+    if (morph.layout?.name() === 'Constraint') morph.layout.refreshBoundsCache();
   }
 
   updateContainerBounds () {
@@ -1102,7 +1103,7 @@ export class TilingLayout extends Layout {
     this.updateContainerNode(); // updates the layout of container AND submorphs
     this.layoutableSubmorphs.forEach(m => {
       this.updateSubmorphNode(m);
-      m.layout?.computeLayout();
+      if (m.layout?.name() === 'Tiling') { m.layout?.computeLayout(); }
     });
     return this.container._yogaNode;
   }
@@ -1377,6 +1378,13 @@ export class TilingLayout extends Layout {
     } else if (!this.noLayoutActionNeeded) {
       this.computeLayoutIfNeeded();
       this.updateBounds();
+      this.forceLayoutsInNextLevel();
+    }
+  }
+
+  forceLayoutsOfMorph (m) {
+    if (m.layout?.name() !== 'Tiling') {
+      m.layout?.forceLayout();
     }
   }
 
@@ -1434,12 +1442,25 @@ export class ConstraintLayout extends Layout {
     super.scheduleApply(submorph, animation, change);
   }
 
+  forceLayout () {
+    if (!this.renderViaCSS) {
+      super.forceLayout();
+    } else if (!this.noLayoutActionNeeded) {
+      this.computeLayout();
+    }
+  }
+
+  forceLayoutsOfMorph (m) {
+    if (m.layout?.name() === 'Tiling') m.layout._alreadyComputed = false;
+    m.layout?.forceLayout();
+  }
+
   computeLayout () {
-    if (this.noLayoutActionNeeded) return;
     this.layoutableSubmorphs.forEach(m => {
       this.updateSubmorphBounds(m);
       m.layout?.computeLayout();
     });
+    this.forceLayoutsInNextLevel();
   }
 
   /**
