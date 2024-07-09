@@ -202,6 +202,68 @@ describe('layout', () => {
       expect(m3.right).to.equal(m2.owner.width);
     });
 
+    it('correctly handles nested constraint and tiling layouts', () => {
+      let m1, m2, m3, m4;
+      m1 = morph({
+        name: 'm1',
+        extent: pt(1000, 500),
+        layout: new TilingLayout({
+          align: 'center',
+          axisAlign: 'center',
+          padding: rect(50, 50, 0, 0),
+          resizePolicies: [['m2', {
+            height: 'fill',
+            width: 'fill'
+          }]]
+        }),
+        submorphs: [m2 = morph({
+          name: 'm2',
+          fill: Color.black.withA(.1),
+          extent: pt(900, 400),
+          layout: new ConstraintLayout({
+            lastExtent: {
+              x: 900,
+              y: 400
+            },
+            reactToSubmorphAnimations: false,
+            submorphSettings: [['m3', {
+              x: 'resize',
+              y: 'fixed'
+            }]]
+          }),
+          submorphs: [m3 = morph({
+            name: 'm3',
+            position: pt(250, 75),
+            extent: pt(400, 250),
+            fill: Color.black.withA(.1),
+            layout: new TilingLayout({
+              align: 'center',
+              axisAlign: 'center'
+            }),
+            submorphs: [m4 = morph({
+              name: 'm4',
+              fill: Color.black.withA(.1),
+              extent: pt(150, 150)
+            })]
+          })]
+        })]
+      });
+      world.addMorph(m1);
+      env.forceUpdate();
+      expect(m3.width).equals(400);
+      expect(m4.left).equals(m3.width - m4.right);
+      m1.width += 200;
+      env.forceUpdate();
+      expect(m2.width).equals(1100);
+      expect(m2._yogaNode.getComputedWidth()).equals(1100);
+      m2.layout.forceLayout();
+      expect(m3.width).equals(600);
+      expect(m3._yogaNode.getWidth().value).equals(600);
+      console.log(m3._yogaNode.getComputedLayout());
+      console.log(m4._yogaNode.getComputedLayout());
+      expect(m4.left).equals(m3.width - m4.right, 'm4 layout responded to constraint change');
+    });
+
     describe('variations', () => {
       let container;
       beforeEach(() => {
