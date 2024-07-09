@@ -3,13 +3,37 @@ import { arr, promise, Closure, num, obj, fun } from 'lively.lang';
 import { once, signal } from 'lively.bindings';
 import { loadYoga } from 'yoga-layout/dist/src/load.js';
 
-let Yoga, _yoga, yogaConfig;
+let Yoga, _yoga, yogaConfig, ALIGN, ALIGN_CSS, JUSTIFY, JUSTIFY_CSS;
 if (!Yoga) {
   _yoga = loadYoga().then((l) => {
     Yoga = l;
     yogaConfig = Yoga.Config.create();
     yogaConfig.setPointScaleFactor(1);
     yogaConfig.setErrata(Yoga.ERRATA_CLASSIC);
+
+    JUSTIFY = {
+      left: Yoga.JUSTIFY_FLEX_START,
+      center: Yoga.JUSTIFY_CENTER,
+      right: Yoga.JUSTIFY_FLEX_END
+    };
+
+    ALIGN = {
+      center: Yoga.ALIGN_CENTER,
+      left: Yoga.ALIGN_FLEX_START,
+      right: Yoga.ALIGN_FLEX_END
+    };
+
+    JUSTIFY_CSS = {
+      [Yoga.JUSTIFY_CENTER]: 'center',
+      [Yoga.JUSTIFY_FLEX_START]: 'flex-start',
+      [Yoga.JUSTIFY_FLEX_END]: 'flex-end'
+    };
+
+    ALIGN_CSS = {
+      [Yoga.ALIGN_CENTER]: 'center',
+      [Yoga.ALIGN_FLEX_START]: 'flex-start',
+      [Yoga.ALIGN_FLEX_END]: 'flex-end'
+    };
   });
 }
 
@@ -1114,25 +1138,13 @@ export class TilingLayout extends Layout {
     }
     style.gap = `${node.getGap(Yoga.GUTTER_ALL)}px`;
 
-    style['justify-content'] = ({
-      [Yoga.JUSTIFY_CENTER]: 'center',
-      [Yoga.JUSTIFY_FLEX_START]: 'flex-start',
-      [Yoga.JUSTIFY_FLEX_END]: 'flex-end'
-    })[node.getJustifyContent()];
+    style['justify-content'] = JUSTIFY_CSS[node.getJustifyContent()];
 
     style['flex-flow'] = axis;
     if (wrapSubmorphs) style['flex-flow'] += ' wrap';
 
-    style['align-items'] = ({
-      [Yoga.ALIGN_CENTER]: 'center',
-      [Yoga.ALIGN_FLEX_START]: 'flex-start',
-      [Yoga.ALIGN_FLEX_END]: 'flex-end'
-    })[node.getAlignItems()];
-    style['align-content'] = ({
-      [Yoga.ALIGN_CENTER]: 'center',
-      [Yoga.ALIGN_FLEX_START]: 'flex-start',
-      [Yoga.ALIGN_FLEX_END]: 'flex-end'
-    })[node.getAlignContent()];
+    style['align-items'] = ALIGN_CSS[node.getAlignItems()];
+    style['align-content'] = ALIGN_CSS[node.getAlignContent()];
 
     if (justifySubmorphs === 'spaced') {
       style['justify-content'] = 'space-between';
@@ -1208,23 +1220,11 @@ export class TilingLayout extends Layout {
     yogaNode.setBorder(Yoga.EDGE_BOTTOM, container.borderWidthBottom);
     yogaNode.setBorder(Yoga.EDGE_RIGHT, container.borderWidthRight);
 
-    yogaNode.setJustifyContent(({
-      left: Yoga.JUSTIFY_FLEX_START,
-      center: Yoga.JUSTIFY_CENTER,
-      right: Yoga.JUSTIFY_FLEX_END
-    })[align]);
+    yogaNode.setJustifyContent(JUSTIFY[align]);
     yogaNode.setFlexDirection(axis === 'row' ? Yoga.FLEX_DIRECTION_ROW : Yoga.FLEX_DIRECTION_COLUMN);
     yogaNode.setFlexWrap(wrapSubmorphs ? Yoga.WRAP_WRAP : Yoga.WRAP_NO_WRAP);
-    yogaNode.setAlignItems(({
-      center: Yoga.ALIGN_CENTER,
-      left: Yoga.ALIGN_FLEX_START,
-      right: Yoga.ALIGN_FLEX_END
-    })[axisAlign]);
-    yogaNode.setAlignContent(({
-      center: Yoga.ALIGN_CENTER,
-      left: Yoga.ALIGN_FLEX_START,
-      right: Yoga.ALIGN_FLEX_END
-    })[axisAlign]);
+    yogaNode.setAlignItems(ALIGN[axisAlign]);
+    yogaNode.setAlignContent(ALIGN[axisAlign]);
 
     if (justifySubmorphs === 'spaced') {
       yogaNode.setJustifyContent(Yoga.JUSTIFY_SPACE_BETWEEN);
