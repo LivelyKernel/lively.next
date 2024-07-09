@@ -917,6 +917,7 @@ export class TilingLayout extends Layout {
   addSubmorphCSS (morph, style) {
     let node = morph._yogaNode;
     if (!node) return; // no yoga no layout
+    const nestedLayout = morph.layout;
     style['z-index'] = this.container.submorphs.indexOf(morph);
     style['min-height'] = '0px';
     style['min-width'] = '0px';
@@ -933,14 +934,22 @@ export class TilingLayout extends Layout {
       if (isVertical) {
         style.width = '100%';
       } else {
-        style.width = `calc(100% + ${margin.offsetH - morph.borderWidthLeft - morph.borderWidthRight}px)`;
+        let paddingOffset = 0;
+        if (nestedLayout?.padding) {
+          paddingOffset = nestedLayout.padding.left() + nestedLayout.padding.right();
+        }
+        style.width = `calc(100% + ${margin.offsetH - morph.borderWidthLeft - morph.borderWidthRight - 2 * paddingOffset}px)`;
         style['flex-grow'] = 1;
         style['flex-shrink'] = 1;
       }
     }
     if (this.getResizeHeightPolicyFor(morph) === 'fill') {
       if (isVertical) {
-        style.height = `calc(100% + ${margin.offsetV - morph.borderWidthTop - morph.borderWidthBottom}px)`;
+        let paddingOffset = 0;
+        if (nestedLayout?.padding) {
+          paddingOffset = nestedLayout.padding.top() + nestedLayout.padding.bottom();
+        }
+        style.height = `calc(100% + ${margin.offsetV - morph.borderWidthTop - morph.borderWidthBottom - 2 * paddingOffset}px)`;
         style['flex-grow'] = 1; // let flex handle that
         style['flex-shrink'] = 1;
       } else {
