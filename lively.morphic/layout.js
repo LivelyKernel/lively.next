@@ -1582,8 +1582,17 @@ export class ConstraintLayout extends Layout {
 
   onDomResize (node, morph) { }
 
+  getContainerExtent () {
+    if (this.container._yogaNode) {
+      const bounds = this.container._yogaNode.getComputedLayout();
+      return pt(bounds.width, bounds.height);
+    }
+    return this.container.extent;
+  }
+
   computePositionFromConfig (config, horizontalPolicy, verticalPolicy, submorph) {
     let left, top;
+    const { x: containerWidth, y: containerHeight } = this.getContainerExtent();
     switch (horizontalPolicy) {
       case 'fixed':
       case 'resize':
@@ -1591,13 +1600,13 @@ export class ConstraintLayout extends Layout {
         left = config.left;
         break;
       case 'scale':
-        left = config.leftProportion / 100 * this.container.width;
+        left = config.leftProportion / 100 * containerWidth;
         break;
       case 'move':
-        left = this.container.width - submorph.width - config.right;
+        left = containerWidth - submorph.width - config.right;
         break;
       case 'center':
-        left = config.leftCenterProportion / 100 * this.container.width - submorph.width / 2;
+        left = config.leftCenterProportion / 100 * containerWidth - submorph.width / 2;
         break;
     }
 
@@ -1608,13 +1617,13 @@ export class ConstraintLayout extends Layout {
         top = config.top;
         break;
       case 'scale':
-        top = config.topProportion / 100 * this.container.height;
+        top = config.topProportion / 100 * containerHeight;
         break;
       case 'move':
-        top = this.container.height - submorph.height - config.bottom;
+        top = containerHeight - submorph.height - config.bottom;
         break;
       case 'center':
-        top = config.topCenterProportion / 100 * this.container.height - submorph.height / 2;
+        top = config.topCenterProportion / 100 * containerHeight - submorph.height / 2;
         break;
     }
 
@@ -1623,7 +1632,7 @@ export class ConstraintLayout extends Layout {
 
   computeExtentFromConfig (config, horizontalPolicy, verticalPolicy, submorph) {
     let width, height;
-
+    const { x: containerWidth, y: containerHeight } = this.getContainerExtent();
     switch (horizontalPolicy) {
       case 'move':
       case 'fixed':
@@ -1632,10 +1641,10 @@ export class ConstraintLayout extends Layout {
         width = submorph.width;
         break;
       case 'resize':
-        width = this.container.width - config.left - config.right;
+        width = containerWidth - config.left - config.right;
         break;
       case 'scale':
-        width = (1 - (config.leftProportion + config.rightProportion) / 100) * this.container.width;
+        width = (1 - (config.leftProportion + config.rightProportion) / 100) * containerWidth;
         break;
     }
 
@@ -1647,10 +1656,10 @@ export class ConstraintLayout extends Layout {
         height = submorph.height;
         break;
       case 'resize':
-        height = this.container.height - config.top - config.bottom;
+        height = containerHeight - config.top - config.bottom;
         break;
       case 'scale':
-        height = (1 - (config.topProportion + config.bottomProportion) / 100) * this.container.height;
+        height = (1 - (config.topProportion + config.bottomProportion) / 100) * containerHeight;
         break;
     }
 
@@ -1660,6 +1669,7 @@ export class ConstraintLayout extends Layout {
   updateSubmorphBounds (morph) {
     const { x, y } = this.settingsFor(morph);
     const config = this.ensureConfigForMorph(morph);
+    const { x: containerWidth, y: containerHeight } = this.getContainerExtent();
 
     morph.withMetaDo({ skipRender: true, isLayoutAction: true }, () => {
       morph.position = this.computePositionFromConfig(config, x, y, morph);
@@ -1671,8 +1681,8 @@ export class ConstraintLayout extends Layout {
 
     config.left = morph.position.x;
     config.top = morph.position.y;
-    config.bottom = this.container.height - morph.position.y - morph.height;
-    config.right = this.container.width - morph.position.x - morph.width;
+    config.bottom = containerHeight - morph.position.y - morph.height;
+    config.right = containerWidth - morph.position.x - morph.width;
   }
 
   equals (other) {
