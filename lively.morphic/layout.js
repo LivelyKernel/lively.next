@@ -1019,14 +1019,16 @@ export class TilingLayout extends Layout {
             submorph.canBeMeasuredViaCanvas &&
             submorph.lineWrapping !== 'no-wrap' &&
             (submorph.fixedWidth ? !submorph.fixedHeight : submorph.fixedHeight)) {
-      if (!isNaN(width) && submorph.fixedWidth && Math.round(submorph.width) !== width) {
-        submorph.width = width;
-        submorph.fitIfNeeded();
-      }
-      if (!isNaN(height) && submorph.fixedHeight && Math.round(submorph.height) !== height) {
-        submorph.height = height;
-        submorph.fitIfNeeded();
-      }
+      submorph.withMetaDo({ isLayoutAction: true, doNotFit: false }, () => {
+        if (!isNaN(width) && submorph.fixedWidth && Math.round(submorph.width) !== width) {
+          submorph.width = width;
+          submorph.fitIfNeeded();
+        }
+        if (!isNaN(height) && submorph.fixedHeight && Math.round(submorph.height) !== height) {
+          submorph.height = height;
+          submorph.fitIfNeeded();
+        }
+      });
     }
 
     const tfm = submorph.getTransform().copy();
@@ -1299,7 +1301,7 @@ export class TilingLayout extends Layout {
 
     yogaNode.setOverflow(submorph.isClip() ? Yoga.OVERFLOW_HIDDEN : Yoga.OVERFLOW_VISIBLE);
     if (submorph.isText && (!submorph.fixedWidth || !submorph.fixedHeight)) {
-      submorph.withMetaDo({ isLayoutAction: true }, () => {
+      submorph.withMetaDo({ isLayoutAction: true, doNotFit: false }, () => {
         if (submorph.canBeMeasuredViaCanvas) submorph.fitIfNeeded();
         else {
           submorph.whenRendered().then(() => {
