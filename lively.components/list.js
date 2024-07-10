@@ -742,6 +742,12 @@ export class List extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // rendering
 
+  dontRecordChangesWhile (cb) {
+    return this.withMetaDo({ isLayoutAction: true }, () => {
+      return super.dontRecordChangesWhile(cb);
+    });
+  }
+
   update () {
     const items = this.items;
     if (!items || !this.scroller) return; // pre-initialize
