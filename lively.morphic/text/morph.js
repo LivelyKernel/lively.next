@@ -2818,14 +2818,13 @@ export class Text extends Morph {
       if (this.fixedHeight && this.fixedWidth) return;
       let textBoundsExtent = this.textBounds().extent();
       this.renderingState.needsFit = this.renderingState.needsRemeasure;
-      if (this.fixedWidth) textBoundsExtent = textBoundsExtent.withX(this.width);
-      if (this.fixedHeight) textBoundsExtent = textBoundsExtent.withY(this.height);
-      const newExt = textBoundsExtent.addXY(
-        this.fixedWidth ? 0 : this.borderWidthLeft + this.borderWidthRight,
-        this.fixedHeight ? 0 : this.borderWidthTop + this.borderWidthBottom
-      );
-
       this.withMetaDo({ isLayoutAction: true, doNotFit: true }, () => {
+        if (this.fixedWidth) textBoundsExtent = textBoundsExtent.withX(this.width);
+        if (this.fixedHeight) textBoundsExtent = textBoundsExtent.withY(this.height);
+        const newExt = textBoundsExtent.addXY(
+          this.fixedWidth ? 0 : this.borderWidthLeft + this.borderWidthRight,
+          this.fixedHeight ? 0 : this.borderWidthTop + this.borderWidthBottom
+        );
         if (!this.extent.equals(newExt)) {
           this.extent = newExt;
         }
