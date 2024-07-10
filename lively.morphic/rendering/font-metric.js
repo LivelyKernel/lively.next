@@ -547,7 +547,7 @@ class DOMTextMeasure {
             break;
           }
         case 'by-chars':
-          if (measuringState.emptySpace < hit) {
+          if (Math.round(measuringState.emptySpace) < hit) {
             measuringState.virtualRow++;
             measuringState.emptySpace = emptySpace;
             if (measuringState.currentWord.length <= 1) measuringState.trailingWhitespaces.forEach(b => b[0] = 0); // too many are injected
