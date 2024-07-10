@@ -409,6 +409,9 @@ class ComponentEditButtonMorph extends Morph {
     } = this;
     const otherBrowsers = this.getAllOtherEqualBrowsers();
     const componentMorph = await componentDescriptor.edit();
+    if (componentMorph) {
+      componentMorph.applyLayoutIfNeeded();
+    }
     const btnPlaceholder = await this.ensureEditControlsFor(componentMorph);
     await this.animateSwapWithPlaceholder(btnPlaceholder, componentMorph);
     otherBrowsers.forEach(b => b.relayout());
