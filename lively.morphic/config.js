@@ -383,8 +383,6 @@ const config = {
   codeEditor: {
     defaultTheme: 'default',
     collapseSelection: false,
-    fixedWidth: true,
-    fixedHeight: true,
     search: {
       maxCharsPerLine: 10e3,
       fastHighlightLineCount: 4e3,
@@ -394,7 +392,9 @@ const config = {
       fontFamily: 'IBM Plex Mono',
       padding: Rectangle.inset(4, 2, 4, 2),
       fontSize: 12,
-      clipMode: 'auto'
+      clipMode: 'auto',
+      fixedWidth: true,
+      fixedHeight: true
     },
 
     modes: {
