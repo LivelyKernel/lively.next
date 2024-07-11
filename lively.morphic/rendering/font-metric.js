@@ -1,6 +1,7 @@
 /* global System, global, self, OffscreenCanvas */
 import { obj, arr } from 'lively.lang';
 import { pt, rect } from 'lively.graphics';
+import { sanitizeFont } from '../helpers.js';
 
 const VARIATION_SELECTOR = 65039;
 const ZWJ = 8205;
@@ -362,6 +363,10 @@ class DOMTextMeasure {
     const { fontFamily, fontWeight, fontStyle } = aMorph;
     const key = `${fontFamily}-${fontWeight}-${fontStyle}`;
     if (key in this.canvasCompatibility) return this.canvasCompatibility[key];
+    if (document.fonts.status === 'loading' &&
+        [...document.fonts.values()].find(f => f.status === 'loading' && key === `${sanitizeFont(f.family)}-${f.weight}-${f.style}`)) {
+      return false;
+    }
 
     // determine wether or not a font does some weird shit with letter spacing
     // note, that this is a heuristic approximation only
