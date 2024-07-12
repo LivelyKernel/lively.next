@@ -1081,11 +1081,11 @@ export class TilingLayout extends Layout {
 
     this.adjustMargin(margin, submorph);
 
-    if (this.getResizeWidthPolicyFor(submorph) === 'fill' && this.axis === 'column') {
+    if (this.getResizeWidthPolicyFor(submorph) === 'fill' && this.axis === 'column' && submorph.rotation == 0) {
       margin.left = 0;
       margin.right = 0;
     }
-    if (this.getResizeHeightPolicyFor(submorph) === 'fill' && this.axis !== 'column') {
+    if (this.getResizeHeightPolicyFor(submorph) === 'fill' && this.axis !== 'column' && submorph.rotation == 0) {
       margin.bottom = 0;
       margin.top = 0;
     }
