@@ -364,7 +364,7 @@ class DOMTextMeasure {
     const key = `${fontFamily}-${fontWeight}-${fontStyle}`;
     if (key in this.canvasCompatibility) return this.canvasCompatibility[key];
     if (document.fonts.status === 'loading' &&
-        [...document.fonts.values()].find(f => f.status === 'loading' && key === `${sanitizeFont(f.family)}-${f.weight}-${f.style}`)) {
+        [...document.fonts].find(f => f.status === 'loading' && key === `${sanitizeFont(f.family)}-${f.weight}-${f.style}`)) {
       return false;
     }
 
