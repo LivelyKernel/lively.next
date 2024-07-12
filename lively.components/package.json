@@ -9,7 +9,8 @@
     "lively.bindings": "^0.1.2",
     "lively.halos": "https://github.com/LivelyKernel/lively.halos",
     "svg-intersections": "0.2.5",
-    "kld-intersections": "^0.4.2"
+    "kld-intersections": "^0.4.2",
+    "lite-youtube-embed": "0.3.0"
   },
   "devDependencies": {
     "mocha-es6": "*"
@@ -21,7 +22,8 @@
     "map": {
       "bowser": "esm://cache/bowser@1.4.1",
       "svg-intersections": "esm://cache/svg-intersections",
-      "kld-intersections": "esm://cache/kld-intersections"
+      "kld-intersections": "esm://cache/kld-intersections",
+      "lite-youtube-embed": "esm://cache/lite-youtube-embed@0.3.0"
     }
   }
 }
