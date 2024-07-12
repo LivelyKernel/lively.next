@@ -307,6 +307,10 @@ class DOMTextMeasure {
     this.textlayerNodeCacheCount = 0;
     this.textlayerNodeCache = {};
 
+    document.fonts.addEventListener('loadingdone', () => {
+      this.canvasCompatibility = {}; // clear the cache
+    });
+
     this.defaultCharWidthHeightCache = {};
     this.doc = doc;
     this.parentEl = parentEl;
