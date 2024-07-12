@@ -1117,9 +1117,11 @@ export class TilingLayout extends Layout {
     this.layoutableSubmorphs.forEach(m => {
       if (m.layout?.name() === 'Tiling') m.layout.computeLayoutWithMargin();
       this.updateSubmorphMargin(m); // at this point the text layouts may not yet be correct, causing incorrect margin computation
+      if (m.master?.getBreakpointStore()) { this.updateSubmorphBounds(m); }
       didCompute &&= !!m._yogaNode;
     });
     this._alreadyComputed = didCompute;
+    if (this.container.master?.getBreakpointStore()) { this.updateContainerBounds(); }
     return this.container._yogaNode;
   }
 
