@@ -1,3 +1,4 @@
+/* global HTMLElement */
 import { prepareClassForManagedPropertiesAfterCreation } from './properties.js';
 import { superclassSymbol, moduleSubscribeToToplevelChangesSym, moduleMetaSymbol, objMetaSymbol, initializeSymbol } from './util.js';
 import { setPrototypeOf } from 'lively.lang/object.js';
@@ -5,6 +6,7 @@ import { isNativeFunction } from 'lively.lang/function.js';
 
 const constructorArgMatcher = /\([^\\)]*\)/;
 const NEW_ONLY_CLASSES = [Proxy, Map, WeakMap];
+if (typeof HTMLElement !== 'undefined') NEW_ONLY_CLASSES.push(HTMLElement);
 
 const defaultPropertyDescriptorForGetterSetter = {
   enumerable: false,
