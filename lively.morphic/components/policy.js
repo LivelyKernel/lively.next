@@ -275,8 +275,10 @@ export class BreakpointStore {
   }
 
   getLimitExtent ([v, h]) {
-    const hOffset = this._horizontalBreakpoints[h];
-    const vOffset = this._verticalBreakpoints[v];
+    let hOffset = this._horizontalBreakpoints[h];
+    let vOffset = this._verticalBreakpoints[v];
+    if (hOffset === 0) hOffset = this._horizontalBreakpoints[h + 1] - 1;
+    if (vOffset === 0) vOffset = this._verticalBreakpoints[v + 1] - 1;
     return pt(hOffset, vOffset);
   }
 }
