@@ -1052,7 +1052,7 @@ export class StylePolicy {
    */
   synthesizeSubSpec (submorphNameInPolicyContext, ownerOfScope, previousTarget) {
     const isRoot = !submorphNameInPolicyContext;
-    const transformProps = ['extent', 'position', 'rotation', 'scale', 'lineHeight'];
+    const transformProps = ['extent', 'position', 'scale', 'lineHeight'];
     let subSpec = this.getSubSpecFor(submorphNameInPolicyContext) || {}; // get the sub spec for the submorphInPolicyContext
 
     if (subSpec.isPolicy) {
