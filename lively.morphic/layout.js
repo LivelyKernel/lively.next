@@ -289,7 +289,9 @@ class Layout {
   }
 
   onSubmorphChange (submorph, change) {
-    if (change.meta && change.meta.isLayoutAction) { return this.scheduleApply(submorph, this.reactToSubmorphAnimation && change.meta.animation); }
+    if (change.meta?.isLayoutAction) {
+      return this.scheduleApply(submorph, this.reactToSubmorphAnimation && change.meta.animation);
+    }
     if (this.affectsLayout(submorph, change)) {
       this.onSubmorphResized(submorph, change);
     }
@@ -878,7 +880,7 @@ export class TilingLayout extends Layout {
     }
 
     if (!isPreliminary && widthPolicy === 'fill' && String(newWidth) !== 'NaN' && newWidth !== morph.width) {
-      morph.withMetaDo({ isLayoutAction: true, skipRender: false }, () => morph.width = newWidth);
+      morph.withMetaDo({ isLayoutAction: true, skipRender: false, metaInteraction: true }, () => morph.width = newWidth);
       if (morph.isText && !morph.fixedHeight) {
         if (!morph.canBeMeasuredViaCanvas) {
           console.warn(`The text morph ${morph.id} is set to hug its content vertically but can not measure via canvas. This causes expensive rountrips for the layout on ${this.container.id}.`);
@@ -1022,7 +1024,7 @@ export class TilingLayout extends Layout {
             submorph.canBeMeasuredViaCanvas &&
             submorph.lineWrapping !== 'no-wrap' &&
             (submorph.fixedWidth ? !submorph.fixedHeight : submorph.fixedHeight)) {
-      submorph.withMetaDo({ isLayoutAction: true, doNotFit: false }, () => {
+      submorph.withMetaDo({ isLayoutAction: true, doNotFit: false, metaInteraction: true }, () => {
         if (!isNaN(width) && submorph.fixedWidth && Math.round(submorph.width) !== width) {
           submorph.width = width;
           submorph.fitIfNeeded();
@@ -1304,7 +1306,7 @@ export class TilingLayout extends Layout {
 
     yogaNode.setOverflow(submorph.isClip() ? Yoga.OVERFLOW_HIDDEN : Yoga.OVERFLOW_VISIBLE);
     if (submorph.isText && (!submorph.fixedWidth || !submorph.fixedHeight)) {
-      submorph.withMetaDo({ isLayoutAction: true, doNotFit: false }, () => {
+      submorph.withMetaDo({ isLayoutAction: true, doNotFit: false, metaInteraction: true }, () => {
         if (submorph.canBeMeasuredViaCanvas) submorph.fitIfNeeded();
         else {
           submorph.whenRendered().then(() => {
