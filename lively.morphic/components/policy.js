@@ -1470,6 +1470,12 @@ export class PolicyApplicator extends StylePolicy {
         if (!morphToBeStyled.fixedHeight) propValue = propValue.withY(morphToBeStyled.height);
       }
 
+      if (morphToBeStyled.isText && propName === 'width' && morphToBeStyled.lineWrapping !== 'no-wrap') {
+        if (!morphToBeStyled.fixedWidth) continue;
+        morphToBeStyled.width = propValue;
+        morphToBeStyled.withMetaDo({ doNotFit: false }, () => morphToBeStyled.fit());
+      }
+
       if (['border', 'borderTop', 'borderBottom', 'borderRight', 'borderLeft'].includes(propName)) continue; // handled by sub props;
 
       if (!obj.equals(morphToBeStyled[propName], propValue)) {
