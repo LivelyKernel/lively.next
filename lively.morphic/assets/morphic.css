@@ -432,6 +432,9 @@ lite-youtube {
   background-size: cover;
   cursor: pointer;
   max-width: 720px;
+  top: 50%;
+  transform: translateY(-50%);
+  position: relative;
 }
 
 /* gradient */
