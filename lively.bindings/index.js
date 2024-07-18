@@ -1,5 +1,4 @@
 import { string, arr, Closure, obj } from 'lively.lang';
-import { stringifyFunctionWithoutToplevelRecorder } from 'lively.source-transform';
 import ExpressionSerializer from 'lively.serializer2/plugins/expression-serializer.js';
 
 export class AttributeConnection {
@@ -137,7 +136,7 @@ export class AttributeConnection {
 
   setUpdater (funcOrSource) {
     delete this.updater;
-    return this.updaterString = funcOrSource ? (stringifyFunctionWithoutToplevelRecorder || String)(funcOrSource) : null;
+    return this.updaterString = funcOrSource ? String(funcOrSource) : null;
   }
 
   getSpec () {

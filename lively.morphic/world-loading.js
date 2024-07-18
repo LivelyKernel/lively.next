@@ -2,18 +2,15 @@
 import { resource, registerExtension as registerResourceExension } from 'lively.resources';
 import { subscribe, subscribeOnce, emit } from 'lively.notifications';
 import { Path, obj, date, promise, string } from 'lively.lang';
-import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
-import ShellClientResource from 'lively.shell/client-resource.js';
-import * as moduleManager from 'lively.modules';
 import { MorphicEnv } from './env.js';
 import { createMorphSnapshot } from './serialization.js';
 import { MorphicDB } from './morphicdb/index.js';
 import { ensureCommitInfo } from './morphicdb/db.js';
 import { pathForBrowserHistory } from './helpers.js';
 import { part } from './components/core.js';
-import { currentUsername, currentUser } from 'lively.user';
 
-function reportWorldLoad (world, user) {
+async function reportWorldLoad (world, user) {
+  const { currentUsername } = await System.import('lively.user');
   fetch(string.joinPath(System.baseURL, '/report-world-load'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -24,6 +21,7 @@ function reportWorldLoad (world, user) {
 }
 
 export async function setupLively2Lively (world) {
+  const { currentUser } = await System.import('lively.user');
   const user = { name: currentUser().login };
   const info = { world: world.name };
   if (user) {
@@ -171,6 +169,7 @@ export async function interactivelySaveWorld (world, options) {
   };
 
   const { SaveWorldDialog } = await System.import('lively.ide/studio/dialogs.cp.js');
+  const moduleManager = await System.import('lively.modules');
   let name = world.name; let tags = []; let description = '';
   const oldCommit = await ensureCommitInfo(Path('metadata.commit').get(world));
   let db = options.morphicdb || MorphicDB.default;
@@ -216,6 +215,8 @@ export async function interactivelySaveWorld (world, options) {
 
     const snap = await createMorphSnapshot(world, { moduleManager });
     await resourceHandle.writeJson(snap);
+    const { defaultDirectory } = await System.import('lively.ide/shell/shell-interface.js');
+    const { default: ShellClientResource } = await System.import('lively.shell/client-resource.js');
     await resource((await defaultDirectory(ShellClientResource.defaultL2lClient)) + '/..')
       .join(jsonStoragePath.replace('.json', '.br.json'))
       .withRelativePartsResolved()
@@ -253,6 +254,8 @@ export async function interactivelySaveWorld (world, options) {
         expectedParentCommit = oldCommit ? oldCommit._id : undefined;
       }
     }
+
+    const { currentUsername, currentUser } = await System.import('lively.user');
 
     const commitSpec = {
       author: { name: currentUser().login, email: currentUser().email },
