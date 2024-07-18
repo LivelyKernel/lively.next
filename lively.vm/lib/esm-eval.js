@@ -114,12 +114,26 @@ function getEs6Transpiler (System, options, env) {
   }
 
   if (System.transpiler === 'lively.transpiler') {
-    let Transpiler = System.get(System.decanonicalize('lively.transpiler')).default;
+    let Transpiler = System.get('lively.transpiler').default;
     let transpiler = new Transpiler(System, options.targetModule, env);
     return (source, options) => transpiler.transpileDoit(source, options);
   }
 
   throw new Error('Sorry, currently only babel is supported as es6 transpiler for runEval!');
+}
+
+function evalEnd (System, code, options, result) {
+  System.get('@lively-env').evaluationEnd(options.targetModule);
+  System.debug && console.log(`[lively.module] runEval in module ${options.targetModule} done`);
+
+  emit('lively.vm/doitresult', {
+    code: code,
+    result,
+    waitForPromise: options.waitForPromise,
+    targetModule: options.targetModule
+  }, Date.now(), System);
+
+  return result;
 }
 
 export function runEval (System, code, options) {
@@ -236,18 +250,4 @@ export function runEval (System, code, options) {
   return options.sync
     ? evalEnd(System, originalSource, options, result)
     : Promise.resolve(result).then(result => evalEnd(System, originalSource, options, result));
-}
-
-function evalEnd (System, code, options, result) {
-  System.get('@lively-env').evaluationEnd(options.targetModule);
-  System.debug && console.log(`[lively.module] runEval in module ${options.targetModule} done`);
-
-  emit('lively.vm/doitresult', {
-    code: code,
-    result,
-    waitForPromise: options.waitForPromise,
-    targetModule: options.targetModule
-  }, Date.now(), System);
-
-  return result;
 }
