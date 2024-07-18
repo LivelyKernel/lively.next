@@ -78,9 +78,11 @@ export class HTMLMorph extends Morph {
         get () { return pt(this.domNode.scrollWidth, this.domNode.scrollHeight); }
       },
       fixedWidth: {
+        isStyleProp: true,
         defaultValue: true
       },
       fixedHeight: {
+        isStyleProp: true,
         defaultValue: true
       },
       cssDeclaration: {
