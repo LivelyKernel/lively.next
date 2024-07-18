@@ -17,7 +17,7 @@ export class MarkdownPreviewMorph extends HTMLMorph {
       markdownSource: {
         after: ['markdownEditor'],
         get () {
-          return this.markdownEditor.textString || this.getProperty('markdownSource');
+          return this.markdownEditor?.textString || this.getProperty('markdownSource');
         },
         set (src) {
           this.setProperty('markdownSource', src);
