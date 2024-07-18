@@ -5,6 +5,7 @@ import { Color, Rectangle, pt, rect } from 'lively.graphics';
 import { DarkNumberWidget, NumberWidgetModel } from '../value-widgets.cp.js';
 import { CloseButton, PopupWindow, CloseButtonHovered } from '../styling/shared.cp.js';
 import { InputLine } from 'lively.components/inputs.js';
+import { Spinner } from 'lively.components/loading-indicator.cp.js';
 
 const DarkThemeList = component(DarkList, {
   name: 'sidebar list',
@@ -256,34 +257,6 @@ const DarkFlap = component(DarkPopupWindow, {
   submorphs: [
     without('header menu')
   ]
-});
-
-class SpinnerModel extends ViewModel {
-  static get properties () {
-    return {
-      color: {
-        defaultValue: 'white',
-        type: 'Enum',
-        values: ['white', 'black']
-      }
-    };
-  }
-
-  viewDidLoad () {
-    const node = this.view.domNode.querySelector('.spinner');
-    if (this.color === 'black') node.classList.add('black-spinner');
-  }
-}
-
-// part(Spinner, {viewModel: { color: 'black'}}).openInWorld();
-const Spinner = component({
-  type: HTMLMorph,
-  defaultViewModel: SpinnerModel,
-  name: 'spinner',
-  extent: pt(86.2, 70.2),
-  fill: Color.rgba(255, 255, 255, 0),
-  html: '<div class="spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>',
-  scale: 0.3244543390629232
 });
 
 export { AddButton, RemoveButton, HeadlineLabel, PropLabel, DarkNumberIconWidget, TextInput, EnumSelector, PropertyLabel, PropertyLabelLight, PropertyLabelHovered, PropertyLabelHoveredLight, PropertyLabelActive, PropertyLabelActiveLight, DarkThemeList, DarkFlap, DarkPopupWindow, DarkCloseButton, DarkCloseButtonHovered, BoundsContainerInactive, BoundsContainerHovered, Spinner };

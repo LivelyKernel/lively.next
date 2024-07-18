@@ -1,8 +1,34 @@
-import { ShadowObject, TilingLayout, easings, stringToEasing, Morph, Icon, Label, component, ViewModel, part } from 'lively.morphic';
+import { ShadowObject, HTMLMorph, TilingLayout, easings, stringToEasing, Morph, Icon, Label, component, ViewModel, part } from 'lively.morphic';
 import { Color, Rectangle, rect, pt } from 'lively.graphics';
 import { promise, num } from 'lively.lang';
 import { ButtonDefault } from './buttons.cp.js';
-import { Spinner } from 'lively.ide/studio/shared.cp.js';
+
+class SpinnerModel extends ViewModel {
+  static get properties () {
+    return {
+      color: {
+        defaultValue: 'white',
+        type: 'Enum',
+        values: ['white', 'black']
+      }
+    };
+  }
+
+  viewDidLoad () {
+    const node = this.view.domNode.querySelector('.spinner');
+    if (this.color === 'black') node.classList.add('black-spinner');
+  }
+}
+
+export const Spinner = component({
+  type: HTMLMorph,
+  defaultViewModel: SpinnerModel,
+  name: 'spinner',
+  extent: pt(86.2, 70.2),
+  fill: Color.rgba(255, 255, 255, 0),
+  html: '<div class="spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>',
+  scale: 0.3244543390629232
+});
 
 class ProgressBar extends Morph {
   static get properties () {
