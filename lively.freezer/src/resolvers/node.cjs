@@ -101,18 +101,19 @@ function detectFormat (moduleId) {
   // return module(moduleId).format();
 }
 
-function setStatus ({ status, progress, label }) {
+function setStatus ({ status = '', progress, label }) {
+  if (Boolean(process.stdout.isTTY)) process.stdout.clearLine();
+  if (progress) {
+    process.stdout.write(chalk.cyan('[lively.freezer]: ') + status + (progress * 100).toFixed() + '%\n');
+    if (Boolean(process.stdout.isTTY)) {
+      process.stdout.moveCursor(0, -1);
+    } else {
+      readline.moveCursor(process.stdout, 0, -1);
+    }
+    return;
+  }
   if (status) console.log(chalk.cyan('[lively.freezer]:'), status);
   if (label) console.log(chalk.cyan('[lively.freezer]:'), label);
-  if (progress) {
-    if (Boolean(process.stdout.isTTY)) {
-      process.stdout.clearLine();
-      process.stdout.cursorTo(0);
-    } else {
-      readline.cursorTo(process.stdout, 0);
-    }
-    process.stdout.write((progress * 100).toFixed() + '%');
-  }
 }
 
 function finish () {

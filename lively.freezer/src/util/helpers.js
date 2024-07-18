@@ -151,7 +151,7 @@ export async function compileOnServer (code, resolver, useTerser) {
     for (const i of arr.range(0, code.length / transpilationSpeed)) {
       await promise.delay(400);
       if (c.status.startsWith('exited')) break;
-      resolver.setStatus({ progress: (i + 1) / (code.length / transpilationSpeed) });
+      resolver.setStatus({ status: 'Transpiling source', progress: (i + 1) / (code.length / transpilationSpeed) });
     }
     await promise.waitFor(100 * 1000, () => c.status.startsWith('exited'));
     c = await resolver.spawn({ command: 'mv tmp.es5.js tmp.js', cwd });
@@ -169,20 +169,21 @@ export async function compileOnServer (code, resolver, useTerser) {
   } else {
     // ensure that optional chaining has been removed beforehand
     c = await resolver.spawn({
-      command: `${pathToGoogleClosure} tmp.js > tmp.min.js --warning_level=QUIET --language_out=ECMASCRIPT_2018`,
+      command: `${pathToGoogleClosure} tmp.js > tmp.min.js --warning_level=QUIET --language_out=ECMASCRIPT_2018 --language_in=ECMASCRIPT_NEXT`,
       cwd
     });
   }
   for (const i of arr.range(0, code.length / compressionSpeed)) {
     await promise.delay(400);
     if (c.status.startsWith('exited')) break;
-    resolver.setStatus({ progress: (i + 1) / (code.length / compressionSpeed) });
+    resolver.setStatus({ status: 'Minifying source files ', progress: (i + 1) / (code.length / compressionSpeed) });
   }
   await promise.waitFor(100 * 1000, () => c.status.startsWith('exited'));
   if (c.stderr && c.exitCode !== 0) {
     resolver.finish();
     throw new Error(c.stderr);
   }
+  resolver.setStatus({ status: 'finished compression' });
   res.code = code;
 
   res.min = await min.read();
