@@ -321,9 +321,11 @@ export class MarkdownPreviewMorph extends HTMLMorph {
           clipMode: 'auto',
 
           layout: new TilingLayout({ axis: 'column', padding: 15, spacing: 15 }),
-          submorphs: blocks.map(elem => {
-            if (elem.isMorph) return elem;
-            else return morph({ type: 'html', fixedHeight: false, html: mdCompiler.compileToHTML(elem, markdownOptions) });
+          submorphs: blocks.map((elem, i) => {
+            if (elem.isMorph) {
+              elem.name = 'embedded ' + i;
+              return elem;
+            } else return morph({ name: 'markdown ' + i, type: 'html', fixedHeight: false, html: mdCompiler.compileToHTML(elem, markdownOptions) });
           })
         }];
         this.layout.setResizePolicyFor(this.submorphs[0], { width: 'fill', height: 'fill' });
@@ -331,7 +333,7 @@ export class MarkdownPreviewMorph extends HTMLMorph {
         setTimeout(async () => {
           const wrapper = this.submorphs[0];
           for (let m of wrapper.submorphs) {
-            wrapper.layout.setResizePolicyFor(m, { width: 'fill', padding: 10 });
+            wrapper.layout.setResizePolicyFor(m, { width: 'fill', height: 'fixed' });
             // but we also need to adjust the height of each html morph to fit its contents
             if (m.isHTMLMorph) {
               await m.whenRendered();
