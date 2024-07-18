@@ -26,7 +26,7 @@ export async function fetchResource (proceed, load) {
   const System = this;
   const isCjs = !!System.METADATA[load.name].isCjs;
   const largeModuleSize = 250 * 1000;
-  const url = load.name + (isCjs ? '!cjs' : '')
+  const url = load.name + (isCjs ? '!cjs' : '');
   let res = System.resource(url);
   const useNodeFetch = System.get('@system-env').node && !res.isNodeJSFileResource && !res.isESMResource;
 
@@ -39,7 +39,9 @@ export async function fetchResource (proceed, load) {
   // an wether our locally stored and translated one already matches that
   // criteria
   if (!jsFileHashMap && !System.get('@system-env').node) {
-    jsFileHashMap = await System.resource(System.baseURL).join('__JS_FILE_HASHES__').readJson();
+    const hashUrl = System.resource(System.baseURL).join('__JS_FILE_HASHES__');
+    if (await hashUrl.exists()) jsFileHashMap = await hashUrl.readJson();
+    else jsFileHashMap = {};
   }
 
   const useCache = System.useModuleTranslationCache;
@@ -48,8 +50,7 @@ export async function fetchResource (proceed, load) {
   if (!System.get('@system-env').node && useCache && indexdb && cache) {
     const stored = await cache.fetchStoredModuleSource(load.name);
     let normalizedName = load.name.replace(System.baseURL, '/');
-    if (normalizedName.startsWith('esm://cache')) 
-      normalizedName = '/esm_cache/' + ESMResource.normalize(normalizedName).join('/');
+    if (normalizedName.startsWith('esm://cache')) { normalizedName = '/esm_cache/' + ESMResource.normalize(normalizedName).join('/'); }
     if (stored && (jsFileHashMap?.[normalizedName] === Number.parseInt(stored.hash))) {
       load.metadata.instrument = false; // skip instrumentation
       return stored.source;
