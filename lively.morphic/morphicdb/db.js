@@ -1,6 +1,4 @@
 /* global System,inspect */
-import { ObjectDBHTTPInterface } from 'lively.storage';
-import { Database } from 'lively.storage';
 import { loadMorphFromSnapshot, createMorphSnapshot } from '../serialization.js';
 import { resource } from 'lively.resources';
 import { obj, Path, arr, string } from 'lively.lang';
@@ -22,7 +20,7 @@ await versionDB.getAll()
 `});
 
 */
-var morphicDBs = morphicDBs || (morphicDBs = new Map());
+var morphicDBs = morphicDBs || (morphicDBs = new Map()); // eslint-disable-line no-use-before-define
 const getDefaultServerUrl = () => resource(typeof document !== 'undefined'
   ? window.SERVER_URL || System.baseURL // the place that serves the modules is not nessecarily where the server sits at
   : 'http://localhost:9001').join('objectdb/').url;
@@ -37,17 +35,6 @@ export function convertToSerializableCommit (commit) {
     };
   }
   return commit;
-}
-
-export async function ensureCommitInfo (commit) {
-  if (!commit || obj.isEmpty(commit)) return false;
-  if (commit && commit._rev) return commit;
-  const { type, name, _id } = commit;
-  try {
-    Object.assign(commit, await MorphicDB.default.fetchCommit(type, name, _id));
-  } finally {
-    return commit;
-  }
 }
 
 export default class MorphicDB {
@@ -65,6 +52,7 @@ export default class MorphicDB {
   }
 
   static async wellKnownMorphicDBs () {
+    const { Database } = await System.import('lively.storage');
     const db = Database.ensureDB('lively.morphic/morphicdb/well-known-morphic-dbs');
     const dbSpecs = await db.getAll();
     const dbs = dbSpecs.reduce((all, { _id, name, serverURL, snapshotLocation }) =>
@@ -74,12 +62,14 @@ export default class MorphicDB {
   }
 
   static async addWellKnownMorphicDB (alias, morphicDB) {
+    const { Database } = await System.import('lively.storage');
     const { name, snapshotLocation, serverURL } = morphicDB;
     const db = Database.ensureDB('lively.morphic/morphicdb/well-known-morphic-dbs');
     await db.set(alias, { name, snapshotLocation, serverURL });
   }
 
   static async removeWellKnownMorphicDB (alias) {
+    const { Database } = await System.import('lively.storage');
     const db = Database.ensureDB('lively.morphic/morphicdb/well-known-morphic-dbs');
     await db.remove(alias);
   }
@@ -88,7 +78,6 @@ export default class MorphicDB {
     this.name = name;
     this.serverURL = serverURL;
     this.snapshotLocation = snapshotLocation || `${name}/snapshots/`;
-    this.httpDB = new ObjectDBHTTPInterface(serverURL);
     this._initialized = false;
   }
 
@@ -114,7 +103,9 @@ export default class MorphicDB {
       .join(`${first}/${rest}.json`);
   }
 
-  ensureDB () {
+  async ensureDB () {
+    const { ObjectDBHTTPInterface } = await System.import('lively.storage');
+    this.httpDB = new ObjectDBHTTPInterface(this.serverURL);
     const { name: db, snapshotLocation } = this;
     return this.httpDB.ensureDB({ db, snapshotLocation });
   }
@@ -300,7 +291,18 @@ export default class MorphicDB {
   async _textSearchInSnapshotOfCommit (stringOrRe, commit, optSnapshot) {
     const { _id } = commit;
     const snapshot = optSnapshot || await this.fetchSnapshot(undefined, undefined, _id);
-    return new SnapshotPackageHelper(snapshot).textSearch(stringOrRe, commit);
+    return new SnapshotPackageHelper(snapshot).textSearch(stringOrRe, commit); // eslint-disable-line no-use-before-define
+  }
+}
+
+export async function ensureCommitInfo (commit) {
+  if (!commit || obj.isEmpty(commit)) return false;
+  if (commit && commit._rev) return commit;
+  const { type, name, _id } = commit;
+  try {
+    Object.assign(commit, await MorphicDB.default.fetchCommit(type, name, _id));
+  } finally {
+    return commit;
   }
 }
 
@@ -359,8 +361,6 @@ export class SnapshotPackageHelper {
     // let files = new SnapshotPackageHelper(snapshot).filesInPackages()
 
     const result = [];
-    for (const baseURL in this.snapshot.packages) { collectFiles(this.snapshot.packages[baseURL], [baseURL], baseURL, null, result); }
-    return result;
 
     function collectFiles (dirObj, path, url, currentPackage, result = []) {
       if (dirObj['package.json'] && typeof dirObj['package.json'] === 'string') {
@@ -390,5 +390,8 @@ export class SnapshotPackageHelper {
 
       return result;
     }
+
+    for (const baseURL in this.snapshot.packages) { collectFiles(this.snapshot.packages[baseURL], [baseURL], baseURL, null, result); }
+    return result;
   }
 }
