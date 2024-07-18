@@ -6,7 +6,6 @@ import { signal } from 'lively.bindings';
 import { runCommand } from 'lively.ide/shell/shell-interface.js';
 import { StatusMessageError } from 'lively.halos/components/messages.cp.js';
 import { part } from 'lively.morphic/components/core.js';
-import { Spinner } from 'lively.ide/studio/shared.cp.js';
 import { rect } from 'lively.graphics/geometry-2d.js';
 import { waitFor, delay, timeToRun } from 'lively.lang/promise.js';
 import { DarkPrompt, ConfirmPrompt } from 'lively.components/prompts.cp.js';
@@ -14,6 +13,7 @@ import { SystemButton } from 'lively.components/buttons.cp.js';
 import { promise } from 'lively.lang';
 import { guardNamed } from 'lively.lang/function.js';
 import L2LClient from 'lively.2lively/client.js';
+import { Spinner } from 'lively.components/loading-indicator.cp.js';
 
 const livelyAuthGithubAppId = 'd523a69022b9ef6be515';
 
@@ -66,7 +66,7 @@ export class UserFlapModel extends ViewModel {
       },
       expose: {
         get () {
-          return ['setupComplete','updateNetworkIndicator', 'showUserData', 'onLogin', 'onLogout', 'showLoggedInUser', 'showGuestUser', 'toggleLoadingAnimation', 'login', 'update'];
+          return ['setupComplete', 'updateNetworkIndicator', 'showUserData', 'onLogin', 'onLogout', 'showLoggedInUser', 'showGuestUser', 'toggleLoadingAnimation', 'login', 'update'];
         }
       }
     };
@@ -258,8 +258,8 @@ export class UserFlapModel extends ViewModel {
       }
     });
     const userData = await userRes.json();
-    // provided token is not valid, purge all data and reset login status throughout user flap 
-    if (userData.status === '401'){
+    // provided token is not valid, purge all data and reset login status throughout user flap
+    if (userData.status === '401') {
       this.logout();
       return false;
     }

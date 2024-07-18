@@ -14,7 +14,7 @@ import { Checkbox, LabeledCheckboxLight } from 'lively.components';
 import { currentUserToken, isUserLoggedIn, currentUsersOrganizations, currentUsername } from 'lively.user';
 import { Project } from 'lively.project';
 import { StatusMessageError, StatusMessageConfirm } from 'lively.halos/components/messages.cp.js';
-import { EnumSelector, Spinner } from 'lively.ide/studio/shared.cp.js';
+import { EnumSelector } from 'lively.ide/studio/shared.cp.js';
 import { SystemList } from 'lively.ide/styling/shared.cp.js';
 import { SystemButton, SystemButtonDark } from 'lively.components/buttons.cp.js';
 import { VersionChecker } from 'lively.ide/studio/version-checker.cp.js';
@@ -25,6 +25,7 @@ import { repositoryOwnerAndNameRegex } from './project.js';
 import { debounceNamed } from 'lively.lang/function.js';
 import { GitHubAPIWrapper } from 'lively.git';
 import { Text } from 'lively.morphic/text/morph.js';
+import { Spinner } from 'lively.components/loading-indicator.cp.js';
 
 class ProjectSettingsPromptModel extends AbstractPromptModel {
   static get properties () {
