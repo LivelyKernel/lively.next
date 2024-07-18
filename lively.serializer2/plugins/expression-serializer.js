@@ -201,7 +201,7 @@ export default class ExpressionSerializer {
   embedValue (val, nestedExpressions) {
     if (val && val.__serialize__) {
       val = val.__serialize__({ expressionSerializer: this });
-      if (val && val.__expr__) {
+      if (val?.__expr__) {
         if (nestedExpressions) {
           const uuid = string.newUUID();
           nestedExpressions[uuid] = val;
@@ -912,6 +912,15 @@ export function serializeSpec (morph, opts = {}) {
   gatherConnectionInfo(morph, path, subopts);
   traverseSubmorphs(morph, exported, path, styleProto, subopts); // needs to be done before we handle text attributes
   handleSpecProps(morph, exported, styleProto, path, masterInScope, subopts);
+
+  let { viewModel } = morph;
+  if (asExpression && viewModel) {
+    const viewModelExpr = exprSerializer.embedValue(viewModel, nestedExpressions);
+    if (viewModelExpr !== viewModel) {
+      exported.viewModel = viewModelExpr;
+    }
+  }
+
   if (!skipAttributes.includes('textAndAttributes')) handleTextAndAttributes(morph, exported, styleProto, path, masterInScope, subopts);
 
   if (root && keepConnections) {
