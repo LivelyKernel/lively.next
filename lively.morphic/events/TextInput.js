@@ -342,7 +342,7 @@ export default class TextInput {
   }
 
   ensureBeingInVisibleBoundsOfWorld (world) {
-    this.setPosition(world.visibleBounds().center());
+    this.setPosition(world.windowBounds().center());
   }
 
   ensureBeingAtCursorOfText (textMorph) {
@@ -356,7 +356,7 @@ export default class TextInput {
     let { row, column } = textMorph.cursorPosition;
     row = Math.max(startRow, Math.min(row, endRow));
     const localCursorPos = textMorph.charBoundsFromTextPosition({ row, column }).topLeft();
-    const globalCursorPos = world.visibleBounds().insetBy(10).constrainPt(
+    const globalCursorPos = world.windowBounds().insetBy(10).constrainPt(
       textMorph.worldPoint(
         localCursorPos.subPt(textMorph.scroll)));
 
