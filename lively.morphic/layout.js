@@ -389,7 +389,6 @@ export class TilingLayout extends Layout {
   attach () {
     this.initializeResizePolicies();
     super.attach();
-    this.measureAfterRender(this.container); // no longer needed with yoga??
   }
 
   initializeResizePolicies (_initializingPoliciesAfterwards = false) {
@@ -1785,8 +1784,7 @@ export class ConstraintLayout extends Layout {
     }
     if (change.prop === 'extent' &&
         !change.value.equals(change.prevValue)) {
-      if (change.meta?.isLayoutAction) this.measureAfterRender(submorph);
-      else {
+      if (!change.meta?.isLayoutAction) {
         let config = this._morphConfigurations?.get(submorph);
         if (config) {
           this.adjustConfigViaExtentDelta(config, change.value.subPt(change.prevValue), submorph);
@@ -1796,8 +1794,7 @@ export class ConstraintLayout extends Layout {
     }
     if (change.prop === 'position' &&
         !change.value.equals(change.prevValue)) {
-      if (change.meta?.isLayoutAction) this.measureAfterRender(submorph);
-      else {
+      if (!change.meta?.isLayoutAction) {
         let config = this._morphConfigurations?.get(submorph);
         if (config) {
           this.adjustConfigViaPositionDelta(config, change.value.subPt(change.prevValue), submorph);
