@@ -25,6 +25,7 @@ function addSourceLineMappingPlugin (md, options = {}) {
 class MarkdownCompiler {
   compileToHTML (src, options = {}) {
     let { linkedCSS, markdownWrapperTemplate } = options;
+    options.html = true; // allow usage of HTML tags in all markdown
     let md = markdownIt(options).use(externalizeLinksPlugin).use(addSourceLineMappingPlugin).use(markdownCheckbox).use(markdownAttrs).use(markdownCaption, { dataType: true, figcaption: true }); // eslint-disable-line no-use-before-define
     let html = md.render(src);
 
@@ -40,6 +41,7 @@ class MarkdownCompiler {
   }
 
   parse (editor, options) {
+    options.html = true; // allow usage of HTML tags in all markdown
     let md = markdownIt(options).use(externalizeLinksPlugin).use(markdownCheckbox).use(markdownCaption, { dataType: true, figcaption: true }).use(markdownAttrs); // eslint-disable-line no-use-before-define
     let src = editor.textString;
     let parsed = md.parse(editor.textString, {});
