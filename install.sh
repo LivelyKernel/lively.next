@@ -55,12 +55,12 @@ export NODE_OPTIONS="--no-experimental-fetch --no-warnings --experimental-module
 
 node lively.installer/install-with-node.js $PWD \
 
+env CI=true npm --prefix $lv_next_dir/lively.classes/ run build
+
 if [ "$1" = "--freezer-only" ];
 then 
   exit
 fi
-
-env CI=true npm --prefix $lv_next_dir/lively.classes/ run build
 
 if [ -z "${CI}" ];
 then
