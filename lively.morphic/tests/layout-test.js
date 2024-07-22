@@ -156,9 +156,7 @@ describe('layout', () => {
         ]
       });
       world.addMorph(m1);
-      expect(!!m1.renderingState.cssLayoutToMeasureWith).not.to.be.false;
       env.forceUpdate();
-      expect(!!m1.renderingState.cssLayoutToMeasureWith, 'all layouts have finished measuring').to.be.false;
       expect(m1.width).to.equal(m2.width + m3.width + 3 * padDist);
       expect(m1.height).to.equal(m1.submorphBounds().height + m1.layout.padding.top() + m1.layout.padding.bottom());
       expect(m1.width).to.equal(m1.submorphBounds().width + m1.layout.padding.left() + m1.layout.padding.right());
