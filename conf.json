@@ -11,7 +11,8 @@
                     "lively.ide",
                     "lively.collab"
                     ],
-        "includePattern": "\\.js$"
+        "includePattern": "\\.js$",
+        "excludePattern": "jsdom\\.worker\\.js"
     },
     "sourceType": "module",
     "opts": {
