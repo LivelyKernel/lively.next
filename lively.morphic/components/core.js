@@ -1,7 +1,7 @@
 import { addOrChangeCSSDeclaration } from 'lively.morphic';
 import { string, fun, properties, obj } from 'lively.lang';
 import { getClassName, ExpressionSerializer } from 'lively.serializer2';
-import { epiConnect, noUpdate } from 'lively.bindings';
+import { epiConnect, signal, noUpdate } from 'lively.bindings';
 import { sanitizeFont, morph } from '../helpers.js';
 import { StylePolicy, PolicyApplicator, without, add } from './policy.js';
 
@@ -377,7 +377,9 @@ export class ViewModel {
    * maybe rename to onChange() analogous to morphs?
    * @param { object } change - The change object regarding the current property that changed in the view model.
    */
-  onRefresh (change) {}
+  onRefresh (change) {
+    if (this.expose?.includes(change)) { signal(this, change, this[change]); }
+  }
 
   clearBindings () {
     noUpdate(() => {
