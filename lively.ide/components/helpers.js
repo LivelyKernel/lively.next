@@ -311,6 +311,14 @@ function getNodeFromSubmorphs (submorphsNode, morphName) {
          ]
     `);
   if (partOrAddRef) return partOrAddRef; // FIXME: how can we express this in a single query?
+  // if no part or add ref was found, it can still be wrapped inside a replace ref
+  const [replaceRef] = query.queryNodes(submorphsNode, `
+    ./  CallExpression [
+         /:callee Identifier [ @name == 'replace' ]
+       && /:arguments "*" [ Literal [ @value == '${morphName}']]
+       ]
+    `);
+  if (replaceRef) return replaceRef;
   const [propNode] = query.queryNodes(submorphsNode, `
   ./  ObjectExpression [
          /:properties "*" [
