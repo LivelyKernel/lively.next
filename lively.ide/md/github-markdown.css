@@ -8,7 +8,7 @@
   -webkit-text-size-adjust: 100%;
   line-height: 1.5;
   color: #24292e;
-  font-family: SF Pro, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-family: "IBM Plex Sans", "Noto Color Emoji", "Font Awesome", "Tabler Icons", "Material Icons";
   font-size: 16px;
   line-height: 1.5;
   word-wrap: break-word;
@@ -178,7 +178,7 @@
 .markdown-body code,
 .markdown-body kbd,
 .markdown-body pre {
-  font-family: monospace, monospace;
+  font-family: IBM Plex Mono, monospace, monospace;
   font-size: 1em;
 }
 
@@ -332,14 +332,14 @@
 }
 
 .markdown-body code {
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  font-family: "IBM Plex Mono";
   font-size: 12px;
 }
 
 .markdown-body pre {
   margin-top: 0;
   margin-bottom: 0;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  font-family: "IBM Plex Mono";
   font-size: 12px;
 }
 
@@ -678,7 +678,7 @@
 .markdown-body kbd {
   display: inline-block;
   padding: 3px 5px;
-  font: 11px "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  font: 11px "IBM Plex Mono";
   line-height: 10px;
   color: #444d56;
   vertical-align: middle;
