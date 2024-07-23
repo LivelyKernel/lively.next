@@ -195,7 +195,12 @@ function addFill (morph, style) {
 }
 
 function addExtentStyle (morph, style) {
-  const { extent } = morph;
+  const { extent, isWorld, resizePolicy } = morph;
+  if (isWorld && resizePolicy === 'elastic') {
+    style.width = '100%';
+    style.height = '100%';
+    return;
+  }
   style.width = extent.x + 'px';
   style.height = extent.y + 'px';
 }
