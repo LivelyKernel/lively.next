@@ -142,7 +142,7 @@ export default class MarkdownEditorPlugin extends CodeMirrorEnabledEditorPlugin 
 
   getNavigator () { return new MarkdownNavigator(); }
 
-  getCommands (otherCommands) { return otherCommands.concat(commands); }
+  getCommands (otherCommands) { return [...super.getCommands(otherCommands), ...otherCommands.concat(commands)]; }
 
   getKeyBindings (other) {
     return other.concat([
