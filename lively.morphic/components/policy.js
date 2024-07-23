@@ -51,7 +51,7 @@ export function add (props, before = null) {
   props.__wasAddedToDerived__ = true;
   return {
     COMMAND: 'add',
-    props: props,
+    props,
     before
   };
 }
@@ -67,6 +67,14 @@ export function without (removedSiblingName) {
   return {
     COMMAND: 'remove',
     target: removedSiblingName
+  };
+}
+
+export function replace (replacedSiblingName, props) {
+  return {
+    COMMAND: 'replace',
+    target: replacedSiblingName,
+    props
   };
 }
 
@@ -129,6 +137,20 @@ function mergeInHierarchy (
     if (cmd.COMMAND === 'remove' && root.submorphs) {
       const morphToRemove = root.submorphs.find(m => m.name === cmd.target);
       if (morphToRemove) removeFn(root, morphToRemove);
+    }
+
+    if (cmd.COMMAND === 'replace' && root.submorphs) {
+      const morphToReplace = root.submorphs.find(m => m.name === cmd.target);
+      let specOrPolicyToAdd = cmd.props;
+      if (specOrPolicyToAdd.isPolicy) specOrPolicyToAdd = specOrPolicyToAdd.spec;
+
+      if (morphToReplace) {
+        if (!specOrPolicyToAdd.position) { specOrPolicyToAdd.position = morphToReplace.spec?.position || morphToReplace.position; }
+        if (!specOrPolicyToAdd.rotation) { specOrPolicyToAdd.rotation = morphToReplace.spec?.rotation || morphToReplace.rotation; }
+        specOrPolicyToAdd.name = morphToReplace.name;
+        addFn(root, cmd.props, morphToReplace);
+        removeFn(root, morphToReplace);
+      }
     }
 
     if (cmd.COMMAND === 'add') {
@@ -716,6 +738,9 @@ export class StylePolicy {
         node = node.props;
         if (!node.name) { node.name = this.generateUniqueNameFor(node); }
       }
+      if (node.COMMAND === 'replace') {
+        node = node.props;
+      }
       if (node.COMMAND === 'remove') return null; // drop specs that are removed
 
       if (node.isPolicy) {
@@ -934,6 +959,9 @@ export class StylePolicy {
   asBuildSpec (asComponent = false) {
     const extractBuildSpecs = (specOrPolicy, submorphs) => {
       if (specOrPolicy.COMMAND === 'add') {
+        specOrPolicy = specOrPolicy.props;
+      }
+      if (specOrPolicy.COMMAND === 'replace') {
         specOrPolicy = specOrPolicy.props;
       }
       if (specOrPolicy.COMMAND === 'remove') return null; // target is already removed so just ignore the command
