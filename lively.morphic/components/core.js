@@ -3,7 +3,7 @@ import { string, fun, properties, obj } from 'lively.lang';
 import { getClassName, ExpressionSerializer } from 'lively.serializer2';
 import { epiConnect, signal, noUpdate } from 'lively.bindings';
 import { sanitizeFont, morph } from '../helpers.js';
-import { StylePolicy, PolicyApplicator, without, add } from './policy.js';
+import { StylePolicy, PolicyApplicator, without, add, replace } from './policy.js';
 
 const expressionSerializer = new ExpressionSerializer();
 
@@ -669,7 +669,7 @@ if (!component.DescriptorClass) component.DescriptorClass = prevDescriptorClass 
 component.System = System;
 component.for = (generator, meta, system, recorder, declaredName) => component.DescriptorClass.for(generator, { moduleId: meta.module, exportedName: meta.export, range: meta.range }, system, recorder, declaredName);
 
-export { add, without };
+export { add, without, replace };
 
 function insertFontCSS (name, fontUrl) {
   if (fontUrl.endsWith('.otf')) {
