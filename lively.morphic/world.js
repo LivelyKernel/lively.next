@@ -286,6 +286,8 @@ export class World extends Morph {
 
   relayout () { /* subclass responsibility */ }
 
+  withTopBarDo () {}
+
   defaultMenuItems (morph) {
     return []; /* subclass responsibility */
   }
