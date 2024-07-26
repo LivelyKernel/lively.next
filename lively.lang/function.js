@@ -312,6 +312,7 @@ function throttle (func, wait) {
  * delay(curry(f, "call3"), 0.15);
  * // => Will eventually output: "running after 352ms with arg call3"
  */
+
 function debounce (wait, func, immediate) {
   let timeout;
   return function () {
@@ -361,8 +362,8 @@ function debounceNamed (name, wait, func, immediate) {
   const store = _debouncedByName;
   if (store[name]) return store[name];
   function debounceNamedWrapper () {
-    // ignore-in-doc, cleaning up
-    delete store[name];
+    if (!immediate) delete store[name];
+    else setTimeout(() => delete store[name], wait);
     return func.apply(this, arguments);
   }
   return store[name] = debounce(wait, debounceNamedWrapper, immediate);
