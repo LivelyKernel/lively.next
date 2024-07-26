@@ -83,10 +83,26 @@ describe('fun', function () {
         var i = setInterval(function () {
           if (typeof result === 'undefined') return;
           clearInterval(i);
-          expect(called).to.equal(1, 'debounce call cound');
+          expect(called).to.equal(1, 'debounce call count');
           expect(result).to.equal(10, 'debounce result');
           done();
         }, 0);
+      });
+
+      it('properly debounces named if immediate execution enabled', async function () {
+        let called = 0; let result;
+        fun.debounceNamed('testDebouncedCommandNamed', 20,
+          function (i) { result = i; called++; }, true)(1);
+        await promise.delay(10);
+        fun.debounceNamed('testDebouncedCommandNamed', 20,
+          function (i) { result = i; called++; }, true)(2);
+        await promise.delay(10);
+        fun.debounceNamed('testDebouncedCommandNamed', 20,
+          function (i) { result = i; called++; }, true)(3);
+        await promise.delay(20);
+
+        expect(called).to.equal(2, 'debounce call count');
+        expect(result).to.equal(3, 'debounce result');
       });
 
       it('throttles calls', function (done) {
