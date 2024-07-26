@@ -13,7 +13,9 @@ export class MarkdownPreviewMorph extends HTMLMorph {
     return {
 
       markdownEditor: {},
-
+      disableInternalScroll: {
+        defaultValue: false
+      },
       markdownSource: {
         after: ['markdownEditor'],
         get () {
@@ -318,8 +320,7 @@ export class MarkdownPreviewMorph extends HTMLMorph {
         this.layout = new TilingLayout({ axis: 'column' });
         this.submorphs = [{
           fill: Color.transparent,
-          clipMode: 'auto',
-
+          clipMode: this.disableInternalScroll ? 'visible' : 'auto',
           layout: new TilingLayout({ axis: 'column', padding: 15, spacing: 15 }),
           submorphs: blocks.map((elem, i) => {
             if (elem.isMorph) {
