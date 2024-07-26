@@ -1,23 +1,36 @@
 # lively.next
 
 [![Daily `lively.next` Status Check](https://github.com/LivelyKernel/lively.next/actions/workflows/daily-ci-checks.yml/badge.svg?branch=main)](https://github.com/LivelyKernel/lively.next/actions/workflows/daily-ci-checks.yml)
-[![Join our Chat room on Matrix](https://img.shields.io/badge/matrix%20chat-JOIN-success)](https://matrix.to/#/#lively.next:matrix.org)
+[![Join our Chat room on Matrix](https://img.shields.io/badge/🗨️_on_matrix-JOIN-ff7700)](https://matrix.to/#/#lively.next:matrix.org)
+[![Say Hi via E-Mail!](https://img.shields.io/badge/📧%20E--Mail-Say_Hi!-ff7700)](mailto:hi@lively-next.org)
 
-This is the repository of the [lively.next project](https://lively-next.org).
+`lively.next` is a personal programming kit. It emphasizes **liveness**, **directness**, and **interactivity**. 
+
+It combines rich **live programming** capabilities, in the spirit of Smalltalk, with a graphical **direct manipulation workflow** from current design tools. It seamlessly bridges these two, allowing for rapid prototyping and efficient collaboration. 
+
+We aim to bring you an innovative programming experience while building an integrated system that brings designer and programmers together.
+
+<video src="https://github.com/user-attachments/assets/aa3f973a-ef91-404f-af29-80f301857378">
+    <p>
+        A screencast of how working inside of `lively.next` looks. A 'desktop' resembling a classic desktop OS can be seen, with a code editor and a web component being visible. The color of a part of the component is changed using a color picker tool. The resulting change is directly mirrored inside of the source code of the component.
+    </p>
+</video>
 
 > [!WARNING]
 >
-> `lively.next` is alpha software and under heavy development.
+> `lively.next` is beta software and under continuous development.
 >
-> **You are very welcome to play with it!** But please be aware, that there are no guarantees regarding the stability of APIs etc.
->
-> In case you want to experiment with `lively.next`, please **feel free to join our [Matrix Chatroom (#lively.next:matrix.org)](https://matrix.to/#/#lively.next:matrix.org) and ask all the questions you want!**
+> **You are very welcome to play with it!** But please be aware, that there are no guarantees regarding the stability of APIs yet.
 
 ## Setup
 
 You need to install `lively.next` on your system.
 
 ### Installation Requirements
+
+> [!TIP]
+>
+> If you want to change files outside of `lively` (i.e., in a normal editor), while still having the changes be available in lively when opening the file, you'll need to install `entr` from its [repository](https://github.com/eradman/entr). Usually, when working inside of `lively.next`, this will not be an issue, but it can be handy when working heavily on the core of `lively`. *This feature works semi-reliable at the moment. If you are interested in this and would like to help debug this, please reach out!*
 
 Currently, MacOS, Linux, and the Linux Subsystem for Windows are supported.
 Make sure you have the following software installed:
@@ -27,7 +40,7 @@ Make sure you have the following software installed:
 
 We try to require/support the current LTS version of `node`.
 
-For some more advanced development operations (bulk testing from the command line), you will also need 
+For some more advanced development operations (such as bulk testing from the command line and spell checking inside of `lively.next`), you will also need 
 
 - `sed` or `gsed` on MacOs
 - `ss` or `netstat` on MacOs
@@ -38,13 +51,13 @@ For some more advanced development operations (bulk testing from the command lin
 
 > [!TIP]
 >
-> If you want to change files outside of `lively` (i.e., in a normal editor), while still having the changes be available in lively when opening the file, you'll need to install `entr` from its [repository](https://github.com/eradman/entr). Usually, when working inside of `lively.next`, this will not be an issue, but it can be handy when working heavily on the core of `lively`.
+> If you want to change files outside of `lively` (i.e., in a normal editor), while still having the changes be available in lively when opening the file, you'll need to install `entr` from its [repository](https://github.com/eradman/entr). Usually, when working inside of `lively.next`, this will not be an issue, but it can be handy when working heavily on the core of `lively`. *This feature works semi-reliable at the moment. If you are interested in this and would like to help debug this, please reach out!*
 
 ### Installation Instructions
 
-1. Clone this repository and run the `install.sh` script. This will install the necessary dependencies. Please note, that this process will take a few minutes.
+1. Clone this repository and run the `install.sh` script. This will install the necessary dependencies and build some bundles that are necessary for the bootstrapping process of `lively.next`. Please note, that this process will take a few minutes.
 2. Run the `start.sh` script.
-3. Lively will now be running on your local computer at [http://localhost:9011](http://localhost:9011).
+3. Lively will now be running on computer and be accessible at [http://localhost:9011](http://localhost:9011).
 
 > [!TIP]
 >
@@ -57,7 +70,7 @@ Usually, running `start.sh` will now be enough to get you going again.
 When a new version of `lively.next` is available, the Version Indicator in the lower-left corner will look like this:
 
 <p align='center'>
-    <img alt="A GIF showing an orange arrow. The arrow is bouncing and points to the text 'Press here to update'" src="./assets/update.gif" width="250" height="70">
+    <img alt="A picture of `lively.next`'s version checker showing an orange arrow. The arrow points to the text 'Press here to update'" src="./assets/update.png" width="250" height="70">
 </p>
 
 Pressing will start the update process, automatically restart the server and prompt you to reload your lively session. Please make sure to save all your progress before updating.
@@ -66,7 +79,9 @@ Manually updating can be done by pulling the latest version and just executing `
 
 ---
 
-Please note, that these instructions currently are not recommended for openly deploying `lively.next` in the web!
+> [!CAUTION]
+>
+> Please note, that these instructions currently are not recommended for openly deploying `lively.next` in the web!
 
 > [!IMPORTANT]
 >
@@ -76,54 +91,17 @@ Please note, that these instructions currently are not recommended for openly de
 
 ## Documentation
 
-Some hints and documentation can be found in the [project wiki](https://github.com/LivelyKernel/lively.next/wiki).
+### Interactive Explanations and Guide
 
-The actual documentation can be found [here](https://livelykernel.github.io/lively.next/).
+We provide all information necessary to start developing in `lively.next` on our [website](https://lively-next.org/#explanations). We recommend this as an entry point for all users.
 
-## Contributing
+### Wiki
+Some more hints and documentation can be found in the [project wiki](https://github.com/LivelyKernel/lively.next/wiki). Note, that these are much less polished than the contents provided on the website.
 
-Please make sure to run `make hooks` from the root of the repository before starting to develop.
 
-Please adhere to the following convention for commit messages:
+### Technical Documentation
 
-`affected package(s): what was changed (first letter lower case)`. The first line should not be longer than 72 characters.
-
-The packages are coded with emojis as follows:
-
-- 2lively: 🗨️
-- ast: 🌳
-- bindings: 🎀
-- changesets: 🔣
-- CI/scripts/docs: 🛠️
-- classes: 🧑‍🏫
-- collab: 💭
-- components: 🎛️
-- context: 🗺️
-- flatn: 🫓
-- freezer: ❄️
-- git: 🛤️
-- graphics: 🖌️
-- halos: 👼
-- headless: 🤕
-- ide: 🧰
-- installer: 📦
-- keyboard: ⌨️
-- lang: 📙
-- modules: 🧩
-- morphic: 🎨
-- notifications: 🔔
-- project: 📂
-- resources: 🪨
-- README: 🗒️
-- serializer2: 📇
-- server: 👔
-- shell: 🐚
-- source-transform: 🔁
-- storage: 💾
-- system-interface: 📠
-- traits: ⚙️
-- user: 👤
-- vm: 🖥️
+Source-Code documentation (only relevant for developers and most useful for those who want to contribute to the `lively.next` core) can be found [here](https://livelykernel.github.io/lively.next/).
 
 ## License
 
