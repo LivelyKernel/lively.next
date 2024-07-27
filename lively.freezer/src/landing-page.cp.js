@@ -97,7 +97,7 @@ class WorldLandingPage extends Morph {
   }
 }
 
-class ShapeMorpher extends ViewModel {
+export class ShapeMorpher extends ViewModel {
   static get properties () {
     return {
       isZoomed: { defaultValue: false },
