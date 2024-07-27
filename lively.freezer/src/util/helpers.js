@@ -292,6 +292,7 @@ export async function generateLoadHtml (htmlConfig, importMap, resolver, modules
             }
           }
         });
+        ${isResurrectionBuild ? 'window.BootstrapSystem = System;' : ''}
         System.trace = ${isResurrectionBuild ? 'true' : 'false'};
         System.import("./${entryPoint}").then(m => { m.renderFrozenPart(domNode); });
       }

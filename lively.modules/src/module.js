@@ -80,10 +80,10 @@ export async function updateBundledModules (system, modulesToUpdate) {
   // finally update the frozen records that require update
   for (let m in registry) {
     if (registry[m].updateRecord) {
-      const realignedId = m.startsWith('esm://') ? m : string.joinPath(System.baseURL, m);
+      const realignedId = m.startsWith('esm://') ? m : string.joinPath(system.baseURL, m);
       const mod = module(system, realignedId);
       if (!mod._frozenModule) continue;
-      system.set(realignedId, System.newModule(R.exportsOf(m)));
+      system.set(realignedId, system.newModule(R.exportsOf(m)));
       mod._recorder = registry[m].recorder;
     }
   }
