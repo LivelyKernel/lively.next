@@ -21,6 +21,7 @@ async function reportWorldLoad (world, user) {
 }
 
 export async function setupLively2Lively (world) {
+  const { importPackage } = await System.import('lively.modules');
   const { currentUser } = await System.import('lively.user');
   const user = { name: currentUser().login };
   const info = { world: world.name };
@@ -29,7 +30,7 @@ export async function setupLively2Lively (world) {
     info.userRealm = user.realm;
   }
 
-  await lively.modules.importPackage('lively.2lively');
+  await importPackage('lively.2lively');
   const { default: L2LClient } = await System.import('lively.2lively/client.js');
   const client = await L2LClient.forLivelyInBrowser(info);
   console.log(`[lively] lively2lively client created ${client}`);
@@ -42,7 +43,8 @@ export async function setupLively2Lively (world) {
 }
 
 export async function setupLivelyShell (opts) {
-  await lively.modules.importPackage('lively.shell');
+  const { importPackage } = await System.import('lively.modules');
+  await importPackage('lively.shell');
   const { default: ClientCommand } = await System.import('lively.shell/client-command.js');
   const { resourceExtension } = await System.import('lively.shell/client-resource.js');
   const { l2lClient } = opts;
@@ -53,7 +55,8 @@ export async function setupLivelyShell (opts) {
 }
 
 async function loadLocalConfig () {
-  const localconfig = lively.modules.module('localconfig.js');
+  const { module } = await System.import('lively.modules');
+  const localconfig = module('localconfig.js');
   try {
     // reload so that localconfig module actually executes, even if it was loaded before
     if (await resource(localconfig.id).exists()) { await localconfig.reload({ resetEnv: false, reloadDeps: false }); }
