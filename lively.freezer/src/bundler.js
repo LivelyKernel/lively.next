@@ -397,7 +397,7 @@ export default class LivelyRollup {
    */
   async transform (source, id) {
     const originalSource = source;
-    if (id.startsWith('\0') || id.endsWith('.json')) {
+    if (id.startsWith('\0') || id.endsWith('.json') || this.excludedModules.find(m => id.startsWith(m))) {
       return source;
     }
     // We use the string 'projectAsset' there in regular code to enable correct reconciliation.
@@ -467,6 +467,7 @@ export default class LivelyRollup {
         if (!mapping[id] && this.globalMap[id]) {
           console.warn(`[freezer] No mapping for "${id}" provided by package "${importingPackage.name}". Guessing "${this.globalMap[id]}" based on past resolutions. Please consider adding a map entry to this package config in oder to make the package definition sound and work independently of the current setup!`); // eslint-disable-line no-console
         }
+        if (this.excludedModules.includes(id)) return id;
         let remapped = mapping[id] || this.globalMap[id];
         const ctx = this.asBrowserModule ? '~node' : 'node';
         if (remapped[ctx]) remapped = remapped[ctx];
@@ -490,7 +491,7 @@ export default class LivelyRollup {
     // results since we are not taking into account in package.json
 
     absolutePath = this.resolver.resolveModuleId(id, importer, this.getResolutionContext());
-    if (this.belongsToExcludedPackage(absolutePath)) return null;
+    if (this.belongsToExcludedPackage(absolutePath)) return id;
     return this.resolved[resolutionId(id, importer)] = absolutePath;
   }
 
@@ -529,7 +530,7 @@ export default class LivelyRollup {
    * @returns { string } The source code.
    */
   async load (id) {
-    if (this.excludedModules.includes(id)) {
+    if (this.excludedModules.find(m => id.startsWith(m))) {
       if (id === 'lively.ast') {
         return `
         let nodes = {}, query = {}, transform = {}, BaseVisitor = Object;
@@ -540,6 +541,7 @@ export default class LivelyRollup {
         let scripting = {};
         export { scripting };`;
       }
+      return '';
     }
 
     if (id === ROOT_ID) {
