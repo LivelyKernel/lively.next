@@ -200,7 +200,7 @@ export function runtimeDefinition () {
     decanonicalize (name) {
       if (name.startsWith('lively://')) return name;
       if (name.endsWith('.json')) return G.lively.resources.resource(G.origin).join(name).url;
-      if (!name.endsWith('.js') && !name.endsWith('/') && !name.endsWith('.svg')) // just import via package name
+      if (!name.endsWith('.js') && !name.endsWith('/') && !name.endsWith('.svg') && !name.endsWith('.cjs')) // just import via package name
       { return name.split('/').concat(['index.js']).filter(Boolean).join('/'); }
       return name;
       // this decanonicalize forces all modules to contain version numbers (if not provided)
