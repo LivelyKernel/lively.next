@@ -5,6 +5,7 @@ import { html5Media } from 'esm://cache/markdown-it-html5-media';
 
 import markdownAttrs from 'esm://cache/markdown-it-attrs';
 import { string } from 'lively.lang';
+import markdownMermaid from 'mermaid-it-markdown';
 
 function addSourceLineMappingPlugin (md, options = {}) {
   options = { ...md.options, ...options };
@@ -28,7 +29,7 @@ class MarkdownCompiler {
   compileToHTML (src, options = {}) {
     let { linkedCSS, markdownWrapperTemplate } = options;
     options.html = true; // allow usage of HTML tags in all markdown
-    let md = markdownIt(options).use(externalizeLinksPlugin).use(addSourceLineMappingPlugin).use(markdownCheckbox).use(markdownAttrs).use(markdownCaption, { dataType: true, figcaption: true }).use(html5Media); // eslint-disable-line no-use-before-define
+    let md = markdownIt(options).use(externalizeLinksPlugin).use(addSourceLineMappingPlugin).use(markdownCheckbox).use(markdownAttrs).use(markdownCaption, { dataType: true, figcaption: true }).use(html5Media).use(markdownMermaid); // eslint-disable-line no-use-before-define
     let html = md.render(src);
 
     if (markdownWrapperTemplate) { html = string.format(markdownWrapperTemplate, html); }
@@ -44,7 +45,7 @@ class MarkdownCompiler {
 
   parse (editor, options) {
     options.html = true; // allow usage of HTML tags in all markdown
-    let md = markdownIt(options).use(externalizeLinksPlugin).use(markdownCheckbox).use(markdownCaption, { dataType: true, figcaption: true }).use(markdownAttrs).use(html5Media); // eslint-disable-line no-use-before-define
+    let md = markdownIt(options).use(externalizeLinksPlugin).use(markdownCheckbox).use(markdownCaption, { dataType: true, figcaption: true }).use(markdownAttrs).use(html5Media).use(markdownMermaid); // eslint-disable-line no-use-before-define
     let src = editor.textString;
     let parsed = md.parse(editor.textString, {});
     let lines = src.split('\n');

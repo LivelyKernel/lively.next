@@ -26,7 +26,8 @@
   },
   "systemjs": {
     "map": {
-      "semver": "esm://cache/semver"
+      "semver": "esm://cache/semver",
+      "mermaid-it-markdown": "esm://run/mermaid-it-markdown"
     }
   },
   "devDependencies": {
