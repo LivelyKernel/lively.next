@@ -49,7 +49,7 @@ const CLASS_INSTRUMENTATION_MODULES = [
   'https://jspm.dev/npm:rollup@2.28.2' // this contains a bunch of class definitions which right now screws up the closure compiler
 ];
 
-const ESM_CDNS = ['jspm.dev', 'jspm.io', 'skypack.dev', 'esm://cache'];
+const ESM_CDNS = ['jspm.dev', 'jspm.io', 'skypack.dev', 'esm://cache', 'esm://run'];
 
 // fixme: Why is a blacklist nessecary if there is a whitelist?
 const CLASS_INSTRUMENTATION_MODULES_EXCLUSION = ['lively.lang'];
