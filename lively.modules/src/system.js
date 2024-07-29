@@ -96,6 +96,7 @@ export function wrapModuleResolution (System) {
 export function unwrapModuleResolution (System) {
   removeHook(Object, 'assign', 'safeAssign');
   removeHook(System, 'normalize', 'normalizeHook');
+  removeHook(System, 'resolve', 'normalizeHook');
   removeHook(System, 'decanonicalize', 'decanonicalizeHook');
   removeHook(System, 'normalizeSync', 'decanonicalizeHook');
   removeHook(System, 'newModule', 'newModule_volatile');
