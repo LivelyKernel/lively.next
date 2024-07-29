@@ -335,11 +335,6 @@ export class MarkdownPreviewMorph extends HTMLMorph {
           const wrapper = this.submorphs[0];
           for (let m of wrapper.submorphs) {
             wrapper.layout.setResizePolicyFor(m, { width: 'fill', height: 'fixed' });
-            // but we also need to adjust the height of each html morph to fit its contents
-            if (m.isHTMLMorph) {
-              await m.whenRendered();
-              m.height = m.env.renderer.getNodeForMorph(m).children[0].children[1].offsetHeight + 10;
-            }
           }
           hljs.highlightAll();
           if (scrollBefore) wrapper.scroll = scrollBefore;
