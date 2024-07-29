@@ -33,6 +33,7 @@ try {
           'chai','mocha', // references old lgtg that breaks the build
           'rollup', // has a dist file that cant be parsed by rollup
           // other stuff that is only needed by rollup
+          'mermaid-it-markdown',
           '@babel/preset-env',
           '@babel/plugin-syntax-import-meta',
           '@rollup/plugin-json', 
