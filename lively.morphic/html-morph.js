@@ -1,3 +1,4 @@
+/* global ResizeObserver */
 import { promise, arr } from 'lively.lang';
 import { pt, Rectangle } from 'lively.graphics';
 import { Morph } from './morph.js';
@@ -118,19 +119,39 @@ export class HTMLMorph extends Morph {
   patchSpecialProps (node) {
     const [wrapperNode] = node.children;
     const parentPos = Rectangle.fromLiteral(wrapperNode.getBoundingClientRect()).topLeft();
-    this.whenRendered().then(() => {
-      const nodeBounds = [...wrapperNode.children]
-        .map(n => Rectangle.fromLiteral(n.getBoundingClientRect()));
+    if (!this.fixedHeight) {
+      node.style.height = 'fit-content';
+      wrapperNode.style.position = 'relative';
+      wrapperNode.style.height = 'fit-content';
+    }
+    if (!this.fixedWidth) {
+      node.style.width = 'fit-content';
+      wrapperNode.style.position = 'relative';
+      wrapperNode.style.width = 'fit-content';
+    }
+    this.ensureResizeObserverIfNeeded(node);
+  }
 
-      if (nodeBounds.length == 0) return;
+  ensureResizeObserverIfNeeded (node) {
+    if (this.fixedWidth && this.fixedHeight) {
+      this.resizeObserver?.unobserve(node);
+      return node;
+    }
+    if (this.resizeObserver) {
+      this.resizeObserver.observe(node);
+      return node;
+    }
 
-      const newBounds = nodeBounds.reduce((a, b) => {
-        if (!a.isNonEmpty()) return b;
-        return a.union(b);
+    this.resizeObserver = new ResizeObserver((entries) => {
+      requestAnimationFrame(() => {
+        const newBounds = entries[0].contentRect;
+        let { height, width } = this;
+        if (!this.fixedHeight && height !== newBounds.height) this.height = newBounds.height;
+        if (!this.fixedWidth && width !== newBounds.width) this.width = newBounds.width;
       });
-      if (!this.fixedHeight && this.height !== newBounds.height) this.height = newBounds.height;
-      if (!this.fixedWidth && this.width !== newBounds.width) this.width = newBounds.width;
     });
+    this.resizeObserver.observe(node);
+    return node;
   }
 
   getNodeForRenderer (renderer) {
