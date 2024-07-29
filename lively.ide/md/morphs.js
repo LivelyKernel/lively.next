@@ -292,7 +292,8 @@ export class MarkdownPreviewMorph extends HTMLMorph {
 
       this.submorphs = [];
       this.env.forceUpdate(this);
-      this.html = ed.editorPlugin.renderedMarkdown();
+      this.html = ed.editorPlugin.renderedMarkdown(markdownOptions);
+      setTimeout(() => hljs.highlightAll());
     } else {
       const blocks = [];
       const exprSerializer = new ExpressionSerializer();
