@@ -15500,6 +15500,7 @@ class ESMResource extends Resource {
     // jspm servers both the entry point into a package as well as subcontent from package@version/
     // differentiate these cases by introducing an index.js which will automatically be served by systemJS
     if (pathStructure.length === 1 ||
+        !pathStructure[pathStructure.length - 1].endsWith('+esm') &&
         !pathStructure[pathStructure.length - 1].endsWith('js') &&
         !pathStructure[pathStructure.length - 1].endsWith('!cjs')) {
       let fileName = 'index.js';
@@ -15508,6 +15509,11 @@ class ESMResource extends Resource {
         pathStructure[0] = pathStructure[0].replace('!cjs', '');
       }
       pathStructure.push(fileName);
+    }
+
+       
+    if (pathStructure[pathStructure.length - 1].endsWith('+esm')) {
+      pathStructure[pathStructure.length - 1] = pathStructure[pathStructure.length - 1].replace('+esm', 'esm.js');
     }
 
     if (pathStructure[pathStructure.length - 1].endsWith('.js!cjs')) {
@@ -15526,7 +15532,8 @@ class ESMResource extends Resource {
 
     const id = this.url.replace(/esm:\/\/(run|cache)\//g, '');
     let baseUrl = 'https://jspm.dev/';
-    if (this.url.startsWith('esm://run/')) baseUrl = 'https://esm.run/';
+    if (this.url.startsWith('esm://run/npm/')) baseUrl = 'https://cdn.jsdelivr.net/';
+    else if (this.url.startsWith('esm://run/')) baseUrl = 'https://esm.run/';
 
     let pathStructure = ESMResource.normalize(id);
 
@@ -15555,7 +15562,9 @@ class ESMResource extends Resource {
 
     // pathElements can together either describe a directory or a file
     // in the case that it is not a file (will be either js or !cjs) we need to fixup the last part of the path
-    if (!pathElements[pathElements.length - 1].endsWith('js') && !pathElements[pathElements.length - 1].endsWith('!cjs')) {
+    if (!pathElements[pathElements.length - 1].endsWith('js') &&
+        !pathElements[pathElements.length - 1].endsWith('!cjs') &&
+        !pathElements[pathElements.length - 1].endsWith('+esm')) {
       pathElements[pathElements.length - 1] = pathElements[pathElements.length - 1] + '/';
     }
 
