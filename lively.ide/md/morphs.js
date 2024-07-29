@@ -338,7 +338,7 @@ export class MarkdownPreviewMorph extends HTMLMorph {
             // but we also need to adjust the height of each html morph to fit its contents
             if (m.isHTMLMorph) {
               await m.whenRendered();
-              m.height = m.env.renderer.getNodeForMorph(m).children[0].children[1].offsetHeight + 10;
+              m.height = m.env.renderer.getNodeForMorph(m).children[0].getElementsByClassName('markdown-body')[0].offsetHeight + 10;
             }
           }
           hljs.highlightAll();
