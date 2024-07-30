@@ -144,10 +144,11 @@ class Layout {
   get layoutableSubmorphs () {
     if (!this.layoutOrder) { this.layoutOrder = Closure.fromSource(JSON.parse(this.layoutOrderSource)).recreateFunc(); }
     if (!this.container) return [];
-    return arr.sortBy(
-      this.container.submorphs.filter(
-        m => m.isLayoutable && !this.ignore.includes(m.name)),
-      m => this.layoutOrder(m));
+    let { submorphs } = this.container;
+    if (this.container.isWorld) submorphs = submorphs.filter(m => !m.hasFixedPosition);
+    return arr.sortBy(submorphs.filter(
+      m => m.isLayoutable && !this.ignore.includes(m.name)),
+    m => this.layoutOrder(m));
   }
 
   layoutOrder (aMorph) {
