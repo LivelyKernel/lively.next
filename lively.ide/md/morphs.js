@@ -6,6 +6,7 @@ import { rect, Color } from 'lively.graphics/index.js';
 import { ExpressionSerializer } from 'lively.serializer2';
 import hljs from 'esm://cache/highlight.js@11.9.0/lib/core';
 import javascript from 'esm://cache/highlight.js@11.9.0/lib/languages/javascript';
+import { module } from 'lively.modules/index.js';
 hljs.registerLanguage('javascript', javascript);
 
 export class MarkdownPreviewMorph extends HTMLMorph {
@@ -280,6 +281,10 @@ export class MarkdownPreviewMorph extends HTMLMorph {
   }
 
   async renderMarkdown (editor = this.markdownEditor) {
+    if (module('lively.ide/md/compiler.js')._frozenModule) {
+      await module('lively.ide/md/compiler.js').revive();
+      return await this.renderMarkdown(editor);
+    }
     this.markdownToHTMLPositionMap = null; // reset cache
     let ed = this.markdownEditor;
     let { markdownSource, markdownOptions } = this;

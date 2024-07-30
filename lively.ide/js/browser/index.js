@@ -1507,6 +1507,9 @@ export class BrowserModel extends ViewModel {
     // FIXME we already have such "mode" switching code in the text editor...
     // combine these?!
     this.switchMode(ext);
+    if (ext === 'md' && modules.module('lively.ide/md/compiler.js')._frozenModule) {
+      await modules.module('lively.ide/md/compiler.js').revive();
+    }
     if (this.editorPlugin.evalEnvironment.targetModule !== mod.url) {
       sourceEditor.scroll = pt(0, 0);
       sourceEditor.undoManager.reset();
