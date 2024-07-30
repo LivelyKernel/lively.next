@@ -46,11 +46,10 @@ let commands = [
 
       if (preview.getWindow() && preview.world()) {
         $world.addMorph(preview.getWindow()).activate();
+        $world.withRequesterDo(preview.getWindow(), async () => {
+          await $world.withLoadingIndicatorDo(() => preview.renderMarkdown(), preview.getWindow(), 'rendering markdown');
+        });
       }
-
-      $world.withRequesterDo(preview.getWindow(), async () => {
-        await $world.withLoadingIndicatorDo(() => preview.renderMarkdown(), preview.getWindow(), 'rendering markdown');
-      });
 
       return preview;
     }
