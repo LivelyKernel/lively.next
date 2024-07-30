@@ -54,6 +54,9 @@ const ESM_CDNS = ['jspm.dev', 'jspm.io', 'skypack.dev', 'esm://cache', 'esm://ru
 // fixme: Why is a blacklist nessecary if there is a whitelist?
 const CLASS_INSTRUMENTATION_MODULES_EXCLUSION = ['lively.lang'];
 
+// rsm 30.7.24: There are packages which when bundled will crash any build reliably. We exclude these from any build by default.
+const ALWAYS_EXCLUDED_MODULES = ['mermaid-it-markdown'];
+
 const ADVANCED_EXCLUDED_MODULES = [
   'lively.ast',
   'lively.vm',
@@ -159,6 +162,7 @@ export default class LivelyRollup {
     this.autoRun = autoRun; // If root module is specified then this flag indicates that the main function of the module is to be invoked on load.
     this.asBrowserModule = asBrowserModule; // Wether or not to export this module as a browser loadable one. This will stub some nodejs packages like fs.
     this.excludedModules = excludedModules; // Set of package names whose modules to exclude from the bundle.
+    this.excludedModules.push(...ALWAYS_EXCLUDED_MODULES);
     this.captureModuleScope = captureModuleScope; // Wether or not the scopes of the modules should be captured. This is needed for supporting meta programming capabilities in the bundle.
     this.isResurrectionBuild = isResurrectionBuild; // If set to true, this will make the lively.core modules hot swappable. This requires not only scope capturing but also embedding of constructs in the build that allow for hot swapping of the modules in the static build scripts.
     this.includeLivelyAssets = includeLivelyAssets; // If set to true, will include the default fonts and css from lively.next into the bundle. Disabling this is probably a bad idea.
@@ -837,7 +841,7 @@ export default class LivelyRollup {
     modules.forEach(chunk => {
       if (chunk.code) {
         if (this.isResurrectionBuild) chunk.code = chunk.code.replace('System.register', 'BootstrapSystem.register');
-	chunk.code = chunk.code.replace("'use strict'", "var __contextModule__ = typeof module !== 'undefined' ? module : arguments[1];\n");
+        chunk.code = chunk.code.replace("'use strict'", "var __contextModule__ = typeof module !== 'undefined' ? module : arguments[1];\n");
       }
     });
     if (this.minify && opts.format !== 'esm') {

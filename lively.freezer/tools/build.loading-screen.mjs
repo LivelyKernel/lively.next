@@ -36,7 +36,6 @@ try {
           '@rollup/plugin-json', 
           '@rollup/plugin-commonjs',
           'rollup-plugin-polyfill-node',
-          'mermaid-it-markdown',
           'babel-plugin-transform-es2015-modules-systemjs'
         ],
         resolver
