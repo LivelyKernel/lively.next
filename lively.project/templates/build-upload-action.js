@@ -30,11 +30,16 @@ jobs:
         with:
           repository: LivelyKernel/lively.next
           ref: %LIVELY_VERSION%
+      - name: Prepare to install \`lively.next\`
+        run: chmod a+x ./install.sh
       - name: Install \`lively.next\`
         if: \${{ steps.cache-lively.outputs.cache-hit != 'true' }}
-        run: |
-          chmod a+x ./install.sh
-          ./install.sh --freezer-only
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 15
+          max_attempts: 5
+          retry_on: error
+          command: ./install.sh --freezer-only
       - name: Save \`lively\` installation in cache
         if: \${{ steps.cache-lively.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v3

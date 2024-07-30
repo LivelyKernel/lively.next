@@ -29,10 +29,16 @@ jobs:
             lively.next-node_modules/ 
             .puppeteer-browser-cache/          
           key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json') }}
-      - name: Install `lively.next`
+      - name: Prepare to install `lively.next`
         run: |
           chmod a+x ./install.sh
-          ./install.sh
+      - name: Install `lively.next`
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 15
+          max_attempts: 5
+          retry_on: error
+          command: ./install.sh
       - name: Cache `lively.next` dependencies
         if: ${{ steps.cache-lively-deps.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v3
