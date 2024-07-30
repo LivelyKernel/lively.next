@@ -313,8 +313,10 @@ export class MarkdownPreviewMorph extends HTMLMorph {
         // FIXME: this is due to a rendering bug with HTML morphs
         this.layout = null;
         this.env.forceUpdate(this);
-
         this.submorphs = [];
+        setTimeout(() => {
+          hljs.highlightAll();
+        });
       } else {
         const scrollBefore = this.submorphs[0]?.scroll;
         this.html = '';
