@@ -815,8 +815,14 @@ export class TilingLayout extends Layout {
 
   ensureLayoutComputed (curr) {
     while (curr.owner?.layout?.name() === 'Tiling' && curr.isLayoutable) curr = curr.owner;
-    curr.layout.computeLayout().calculateLayout();
-    curr.layout.computeLayoutWithMargin().calculateLayout();
+    if (curr.isWorld) {
+      const { width, height } = curr;
+      curr.layout.computeLayout().calculateLayout(width, height);
+      curr.layout.computeLayoutWithMargin().calculateLayout(width, height);
+    } else {
+      curr.layout.computeLayout().calculateLayout();
+      curr.layout.computeLayoutWithMargin().calculateLayout();
+    }
   }
 
   ensureYogaNodeFor (aMorph) {
