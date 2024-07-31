@@ -222,24 +222,23 @@ export function instrumentStaticSystemJS (system) {
     if (typeof name !== 'string') {
       def = deps;
       deps = name;
-      res = _originalRegister(deps, (exports, module) => {
+      let registerFn = (exports, module) => {
         let res = def(exports, module);
         if (!res.setters) res.setters = [];
         return res;
-      });
-      const hit = Object.values(system.REGISTER_INTERNAL?.records || {})
-        .find((rec) => !rec.module && !rec.loadError && !rec.metadata && !rec.registration);
+      };
+      res = _originalRegister(deps, registerFn);
+      const key = system.baseURL + system._currentFile;
       // this is not a reliable way to detect the key once we have the module already present
-      if (hit) { system.moduleRegisters[hit.key] = system.REGISTER_INTERNAL.lastRegister; }
+      if (!system.moduleRegisters[key]) { system.moduleRegisters[key] = [deps, registerFn]; }
     } else {
       res = _originalRegister(name, deps, (exports, module) => {
         let res = def(exports, module);
         if (!res.setters) res.setters = [];
         return res;
       });
-      const hit = Object.values(system.REGISTER_INTERNAL?.records || {})
-        .find((rec) => !rec.module && !rec.loadError && !rec.metadata && !rec.registration);
-      if (hit) { system.moduleRegisters[hit.key] = system.REGISTER_INTERNAL.lastRegister; }
+      const key = system.baseURL + system._currentFile;
+      if (!system.moduleRegisters[key]) { system.moduleRegisters[key] = [name, deps, registerFn]; }
     }
     return res;
   };

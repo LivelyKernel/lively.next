@@ -840,7 +840,9 @@ export default class LivelyRollup {
     const modules = Object.values(bundle);
     modules.forEach(chunk => {
       if (chunk.code) {
-        if (this.isResurrectionBuild) chunk.code = chunk.code.replace('System.register', 'BootstrapSystem.register');
+        if (this.isResurrectionBuild) {
+          chunk.code = chunk.code.replace('System.register', `BootstrapSystem._currentFile = "${chunk.fileName}";\nBootstrapSystem.register`);
+        }
         chunk.code = chunk.code.replace("'use strict'", "var __contextModule__ = typeof module !== 'undefined' ? module : arguments[1];\n");
       }
     });
