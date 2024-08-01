@@ -964,6 +964,7 @@ export default class LivelyRollup {
 
     for (let asset of this.projectAssets) {
       const file = resource(projectsDir).join(asset.project).join('assets').join(`${asset.oldName}`);
+      if (file.isDirectory()) continue;
       file.beBinary();
       let source = await file.read();
       if (source instanceof ArrayBuffer) source = new Uint8Array(source);
