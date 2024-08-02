@@ -550,9 +550,12 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
     align: 'center',
     axis: 'column',
     axisAlign: 'center',
-    orderByIndex: true,
     padding: rect(15, 15, 0, 0),
-    spacing: 16
+    spacing: 16,
+    resizePolicies: [['prompt contents', {
+      height: 'fixed',
+      width: 'fill'
+    }]]
   }),
   submorphs: [{
     name: 'prompt title',
@@ -564,7 +567,14 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
       align: 'center',
       axis: 'column',
       axisAlign: 'center',
-      orderByIndex: true,
+      hugContentsVertically: true,
+      resizePolicies: [['ci settings', {
+        height: 'fixed',
+        width: 'fill'
+      }], ['repo settings', {
+        height: 'fixed',
+        width: 'fill'
+      }]],
       spacing: 20
     }),
     fill: Color.transparent,
@@ -578,7 +588,17 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
           align: 'center',
           axis: 'column',
           axisAlign: 'center',
-          orderByIndex: true
+          hugContentsVertically: true,
+          resizePolicies: [['row 11', {
+            height: 'fixed',
+            width: 'fill'
+          }], ['row 21', {
+            height: 'fixed',
+            width: 'fill'
+          }], ['row 31', {
+            height: 'fixed',
+            width: 'fill'
+          }]]
         }),
         submorphs: [
           {
@@ -594,15 +614,17 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
             layout: new TilingLayout({
               align: 'center',
               axisAlign: 'center',
-              orderByIndex: true,
+              resizePolicies: [['wrapper 11', {
+                height: 'fixed',
+                width: 'fill'
+              }]],
               spacing: 20
             }),
             submorphs: [{
               name: 'wrapper 11',
               borderColor: Color.rgba(255, 255, 255, 0),
               layout: new TilingLayout({
-                axisAlign: 'center',
-                orderByIndex: true
+                axisAlign: 'center'
               }),
               fill: Color.transparent,
               borderWidth: 0,
@@ -628,13 +650,15 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
             layout: new TilingLayout({
               align: 'center',
               axisAlign: 'center',
-              orderByIndex: true,
+              resizePolicies: [['wrapper 21', {
+                height: 'fixed',
+                width: 'fill'
+              }]],
               spacing: 20
             }),
             submorphs: [{
               name: 'wrapper 21',
               layout: new TilingLayout({
-                orderByIndex: true,
                 axisAlign: 'center'
               }),
               fill: Color.transparent,
@@ -661,14 +685,16 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
             layout: new TilingLayout({
               align: 'center',
               axisAlign: 'center',
-              orderByIndex: true,
+              resizePolicies: [['wrapper 31', {
+                height: 'fixed',
+                width: 'fill'
+              }]],
               spacing: 20
             }),
             submorphs: [{
               name: 'wrapper 31',
               layout: new TilingLayout({
                 axisAlign: 'center',
-                orderByIndex: true,
                 spacing: 5
               }),
               fill: Color.transparent,
@@ -699,30 +725,36 @@ export const ProjectSettingsPrompt = component(LightPrompt, {
           align: 'center',
           axis: 'column',
           axisAlign: 'center',
-          orderByIndex: true
+          hugContentsVertically: true,
+          resizePolicies: [['row 12', {
+            height: 'fixed',
+            width: 'fill'
+          }]],
+          spacing: 5
         }),
         submorphs: [
           {
             type: Label,
             textString: 'Repository Settings',
+            name: 'repo settings title',
             fontSize: 15,
-            fontWeight: '600',
-            padding: {
-              left: 200
-            }
+            fontWeight: '600'
           }, {
             name: 'row 12',
             fill: Color.rgba(255, 255, 255, 0),
             extent: pt(520, 42),
             layout: new TilingLayout({
               axisAlign: 'center',
-              orderByIndex: true,
+              hugContentsVertically: true,
+              resizePolicies: [['visibility selector', {
+                height: 'fixed',
+                width: 'fill'
+              }]],
               spacing: 20
             }),
             submorphs: [{
               name: 'wrapper 12',
               layout: new TilingLayout({
-                orderByIndex: true,
                 axisAlign: 'center',
                 spacing: 20
               }),
