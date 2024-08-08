@@ -290,7 +290,7 @@ class Layout {
   }
 
   onSubmorphChange (submorph, change) {
-    if (change.meta?.isLayoutAction) {
+    if (!change.meta?.isLayoutAction) {
       return this.scheduleApply(submorph, this.reactToSubmorphAnimation && change.meta.animation);
     }
     if (this.affectsLayout(submorph, change)) {
