@@ -826,7 +826,20 @@ export class TilingLayout extends Layout {
   }
 
   ensureYogaNodeFor (aMorph) {
-    return aMorph._yogaNode || (aMorph._yogaNode = Yoga.Node.create(yogaConfig));
+    if (aMorph._yogaNode) return aMorph._yogaNode;
+    aMorph._yogaNode = Yoga.Node.create(yogaConfig);
+    if (aMorph.isText) {
+      aMorph._yogaNode.setMeasureFunc((width, widthMode, height, heightMode) => {
+        if (aMorph.fixedWidth && widthMode !== 0) aMorph.width = width;
+        if (aMorph.fixedHeight && heightMode !== 0) aMorph.height = height;
+        if (!aMorph.visible) return { width: aMorph.width, height: aMorph.height };
+        if (!aMorph.fixedWidth || !aMorph.fixedHeight) aMorph.withMetaDo({ doNotFit: false }, () => aMorph.fit());
+        if (!aMorph.fixedWidth) width = aMorph.width;
+        if (!aMorph.fixedHeight) height = aMorph.height;
+        return { width, height };
+      });
+    }
+    return aMorph._yogaNode;
   }
 
   resetYogaNodeFor (aMorph) {
@@ -1313,16 +1326,6 @@ export class TilingLayout extends Layout {
     const isHorizontal = !isVertical;
 
     yogaNode.setOverflow(submorph.isClip() ? Yoga.OVERFLOW_HIDDEN : Yoga.OVERFLOW_VISIBLE);
-    if (submorph.isText && (!submorph.fixedWidth || !submorph.fixedHeight)) {
-      submorph.withMetaDo({ isLayoutAction: true, doNotFit: false, metaInteraction: true }, () => {
-        if (submorph.canBeMeasuredViaCanvas) submorph.fitIfNeeded();
-        else {
-          submorph.whenRendered().then(() => {
-            submorph.fitIfNeeded();
-          });
-        }
-      });
-    }
 
     if (this.getResizeWidthPolicyFor(submorph) === 'fill') {
       if (isVertical) {
@@ -1337,7 +1340,10 @@ export class TilingLayout extends Layout {
         yogaNode.setFlexGrow(0);
         yogaNode.setFlexShrink(0);
       }
-      yogaNode.setWidth(submorph.width);
+      if (submorph.isText && !submorph.fixedWidth) {
+        yogaNode.setWidthAuto();
+        yogaNode.markDirty();
+      } else yogaNode.setWidth(submorph.width);
     }
     if (this.getResizeHeightPolicyFor(submorph) === 'fill') {
       if (isVertical) {
@@ -1352,7 +1358,10 @@ export class TilingLayout extends Layout {
         yogaNode.setFlexGrow(0);
         yogaNode.setFlexShrink(0);
       }
-      yogaNode.setHeight(submorph.height);
+      if (submorph.isText && !submorph.fixedHeight) {
+        yogaNode.setHeightAuto();
+        yogaNode.markDirty();
+      } else yogaNode.setHeight(submorph.height);
     }
 
     return yogaNode;
