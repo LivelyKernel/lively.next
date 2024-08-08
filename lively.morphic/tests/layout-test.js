@@ -257,9 +257,43 @@ describe('layout', () => {
       m2.layout.forceLayout();
       expect(m3.width).equals(600);
       expect(m3._yogaNode.getWidth().value).equals(600);
-      console.log(m3._yogaNode.getComputedLayout());
-      console.log(m4._yogaNode.getComputedLayout());
       expect(m4.left).equals(m3.width - m4.right, 'm4 layout responded to constraint change');
+    });
+
+    it('correctly handles interaction with text layouts', () => {
+      let m1, m2, m3, m4;
+      m1 = morph({
+        name: 'm1',
+        extent: pt(400, 500),
+        layout: new TilingLayout({
+          axis: 'column',
+          resizePolicies: [['m2', {
+            height: 'fixed',
+            width: 'fill'
+          }]]
+        }),
+        submorphs: [m2 = morph({
+          name: 'm2',
+          type: 'text',
+          fill: Color.black.withA(.1),
+          fixedWidth: true,
+          lineWrapping: 'by-words',
+          textString: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.'
+        }),
+        m3 = morph({
+          name: 'm3',
+          position: pt(250, 75),
+          extent: pt(400, 250),
+          fill: Color.black.withA(.1)
+        })
+        ]
+      });
+      world.addMorph(m1);
+      env.forceUpdate();
+      expect(m1.layout.getResizeWidthPolicyFor(m2)).equals('fill');
+      expect(m2.width).equals(m1.width, 'resizes horizontally');
+      expect(m2.height).equals(m2.textBounds().height, 'text layout computed');
+      expect(m3.top.toFixed()).equals(m2.bottom.toFixed(), 'layout respects text layout');
     });
 
     describe('variations', () => {
