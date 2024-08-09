@@ -457,14 +457,32 @@ export default class LivelyRollup {
     if (isCdnImport(id, importer, this.resolver)) {
       if (id.startsWith('.')) {
         id = resource(importer).parent().join(id).withRelativePartsResolved().url;
-      } else {
+      } else if (id.startsWith('/')) {
         id = resource(importer).root().join(id).withRelativePartsResolved().url;
       }
     }
 
     const importingPackage = this.resolver.resolvePackage(importer);
     // honor the systemjs options within the package config
-    const mapping = importingPackage?.systemjs?.map;
+    const { map: mapping, importMap } = importingPackage?.systemjs || {};
+    if (importMap) {
+      let remapped;
+      if (remapped = importMap.imports?.[id]) {
+        id = remapped;
+      }
+      let scope, prefix;
+      if (scope = Object.entries(importMap.scopes)
+        .filter(([k, v]) => importer.startsWith(k))
+        .sort((a, b) => a[0].length - b[0].length)
+        .map(([prefix, scope]) => scope)
+        .reduce((a, b) => ({ ...a, ...b }), false)) {
+        remapped = scope[id];
+      }
+      if (remapped) {
+        id = remapped;
+      }
+    }
+    this.moduleToPkg.set(id, importingPackage);
     if (mapping) {
       this.globalMap = { ...this.globalMap, ...mapping };
       if (mapping[id] || this.globalMap[id]) {
