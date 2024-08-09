@@ -386,32 +386,54 @@ function preNormalize (System, name, parent) {
   // '{node: "events", "~node": "@empty"}' mapping but we need it
   const { packageRegistry } = System.get('@lively-env');
   if (packageRegistry) {
+    let sourceMap, mappedObject, packageURL;
     const pkg = parent && packageRegistry.findPackageHavingURL(parent);
     if (pkg) {
-      const { map, url: packageURL } = pkg;
-      let mappedObject = (map && map[name]) || System.map[name];
-      if (mappedObject) {
-        if (typeof mappedObject === 'object') {
-          mappedObject = normalize_doMapWithObject(mappedObject, pkg, System);
-        }
-        if (typeof mappedObject === 'string' && mappedObject !== '') {
-          name = mappedObject;
-        }
-        // relative to package
-        if (name.startsWith('.')) name = urlResolve(join(packageURL, name));
+      let map, systemjs;
+      ({ map, url: packageURL, systemjs } = pkg);
+      sourceMap = !isNode && systemjs?.sourceMap; // only works in the browser
+      mappedObject = map?.[name] || System.map[name];
+    }
+
+    if (sourceMap) {
+      let remapped = sourceMap.imports?.[name];
+      let scope, prefix;
+      if (scope = Object.entries(sourceMap.scopes)
+        .filter(([k, v]) => parent.startsWith(k))
+        .sort((a, b) => a[0].length - b[0].length)
+        .map(([prefix, scope]) => scope)
+        .reduce((a, b) => ({ ...a, ...b }), false)) {
+        if (scope[name]) remapped = scope[name];
+      }
+      if (remapped) {
+        name = remapped;
+        if (mappedObject) mappedObject = name;
+        packageRegistry.moduleUrlToPkg.set(name, pkg);
       }
     }
-  }
-  // <snip> experimental
-  if (packageRegistry) {
+
+    if (mappedObject) {
+      if (typeof mappedObject === 'object') {
+        mappedObject = normalize_doMapWithObject(mappedObject, pkg, System);
+      }
+      if (typeof mappedObject === 'string' && mappedObject !== '') {
+        name = mappedObject;
+      }
+      // relative to package
+      if (name.startsWith('.')) name = urlResolve(join(packageURL, name));
+    }
+
     let resolved = packageRegistry.resolvePath(name, parent);
     if (resolved) {
       if (resolved.endsWith('/') && !name.endsWith('/')) resolved = resolved.slice(0, -1);
       if (!resolved.endsWith('/') && name.endsWith('/')) resolved = resolved + '/';
       name = resolved;
     }
+
+    if (pkg && sourceMap && !packageRegistry.moduleUrlToPkg.get(name)) {
+      packageRegistry.moduleUrlToPkg.set(name, pkg);
+    }
   }
-  // </snap> experimental
 
   System.debug && console.log(`>> [preNormalize] ${name}`);
   return name;
