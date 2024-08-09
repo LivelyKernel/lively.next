@@ -3,7 +3,7 @@ import { parseFunction, parse, stringify, ReplaceVisitor, nodes } from 'lively.a
 import { QueryReplaceManyVisitor } from 'lively.ast/lib/visitors.js';
 import catchBinding from '@babel/plugin-syntax-import-meta';
 import importMeta from '@babel/plugin-syntax-import-meta';
-
+import recast from 'recast';
 import * as capturing from './capturing.js';
 import { topLevelDeclsAndRefs, queryNodes } from 'lively.ast/lib/query.js';
 import { arr, string } from 'lively.lang';
