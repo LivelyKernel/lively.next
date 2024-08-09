@@ -28,7 +28,8 @@
     "lively.lang": "https://github.com/LivelyKernel/lively.lang",
     "lively.classes": "https://github.com/LivelyKernel/lively.classes",
     "@babel/plugin-proposal-optional-catch-binding": "7.16.7",
-    "@babel/plugin-syntax-import-meta": "7.10.4"
+    "@babel/plugin-syntax-import-meta": "7.10.4",
+    "recast": "^0.23.9"
   },
   "devDependencies": {
     "lively.vm": "*",
@@ -43,6 +44,26 @@
   },
   "systemjs": {
     "main": "index.js",
+    "sourceMap": {
+      "imports": {
+        "recast": "https://ga.jspm.io/npm:recast@0.23.9/main.js"
+      },
+      "scopes": {
+        "https://ga.jspm.io/": {
+          "ast-types": "https://ga.jspm.io/npm:ast-types@0.16.1/lib/main.js",
+          "esprima": "https://ga.jspm.io/npm:esprima@4.0.1/dist/esprima.js",
+          "fs": "https://ga.jspm.io/npm:@jspm/core@2.0.1/nodelibs/browser/fs.js",
+          "os": "https://ga.jspm.io/npm:@jspm/core@2.0.1/nodelibs/browser/os.js",
+          "process": "https://ga.jspm.io/npm:@jspm/core@2.0.1/nodelibs/browser/process.js",
+          "source-map": "https://ga.jspm.io/npm:source-map@0.6.1/source-map.js",
+          "tiny-invariant": "https://ga.jspm.io/npm:tiny-invariant@1.3.3/dist/dev.tiny-invariant.cjs.js",
+          "tslib": "https://ga.jspm.io/npm:tslib@2.6.3/tslib.es6.mjs"
+        },
+        "https://ga.jspm.io/npm:recast@0.23.9/_/35R77JPr.js": {
+          "tiny-invariant": "https://ga.jspm.io/npm:tiny-invariant@1.3.3/dist/tiny-invariant.cjs.js"
+        }
+      }
+    },
     "map": {
       "@babel/plugin-proposal-optional-catch-binding": {
         "~node": "esm://cache/@babel/plugin-proposal-optional-catch-binding",
