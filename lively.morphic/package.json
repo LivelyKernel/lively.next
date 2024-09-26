@@ -35,7 +35,7 @@
     "babel-regenerator-runtime": "^6.5.0",
     "lively.classes": "*",
     "lively.source-transform": "*",
-    "rollup": "0.36.4",
+    "rollup": "2.79.2",
     "rollup-plugin-babel": "^2.6.1",
     "uglify-es": "^3.3.9"
   },
