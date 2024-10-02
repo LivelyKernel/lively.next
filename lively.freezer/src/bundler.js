@@ -177,6 +177,7 @@ export default class LivelyRollup {
     this.projectAssets = [];
     this.customFontFiles = [];
     this.projectsInBundle = new Set();
+    this.moduleToPkg = new Map();
 
     this.resolver.setStatus({ label: 'Freezing in Progress' });
   }
@@ -462,7 +463,7 @@ export default class LivelyRollup {
       }
     }
 
-    const importingPackage = this.resolver.resolvePackage(importer);
+    const importingPackage = this.resolver.resolvePackage(importer) || this.moduleToPkg.get(importer);
     // honor the systemjs options within the package config
     const { map: mapping, importMap } = importingPackage?.systemjs || {};
     if (importMap) {
