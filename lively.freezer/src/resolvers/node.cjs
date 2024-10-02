@@ -42,11 +42,16 @@ async function availableFonts(fontCSSFile) {
   ]
 }
 
+function isCdnImport(url) {
+   return  url.includes('jspm.dev') ||
+   url.includes('esm://') ||
+   url.startsWith('https://ga.jspm.io');
+}
+
 function isAlreadyResolved(url) {
   if (url.startsWith('file://') ||
       url.startsWith('https://') ||
-      url.includes('jspm.dev') ||
-      url.includes('esm://') ||
+      isCdnImport(url) ||
       url.startsWith('node:')) return true;
 }
 
@@ -85,6 +90,9 @@ function decanonicalizeFileName (fileName) {
 }
 
 function resolvePackage (moduleName) {
+  // if the moduleName is from a ESM cdn, we cannot determine the
+  // package based on the module path
+  if (isCdnImport(moduleName)) return;
   return findPackageConfig(moduleName);
 }
 
