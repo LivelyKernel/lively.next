@@ -6,7 +6,7 @@ import importMeta from '@babel/plugin-syntax-import-meta';
 
 import * as capturing from './capturing.js';
 import { topLevelDeclsAndRefs, queryNodes } from 'lively.ast/lib/query.js';
-import { arr, string } from 'lively.lang';
+import { arr } from 'lively.lang';
 export { capturing };
 
 // fixme: this is a sort of bad placement

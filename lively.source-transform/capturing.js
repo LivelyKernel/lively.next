@@ -1,9 +1,8 @@
-import { obj, chain, arr, Path } from 'lively.lang';
+import { obj, arr, Path } from 'lively.lang';
 import {
   parse,
   stringify,
   query,
-  transform,
   nodes,
   ReplaceManyVisitor,
   ReplaceVisitor
@@ -19,146 +18,9 @@ const {
   exprStmt,
   conditional,
   binaryExpr,
-  funcCall,
-  block
+  funcCall
 } = nodes;
 const { topLevelDeclsAndRefs, helpers: queryHelpers } = query;
-const { transformSingleExpression, wrapInStartEndCall } = transform;
-
-export function rewriteToCaptureTopLevelVariables (parsed, assignToObj, options) {
-  /* replaces var and function declarations with assignment statements.
-   * Example:
-     stringify(
-       rewriteToCaptureTopLevelVariables(
-         parse("var x = 3, y = 2, z = 4"),
-         {name: "A", type: "Identifier"},
-         {exclude: ['z']}));
-     // => "A.x = 3; A.y = 2; z = 4"
-   */
-
-  if (!assignToObj) assignToObj = { type: 'Identifier', name: '__rec' };
-
-  options = {
-    ignoreUndeclaredExcept: null,
-    includeRefs: null,
-    excludeRefs: (options && options.exclude) || [],
-    includeDecls: null,
-    excludeDecls: (options && options.exclude) || [],
-    recordDefRanges: false,
-    es6ExportFuncId: null,
-    es6ImportFuncId: null,
-    captureObj: assignToObj,
-    captureImports: true,
-    moduleExportFunc: { name: options && options.es6ExportFuncId || '_moduleExport', type: 'Identifier' },
-    moduleImportFunc: { name: options && options.es6ImportFuncId || '_moduleImport', type: 'Identifier' },
-    declarationWrapper: undefined,
-    classTransform: (parsed) => parsed, // no transform
-    // classToFunction: options && options.hasOwnProperty("classToFunction") ?
-    //   options.classToFunction : {
-    //     classHolder: assignToObj,
-    //     functionNode: {type: "Identifier", name: "_createOrExtendClass"},
-    //     declarationWrapper: options && options.declarationWrapper,
-    //     evalId: options && options.evalId,
-    //     sourceAccessorName: options && options.sourceAccessorName
-    //   },
-    ...options
-  };
-
-  let rewritten = parsed;
-
-  rewritten = removeJspmGlobalRef(rewritten, options);
-
-  // "ignoreUndeclaredExcept" is null if we want to capture all globals in the toplevel scope
-  // if it is a list of names we will capture all refs with those names
-  if (options.ignoreUndeclaredExcept) {
-    const topLevel = topLevelDeclsAndRefs(parsed);
-    options.excludeRefs = arr.withoutAll(topLevel.undeclaredNames, options.ignoreUndeclaredExcept).concat(options.excludeRefs);
-    options.excludeDecls = arr.withoutAll(topLevel.undeclaredNames, options.ignoreUndeclaredExcept).concat(options.excludeDecls);
-  }
-
-  options.excludeRefs = options.excludeRefs.concat(options.captureObj.name);
-  options.excludeDecls = options.excludeDecls.concat(options.captureObj.name);
-
-  // 1. def ranges so that we know at which source code positions the
-  // definitions are
-  const defRanges = options.recordDefRanges ? computeDefRanges(rewritten, options) : null;
-
-  // 2. find those var declarations that should not be rewritten. we
-  // currently ignore var declarations in for loops and the error parameter
-  // declaration in catch clauses. Also es6 import / export declaration need
-  // a special treatment
-  // DO NOT rewrite exports like "export { foo as bar }" => "export { _rec.foo as bar }"
-  // as this is not valid syntax. Instead we add a var declaration using the
-  // recorder as init for those exports later
-  options.excludeRefs = options.excludeRefs.concat(additionalIgnoredRefs(parsed, options));
-  options.excludeDecls = options.excludeDecls.concat(additionalIgnoredDecls(parsed, options));
-
-  rewritten = fixDefaultAsyncFunctionExportForRegeneratorBug(rewritten, options);
-
-  // 3. if the es6ExportFuncId options is defined we rewrite the es6 form into an
-  // obj assignment, converting es6 code to es5 using the extra
-  // options.moduleExportFunc and options.moduleImportFunc as capture / sources
-  if (options.es6ExportFuncId) {
-    options.excludeRefs.push(options.es6ExportFuncId);
-    options.excludeRefs.push(options.es6ImportFuncId);
-    rewritten = es6ModuleTransforms(rewritten, options);
-  }
-
-  // 4. make all references declared in the toplevel scope into property
-  // reads of captureObj
-  // Example "var foo = 3; 99 + foo;" -> "var foo = 3; 99 + Global.foo;"
-  rewritten = replaceRefs(rewritten, options);
-
-  // 5.a turn var declarations into assignments to captureObj
-  // Example: "var foo = 3; 99 + foo;" -> "Global.foo = 3; 99 + foo;"
-  // if declarationWrapper is requested:
-  //   "var foo = 3;" -> "Global.foo = _define(3, 'foo', _rec, 'var');"
-  rewritten = replaceVarDecls(rewritten, options);
-
-  // clear empty exports
-  // rms 26.05.20: removes statements of the sort "export {}"
-  //               This is technically illegal ESM syntax, however
-  //               this sometimes is served by jspm due to auto generated esm modules
-  //               It's therefore worth tolerating this kind of syntax for convenience sake.
-  rewritten = clearEmptyExports(rewritten, options);
-
-  // 5.b record class declarations
-  // Example: "class Foo {}" -> "class Foo {}; Global.Foo = Foo;"
-  // if declarationWrapper is requested:
-  //   "class Foo {}" -> "Global.Foo = _define(class Foo {});"
-  rewritten = replaceClassDecls(rewritten, options);
-
-  rewritten = splitExportDeclarations(rewritten, options);
-
-  // 6. es6 export declaration are left untouched but a capturing assignment
-  // is added after the export so that we get the value:
-  // "export var x = 23;" => "export var x = 23; Global.x = x;"
-  rewritten = insertCapturesForExportDeclarations(rewritten, options);
-
-  // 7. es6 import declaration are left untouched but a capturing assignment
-  // is added after the import so that we get the value:
-  // "import x from './some-es6-module.js';" =>
-  //   "import x from './some-es6-module.js';\n_rec.x = x;"
-  if (options.captureImports) rewritten = insertCapturesForImportDeclarations(rewritten, options);
-
-  // 8. Since variable declarations like "var x = 23" were transformed to sth
-  // like "_rex.x = 23" exports can't simply reference vars anymore and
-  // "export { _rec.x }" is invalid syntax. So in front of those exports we add
-  // var decls manually
-  rewritten = insertDeclarationsForExports(rewritten, options);
-
-  // 9. assignments for function declarations in the top level scope are
-  // put in front of everything else to mirror the func hoisting:
-  // "return bar(); function bar() { return 23 }" ->
-  //   "Global.bar = bar; return bar(); function bar() { return 23 }"
-  // if declarationWrapper is requested:
-  //   "Global.bar = _define(bar, 'bar', _rec, 'function'); function bar() {}"
-  rewritten = putFunctionDeclsInFront(rewritten, options);
-
-  rewritten = transformImportMeta(rewritten, options);
-
-  return rewritten;
-}
 
 function removeJspmGlobalRef (parsed) {
   // do not replace until the
@@ -166,11 +28,11 @@ function removeJspmGlobalRef (parsed) {
   // declaration has been detected
   let declarationFound = false;
   return ReplaceVisitor.run(parsed, (node) => {
-    if (!declarationFound && node.type == 'VariableDeclarator' && node.id.name == '_global') {
-      declarationFound = stringify(node) == '_global = typeof globalThis !== "undefined" ? globalThis : typeof self !== "undefined" ? self : global';
+    if (!declarationFound && node.type === 'VariableDeclarator' && node.id.name === '_global') {
+      declarationFound = stringify(node) === '_global = typeof globalThis !== "undefined" ? globalThis : typeof self !== "undefined" ? self : global';
     }
-    if (declarationFound && node.type == 'LogicalExpression' &&
-        node.right.name == '_global') {
+    if (declarationFound && node.type === 'LogicalExpression' &&
+        node.right.name === '_global') {
       return node.left;
     }
     return node;
@@ -179,13 +41,51 @@ function removeJspmGlobalRef (parsed) {
 
 function transformImportMeta (parsed, options) {
   return ReplaceVisitor.run(parsed, (node) => {
-    if (node.type == 'MetaProperty' && node.meta.name == 'import') {
+    if (node.type === 'MetaProperty' && node.meta.name === 'import') {
       return options.classToFunction.currentModuleAccessor
         ? nodes.objectLiteral(['url', nodes.member(options.classToFunction.currentModuleAccessor, 'id')])
         : parse('({url: eval("typeof _context !== \'undefined\' ? _context : {}").id})').body[0].expression;
     }
     return node;
   });
+}
+
+function declarationWrapperCall (
+  declarationWrapperNode,
+  declNode,
+  varNameLiteral,
+  varKindLiteral,
+  valueNode,
+  recorder,
+  options
+) {
+  if (declNode) {
+    // here we pass compile-time meta data into the runtime
+    const keyVals = [];
+    let addMeta = false; let start; let end; let evalId; let sourceAccessorName;
+    if (declNode['x-lively-object-meta']) {
+      ({ start, end, evalId, sourceAccessorName } = declNode['x-lively-object-meta']);
+      addMeta = true;
+      keyVals.push('start', nodes.literal(start), 'end', nodes.literal(end));
+    }
+    if (evalId === undefined && options.hasOwnProperty('evalId')) {
+      evalId = options.evalId;
+      addMeta = true;
+    }
+    if (sourceAccessorName === undefined && options.hasOwnProperty('sourceAccessorName')) {
+      sourceAccessorName = options.sourceAccessorName;
+      addMeta = true;
+    }
+    if (evalId !== undefined) keyVals.push('evalId', nodes.literal(evalId));
+    if (sourceAccessorName) keyVals.push('moduleSource', nodes.id(sourceAccessorName));
+    if (addMeta) {
+    	 return funcCall(
+        declarationWrapperNode, varNameLiteral, varKindLiteral, valueNode, recorder,
+        nodes.objectLiteral(keyVals)/* meta node */);
+    }
+  }
+
+  return funcCall(declarationWrapperNode, varNameLiteral, varKindLiteral, valueNode, recorder);
 }
 
 export function rewriteToRegisterModuleToCaptureSetters (parsed, assignToObj, options) {
@@ -246,7 +146,7 @@ export function rewriteToRegisterModuleToCaptureSetters (parsed, assignToObj, op
 
   let captureInitialize = execute.value.body.body.find(stmt =>
     stmt.type === 'ExpressionStatement' &&
-                         stmt.expression.type == 'AssignmentExpression' &&
+                         stmt.expression.type === 'AssignmentExpression' &&
                          stmt.expression.left.name === options.captureObj.name);
   if (!captureInitialize) {
     captureInitialize = execute.value.body.body.find(stmt =>
@@ -262,7 +162,7 @@ export function rewriteToRegisterModuleToCaptureSetters (parsed, assignToObj, op
   if (options.sourceAccessorName) {
     let origSourceInitialize = execute.value.body.body.find(stmt =>
       stmt.type === 'ExpressionStatement' &&
-                           stmt.expression.type == 'AssignmentExpression' &&
+                           stmt.expression.type === 'AssignmentExpression' &&
                            stmt.expression.left.name === options.sourceAccessorName);
     if (!origSourceInitialize) {
       origSourceInitialize = execute.value.body.body.find(stmt =>
@@ -282,12 +182,31 @@ export function rewriteToRegisterModuleToCaptureSetters (parsed, assignToObj, op
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // replacement helpers
 
-function clearEmptyExports (parsed, options) {
+function clearEmptyExports (parsed) {
   const topLevel = topLevelDeclsAndRefs(parsed);
   for (const exp of topLevel.scope.exportDecls) {
     if (!exp.declaration && exp.specifiers && !exp.specifiers.length) { arr.remove(parsed.body, exp); }
   }
   return parsed;
+}
+
+function shouldDeclBeCaptured (decl, options) {
+  return options.excludeDecls.indexOf(decl.id.name) === -1 &&
+    options.excludeDecls.indexOf(decl.id) === -1 &&
+    (!options.includeDecls || options.includeDecls.indexOf(decl.id.name) > -1);
+}
+
+function shouldRefBeCaptured (ref, toplevel, options) {
+  if (toplevel.scope.importSpecifiers.includes(ref)) return false;
+  for (let i = 0; i < toplevel.scope.exportDecls.length; i++) {
+    const ea = toplevel.scope.exportDecls[i];
+    if (ea.declarations && ea.declarations.includes(ref)) return false;
+    if (ea.declaration === ref) return false;
+  }
+  if (options.excludeRefs.includes(ref.object?.name)) return false;
+  if (options.excludeRefs.includes(ref.name)) return false;
+  if (options.includeRefs && !options.includeRefs.includes(ref.name)) return false;
+  return true;
 }
 
 function replaceRefs (parsed, options) {
@@ -296,7 +215,7 @@ function replaceRefs (parsed, options) {
   const locallyIgnored = [];
   let intermediateCounter = 0;
 
-  const replaced = ReplaceVisitor.run(parsed, (node, path) => {
+  const replaced = ReplaceVisitor.run(parsed, (node) => {
     // cs 2016/06/27, 1a4661
     // ensure keys of shorthand properties are not renamed while capturing
     if (node.type === 'Property' &&
@@ -366,10 +285,217 @@ function replaceRefs (parsed, options) {
     return node;
   });
 
-  return ReplaceVisitor.run(replaced, (node, path, parent) =>
+  return ReplaceVisitor.run(replaced, (node) =>
     refsToReplace.includes(node) && !locallyIgnored.includes(node)
       ? member(options.captureObj, node)
       : node);
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// naming
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function generateUniqueName (declaredNames, hint) {
+  let unique = hint; let n = 1;
+  while (declaredNames.indexOf(unique) > -1) {
+    if (n > 1000) throw new Error('Endless loop searching for unique variable ' + unique);
+    unique = unique.replace(/_[0-9]+$|$/, '_' + (++n));
+  }
+  return unique;
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// code generation helpers
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function varDeclOrAssignment (parsed, declarator, kind) {
+  const topLevel = topLevelDeclsAndRefs(parsed);
+  const name = declarator.id.name;
+  return topLevel.declaredNames.indexOf(name) > -1
+    // only create a new declaration if necessary
+    ? exprStmt(assign(declarator.id, declarator.init))
+    : {
+        declarations: [declarator],
+        kind: kind || 'var',
+        type: 'VariableDeclaration'
+      };
+}
+
+function assignExpr (assignee, propId, value, computed) {
+  return exprStmt(
+    assign(
+      member(assignee, propId, computed),
+      value || id('undefined')));
+}
+
+function importCall (imported, moduleSource, moduleImportFunc) {
+  if (typeof imported === 'string') imported = literal(imported);
+  return {
+    arguments: [moduleSource].concat(imported || []),
+    callee: moduleImportFunc,
+    type: 'CallExpression'
+  };
+}
+
+function varDeclAndImportCall (parsed, localId, imported, moduleSource, moduleImportFunc) {
+  // return varDeclOrAssignment(parsed, {
+  //   type: "VariableDeclarator",
+  //   id: localId,
+  //   init: importCall(imported, moduleSource, moduleImportFunc)
+  // });
+  return varDecl(localId, importCall(imported, moduleSource, moduleImportFunc));
+}
+
+function importCallStmt (imported, moduleSource, moduleImportFunc) {
+  return exprStmt(importCall(imported, moduleSource, moduleImportFunc));
+}
+
+function exportCall (exportFunc, local, exportedObj) {
+  if (typeof local === 'string') local = literal(local);
+  exportedObj = obj.deepCopy(exportedObj);
+  return funcCall(exportFunc, local, exportedObj);
+}
+
+function exportFromImport (keyLeft, keyRight, moduleId, moduleExportFunc, moduleImportFunc) {
+  return exportCall(moduleExportFunc, keyLeft, importCall(keyRight, moduleId, moduleImportFunc));
+}
+
+function exportCallStmt (exportFunc, local, exportedObj) {
+  return exprStmt(exportCall(exportFunc, local, exportedObj));
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// capturing oobject patters / destructuring
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+let annotationSym = Symbol('lively.ast-destructuring-transform');
+
+function transformArrayPattern (pattern, transformState) {
+  const declaredNames = transformState.declaredNames;
+  const p = annotationSym;
+  const transformed = [];
+
+  for (let i = 0; i < pattern.elements.length; i++) {
+    const el = pattern.elements[i];
+
+    // like [a]
+    if (el.type === 'Identifier') {
+      let decl = varDecl(el, member(transformState.parent, id(i), true));
+      decl[p] = { capture: true };
+      transformed.push(decl);
+
+    // like [...foo]
+    } else if (el.type === 'RestElement') {
+      let decl = varDecl(el.argument, {
+        type: 'CallExpression',
+        arguments: [{ type: 'Literal', value: i }],
+        callee: member(transformState.parent, id('slice'), false)
+      });
+      decl[p] = { capture: true };
+      transformed.push(decl);
+    } else if (el.type === 'AssignmentPattern') {
+      // like [x = 23]
+      let decl = varDecl(
+        el.left/* id */,
+        conditional(
+          binaryExpr(member(transformState.parent, id(i), true), '===', id('undefined')),
+          el.right,
+          member(transformState.parent, id(i), true)));
+      decl[p] = { capture: true };
+      transformed.push(decl);
+
+    // like [{x}]
+    } else {
+      const helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + '$' + i));
+      const helperVar = varDecl(helperVarId, member(transformState.parent, i));
+      // helperVar[p] = {capture: true};
+      declaredNames.push(helperVarId.name);
+      transformed.push(helperVar);
+      transformed.push(...transformPattern(el, { parent: helperVarId, declaredNames })); // eslint-disable-line no-use-before-define
+    }
+  }
+  return transformed;
+}
+
+function transformObjectPattern (pattern, transformState) {
+  const declaredNames = transformState.declaredNames;
+  const p = annotationSym;
+  const transformed = [];
+
+  for (let i = 0; i < pattern.properties.length; i++) {
+    const prop = pattern.properties[i];
+
+    if (prop.type === 'RestElement') {
+      const knownKeys = pattern.properties.map(ea => ea.key && ea.key.name).filter(Boolean);
+      let decl = nodes.varDecl(prop.argument.name, nodes.objectLiteral([]));
+      const captureDecl = nodes.varDecl(prop.argument.name, id(prop.argument.name));
+      const defCall = nodes.exprStmt(nodes.funcCall(nodes.funcExpr({}, [],
+        nodes.forIn('__key', transformState.parent,
+          nodes.block(
+            ...(knownKeys.length
+              ? knownKeys.map(knownKey =>
+                nodes.ifStmt(
+                  nodes.binaryExpr(nodes.id('__key'), '===', nodes.literal(knownKey)),
+                  { type: 'ContinueStatement', label: null }, null))
+              : []),
+            nodes.exprStmt(
+              nodes.assign(
+                nodes.member(prop.argument.name, nodes.id('__key'), true),
+                nodes.member(transformState.parent, nodes.id('__key'), true)))
+          )))));
+
+      captureDecl[p] = { capture: true };
+      transformed.push(decl, captureDecl, defCall);
+    } else if (prop.value.type === 'Identifier') {
+      // like {x: y}
+      let decl = varDecl(prop.value, member(transformState.parent, prop.key));
+      decl[p] = { capture: true };
+      transformed.push(decl);
+    } else if (prop.value.type === 'AssignmentPattern') {
+      // like {x = 23}
+      let decl = varDecl(
+        prop.value.left/* id */,
+        conditional(
+          binaryExpr(member(transformState.parent, prop.key), '===', id('undefined')),
+          prop.value.right,
+          member(transformState.parent, prop.key)));
+      decl[p] = { capture: true };
+      transformed.push(decl);
+    } else {
+      // like {x: {z}} or {x: [a]}
+      const helperVarId = id(generateUniqueName(
+        declaredNames,
+        transformState.parent.name + '$' + prop.key.name));
+      const helperVar = varDecl(helperVarId, member(transformState.parent, prop.key));
+      helperVar[p] = { capture: false };
+      declaredNames.push(helperVarId.name);
+      transformed.push(
+        ...[helperVar].concat(
+          transformPattern(prop.value, { parent: helperVarId, declaredNames: declaredNames }))); // eslint-disable-line no-use-before-define
+    }
+  }
+
+  return transformed;
+}
+
+function transformPattern (pattern, transformState) {
+  // For transforming destructuring expressions into plain vars and member access.
+  // Takes a var or argument pattern node (of type ArrayPattern or
+  // ObjectPattern) and transforms it into a set of var declarations that will
+  // "pull out" the nested properties
+  // Example:
+  // var parsed = parse("var [{b: {c: [a]}}] = foo;");
+  // var state = {parent: {type: "Identifier", name: "arg"}, declaredNames: ["foo"]}
+  // transformPattern(parsed.body[0].declarations[0].id, state).map(stringify).join("\n");
+  // // => "var arg$0 = arg[0];\n"
+  // //  + "var arg$0$b = arg$0.b;\n"
+  // //  + "var arg$0$b$c = arg$0$b.c;\n"
+  // //  + "var a = arg$0$b$c[0];"
+  return pattern.type === 'ArrayPattern'
+    ? transformArrayPattern(pattern, transformState)
+    : pattern.type === 'ObjectPattern'
+      ? transformObjectPattern(pattern, transformState)
+      : [];
 }
 
 function replaceVarDecls (parsed, options) {
@@ -450,23 +576,10 @@ function replaceVarDecls (parsed, options) {
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// naming
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-function generateUniqueName (declaredNames, hint) {
-  let unique = hint; let n = 1;
-  while (declaredNames.indexOf(unique) > -1) {
-    if (n > 1000) throw new Error('Endless loop searching for unique variable ' + unique);
-    unique = unique.replace(/_[0-9]+$|$/, '_' + (++n));
-  }
-  return unique;
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // exclude / include helpers
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function additionalIgnoredDecls (parsed, options) {
+function additionalIgnoredDecls (parsed) {
   const topLevel = topLevelDeclsAndRefs(parsed); const ignoreDecls = [];
   for (let i = 0; i < topLevel.scope.varDecls.length; i++) {
     const decl = topLevel.scope.varDecls[i];
@@ -510,25 +623,6 @@ function additionalIgnoredRefs (parsed, options) {
       .map(ea => ea.name));
 }
 
-function shouldDeclBeCaptured (decl, options) {
-  return options.excludeDecls.indexOf(decl.id.name) === -1 &&
-    options.excludeDecls.indexOf(decl.id) === -1 &&
-    (!options.includeDecls || options.includeDecls.indexOf(decl.id.name) > -1);
-}
-
-function shouldRefBeCaptured (ref, toplevel, options) {
-  if (toplevel.scope.importSpecifiers.includes(ref)) return false;
-  for (let i = 0; i < toplevel.scope.exportDecls.length; i++) {
-    const ea = toplevel.scope.exportDecls[i];
-    if (ea.declarations && ea.declarations.includes(ref)) return false;
-    if (ea.declaration === ref) return false;
-  }
-  if (options.excludeRefs.includes(ref.object?.name)) return false;
-  if (options.excludeRefs.includes(ref.name)) return false;
-  if (options.includeRefs && !options.includeRefs.includes(ref.name)) return false;
-  return true;
-}
-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // capturing specific code
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -548,7 +642,7 @@ function replaceClassDecls (parsed, options) {
   return parsed;
 }
 
-function splitExportDeclarations (parsed, options) {
+function splitExportDeclarations (parsed) {
   const stmts = parsed.body; const newNodes = parsed.body = [];
   for (let i = 0; i < stmts.length; i++) {
     const stmt = stmts[i];
@@ -638,7 +732,6 @@ function insertCapturesForExportDeclarations (parsed, options) {
       // default export of an unnamed primitive value, i.e.
       // "export default "foo"", "export default 27;"
       const decl = stmt.declaration;
-      const assignVal = decl.raw;
       const refId = generateUniqueName(topLevelDeclsAndRefs(parsed).declaredNames, '$' + decl.raw.split('"').join(''));
       stmt.declaration = id(refId);
       arr.pushAt(body, assignExpr(options.captureObj, refId, decl.raw, false), body.indexOf(stmt));
@@ -737,7 +830,7 @@ function insertDeclarationsForExports (parsed, options) {
   return parsed;
 }
 
-function fixDefaultAsyncFunctionExportForRegeneratorBug (parsed, options) {
+function fixDefaultAsyncFunctionExportForRegeneratorBug (parsed) {
   // rk 2016-06-02: see https://github.com/LivelyKernel/lively.modules/issues/9
   // FIXME this needs to be removed as soon as the cause for the issue is fixed
   const body = [];
@@ -757,11 +850,12 @@ function fixDefaultAsyncFunctionExportForRegeneratorBug (parsed, options) {
 }
 
 function es6ModuleTransforms (parsed, options) {
+  let moduleId;
   parsed.body = parsed.body.reduce((stmts, stmt) => {
     let nodes;
     if (stmt.type === 'ExportNamedDeclaration') {
       if (stmt.source) {
-        var key = moduleId = stmt.source;
+        moduleId = stmt.source;
         nodes = stmt.specifiers.map(specifier => ({
           type: 'ExpressionStatement',
           expression: exportFromImport(
@@ -808,7 +902,7 @@ function es6ModuleTransforms (parsed, options) {
         nodes = [exportCallStmt(options.moduleExportFunc, 'default', stmt.declaration)];
       }
     } else if (stmt.type === 'ExportAllDeclaration') {
-      var key = { name: options.es6ExportFuncId + '__iterator__', type: 'Identifier' }; var moduleId = stmt.source;
+      const key = { name: options.es6ExportFuncId + '__iterator__', type: 'Identifier' }; moduleId = stmt.source;
       nodes = [
         {
           type: 'ForInStatement',
@@ -888,246 +982,137 @@ function putFunctionDeclsInFront (parsed, options) {
   return parsed;
 }
 
-function computeDefRanges (parsed, options) {
-  const topLevel = topLevelDeclsAndRefs(parsed);
-  return chain(topLevel.scope.varDecls)
-    .pluck('declarations').flat().value()
-    .concat(topLevel.scope.funcDecls.filter(ea => ea.id))
-    .reduce((defs, decl) => {
-      if (!defs[decl.id.name]) defs[decl.id.name] = [];
-      defs[decl.id.name].push({ type: decl.type, start: decl.start, end: decl.end });
-      return defs;
-    }, {});
-}
+export function rewriteToCaptureTopLevelVariables (parsed, assignToObj, options) {
+  /* replaces var and function declarations with assignment statements.
+   * Example:
+     stringify(
+       rewriteToCaptureTopLevelVariables(
+         parse("var x = 3, y = 2, z = 4"),
+         {name: "A", type: "Identifier"},
+         {exclude: ['z']}));
+     // => "A.x = 3; A.y = 2; z = 4"
+   */
 
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// capturing oobject patters / destructuring
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  if (!assignToObj) assignToObj = { type: 'Identifier', name: '__rec' };
 
-var annotationSym = Symbol('lively.ast-destructuring-transform');
-
-function transformPattern (pattern, transformState) {
-  // For transforming destructuring expressions into plain vars and member access.
-  // Takes a var or argument pattern node (of type ArrayPattern or
-  // ObjectPattern) and transforms it into a set of var declarations that will
-  // "pull out" the nested properties
-  // Example:
-  // var parsed = parse("var [{b: {c: [a]}}] = foo;");
-  // var state = {parent: {type: "Identifier", name: "arg"}, declaredNames: ["foo"]}
-  // transformPattern(parsed.body[0].declarations[0].id, state).map(stringify).join("\n");
-  // // => "var arg$0 = arg[0];\n"
-  // //  + "var arg$0$b = arg$0.b;\n"
-  // //  + "var arg$0$b$c = arg$0$b.c;\n"
-  // //  + "var a = arg$0$b$c[0];"
-  return pattern.type === 'ArrayPattern'
-    ? transformArrayPattern(pattern, transformState)
-    : pattern.type === 'ObjectPattern'
-      ? transformObjectPattern(pattern, transformState)
-      : [];
-}
-
-function transformArrayPattern (pattern, transformState) {
-  const declaredNames = transformState.declaredNames;
-  const p = annotationSym;
-  const transformed = [];
-
-  for (let i = 0; i < pattern.elements.length; i++) {
-    const el = pattern.elements[i];
-
-    // like [a]
-    if (el.type === 'Identifier') {
-      var decl = varDecl(el, member(transformState.parent, id(i), true));
-      decl[p] = { capture: true };
-      transformed.push(decl);
-
-    // like [...foo]
-    } else if (el.type === 'RestElement') {
-      var decl = varDecl(el.argument, {
-        type: 'CallExpression',
-        arguments: [{ type: 'Literal', value: i }],
-        callee: member(transformState.parent, id('slice'), false)
-      });
-      decl[p] = { capture: true };
-      transformed.push(decl);
-    } else if (el.type == 'AssignmentPattern') {
-      // like [x = 23]
-      var decl = varDecl(
-        el.left/* id */,
-        conditional(
-          binaryExpr(member(transformState.parent, id(i), true), '===', id('undefined')),
-          el.right,
-          member(transformState.parent, id(i), true)));
-      decl[p] = { capture: true };
-      transformed.push(decl);
-
-    // like [{x}]
-    } else {
-      const helperVarId = id(generateUniqueName(declaredNames, transformState.parent.name + '$' + i));
-      const helperVar = varDecl(helperVarId, member(transformState.parent, i));
-      // helperVar[p] = {capture: true};
-      declaredNames.push(helperVarId.name);
-      transformed.push(helperVar);
-      transformed.push(...transformPattern(el, { parent: helperVarId, declaredNames }));
-    }
-  }
-  return transformed;
-}
-
-function transformObjectPattern (pattern, transformState) {
-  const declaredNames = transformState.declaredNames;
-  const p = annotationSym;
-  const transformed = [];
-
-  for (let i = 0; i < pattern.properties.length; i++) {
-    const prop = pattern.properties[i];
-
-    if (prop.type == 'RestElement') {
-      const knownKeys = pattern.properties.map(ea => ea.key && ea.key.name).filter(Boolean);
-      var decl = nodes.varDecl(prop.argument.name, nodes.objectLiteral([]));
-      const captureDecl = nodes.varDecl(prop.argument.name, id(prop.argument.name));
-      const defCall = nodes.exprStmt(nodes.funcCall(nodes.funcExpr({}, [],
-        nodes.forIn('__key', transformState.parent,
-          nodes.block(
-            ...(knownKeys.length
-              ? knownKeys.map(knownKey =>
-                nodes.ifStmt(
-                  nodes.binaryExpr(nodes.id('__key'), '===', nodes.literal(knownKey)),
-                  { type: 'ContinueStatement', label: null }, null))
-              : []),
-            nodes.exprStmt(
-              nodes.assign(
-                nodes.member(prop.argument.name, nodes.id('__key'), true),
-                nodes.member(transformState.parent, nodes.id('__key'), true)))
-          )))));
-
-      captureDecl[p] = { capture: true };
-      transformed.push(decl, captureDecl, defCall);
-    } else if (prop.value.type == 'Identifier') {
-      // like {x: y}
-      var decl = varDecl(prop.value, member(transformState.parent, prop.key));
-      decl[p] = { capture: true };
-      transformed.push(decl);
-    } else if (prop.value.type == 'AssignmentPattern') {
-      // like {x = 23}
-      var decl = varDecl(
-        prop.value.left/* id */,
-        conditional(
-          binaryExpr(member(transformState.parent, prop.key), '===', id('undefined')),
-          prop.value.right,
-          member(transformState.parent, prop.key)));
-      decl[p] = { capture: true };
-      transformed.push(decl);
-    } else {
-      // like {x: {z}} or {x: [a]}
-      const helperVarId = id(generateUniqueName(
-        declaredNames,
-        transformState.parent.name + '$' + prop.key.name));
-      const helperVar = varDecl(helperVarId, member(transformState.parent, prop.key));
-      helperVar[p] = { capture: false };
-      declaredNames.push(helperVarId.name);
-      transformed.push(
-        ...[helperVar].concat(
-          transformPattern(prop.value, { parent: helperVarId, declaredNames: declaredNames })));
-    }
-  }
-
-  return transformed;
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// code generation helpers
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-function varDeclOrAssignment (parsed, declarator, kind) {
-  const topLevel = topLevelDeclsAndRefs(parsed);
-  const name = declarator.id.name;
-  return topLevel.declaredNames.indexOf(name) > -1
-    // only create a new declaration if necessary
-    ? exprStmt(assign(declarator.id, declarator.init))
-    : {
-        declarations: [declarator],
-        kind: kind || 'var',
-        type: 'VariableDeclaration'
-      };
-}
-
-function assignExpr (assignee, propId, value, computed) {
-  return exprStmt(
-    assign(
-      member(assignee, propId, computed),
-      value || id('undefined')));
-}
-
-function exportFromImport (keyLeft, keyRight, moduleId, moduleExportFunc, moduleImportFunc) {
-  return exportCall(moduleExportFunc, keyLeft, importCall(keyRight, moduleId, moduleImportFunc));
-}
-
-function varDeclAndImportCall (parsed, localId, imported, moduleSource, moduleImportFunc) {
-  // return varDeclOrAssignment(parsed, {
-  //   type: "VariableDeclarator",
-  //   id: localId,
-  //   init: importCall(imported, moduleSource, moduleImportFunc)
-  // });
-  return varDecl(localId, importCall(imported, moduleSource, moduleImportFunc));
-}
-
-function importCall (imported, moduleSource, moduleImportFunc) {
-  if (typeof imported === 'string') imported = literal(imported);
-  return {
-    arguments: [moduleSource].concat(imported || []),
-    callee: moduleImportFunc,
-    type: 'CallExpression'
+  options = {
+    ignoreUndeclaredExcept: null,
+    includeRefs: null,
+    excludeRefs: (options && options.exclude) || [],
+    includeDecls: null,
+    excludeDecls: (options && options.exclude) || [],
+    recordDefRanges: false,
+    es6ExportFuncId: null,
+    es6ImportFuncId: null,
+    captureObj: assignToObj,
+    captureImports: true,
+    moduleExportFunc: { name: options && options.es6ExportFuncId || '_moduleExport', type: 'Identifier' },
+    moduleImportFunc: { name: options && options.es6ImportFuncId || '_moduleImport', type: 'Identifier' },
+    declarationWrapper: undefined,
+    classTransform: (parsed) => parsed, // no transform
+    // classToFunction: options && options.hasOwnProperty("classToFunction") ?
+    //   options.classToFunction : {
+    //     classHolder: assignToObj,
+    //     functionNode: {type: "Identifier", name: "_createOrExtendClass"},
+    //     declarationWrapper: options && options.declarationWrapper,
+    //     evalId: options && options.evalId,
+    //     sourceAccessorName: options && options.sourceAccessorName
+    //   },
+    ...options
   };
-}
 
-function importCallStmt (imported, moduleSource, moduleImportFunc) {
-  return exprStmt(importCall(imported, moduleSource, moduleImportFunc));
-}
+  let rewritten = parsed;
 
-function exportCall (exportFunc, local, exportedObj) {
-  if (typeof local === 'string') local = literal(local);
-  exportedObj = obj.deepCopy(exportedObj);
-  return funcCall(exportFunc, local, exportedObj);
-}
+  rewritten = removeJspmGlobalRef(rewritten, options);
 
-function exportCallStmt (exportFunc, local, exportedObj) {
-  return exprStmt(exportCall(exportFunc, local, exportedObj));
-}
-
-function declarationWrapperCall (
-  declarationWrapperNode,
-  declNode,
-  varNameLiteral,
-  varKindLiteral,
-  valueNode,
-  recorder,
-  options
-) {
-  if (declNode) {
-    // here we pass compile-time meta data into the runtime
-    const keyVals = [];
-    let addMeta = false;
-    if (declNode['x-lively-object-meta']) {
-      var { start, end, evalId, sourceAccessorName } = declNode['x-lively-object-meta'];
-      addMeta = true;
-      keyVals.push('start', nodes.literal(start), 'end', nodes.literal(end));
-    }
-    if (evalId === undefined && options.hasOwnProperty('evalId')) {
-      evalId = options.evalId;
-      addMeta = true;
-    }
-    if (sourceAccessorName === undefined && options.hasOwnProperty('sourceAccessorName')) {
-      sourceAccessorName = options.sourceAccessorName;
-      addMeta = true;
-    }
-    if (evalId !== undefined) keyVals.push('evalId', nodes.literal(evalId));
-    if (sourceAccessorName) keyVals.push('moduleSource', nodes.id(sourceAccessorName));
-    if (addMeta) {
-    	 return funcCall(
-        declarationWrapperNode, varNameLiteral, varKindLiteral, valueNode, recorder,
-        nodes.objectLiteral(keyVals)/* meta node */);
-    }
+  // "ignoreUndeclaredExcept" is null if we want to capture all globals in the toplevel scope
+  // if it is a list of names we will capture all refs with those names
+  if (options.ignoreUndeclaredExcept) {
+    const topLevel = topLevelDeclsAndRefs(parsed);
+    options.excludeRefs = arr.withoutAll(topLevel.undeclaredNames, options.ignoreUndeclaredExcept).concat(options.excludeRefs);
+    options.excludeDecls = arr.withoutAll(topLevel.undeclaredNames, options.ignoreUndeclaredExcept).concat(options.excludeDecls);
   }
 
-  return funcCall(declarationWrapperNode, varNameLiteral, varKindLiteral, valueNode, recorder);
+  options.excludeRefs = options.excludeRefs.concat(options.captureObj.name);
+  options.excludeDecls = options.excludeDecls.concat(options.captureObj.name);
+
+  // 1. def ranges so that we know at which source code positions the
+  // definitions are
+  // const defRanges = options.recordDefRanges ? computeDefRanges(rewritten, options) : null;
+
+  // 2. find those var declarations that should not be rewritten. we
+  // currently ignore var declarations in for loops and the error parameter
+  // declaration in catch clauses. Also es6 import / export declaration need
+  // a special treatment
+  // DO NOT rewrite exports like "export { foo as bar }" => "export { _rec.foo as bar }"
+  // as this is not valid syntax. Instead we add a var declaration using the
+  // recorder as init for those exports later
+  options.excludeRefs = options.excludeRefs.concat(additionalIgnoredRefs(parsed, options));
+  options.excludeDecls = options.excludeDecls.concat(additionalIgnoredDecls(parsed, options));
+
+  rewritten = fixDefaultAsyncFunctionExportForRegeneratorBug(rewritten, options);
+
+  // 3. if the es6ExportFuncId options is defined we rewrite the es6 form into an
+  // obj assignment, converting es6 code to es5 using the extra
+  // options.moduleExportFunc and options.moduleImportFunc as capture / sources
+  if (options.es6ExportFuncId) {
+    options.excludeRefs.push(options.es6ExportFuncId);
+    options.excludeRefs.push(options.es6ImportFuncId);
+    rewritten = es6ModuleTransforms(rewritten, options);
+  }
+
+  // 4. make all references declared in the toplevel scope into property
+  // reads of captureObj
+  // Example "var foo = 3; 99 + foo;" -> "var foo = 3; 99 + Global.foo;"
+  rewritten = replaceRefs(rewritten, options);
+
+  // 5.a turn var declarations into assignments to captureObj
+  // Example: "var foo = 3; 99 + foo;" -> "Global.foo = 3; 99 + foo;"
+  // if declarationWrapper is requested:
+  //   "var foo = 3;" -> "Global.foo = _define(3, 'foo', _rec, 'var');"
+  rewritten = replaceVarDecls(rewritten, options);
+
+  // clear empty exports
+  // rms 26.05.20: removes statements of the sort "export {}"
+  //               This is technically illegal ESM syntax, however
+  //               this sometimes is served by jspm due to auto generated esm modules
+  //               It's therefore worth tolerating this kind of syntax for convenience sake.
+  rewritten = clearEmptyExports(rewritten, options);
+
+  // 5.b record class declarations
+  // Example: "class Foo {}" -> "class Foo {}; Global.Foo = Foo;"
+  // if declarationWrapper is requested:
+  //   "class Foo {}" -> "Global.Foo = _define(class Foo {});"
+  rewritten = replaceClassDecls(rewritten, options);
+
+  rewritten = splitExportDeclarations(rewritten, options);
+
+  // 6. es6 export declaration are left untouched but a capturing assignment
+  // is added after the export so that we get the value:
+  // "export var x = 23;" => "export var x = 23; Global.x = x;"
+  rewritten = insertCapturesForExportDeclarations(rewritten, options);
+
+  // 7. es6 import declaration are left untouched but a capturing assignment
+  // is added after the import so that we get the value:
+  // "import x from './some-es6-module.js';" =>
+  //   "import x from './some-es6-module.js';\n_rec.x = x;"
+  if (options.captureImports) rewritten = insertCapturesForImportDeclarations(rewritten, options);
+
+  // 8. Since variable declarations like "var x = 23" were transformed to sth
+  // like "_rex.x = 23" exports can't simply reference vars anymore and
+  // "export { _rec.x }" is invalid syntax. So in front of those exports we add
+  // var decls manually
+  rewritten = insertDeclarationsForExports(rewritten, options);
+
+  // 9. assignments for function declarations in the top level scope are
+  // put in front of everything else to mirror the func hoisting:
+  // "return bar(); function bar() { return 23 }" ->
+  //   "Global.bar = bar; return bar(); function bar() { return 23 }"
+  // if declarationWrapper is requested:
+  //   "Global.bar = _define(bar, 'bar', _rec, 'function'); function bar() {}"
+  rewritten = putFunctionDeclsInFront(rewritten, options);
+
+  rewritten = transformImportMeta(rewritten, options);
+
+  return rewritten;
 }
