@@ -386,19 +386,19 @@ function preNormalize (System, name, parent) {
   // '{node: "events", "~node": "@empty"}' mapping but we need it
   const { packageRegistry } = System.get('@lively-env');
   if (packageRegistry) {
-    let sourceMap, mappedObject, packageURL;
+    let importMap, mappedObject, packageURL;
     const pkg = parent && packageRegistry.findPackageHavingURL(parent);
     if (pkg) {
       let map, systemjs;
       ({ map, url: packageURL, systemjs } = pkg);
-      sourceMap = !isNode && systemjs?.sourceMap; // only works in the browser
+      importMap = !isNode && systemjs?.importMap; // only works in the browser
       mappedObject = map?.[name] || System.map[name];
     }
 
-    if (sourceMap) {
-      let remapped = sourceMap.imports?.[name];
+    if (importMap) {
+      let remapped = importMap.imports?.[name];
       let scope, prefix;
-      if (scope = Object.entries(sourceMap.scopes)
+      if (scope = Object.entries(importMap.scopes)
         .filter(([k, v]) => parent.startsWith(k))
         .sort((a, b) => a[0].length - b[0].length)
         .map(([prefix, scope]) => scope)
@@ -430,7 +430,7 @@ function preNormalize (System, name, parent) {
       name = resolved;
     }
 
-    if (pkg && sourceMap && !packageRegistry.moduleUrlToPkg.get(name)) {
+    if (pkg && importMap && !packageRegistry.moduleUrlToPkg.get(name)) {
       packageRegistry.moduleUrlToPkg.set(name, pkg);
     }
   }
