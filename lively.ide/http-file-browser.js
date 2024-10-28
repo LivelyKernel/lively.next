@@ -1,5 +1,5 @@
 /* global System */
-import { Morph, Icon, part, Image, Label } from 'lively.morphic';
+import { Morph, TilingLayout, Icon, part, Image, Label } from 'lively.morphic';
 import { Tree, TreeData } from 'lively.components';
 import { arr, promise, num, date, string } from 'lively.lang';
 import { pt, Rectangle, Color } from 'lively.graphics';
@@ -377,6 +377,20 @@ export default class HTTPFileBrowser extends Morph {
       excludeFiles: { defaultValue: ['.git', '.DS_Store'] },
       draggable: { defaultValue: false },
 
+      layout: {
+        initialize () {
+          this.layout = new TilingLayout({
+            axis: 'column',
+            resizePolicies: [
+              ['input wrapper', { width: 'fill', height: 'fixed' }],
+              ['fileTree', { width: 'fill', height: 'fill' }],
+              ['selectedFileName', { width: 'fill', height: 'fixed' }],
+              ['button container', { width: 'fill', height: 'fixed' }]
+            ]
+          });
+        }
+      },
+
       submorphs: {
         initialize () {
           const btnStyle = {
@@ -387,7 +401,37 @@ export default class HTTPFileBrowser extends Morph {
             draggable: false
           };
 
+          const topButtons = [
+            part(SystemButton, { name: 'searchButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('search') }], tooltip: 'search for files' }),
+            part(SystemButton, { name: 'reloadButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('redo') }], tooltip: 'reload list' }),
+            part(SystemButton, { name: 'filterButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('filter') }], tooltip: 'set file filter' })
+          ];
+          const bottomButtons = [
+            part(SystemButton, { name: 'openFileButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('edit', { fontWeight: '400' }) }], tooltip: 'open selected file' }),
+            part(SystemButton, { name: 'addDirectoryButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('folder', { fontWeight: '400' }) }], tooltip: 'add directory' }),
+            part(SystemButton, { name: 'addFileButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('file', { fontWeight: '400' }) }], tooltip: 'add file' }),
+            part(SystemButton, { name: 'renameFileButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('mi-drive_file_rename_outline', { fontWeight: '400' }) }], tooltip: 'rename selected file' }),
+            part(SystemButton, { name: 'deleteFileButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('trash-alt', { fontWeight: '400' }) }], tooltip: 'delete selected file' })];
+
           this.submorphs = [
+            {
+              name: 'input wrapper',
+              layout: new TilingLayout({
+                resizePolicies: [
+                  ['locationInput', { width: 'fill', height: 'fixed' }]
+                ]
+              }),
+              submorphs: [
+                new InputLine({
+                  name: 'locationInput',
+                  textString: '',
+                  historyId: 'http-file-browser-location-input-history',
+                  padding: Rectangle.inset(4, 2)
+                }),
+                ...topButtons
+              ]
+            },
+
             new Tree({
               name: 'fileTree',
               treeData: new HTTPFileBrowserNode({
@@ -407,13 +451,6 @@ export default class HTTPFileBrowser extends Morph {
               padding: Rectangle.inset(4)
             }),
 
-            new InputLine({
-              name: 'locationInput',
-              textString: '',
-              historyId: 'http-file-browser-location-input-history',
-              padding: Rectangle.inset(4, 2)
-            }),
-
             {
               type: 'label',
               name: 'selectedFileName',
@@ -427,14 +464,14 @@ export default class HTTPFileBrowser extends Morph {
               fontWeight: 'bold'
             },
 
-            part(SystemButton, { name: 'searchButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('search') }], tooltip: 'search for files' }),
-            part(SystemButton, { name: 'reloadButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('redo') }], tooltip: 'reload list' }),
-            part(SystemButton, { name: 'filterButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('filter') }], tooltip: 'set file filter' }),
-            part(SystemButton, { name: 'openFileButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('edit', { fontWeight: '400' }) }], tooltip: 'open selected file' }),
-            part(SystemButton, { name: 'addDirectoryButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('folder', { fontWeight: '400' }) }], tooltip: 'add directory' }),
-            part(SystemButton, { name: 'addFileButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('file', { fontWeight: '400' }) }], tooltip: 'add file' }),
-            part(SystemButton, { name: 'renameFileButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('mi-drive_file_rename_outline', { fontWeight: '400' }) }], tooltip: 'rename selected file' }),
-            part(SystemButton, { name: 'deleteFileButton', ...btnStyle, submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('trash-alt', { fontWeight: '400' }) }], tooltip: 'delete selected file' })
+            {
+              name: 'button container',
+              fill: Color.transparent,
+              layout: new TilingLayout({
+                resizePolicies: bottomButtons.map(m => [m.name, { height: 'fixed', width: 'fill' }])
+              }),
+              submorphs: bottomButtons
+            }
           ];
 
           const {
