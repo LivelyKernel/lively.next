@@ -1,4 +1,4 @@
-import { Path } from 'lively.lang';
+import { Path, arr } from 'lively.lang';
 import { parse, stringify, query, nodes, BaseVisitor as Visitor } from 'lively.ast';
 import { queryNodes } from 'lively.ast/lib/query.js';
 
@@ -31,11 +31,12 @@ function ensureIdentifier (name) {
     .replace(trailingIdRe, '_');
 }
 
-function classFieldsInitialization (nodes) {
+function classFieldsInitialization (nodes, options) {
+  const { assign, member, id } = options.nodes;
   return nodes.map(({ key, value }) => {
     let name = key.name;
     if (key.type === 'PrivateIdentifier') name = '_' + name;
-    return assign(member('this', name), value);
+    return assign('=', member(id('this'), id(name)), value === null ? id('null') : value);
   });
 }
 
@@ -57,21 +58,23 @@ function classFieldsInitialization (nodes) {
  * @param {string} name - The name of the class that is being defined.
  * @param {object[]} fields - The set of custom class fields that were defined by the code.
  */
-function constructorTemplate (name, fields) {
-  return funcExpr({ id: name ? id(name) : null }, ['__first_arg__'],
-    ifStmt(
-      binaryExpr(
-        id('__first_arg__'),
+
+function constructorTemplate (name, fields, options) {
+  const n = options.nodes;
+  return n.funcExpr(name ? n.id(name) : null, [n.id('__first_arg__')],
+    n.block([n.ifStmt(
+      n.logicalExpr(
         '&&',
-        member('__first_arg__', funcCall(member('Symbol', 'for'), literal('lively-instance-restorer')), true)),
-      block(),
-      block(
-        ...classFieldsInitialization(fields),
-        returnStmt(
-          funcCall(
-            member(
-              member('this', funcCall(member('Symbol', 'for'), literal('lively-instance-initialize')), true),
-              'apply'), id('this'), id('arguments'))))));
+        n.id('__first_arg__'),
+        n.member(n.id('__first_arg__'), n.funcCall(n.member(n.id('Symbol'), n.id('for')), [n.literal('lively-instance-restorer')]), true)),
+      n.block([]),
+      n.block(
+        [...classFieldsInitialization(fields, options),
+          n.returnStmt(
+            n.funcCall(
+              n.member(
+                n.member(n.id('this'), n.funcCall(n.member(n.id('Symbol'), n.id('for')), [n.literal('lively-instance-initialize')]), true),
+                n.id('apply')), [n.id('this'), n.id('arguments')]))]))]));
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -81,18 +84,17 @@ const methodKindSymbol = Symbol();
 const tempLivelyClassVar = '__lively_class__';
 const tempLivelyClassHolderVar = '__lively_classholder__';
 
-function splitExportDefaultWithClass (node, classHolder, path, options) {
+function splitExportDefaultWithClass (node, classHolder, options) {
+  const n = options.nodes;
   return !node.declaration || !node.declaration[isTransformedClassVarDeclSymbol]
     ? node
-    : [node.declaration, {
-        declaration: node.declaration.declarations[0].id,
-        type: 'ExportDefaultDeclaration'
-      }];
+    : [node.declaration, n.exportDefaultDecl(node.declaration.declarations[0].id)];
 }
 
 function replaceSuper (node, state, path, options) {
   // just super
   console.assert(node.type === 'Super');
+  const n = options.nodes;
 
   let { currentMethod } = state;
   if (!currentMethod) {
@@ -103,8 +105,8 @@ function replaceSuper (node, state, path, options) {
   if ((parentReferencedAs === 'callee' && referencedAs === 'object') || referencedAs === 'callee') { return node; } // deal with this in replaceSuperCall
 
   let methodHolder = currentMethod && currentMethod[methodKindSymbol] === 'static'
-    ? funcCall(member('Object', 'getPrototypeOf'), id(tempLivelyClassVar))
-    : funcCall(member('Object', 'getPrototypeOf'), member(id(tempLivelyClassVar), 'prototype'));
+    ? n.funcCall(n.member(n.id('Object'), n.id('getPrototypeOf')), [n.id(tempLivelyClassVar)])
+    : n.funcCall(n.member(n.id('Object'), n.id('getPrototypeOf')), [n.member(n.id(tempLivelyClassVar), n.id('prototype'))]);
 
   return methodHolder;
 }
@@ -113,90 +115,94 @@ function replaceSuperMethodCall (node, state, path, options) {
   // like super.foo()
   console.assert(node.type === 'CallExpression');
   console.assert(node.callee.object.type === 'Super');
-
-  return funcCall(
-    member(
-      funcCall(
-        member(options.functionNode, '_get'),
-        replaceSuper(node.callee.object, state, path.concat(['callee', 'object']), options),
-        literal(node.callee.property.value || node.callee.property.name),
-        id('this')),
-      'call'),
-    id('this'), ...node.arguments);
+  const n = options.nodes;
+  return n.funcCall(
+    n.member(
+      n.funcCall(
+        n.member(options.functionNode, n.id('_get')),
+        [replaceSuper(node.callee.object, state, path.concat(['callee', 'object']), options),
+          n.literal(node.callee.property.value || node.callee.property.name),
+          n.id('this')]),
+      n.id('call')),
+    [n.id('this'), ...node.arguments]);
 }
 
 function replaceDirectSuperCall (node, state, path, options) {
   // like super()
   console.assert(node.type === 'CallExpression');
   console.assert(node.callee.type === 'Super');
-  const f = funcCall(
-    member(
-      funcCall(
-        member(options.functionNode, '_get'),
-        replaceSuper(node.callee, state, path.concat(['callee']), options),
-        funcCall(member('Symbol', 'for'), literal('lively-instance-initialize')),
-        id('this')),
-      'call'),
-    id('this'), ...node.arguments);
-  return assign(id('_this'), f);
+  const n = options.nodes;
+  const f = n.funcCall(
+    n.member(
+      n.funcCall(
+        n.member(options.functionNode, n.id('_get')),
+        [replaceSuper(node.callee, state, path.concat(['callee']), options),
+          n.funcCall(n.member(n.id('Symbol'), n.id('for')), [n.literal('lively-instance-initialize')]),
+          n.id('this')]),
+      n.id('call')),
+    [n.id('this'), ...node.arguments]);
+  return n.assign('=', n.id('_this'), f);
 }
 
 function replaceSuperGetter (node, state, path, options) {
   console.assert(node.type === 'MemberExpression');
   console.assert(node.object.type === 'Super');
-  return funcCall(
-    member(options.functionNode, '_get'),
-    replaceSuper(node.object, state, path.concat(['object']), options),
-    literal(node.property.value || node.property.name),
-    id('this'));
+  const n = options.nodes;
+  return n.funcCall(
+    n.member(options.functionNode, n.id('_get')),
+    [replaceSuper(node.object, state, path.concat(['object']), options),
+      n.literal(node.property.value || node.property.name),
+      n.id('this')]);
 }
 
 function replaceSuperSetter (node, state, path, options) {
   console.assert(node.type === 'AssignmentExpression');
   console.assert(node.left.object.type === 'Super');
-
-  return funcCall(
-    member(options.functionNode, '_set'),
-    replaceSuper(node.left.object, state, path.concat(['left', 'object']), options),
-    literal(node.left.property.value || node.left.property.name),
-    node.right,
-    id('this'));
+  const n = options.nodes;
+  return n.funcCall(
+    n.member(options.functionNode, n.id('_set')),
+    [replaceSuper(node.left.object, state, path.concat(['left', 'object']), options),
+      n.literal(node.left.property.value || node.left.property.name),
+      node.right,
+      n.id('this')]);
 }
 
 function checkForDirectSuperCall (body) {
   return queryNodes(body, '// CallExpression [ /:callee \'*\' [ type() ==  \'Super\']]').length > 0;
 }
 
-function insertThisReturn (functionBody) {
+function insertThisReturn (functionBody, options) {
   if (!checkForDirectSuperCall(functionBody)) {
     return functionBody;
   }
+  const n = options.nodes;
   return {
     // block
     ...functionBody,
     body: [
-      varDecl(id('_this')),
+      n.varDecl(n.id('_this')),
       ...functionBody.body,
-      returnStmt(id('_this'))
+      n.returnStmt(n.id('_this'))
     ]
   };
 }
 
-function replaceClass (node, state, path, options) {
+function replaceClass (node, state, options) {
   console.assert(node.type === 'ClassDeclaration' || node.type === 'ClassExpression');
-
+  const n = options.nodes;
   let { body: { body }, superClass, id: classId, type, start, end } = node;
   let { addClassNameGetter = true } = options;
-  let instanceProps = id('undefined');
-  let classProps = id('undefined');
+  let instanceProps = n.id('undefined');
+  let classProps = n.id('undefined');
   let className = classId ? classId.name : 'anonymous_class';
   let evalId = options.evalId;
   let sourceAccessorName = options.sourceAccessorName;
-  let loc = node['x-lively-object-meta'] || { start, end };
-  const validMemberIdentifiers = ['Literal', 'Identifier', 'PrivateIdentifier', 'MemberExpression', 'CallExpression'];
+  let loc = { start, end, ...node['x-lively-object-meta'] || {} };
+  const validMemberIdentifiers = ['Literal', 'StringLiteral', 'Identifier', 'PrivateIdentifier', 'MemberExpression', 'CallExpression'];
 
   let { inst, clazz, fields } = body.reduce((props, propNode) => {
     let decl; let { key, kind, value, static: classSide, type } = propNode;
+    if (!value) value = propNode;
 
     if (!validMemberIdentifiers.includes(key.type)) {
       console.warn(`Unexpected key in classToFunctionTransform! ${JSON.stringify(key)} -> ${stringify(propNode)}`);
@@ -213,27 +219,29 @@ function replaceClass (node, state, path, options) {
       let methodName = key.name || key.value || Path('property.name').get(key);
       let methodId;
       if (isMemberExpr) {
-        methodId = id(className + '_' + stringify(key.property).replaceAll('.', '_') + '_');
-      } else methodId = id(className + '_' + ensureIdentifier(methodName || Path('arguments.0.value').get(key)) + '_');
-      let props = [
-        'key', !isMemberExpr && methodName ? literal(methodName) : key,
-        'value', { ...value, id: methodId, [methodKindSymbol]: classSide ? 'static' : 'proto' }];
+        methodId = n.id(className + '_' + stringify(key.property).replaceAll('.', '_') + '_');
+      } else methodId = n.id(className + '_' + ensureIdentifier(methodName || Path('arguments.0.value').get(key)) + '_');
 
-      decl = objectLiteral(props);
+      let props = [
+        n.property('init', n.id('key'), !isMemberExpr && methodName ? n.literal(methodName) : key),
+
+        n.property('init', n.id('value'), (value = n.funcExpr(methodId, value.params, value.body, value.generator, value.async), value[methodKindSymbol] = classSide ? 'static' : 'proto', value))];
+
+      decl = n.objectLiteral(props);
     } else if (kind === 'get' || kind === 'set') {
-      decl = objectLiteral([
-        'key', literal(key.name || key.value || Path('property.name').get(key)),
-        kind, Object.assign({}, value, { id: id(kind), [methodKindSymbol]: classSide ? 'static' : 'proto' })]);
+      decl = n.objectLiteral([
+        n.property('init', n.id('key'), n.literal(key.name || key.value || Path('property.name').get(key))),
+        n.property('init', n.id(kind), (value = n.funcExpr(n.id(kind), value.params, value.body, value.generator, value.async), value[methodKindSymbol] = classSide ? 'static' : 'proto', value))]);
     } else if (kind === 'constructor') {
       let props = [
-        'key', funcCall(member('Symbol', 'for'), literal('lively-instance-initialize')),
-        'value', {
-          ...value,
-          id: id(className + '_initialize_'),
-          [methodKindSymbol]: 'proto',
-          body: insertThisReturn(value.body)
-        }];
-      decl = objectLiteral(props);
+        n.property('init', n.id('key'), n.funcCall(n.member(n.id('Symbol'), n.id('for')), [n.literal('lively-instance-initialize')])),
+        n.property('init', n.id('value'), (value = n.funcExpr(
+          n.id(className + '_initialize_'),
+          value.params,
+          insertThisReturn(value.body, options),
+          value.generator, value.async
+        ), value[methodKindSymbol] = 'proto', value))];
+      decl = n.objectLiteral(props);
     } else if (type === 'PropertyDefinition') {
       // collect these for class field initializiation
       props.fields.push(propNode);
@@ -248,13 +256,13 @@ function replaceClass (node, state, path, options) {
     clazz: addClassNameGetter
       ? [
           // explicitly add in a static property to ensure the class name is accessible also in google closure env
-          parse(`({ key: Symbol.for("__LivelyClassName__"), get: function get() { return "${className}"; } })`).body[0].expression
+          n.parse(`({ key: Symbol.for("__LivelyClassName__"), get: function get() { return "${className}"; } })`).body[0].expression
         ]
       : []
   });
 
-  if (inst.length) instanceProps = { type: 'ArrayExpression', elements: inst };
-  if (clazz.length) classProps = { type: 'ArrayExpression', elements: clazz };
+  if (inst.length) instanceProps = n.arrayExpr(inst);
+  if (clazz.length) classProps = n.arrayExpr(clazz);
 
   let scope = options.scope;
   let superClassReferencedAs;
@@ -265,8 +273,8 @@ function replaceClass (node, state, path, options) {
       superClassRef = superClass;
       superClassReferencedAs = superClass.property.name;
     } else {
-      let found = scope && scope.resolvedRefMap && scope.resolvedRefMap.get(superClass);
-      let isTopLevel = found && found.decl && scope.decls && scope.decls.find(([decl]) => decl === found.decl);
+      let found = scope?.resolvedRefMap?.get(superClass);
+      let isTopLevel = found?.decl && scope.decls?.find(([decl]) => decl === found.decl);
       if (isTopLevel) {
         superClassRef = superClass;
         superClassReferencedAs = superClass.name;
@@ -275,77 +283,74 @@ function replaceClass (node, state, path, options) {
   }
 
   let superClassSpec = superClassRef
-    ? objectLiteral(['referencedAs', literal(superClassReferencedAs), 'value', superClassRef])
-    : superClass || id('undefined');
+  // this is inserting incorrect nodes into the ast since scope ist always acorn nodes
+    ? n.objectLiteral([n.property('init', n.id('referencedAs'), n.literal(superClassReferencedAs)), n.property('init', n.id('value'), superClassRef)])
+    : superClass || n.id('undefined');
 
   // For persistent storage and retrieval of pre-existing classes in "classHolder" object
   let { useClassHolder = classId && (type === 'ClassDeclaration' || type === 'ClassExpression') } = options; // if the class is assigned this will not work
 
-  let locKeyVals = ['start', literal(loc.start), 'end', literal(loc.end)];
-  if (typeof evalId !== 'undefined') locKeyVals.push('evalId', literal(evalId));
-  if (sourceAccessorName) locKeyVals.push('moduleSource', nodes.id(sourceAccessorName));
-  let locNode = objectLiteral(locKeyVals);
-
-  let classCreator =
-    funcCall(
-      funcExpr({}, ['superclass'],
-        varDecl(tempLivelyClassHolderVar, state.classHolder),
-        varDecl(tempLivelyClassVar,
-          useClassHolder
-            ? {
-                type: 'ConditionalExpression',
-                test: binaryExpr(
-                  funcCall(member(tempLivelyClassHolderVar, 'hasOwnProperty'), literal(classId.name)),
-                  '&&',
-                  binaryExpr(
-                    {
-                      argument: member(tempLivelyClassHolderVar, classId),
-                      operator: 'typeof',
-                      prefix: true,
-                      type: 'UnaryExpression'
-                    }, '===', literal('function'))),
-                consequent: member(tempLivelyClassHolderVar, classId),
-                alternate: assign(
-                  member(tempLivelyClassHolderVar, classId),
-                  constructorTemplate(classId.name, fields))
-              }
-            : classId ? constructorTemplate(classId.name, fields) : constructorTemplate(null, fields)),
-        ifStmt(funcCall(member(id('Object'), id('isFrozen')), id(tempLivelyClassHolderVar)), block(returnStmt(id(tempLivelyClassVar))), false),
-        returnStmt(
-          funcCall(
-            options.functionNode,
-            id(tempLivelyClassVar),
-            id('superclass'),
+  let locKeyVals = [n.property('init', n.id('start'), n.literal(loc.start)), n.property('init', n.id('end'), n.literal(loc.end))];
+  if (typeof evalId !== 'undefined') locKeyVals.push(n.property('init', n.id('evalId'), n.literal(evalId)));
+  if (sourceAccessorName) locKeyVals.push(n.property('init', n.id('moduleSource'), nodes.id(sourceAccessorName)));
+  let locNode = n.objectLiteral(locKeyVals);
+  let funcParts = [[n.id('superclass')],
+    n.block([
+      n.varDecl(n.id(tempLivelyClassHolderVar), state.classHolder),
+      ...useClassHolder
+        ? [n.varDecl(n.id(tempLivelyClassVar),
+            n.conditional(
+              n.logicalExpr(
+                '&&',
+                n.funcCall(n.member(n.id(tempLivelyClassHolderVar), n.id('hasOwnProperty')), [n.literal(classId.name)]),
+                n.binaryExpr(
+                  '===',
+                  n.unaryExpr('typeof', n.member(n.id(tempLivelyClassHolderVar), classId), true),
+                  n.literal('function'))),
+              n.member(n.id(tempLivelyClassHolderVar), classId),
+              n.assign(
+                '=',
+                n.member(n.id(tempLivelyClassHolderVar), classId),
+                constructorTemplate(classId.name, fields, options)))
+          )]
+        : classId
+          ? [n.varDecl(classId, constructorTemplate(classId.name, fields, options)), n.varDecl(n.id(tempLivelyClassVar), classId)]
+          : [n.varDecl(n.id(tempLivelyClassVar), constructorTemplate(null, fields, options))],
+      n.ifStmt(n.funcCall(n.member(n.id('Object'), n.id('isFrozen')), [n.id(tempLivelyClassHolderVar)]), n.block([n.returnStmt(n.id(tempLivelyClassVar))]), null),
+      n.returnStmt(
+        n.funcCall(
+          options.functionNode,
+          [n.id(tempLivelyClassVar),
+            n.id('superclass'),
             instanceProps, classProps,
-            useClassHolder ? id(tempLivelyClassHolderVar) : id('null'),
-            options.currentModuleAccessor || id('undefined'),
-            locNode
-          ))),
-      superClassSpec);
+            useClassHolder ? n.id(tempLivelyClassHolderVar) : n.id('null'),
+            options.currentModuleAccessor || n.id('undefined'),
+            locNode]
+        ))])];
 
-  if (type === 'ClassExpression') return classCreator;
+  if (type === 'ClassExpression') return n.funcCall(n.arrowFuncExpr(...funcParts), [superClassSpec]);
 
-  let result = classCreator;
+  let result = n.funcCall(n.funcExpr(null, ...funcParts), [superClassSpec]);
 
   if (options.declarationWrapper && state.classHolder === options.classHolder /* i.e. toplevel */) {
-    result = funcCall(
+    result = n.funcCall(
       options.declarationWrapper,
-      literal(classId.name),
-      literal('class'),
-      result,
-      options.classHolder,
-      locNode);
+      [n.literal(classId.name),
+        n.literal('class'),
+        result,
+        options.classHolder,
+        locNode]);
   }
 
   // since it is a declaration and we removed the class construct we need to add a var-decl
-  result = varDecl(classId, result, 'var');
+  result = n.varDecl(classId, result, 'var');
   result[isTransformedClassVarDeclSymbol] = true;
 
   return result;
 }
 
-function replacePrivateIdentifier (node) {
-  return { ...node, type: 'Identifier', name: '_' + node.name };
+function replacePrivateIdentifier (node, options) {
+  return options.nodes.id('_' + node.name);
 }
 
 /**
@@ -402,6 +407,107 @@ class ClassReplaceVisitor extends Visitor {
     let classHolder = options.classHolder || objectLiteral([]);
     return v.accept(parsed, { options, classHolder }, []);
   }
+export function classToFunctionTransformBabel (path, state, options) {
+  function getPropPath (path) {
+    const propPath = [path.name];
+    while (path = path.parent) {
+      propPath.push(String(path.name));
+    }
+    return propPath;
+  }
+
+  function handleFunctionDefinition (path, state) {
+    const { nodes: n } = options;
+    const { classHolder, currentMethodStack, currentMethod } = state;
+    currentMethodStack.push(path.node[methodKindSymbol] ? path.node : currentMethod);
+    state.currentMethod = arr.last(currentMethodStack);
+  }
+
+  function handleClass (path, state) {
+    const { node } = path;
+    if (node._skipClassHolder) options.useClassHolder = false;
+
+    path.replaceWith(replaceClass(node, state, options));
+    path.traverse(this.visitor, state);
+    delete options.useClassHolder;
+  }
+
+  const currentMethodStack = [];
+  Object.assign(state, {
+    classHolder: options.classHolder || options.nodes.objectLiteral([]),
+    currentMethodStack
+  });
+
+  path.traverse({
+    'ArrowFunctionExpression|FunctionDeclaration|FunctionExpression': {
+      enter: handleFunctionDefinition,
+      exit (path, state) {
+        state.currentMethodStack.pop();
+        state.currentMethod = arr.last(state.currentMethodStack);
+      }
+    },
+
+    ClassExpression (path, state) {
+      handleClass.bind(this)(path, state);
+    },
+
+    ClassDeclaration (path, state) {
+      handleClass.bind(this)(path, state);
+    },
+
+    VariableDeclarator (path, state) {
+      const { node } = path;
+      if (node.init?.type === 'ClassExpression' || node.init?.type === 'ClassDeclaration') {
+        node.init._skipClassHolder = true;
+      }
+    },
+
+    AssignmentExpression (path, state) {
+      const { node } = path;
+      if (node.right?.type === 'ClassExpression' || node.right?.type === 'ClassDeclaration') {
+        node.right._skipClassHolder = true;
+      }
+      if (node.left.type === 'MemberExpression' && node.left.object.type === 'Super') {
+        path.replaceWith(replaceSuperSetter(node, state, getPropPath(path), options));
+      }
+    },
+
+    PrivateName (path, state) {
+      path.replaceWith(replacePrivateIdentifier(path.node, options));
+      path.skip();
+    },
+
+    Super (path, state) {
+      path.replaceWith(replaceSuper(path.node, state, getPropPath(path), options));
+      path.skip();
+    },
+
+    MemberExpression (path, state) {
+      const { node } = path;
+      if (node.object?.type === 'Super') {
+        path.replaceWith(replaceSuperGetter(node, state, getPropPath(path), options));
+      }
+    },
+
+    CallExpression (path, state) {
+      const { node } = path;
+      if (node.callee.type === 'Super') {
+        path.replaceWith(replaceDirectSuperCall(node, state, getPropPath(path), options));
+      }
+      if (node.callee.object && node.callee.object.type === 'Super') {
+        path.replaceWith(replaceSuperMethodCall(node, state, getPropPath(path), options));
+      }
+    },
+
+    ExportDefaultDeclaration (path, state) {
+      const { node } = path;
+      const { nodes: n } = options;
+      if (node.declaration.type === 'ClassDeclaration') {
+        path.insertAfter([replaceClass(node.declaration, state, options), n.exportDefaultDecl(node.declaration.id)]);
+        path.remove();
+      }
+    }
+  }, state);
 }
 
 /**
