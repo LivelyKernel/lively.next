@@ -240,28 +240,40 @@ export async function customTranslate (load) {
     console.error(`[lively.modules customTranslate] error reading module translation cache: ${e.stack}`);
   }
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // FIXME: move all of the stuff below into the transpilation step, it is not needed here, just wrecks performance by
+  //        needlessly stringifying AST nodes over and over. We achieve this by implementing a custom plugin called "lively-pre-transpile"
+  //        The reason this was placed outside of babel in the first place was that a decade ago, babel was not yet supporting a majority
+  //        of the ecmascript syntax out of the box.
 
-  let options = meta.compileOptions = {};
+  meta.compileOptions = {};
   let source = load.source;
 
-  if (isEsm) {
+  if (System.transpiler === 'lively.transpiler') {
+    if (isEsm) {
+      mod.recorderName = '__lvVarRecorder';
+      if (mod.recorder === System.global) { mod.unloadEnv(); }
+      load.metadata.format = 'esm';
+      ({ source } = prepareCodeForCustomCompile(System, source, load.name, mod, debug));
+      load.source = source;
+      load.metadata['lively.modules instrumented'] = true;
+      instrumented = true;
+      debug && console.log('[lively.modules] loaded %s as es6 module', load.name);
+    } else if (load.metadata.format === 'global') {
+      mod.recorderName = 'System.global';
+      mod.recorder = System.global;
+      load.metadata.format = 'global';
+      ({ source } = prepareCodeForCustomCompile(System, source, load.name, mod, debug));
+      load.source = source;
+      load.metadata['lively.modules instrumented'] = true;
+      instrumented = true;
+      debug && console.log('[lively.modules] loaded %s as instrumented global module', load.name);
+    }
+  } else if (System.transpiler === 'lively.transpiler.babel') {
     mod.recorderName = '__lvVarRecorder';
     if (mod.recorder === System.global) { mod.unloadEnv(); }
+    load.metadata['lively.modules instrumented'] = true;
     load.metadata.format = 'esm';
-    ({ options, source } = prepareCodeForCustomCompile(System, source, load.name, mod, debug));
-    load.source = source;
-    load.metadata['lively.modules instrumented'] = true;
-    instrumented = true;
-    debug && console.log('[lively.modules] loaded %s as es6 module', load.name);
-  } else if (load.metadata.format === 'global') {
-    mod.recorderName = 'System.global';
-    mod.recorder = System.global;
-    load.metadata.format = 'global';
-    ({ options, source } = prepareCodeForCustomCompile(System, source, load.name, mod, debug));
-    load.source = source;
-    load.metadata['lively.modules instrumented'] = true;
-    instrumented = true;
-    debug && console.log('[lively.modules] loaded %s as instrumented global module', load.name);
+    load.metadata.module = mod;
   }
 
   if (!instrumented) {
@@ -272,18 +284,25 @@ export async function customTranslate (load) {
 }
 
 export async function postCustomTranslate (load) {
+  // FIXME: Move this too into the transpilation step via a custom babel plugin "lively-post-transpile"
   const start = load.metadata.ts;
   if (!load.metadata['lively.modules instrumented']) return; // if we already retrieved the source from cache, not need to store it again
   let translated = load.source;
   const debug = System.debug;
   const indexdb = System.global.indexedDB;
-  const mod = module(System, load.name);
   const hashForCache = load.metadata.hashForCache;
   const options = load.metadata.compileOptions;
   const useCache = System.useModuleTranslationCache;
-  if (translated.indexOf('System.register(') === 0) {
-    debug && console.log('[lively.modules customTranslate] Installing System.register setter captures for %s', load.name);
-    translated = prepareTranslatedCodeForSetterCapture(System, translated, load.name, mod, options, debug);
+  let mod;
+  if (System.transpiler === 'lively.transpiler') {
+    mod = module(System, load.name);
+    if (translated.indexOf('System.register(') === 0) {
+      debug && console.log('[lively.modules customTranslate] Installing System.register setter captures for %s', load.name);
+      translated = prepareTranslatedCodeForSetterCapture(System, translated, load.name, mod, options, debug);
+    }
+  } else if (System.transpiler === 'lively.transpiler.babel') {
+    mod = load.metadata.module;
+    // translation was already performed fully in the transpiler
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -316,10 +335,14 @@ export async function postCustomTranslate (load) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // Functions below are for re-loading modules from change.js. We typically
 // start with a load object that skips the normalize / fetch step. Since we need
-// to jumo in the "middle" of the load process and SystemJS does not provide an
+// to jump in the "middle" of the load process and SystemJS does not provide an
 // interface to this, we need to invoke the translate / instantiate / execute
 // manually
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+let sourceMapPrefix = '\n//# sourceMapping' + 'URL=data:application/json;base64,';
+function inlineSourceMap (sourceMapString) {
+  return sourceMapPrefix + string.base64EncodeUnicode(sourceMapString);
+}
 
 async function instrumentSourceOfEsmModuleLoad (System, load) {
   // brittle, since it relies on the particular format that SystemJS returns us!
@@ -328,33 +351,44 @@ async function instrumentSourceOfEsmModuleLoad (System, load) {
   // details from it that we will use to re-define the module
   // (dependencies, setters, execute)
   // Note: this only works for esm modules!
-  load.source = await customTranslate.bind(System)(load) // do that beforehand
-  const translated = await System.translate(load);
-    // translated looks like
-    // (function(__moduleName){System.register(["./some-es6-module.js", ...], function (_export) {
-    //   "use strict";
-    //   var x, z, y;
-    //   return {
-    //     setters: [function (_someEs6ModuleJs) { ... }],
-    //     execute: function () {...}
-    //   };
-    // });
-
-    const parsed = parse(translated);
-    const callExpression = parsed.body.find(
-      ea =>
-        ea.expression &&
+  load.source = await customTranslate.bind(System)(load); // do that beforehand
+  let translated;
+  if (System.transpiler === 'lively.transpiler') {
+    translated = await System.translate(load); // this is just invoking the transpiler
+  } else if (System.transpiler === 'lively.transpiler.babel') {
+    // invoke the babel transpiler directly without doing the funny Systemjs dance
+    const localDeps = [];
+    let declareSource = await System.translate(load, { depNames: localDeps, esmLoad: true });
+    declareSource += `//# sourceURL=${load.name}\n`;
+    if (load.metadata.sourceMap) declareSource += inlineSourceMap(JSON.stringify(load.metadata.sourceMap));
+    return { declare: eval(declareSource), localDeps };
+  }
+  // translated looks like
+  // (function(__moduleName){System.register(["./some-es6-module.js", ...], function (_export) {
+  //   "use strict";
+  //   var x, z, y;
+  //   return {
+  //     setters: [function (_someEs6ModuleJs) { ... }],
+  //     execute: function () {...}
+  //   };
+  // });
+  // wrap this in a custom babel plugin?
+  const parsed = parse(translated);
+  const callExpression = (parsed.program || parsed).body.find(
+    ea =>
+      ea.expression &&
         ea.expression.type === 'CallExpression' &&
         ea.expression.callee.property.name === 'register');
-    if (!callExpression) throw new Error(`Cannot find register call in translated source of ${load.name}`);
-    const registerCall = callExpression.expression;
-    const depNames = registerCall.arguments[0].elements.map(ea => ea.value);
-    const declareFuncNode = registerCall.arguments[1];
-    const declareFuncSource = translated.slice(declareFuncNode.start, declareFuncNode.end);
-    const declare = eval(`var SystemJS = System; var __moduleName = "${load.name}";\n(${declareFuncSource});\n//# sourceURL=${load.name}\n`);
-    if (System.debug && $world !== 'undefined' && $world.get('log') && $world.get('log').isText) { $world.get('log').textString = declare; }
+  if (!callExpression) throw new Error(`Cannot find register call in translated source of ${load.name}`);
+  const registerCall = callExpression.expression;
+  const depNames = registerCall.arguments[0].elements.map(ea => ea.value);
+  const declareFuncNode = registerCall.arguments[1];
+  const declareFuncSource = translated.slice(declareFuncNode.start, declareFuncNode.end);
+  const declare = eval(`var SystemJS = System; var __moduleName = "${load.name}";\n(${declareFuncSource});\n//# sourceURL=${load.name}\n`);
 
-    return { localDeps: depNames, declare: declare };
+  if (System.debug && $world !== 'undefined' && $world.get('log') && $world.get('log').isText) { $world.get('log').textString = declare; }
+
+  return { localDeps: depNames, declare: declare };
 }
 
 function instrumentSourceOfGlobalModuleLoad (System, load) {
