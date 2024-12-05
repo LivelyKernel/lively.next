@@ -433,6 +433,8 @@ class ClassReplaceVisitor extends Visitor {
     let classHolder = options.classHolder || objectLiteral([]);
     return v.accept(parsed, { options, classHolder }, []);
   }
+};
+
 export function classToFunctionTransformBabel (path, state, options) {
   function getPropPath (path) {
     const propPath = [path.name];
