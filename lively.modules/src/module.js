@@ -627,8 +627,10 @@ class ModuleInterface {
     recorder[varName] = value;
 
     // exports update
-    scheduleModuleExportsChange(
-      System, id, varName, value, false/* force adding export */);
+    if (!meta?.exportConflict) {
+      scheduleModuleExportsChange(
+        System, id, varName, value, false/* force adding export */);
+    }
 
     // system event
     this.notifyTopLevelObservers(varName);
