@@ -1,10 +1,16 @@
 /* global describe, it */
 import { expect } from 'mocha-es6';
+import babel from '@babel/core';
+import t from '@babel/types';
 import { string, fun } from 'lively.lang';
-import { parse, nodes, stringify } from 'lively.ast';
+import { parse, query, transform, nodes, stringify } from 'lively.ast';
 import { rewriteToCaptureTopLevelVariables, rewriteToRegisterModuleToCaptureSetters } from '../capturing.js';
 import { classToFunctionTransform } from 'lively.classes';
-import objectSpreadTransform from 'lively.ast/lib/object-spread-transform.js';
+import { defaultClassToFunctionConverterName } from 'lively.vm';
+import { objectSpreadTransform } from 'lively.source-transform';
+import lint from 'lively.ide/js/linter.js';
+import { livelyPreTranspile, livelyPostTranspile } from '../babel/plugin.js';
+import { classToFunctionTransformBabel } from 'lively.classes/class-to-function-transform.js';
 
 function _testVarTfm (descr, options, code, expected, only) {
   // options = 'var y, z = foo + bar; baz.foo(z, 3)';
@@ -14,19 +20,37 @@ function _testVarTfm (descr, options, code, expected, only) {
     expected = code;
     code = options;
     options = {
-      captureObj: nodes.id('_rec'),
+      recordGlobals: true,
+      captureObj: t.Identifier('_rec'),
+      varRecorderName: '_rec',
+      topLevelVarRecorder: t.Identifier('_rec'),
+      topLevelVarRecorderName: '_rec',
+      plugin: livelyPreTranspile,
       classToFunction: {
-        classHolder: nodes.id('_rec'),
-        functionNode: nodes.id('_createOrExtendClass'),
-        transform: classToFunctionTransform
+        classHolder: t.Identifier('_rec'),
+        functionNode: t.Identifier('_createOrExtendClass')
       }
+    };
+  } else {
+    options = {
+      recordGlobals: true,
+      captureObj: t.Identifier('_rec'),
+      varRecorderName: '_rec',
+      topLevelVarRecorder: t.Identifier('_rec'),
+      topLevelVarRecorderName: '_rec',
+      classToFunction: {
+        classHolder: t.Identifier('_rec'),
+        functionNode: t.Identifier('_createOrExtendClass')
+      },
+      plugin: livelyPreTranspile,
+      ...options
     };
   }
   return (only ? it.only : it)(descr, () => {
-    let result = stringify(
-      fun.compose(rewriteToCaptureTopLevelVariables, objectSpreadTransform)(
-        parse(code), nodes.id('_rec'), options));
-    expect(result).equals(stringify(parse(expected)));
+    let { code: result } = babel.transform(code, {
+      plugins: [[options.plugin, options]]
+    });
+    expect(stringify(parse(result))).equals(stringify(parse(expected)));
   });
 }
 
@@ -93,37 +117,26 @@ describe('ast.capturing', function () {
            '  b: function b(n) {\n' +
            '    return 23 + n;\n' +
            '  }\n\n' +
-           '};\n\n' +
-           'foo;');
+           '};\nfoo;');
 
-  it("don't capture excludes / globals", function () {
-    let code = 'var x = 2; y = 3; z = 4; baz(x, y, z)';
-    let expected = 'foo.x = 2;\nfoo.y = 3;\nz = 4;\nbaz(foo.x, foo.y, z);';
-    let recorder = { name: 'foo', type: 'Identifier' };
-    let result = stringify(rewriteToCaptureTopLevelVariables(
-      parse(code), recorder, { captureObj: recorder, exclude: ['baz', 'z'] }));
-    expect(result).equals(stringify(parse(expected)));
-  });
+  testVarTfm('dont capture excludes / globals',
+    { varRecorderName: 'foo', dontTransform: ['baz', 'z'] },
+    'var x = 2; y = 3; z = 4; baz(x, y, z)',
+    'foo.x = 2;\nfoo.y = 3;\nz = 4;\nbaz(foo.x, foo.y, z);');
 
-  it('keep var decls when requested', function () {
-    let code = 'var x = 2, y = 3; baz(x, y)';
-    let expected = 'foo.x = 2;\n' +
+  testVarTfm('keep var decls when requested',
+    { varRecorderName: 'foo', keepTopLevelVarDecls: true },
+    'var x = 2, y = 3; baz(x, y)',
+    'foo.x = 2;\n' +
                  'var x = foo.x;\n' +
                  'foo.y = 3;\n' +
                  'var y = foo.y;\n' +
-                 'foo.baz(foo.x, foo.y);';
-    let recorder = { name: 'foo', type: 'Identifier' };
-    let result = stringify(rewriteToCaptureTopLevelVariables(
-      parse(code), recorder, { captureObj: recorder, keepTopLevelVarDecls: true }));
-    expect(result).equals(expected);
-  });
+                 'foo.baz(foo.x, foo.y);');
 
-  it('properly captures global vars even if redefined in sub-scopes', function () {
-    let code = 'const baz = 42; function bar(y) { const x = baz + 10; if (y > 10) { const baz = 33; return baz + 10 } return x; }';
-    let recorder = { name: 'foo', type: 'Identifier' };
-    let result = stringify(rewriteToCaptureTopLevelVariables(
-      parse(code), recorder, { captureObj: recorder, keepTopLevelVarDecls: true }));
-    ignoreFormatCompare(result, `function bar(y) {
+  testVarTfm('properly captures global vars even if redefined in sub-scopes',
+    { varRecorderName: 'foo', keepTopLevelVarDecls: true },
+    'const baz = 42; function bar(y) { const x = baz + 10; if (y > 10) { const baz = 33; return baz + 10 } return x; }',
+            `function bar(y) {
   const x = foo.baz + 10;
 
   if (y > 10) {
@@ -138,7 +151,6 @@ foo.bar = bar;
 foo.baz = 42;
 var baz = foo.baz;
 bar;`);
-  });
 
   describe('try-catch', () => {
     testVarTfm("isn't transformed",
@@ -257,7 +269,7 @@ bar;`);
       });
 
       describe('without class-to-func transform', () => {
-        let opts = { classToFunction: null, captureObj: nodes.id('_rec') };
+        let opts = { transformES6Classes: false, captureObj: nodes.id('_rec') };
 
         testVarTfm('class def',
           opts,
@@ -401,7 +413,7 @@ bar;`);
 
       testVarTfm('exported default',
         'export default async function foo() { return 23; }',
-        'async function foo() {\n  return 23;\n}\n_rec.foo = foo;\nfoo;\nexport default foo;');
+        'async function foo() {\n  return 23;\n}\n_rec.foo = foo;\n\nexport default foo;');
 
       // testVarTfm("export default async function foo() { return 23; }",
       //           "_rec.foo = foo;\nexport default async function foo() {\n    return 23;\n}");
@@ -501,6 +513,7 @@ bar;`);
 
     describe('export', () => {
       testVarTfm('default named',
+        { keepTopLevelVarDecls: true },
         'var x = {x: 23}; export default x;',
         '_rec.x = { x: 23 };\nvar x = _rec.x;\nexport default x;');
 
@@ -517,10 +530,12 @@ bar;`);
                '_rec.y = y;\nexport default f;');
 
       testVarTfm('var',
+        { keepTopLevelVarDecls: true },
         'var x = 23; export { x };',
         '_rec.x = 23;\nvar x = _rec.x;\nexport {\n  x\n};');
 
       testVarTfm('aliased var',
+        { keepTopLevelVarDecls: true },
         'var x = 23; export { x as y };',
         '_rec.x = 23;\nvar x = _rec.x;\nexport {\n  x as y\n};');
 
@@ -555,12 +570,12 @@ bar;`);
                                                        '}]', '_rec', 'undefined', 15, 27)}\nexport default Foo;\n;`);
 
       testVarTfm('class decl without classToFunction',
-        { classToFunction: null, captureObj: nodes.id('_rec') },
+        { transformES6Classes: false, captureObj: nodes.id('_rec') },
         'export class Foo {};',
         'export class Foo {\n}\n_rec.Foo = Foo;\n;');
 
       testVarTfm('default class decl without classToFunction',
-        { classToFunction: null, captureObj: nodes.id('_rec') },
+        { transformES6Classes: false, captureObj: nodes.id('_rec') },
         'export default class Foo {};',
         'export default class Foo {\n}\n_rec.Foo = Foo;\n;');
 
@@ -615,7 +630,7 @@ bar;`);
       testVarTfm('func decl',
         opts,
         'export function foo(a) { return a + 3; };',
-        'function foo(a) {\n  return a + 3;\n}\n_rec.foo = foo;\nfoo;\n_moduleExport("foo", _rec.foo);\n;');
+        'function foo(a) {\n  return a + 3;\n}\n_rec.foo = foo;\n_moduleExport("foo", _rec.foo);\n;');
 
       testVarTfm('default anonym func decl',
         opts,
@@ -630,12 +645,12 @@ bar;`);
       testVarTfm('default function',
         opts,
         'export default function foo() {};',
-        'function foo() {\n}\n_rec.foo = foo;\nfoo;\n_moduleExport("default", _rec.foo);\n;');
+        'function foo() {\n}\n_rec.foo = foo;\n_moduleExport("default", _rec.foo);\n;');
 
       testVarTfm('default async func decl',
         opts,
         'export default async function foo() {};',
-        'async function foo() {\n}\n_rec.foo = foo;\nfoo;\n_moduleExport("default", _rec.foo);\n;');
+        'async function foo() {\n}\n_rec.foo = foo;\n_moduleExport("default", _rec.foo);\n;');
 
       testVarTfm('default class decl',
         opts,
@@ -702,7 +717,7 @@ bar;`);
       testVarTfm('let decl, declarationWrapper',
         Object.assign({}, opts, { declarationWrapper: { name: '_define', type: 'Identifier' } }),
         'export let x = 34;',
-        'let x = _rec.x = _rec._define("x", "let", 34, _rec);\n_moduleExport("x", _rec.x);');
+        'let x = _rec.x = _rec._define("x", "let", 34, _rec, { start: 11, end: 17 });\n_moduleExport("x", _rec.x);');
 
       testVarTfm('name aliased',
         opts,
@@ -729,85 +744,95 @@ bar;`);
 });
 
 describe('declarations', () => {
-  function rewriteWithWrapper (code, opts = {
+  let opts = {
+    // es6ExportFuncId: '_moduleExport',
+    // es6ImportFuncId: '_moduleImport',
+    keepTopLevelVarDecls: true,
+    declarationWrapper: t.Identifier('_define'),
+    captureObj: nodes.id('_rec'),
+    addSourceMeta: false,
     classToFunction: {
       classHolder: nodes.id('_rec'),
-      functionNode: nodes.id('_createOrExtendClass'),
-      declarationWrapper: { name: '_define', type: 'Identifier' },
-      transform: classToFunctionTransform
+      functionNode: nodes.id('_createOrExtendClass')
     }
-  }) {
-    return stringify(
-      rewriteToCaptureTopLevelVariables(
-        parse(code), nodes.id('_rec'), {
-          declarationWrapper: { name: '_define', type: 'Identifier' },
-          captureObj: nodes.id('_rec'),
-          ...opts
-        }));
-  }
+  };
 
-  it('wraps literals that are exported as defaults', () => {
-    expect(rewriteWithWrapper('export default 32')).equals('_rec.$32 = 32;\nvar $32 = _rec.$32;\nexport default $32;');
-  });
+  testVarTfm(
+    'wraps literals that are exported as defaults',
+    opts,
+    'export default 32',
+    '_rec.$32 = 32;\nvar $32 = _rec.$32;\nexport default $32;');
 
-  it('can be wrapped in define call', () => {
-    expect(rewriteWithWrapper('var x = 23;')).equals('_rec.x = _define("x", "var", 23, _rec);');
-  });
+  testVarTfm(
+    'can be wrapped in define call',
+    { ...opts, keepTopLevelVarDecls: false },
+    'var x = 23;',
+    '_rec.x = _define("x", "var", 23, _rec);');
 
-  it('assignments are wrapped in define call', () => {
-    expect(rewriteWithWrapper('x = 23;')).equals('_rec.x = _define("x", "assignment", 23, _rec);');
-  });
+  testVarTfm(
+    'assignments are wrapped in define call',
+    opts,
+    'x = 23;',
+    '_rec.x = _define("x", "assignment", 23, _rec);'
+  );
 
-  it('define call works for exports', () => {
-    ignoreFormatCompare(rewriteWithWrapper('export var x = 23;'),
-      'export var x = 23;\n_rec.x = _define("x", "assignment", x, _rec);');
+  testVarTfm('define call works for exports 1', opts, 'export var x = 23;',
+    'export var x = 23;\n_rec.x = _define("x", "assignment", x, _rec);');
 
-    ignoreFormatCompare(rewriteWithWrapper('export function foo() {}'),
-      'function foo() {}\n_rec.foo = _define(\"foo\", \"function\", foo, _rec);\nexport { foo };');
+  testVarTfm('define call works for exports 2', opts, 'export function foo() {}',
+    'function foo() {}\n_rec.foo = _define(\"foo\", \"function\", foo, _rec);\nexport { foo };');
 
-    ignoreFormatCompare(rewriteWithWrapper('export class Foo {}'), `export var Foo = _define(\"Foo\", \"class\", ${classTemplate('Foo', 'undefined', 'undefined', '[{\n' +
+  testVarTfm(
+    'define call works for exports 3',
+    opts,
+    'export class Foo {}',
+    `export var Foo = _define(\"Foo\", \"class\", ${classTemplate('Foo', 'undefined', 'undefined', '[{\n' +
                                                        '  key: Symbol.for("__LivelyClassName__"),\n' +
                                                        '  get: function get() {\n' +
                                                        '    return "Foo";\n' +
                                                        '  }\n' +
                                                        '}]', '_rec', 'undefined', 'undefined', 7, 19)}, _rec, {\n  start: 7,\n  end: 19\n});\n_rec.Foo = Foo;`);
 
-    ignoreFormatCompare(rewriteWithWrapper('var x, y; x = 23; export { x, y };'), '_rec.x = _define("x", "var", _rec.x || undefined, _rec);\n_rec.y = _define("y", "var", _rec.y || undefined, _rec);\n_rec.x = _define("x", "assignment", 23, _rec);\nvar x = _rec.x;\nvar y = _rec.y;\nexport {\n  x,\n  y\n};');
-  });
+  testVarTfm(
+    'define call works for exports 4',
+    opts,
+    'var x, y; x = 23; export { x, y };', `_rec.x = _define("x", "var", _rec.x || undefined, _rec);
+var x = _rec.x;
+_rec.y = _define("y", "var", _rec.y || undefined, _rec);
+var y = _rec.y;
+_rec.x = _define("x", "assignment", 23, _rec);
+export { x, y };`);
 
-  it('wraps class decls', () => {
-    ignoreFormatCompare(rewriteWithWrapper('class Foo {}'), `var Foo = _define(\"Foo\", \"class\", ${classTemplate('Foo', 'undefined', 'undefined', '[{\n' +
+  testVarTfm('wraps class decls',
+    opts,
+    'class Foo {}',
+             `var Foo = _define(\"Foo\", \"class\", ${classTemplate('Foo', 'undefined', 'undefined', '[{\n' +
                                                        '  key: Symbol.for("__LivelyClassName__"),\n' +
                                                        '  get: function get() {\n' +
                                                        '    return "Foo";\n' +
                                                        '  }\n' +
                                                        '}]', '_rec', 'undefined', 'undefined', 0, 12)}, _rec, {\n  start: 0,\n  end: 12\n});`);
-  });
 
-  it('wraps function decls', () => {
-    ignoreFormatCompare(rewriteWithWrapper('function bar() {}'),
-      'function bar() {\n}\n_rec.bar = _define("bar", "function", bar, _rec);\nbar;');
-  });
+  testVarTfm('wraps function decls', opts, 'function bar() {}',
+    'function bar() {\n}\n_rec.bar = _define("bar", "function", bar, _rec);\nbar;');
 
-  it('wraps destructuring', () => {
-    expect(rewriteWithWrapper('var [{x}, y] = foo')).equals(
+  testVarTfm('wraps destructuring', opts, 'var [{x}, y] = foo',
 `var destructured_1 = _rec.foo;
 var destructured_1$0 = destructured_1[0];
 _rec.x = _define(\"x\", \"var\", destructured_1$0.x, _rec);
 _rec.y = _define(\"y\", \"var\", destructured_1[1], _rec);`);
-  });
 
-  it('evalId and sourceAccessorName', () => {
-    ignoreFormatCompare(
-      rewriteWithWrapper('function foo() {}', { evalId: 1, sourceAccessorName: '__source' }),
-      'function foo() {\n' +
+  testVarTfm('evalId and sourceAccessorName', {
+    ...opts, evalId: 1, sourceAccessorName: '__source'
+  },
+  'function foo() {}',
+  'function foo() {\n' +
               '}\n' +
               '_rec.foo = _define(\"foo\", \"function\", foo, _rec, {\n' +
               '  evalId: 1,\n' +
               '  moduleSource: __source\n' +
               '});\n' +
               'foo;');
-  });
 });
 
 describe('System.register', () => {
@@ -827,12 +852,10 @@ return {
 };
 });`;
 
-    it('captures setters of registered module', () => {
-      ignoreFormatCompare(stringify(
-        rewriteToRegisterModuleToCaptureSetters(
-          parse(input),
-          { name: '_rec', type: 'Identifier' },
-          { exclude: ['z'] })),
+    testVarTfm(
+      'captures setters of registered module',
+      { varRecorderName: '_rec', dontTransform: ['z'], plugin: livelyPostTranspile },
+      input,
         `System.register([
   \"foo:a.js\",
   \"http://zork/b.js\"
@@ -855,14 +878,11 @@ return {
     }
   };
 });`);
-    });
 
-    it('captures setters of registered module with declarationWrapper', () => {
-      ignoreFormatCompare(stringify(
-        rewriteToRegisterModuleToCaptureSetters(
-          parse(input),
-          { name: '_rec', type: 'Identifier' },
-          { declarationWrapper: { name: '_define', type: 'Identifier' } })),
+    testVarTfm(
+      'captures setters of registered module with declarationWrapper',
+      { plugin: livelyPostTranspile, varRecorderName: '_rec', declarationWrapper: t.Identifier('_define') },
+      input,
         `System.register([
   \"foo:a.js\",
   \"http://zork/b.js\"
@@ -885,6 +905,5 @@ return {
     }
   };
 });`);
-    });
   });
 });
