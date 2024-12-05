@@ -32,7 +32,7 @@ function binaryExpr (left, op, right) {
   };
 }
 
-function funcExpr ({ arrow, id: funcId, expression, generator }, params = [], ...statements) {
+function funcExpr ({ arrow, id: funcId, expression, generator, isAsync }, params = [], ...statements) {
   // lively.ast.stringify(funcExpr({id: "foo"}, ["a"], exprStmt(id("3"))))
   // // => "function foo(a) { 3; }"
   params = params.map(ea => typeof ea === 'string' ? id(ea) : ea);
@@ -44,7 +44,8 @@ function funcExpr ({ arrow, id: funcId, expression, generator }, params = [], ..
       ? statements[0]
       : { body: statements, type: 'BlockStatement' },
     expression: expression || false,
-    generator: generator || false
+    generator: generator || false,
+    async: isAsync
   };
 }
 
