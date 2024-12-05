@@ -1,21 +1,47 @@
 import { Path, arr } from 'lively.lang';
 import { parse, stringify, query, nodes, BaseVisitor as Visitor } from 'lively.ast';
 import { queryNodes } from 'lively.ast/lib/query.js';
-
-let {
-  assign,
-  member,
-  id,
-  funcCall,
-  literal,
-  objectLiteral,
-  varDecl,
-  funcExpr,
-  returnStmt,
-  binaryExpr,
-  ifStmt,
-  block
-} = nodes;
+const acornNodes = {
+  exportDefaultDecl: (declaration) => {
+    return {
+      declaration,
+      type: 'ExportDefaultDeclaration'
+    };
+  },
+  conditional: nodes.conditional,
+  binaryExpr: (op, left, right) => nodes.binaryExpr(left, op, right),
+  logicalExpr: (op, left, right) => nodes.binaryExpr(left, op, right),
+  unaryExpr: (operator, argument) => {
+    return { type: 'UnaryExpression', operator, argument };
+  },
+  arrayExpr: (elements) => {
+    return {
+      elements, type: 'ArrayExpression'
+    };
+  },
+  ifStmt: nodes.ifStmt,
+  funcCall: (func, args) => nodes.funcCall(func, ...args),
+  id: (name) => nodes.id(name),
+  assign: (operator, left, right) => nodes.assign(left, right),
+  member: nodes.member,
+  block: (stmts) => nodes.block(...stmts),
+  literal: (val) => nodes.literal(val),
+  property: (kind, key, val) => nodes.prop(key, val),
+  returnStmt: nodes.returnStmt,
+  arrowFuncExpr: (args, body, generator, isAsync) => nodes.funcExpr({ arrow: true, expression: false, generator, isAsync }, args, ...body.body),
+  funcExpr: (id, args, body, generator, isAsync) => nodes.funcExpr({ id, expression: false, generator, isAsync }, args, ...body.body),
+  objectLiteral: (props) => nodes.objectLiteral(props.map(prop => [prop.key, prop.value]).flat()),
+  varDecl: nodes.varDecl,
+  declaration: (kind, declarations) => ({
+    type: 'VariableDeclaration',
+    kind: kind || 'var',
+    declarations: declarations || []
+  }),
+  declarator: (id, init) => ({
+    type: 'VariableDeclarator', id, init
+  }),
+  parse
+};
 
 function isFunctionNode (node) {
   return node.type === 'ArrowFunctionExpression' ||
@@ -358,18 +384,25 @@ function replacePrivateIdentifier (node, options) {
  * we need to implement the custom lively class notation.
  */
 class ClassReplaceVisitor extends Visitor {
+  static run (parsed, options) {
+    let v = new this();
+    let classHolder = options.classHolder || nodes.objectLiteral([]);
+    return v.accept(parsed, { options, classHolder }, []);
+  }
+
+  // FIXME: this is an extremely obscure way of implementing a custom visitor
   accept (node, state, path) {
     if (isFunctionNode(node)) {
       state = {
         ...state,
-        classHolder: objectLiteral([]),
+        classHolder: nodes.objectLiteral([]),
         currentMethod: node[methodKindSymbol] ? node : state.currentMethod
       };
     }
 
     if (node.type === 'ClassExpression' || node.type === 'ClassDeclaration') {
       if (node._skipClassHolder) state.options.useClassHolder = false;
-      node = replaceClass(node, state, path, state.options);
+      node = replaceClass(node, state, state.options);
       delete state.options.useClassHolder;
     }
 
@@ -381,7 +414,7 @@ class ClassReplaceVisitor extends Visitor {
       node.right._skipClassHolder = true;
     }
 
-    if (node.type === 'PrivateIdentifier') node = replacePrivateIdentifier(node);
+    if (node.type === 'PrivateIdentifier') node = replacePrivateIdentifier(node, state.options);
 
     if (node.type === 'Super') { node = replaceSuper(node, state, path, state.options); }
 
@@ -396,17 +429,13 @@ class ClassReplaceVisitor extends Visitor {
     node = super.accept(node, state, path);
 
     if (node.type === 'ExportDefaultDeclaration') {
-      return splitExportDefaultWithClass(node, state, path, state.options);
+      return splitExportDefaultWithClass(node, state, state.options);
     }
 
     return node;
   }
+}
 
-  static run (parsed, options) {
-    let v = new this();
-    let classHolder = options.classHolder || objectLiteral([]);
-    return v.accept(parsed, { options, classHolder }, []);
-  }
 export function classToFunctionTransformBabel (path, state, options) {
   function getPropPath (path) {
     const propPath = [path.name];
@@ -528,6 +557,7 @@ export function classToFunctionTransformBabel (path, state, options) {
 export function classToFunctionTransform (sourceOrAst, options) {
   let parsed = typeof sourceOrAst === 'string' ? parse(sourceOrAst) : sourceOrAst;
   options.scope = query.resolveReferences(query.scopes(parsed));
+  if (!options.nodes) options = { ...options, nodes: acornNodes };
 
   let replaced = ClassReplaceVisitor.run(parsed, options);
 
