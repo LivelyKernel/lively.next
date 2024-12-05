@@ -471,6 +471,8 @@ function postNormalize (System, normalizeResult, isSync) {
     }
   }
 
+  return normalizeResult;
+
   // Fix issue with accidentally adding .js
   const jsonPath = normalizeResult.match(jsonJsExtRe);
   // if (!jsExtRe.test(normalizeResult) &&
