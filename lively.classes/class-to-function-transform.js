@@ -388,7 +388,7 @@ class ClassReplaceVisitor extends Visitor {
     if (isFunctionNode(node)) {
       state = {
         ...state,
-        classHolder: objectLiteral([]),
+        classHolder: nodes.objectLiteral([]),
         currentMethod: node[methodKindSymbol] ? node : state.currentMethod
       };
     }
