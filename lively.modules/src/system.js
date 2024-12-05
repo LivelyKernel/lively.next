@@ -471,18 +471,7 @@ function postNormalize (System, normalizeResult, isSync) {
     }
   }
 
-  // Fix issue with accidentally adding .js
-  const jsonPath = normalizeResult.match(jsonJsExtRe);
-  // if (!jsExtRe.test(normalizeResult) &&
-  //   !jsxExtRe.test(normalizeResult) &&
-  //   !jsonExtRe.test(normalizeResult) &&
-  //   !nodeModRe.test(normalizeResult) &&
-  //   !nodeExtRe.test(normalizeResult)) {
-  //   // make sure this is not a package name
-  //   normalizeResult += '.js';
-  // }
-  System.debug && console.log(`>> [postNormalize] ${jsonPath ? jsonPath[1] : normalizeResult}`);
-  return jsonPath ? jsonPath[1] : normalizeResult;
+  return normalizeResult;
 }
 
 async function checkExistence (url, System) {
