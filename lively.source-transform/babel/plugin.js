@@ -1102,7 +1102,7 @@ function ensureComponentDescriptors (path, moduleId, options) {
 }
 
 function getExportDecls (scope) {
-  return [...new Set(Object.values(scope.bindings).map(m => m.referencePaths.filter(m => m.parentPath.parentPath?.type.match(/ExportNamedDeclaration|ExportDefaultDeclaration/))).flat().map(m => m.parentPath.parentPath.node))];
+  return [...new Set(Object.values(scope.bindings).map(m => m.referencePaths.filter(m => m.parentPath.parentPath?.type.match(/ExportNamedDeclaration|ExportDefaultDeclaration/))).flat().map(m => m.parent))];
 }
 
 function evalCodeTransform (path, state, options) {
@@ -1113,7 +1113,7 @@ function evalCodeTransform (path, state, options) {
 
   getExportDecls(path.scope)
     .filter(stmt => stmt.local !== stmt.exported)
-    .forEach(stmt => renamedExports[stmt.exported] = stmt.local || stmt.imported);
+    .forEach(stmt => renamedExports[stmt.exported.name] = stmt.local?.name || stmt.imported?.name);
 
   let annotation = {};
   // FIXME: the entire name extraction stuff is extremely confusing. Why do we need to do
