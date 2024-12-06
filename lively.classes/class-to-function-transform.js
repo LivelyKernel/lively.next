@@ -384,6 +384,13 @@ function replacePrivateIdentifier (node, options) {
  * we need to implement the custom lively class notation.
  */
 class ClassReplaceVisitor extends Visitor {
+  static run (parsed, options) {
+    let v = new this();
+    let classHolder = options.classHolder || nodes.objectLiteral([]);
+    return v.accept(parsed, { options, classHolder }, []);
+  }
+
+  // FIXME: this is an extremely obscure way of implementing a custom visitor
   accept (node, state, path) {
     if (isFunctionNode(node)) {
       state = {
@@ -395,7 +402,7 @@ class ClassReplaceVisitor extends Visitor {
 
     if (node.type === 'ClassExpression' || node.type === 'ClassDeclaration') {
       if (node._skipClassHolder) state.options.useClassHolder = false;
-      node = replaceClass(node, state, path, state.options);
+      node = replaceClass(node, state, state.options);
       delete state.options.useClassHolder;
     }
 
@@ -407,7 +414,7 @@ class ClassReplaceVisitor extends Visitor {
       node.right._skipClassHolder = true;
     }
 
-    if (node.type === 'PrivateIdentifier') node = replacePrivateIdentifier(node);
+    if (node.type === 'PrivateIdentifier') node = replacePrivateIdentifier(node, state.options);
 
     if (node.type === 'Super') { node = replaceSuper(node, state, path, state.options); }
 
@@ -422,18 +429,12 @@ class ClassReplaceVisitor extends Visitor {
     node = super.accept(node, state, path);
 
     if (node.type === 'ExportDefaultDeclaration') {
-      return splitExportDefaultWithClass(node, state, path, state.options);
+      return splitExportDefaultWithClass(node, state, state.options);
     }
 
     return node;
   }
-
-  static run (parsed, options) {
-    let v = new this();
-    let classHolder = options.classHolder || objectLiteral([]);
-    return v.accept(parsed, { options, classHolder }, []);
-  }
-};
+}
 
 export function classToFunctionTransformBabel (path, state, options) {
   function getPropPath (path) {
