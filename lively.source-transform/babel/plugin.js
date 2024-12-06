@@ -456,8 +456,6 @@ function replaceVarDeclsAndRefs (path, options) {
           node.right,
           options.captureObj,
           options));
-        path.skip();
-        path.get('left').visit();
         return;
       }
       // declaration wrapper for destructuring assignments like
