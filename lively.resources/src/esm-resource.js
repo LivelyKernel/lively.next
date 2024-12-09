@@ -7,7 +7,7 @@ const requestMap = {};
 
 export class ESMResource extends Resource {
   static normalize (esmUrl) {
-    const id = esmUrl.replaceAll(/esm:\/\/(run|cache)\//g, '');
+    const id = esmUrl.replaceAll(/esm:\/\/([^\/]*)\//g, '');
 
     let pathStructure = id.split('/').filter(Boolean);
 
@@ -25,7 +25,6 @@ export class ESMResource extends Resource {
       pathStructure.push(fileName);
     }
 
-       
     if (pathStructure[pathStructure.length - 1].endsWith('+esm')) {
       pathStructure[pathStructure.length - 1] = pathStructure[pathStructure.length - 1].replace('+esm', 'esm.js');
     }
@@ -41,13 +40,22 @@ export class ESMResource extends Resource {
     return pathStructure;
   }
 
-  async read () {
-    let module;
-
-    const id = this.url.replace(/esm:\/\/(run|cache)\//g, '');
-    let baseUrl = 'https://jspm.dev/';
+  getEsmURL () {
+    let baseUrl;
     if (this.url.startsWith('esm://run/npm/')) baseUrl = 'https://cdn.jsdelivr.net/';
     else if (this.url.startsWith('esm://run/')) baseUrl = 'https://esm.run/';
+    else if (this.url.startsWith('esm://cache/')) baseUrl = 'https://jspm.dev/';
+    else {
+      const domain = this.url.match(/esm:\/\/([^\/]*)\//)?.[1];
+      baseUrl = `https://${domain}/`;
+    }
+    return baseUrl;
+  }
+
+  async read () {
+    let module;
+    const id = this.url.replace(/esm:\/\/([^\/]*)\//g, '');
+    const esmURL = this.getEsmURL();
 
     let pathStructure = ESMResource.normalize(id);
 
@@ -58,7 +66,7 @@ export class ESMResource extends Resource {
       if (typeof lively !== 'undefined' && (hit = lively.memory_esm?.get(shortName))) return await hit.blob.text();
       module = await res.read();
     } else {
-      module = await resource((baseUrl + id)).read();
+      module = await resource((esmURL + id)).read();
       res.write(module);
     }
     return module;
@@ -141,7 +149,9 @@ export class ESMResource extends Resource {
   }
 
   async exists () {
-    // stub that needs to exist
+    const id = this.url.replace(/esm:\/\/([^\/]*)\//g, '');
+    const baseUrl = this.getEsmURL();
+    return await resource(baseUrl).join(id).exists();
   }
 
   async remove () {
