@@ -7,7 +7,7 @@ const requestMap = {};
 
 export class ESMResource extends Resource {
   static normalize (esmUrl) {
-    const id = esmUrl.replaceAll(/esm:\/\/(run|cache)\//g, '');
+    const id = esmUrl.replaceAll(/esm:\/\/([^\/]*)\//g, '');
 
     let pathStructure = id.split('/').filter(Boolean);
 
@@ -25,7 +25,6 @@ export class ESMResource extends Resource {
       pathStructure.push(fileName);
     }
 
-       
     if (pathStructure[pathStructure.length - 1].endsWith('+esm')) {
       pathStructure[pathStructure.length - 1] = pathStructure[pathStructure.length - 1].replace('+esm', 'esm.js');
     }
@@ -43,11 +42,15 @@ export class ESMResource extends Resource {
 
   async read () {
     let module;
-
-    const id = this.url.replace(/esm:\/\/(run|cache)\//g, '');
-    let baseUrl = 'https://jspm.dev/';
+    const id = this.url.replace(/esm:\/\/([^\/]*)\//g, '');
+    let baseUrl;
     if (this.url.startsWith('esm://run/npm/')) baseUrl = 'https://cdn.jsdelivr.net/';
     else if (this.url.startsWith('esm://run/')) baseUrl = 'https://esm.run/';
+    else if (this.url.startsWith('esm://cache/')) baseUrl = 'https://jspm.dev/';
+    else {
+      const domain = this.url.match(/esm:\/\/([^\/]*)\//)?.[1];
+      baseUrl = `https://${domain}/`;
+    }
 
     let pathStructure = ESMResource.normalize(id);
 
