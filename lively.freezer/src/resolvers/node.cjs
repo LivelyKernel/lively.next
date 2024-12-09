@@ -44,8 +44,7 @@ async function availableFonts(fontCSSFile) {
 
 function isCdnImport(url) {
    return  url.includes('jspm.dev') ||
-   url.includes('esm://') ||
-   url.startsWith('https://ga.jspm.io');
+   url.includes('esm://');
 }
 
 function isAlreadyResolved(url) {
