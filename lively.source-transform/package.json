@@ -30,8 +30,7 @@
     "@babel/plugin-proposal-optional-catch-binding": "7.16.7",
     "@babel/plugin-syntax-import-meta": "7.10.4",
     "@babel/types": "7.26.0",
-    "@babel/core": "7.26.0",
-    "recast-x": "1.0.5"
+    "@babel/core": "7.26.0"
   },
   "devDependencies": {
     "lively.vm": "*",
