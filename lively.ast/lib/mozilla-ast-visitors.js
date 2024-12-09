@@ -395,6 +395,22 @@ class ScopeVisitor extends Visitor {
     return node;
   }
 
+  visitIfStatement (node, scope, path) {
+    const visitor = this;
+
+    node.test = visitor.accept(node.test, scope, path.concat(['test']));
+
+    const consequentScope = this.newScope(node, scope);
+    node.consequent = visitor.accept(node.consequent, consequentScope, path.concat(['consequent']));
+
+    if (node.alternate) {
+      const alternateScope = this.newScope(node, scope);
+      node.alternate = visitor.accept(node.alternate, alternateScope, path.concat(['alternate']));
+    }
+
+    return node;
+  }
+
   visitLabeledStatement (node, scope, path) {
     const visitor = this;
     // ignore label
