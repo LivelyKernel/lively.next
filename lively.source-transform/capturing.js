@@ -279,7 +279,7 @@ function replaceRefs (parsed, options) {
           }
           const key = prop.value || prop.key;
           return assign(key, member(member(options.captureObj, intermediate), prop.key));
-        }));
+        }), member(options.captureObj, intermediate));
     }
 
     return node;
@@ -880,10 +880,10 @@ function es6ModuleTransforms (parsed, options) {
                     null,
                     literal(decl.id.name),
                     literal(stmt.declaration.kind),
-                    decl, options.captureObj,
+                    decl.init, options.captureObj,
                     options)
                   : decl.init,
-                false),
+                false).expression,
               stmt.declaration.kind);
           })
             .concat(decls.map(decl => exportCallStmt(options.moduleExportFunc, decl.id.name, decl.id)));
