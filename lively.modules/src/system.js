@@ -536,7 +536,7 @@ async function normalizeHook (proceed, name, parent, parentAddress) {
       const indexjs = stage3.replace('.js', '/index.js');
       if (await checkExistence(indexjs, System) || !isNodePath) return indexjs;
       return stage3.replace('.js', '/index.node');
-    } else if (!stage3.includes('jspm.dev') && stage3 !== '@empty') {
+    } else if (!stage3.startsWith('esm://') && !stage3.includes('jspm.dev') && stage3 !== '@empty') {
       if (await checkExistence(stage3 + '.js', System)) return stage3 + '.js';
       if (await checkExistence(stage3 + '/index.js', System)) return stage3 + '/index.js';
     }
