@@ -99,7 +99,7 @@ function transformArrayPattern (pattern, transformState) {
     } else if (el.type === 'RestElement') {
       let decl = varDecl(el.argument, {
         type: 'CallExpression',
-        arguments: [t.NumberLiteral(i)],
+        arguments: [t.NumericLiteral(i)],
         callee: t.MemberExpression(transformState.parent, t.Identifier('slice'), false)
       });
       decl[p] = { capture: true };
@@ -111,14 +111,14 @@ function transformArrayPattern (pattern, transformState) {
         t.ConditionalExpression(
           t.BinaryExpression('===', t.MemberExpression(transformState.parent, t.Identifier(String(i)), true), t.Identifier('undefined')),
           el.right,
-          t.MemberExpression(transformState.parent, t.NumberLiteral(i), true)));
+          t.MemberExpression(transformState.parent, t.NumericLiteral(i), true)));
       decl[p] = { capture: true };
       transformed.push(decl);
 
     // like [{x}]
     } else {
       const helperVarId = t.Identifier(generateUniqueName(declaredNames, transformState.parent.name + '$' + i));
-      const helperVar = varDecl(helperVarId, t.MemberExpression(transformState.parent, t.NumberLiteral(i), true));
+      const helperVar = varDecl(helperVarId, t.MemberExpression(transformState.parent, t.NumericLiteral(i), true));
       // helperVar[p] = {capture: true};
       declaredNames.push(helperVarId.name);
       transformed.push(helperVar);
@@ -292,8 +292,8 @@ export function declarationWrapperCall (
     if (declNode['x-lively-object-meta']) {
       ({ start, end, evalId, sourceAccessorName, exportConflict } = declNode['x-lively-object-meta']);
     }
-    if (start !== undefined) keyVals.push(t.ObjectProperty(t.Identifier('start'), t.NumberLiteral(start)));
-    if (end !== undefined) keyVals.push(t.ObjectProperty(t.Identifier('end'), t.NumberLiteral(end)));
+    if (start !== undefined) keyVals.push(t.ObjectProperty(t.Identifier('start'), t.NumericLiteral(start)));
+    if (end !== undefined) keyVals.push(t.ObjectProperty(t.Identifier('end'), t.NumericLiteral(end)));
     if (exportConflict !== undefined) keyVals.push(t.ObjectProperty(t.Identifier('exportConflict'), t.StringLiteral(exportConflict)));
     if (evalId === undefined && options.hasOwnProperty('evalId')) {
       evalId = options.evalId;
@@ -302,7 +302,7 @@ export function declarationWrapperCall (
       sourceAccessorName = options.sourceAccessorName;
     }
 
-    if (evalId !== undefined) keyVals.push(t.ObjectProperty(t.Identifier('evalId'), t.NumberLiteral(evalId)));
+    if (evalId !== undefined) keyVals.push(t.ObjectProperty(t.Identifier('evalId'), t.NumericLiteral(evalId)));
     if (sourceAccessorName) keyVals.push(t.ObjectProperty(t.Identifier('moduleSource'), t.Identifier(sourceAccessorName)));
     if (keyVals.length > 0) {
       return t.CallExpression(
