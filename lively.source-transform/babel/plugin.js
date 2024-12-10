@@ -49,7 +49,7 @@ const babelNodes = {
   assignPattern: t.AssignmentPattern,
   id: t.Identifier,
   block: t.BlockStatement,
-  literal: (v) => typeof v === 'string' ? t.StringLiteral(v) : t.NumberLiteral(v),
+  literal: (v) => typeof v === 'string' ? t.StringLiteral(v) : t.NumericLiteral(v),
   forInStmt: t.ForInStatement,
   continueStmt: t.ContinueStatement,
   objectLiteral: t.ObjectExpression,
@@ -1087,8 +1087,8 @@ function ensureComponentDescriptors (path, moduleId, options) {
             t.ObjectProperty(t.Identifier('module'), t.StringLiteral(moduleId)),
             t.ObjectProperty(t.Identifier('export'), t.StringLiteral(componentRef)),
             t.ObjectProperty(t.Identifier('range'), t.ObjectExpression([
-              t.ObjectProperty(t.Identifier('start'), t.NumberLiteral(node.start)),
-              t.ObjectProperty(t.Identifier('end'), t.NumberLiteral(node.end))
+              t.ObjectProperty(t.Identifier('start'), t.NumericLiteral(node.start)),
+              t.ObjectProperty(t.Identifier('end'), t.NumericLiteral(node.end))
             ]))
           ]),
           t.Identifier('System'),
@@ -1548,7 +1548,6 @@ export function setupBabelTranspiler (System) {
     transpiler: 'lively.transpiler.babel',
     babelOptions: {
       sourceMaps: true,
-      // inputSourceMap: true,
       compact: false,
       comments: true,
       presets: []
