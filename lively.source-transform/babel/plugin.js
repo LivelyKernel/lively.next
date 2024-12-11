@@ -272,7 +272,14 @@ function getRefs (scope, options) {
   return bindings.map(binding =>
     binding.referencePaths
       .filter(path => !path.parentPath.type.match(exportRe) && !path.type.match(exportRe))
-      .concat(binding.constantViolations.filter(path => path.type === 'AssignmentExpression').map(path => path.get('left'))))
+      .concat(binding.constantViolations.filter(path => path.type === 'AssignmentExpression').map(path => path.get('left')).map(m => {
+        if (m.type === 'ObjectPattern') {
+          return m.get('properties').map(prop => {
+            return prop.get('key');
+          });
+        }
+        return m;
+      })).flat())
     .flat().map(m => m.node).concat(globalRefs).filter(ref => !options?.excludeRefs.includes(ref.name));
 }
 
@@ -468,7 +475,8 @@ function replaceVarDeclsAndRefs (path, options) {
               if (prop.type === 'RestElement') {
                 return t.AssignmentExpression('=', prop.argument.name, t.MemberExpression(options.captureObj, intermediate));
               }
-              const key = prop.value || prop.key;
+              let key = prop.value || prop.key;
+              if (refsToReplace.has(key)) key = t.MemberExpression(options.captureObj, key);
               return t.AssignmentExpression('=', key, t.MemberExpression(t.MemberExpression(options.captureObj, intermediate), prop.key));
             }), t.MemberExpression(options.captureObj, intermediate)]));
         path.skip();
