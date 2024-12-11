@@ -4,6 +4,12 @@ import * as modules from 'lively.modules';
 import { withMozillaAstDo } from 'lively.ast';
 import mocha from 'mocha';
 import chai from 'chai';
+import chaiSubset from 'chai-subset';
+
+System.global.chai = chai;
+System.global.mocha = mocha;
+
+chai.use(chaiSubset);
 
 // FIXME: This is a temporary solution since we can not easily bundle mocha and chai into the frozen bundle because the esm builds are temporarily broken.
 // For now we just inject them manually into the frozen bundle by setting the modules namespaces here:
