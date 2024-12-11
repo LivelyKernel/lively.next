@@ -10,7 +10,8 @@
     "minimist": "^1.2.0",
     "systemjs": "^0.21.6",
     "mocha": "^10.0.0",
-    "chai": "^4.3.6"
+    "chai": "^4.3.6",
+    "chai-subset": "1.6.0"
   },
   "devDependencies": {
     "babel-plugin-external-helpers": "^6.18.0",
@@ -84,6 +85,9 @@
       }
     },
     "map": {
+      "chai-subset": {
+        "~node": "esm://ga.jspm.io/npm:chai-subset@1.6.0/lib/chai-subset.js"
+      },
       "chai": {
         "node": "./dist/chai.js"
       },
