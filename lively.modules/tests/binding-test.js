@@ -1,13 +1,14 @@
 /* global System, beforeEach, afterEach, describe, it */
 
 import { expect } from 'mocha-es6';
-import { removeDir, createFiles } from './helpers.js';
+import { createFiles, resource } from 'lively.resources';
+import { prepareSystem } from './helpers.js';
 
-import { getSystem } from '../src/system.js';
+import { removeSystem } from '../src/system.js';
 import module from '../src/module.js';
 import { registerPackage } from '../src/packages/package.js';
 
-let dir = System.decanonicalize('lively.modules/tests/');
+let dir = 'local://lively.modules-bindings-test/';
 let testProjectDir = dir + 'test-dir-imports-exports/';
 let testProjectSpec = {
   'package.json': '{"name": "imports-exports-test-project", "main": "file2.js"}',
@@ -51,12 +52,12 @@ let testProjectSpec = {
 describe('binding', () => {
   let S, modules;
   beforeEach(async () => {
-    S = getSystem('import-export-test');
+    S = prepareSystem('import-export-test', testProjectDir);
     modules = Object.keys(testProjectSpec)
       .map(k => module(S, testProjectDir + k));
     await createFiles(testProjectDir, testProjectSpec);
   });
-  afterEach(() => removeDir(testProjectDir));
+  afterEach(async () => { removeSystem('import-export-test'); await resource(testProjectDir).remove(); });
 
   it('within module', async () => {
     const decls = await modules[1].bindingPathForRefAt(19);
