@@ -8,12 +8,9 @@ import { member } from 'lively.ast/lib/nodes.js';
 import { parse } from 'lively.ast/lib/parser.js';
 import stringify from 'lively.ast/lib/stringify.js';
 
-function classTemplate (className, superClassName, methodString, classMethodString, classHolder, moduleMeta, useClassHolder = true, start, end) {
-  if (methodString.includes('\n')) methodString = string.indent(methodString, '  ', 2).replace(/^\s+/, '');
-  if (classMethodString.includes('\n')) classMethodString = string.indent(classMethodString, '  ', 2).replace(/^\s+/, '');
 function classTemplate (className, superClassName, methodString, classMethodString, classHolder, moduleMeta, useClassHolder = true, start, end, evalId) {
-  if (methodString.includes('\n')) methodString = string.indent(methodString, ' ', 2).replace(/^\s+/, '');
-  if (classMethodString.includes('\n')) classMethodString = string.indent(classMethodString, ' ', 2).replace(/^\s+/, '');
+  if (methodString.includes('\n')) methodString = string.indent(methodString, ' ', 4).replace(/^\s+/, '');
+  if (classMethodString.includes('\n')) classMethodString = string.indent(classMethodString, ' ', 4).replace(/^\s+/, '');
 
   if (!className) useClassHolder = false;
 
@@ -27,23 +24,23 @@ function classTemplate (className, superClassName, methodString, classMethodStri
     end: ${end}${evalId ? `,\n    evalId: ${evalId}` : ''}
   }`;
   }
-  return `${useClassHolder ? 'function(superclass)' : '(superclass =>'} {
+  return `${useClassHolder ? 'function (superclass)' : '(superclass =>'} {
   var __lively_classholder__ = ${classHolder};
   var ${useClassHolder ? '__lively_class__' : (className ? 'Foo' : '__lively_class__')} = ${classFunctionHeader}(__first_arg__) {
-    if (__first_arg__ && __first_arg__[Symbol.for("lively-instance-restorer")])
-      {} else {
+    if (__first_arg__ && __first_arg__[Symbol.for("lively-instance-restorer")]) {
+    } else {
       return this[Symbol.for("lively-instance-initialize")].apply(this, arguments);
     }
-  };${(useClassHolder || !className) ? '' : '\nvar __lively_class__ = Foo;'}
+  };${(useClassHolder || !className) ? '' : '\n  var __lively_class__ = Foo;'}
   if (Object.isFrozen(__lively_classholder__)) {
     return __lively_class__;
   }
   return initializeClass(__lively_class__, superclass, ${methodString}, ${classMethodString}, ${ useClassHolder ? '__lively_classholder__' : 'null'}, ${moduleMeta}${pos});
-}${useClassHolder ? '' : ')'}(${superClassName})`;
+}${useClassHolder ? '' : ')'}(${superClassName});`;
 }
 
 function classTemplateDecl (className, superClassName, methodString, classMethodString, classHolder, moduleMeta, start, end) {
-  return sanitize(`var ${className} = ${classTemplate(className, superClassName, methodString, classMethodString, classHolder, moduleMeta, true, start, end)}`);
+  return `var ${className} = ${classTemplate(className, superClassName, methodString, classMethodString, classHolder, moduleMeta, true, start, end)}`;
 }
 
 let opts = {
