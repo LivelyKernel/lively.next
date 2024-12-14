@@ -40,10 +40,10 @@ describe('lively.modules aware eval', () => {
     await module1.load();
     let virtualModule = module(S, 'local://foo/mod1');
     await runEval(`import { x } from '${module1.id}';`, { targetModule: virtualModule.id, System: S });
-    expect(virtualModule).to.have.deep.property('recorder.x', 23);
+    expect(virtualModule).to.have.nested.property('recorder.x', 23);
     await runEval(`import { x } from '${module1.id}';`, { targetModule: virtualModule.id, System: S });
     await module1.changeSource('export var x = 24;');
-    expect(virtualModule).to.have.deep.property('recorder.x', 24);
+    expect(virtualModule).to.have.nested.property('recorder.x', 24);
   });
 
   it('exports and imports are updated on eval', async () => {
@@ -51,10 +51,10 @@ describe('lively.modules aware eval', () => {
     let m2 = S.get('@lively-env').moduleEnv('local://foo/mod2');
     await runEval('export var z = 23;', { targetModule: m1.id, System: S });
     await runEval(`import { z } from '${m1.id}';`, { targetModule: m2.id, System: S });
-    expect(m2).to.have.deep.property('recorder.z', 23);
+    expect(m2).to.have.nested.property('recorder.z', 23);
     expect(m1.record().importers).to.containSubset([{ name: m2.id }]);
     expect(m2.record().dependencies).to.containSubset([{ name: m1.id }]);
     await runEval('export var z = 24;', { targetModule: m1.id, System: S });
-    expect(m2).to.have.deep.property('recorder.z', 24);
+    expect(m2).to.have.nested.property('recorder.z', 24);
   });
 });

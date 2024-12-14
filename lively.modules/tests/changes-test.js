@@ -91,10 +91,10 @@ describe('code changes of esm format module', function () {
 
   it('affects dependent modules', async () => {
     let m1 = await S.import(file1m);
-    expect(module1.env()).deep.property('recorder.y').equal(1, 'internal state before change');
+    expect(module1.env()).nested.property('recorder.y').equal(1, 'internal state before change');
     expect(m1.x).to.equal(3, 'before change');
     await changeModule2Source();
-    expect(module1.env()).deep.property('recorder.y').to.equal(2, 'internal state after change');
+    expect(module1.env()).nested.property('recorder.y').to.equal(2, 'internal state after change');
     // We expect to still have the same internal computed state b/c module 1
     // won't get re-run!
     expect(m1.x).to.equal(3, 'state after change');
