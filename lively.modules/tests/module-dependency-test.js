@@ -1,9 +1,9 @@
 /* global System, beforeEach, afterEach, describe, it */
 
 import { expect } from 'mocha-es6';
-import { removeDir, createFiles } from './helpers.js';
+import { removeDir, prepareSystem, createFiles } from './helpers.js';
 
-import { getSystem, removeSystem } from '../src/system.js';
+import { removeSystem } from '../src/system.js';
 import module from '../src/module.js';
 
 let dir = System.decanonicalize('lively.modules/tests/');
@@ -22,11 +22,7 @@ let S, module1, module2, module3;
 
 describe('dependencies', () => {
   beforeEach(async () => {
-    S = getSystem('test', { baseURL: testProjectDir });
-    S.set('lively.transpiler', System.get('lively.transpiler'));
-    S.config({ transpiler: 'lively.transpiler' });
-    S.babelOptions = System.babelOptions;
-    S.translate = async (load) => await System.translate.bind(S)(load);
+    S = prepareSystem('test', testProjectDir);
     module1 = module(S, file1m);
     module2 = module(S, file2m);
     module3 = module(S, file3m);
