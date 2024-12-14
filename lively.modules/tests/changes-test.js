@@ -2,8 +2,9 @@
 
 import { expect } from 'mocha-es6';
 import { createFiles, resource } from 'lively.resources';
+import { prepareSystem } from './helpers.js';
 
-import { getSystem, removeSystem } from '../src/system.js';
+import { removeSystem } from '../src/system.js';
 import module from '../src/module.js';
 
 const dir = 'local://lively.modules-changes-test/';
@@ -31,11 +32,7 @@ describe('code changes of esm format module', function () {
   this.timeout(5000);
 
   beforeEach(async () => {
-    S = getSystem('test', { baseURL: testProjectDir });
-    S.set('lively.transpiler', System.get('lively.transpiler'));
-    S.config({ transpiler: 'lively.transpiler' });
-    S.translate = async (load) => await System.translate.bind(S)(load);
-    S.useModuleTranslationCache = false;
+    S = prepareSystem('test', testProjectDir);
     module1 = module(S, file1m);
     module2 = module(S, file2m);
     module4 = module(S, file4m);
@@ -45,7 +42,7 @@ describe('code changes of esm format module', function () {
   afterEach(async () => { removeSystem('test'); await resource(testProjectDir).remove(); });
 
   it('modifies module and its exports', async () => {
-    const m1 = await S.import(file1m);
+    let m1 = await S.import(file1m);
     const m2 = await S.import(file2m);
 
     expect(module2.env().recorder.internal).to.equal(1, 'internal state of module2 before change');
@@ -174,10 +171,7 @@ describe('code changes of global format module', () => {
 
   let S, module1;
   beforeEach(async () => {
-    S = getSystem('test', { baseURL: dir });
-    S.set('lively.transpiler', System.get('lively.transpiler'));
-    S.config({ transpiler: 'lively.transpiler' });
-    S.translate = async (load) => await System.translate.bind(S)(load);
+    S = prepareSystem('test', dir);
     module1 = module(S, file1m);
     await createFiles(testProjectDir, testProjectSpec);
     await S.import(testProjectDir + 'file1.js');
@@ -222,10 +216,7 @@ describe('persistent definitions', () => {
 
   let S, module1;
   beforeEach(async () => {
-    S = getSystem('test', { baseURL: testProjectDir });
-    S.set('lively.transpiler', System.get('lively.transpiler'));
-    S.config({ transpiler: 'lively.transpiler' });
-    S.translate = async (load) => await System.translate.bind(S)(load);
+    S = prepareSystem('test', testProjectDir);
     module1 = module(S, file1m);
     await createFiles(testProjectDir, testProjectSpec);
   });
@@ -259,10 +250,7 @@ describe('persistent definitions', () => {
 describe('notifications of toplevel changes', () => {
   let S, module1, module2, module4;
   beforeEach(async () => {
-    S = getSystem('test', { baseURL: testProjectDir });
-    S.set('lively.transpiler', System.get('lively.transpiler'));
-    S.config({ transpiler: 'lively.transpiler' });
-    S.translate = async (load) => await System.translate.bind(S)(load);
+    S = prepareSystem('test', testProjectDir);
     module1 = module(S, file1m);
     module2 = module(S, file2m);
     module4 = module(S, file4m);
