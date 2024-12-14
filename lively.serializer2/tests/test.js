@@ -182,7 +182,7 @@ describe('marshalling', () => {
       let obj = { foo: exprObj };
       let snap = objPool.snapshotObject(obj);
       let obj2 = ObjectPool.resolveFromSnapshotAndId(snap, objPool.options);
-      expect(obj2).deep.property('foo.n', 2);
+      expect(obj2).has.nested.property('foo.n', 2);
       expect(obj2.foo).property('__serialize__').to.be.a('function');
     });
 
