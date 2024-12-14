@@ -33,8 +33,8 @@ describe('changes', function () {
     m2.fill = Color.yellow;
 
     expect(m1Changes).equals([]);
-    expect(m1SubmorphChanges).deep.property('[0].change').containSubset({ prop: 'fill', value: Color.yellow });
-    expect(m1SubmorphChanges).deep.property('[0].morph', m2);
+    expect(m1SubmorphChanges).nested.property('[0].change').containSubset({ prop: 'fill', value: Color.yellow });
+    expect(m1SubmorphChanges).nested.property('[0].morph', m2);
     expect(m2Changes).containSubset([{ prop: 'fill', value: Color.yellow }]);
     expect(m2SubmorphChanges).equals([]);
   });
@@ -164,7 +164,7 @@ describe('changes', function () {
       });
     });
   });
-  
+
   describe('animations', () => {
     it('enques a new animation when setting prop animated', () => {
       let m = morph({ extent: pt(10, 20), fill: Color.red });
@@ -172,7 +172,7 @@ describe('changes', function () {
       q.registerAnimation({ fill: Color.green, extent: pt(50, 50), easing: 'easInOut', onFinish: () => m.remove() });
       expect(q.animations[0].animatedProps).deep.equals({ fill: Color.green, extent: pt(50, 50) });
     });
-    
+
     it('does not enqueue the same prop animation more than once', () => {
       let m = morph({ extent: pt(10, 20), fill: Color.red });
       let q = m._animationQueue;
@@ -183,7 +183,7 @@ describe('changes', function () {
       expect(q.animations.length).equals(1);
       expect(new PropertyAnimation(null, m, a1).equals(new PropertyAnimation(null, m, a2))).to.be.true;
     });
-    
+
     it('does not enqueue animations that have no effect', () => {
       let m = morph({ extent: pt(10, 20), fill: Color.red });
       let q = m._animationQueue;
