@@ -2,9 +2,10 @@
 
 import { expect } from 'mocha-es6';
 import { promise } from 'lively.lang';
+import { prepareSystem } from './helpers.js';
 
 import module, { isModuleLoaded, doesModuleExist } from '../src/module.js';
-import { getSystem, removeSystem, loadedModules, whenLoaded } from '../src/system.js';
+import { removeSystem, loadedModules, whenLoaded } from '../src/system.js';
 import { registerPackage, importPackage } from '../src/packages/package.js';
 import { createFiles, resource } from 'lively.resources';
 
@@ -15,11 +16,7 @@ let S;
 
 describe('module loading', () => {
   beforeEach(async () => {
-    S = getSystem('test', { baseURL: dir });
-    S.set('lively.transpiler', System.get('lively.transpiler'));
-    S.config({ transpiler: 'lively.transpiler' });
-    S.babelOptions = System.babelOptions;
-    S.translate = async (load) => await System.translate.bind(S)(load);
+    S = prepareSystem('test', dir);
     await createFiles(testDir, {
       'file1.js': "import { y } from './file2.js'; export var x = y + 1;",
       'file2.js': "import { z } from './file3.js'; export var y = 1 + z;",
