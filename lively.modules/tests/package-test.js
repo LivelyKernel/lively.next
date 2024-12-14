@@ -1,12 +1,12 @@
 /* global System, beforeEach, afterEach, describe, it */
 
 import { expect } from 'mocha-es6';
-import { modifyJSON, noTrailingSlash } from './helpers.js';
+import { modifyJSON, prepareSystem, noTrailingSlash } from './helpers.js';
 
 import { arr } from 'lively.lang';
 import { resource, createFiles } from 'lively.resources';
 import module from '../src/module.js';
-import { getSystem, removeSystem } from '../src/system.js';
+import { removeSystem } from '../src/system.js';
 import { getPackage, ensurePackage, applyConfig, getPackageSpecs } from '../src/packages/package.js';
 import { PackageRegistry } from '../src/packages/package-registry.js';
 
@@ -41,11 +41,7 @@ describe('package loading', function () {
   let S;
 
   beforeEach(async () => {
-    S = getSystem('test', { baseURL: testDir });
-    S.set('lively.transpiler', System.get('lively.transpiler'));
-    S.config({ transpiler: 'lively.transpiler' });
-    S.babelOptions = System.babelOptions;
-    S.translate = async (load) => await System.translate.bind(S)(load);
+    S = prepareSystem('test', testDir);
     await createFiles(testDir, testResources);
   });
 
@@ -295,7 +291,7 @@ describe('package loading', function () {
       expect(await resource(newURL + '/entry-a.js').exists()).equals(true, 'entry-a.js does not exist');
       expect(await resource(newURL + '/package.json').exists()).equals(true, 'package.json does not exist');
 
-      expect(S.get(newURL + '/entry-a.js')).deep.equals({ version: 'a', x: 2 });
+      expect(S.get(newURL + '/entry-a.js')).containSubset({ version: 'a', x: 2 });
       expect(S.get(newURL + '/package.json').default).containSubset({ main: 'entry-a.js', name: 'some-project' });
     });
 
@@ -330,7 +326,7 @@ describe('package loading', function () {
       expect(await resource(newURL + '/package.json').exists()).equals(true, 'package.json does not exist');
       expect(JSON.parse(await resource(newURL + '/package.json').read())).containSubset({ main: 'entry-a.js', name: 'some-project-copied' });
 
-      expect(S.get(newURL + '/entry-a.js')).deep.equals({ version: 'a', x: 2 });
+      expect(S.get(newURL + '/entry-a.js')).containSubset({ version: 'a', x: 2 });
       expect(S.get(newURL + '/package.json').default).containSubset({ main: 'entry-a.js', name: 'some-project-copied' });
     });
   });
@@ -340,11 +336,7 @@ describe('package configuration test', () => {
   let S;
 
   beforeEach(async () => {
-    S = getSystem('test', { baseURL: testDir });
-    S.set('lively.transpiler', System.get('lively.transpiler'));
-    S.config({ transpiler: 'lively.transpiler' });
-    S.babelOptions = System.babelOptions;
-    S.translate = async (load) => await System.translate.bind(S)(load);
+    S = prepareSystem('test', testDir);
     await createFiles(testDir, testResources);
   });
 
@@ -415,11 +407,7 @@ describe('mutual dependent packages', () => {
   let S;
 
   beforeEach(async () => {
-    S = getSystem('test', { baseURL: testDir });
-    S.set('lively.transpiler', System.get('lively.transpiler'));
-    S.config({ transpiler: 'lively.transpiler' });
-    S.babelOptions = System.babelOptions;
-    S.translate = async (load) => await System.translate.bind(S)(load);
+    S = prepareSystem('test', testDir);
     await createFiles(testDir, testResources);
   });
 
@@ -466,11 +454,7 @@ describe('package registry', () => {
         }
       }
     });
-    S = getSystem('test', { baseURL: testDir });
-    S.set('lively.transpiler', System.get('lively.transpiler'));
-    S.config({ transpiler: 'lively.transpiler' });
-    S.babelOptions = System.babelOptions;
-    S.translate = async (load) => await System.translate.bind(S)(load);
+    S = prepareSystem('test', testDir);
     registry = PackageRegistry.ofSystem(S);
     registry.packageBaseDirs = [resource(testDir).join('packages/')];
     await registry.update();

@@ -1,8 +1,9 @@
 /* global beforeEach, afterEach, describe, it */
 
 import { expect } from 'mocha-es6';
+import { prepareSystem } from './helpers.js';
 
-import { getSystem, removeSystem } from '../src/system.js';
+import { removeSystem } from '../src/system.js';
 import module from '../src/module.js';
 import { registerPackage } from '../src/packages/package.js';
 import { runEval } from 'lively.vm';
@@ -27,11 +28,7 @@ let testProjectSpec = {
 let S, module1, module3, module4, module5;
 
 async function setup () {
-  S = getSystem('test', { baseURL: dir });
-  S.set('lively.transpiler', System.get('lively.transpiler'));
-  S.config({ transpiler: 'lively.transpiler' });
-  S.babelOptions = System.babelOptions;
-  S.translate = async (load) => await System.translate.bind(S)(load);
+  S = prepareSystem('test', dir);
   module1 = module(S, testProjectDir + 'file1.js');
   module3 = module(S, testProjectDir + 'file3.js');
   module4 = module(S, testProjectDir + 'file4.js');
