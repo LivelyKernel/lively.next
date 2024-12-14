@@ -1,16 +1,14 @@
-/*global process, require, beforeEach, afterEach, describe, it*/
+/* global process, require, beforeEach, afterEach, describe, it */
 
-import { expect } from "mocha-es6";
+import { expect } from 'mocha-es6';
 
-import { parse } from "../lib/parser.js";
+import { parse } from '../lib/parser.js';
 
-describe('es6', function() {
-
-  it("arrow function", function() {
-    var code = '() => 23;'
-    var parsed = parse(code);
-    expect(parsed).deep.property("body[0].expression.type")
-      .equals("ArrowFunctionExpression");
+describe('es6', function () {
+  it('arrow function', function () {
+    let code = '() => 23;';
+    let parsed = parse(code);
+    expect(parsed).has.nested.property('body[0].expression.type')
+      .equals('ArrowFunctionExpression');
   });
-
 });

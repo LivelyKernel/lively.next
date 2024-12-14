@@ -363,7 +363,7 @@ describe('key events', () => {
       await env.eventDispatcher.simulateDOMEvents({ type: 'keydown', key: 'x' });
       await env.eventDispatcher.simulateDOMEvents({ type: 'keydown', key: 'y' });
       expect(log).equals('!');
-      expect(env).deep.property('eventDispatcher.eventState.keyInputState')
+      expect(env).nested.property('eventDispatcher.eventState.keyInputState')
         .deep.equals({ count: undefined, keyChain: '' });
     });
 
@@ -377,7 +377,7 @@ describe('key events', () => {
       await env.eventDispatcher.simulateDOMEvents({ type: 'keydown', ctrlKey: true, key: 'x' });
       await env.eventDispatcher.simulateDOMEvents({ type: 'keydown', ctrlKey: true, key: 'x' });
       expect(log).equals('2');
-      expect(env).deep.property('eventDispatcher.eventState.keyInputState')
+      expect(env).nested.property('eventDispatcher.eventState.keyInputState')
         .deep.equals({ count: undefined, keyChain: '' });
     });
 
@@ -405,7 +405,7 @@ describe('key events', () => {
       !e.propagationStopped && await env.eventDispatcher.simulateDOMEvents({ type: 'input', key: 'z', isPrimary: true });
       expect(log).equals('!');
       expect(submorph5.textString).equals('ztext');
-      expect(env).deep.property('eventDispatcher.eventState.keyInputState')
+      expect(env).nested.property('eventDispatcher.eventState.keyInputState')
         .deep.equals({ count: undefined, keyChain: '' });
     });
   });
