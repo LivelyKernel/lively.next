@@ -19,6 +19,7 @@ const acornNodes = {
       elements, type: 'ArrayExpression'
     };
   },
+  exprStmt: (expr) => nodes.exprStmt(expr),
   ifStmt: nodes.ifStmt,
   funcCall: (func, args) => nodes.funcCall(func, ...args),
   id: (name) => nodes.id(name),
@@ -58,11 +59,12 @@ function ensureIdentifier (name) {
 }
 
 function classFieldsInitialization (nodes, options) {
-  const { assign, member, id } = options.nodes;
+  const { assign, member, id, exprStmt } = options.nodes;
   return nodes.map(({ key, value }) => {
     let name = key.name;
     if (key.type === 'PrivateIdentifier') name = '_' + name;
-    return assign('=', member(id('this'), id(name)), value === null ? id('null') : value);
+    if (key.type === 'PrivateName') name = '_' + key.id.name;
+    return exprStmt(assign('=', member(id('this'), id(name)), value === null ? id('null') : value));
   });
 }
 
@@ -224,7 +226,7 @@ function replaceClass (node, state, options) {
   let evalId = options.evalId;
   let sourceAccessorName = options.sourceAccessorName;
   let loc = { start, end, ...node['x-lively-object-meta'] || {} };
-  const validMemberIdentifiers = ['Literal', 'StringLiteral', 'Identifier', 'PrivateIdentifier', 'MemberExpression', 'CallExpression'];
+  const validMemberIdentifiers = ['Literal', 'StringLiteral', 'Identifier', 'PrivateIdentifier', 'PrivateName', 'MemberExpression', 'CallExpression'];
 
   let { inst, clazz, fields } = body.reduce((props, propNode) => {
     let decl; let { key, kind, value, static: classSide, type } = propNode;
@@ -268,7 +270,7 @@ function replaceClass (node, state, options) {
           value.generator, value.async
         ), value[methodKindSymbol] = 'proto', value))];
       decl = n.objectLiteral(props);
-    } else if (type === 'PropertyDefinition') {
+    } else if (['PropertyDefinition', 'ClassPrivateProperty', 'ClassProperty'].includes(type)) {
       // collect these for class field initializiation
       props.fields.push(propNode);
     } else {
