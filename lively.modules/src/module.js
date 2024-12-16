@@ -1,5 +1,5 @@
 import { arr, obj, graph, string } from 'lively.lang';
-import { parse, query } from 'lively.ast';
+import { parse, fuzzyParse, query } from 'lively.ast';
 import { computeRequireMap } from './dependencies.js';
 import { moduleSourceChange } from './change.js';
 import { scheduleModuleExportsChange, runScheduledExportChanges } from './import-export.js';
@@ -473,7 +473,7 @@ class ModuleInterface {
 
   isMochaTest () {
     if (!this._source) { return false; }
-    const scope = this._scope || (this._scope = query.topLevelDeclsAndRefs(parse(this._source)).scope);
+    const scope = this._scope || (this._scope = query.topLevelDeclsAndRefs(fuzzyParse(this._source)).scope);
     const deps = query.imports(scope).map(imp => imp.fromModule);
     if (!deps.some(ea => ea.endsWith('mocha-es6') || ea.endsWith('mocha-es6/index.js'))) { return false; }
     return true;
