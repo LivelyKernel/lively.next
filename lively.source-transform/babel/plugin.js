@@ -269,17 +269,21 @@ function getRefs (scope, options) {
     }
   });
   const exportRe = /ExportDefaultDeclaration|ExportNamedDeclaration|ExportSpecifier/;
+  function extractRef (ref) {
+    if (ref.type === 'ObjectPattern') {
+      return ref.get('properties').map(prop => {
+        return prop.node?.value ? prop.get('value') : prop.get('key');
+      });
+    }
+    if (ref.type === 'ArrayPattern') {
+      return ref.get('elements').map(extractRef).flat();
+    }
+    return ref;
+  }
   return bindings.map(binding =>
     binding.referencePaths
       .filter(path => !path.parentPath.type.match(exportRe) && !path.type.match(exportRe))
-      .concat(binding.constantViolations.filter(path => path.type === 'AssignmentExpression').map(path => path.get('left')).map(m => {
-        if (m.type === 'ObjectPattern') {
-          return m.get('properties').map(prop => {
-            return prop.get('key');
-          });
-        }
-        return m;
-      })).flat())
+      .concat(binding.constantViolations.filter(path => path.type === 'AssignmentExpression').map(path => path.get('left')).map(extractRef)).flat())
     .flat().map(m => m.node).concat(globalRefs).filter(ref => !options?.excludeRefs.includes(ref.name));
 }
 
@@ -423,7 +427,9 @@ function replaceVarDeclsAndRefs (path, options) {
     Identifier (path) {
       const { node } = path;
       if (refsToReplace.has(node)) {
-        path.replaceWith(t.MemberExpression(options.captureObj, node));
+        const newNode = t.MemberExpression(options.captureObj, node);
+        newNode.loc = node.loc;
+        path.replaceWith(newNode);
         path.skip();
       }
     },
@@ -476,16 +482,13 @@ function replaceVarDeclsAndRefs (path, options) {
                 return t.AssignmentExpression('=', prop.argument.name, t.MemberExpression(options.captureObj, intermediate));
               }
               let key = prop.value || prop.key;
-              if (refsToReplace.has(key)) key = t.MemberExpression(options.captureObj, key);
               return t.AssignmentExpression('=', key, t.MemberExpression(t.MemberExpression(options.captureObj, intermediate), prop.key));
             }), t.MemberExpression(options.captureObj, intermediate)]));
-        path.skip();
       }
     },
     VariableDeclaration (path) {
       if (!varDeclsToReplace.has(path) ||
-           path.node.declarations.every(decl => !shouldDeclBeCaptured(decl, options)) ||
-           path.node._visited) {
+           path.node.declarations.every(decl => !shouldDeclBeCaptured(decl, options))) {
         return;
       }
 
@@ -541,7 +544,7 @@ function replaceVarDeclsAndRefs (path, options) {
         }
 
         const rewrittenDecl = assignExpr(options.captureObj, decl.id, initWrapped, false);
-
+        rewrittenDecl.loc = decl.loc;
         // This is rewriting normal vars
         replaced.push(rewrittenDecl); // FIXME: also update the refs here
 
@@ -555,8 +558,8 @@ function replaceVarDeclsAndRefs (path, options) {
         return;
       }
 
-      replaced.forEach(n => n._visited = true);
-      path.replaceWithMultiple(replaced);
+      if (replaced.length > 1) path.replaceWithMultiple(replaced); // this seems to fuck up the source map?
+      else path.replaceWith(replaced[0]);
     }
   });
 }
@@ -1118,7 +1121,7 @@ function evalCodeTransform (path, state, options) {
   if (state.opts.module) state.opts.module._renamedExports = renamedExports;
 
   getExportDecls(path.scope)
-    .filter(stmt => stmt.local !== stmt.exported)
+    .filter(stmt => stmt.local?.name !== stmt.exported?.name)
     .forEach(stmt => renamedExports[stmt.exported.name] = stmt.local?.name || stmt.imported?.name);
 
   let annotation = {};
