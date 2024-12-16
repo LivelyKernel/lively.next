@@ -16,6 +16,19 @@ import { BrowserModuleTranslationCache, NodeModuleTranslationCache } from './cac
 const isNode = System.get('@system-env').node;
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+// Functions below are for re-loading modules from change.js. We typically
+// start with a load object that skips the normalize / fetch step. Since we need
+// to jump in the "middle" of the load process and SystemJS does not provide an
+// interface to this, we need to invoke the translate / instantiate / execute
+// manually
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+let sourceMapPrefix = '\n//# sourceMapping' + 'URL=data:application/json;base64,';
+function inlineSourceMap (sourceMapString) {
+  if (!sourceMapString) return '';
+  return sourceMapPrefix + string.base64EncodeUnicode(sourceMapString);
+}
+
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // code instrumentation
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -206,7 +219,7 @@ export async function customTranslate (load) {
           // to define it here to avoid an
           // undefined entry later!
           meta.deps = [];
-
+          if (stored.sourceMap) meta.sourceMap = JSON.parse(stored.sourceMap);
           debug && console.log('[lively.modules customTranslate] loaded %s from browser cache after %sms', load.name, Date.now() - start);
           return Promise.resolve(stored.source);
         }
@@ -272,7 +285,7 @@ export async function customTranslate (load) {
     mod.recorderName = '__lvVarRecorder';
     if (mod.recorder === System.global) { mod.unloadEnv(); }
     load.metadata['lively.modules instrumented'] = true;
-    load.metadata.format = 'esm';
+    if (isEsm) load.metadata.format = 'esm';
     load.metadata.module = mod;
   }
 
@@ -290,9 +303,8 @@ export async function postCustomTranslate (load) {
   let translated = load.source;
   const debug = System.debug;
   const indexdb = System.global.indexedDB;
-  const hashForCache = load.metadata.hashForCache;
-  const options = load.metadata.compileOptions;
   const useCache = System.useModuleTranslationCache;
+  const { hashForCache, compileOptions: options, sourceMap = {} } = load.metadata;
   let mod;
   if (System.transpiler === 'lively.transpiler') {
     mod = module(System, load.name);
@@ -302,7 +314,6 @@ export async function postCustomTranslate (load) {
     }
   } else if (System.transpiler === 'lively.transpiler.babel') {
     mod = load.metadata.module;
-    // translation was already performed fully in the transpiler
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -311,7 +322,7 @@ export async function postCustomTranslate (load) {
     let cache = System._livelyModulesTranslationCache ||
                (System._livelyModulesTranslationCache = new NodeModuleTranslationCache());
     try {
-      await cache.cacheModuleSource(load.name, hashForCache, translated, await mod.exports());
+      await cache.cacheModuleSource(load.name, hashForCache, translated, await mod.exports(), sourceMap);
       debug && console.log('[lively.modules customTranslate] stored cached version in filesystem for %s', load.name);
     } catch (e) {
       console.error(`[lively.modules customTranslate] failed storing module cache: ${e.stack}`);
@@ -320,7 +331,7 @@ export async function postCustomTranslate (load) {
     let cache = System._livelyModulesTranslationCache ||
                (System._livelyModulesTranslationCache = new BrowserModuleTranslationCache());
     try {
-      await cache.cacheModuleSource(load.name, hashForCache, translated, await mod.exports());
+      await cache.cacheModuleSource(load.name, hashForCache, translated, await mod.exports(), sourceMap);
       debug && console.log('[lively.modules customTranslate] stored cached version for %s', load.name);
     } catch (e) {
       console.error(`[lively.modules customTranslate] failed storing module cache: ${e.stack}`);
@@ -330,18 +341,6 @@ export async function postCustomTranslate (load) {
 
   debug && console.log('[lively.modules customTranslate] done %s after %sms', load.name, Date.now() - start);
   load.source = translated;
-}
-
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-// Functions below are for re-loading modules from change.js. We typically
-// start with a load object that skips the normalize / fetch step. Since we need
-// to jump in the "middle" of the load process and SystemJS does not provide an
-// interface to this, we need to invoke the translate / instantiate / execute
-// manually
-// -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-let sourceMapPrefix = '\n//# sourceMapping' + 'URL=data:application/json;base64,';
-function inlineSourceMap (sourceMapString) {
-  return sourceMapPrefix + string.base64EncodeUnicode(sourceMapString);
 }
 
 async function instrumentSourceOfEsmModuleLoad (System, load) {
@@ -359,7 +358,7 @@ async function instrumentSourceOfEsmModuleLoad (System, load) {
     // invoke the babel transpiler directly without doing the funny Systemjs dance
     const localDeps = [];
     let declareSource = await System.translate(load, { depNames: localDeps, esmLoad: true });
-    declareSource += `//# sourceURL=${load.name}\n`;
+    declareSource += `//# sourceURL=${load.name}!transpiled`;
     if (load.metadata.sourceMap) declareSource += inlineSourceMap(JSON.stringify(load.metadata.sourceMap));
     return { declare: eval(declareSource), localDeps };
   }
