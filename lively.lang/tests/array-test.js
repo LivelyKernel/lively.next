@@ -186,8 +186,8 @@ describe('arr', function () {
 
   describe('batchify', function () {
     it('splits array ccording to constraint', function () {
-      function batchConstrained (batch) { return batch.length === 1 || sum(batch) < batchMaxSize; }
       const batchMaxSize = Math.pow(2, 28)/* 256MB */;
+      function batchConstrained (batch) { return batch.length === 1 || sum(batch) < batchMaxSize; }
       const sizes = [
         Math.pow(2, 15), // 32KB
         Math.pow(2, 29), // 512MB
@@ -204,8 +204,8 @@ describe('arr', function () {
     });
 
     it('needs to consume', function () {
-      function batchConstrained (batch) { return sum(batch) < batchMaxSize; }
       const batchMaxSize = 3;
+      function batchConstrained (batch) { return sum(batch) < batchMaxSize; }
       let sizes = [1, 4, 2, 3];
       expect(() => batchify(sizes, batchConstrained))
         .throws(/does not ensure consumption of at least one/);
