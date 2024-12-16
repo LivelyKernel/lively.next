@@ -28,7 +28,6 @@ import { undeclaredVariables } from '../js/import-helper.js';
 import { ImportInjector, ImportRemover } from 'lively.modules/src/import-modification.js';
 import module from 'lively.modules/src/module.js';
 import { parse, stringify, nodes, query } from 'lively.ast';
-import lint from '../js/linter.js';
 import { notYetImplemented } from 'lively.lang/function.js';
 import { isFoldableProp, getDefaultValueFor } from 'lively.morphic/helpers.js';
 import { resource } from 'lively.resources';
@@ -341,7 +340,7 @@ export async function insertComponentDefinition (protoMorph, entityName, mod) {
       specifiers: [...finalExports.specifiers, nodes.id(entityName)]
     };
 
-    return lint(fixUndeclaredVars(
+    return System.lint(fixUndeclaredVars(
       string.applyChanges(oldSource, [
         { action: 'replace', ...finalExports, lines: [decl, stringify(updatedExports)] }
       ]),
@@ -558,7 +557,7 @@ export function applyModuleChanges (reconciliation, scope, system, sourceEditor 
     }
 
     if (runLint) {
-      [updatedSource] = lint(updatedSource);
+      [updatedSource] = System.lint(updatedSource);
       if (patchTextMorph) {
         sourceEditor.textString = updatedSource;
       }
