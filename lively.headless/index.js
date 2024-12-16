@@ -93,7 +93,7 @@ export class HeadlessSession {
       return this;
     } catch (err) {
       console.error(`[lively.headless] ${err.stack}`);
-      try { this.close(); } catch (err) {}
+      try { await this.close(); } catch (err) {}
       this.state = SESSION_STATE.ERRORED;
       this.error = String(err.stack);
       throw err;
