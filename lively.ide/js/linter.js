@@ -127,3 +127,7 @@ export default function lint (code, customRules = {}) {
   const linterOutput = linter.verifyAndFix(code, { ...config, rules: { ...config.rules, ...customRules } });
   return [linterOutput.output, linterOutput.messages];
 }
+
+export function installLinter (System) {
+  System.lint = lint;
+}

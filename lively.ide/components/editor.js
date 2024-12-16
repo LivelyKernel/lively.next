@@ -3,7 +3,6 @@ import { ExpressionSerializer } from 'lively.serializer2';
 import { string, obj } from 'lively.lang';
 import module from 'lively.modules/src/module.js';
 import { withAllViewModelsDo } from 'lively.morphic/components/policy.js';
-import lint from '../js/linter.js';
 import { ComponentChangeTracker } from './change-tracker.js';
 import { findComponentDef, getComponentNode, scanForNamesInGenerator } from './helpers.js';
 import { replaceComponentDefinition, Reconciliation, createInitialComponentDefinition } from './reconciliation.js';
@@ -245,7 +244,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
 
   getSourceCode () {
     this._cachedComponent = null; // ensure to recreate the component morph
-    return lint(createInitialComponentDefinition(this.getComponentMorph()))[0];
+    return System.lint(createInitialComponentDefinition(this.getComponentMorph()))[0];
   }
 
   makeDirty () {
