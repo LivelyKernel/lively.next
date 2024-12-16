@@ -135,7 +135,7 @@ export class BrowserModuleTranslationCache extends ModuleTranslationCache {
     });
   }
 
-  async cacheModuleSource (moduleId, hash, source, exports = []) {
+  async cacheModuleSource (moduleId, hash, source, exports = [], sourceMap = {}) {
     const db = await this.db;
     return new Promise((resolve, reject) => {
       const transaction = db.transaction([this.sourceCodeCacheStoreName], 'readwrite');
@@ -146,6 +146,7 @@ export class BrowserModuleTranslationCache extends ModuleTranslationCache {
         hash,
         source,
         timestamp,
+        sourceMap: JSON.stringify(sourceMap),
         exports: JSON.stringify(exports.map(({
           type, exported, local, fromModule
         }) => ({ type, exported, local, fromModule })))
