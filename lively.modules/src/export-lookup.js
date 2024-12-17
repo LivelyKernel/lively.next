@@ -109,6 +109,21 @@ export default class ExportLookup {
     return exportsByModule;
   }
 
+  getExportSpec (moduleId) {
+    const { exports, recorder: rec } = module(System, moduleId).getFrozenRecord();
+    const exportSpec = [];
+    if (!rec.__module_exports__) return exportSpec;
+    for (let exp of rec.__module_exports__) {
+      if (exp.startsWith('__rename__')) {
+        const [local, exported] = exp.replace('__rename__', '').split('->');
+        exportSpec({ local, exported, type: 'id'});
+      } 
+      else if (exp.startsWith('__reexport__')) exportSpec.push(...this.getExportSpec(exp.replace('__reexport__', '')));
+      else exportSpec.push({ local: exp, exported: exp, type: 'id' })
+    }
+    return exports;
+  }
+
   async rawExportsOfModule (moduleId, opts = {}) {
     let { System, exportByModuleCache: cache } = this;
     let excludedPackages = opts.excludedPackages || [];
@@ -153,7 +168,9 @@ export default class ExportLookup {
       if (['register', 'es6', 'esm'].includes(format)) {
         const cached = await System._livelyModulesTranslationCache.fetchStoredModuleSource(mod.id);
         if (cached && cached.exports) result.exports = JSON.parse(cached.exports);
-        else result.exports = await mod.exports();
+        else if (mod._frozenModule) {
+          result.exports = getExportSpec(mod.id);
+        } else result.exports = await mod.exports();
       } else {
         await mod.load();
         let moduleRecord = mod._recorder;
