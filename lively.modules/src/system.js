@@ -255,7 +255,7 @@ function prepareSystem (System, config) {
     fetch: function (load, proceed) {
       const s = this.moduleSources?.[load.name];
       if (s) return s;
-      if (!this.transpiler?.startsWith('lively.transpiler')) return proceed(load);
+      if (this.transpiler !== 'lively.transpiler.babel') return proceed(load);
       return fetchResource.call(this, proceed, load);
     },
     translate: function (load, opts) {
@@ -317,11 +317,11 @@ function prepareSystem (System, config) {
 
   if (!config.transpiler && System.transpiler === 'traceur') {
     const initialSystem = GLOBAL.System;
-    if (initialSystem.transpiler === 'lively.transpiler') {
-      System.set('lively.transpiler', initialSystem.get('lively.transpiler'));
+    if (initialSystem.transpiler === 'lively.transpiler.babel') {
+      System.set('lively.transpiler.babel', initialSystem.get('lively.transpiler.babel'));
       System._loader.transpilerPromise = initialSystem._loader.transpilerPromise;
       System.config({
-        transpiler: 'lively.transpiler',
+        transpiler: 'lively.transpiler.babel',
         babelOptions: Object.assign(initialSystem.babelOptions || {}, config.babelOptions)
       });
     } else {
@@ -498,7 +498,7 @@ async function checkExistence (url, System) {
 
 async function normalizeHook (proceed, name, parent, parentAddress) {
   const System = this;
-  if (!System.transpiler?.startsWith('lively.transpiler')) return await proceed(name, parent, true);
+  if (System.transpiler !== 'lively.transpiler.babel') return await proceed(name, parent, true);
   if (parent && name === 'cjs') {
     return 'cjs';
   }
