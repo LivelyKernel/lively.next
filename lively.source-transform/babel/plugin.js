@@ -1,13 +1,13 @@
 import t from '@babel/types';
 import babel from '@babel/core';
 import systemjsTransform from '@babel/plugin-transform-modules-systemjs';
+import dynamicImport from  "@babel/plugin-proposal-dynamic-import";
 import { arr, Path } from 'lively.lang';
 import { topLevelFuncDecls } from 'lively.ast/lib/visitors.js';
 import { query } from 'lively.ast';
 import { getGlobal } from 'lively.vm/lib/util.js';
 import { declarationWrapperCall, annotationSym, assignExpr, varDeclOrAssignment, transformPattern, generateUniqueName, varDeclAndImportCall, importCallStmt, shouldDeclBeCaptured, importCall, exportCallStmt, exportFromImport, additionalIgnoredDecls, additionalIgnoredRefs } from './helpers.js';
 import { classToFunctionTransformBabel } from 'lively.classes/class-to-function-transform.js';
-import { scopes } from './scopes.js';
 
 /*
 import { module } from 'lively.modules'
@@ -1538,6 +1538,7 @@ class BabelTranspiler {
     opts.sourceFileName = options.module?.id;
     opts.plugins = opts.plugins ? opts.plugins.slice() : [
       [livelyPreTranspile, options],
+      dynamicImport,
       systemjsTransform,
       // choose either one
       options.esmLoad ? [livelyModuleLoadTranspile, options] : [livelyPostTranspile, options]
