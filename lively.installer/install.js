@@ -262,7 +262,6 @@ export async function setupSystem(baseURL) {
   modules = await import("lively.modules");
   let livelySystem = modules.getSystem("lively", {baseURL, _nodeRequire: System._nodeRequire });
   modules.changeSystem(livelySystem, true);
-  await import("lively.modules/systemjs-init.js");
   var registry = livelySystem["__lively.modules__packageRegistry"] = new modules.PackageRegistry(livelySystem);
   registry.packageBaseDirs = process.env.FLATN_PACKAGE_COLLECTION_DIRS.split(":").map(ea => resource(`file://${ea}`));
   registry.devPackageDirs = process.env.FLATN_DEV_PACKAGE_DIRS.split(":").map(ea => resource(`file://${ea}`));
@@ -270,6 +269,10 @@ export async function setupSystem(baseURL) {
   await registry.update();
   // also reset the flatn package map, so that native requires wont fail
   resetPackageMap();
+
+  const { setupBabelTranspiler } = await import('lively.source-transform/babel/plugin.js');
+  await setupBabelTranspiler(livelySystem);
+
   return livelySystem;
 }
 
