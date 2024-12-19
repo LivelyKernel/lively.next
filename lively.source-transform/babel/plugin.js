@@ -1,7 +1,8 @@
+/* global require,global */
 import t from '@babel/types';
 import babel from '@babel/core';
 import systemjsTransform from '@babel/plugin-transform-modules-systemjs';
-import dynamicImport from  "@babel/plugin-proposal-dynamic-import";
+import dynamicImport from '@babel/plugin-proposal-dynamic-import';
 import { arr, Path } from 'lively.lang';
 import { topLevelFuncDecls } from 'lively.ast/lib/visitors.js';
 import { query } from 'lively.ast';
@@ -451,7 +452,17 @@ function replaceVarDeclsAndRefs (path, options) {
                 return t.AssignmentExpression('=', prop.argument.name, t.MemberExpression(options.captureObj, intermediate));
               }
               let key = prop.value || prop.key;
-              return t.AssignmentExpression('=', key, t.MemberExpression(t.MemberExpression(options.captureObj, intermediate), prop.key));
+              // what if the key is itself an assignment? that will not end well.
+              // something like a = 1 = n; is not valid syntax.
+              let value = t.MemberExpression(t.MemberExpression(options.captureObj, intermediate), prop.key);
+              if (key.type === 'AssignmentPattern' && key.right?.type.includes('Literal')) {
+                // replace instead by a ternary expression that alternates between the default value
+                // and the actual value present inside the struct
+                const defaultValue = key.right;
+                key = refsToReplace.has(key) ? t.MemberExpression(options.captureObj, key.left) : key.left;
+                value = t.ConditionalExpression(t.BinaryExpression('===', t.UnaryExpression('typeof', value), t.StringLiteral('undefined')), defaultValue, value);
+              }
+              return t.AssignmentExpression('=', key, value);
             }), t.MemberExpression(options.captureObj, intermediate)]));
       }
     },
@@ -1219,6 +1230,29 @@ class BabelTranspiler {
 }
 // setupBabelTranspiler(System)
 export function setupBabelTranspiler (System) {
+  if (typeof require !== 'undefined') { System._nodeRequire = eval('require'); } // hack to enable dynamic requires in bundles
+  if (typeof global !== 'undefined') { global.__webpack_require__ = global.__non_webpack_require__ = System._nodeRequire; }
+
+  System.global = typeof global === 'undefined' ? window : global;
+  System.trace = true; // in order to harvest more metadata for lively.modules
+  if (System._nodeRequire) {
+    const Module = System._nodeRequire('module');
+    // wrap _load() such that it attaches the __esModule flag to each imported native module
+    // this ensures the interoperability to 0.21 SystemJS
+    const origLoad = Module._load;
+    // this also overrides native requires, which is not what we want really
+    Module._load = (...args) => {
+      let exports = origLoad(...args);
+      const isCoreModule = !!System.loads?.['@node/' + args[0]];
+      if (isCoreModule && !args[1].loaded && !exports.prototype) {
+        exports = Object.assign(Object.create(exports.prototype || {}), exports);
+        if (!exports.default) exports.default = exports;
+        exports.__esModule = true;
+      }
+      return exports;
+    };
+  }
+
   function translate (load, opts) {
     const { code, map } = new BabelTranspiler(this, load.name, {}).transpileModule(load.source, { ...opts, module: load.metadata.module });
     load.metadata.sourceMap = map;
