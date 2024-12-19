@@ -271,7 +271,7 @@ class WorldAligningLandigPageUIElements extends ViewModel {
     $world._cachedWindowBounds = null;
     document.body.style.overflowY = 'hidden';
     this.ui.topSide.topRight = $world.visibleBounds().insetBy(10).topRight();
-    this.ui.fastLoadToggler.bottomRight = $world.visibleBounds().insetBy(10).bottomRight();
+    this.ui.fastLoadTogglerWrapper.bottomRight = $world.visibleBounds().bottomRight();
     return this.view;
   }
 }
@@ -349,9 +349,21 @@ const LandingPageUI = component(
             }]
           })]
       },
-      part(FastLoadToggler, {
-        name: 'fast load toggler'
-      })
+      {
+        name: 'fast load toggler wrapper',
+        layout: new TilingLayout({
+          align: 'right',
+          axisAlign: 'right',
+          padding: rect(0, 0, 10, 10)
+        }),
+        position: pt(216.8, 80.2),
+        extent: pt(100, 100),
+        fill: Color.transparent,
+        reactsToPointer: false,
+        submorphs: [part(FastLoadToggler, {
+          name: 'fast load toggler'
+        })]
+      }
     ]
   });
 
