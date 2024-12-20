@@ -202,27 +202,6 @@ function analyzeParsed (path, options, footer, header) {
   return options;
 }
 
-function removeJspmGlobalRef (path, options) {
-  // do not replace until the
-  // var _global = typeof globalThis !== "undefined" ? globalThis : typeof self !== "undefined" ? self : global;
-  // declaration has been detected
-  let declarationFound = false;
-  const globalInitStmt = '_global = typeof globalThis !== "undefined" ? globalThis : typeof self !== "undefined" ? self : global';
-  path.traverse({
-    LogicalExpression (path, state) {
-      if (declarationFound && path.node.right.name === '_global') {
-        path.replaceWith(path.node.left);
-        path.skip();
-      }
-    },
-    VariableDeclarator (path, state) {
-      if (!declarationFound && path.node.id.name === '_global') {
-        declarationFound = path.getSource() === globalInitStmt;
-      }
-    }
-  });
-}
-
 function getRefs (scope, options) {
   const bindings = Object.values(scope.bindings);
   const globalRefs = [];
@@ -347,51 +326,74 @@ function es6ModuleTransforms (path, options) {
       path.skip();
     }
   });
-  path.scope.crawl();
-  options.scope.refs = getRefs(path.scope, options);
 }
 
-function replaceVarDeclsAndRefs (path, options) {
-  let intermediateCounter = 0;
-  const refsToReplace = new Set(options.scope.refs.filter(ref => !options?.excludeRefs.includes(ref.name)));
-  // const varDeclsToReplace = options.scope.varDecls;
-  const varDeclsToReplace = getVarDecls(path.scope);
-  const declaredNames = Object.keys(path.scope.bindings);
-  const globalRegex = /(?:"undefined"\s*!==\s*typeof\s+(globalThis|self|global|window)\s*\?\s*\1\s*:)+\s*(globalThis|self|global|window)/;
+const globalRegex = /(?:"undefined"\s*!==\s*typeof\s+(globalThis|self|global|window)\s*\?\s*\1\s*:)+\s*(globalThis|self|global|window)/;
 
-  function isGlobalRef (identifierPath) {
-    const variableName = identifierPath.node.name;
-    const binding = identifierPath.scope.getBinding(variableName);
+function isGlobalRef (identifierPath) {
+  const variableName = identifierPath.node.name;
+  const binding = identifierPath.scope.getBinding(variableName);
 
-    if (!binding) {
-      return false;
-    }
-
-    const { path: declarationPath } = binding;
-
-    if (declarationPath.isVariableDeclarator()) {
-      if (declarationPath.node.init) {
-        return globalRegex.test(declarationPath.get('init').toString());
-      }
-    }
-
+  if (!binding) {
     return false;
   }
 
-  function ensureGlobalBinding (ref) {
-    // handles cases where we capture functions that need to be bound to the global
-    // object in order to be run successfully.
-    if (ref.type === 'MemberExpression') {
-      const propName = ref.node.property?.name;
-      if (['setInterval', 'setTimeout', 'clearTimeout'].includes(propName) && isGlobalRef(ref.get('object'))) {
-        const globalRef = t.MemberExpression(options.captureObj, t.cloneNode(ref.get('object').node));
-        return t.CallExpression(t.MemberExpression(t.MemberExpression(globalRef, t.Identifier(propName)), t.Identifier('bind')), [globalRef]);
-      }
+  const { path: declarationPath } = binding;
+
+  if (declarationPath.isVariableDeclarator()) {
+    if (declarationPath.node.init) {
+      return globalRegex.test(declarationPath.get('init').toString());
     }
-    return ref.node;
   }
 
+  return false;
+}
+
+function ensureGlobalBinding (ref, options) {
+  // handles cases where we capture functions that need to be bound to the global
+  // object in order to be run successfully.
+  if (ref.type === 'MemberExpression') {
+    const propName = ref.node.property?.name;
+    if (['setInterval', 'setTimeout', 'clearTimeout'].includes(propName) && isGlobalRef(ref.get('object'))) {
+      const globalRef = t.MemberExpression(options.captureObj, t.cloneNode(ref.get('object').node));
+      return t.CallExpression(t.MemberExpression(t.MemberExpression(globalRef, t.Identifier(propName)), t.Identifier('bind')), [globalRef]);
+    }
+  }
+  return ref.node;
+}
+
+function replaceVarDeclsAndRefs (path, options) {
+  const globalInitStmt = '_global = typeof globalThis !== "undefined" ? globalThis : typeof self !== "undefined" ? self : global';
+  const refsToReplace = new Set(options.scope.refs.filter(ref => !options?.excludeRefs.includes(ref.name)));
+  const varDeclsToReplace = getVarDecls(path.scope);
+  const declaredNames = Object.keys(path.scope.bindings);
+  const currentModuleAccessor = options.classToFunction?.currentModuleAccessor;
+  let globalDeclarationFound = false;
+  let intermediateCounter = 0;
+
   path.traverse({
+    MetaProperty (path) {
+      if (path.node.meta.name === 'import') {
+        path.replaceWith(currentModuleAccessor
+          ? t.ObjectExpression(
+            [
+              t.ObjectProperty(
+                t.Identifier('url'),
+                t.MemberExpression(currentModuleAccessor, t.Identifier('id')))
+            ])
+          : t.ObjectExpression([
+            t.objectProperty(
+              t.Identifier('url'),
+              t.MemberExpression(t.CallExpression(t.Identifier('eval'), [t.StringLiteral("typeof _context !== \'undefined\' ? _context : {}")]), t.Identifier('id')))]));
+        path.skip();
+      }
+    },
+    LogicalExpression (path) {
+      if (globalDeclarationFound && path.node.right.name === '_global') {
+        path.replaceWith(path.node.left);
+        path.skip();
+      }
+    },
     Identifier (path) {
       const { node } = path;
       if (refsToReplace.has(node)) {
@@ -464,6 +466,11 @@ function replaceVarDeclsAndRefs (path, options) {
             }), t.MemberExpression(options.captureObj, intermediate)]));
       }
     },
+    VariableDeclarator (path) {
+      if (!globalDeclarationFound && path.node.id.name === '_global') {
+        globalDeclarationFound = path.getSource() === globalInitStmt;
+      }
+    },
     VariableDeclaration (path) {
       if (!varDeclsToReplace.has(path) ||
            path.node.declarations.every(decl => !shouldDeclBeCaptured(decl, options))) {
@@ -479,7 +486,7 @@ function replaceVarDeclsAndRefs (path, options) {
           continue;
         }
 
-        let init = ensureGlobalBinding(path.get('declarations.' + i + '.init')) || t.LogicalExpression('||', t.MemberExpression(options.captureObj, decl.id), t.Identifier('undefined'));
+        let init = ensureGlobalBinding(path.get('declarations.' + i + '.init'), options) || t.LogicalExpression('||', t.MemberExpression(options.captureObj, decl.id), t.Identifier('undefined'));
 
         const initWrapped = options.declarationWrapper && decl.id.name
           ? declarationWrapperCall(
@@ -591,7 +598,6 @@ function splitExportDeclarations (path) {
 }
 
 function insertCapturesForImportAndExportDeclarations (path, options) {
-  path.scope.crawl();
   const declaredNames = new Set(Object.keys(path.scope.bindings));
   function handleDeclarations (path) {
     const stmt = path.node;
@@ -708,29 +714,6 @@ function putFunctionDeclsInFront (path, options) {
     putInFront.unshift(declFront);
   }
   path.unshiftContainer('body', putInFront);
-  path.scope.crawl();
-}
-
-function transformImportMeta (path, options) {
-  const currentModuleAccessor = options.classToFunction?.currentModuleAccessor;
-  path.traverse({
-    MetaProperty (path) {
-      if (path.node.meta.name === 'import') {
-        path.replaceWith(currentModuleAccessor
-          ? t.ObjectExpression(
-            [
-              t.ObjectProperty(
-                t.Identifier('url'),
-                t.MemberExpression(currentModuleAccessor, t.Identifier('id')))
-            ])
-          : t.ObjectExpression([
-            t.objectProperty(
-              t.Identifier('url'),
-              t.MemberExpression(t.CallExpression(t.Identifier('eval'), [t.StringLiteral("typeof _context !== \'undefined\' ? _context : {}")]), t.Identifier('id')))]));
-        path.skip();
-      }
-    }
-  });
 }
 
 export function rewriteToCaptureTopLevelVariables (path, options) {
@@ -741,10 +724,10 @@ export function rewriteToCaptureTopLevelVariables (path, options) {
 
   options = analyzeParsed(path, options, footer, header);
 
-  removeJspmGlobalRef(path, options);
-
   if (options.es6ExportFuncId) {
     es6ModuleTransforms(path, options);
+    path.scope.crawl();
+    options.scope.refs = getRefs(path.scope, options);
   }
 
   replaceVarDeclsAndRefs(path, options);
@@ -755,11 +738,12 @@ export function rewriteToCaptureTopLevelVariables (path, options) {
 
   splitExportDeclarations(path, options);
 
+  path.scope.crawl();
+
   insertCapturesForImportAndExportDeclarations(path, options);
 
   putFunctionDeclsInFront(path, options);
-
-  transformImportMeta(path, options);
+  path.scope.crawl();
 
   path.unshiftContainer('body', header);
   path.pushContainer('body', footer);
@@ -826,10 +810,6 @@ function evalCodeTransform (path, state, options) {
     .forEach(stmt => renamedExports[stmt.exported.name] = stmt.local?.name || stmt.imported?.name);
 
   let annotation = {};
-  // FIXME: the entire name extraction stuff is extremely confusing. Why do we need to do
-  //        this dance in the first place? Don't we always have a module in place that we
-  //        can use to retrive the module name?
-  // moduleName = ensureModuleName(options)
 
   processInlineCodeTransformOptions(path, options);
 
@@ -883,8 +863,7 @@ function evalCodeTransform (path, state, options) {
   if (options.topLevelVarRecorder) {
     // capture and wrap logic
     let blacklist = (options.dontTransform || []).concat(['arguments']);
-    let undeclaredToTransform = options.recordGlobals
-      ? null/* all */ : arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist);
+    let undeclaredToTransform = options.recordGlobals ? null/* all */ : arr.withoutAll(Object.keys(options.topLevelVarRecorder), blacklist);
     let varRecorder = t.Identifier(options.varRecorderName || '__lvVarRecorder');
     let es6ClassToFunctionOptions = null;
 
