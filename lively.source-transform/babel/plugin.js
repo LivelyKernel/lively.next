@@ -83,32 +83,6 @@ function processInlineCodeTransformOptions (path, options) {
   } catch (err) { return options; }
 }
 
-function ensureModuleName (options) {
-  let moduleName = false;
-  if (options.declarationWrapperName?.includes(System.baseURL)) {
-    moduleName = options.declarationWrapperName.split(System.baseURL)[1];
-  }
-
-  let separator;
-  if (separator = options.declarationWrapperName?.match(/local\:\/\/(.*\/)/)?.[1]) {
-    moduleName = options.declarationWrapperName.split(separator)[1];
-    moduleName = `local://${separator}${moduleName}`;
-  }
-
-  if (separator = options.declarationWrapperName?.match(/lively\:\/\/(.*\/)/)?.[1]) {
-    moduleName = options.declarationWrapperName.split(separator)[1];
-    moduleName = `lively://${separator}${moduleName}`;
-  }
-
-  if (options.declarationWrapperName?.includes('lively.next-workspace/')) {
-    moduleName = options.declarationWrapperName.split('lively.next-workspace/')[1];
-    moduleName = `lively://lively.next-workspace/${moduleName}`;
-  }
-
-  if (moduleName && moduleName.includes('local_projects/')) moduleName = moduleName.replace('local_projects/', '');
-  return moduleName;
-}
-
 function sanitizeOptions (options) {
   options = {
     ignoreUndeclaredExcept: null,
@@ -192,14 +166,10 @@ function wrapInStartEndCall (path, options, parsed) {
   path.replaceWith(isProgram ? t.Program(outerBody) : t.BlockStatement(outerBody));
 }
 
-function getCatches (scope) {
-  return [];
-}
-
 function analyzeParsed (path, options, footer, header) {
   const undeclaredNames = Object.keys(path.scope.globals);
   const varDecls = getVarDecls(path.scope);
-  const catches = getCatches(path.scope);
+  const catches = [];
 
   if (options.footer) footer.push(...babel.parse(options.footer).program.body);
   if (options.header) header.push(...babel.parse(options.header).program.body);
@@ -293,7 +263,6 @@ function es6ModuleTransforms (path, options) {
   path.traverse({
     ExportNamedDeclaration (path) {
       const stmt = path.node;
-      let insertedRef;
       if (stmt.source) {
         moduleId = stmt.source;
         path.insertAfter(stmt.specifiers.map(specifier => t.ExpressionStatement(
@@ -307,7 +276,6 @@ function es6ModuleTransforms (path, options) {
         if (!decls) { // func decl or class
           path.insertAfter([stmt.declaration].concat(
             exportCallStmt(options.moduleExportFunc, stmt.declaration.id.name, stmt.declaration.id)));
-          insertedRef = path.getSibling(path.key + 2).get('expression.arguments.1');
           path.remove();
         } else {
           path.insertAfter(decls.map(decl => {
@@ -325,7 +293,6 @@ function es6ModuleTransforms (path, options) {
               stmt.declaration.kind);
           })
             .concat(decls.map(decl => exportCallStmt(options.moduleExportFunc, decl.id.name, decl.id))));
-          insertedRef = path.getAllNextSiblings().slice(decls.length, decls.length * 2).map(ea => ea.get('expression.arguments.1'));
           path.remove();
         }
       } else {
@@ -575,196 +542,7 @@ function replaceVarDeclsAndRefs (path, options) {
   });
 }
 
-function replaceRefs (path, options) {
-  const refsToReplace = new Set(getRefs(path.scope, options));
-  // const refsToReplace = options.scope.refs;
-  let intermediateCounter = 0;
-
-  path.traverse({
-    Identifier (path) {
-      const { node } = path;
-      if (refsToReplace.has(node)) {
-        path.replaceWith(t.MemberExpression(options.captureObj, node));
-        path.skip();
-      }
-    },
-    Property (path) {
-      if (refsToReplace.has(path.node) && path.node.shorthand) {
-        path.replaceWith(t.Property(t.Identifier(path.node.key.name), path.node.value));
-        path.skip();
-      }
-    },
-    ClassMethod (path) {
-      // for computed method names we need to insert the capture
-      // object such that the correct values are retrieved
-      if (path.node.computed) {
-        const { key } = path.node;
-        if (refsToReplace.has(key)) {
-          if (key.type === 'MemberExpression') {
-            let curr = path.get('key');
-            while (curr.get('object').type === 'MemberExpression') {
-              curr = curr.get('object');
-            }
-            curr.get('object').replaceWith(t.MemberExpression(options.captureObj, curr.node.object));
-            path.skip();
-          }
-        }
-      }
-    },
-    AssignmentExpression (path) {
-      // declaration wrapper function for assignments
-      // "a = 3" => "a = _define('a', 'assignment', 3, _rec)"
-      const { node } = path;
-      if (refsToReplace.has(node.left) && options.declarationWrapper) {
-        path.get('right').replaceWith(declarationWrapperCall(
-          options.declarationWrapper,
-          path.get('left').node,
-          t.StringLiteral(node.left.name),
-          t.StringLiteral('assignment'),
-          node.right,
-          options.captureObj,
-          options));
-        path.skip();
-        path.get('left').visit();
-        return;
-      }
-      // declaration wrapper for destructuring assignments like
-      // ({ a: blub, b, c } = d); => (_inter = d, _rec.a = _inter.a, _rec.b = _inter.b, _rec.c = _inter.c);
-      if (node.left.type === 'ObjectPattern') {
-        const intermediate = t.Identifier(`__inter${intermediateCounter++}__`);
-        path.replaceWith(t.SequenceExpression(
-          [t.AssignmentExpression('=', t.MemberExpression(options.captureObj, intermediate), node.right),
-            ...node.left.properties.map(prop => {
-              if (prop.type === 'RestElement') {
-                return t.AssignmentExpression('=', prop.argument.name, t.MemberExpression(options.captureObj, intermediate));
-              }
-              const key = prop.value || prop.key;
-              return t.AssignmentExpression('=', key, t.MemberExpression(t.MemberExpression(options.captureObj, intermediate), prop.key));
-            }), t.MemberExpression(options.captureObj, intermediate)]));
-        path.skip();
-      }
-    }
-  });
-}
-
-function replaceVarDecls (path, options) {
-  const varDecls = getVarDecls(path.scope);
-  const declaredNames = Object.keys(path.scope.bindings);
-  const globalRegex = /(?:"undefined"\s*!==\s*typeof\s+(globalThis|self|global|window)\s*\?\s*\1\s*:)+\s*(globalThis|self|global|window)/;
-
-  function isGlobalRef (identifierPath) {
-    const variableName = identifierPath.node.name;
-    const binding = identifierPath.scope.getBinding(variableName);
-
-    if (!binding) {
-      return false;
-    }
-
-    const { path: declarationPath } = binding;
-
-    if (declarationPath.isVariableDeclarator()) {
-      if (declarationPath.node.init) {
-        return globalRegex.test(declarationPath.get('init').toString());
-      }
-    }
-
-    return false;
-  }
-
-  function ensureGlobalBinding (ref) {
-    // handles cases where we capture functions that need to be bound to the global
-    // object in order to be run successfully.
-    if (ref.type === 'MemberExpression') {
-      const propName = ref.node.property?.name;
-      if (['setInterval', 'setTimeout', 'clearTimeout'].includes(propName) && isGlobalRef(ref.get('object'))) {
-        const globalRef = t.MemberExpression(options.captureObj, t.cloneNode(ref.get('object').node));
-        return t.CallExpression(t.MemberExpression(t.MemberExpression(globalRef, t.Identifier(propName)), t.Identifier('bind')), [globalRef]);
-      }
-    }
-    return ref.node;
-  }
-
-  path.traverse({
-    VariableDeclaration (path) {
-      if (!varDecls.has(path) ||
-           path.node.declarations.every(decl => !shouldDeclBeCaptured(decl, options)) ||
-           path.node._visited) {
-        return;
-      }
-
-      const replaced = []; const { node } = path;
-      for (let i = 0; i < node.declarations.length; i++) {
-        const decl = node.declarations[i];
-
-        if (!shouldDeclBeCaptured(decl, options)) {
-          replaced.push(t.VariableDeclaration(node.kind || 'var', [decl]));
-          continue;
-        }
-
-        let init = ensureGlobalBinding(path.get('declarations.' + i + '.init')) || t.LogicalExpression('||', t.MemberExpression(options.captureObj, decl.id), t.Identifier('undefined'));
-
-        const initWrapped = options.declarationWrapper && decl.id.name
-          ? declarationWrapperCall(
-            options.declarationWrapper,
-            decl,
-            t.StringLiteral(decl.id.name),
-            t.StringLiteral(node.kind),
-            init,
-            options.captureObj,
-            options)
-          : init;
-
-        // Here we create the object pattern / destructuring replacements
-        if (decl.id.type.includes('Pattern')) {
-          const declRootName = generateUniqueName(declaredNames, 'destructured_1');
-          const declRoot = t.Identifier(declRootName);
-          const state = { parent: declRoot, declaredNames };
-          const extractions = transformPattern(decl.id, state).map(decl =>
-            decl[annotationSym] && decl[annotationSym].capture
-              ? assignExpr(
-                options.captureObj,
-                decl.declarations[0].id,
-                options.declarationWrapper
-                  ? declarationWrapperCall(
-                    options.declarationWrapper,
-                    null,
-                    t.StringLiteral(decl.declarations[0].id.name),
-                    t.StringLiteral(node.kind),
-                    decl.declarations[0].init,
-                    options.captureObj,
-                    options)
-                  : decl.declarations[0].init,
-                false)
-              : decl);
-          declaredNames.push(declRootName);
-          options.excludeRefs.push(declRootName);
-          options.excludeDecls.push(declRootName);
-          replaced.push(...[varDecl(declRoot, initWrapped, node.kind)].concat(extractions));
-          continue;
-        }
-
-        const rewrittenDecl = assignExpr(options.captureObj, decl.id, initWrapped, false);
-
-        // This is rewriting normal vars
-        replaced.push(rewrittenDecl); // FIXME: also update the refs here
-
-        if (options.keepTopLevelVarDecls) {
-          replaced.push(varDecl(decl.id, t.MemberExpression(options.captureObj, decl.id)));
-        }
-      }
-
-      if (path.parent.type === 'IfStatement') {
-        path.replaceWith(t.BlockStatement(replaced));
-        return;
-      }
-
-      replaced.forEach(n => n._visited = true);
-      path.replaceWithMultiple(replaced);
-    }
-  });
-}
-
-function clearEmptyExports (path, options) {
+function clearEmptyExports (path) {
   for (const exp of path.get('body')) {
     if (exp.type !== 'ExportNamedDeclaration') continue;
     if (!exp.node.declaration && exp.node.specifiers && !exp.node.specifiers.length) {
@@ -795,7 +573,7 @@ function replaceClassDecls (path, options) {
   }
 }
 
-function splitExportDeclarations (path, options) {
+function splitExportDeclarations (path) {
   const stmts = path.get('body');
   for (let stmt of stmts) {
     const { declaration, type } = stmt.node;
@@ -810,69 +588,6 @@ function splitExportDeclarations (path, options) {
     }
     stmt.replaceWithMultiple(newNodes);
   }
-}
-
-function insertCapturesForExportDeclarations (path, options) {
-  const declaredNames = Object.keys(path.scope.bindings);
-  function handleDeclarations (path) {
-    const stmt = path.node;
-    path.insertAfter(stmt.declaration.declarations.map(decl => {
-      let assignVal = decl.id;
-      if (options.declarationWrapper) {
-        const alreadyWrapped = decl.init.callee &&
-                            decl.init.callee.name === options.declarationWrapper.name;
-        if (!alreadyWrapped) {
-          assignVal = declarationWrapperCall(
-            options.declarationWrapper,
-            decl,
-            t.StringLiteral(decl.id.name),
-            t.StringLiteral('assignment'),
-            decl.id,
-            options.captureObj,
-            options);
-        }
-      }
-      return assignExpr(options.captureObj, decl.id, assignVal, false);
-    }));
-  }
-  return path.traverse({
-    ExportNamedDeclaration (path) {
-      const stmt = path.node;
-      if (!stmt.declaration) return;
-      if (stmt.declaration.declarations) {
-        handleDeclarations(path);
-      } else if (stmt.declaration.type === 'ClassDeclaration') {
-        path.insertAfter(assignExpr(options.captureObj, stmt.declaration.id, stmt.declaration.id, false));
-      }
-    },
-    ExportDefaultDeclaration (path) {
-      const stmt = path.node;
-      if (!stmt.declaration) return;
-      if (stmt.declaration.type.match(/StringLiteral|NumericLiteral/)) {
-        // default export of an unnamed primitive value, i.e.
-        // "export default "foo"", "export default 27;"
-        const decl = stmt.declaration;
-        const refId = generateUniqueName(declaredNames, '$' + decl.extra.raw.split('"').join(''));
-        path.insertBefore(assignExpr(options.captureObj, t.Identifier(refId), stmt.declaration, false));
-        stmt.declaration = t.Identifier(refId);
-      } else if (stmt.declaration.declarations) {
-        return handleDeclarations(path);
-      } else if (stmt.declaration.type === 'ClassDeclaration') {
-        path.insertAfter(assignExpr(options.captureObj, stmt.declaration.id, stmt.declaration.id, false));
-      }
-    }
-  });
-}
-
-function insertCapturesForImportDeclarations (path, options) {
-  path.traverse({
-    ImportDeclaration (path) {
-      const stmt = path.node;
-      if (!stmt.specifiers.length) return;
-      path.insertAfter(stmt.specifiers.map(specifier =>
-        assignExpr(options.captureObj, specifier.local, specifier.local, false)));
-    }
-  });
 }
 
 function insertCapturesForImportAndExportDeclarations (path, options) {
@@ -944,31 +659,6 @@ function insertCapturesForImportAndExportDeclarations (path, options) {
       if (!stmt.specifiers.length) return;
       path.insertAfter(stmt.specifiers.map(specifier =>
         assignExpr(options.captureObj, specifier.local, specifier.local, false)));
-    }
-  });
-}
-
-function insertDeclarationsForExports (path, options) {
-  path.scope.crawl();
-  const declaredNames = new Set(Object.keys(path.scope.bindings));
-  path.traverse({
-    ExportDefaultDeclaration (path) {
-      const stmt = path.node;
-      if (stmt.declaration &&
-            !stmt.declaration.type.includes('Declaration') &&
-            (stmt.declaration.type === 'Identifier' || stmt.declaration.id) &&
-            !declaredNames.has(stmt.declaration.name)) {
-        path.insertBefore(
-          varDeclOrAssignment(declaredNames, stmt.declaration, t.MemberExpression(options.captureObj, stmt.declaration)));
-      }
-    },
-    ExportNamedDeclaration (path) {
-      const stmt = path.node;
-      if (!stmt.specifiers.length || stmt.source) return;
-      path.insertBefore(arr.compact(stmt.specifiers.map(specifier =>
-        declaredNames.has(specifier.local.name)
-          ? null
-          : varDeclOrAssignment(declaredNames, specifier.local, t.MemberExpression(options.captureObj, specifier.local)))));
     }
   });
 }
@@ -1081,7 +771,7 @@ function ensureComponentDescriptors (path, moduleId, options) {
   let earlyReturn = false;
 
   path.traverse({
-    ExpressionStatement (sub, state) {
+    ExpressionStatement (sub) {
       if (sub.node.expression?.callee?.name === 'component') {
         sub.stop();
         path.replaceWith(t.CallExpression(t.MemberExpression(t.Identifier('component'), t.Identifier('for')), [
@@ -1096,7 +786,7 @@ function ensureComponentDescriptors (path, moduleId, options) {
   if (earlyReturn) return;
 
   path.traverse({
-    VariableDeclarator (path, state) {
+    VariableDeclarator (path) {
       const node = path.node;
       const isCaptured = varDecls.has(path);
       const componentRef = node.id.name;
@@ -1473,7 +1163,7 @@ function rewriteToRegisterModuleToCaptureSetters (path, state, options) {
 
 export function livelyPostTranspile (api, options) {
   if (options.module) {
-    const { module, debug } = options;
+    const { module } = options;
     const captureObj = t.Identifier(module.recorderName);
     options = {
       captureObj,
@@ -1505,7 +1195,7 @@ export function livelyPostTranspile (api, options) {
 export function livelyModuleLoadTranspile (api, options) {
   return {
     visitor: {
-      CallExpression (path, state) {
+      CallExpression (path) {
         if (path.get('callee.property').node?.name === 'register') {
           options.depNames.push(...path.node.arguments[0].elements.map(ea => ea.value));
           const declareFuncNode = path.node.arguments[1];
@@ -1532,7 +1222,7 @@ class BabelTranspiler {
     this.env = env;
   }
 
-  transpileDoit (source, options) {
+  transpileDoit (source) {
     // wrap in async function so we can use await top-level
     let System = this.System;
     var source = '(async function(__rec) {\n' + source.replace(/(\/\/# sourceURL=.+)$|$/, '\n}).call(this);\n$1'); // eslint-disable-line no-var
@@ -1547,13 +1237,15 @@ class BabelTranspiler {
     let System = this.System;
     let opts = Object.assign({}, System.babelOptions);
     opts.sourceFileName = options.module?.id;
-    opts.plugins = opts.plugins ? opts.plugins.slice() : [
-      [livelyPreTranspile, options],
-      dynamicImport,
-      systemjsTransform,
-      // choose either one
-      options.esmLoad ? [livelyModuleLoadTranspile, options] : [livelyPostTranspile, options]
-    ];
+    opts.plugins = opts.plugins
+      ? opts.plugins.slice()
+      : [
+          [livelyPreTranspile, options],
+          dynamicImport,
+          systemjsTransform,
+          // choose either one
+          options.esmLoad ? [livelyModuleLoadTranspile, options] : [livelyPostTranspile, options]
+        ];
     return babel.transform(source, opts);
   }
 }
