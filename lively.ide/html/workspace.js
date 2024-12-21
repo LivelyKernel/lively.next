@@ -52,7 +52,7 @@ export default class Workspace extends JSWorkspace {
         after: ['targetMorph'],
         get () { this.getSubmorphNamed('eval backend button'); },
         initialize () {
-          this.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(this, 'local'));
+          this.ui.header.addMorph(EvalBackendChooser.default.ensureEvalBackendDropdown(this, 'local'));
         }
       }
     };
