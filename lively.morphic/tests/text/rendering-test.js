@@ -1,4 +1,4 @@
-/* global it, describe, beforeEach, afterEach */
+/* global it, describe, beforeEach, afterEach, CSS */
 import { expect } from 'mocha-es6';
 import { Text } from '../../text/morph.js';
 import { Rectangle, Color, pt } from 'lively.graphics';
@@ -11,7 +11,7 @@ const defaultStyle = {
   fontWeight: 'normal',
   fontColor: Color.black,
   fontStyle: 'normal',
-  textDecoration: 'none solid color(display-p3 0 0 0)'
+  textDecoration: `none solid ${CSS.supports('color', 'color(display-p3 0 0 0)') ? 'color(display-p3 0 0 0)' : 'rgb(0,0,0)'}`
 };
 
 let padding = Rectangle.inset(3);
@@ -72,7 +72,7 @@ describe('text rendering', () => {
     const visibleLines = 2;
     const paddingLines = 1;
     expect(textBounds.height).closeTo(lineHeight * (scrolledLines + visibleLines + paddingLines) + (padTop + padBot), 30, 'text layer does not have size of all lines');
-    expect(node.querySelector('.newtext-text-layer.actual').textContent).lessThan(10111213, 'text  layer renders more than necessary');
+    expect(Number(node.querySelector('.newtext-text-layer.actual').textContent)).lessThan(10111213, 'text  layer renders more than necessary');
   });
 
   it('can resize on content change', async () => {

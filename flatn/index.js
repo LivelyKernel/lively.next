@@ -114,6 +114,9 @@ async function installPackage (
 
   while (queue.length) {
     let [name, version] = queue.shift();
+  if (version.startsWith('npm:')) {
+    [name, version] = version.match(/npm:(.*)@(.*)/).slice(1);
+  }
     let installed = packageMap.lookup(name, version);
 
     if (!installed) {

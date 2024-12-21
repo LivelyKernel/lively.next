@@ -55,7 +55,7 @@ describe('rendering', function () {
       submorph1.rotateBy(num.toRadians(45));
       submorph1.renderOnGPU = true;
       env.forceUpdate();
-      expect(env.renderer.getNodeForMorph(submorph1)).deep.property('style.transform')
+      expect(env.renderer.getNodeForMorph(submorph1)).nested.property('style.transform')
         .match(/translate.*10px/)
         .match(/rotate\(0\.78\d*rad\)/)
         .match(/scale\(1,\s*1\)/);
@@ -65,7 +65,7 @@ describe('rendering', function () {
       submorph1.origin = pt(20, 10);
       env.forceUpdate();
       expect(env.renderer.getNodeForMorph(submorph1))
-        .deep.property('style.transformOrigin').match(/20px 10px/);
+        .nested.property('style.transformOrigin').match(/20px 10px/);
     });
   });
 

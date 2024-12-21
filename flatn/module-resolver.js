@@ -182,7 +182,16 @@ function flatnResolve (request, parentId = '', context = 'node') {
   let packageMap = ensurePackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs);
   let packageFound = packageMap.lookup(basename, deps[basename]) ||
                    packageMap.lookup(request, deps[request])/* for package names with "/" */;
-  let resolved = packageFound && findModuleInPackage(packageFound, basename, request, context);
+  
+  let resolved;
+  if (!packageFound && deps[basename]?.startsWith('npm:')) {
+    let version;
+    [basename, version] = deps[basename].match(/npm:(.*)@(.*)/).slice(1);
+    packageFound = packageMap.lookup(basename, version);
+    resolved = packageFound && findModuleInPackage(packageFound, basename, basename, context);
+  } else {
+    resolved = packageFound && findModuleInPackage(packageFound, basename, request, context);
+  }
 
   if (basename === '@empty') return '@empty';
   if (basename && basename.match(/^https?\:\/\//)) return basename;

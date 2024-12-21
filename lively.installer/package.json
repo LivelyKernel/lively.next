@@ -8,6 +8,11 @@
     "url": "https://github.com/LivelyKernel/lively.installer"
   },
   "systemjs": {
+    "meta": {
+      "packages-config.json": {
+        "format": "json"
+      }
+    },
     "map": {
       "child_process": {
         "node": "@node/child_process",

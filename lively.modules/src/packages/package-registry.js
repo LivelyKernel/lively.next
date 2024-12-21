@@ -273,7 +273,6 @@ export class PackageRegistry {
   findPackageHavingURL (url) {
     // does url identify a resource inside pkg, maybe pkg.url === url?
     if (url.isResource) url = url.url;
-    if (url.startsWith('esm://')) return null;
     if (url.endsWith('/')) url = url.slice(0, -1);
     if (this.moduleUrlToPkg.has(url)) return this.moduleUrlToPkg.get(url);
     let penaltySoFar = Infinity; let found = null; let { byURL } = this;
@@ -454,7 +453,7 @@ export class PackageRegistry {
       let pkg = (existingPackageMap && existingPackageMap[url]) ||
               new Package(this.System, url);
       let config = await pkg.tryToLoadPackageConfig();
-      if (url.includes('local_projects')){
+      if (url.includes('local_projects')) {
         const forkInfoFile = resource(url).join('.livelyForkInformation');
         if ((await forkInfoFile.exists())) {
           const forkInfo = JSON.parse((await forkInfoFile.read()));

@@ -49,7 +49,7 @@ const CLASS_INSTRUMENTATION_MODULES = [
   'https://jspm.dev/npm:rollup@2.28.2' // this contains a bunch of class definitions which right now screws up the closure compiler
 ];
 
-const ESM_CDNS = ['jspm.dev', 'jspm.io', 'skypack.dev', 'esm://cache', 'esm://run'];
+const ESM_CDNS = ['jspm.dev', 'jspm.io', 'skypack.dev', 'esm://cache', 'esm://run', /esm:\/\/([^\/]*)\//];
 
 // fixme: Why is a blacklist nessecary if there is a whitelist?
 const CLASS_INSTRUMENTATION_MODULES_EXCLUSION = ['lively.lang'];
@@ -70,6 +70,32 @@ const ADVANCED_EXCLUDED_MODULES = [
 ];
 
 const baseURL = typeof System !== 'undefined' ? System.baseURL : ensureFolder(process.env.lv_next_dir || process.cwd());
+
+export function bulletProofNamespaces (code) {
+  let rewrites = [];
+  let parsed = ast.parse(code, { withComments: true });
+  const pureComments = parsed.allComments.filter(c => c.text === '#__PURE__');
+  if (pureComments.length === 0) return null;
+  parsed = ast.ReplaceVisitor.run(parsed, (node) => {
+    if (node.type === 'VariableDeclaration') {
+      const matchingComment = pureComments.find(c => node.start < c.start && c.end > node.end);
+      if (!matchingComment) return node;
+      const matchingGetter = node.declarations[0]?.init?.arguments?.[0]?.properties?.find(prop => prop.key.name === 'default' && prop.kind === 'get');
+      if (!matchingGetter) return node;
+      const getterBody = matchingGetter.value.body;
+      const [returnStmt] = getterBody.body;
+      rewrites.push([getterBody, `\nif (typeof ${returnStmt.argument.name} === 'undefined') throw new Error('Module not yet initialized!');\n`])
+    }
+    return node;
+  });
+  if (rewrites.length > 0) {
+    arr.sortBy(rewrites, ([node]) => node.start).forEach(([node, snippet]) => {
+      code = code.slice(0, node.start + 1) + snippet + code.slice(node.start + 1);
+    });
+    return code;
+  }
+  return null;
+}
 
 /**
  * Custom warn() that is triggered by RollupJS to inidicate problems with the bundle.
@@ -125,9 +151,10 @@ function resolutionId (id, importer) {
  * @returns { boolean } Wether or not the module was served from an ESM CDN.
  */
 function isCdnImport (id, importer, resolver) {
-  if (ESM_CDNS.find(cdn => id.includes(cdn) || importer.includes(cdn)) && importer && importer !== ROOT_ID) {
+
+  if (ESM_CDNS.find(cdn => id.match(cdn) || importer.match(cdn)) && importer && importer !== ROOT_ID) {
     const { url } = resource(resolver.ensureFileFormat(importer)).root(); // get the cdn host root
-    return ESM_CDNS.find(cdn => url.includes(cdn));
+    return ESM_CDNS.find(cdn => url.match(cdn));
   }
   return false;
 }
@@ -177,6 +204,7 @@ export default class LivelyRollup {
     this.projectAssets = [];
     this.customFontFiles = [];
     this.projectsInBundle = new Set();
+    this.moduleToPkg = new Map();
 
     this.resolver.setStatus({ label: 'Freezing in Progress' });
   }
@@ -320,7 +348,7 @@ export default class LivelyRollup {
    * @returns { boolean }
    */
   wasFetchedFromEsmCdn (moduleId) {
-    return !!ESM_CDNS.find(url => moduleId.includes(url));
+    return !!ESM_CDNS.find(url => moduleId.match(url));
   }
 
   /**
@@ -457,14 +485,32 @@ export default class LivelyRollup {
     if (isCdnImport(id, importer, this.resolver)) {
       if (id.startsWith('.')) {
         id = resource(importer).parent().join(id).withRelativePartsResolved().url;
-      } else {
+      } else if (id.startsWith('/')) {
         id = resource(importer).root().join(id).withRelativePartsResolved().url;
       }
     }
 
-    const importingPackage = this.resolver.resolvePackage(importer);
+    const importingPackage = this.resolver.resolvePackage(importer) || this.moduleToPkg.get(importer);
     // honor the systemjs options within the package config
-    const mapping = importingPackage?.systemjs?.map;
+    const { map: mapping, importMap } = importingPackage?.systemjs || {};
+    if (importMap) {
+      let remapped;
+      if (remapped = importMap.imports?.[id]) {
+        id = remapped;
+      }
+      let scope, prefix;
+      if (scope = Object.entries(importMap.scopes)
+        .filter(([k, v]) => importer.startsWith(k))
+        .sort((a, b) => a[0].length - b[0].length)
+        .map(([prefix, scope]) => scope)
+        .reduce((a, b) => ({ ...a, ...b }), false)) {
+        remapped = scope[id];
+      }
+      if (remapped) {
+        id = remapped;
+      }
+    }
+    this.moduleToPkg.set(id, importingPackage);
     if (mapping) {
       this.globalMap = { ...this.globalMap, ...mapping };
       if (mapping[id] || this.globalMap[id]) {

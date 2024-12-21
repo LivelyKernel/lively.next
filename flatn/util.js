@@ -62,6 +62,9 @@ let fixGnuTar;
 
 async function npmSearchForVersions (pname, range = '*') {
   try {
+    if (range.startsWith('npm:')) {
+      [pname, range] = range.match(/npm:(.*)@(.*)/).slice(1);
+    }
     pname = pname.replace(/\//g, '%2f');
     // rms 18.6.18: npmjs.org seems to have dropped semver version resolution, so we do it by hand now
     const { versions } = await resource(`http://registry.npmjs.org/${pname}/`).readJson();
