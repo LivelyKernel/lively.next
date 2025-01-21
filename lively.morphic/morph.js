@@ -886,6 +886,7 @@ export class Morph {
     if (props.__wasAddedToDerived__) this.__wasAddedToDerived__ = true;
 
     if (typeof this.onLoad === 'function' && !this.isComponent) this.onLoad();
+    if (typeof props.onLoad === 'function' && !this.isComponent) props.onLoad.bind(this)();
   }
 
   get __serialization_id_property__ () { return '_id'; }
