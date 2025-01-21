@@ -1658,11 +1658,13 @@ export class Morph {
       this.makeDirty();
       submorph.resumeSteppingAll();
 
-      submorph.withAllSubmorphsDo(ea => ea.onOwnerChanged(this));
+      submorph.withAllSubmorphsDo(ea => {
+        ea.onOwnerChanged(this);
+      });
 
-      if (submorph._requestMasterStyling) {
-        submorph.master && submorph.master.applyIfNeeded(true);
-        submorph._requestMasterStyling = false;
+      if (this.world() && !this.isText) {
+        this.env.forceUpdate(this);
+        this.withAllSubmorphsDo(m => m.makeDirty());
       }
     });
 
