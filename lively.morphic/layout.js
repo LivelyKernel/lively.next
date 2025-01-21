@@ -360,7 +360,7 @@ export class TilingLayout extends Layout {
     this._justifySubmorphs = props.justifySubmorphs || 'packed';
     this._hugContentsVertically = props.hugContentsVertically || false;
     this._hugContentsHorizontally = props.hugContentsHorizontally || false;
-    this._orderByIndex = props.orderByIndex || true;
+    this._orderByIndex = props.orderByIndex === false ? props.orderByIndex : true;
     this._wrapSubmorphs = false;
     if (typeof props.wrapSubmorphs !== 'undefined') {
       this._wrapSubmorphs = props.wrapSubmorphs;
@@ -497,7 +497,7 @@ export class TilingLayout extends Layout {
           if (config.hugContentsHorizontally !== false) spec.hugContentsHorizontally = true;
           break;
         case 'orderByIndex':
-          if (config.orderByIndex !== false && config.renderViaCSS === false) spec.orderByIndex = true;
+          if (!config.orderByIndex) spec.orderByIndex = config.orderByIndex;
           break;
         case 'wrapSubmorphs':
           if (config.wrapSubmorphs !== false) spec.wrapSubmorphs = true;
@@ -539,7 +539,7 @@ export class TilingLayout extends Layout {
       align,
       axisAlign,
       spacing,
-      orderByIndex: !renderViaCSS && orderByIndex,
+      orderByIndex,
       reactToSubmorphAnimations,
       renderViaCSS,
       padding,
@@ -572,7 +572,7 @@ export class TilingLayout extends Layout {
    * Warning: This property is not supported when the layout is rendered via CSS and defaults to true in this case.
    * @type {Boolean}
    */
-  get orderByIndex () { return this._orderByIndex || this.renderViaCSS; }
+  get orderByIndex () { return this._orderByIndex; }
   set orderByIndex (active) { this._orderByIndex = active; this.onConfigUpdate(); }
 
   /**
@@ -986,7 +986,7 @@ export class TilingLayout extends Layout {
     }
     style.top = 'unset';
     style.left = 'unset';
-    style.order = layoutableSubmorphs.indexOf(morph); // already handled by the node ordering
+    style.order = this.orderByIndex ? layoutableSubmorphs.indexOf(morph) : layoutableSubmorphs.length - 1 - layoutableSubmorphs.indexOf(morph); // already handled by the node ordering
     const hasNextSibling = layoutableSubmorphs.length > style.order + 1;
     const hasPrevSibling = style.order > 0;
 
@@ -1224,6 +1224,7 @@ export class TilingLayout extends Layout {
     if (resetNodes) {
       while (containerNode.getChildCount()) containerNode.removeChild(containerNode.getChild(0));
       i = 0;
+      if (!this.orderByIndex) layoutableSubmorphs = layoutableSubmorphs.reverse();
       for (let m of layoutableSubmorphs) {
         let subNode = this.ensureYogaNodeFor(m); let danglingParent;
         if (danglingParent = subNode.getParent()) danglingParent.removeChild(subNode);
@@ -1433,8 +1434,7 @@ export class TilingLayout extends Layout {
   layoutOrder (morph) {
     // the following creates a drop zone that is 15 pixels tall.
     // allows for horizontal reordering.
-    if (this.orderByIndex) return this.container.getProperty('submorphs').indexOf(morph);
-    return this.axis === 'row' ? (morph.top - morph.top % 15) * 1000000 + morph.left : (morph.left - morph.left % 15) * 1000000 + morph.top;
+    return this.container.getProperty('submorphs').indexOf(morph);
   }
 }
 
