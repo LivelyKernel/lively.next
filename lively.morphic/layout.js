@@ -419,6 +419,10 @@ export class TilingLayout extends Layout {
   }
 
   scheduleApply (submorph, animation, change = {}) {
+    if (change.meta?.deferLayoutApplication) {
+      return;
+    }
+
     if (!change.meta?.isLayoutAction || !this.container?._yogaNode?.getParent()) {
       this._alreadyComputed = false;
     }
