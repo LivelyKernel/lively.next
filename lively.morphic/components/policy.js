@@ -1350,7 +1350,7 @@ export class StylePolicy {
    */
   isPositionedByLayout (aSubmorph) {
     const layout = aSubmorph.owner?.layout;
-    return layout?.name() !== 'Constraint' && layout?.layoutableSubmorphs?.includes(aSubmorph);
+    return layout && layout.name() !== 'Constraint' && aSubmorph.isLayoutable;
   }
 
   /**
@@ -1559,7 +1559,7 @@ export class PolicyApplicator extends StylePolicy {
         continue;
       }
 
-      if (this.isPositionedByLayout(morphToBeStyled) && propName === 'position') continue;
+      if (propName === 'position' && this.isPositionedByLayout(morphToBeStyled)) continue;
       let resizePolicy;
       if (propName === 'extent' && (resizePolicy = this.isResizedByLayout(morphToBeStyled))) {
         if (resizePolicy.widthPolicy === 'fixed' && morphToBeStyled.width !== propValue.x) morphToBeStyled.width = propValue.x;
