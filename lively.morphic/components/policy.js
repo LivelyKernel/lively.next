@@ -455,7 +455,12 @@ export class StylePolicy {
       if (targetMorph._lastIndex && !obj.equals(targetMorph._lastIndex, currIndex)) {
         const limitExtent = bpStore.getLimitExtent(currIndex);
         const actualExtent = targetMorph.extent;
-        targetMorph.withMetaDo({ metaInteraction: true, reconcileChanges: false, doNotFit: true }, () => {
+        targetMorph.withMetaDo({
+          metaInteraction: true, // do not record
+          reconcileChanges: false,
+          doNotFit: true,
+          doNotOverride: true
+        }, () => {
           const origLayoutableFlag = targetMorph.isLayoutable;
           targetMorph.isLayoutable = false; // avoid any resizing interference here
           targetMorph.extent = limitExtent;
@@ -1638,6 +1643,7 @@ export class PolicyApplicator extends StylePolicy {
    */
   onMorphChange (changedMorph, change) {
     if (change.meta?.metaInteraction ||
+        change.meta?.doNotOverride ||
         !this.targetMorph ||
         this.isCurrentlyAnimated(changedMorph)
     ) return;

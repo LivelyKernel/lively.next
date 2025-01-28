@@ -2828,8 +2828,7 @@ export class Text extends Morph {
     } else if (this.env.renderer) {
       if (this.fixedHeight && this.fixedWidth) return;
       let textBoundsExtent = this.textBounds().extent();
-      this.renderingState.needsFit = this.renderingState.needsRemeasure;
-      this.withMetaDo({ isLayoutAction: true, doNotFit: true }, () => {
+      this.withMetaDo({ isLayoutAction: true, doNotFit: true, doNotOverride: true }, () => {
         if (this.fixedWidth) textBoundsExtent = textBoundsExtent.withX(this.width);
         if (this.fixedHeight) textBoundsExtent = textBoundsExtent.withY(this.height);
         const newExt = textBoundsExtent.addXY(
@@ -2838,6 +2837,7 @@ export class Text extends Morph {
         );
         if (!this.extent.equals(newExt)) {
           this.extent = newExt;
+          this.renderingState.needsFit = this.renderingState.needsRemeasure;
         }
       });
     } else {
