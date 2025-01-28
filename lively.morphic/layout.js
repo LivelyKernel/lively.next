@@ -834,10 +834,10 @@ export class TilingLayout extends Layout {
     aMorph._yogaNode = Yoga.Node.create(yogaConfig);
     if (aMorph.isText) {
       aMorph._yogaNode.setMeasureFunc((width, widthMode, height, heightMode) => {
-        if (aMorph.fixedWidth && widthMode !== 0) aMorph.width = width;
-        if (aMorph.fixedHeight && heightMode !== 0) aMorph.height = height;
+        if (aMorph.fixedWidth && widthMode !== 0) aMorph.withMetaDo({ doNotOverride: true }, () => aMorph.width = width);
+        if (aMorph.fixedHeight && heightMode !== 0) aMorph.withMetaDo({ doNotOverride: true }, () => aMorph.height = height);
         if (!aMorph.visible) return { width: aMorph.width, height: aMorph.height };
-        if (!aMorph.fixedWidth || !aMorph.fixedHeight) aMorph.withMetaDo({ doNotFit: false }, () => aMorph.fit());
+        if (!aMorph.fixedWidth || !aMorph.fixedHeight) aMorph.withMetaDo({ doNotFit: false, skipRerender: true }, () => aMorph.fitIfNeeded());
         if (!aMorph.fixedWidth) width = aMorph.width;
         if (!aMorph.fixedHeight) height = aMorph.height;
         return { width, height };
@@ -934,10 +934,10 @@ export class TilingLayout extends Layout {
 
     if (this.container.submorphs.length > 0) {
       if (hugContentsVertically && container.height !== height) {
-        container.withMetaDo({ isLayoutAction: true, skipRender: true }, () => container.height = height);
+        container.withMetaDo({ isLayoutAction: true, skipRender: true, doNotOverride: true }, () => container.height = height);
       }
       if (hugContentsHorizontally && container.width !== width) {
-        container.withMetaDo({ isLayoutAction: true, skipRender: true }, () => container.width = width);
+        container.withMetaDo({ isLayoutAction: true, skipRender: true, doNotOverride: true }, () => container.width = width);
       }
     }
   }
