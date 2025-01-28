@@ -223,7 +223,7 @@ export default class FontMetric {
 
     if (!forceCache && string.length > 1) return this.measure(relevantStyle, string);
 
-    const styleKey = this._domMeasure.generateStyleKey(style);
+    const styleKey = this._domMeasure.generateStyleKey(relevantStyle);
 
     if (!this.charMap[styleKey]) { this.charMap[styleKey] = {}; }
     if (!this.charMap[styleKey][string]) { this.charMap[styleKey][string] = this.measure(relevantStyle, string); }
