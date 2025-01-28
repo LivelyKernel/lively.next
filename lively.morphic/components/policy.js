@@ -471,8 +471,17 @@ export class StylePolicy {
     })();
   }
 
+  getLastMatchingBreakpoint (target) {
+    let curr = this;
+    let matchingBreakpoint;
+    while (curr = curr.getMatchingBreakpointMaster(target)) {
+      matchingBreakpoint = curr = curr.stylePolicy || curr;
+    }
+    return matchingBreakpoint || curr;
+  }
+
   needsBreakpointUpdate (target) {
-    const matchingBreakpoint = this.getMatchingBreakpointMaster(target);
+    const matchingBreakpoint = this.getLastMatchingBreakpoint(target);
     if (typeof matchingBreakpoint === 'undefined') return false;
     if (matchingBreakpoint === (target._lastBreakpoint || null)) { return false; }
     target._lastBreakpoint = matchingBreakpoint;
