@@ -81,6 +81,10 @@ export function replace (replacedSiblingName, props) {
 function handleTextProps (props) {
   if (arr.intersect(
     ['text', 'label', Text, Label], withSuperclasses(props.type)).length === 0) { return props; }
+  if (props.textAndAttributes) {
+    delete props.textString;
+    delete props.value;
+  }
   if (props.textString) {
     props.textAndAttributes = [props.textString, null];
     delete props.textString;
@@ -1455,11 +1459,21 @@ export class PolicyApplicator extends StylePolicy {
   }
 
   synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope, previousTarget) {
-    const subSpec = super.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, previousTarget);
-    if (subSpec.isPolicy && !subSpec.isPolicyApplicator) {
-      return new PolicyApplicator({}, subSpec);
+    let synthesized = super.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, previousTarget);
+    if (synthesized.isPolicy && !synthesized.isPolicyApplicator) {
+      return new PolicyApplicator({}, synthesized);
     }
-    return subSpec;
+    synthesized = sanitizeSpec(synthesized);
+    if ('width' in synthesized && synthesized.extent?.isPoint) {
+      synthesized.extent = synthesized.extent.withX(synthesized.width);
+      delete synthesized.width;
+    }
+
+    if ('height' in synthesized && synthesized.extent?.isPoint) {
+      synthesized.extent = synthesized.extent.withY(synthesized.height);
+      delete synthesized.height;
+    }
+    return synthesized;
   }
 
   applyIfNeeded (needsUpdate = false, animationConfig = false) {
