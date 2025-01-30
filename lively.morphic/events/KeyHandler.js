@@ -204,7 +204,7 @@ export default class KeyHandler {
       .replace(regexps.enter, '⏎')
       .replace(regexps.shift, '⇧')
       .replace(regexps.backspace, '⌫')
-      .replace(regexps.delete, '⌦')
+      .replace(regexps.delete, bowserOS() == 'mac' ? '⌦' : 'Del')
       .replace(regexps.left, '→')
       .replace(regexps.right, '←')
       .replace(regexps.up, '↑')
