@@ -2,6 +2,7 @@ import { Polygon, component, part } from 'lively.morphic';
 import { Color, pt } from 'lively.graphics';
 import { CheckerPattern } from './shared.cp.js';
 import { signal } from 'lively.bindings';
+import KeyHandler from 'lively.morphic/events/KeyHandler.js';
 
 export class ColorStopControl extends Polygon {
   static get properties () {
@@ -99,6 +100,7 @@ const ColorStop = component({
   borderWidth: 1,
   draggable: true,
   extent: pt(24, 28.7),
+  tooltip: 'Color stop of this gradient.\nDrag to move its relative\nposition within the gradient.',
   submorphs: [part(ColorCell, {
     name: 'color cell',
     position: pt(2, 2)
@@ -109,7 +111,8 @@ const ColorStop = component({
 const SelectedColorStop = component(ColorStop, {
   name: 'selected color stop',
   fill: Color.rgb(33, 150, 243),
-  borderWidth: 0
+  borderWidth: 0,
+  tooltip: 'Press ' + KeyHandler.prettyCombo('Delete') + ' to remove this color stop from the gradient.'
 });
 
 export { SelectedColorStop, ColorStop, ColorCell };
