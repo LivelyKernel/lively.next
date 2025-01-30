@@ -939,13 +939,11 @@ export class Text extends Morph {
   }
 
   setupSelectionColorCSSRuleForColor (color) {
-    const rules = document.styleSheets[0].cssRules;
-    let idx = 0;
-    for (const rule of rules) {
-      if (rule.selectorText === `#${this.id} > div > .line > span::selection`) document.styleSheets[0].deleteRule(idx);
-      idx++;
+    if (obj.isNumber(this._ruleIndex)) {
+      document.styleSheets[0].deleteRule(this._ruleIndex);
+      delete this._ruleIndex;
     }
-    if (this.selectionMode === 'native') document.styleSheets[0].insertRule(`#${this.id} > div > .line > span::selection { background: ${color.toCSSString()}; }`, 0);
+    if (this.selectionMode === 'native') this._ruleIndex = document.styleSheets[0].insertRule(`#${this.id} > div > .line > span::selection { background: ${color.toCSSString()}; }`, 0);
   }
 
   renderStyles (styleProps) {
