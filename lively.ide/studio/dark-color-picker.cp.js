@@ -65,7 +65,7 @@ const DarkColorPicker = component(ColorPicker, {
                 borderRadius: 0,
                 submorphs: [{
                   name: 'value',
-                  fontSize: 11,
+                  fontSize: 12,
                   fontColor: Color.rgbHex('B2EBF2')
                 }]
               },
