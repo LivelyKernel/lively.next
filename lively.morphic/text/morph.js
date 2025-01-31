@@ -639,7 +639,9 @@ export class Text extends Morph {
             $world.logError(`Invalid Font Name: ${sanitizedFontFamily} on morph ${this.name}!`);
           }
           this.setProperty('fontFamily', sanitizedFontFamily);
-          document.fonts.load(`${this.fontStyle} ${this.fontWeight} 12px ${sanitizedFontFamily}`)
+          if (this._fontFamilyToRender === sanitizedFontFamily) return;
+          const needsFontLoad = !this.fontMetric?.isFontSupported(sanitizedFontFamily, this.fontWeight, this.fontStyle);
+          Promise.resolve(needsFontLoad && document.fonts.load(`${this.fontStyle} ${this.fontWeight} 12px ${sanitizedFontFamily}`))
             .then(() => {
               this._fontFamilyToRender = this.fontFamily;
             });
@@ -727,7 +729,10 @@ export class Text extends Morph {
         defaultValue: 'normal',
         set (weight) {
           this.setProperty('fontWeight', weight);
-          document.fonts.load(`${this.fontStyle} ${weight} 12px ${this.fontFamily}`)
+          if (this._fontWeightToRender === weight) return;
+          // only do this if not already loaded
+          const needsFontLoad = !this.fontMetric?.isFontSupported(this.fontFamily, weight, this.fontStyle);
+          Promise.resolve(needsFontLoad && document.fonts.load(`${this.fontStyle} ${weight} 12px ${this.fontFamily}`))
             .then(() => this._fontWeightToRender = weight);
         },
         isStyleProp: true,
@@ -748,7 +753,9 @@ export class Text extends Morph {
         values: ['normal', 'italic', 'oblique'],
         set (style) {
           this.setProperty('fontStyle', style);
-          document.fonts.load(`${style} ${this.fontWeight} 12px ${this.fontFamily}`)
+          if (this._fontStyleToRender === style) return;
+          const needsFontLoad = !this.fontMetric?.isFontSupported(this.fontFamily, this.fontWeight, style);
+          Promise.resolve(needsFontLoad && document.fonts.load(`${style} ${this.fontWeight} 12px ${this.fontFamily}`))
             .then(() => this._fontStyleToRender = style);
         },
         defaultValue: 'normal',
@@ -932,13 +939,11 @@ export class Text extends Morph {
   }
 
   setupSelectionColorCSSRuleForColor (color) {
-    const rules = document.styleSheets[0].cssRules;
-    let idx = 0;
-    for (const rule of rules) {
-      if (rule.selectorText === `#${this.id} > div > .line > span::selection`) document.styleSheets[0].deleteRule(idx);
-      idx++;
+    if (obj.isNumber(this._ruleIndex)) {
+      document.styleSheets[0].deleteRule(this._ruleIndex);
+      delete this._ruleIndex;
     }
-    if (this.selectionMode === 'native') document.styleSheets[0].insertRule(`#${this.id} > div > .line > span::selection { background: ${color.toCSSString()}; }`, 0);
+    if (this.selectionMode === 'native') this._ruleIndex = document.styleSheets[0].insertRule(`#${this.id} > div > .line > span::selection { background: ${color.toCSSString()}; }`, 0);
   }
 
   renderStyles (styleProps) {
