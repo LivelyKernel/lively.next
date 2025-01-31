@@ -136,6 +136,15 @@ const HexEncoder = component({
   submorphs: [
     part(DefaultNumberWidget, {
       name: 'hex opacity control',
+      layout: new TilingLayout({
+        axisAlign: 'center',
+        justifySubmorphs: 'spaced',
+        padding: rect(0, 0, 0, 2),
+        resizePolicies: [['value', {
+          height: 'fixed',
+          width: 'fixed'
+        }]]
+      }),
       dropShadow: false,
       extent: pt(45, 23),
       borderRadius: 0,
@@ -145,11 +154,11 @@ const HexEncoder = component({
         min: 0,
         scaleFactor: 100,
         unit: '%',
-        autofit: true
+        autofit: false
       },
       submorphs: [{
         name: 'value',
-        fontSize: 11
+        fontSize: 12
       },
       without('button holder')]
     }),

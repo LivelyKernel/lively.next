@@ -61,6 +61,7 @@ export class GradientHaloModel extends ViewModel {
   }
 
   initFromLinearGradient (target, linearGradient) {
+    const { orthogonalHandle, originHandle, directionHandle } = this.ui;
     // based on the angle
     const targetBounds = target.innerBounds();
     const theta = linearGradient.vectorAsAngle();
@@ -75,17 +76,24 @@ export class GradientHaloModel extends ViewModel {
     this.originPoint = directionPoint === p1 ? p2 : p1;
     this.directionPoint = directionPoint;
     this.orthogonalDist = arr.min(targetBounds.edges(), edge => edge.distanceFromLine(p2)).length() / 2;
-
+    orthogonalHandle.visible = false;
+    originHandle.tooltip = 'Drag to adjust the orientation of the linear gradient.';
+    directionHandle.tooltip = 'Drag to adjust the orientation of the linear gradient.';
     this.alignWithTarget();
   }
 
   initFromRadialGradient (target, radialGradient) {
+    const { orthogonalHandle, originHandle, directionHandle } = this.ui;
     const targetBounds = target.innerBounds();
     const originPoint = targetBounds.relativeToAbsPoint(radialGradient.focus);
     const { height: gradientHeight, width: gradientWidth } = radialGradient.bounds;
     this.originPoint = originPoint;
     this.directionPoint = originPoint.addXY(0, gradientHeight / 2);
     this.orthogonalDist = gradientWidth / 2;
+    orthogonalHandle.visible = true;
+    orthogonalHandle.tooltip = 'Drag to adjust the horizontal dimension fo the radial gradient.';
+    originHandle.tooltip = 'Drag to adjust the center of the radial gradient.';
+    directionHandle.tooltip = 'Drag to adjust the vertical dimension of the radial gradient.';
     this.alignWithTarget();
   }
 
@@ -488,6 +496,7 @@ const GradientControl = component({
     clipMode: 'hidden',
     extent: pt(195.4, 15),
     fill: Color.rgba(0, 0, 0, 0),
+    tooltip: 'Click to add a new color stop for the gradient.',
     submorphs: [part(CheckerPattern, {
       name: 'checkerboard pattern gradient',
       extent: pt(218.4, 38.8)
