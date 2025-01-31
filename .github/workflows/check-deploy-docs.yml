@@ -35,7 +35,7 @@ jobs:
         cp doc-style/logo.svg docs/logo.svg
         cp lively.morphic/assets/favicon.ico docs/favicon.ico
     - name: Upload Documentation Build
-      uses: actions/upload-pages-artifact@v2
+      uses: actions/upload-pages-artifact@v3
       with:
         name: docs
         path: docs/
@@ -47,7 +47,7 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v3
       - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4
         with:
           artifact_name: docs
   cleanup:
