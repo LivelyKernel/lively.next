@@ -224,7 +224,6 @@ input:placeholder {
 }
 
 .newtext-text-layer.auto-width .line {
-  width: fit-content;
 }
 
 .newtext-text-layer.auto-height .line {
