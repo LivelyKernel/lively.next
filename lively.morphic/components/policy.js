@@ -81,6 +81,10 @@ export function replace (replacedSiblingName, props) {
 function handleTextProps (props) {
   if (arr.intersect(
     ['text', 'label', Text, Label], withSuperclasses(props.type)).length === 0) { return props; }
+  if (props.textAndAttributes) {
+    delete props.textString;
+    delete props.value;
+  }
   if (props.textString) {
     props.textAndAttributes = [props.textString, null];
     delete props.textString;
@@ -450,7 +454,12 @@ export class StylePolicy {
       if (targetMorph._lastIndex && !obj.equals(targetMorph._lastIndex, currIndex)) {
         const limitExtent = bpStore.getLimitExtent(currIndex);
         const actualExtent = targetMorph.extent;
-        targetMorph.withMetaDo({ metaInteraction: true, reconcileChanges: false, doNotFit: true }, () => {
+        targetMorph.withMetaDo({
+          metaInteraction: true, // do not record
+          reconcileChanges: false,
+          doNotFit: true,
+          doNotOverride: true
+        }, () => {
           const origLayoutableFlag = targetMorph.isLayoutable;
           targetMorph.isLayoutable = false; // avoid any resizing interference here
           targetMorph.extent = limitExtent;
@@ -467,8 +476,17 @@ export class StylePolicy {
     })();
   }
 
+  getLastMatchingBreakpoint (target) {
+    let curr = this;
+    let matchingBreakpoint;
+    while (curr = curr.getMatchingBreakpointMaster(target)) {
+      matchingBreakpoint = curr = curr.stylePolicy || curr;
+    }
+    return matchingBreakpoint || curr;
+  }
+
   needsBreakpointUpdate (target) {
-    const matchingBreakpoint = this.getMatchingBreakpointMaster(target);
+    const matchingBreakpoint = this.getLastMatchingBreakpoint(target);
     if (typeof matchingBreakpoint === 'undefined') return false;
     if (matchingBreakpoint === (target._lastBreakpoint || null)) { return false; }
     target._lastBreakpoint = matchingBreakpoint;
@@ -1273,7 +1291,7 @@ export class StylePolicy {
    */
   isPositionedByLayout (aSubmorph) {
     const layout = aSubmorph.owner?.layout;
-    return layout?.name() !== 'Constraint' && layout?.layoutableSubmorphs?.includes(aSubmorph);
+    return layout && layout.name() !== 'Constraint' && aSubmorph.isLayoutable;
   }
 
   /**
@@ -1282,7 +1300,7 @@ export class StylePolicy {
    * @returns { boolean | object } Wether or not size is controlled via layout and if so, the concrete policy.
    */
   isResizedByLayout (aSubmorph) {
-    const layout = aSubmorph.owner && aSubmorph.owner.layout;
+    let layout = aSubmorph.owner && aSubmorph.owner.layout;
     let heightPolicy = 'fixed'; let widthPolicy = 'fixed';
     if (aSubmorph.isText) {
       if (!aSubmorph.fixedHeight) heightPolicy = 'hug';
@@ -1293,6 +1311,19 @@ export class StylePolicy {
       if (widthPolicy !== 'hug') widthPolicy = layout.getResizeWidthPolicyFor(aSubmorph);
       if (heightPolicy === 'fill' || widthPolicy === 'fill') return { widthPolicy, heightPolicy };
     }
+
+    layout = aSubmorph.layout;
+
+    if (layout?.hugContentsVertically ||
+        layout?.hugContentsHorizontally ||
+        widthPolicy === 'hug' ||
+        heightPolicy === 'hug') {
+      return {
+        widthPolicy: layout?.hugContentsHorizontally ? 'hug' : widthPolicy,
+        heightPolicy: layout?.hugContentsVertically ? 'hug' : heightPolicy
+      };
+    }
+
     return false;
   }
 
@@ -1391,11 +1422,21 @@ export class PolicyApplicator extends StylePolicy {
   }
 
   synthesizeSubSpec (submorphNameInPolicyContext, parentOfScope, previousTarget) {
-    const subSpec = super.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, previousTarget);
-    if (subSpec.isPolicy && !subSpec.isPolicyApplicator) {
-      return new PolicyApplicator({}, subSpec);
+    let synthesized = super.synthesizeSubSpec(submorphNameInPolicyContext, parentOfScope, previousTarget);
+    if (synthesized.isPolicy && !synthesized.isPolicyApplicator) {
+      return new PolicyApplicator({}, synthesized);
     }
-    return subSpec;
+    synthesized = sanitizeSpec(synthesized);
+    if ('width' in synthesized && synthesized.extent?.isPoint) {
+      synthesized.extent = synthesized.extent.withX(synthesized.width);
+      delete synthesized.width;
+    }
+
+    if ('height' in synthesized && synthesized.extent?.isPoint) {
+      synthesized.extent = synthesized.extent.withY(synthesized.height);
+      delete synthesized.height;
+    }
+    return synthesized;
   }
 
   applyIfNeeded (needsUpdate = false, animationConfig = false) {
@@ -1472,11 +1513,20 @@ export class PolicyApplicator extends StylePolicy {
         continue;
       }
 
-      if (this.isPositionedByLayout(morphToBeStyled) && propName === 'position') continue;
+      if (propName === 'position' && this.isPositionedByLayout(morphToBeStyled)) continue;
       let resizePolicy;
       if (propName === 'extent' && (resizePolicy = this.isResizedByLayout(morphToBeStyled))) {
-        if (resizePolicy.widthPolicy === 'fixed' && morphToBeStyled.width !== propValue.x) morphToBeStyled.width = propValue.x;
-        if (resizePolicy.heightPolicy === 'fixed' && morphToBeStyled.height !== propValue.y) morphToBeStyled.height = propValue.y;
+        morphToBeStyled.withMetaDo({ deferLayoutApplication: true }, () => {
+          if (resizePolicy.widthPolicy === 'fixed' && morphToBeStyled.width !== propValue.x) {
+            morphToBeStyled.width = propValue.x;
+          }
+          if (resizePolicy.heightPolicy === 'fixed' && morphToBeStyled.height !== propValue.y) {
+            morphToBeStyled.height = propValue.y;
+          }
+          if (morphToBeStyled.isText && (resizePolicy.widthPolicy === 'hug' || resizePolicy.heightPolicy === 'hug')) {
+            morphToBeStyled.withMetaDo({ doNotFit: false }, () => morphToBeStyled.fit());
+          }
+        });
         continue;
       }
 
@@ -1491,31 +1541,10 @@ export class PolicyApplicator extends StylePolicy {
         if (propName === 'position') continue;
       }
 
-      // FIXME: other special cases??
-      if (morphToBeStyled.isText && propName === 'extent') {
-        if (!morphToBeStyled.fixedWidth && !morphToBeStyled.fixedHeight) continue;
-        if (!morphToBeStyled.fixedWidth) propValue = propValue.withX(morphToBeStyled.width);
-        if (!morphToBeStyled.fixedHeight) propValue = propValue.withY(morphToBeStyled.height);
-      }
-
-      if (morphToBeStyled.isText && propName === 'width' && morphToBeStyled.lineWrapping !== 'no-wrap') {
-        if (!morphToBeStyled.fixedWidth) continue;
-        morphToBeStyled.width = propValue;
-        morphToBeStyled.withMetaDo({ doNotFit: false }, () => morphToBeStyled.fit());
-      }
-
       if (['border', 'borderTop', 'borderBottom', 'borderRight', 'borderLeft'].includes(propName)) continue; // handled by sub props;
 
       if (!obj.equals(morphToBeStyled[propName], propValue)) {
         morphToBeStyled[propName] = propValue;
-      }
-
-      // we may be late for the game when setting these props
-      // se we need to make sure, we restore the morphs "intended extent"
-      // for this purpose we enforce the masterSubmorph extent
-      if (['fixedHeight', 'fixedWidth'].includes(propName) &&
-          morphToBeStyled._parametrizedProps?.extent) {
-        morphToBeStyled.extent = morphToBeStyled._parametrizedProps.extent;
       }
     }
   }
@@ -1550,6 +1579,7 @@ export class PolicyApplicator extends StylePolicy {
    */
   onMorphChange (changedMorph, change) {
     if (change.meta?.metaInteraction ||
+        change.meta?.doNotOverride ||
         !this.targetMorph ||
         this.isCurrentlyAnimated(changedMorph)
     ) return;
