@@ -145,6 +145,8 @@ export default class Renderer {
       }
     }
 
+    this.worldMorph.applyLayoutIfNeeded();
+
     // handling these first allows us to assume correct wrapping, when we have submorphs already!
     for (let morph of morphsToHandle) {
       if (morph.renderingState.hasCSSLayoutChange) this.renderLayoutChange(morph);

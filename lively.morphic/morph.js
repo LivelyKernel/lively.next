@@ -886,6 +886,7 @@ export class Morph {
     if (props.__wasAddedToDerived__) this.__wasAddedToDerived__ = true;
 
     if (typeof this.onLoad === 'function' && !this.isComponent) this.onLoad();
+    if (typeof props.onLoad === 'function' && !this.isComponent) props.onLoad.bind(this)();
   }
 
   get __serialization_id_property__ () { return '_id'; }
@@ -1657,11 +1658,13 @@ export class Morph {
       this.makeDirty();
       submorph.resumeSteppingAll();
 
-      submorph.withAllSubmorphsDo(ea => ea.onOwnerChanged(this));
+      submorph.withAllSubmorphsDo(ea => {
+        ea.onOwnerChanged(this);
+      });
 
-      if (submorph._requestMasterStyling) {
-        submorph.master && submorph.master.applyIfNeeded(true);
-        submorph._requestMasterStyling = false;
+      if (this.world() && !this.isText) {
+        this.env.forceUpdate(this);
+        this.withAllSubmorphsDo(m => m.makeDirty());
       }
     });
 

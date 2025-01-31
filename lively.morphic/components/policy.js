@@ -145,8 +145,10 @@ function mergeInHierarchy (
       if (specOrPolicyToAdd.isPolicy) specOrPolicyToAdd = specOrPolicyToAdd.spec;
 
       if (morphToReplace) {
-        if (!specOrPolicyToAdd.position) { specOrPolicyToAdd.position = morphToReplace.spec?.position || morphToReplace.position; }
-        if (!specOrPolicyToAdd.rotation) { specOrPolicyToAdd.rotation = morphToReplace.spec?.rotation || morphToReplace.rotation; }
+        if (!specOrPolicyToAdd.hasOwnProperty('position')) { specOrPolicyToAdd.position = morphToReplace.spec?.position || morphToReplace.position; }
+        if (!specOrPolicyToAdd.hasOwnProperty('rotation')) { specOrPolicyToAdd.rotation = morphToReplace.spec?.rotation || morphToReplace.rotation; }
+        if (typeof specOrPolicyToAdd.position === 'undefined') delete specOrPolicyToAdd.position;
+        if (typeof specOrPolicyToAdd.rotation === 'undefined') delete specOrPolicyToAdd.rotation;
         specOrPolicyToAdd.name = morphToReplace.name;
         addFn(root, cmd.props, morphToReplace);
         removeFn(root, morphToReplace);
@@ -188,7 +190,6 @@ function getEventState (targetMorph, breakpointStore, localComponentStates) {
 }
 
 export function withAllViewModelsDo (inst, cb) {
-  if (inst.master) inst.master.applyIfNeeded(true);
   const toAttach = [];
   inst.withAllSubmorphsDo(m => {
     if (m.viewModel) toAttach.unshift(m);
@@ -940,10 +941,73 @@ export class StylePolicy {
   instantiate (props = {}) {
     // we may be able to avoid this explicit wrapping of the policies
     // by moving that logic into the master setter at a later stage
-    const inst = morph(new PolicyApplicator(props, this).asBuildSpec()); // eslint-disable-line no-use-before-define
+    const inst = morph(new PolicyApplicator(props, this).asFullySynthesizedSpec()); // eslint-disable-line no-use-before-define
     // FIXME: This is temporary and should be moved into the viewModel setter after transition is complete.
-    withAllViewModelsDo(inst, m => m.viewModel.attach(m));
+    withAllViewModelsDo(inst, m => {
+      m.viewModel.attach(m); // as fully synthesized spec does not seem to assign all viewModels
+    });
     return inst;
+  }
+
+  asFullySynthesizedSpec () {
+    // caching does not work that way, since it requires more dynamicity depending on the event/breakpoint state of each morph in the morph hierarchy. Instead we can only cache on a per morph x state basis, always having to assemble the spec ad hoc.
+    // if (this._cachedFullySynthesized) return this._cachedFullySynthesized;
+    const extractBuildSpecs = (specOrPolicy, submorphs) => {
+      if (specOrPolicy.COMMAND === 'add') {
+        specOrPolicy = specOrPolicy.props;
+      }
+      if (specOrPolicy.COMMAND === 'remove') return null; // target is already removed so just ignore the command
+      if (specOrPolicy.isPolicy) return specOrPolicy.asFullySynthesizedSpec();
+      const modelClass = specOrPolicy.defaultViewModel || specOrPolicy.viewModelClass;
+      const modelParams = { ...specOrPolicy.viewModel } || {}; // accumulate the derivation chain for the viewModel
+      const synthesized = this.synthesizeSubSpec(specOrPolicy === this.spec ? null : specOrPolicy.name);
+      if (specOrPolicy.name) synthesized.name = specOrPolicy.name;
+      // remove the props that are equal to the default value
+      getStylePropertiesFor(specOrPolicy.type).forEach(prop => {
+        if (synthesized[prop]?.isDefaultValue) {
+          delete synthesized[prop];
+        }
+        if (prop === 'layout' && synthesized[prop]?.isLayout) synthesized[prop] = synthesized[prop].copy();
+      });
+      if (synthesized.textAndAttributes) {
+        synthesized.textAndAttributes = synthesized.textAndAttributes.map(textOrAttr => {
+          if (textOrAttr?.__isSpec__) return morph(tree.mapTree(textOrAttr, extractBuildSpecs, node => node.submorphs)); // ensure sub build specs...
+          if (textOrAttr?.isPolicy) return textOrAttr.instantiate();
+          return textOrAttr;
+        });
+      }
+      if (synthesized.layout) synthesized.layout = synthesized.layout.copy();
+      if (submorphs.length > 0) {
+        let transformedSubmorphs = submorphs.filter(spec => spec && !spec.__before__);
+        for (let spec of submorphs) {
+          if (spec?.__before__ !== undefined) {
+            {
+              const idx = transformedSubmorphs.findIndex(m => m.name === spec.__before__);
+              arr.pushAt(transformedSubmorphs, spec, idx);
+              delete spec.__before__;
+            }
+          }
+        }
+        synthesized.submorphs = transformedSubmorphs;
+      }
+      if (modelClass) synthesized.viewModel = new modelClass(modelParams);
+      else delete synthesized.viewModel;
+
+      if (!synthesized.isPolicy) {
+        return sanitizeSpec(synthesized);
+      }
+
+      return synthesized;
+    };
+    const buildSpec = tree.mapTree(this.spec, extractBuildSpecs, node => node.props?.submorphs || node.submorphs);
+    // do not add a master, since that would tigger an application
+    const self = this;
+    buildSpec.onLoad = function () {
+      const policy = self; // PolicyApplicator.for(this, {}, self); // eslint-disable-line no-use-before-define
+      this.setProperty('master', policy);
+      policy.attach(this);
+    };
+    return buildSpec;
   }
 
   /**
