@@ -34,7 +34,6 @@ import { part } from 'lively.morphic';
 
 import worldCommands from './world-commands.js';
 import { CommentData } from 'lively.collab';
-import './js/linter.js';
 import { TopBar } from './studio/top-bar.cp.js';
 import { pathForBrowserHistory } from 'lively.morphic/helpers.js';
 import { Project } from 'lively.project';

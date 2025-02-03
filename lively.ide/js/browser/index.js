@@ -32,8 +32,6 @@ import DefaultTheme from '../../themes/default.js';
 import { objectReplacementChar } from 'lively.morphic/text/document.js';
 import { serverInterfaceFor, localInterface } from 'lively-system-interface/index.js';
 
-import lint from '../linter.js';
-
 import { mdCompiler } from '../../md/compiler.js';
 import MarkdownEditorPlugin from '../../md/editor-plugin.js';
 
@@ -1951,7 +1949,7 @@ export class BrowserModel extends ViewModel {
           content = sourceEditor.textString;
         }
 
-        const linterOutput = await lint(content);
+        const linterOutput = await System.lint(content);
         content = linterOutput[0];
         warnings = linterOutput[1];
 
