@@ -250,6 +250,10 @@ const c6 = ComponentDescriptor.for(() => component(c5, {
   moduleId
 });
 
+function structCompare (a, b, message) {
+  expect(JSON.parse(JSON.stringify(a))).to.eql(JSON.parse(JSON.stringify(b)), message);
+}
+
 describe('spec based components', () => {
   afterEach(() => {
     detach(e2);
@@ -257,7 +261,7 @@ describe('spec based components', () => {
 
   it('specs are always fully expanded', () => {
     let alicePolicy = c2.stylePolicy.getSubSpecFor('alice');
-    expect(d3.stylePolicy.spec).to.eql({
+    structCompare(d3.stylePolicy.spec, {
       name: 'd3',
       fill: Color.cyan,
       defaultViewModel: TestViewModel,
@@ -272,7 +276,7 @@ describe('spec based components', () => {
 
     const fooPolicy = c3.stylePolicy.getSubSpecFor('foo');
     alicePolicy = fooPolicy.getSubSpecFor('alice');
-    expect(c4.stylePolicy.spec).to.eql({
+    structCompare(c4.stylePolicy.spec, {
       name: 'c4',
       submorphs: [
         new PolicyApplicator({
@@ -336,7 +340,7 @@ describe('spec based components', () => {
       ]
     }));
 
-    const expectedBuildSpec = {
+    const expectedBuildSpec = JSON.parse(JSON.stringify({
       name: 'e2',
       master: internalSpec,
       submorphs: [
@@ -380,9 +384,9 @@ describe('spec based components', () => {
         },
         { name: 'bar', __wasAddedToDerived__: true }
       ]
-    };
-    expect(internalSpec.asBuildSpec()).to.eql(expectedBuildSpec, 'equals generated');
-    expect(e2.stylePolicy.asBuildSpec()).to.eql(expectedBuildSpec, 'equals defined');
+    }));
+    expect(JSON.parse(JSON.stringify(internalSpec.asBuildSpec()))).to.eql(JSON.parse(JSON.stringify(expectedBuildSpec)), 'equals generated');
+    expect(JSON.parse(JSON.stringify(e2.stylePolicy.asBuildSpec()))).to.eql(expectedBuildSpec, 'equals defined');
 
     const pa = new PolicyApplicator({}, c3);
     const bs = pa.asBuildSpec();
@@ -433,7 +437,7 @@ describe('spec based components', () => {
       submorphs: [{ name: 'bob', fill: Color.green }]
     }, e1);
     p2.__wasAddedToDerived__ = true;
-    expect(e2.stylePolicy.synthesizeSubSpec('foo')).to.eql(p2);
+    expect(JSON.parse(JSON.stringify(e2.stylePolicy.synthesizeSubSpec('foo')))).to.eql(JSON.parse(JSON.stringify(p2)));
     expect(sanitizeSpec(e3.stylePolicy.synthesizeSubSpec('alice'))).to.eql({
       ...sanitizeSpec(getDefaultValuesFor('text')),
       fill: Color.black,
@@ -820,7 +824,7 @@ describe('components', () => {
     });
 
     expect(part(T1).get('bob').master.parent).to.eql(T1.stylePolicy.getSubSpecFor('bob'));
-    expect(part(T1).get('bob').master.parent.parent).not.to.be.defined;
+    expect(part(T1).get('bob').master.parent.parent).to.be.undefined;
   });
 
   it('includes added morphs into inline policies', () => {

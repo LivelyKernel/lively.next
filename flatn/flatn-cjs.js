@@ -15493,7 +15493,7 @@ const requestMap = {};
 
 class ESMResource extends Resource {
   static normalize (esmUrl) {
-    const id = esmUrl.replaceAll(/esm:\/\/(run|cache)\//g, '');
+    const id = esmUrl.replaceAll(/esm:\/\/([^\/]*)\//g, '');
 
     let pathStructure = id.split('/').filter(Boolean);
 
@@ -15511,7 +15511,6 @@ class ESMResource extends Resource {
       pathStructure.push(fileName);
     }
 
-       
     if (pathStructure[pathStructure.length - 1].endsWith('+esm')) {
       pathStructure[pathStructure.length - 1] = pathStructure[pathStructure.length - 1].replace('+esm', 'esm.js');
     }
@@ -15527,13 +15526,22 @@ class ESMResource extends Resource {
     return pathStructure;
   }
 
-  async read () {
-    let module;
-
-    const id = this.url.replace(/esm:\/\/(run|cache)\//g, '');
-    let baseUrl = 'https://jspm.dev/';
+  getEsmURL () {
+    let baseUrl;
     if (this.url.startsWith('esm://run/npm/')) baseUrl = 'https://cdn.jsdelivr.net/';
     else if (this.url.startsWith('esm://run/')) baseUrl = 'https://esm.run/';
+    else if (this.url.startsWith('esm://cache/')) baseUrl = 'https://jspm.dev/';
+    else {
+      const domain = this.url.match(/esm:\/\/([^\/]*)\//)?.[1];
+      baseUrl = `https://${domain}/`;
+    }
+    return baseUrl;
+  }
+
+  async read () {
+    let module;
+    const id = this.url.replace(/esm:\/\/([^\/]*)\//g, '');
+    const esmURL = this.getEsmURL();
 
     let pathStructure = ESMResource.normalize(id);
 
@@ -15544,7 +15552,7 @@ class ESMResource extends Resource {
       if (typeof lively !== 'undefined' && (hit = lively.memory_esm?.get(shortName))) return await hit.blob.text();
       module = await res.read();
     } else {
-      module = await resource((baseUrl + id)).read();
+      module = await resource((esmURL + id)).read();
       res.write(module);
     }
     return module;
@@ -15627,7 +15635,9 @@ class ESMResource extends Resource {
   }
 
   async exists () {
-    // stub that needs to exist
+    const id = this.url.replace(/esm:\/\/([^\/]*)\//g, '');
+    const baseUrl = this.getEsmURL();
+    return await resource(baseUrl).join(id).exists();
   }
 
   async remove () {
@@ -15706,6 +15716,9 @@ let fixGnuTar;
 
 async function npmSearchForVersions (pname, range = '*') {
   try {
+    if (range.startsWith('npm:')) {
+      [pname, range] = range.match(/npm:(.*)@(.*)/).slice(1);
+    }
     pname = pname.replace(/\//g, '%2f');
     // rms 18.6.18: npmjs.org seems to have dropped semver version resolution, so we do it by hand now
     const { versions } = await resource(`http://registry.npmjs.org/${pname}/`).readJson();
@@ -16566,6 +16579,7 @@ function depGraph (packageSpec, packageMap, dependencyFields = ['dependencies'])
     let atIndex = nameAndVersion.lastIndexOf('@');
     if (atIndex === -1) atIndex = nameAndVersion.length;
     let name = nameAndVersion.slice(0, atIndex);
+    if (name.includes('@npm:')) name = name.split('@npm:')[1];
     let version = nameAndVersion.slice(atIndex + 1);
     let pSpec = packageMap.lookup(name, version);
     if (!pSpec) throw new Error(`Cannot resolve package ${nameAndVersion}`);
@@ -16915,6 +16929,9 @@ async function installPackage (
 
   while (queue.length) {
     let [name, version] = queue.shift();
+  if (version.startsWith('npm:')) {
+    [name, version] = version.match(/npm:(.*)@(.*)/).slice(1);
+  }
     let installed = packageMap.lookup(name, version);
 
     if (!installed) {

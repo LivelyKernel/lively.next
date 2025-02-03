@@ -9,6 +9,9 @@ import { install as installHook } from 'lively.modules/src/hooks.js';
 import { updateBundledModules } from 'lively.modules/src/module.js';
 import { Project } from 'lively.project/project.js';
 import { pathForBrowserHistory } from 'lively.morphic/helpers.js';
+import { setupBabelTranspiler } from 'lively.source-transform/babel/plugin.js';
+import { installLinter } from 'lively.ide/js/linter.js';
+
 import untar from 'esm://cache/js-untar';
 import bowser from 'bowser';
 
@@ -230,7 +233,8 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
       lively.modules.changeSystem(System, true);
       $world.env.installSystemChangeHandlers();
 
-      await loadViaScript(resource(baseURL).join('/lively.modules/systemjs-init.js').url);
+      setupBabelTranspiler(System);
+      installLinter(System);
       logInfo('Setup SystemJS:', Date.now() - ts + 'ms');
 
       // load packages

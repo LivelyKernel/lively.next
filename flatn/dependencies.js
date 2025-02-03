@@ -16,6 +16,7 @@ function depGraph (packageSpec, packageMap, dependencyFields = ['dependencies'])
     let atIndex = nameAndVersion.lastIndexOf('@');
     if (atIndex === -1) atIndex = nameAndVersion.length;
     let name = nameAndVersion.slice(0, atIndex);
+    if (name.includes('@npm:')) name = name.split('@npm:')[1];
     let version = nameAndVersion.slice(atIndex + 1);
     let pSpec = packageMap.lookup(name, version);
     if (!pSpec) throw new Error(`Cannot resolve package ${nameAndVersion}`);
