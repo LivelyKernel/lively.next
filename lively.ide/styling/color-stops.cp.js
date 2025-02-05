@@ -14,12 +14,25 @@ export class ColorStopControl extends Polygon {
         readOnly: true,
         get () { return true; }
       },
+      tooltip: {
+        derived: true,
+        get () {
+          return this.editor?.gradientValue?.stops.length > 2
+            ? 'Press ' + KeyHandler.prettyCombo('Delete') + ' to remove this color stop from the gradient.'
+            : '';
+        }
+      },
       ui: {
         get () {
           return {
             transparent: this.getSubmorphNamed('transparent'),
             opaque: this.getSubmorphNamed('opaque')
           };
+        }
+      },
+      expose: {
+        get () {
+          return ['tooltip'];
         }
       }
     };
@@ -118,8 +131,7 @@ const ColorStop = component({
 const SelectedColorStop = component(ColorStop, {
   name: 'selected color stop',
   fill: Color.rgb(33, 150, 243),
-  borderWidth: 0,
-  tooltip: 'Press ' + KeyHandler.prettyCombo('Delete') + ' to remove this color stop from the gradient.'
+  borderWidth: 0
 });
 
 export { SelectedColorStop, ColorStop, ColorCell };
