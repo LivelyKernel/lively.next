@@ -1,13 +1,11 @@
 import { Color, Point, RadialGradient, rect, LinearGradient, pt } from 'lively.graphics';
 import { ShadowObject, ViewModel, component, part } from 'lively.morphic';
 import { CheckerPattern } from './shared.cp.js';
-import { joinPath } from 'lively.lang/string.js';
+
 import { ExpressionSerializer } from 'lively.serializer2';
 import { arr, num, fun } from 'lively.lang';
 import { signal, noUpdate, connect } from 'lively.bindings';
 import { ColorStop, SelectedColorStop } from './color-stops.cp.js';
-
-const WHEEL_URL = joinPath(System.baseURL, '/lively.ide/assets/color-wheel.png');
 
 export class GradientHaloModel extends ViewModel {
   static get properties () {
@@ -173,7 +171,7 @@ export class GradientHaloModel extends ViewModel {
     this.picker.models.gradientControl.adjustStop(aStop, dx / this.ui.colorStopWrapper.width);
   }
 
-  refresh (gradientControl, target) {
+  refresh (gradientControl) {
     const gradientValue = gradientControl.gradientValue;
     this.alignWithTarget();
     fun.guardNamed('updateGradient', () => {
@@ -316,7 +314,7 @@ export class GradientControlModel extends ViewModel {
     this.confirm();
   }
 
-  toggle (active, picker) {
+  toggle (active) {
     const { view } = this;
     view.isLayoutable = view.visible = active;
     if (active) {
