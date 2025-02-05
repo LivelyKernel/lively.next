@@ -7,6 +7,7 @@ import KeyHandler from 'lively.morphic/events/KeyHandler.js';
 export class ColorStopControl extends Polygon {
   static get properties () {
     return {
+      editor: {},
       stop: {},
       isSelected: {},
       isColorStop: {
@@ -52,6 +53,12 @@ export class ColorStopControl extends Polygon {
 
   positionIn (gradientEditor) {
     this.bottomCenter = gradientEditor.getPositionFor(this.stop);
+  }
+
+  onKeyDown (evt) {
+    if (evt.keyCombo === 'Delete') {
+      this.editor.removeStop(this);
+    }
   }
 
   onMouseDown (evt) {

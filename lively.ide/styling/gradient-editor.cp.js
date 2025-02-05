@@ -420,7 +420,7 @@ export class GradientControlModel extends ViewModel {
   }
 
   getControlFor (aStop, haloOrEditor = this) {
-    const s = part(ColorStop, { master: { states: { selected: SelectedColorStop } } });
+    const s = part(ColorStop, { master: { states: { selected: SelectedColorStop } }, editor: this });
     s.withAllSubmorphsDo(m => m.halosEnabled = false);
     haloOrEditor.placeStop(s);
     connect(s, 'select', haloOrEditor, 'selectStop');
