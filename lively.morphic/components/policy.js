@@ -968,8 +968,6 @@ export class StylePolicy {
   }
 
   asFullySynthesizedSpec () {
-    // caching does not work that way, since it requires more dynamicity depending on the event/breakpoint state of each morph in the morph hierarchy. Instead we can only cache on a per morph x state basis, always having to assemble the spec ad hoc.
-    // if (this._cachedFullySynthesized) return this._cachedFullySynthesized;
     const extractBuildSpecs = (specOrPolicy, submorphs) => {
       if (specOrPolicy.COMMAND === 'add') {
         specOrPolicy = specOrPolicy.props;
@@ -1018,10 +1016,10 @@ export class StylePolicy {
       return synthesized;
     };
     const buildSpec = tree.mapTree(this.spec, extractBuildSpecs, node => node.props?.submorphs || node.submorphs);
-    // do not add a master, since that would tigger an application
     const self = this;
     buildSpec.onLoad = function () {
-      const policy = self; // PolicyApplicator.for(this, {}, self); // eslint-disable-line no-use-before-define
+      const policy = self;
+      // do not trigger master setter, since that would cause an application
       this.setProperty('master', policy);
       policy.attach(this);
     };
