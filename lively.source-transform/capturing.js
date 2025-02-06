@@ -279,7 +279,7 @@ function replaceRefs (parsed, options) {
           }
           const key = prop.value || prop.key;
           return assign(key, member(member(options.captureObj, intermediate), prop.key));
-        }));
+        }), member(options.captureObj, intermediate));
     }
 
     return node;
