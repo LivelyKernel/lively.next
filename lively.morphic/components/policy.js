@@ -977,6 +977,7 @@ export class StylePolicy {
       const modelClass = specOrPolicy.defaultViewModel || specOrPolicy.viewModelClass;
       const modelParams = { ...specOrPolicy.viewModel } || {}; // accumulate the derivation chain for the viewModel
       const synthesized = this.synthesizeSubSpec(specOrPolicy === this.spec ? null : specOrPolicy.name);
+      if (specOrPolicy.__wasAddedToDerived__) synthesized.__wasAddedToDerived__ = true;
       if (specOrPolicy.name) synthesized.name = specOrPolicy.name;
       // remove the props that are equal to the default value
       getStylePropertiesFor(specOrPolicy.type).forEach(prop => {
