@@ -15706,6 +15706,9 @@ let fixGnuTar;
 
 async function npmSearchForVersions (pname, range = '*') {
   try {
+    if (range.startsWith('npm:')) {
+      [pname, range] = range.match(/npm:(.*)@(.*)/).slice(1);
+    }
     pname = pname.replace(/\//g, '%2f');
     // rms 18.6.18: npmjs.org seems to have dropped semver version resolution, so we do it by hand now
     const { versions } = await resource(`http://registry.npmjs.org/${pname}/`).readJson();
@@ -16566,6 +16569,7 @@ function depGraph (packageSpec, packageMap, dependencyFields = ['dependencies'])
     let atIndex = nameAndVersion.lastIndexOf('@');
     if (atIndex === -1) atIndex = nameAndVersion.length;
     let name = nameAndVersion.slice(0, atIndex);
+    if (name.includes('@npm:')) name = name.split('@npm:')[1];
     let version = nameAndVersion.slice(atIndex + 1);
     let pSpec = packageMap.lookup(name, version);
     if (!pSpec) throw new Error(`Cannot resolve package ${nameAndVersion}`);
@@ -16915,6 +16919,9 @@ async function installPackage (
 
   while (queue.length) {
     let [name, version] = queue.shift();
+  if (version.startsWith('npm:')) {
+    [name, version] = version.match(/npm:(.*)@(.*)/).slice(1);
+  }
     let installed = packageMap.lookup(name, version);
 
     if (!installed) {
