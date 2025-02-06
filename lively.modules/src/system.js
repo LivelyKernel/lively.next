@@ -386,32 +386,54 @@ function preNormalize (System, name, parent) {
   // '{node: "events", "~node": "@empty"}' mapping but we need it
   const { packageRegistry } = System.get('@lively-env');
   if (packageRegistry) {
+    let importMap, mappedObject, packageURL;
     const pkg = parent && packageRegistry.findPackageHavingURL(parent);
     if (pkg) {
-      const { map, url: packageURL } = pkg;
-      let mappedObject = (map && map[name]) || System.map[name];
-      if (mappedObject) {
-        if (typeof mappedObject === 'object') {
-          mappedObject = normalize_doMapWithObject(mappedObject, pkg, System);
-        }
-        if (typeof mappedObject === 'string' && mappedObject !== '') {
-          name = mappedObject;
-        }
-        // relative to package
-        if (name.startsWith('.')) name = urlResolve(join(packageURL, name));
+      let map, systemjs;
+      ({ map, url: packageURL, systemjs } = pkg);
+      importMap = !isNode && systemjs?.importMap; // only works in the browser
+      mappedObject = map?.[name] || System.map[name];
+    }
+
+    if (importMap) {
+      let remapped = importMap.imports?.[name];
+      let scope, prefix;
+      if (scope = Object.entries(importMap.scopes)
+        .filter(([k, v]) => parent.startsWith(k))
+        .sort((a, b) => a[0].length - b[0].length)
+        .map(([prefix, scope]) => scope)
+        .reduce((a, b) => ({ ...a, ...b }), false)) {
+        if (scope[name]) remapped = scope[name];
+      }
+      if (remapped) {
+        name = remapped;
+        if (mappedObject) mappedObject = name;
+        packageRegistry.moduleUrlToPkg.set(name, pkg);
       }
     }
-  }
-  // <snip> experimental
-  if (packageRegistry) {
+
+    if (mappedObject) {
+      if (typeof mappedObject === 'object') {
+        mappedObject = normalize_doMapWithObject(mappedObject, pkg, System);
+      }
+      if (typeof mappedObject === 'string' && mappedObject !== '') {
+        name = mappedObject;
+      }
+      // relative to package
+      if (name.startsWith('.')) name = urlResolve(join(packageURL, name));
+    }
+
     let resolved = packageRegistry.resolvePath(name, parent);
     if (resolved) {
       if (resolved.endsWith('/') && !name.endsWith('/')) resolved = resolved.slice(0, -1);
       if (!resolved.endsWith('/') && name.endsWith('/')) resolved = resolved + '/';
       name = resolved;
     }
+
+    if (pkg && importMap && !packageRegistry.moduleUrlToPkg.get(name)) {
+      packageRegistry.moduleUrlToPkg.set(name, pkg);
+    }
   }
-  // </snap> experimental
 
   System.debug && console.log(`>> [preNormalize] ${name}`);
   return name;
@@ -514,7 +536,7 @@ async function normalizeHook (proceed, name, parent, parentAddress) {
       const indexjs = stage3.replace('.js', '/index.js');
       if (await checkExistence(indexjs, System) || !isNodePath) return indexjs;
       return stage3.replace('.js', '/index.node');
-    } else if (!stage3.includes('jspm.dev') && stage3 !== '@empty') {
+    } else if (!stage3.startsWith('esm://') && !stage3.includes('jspm.dev') && stage3 !== '@empty') {
       if (await checkExistence(stage3 + '.js', System)) return stage3 + '.js';
       if (await checkExistence(stage3 + '/index.js', System)) return stage3 + '/index.js';
     }
