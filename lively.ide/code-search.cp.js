@@ -416,12 +416,7 @@ const CodeSearch = component({
         fontSize: 14,
         haloShadow: {
           blur: 6,
-          color: {
-            a: 1,
-            b: 0.8588,
-            g: 0.5961,
-            r: 0.2039
-          },
+          color: Color.rgb(52, 152, 219),
           distance: 0,
           rotation: 45
         },
