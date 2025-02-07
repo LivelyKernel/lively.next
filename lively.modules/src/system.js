@@ -255,7 +255,7 @@ function prepareSystem (System, config) {
     fetch: function (load, proceed) {
       const s = this.moduleSources?.[load.name];
       if (s) return s;
-      if (this.transpiler !== 'lively.transpiler') return proceed(load);
+      if (this.transpiler !== 'lively.transpiler.babel') return proceed(load);
       return fetchResource.call(this, proceed, load);
     },
     translate: function (load, opts) {
@@ -317,11 +317,11 @@ function prepareSystem (System, config) {
 
   if (!config.transpiler && System.transpiler === 'traceur') {
     const initialSystem = GLOBAL.System;
-    if (initialSystem.transpiler === 'lively.transpiler') {
-      System.set('lively.transpiler', initialSystem.get('lively.transpiler'));
+    if (initialSystem.transpiler === 'lively.transpiler.babel') {
+      System.set('lively.transpiler.babel', initialSystem.get('lively.transpiler.babel'));
       System._loader.transpilerPromise = initialSystem._loader.transpilerPromise;
       System.config({
-        transpiler: 'lively.transpiler',
+        transpiler: 'lively.transpiler.babel',
         babelOptions: Object.assign(initialSystem.babelOptions || {}, config.babelOptions)
       });
     } else {
@@ -386,32 +386,54 @@ function preNormalize (System, name, parent) {
   // '{node: "events", "~node": "@empty"}' mapping but we need it
   const { packageRegistry } = System.get('@lively-env');
   if (packageRegistry) {
+    let importMap, mappedObject, packageURL;
     const pkg = parent && packageRegistry.findPackageHavingURL(parent);
     if (pkg) {
-      const { map, url: packageURL } = pkg;
-      let mappedObject = (map && map[name]) || System.map[name];
-      if (mappedObject) {
-        if (typeof mappedObject === 'object') {
-          mappedObject = normalize_doMapWithObject(mappedObject, pkg, System);
-        }
-        if (typeof mappedObject === 'string' && mappedObject !== '') {
-          name = mappedObject;
-        }
-        // relative to package
-        if (name.startsWith('.')) name = urlResolve(join(packageURL, name));
+      let map, systemjs;
+      ({ map, url: packageURL, systemjs } = pkg);
+      importMap = !isNode && systemjs?.importMap; // only works in the browser
+      mappedObject = map?.[name] || System.map[name];
+    }
+
+    if (importMap) {
+      let remapped = importMap.imports?.[name];
+      let scope, prefix;
+      if (scope = Object.entries(importMap.scopes)
+        .filter(([k, v]) => parent.startsWith(k))
+        .sort((a, b) => a[0].length - b[0].length)
+        .map(([prefix, scope]) => scope)
+        .reduce((a, b) => ({ ...a, ...b }), false)) {
+        if (scope[name]) remapped = scope[name];
+      }
+      if (remapped) {
+        name = remapped;
+        if (mappedObject) mappedObject = name;
+        packageRegistry.moduleUrlToPkg.set(name, pkg);
       }
     }
-  }
-  // <snip> experimental
-  if (packageRegistry) {
+
+    if (mappedObject) {
+      if (typeof mappedObject === 'object') {
+        mappedObject = normalize_doMapWithObject(mappedObject, pkg, System);
+      }
+      if (typeof mappedObject === 'string' && mappedObject !== '') {
+        name = mappedObject;
+      }
+      // relative to package
+      if (name.startsWith('.')) name = urlResolve(join(packageURL, name));
+    }
+
     let resolved = packageRegistry.resolvePath(name, parent);
     if (resolved) {
       if (resolved.endsWith('/') && !name.endsWith('/')) resolved = resolved.slice(0, -1);
       if (!resolved.endsWith('/') && name.endsWith('/')) resolved = resolved + '/';
       name = resolved;
     }
+
+    if (pkg && importMap && !packageRegistry.moduleUrlToPkg.get(name)) {
+      packageRegistry.moduleUrlToPkg.set(name, pkg);
+    }
   }
-  // </snap> experimental
 
   System.debug && console.log(`>> [preNormalize] ${name}`);
   return name;
@@ -449,18 +471,7 @@ function postNormalize (System, normalizeResult, isSync) {
     }
   }
 
-  // Fix issue with accidentally adding .js
-  const jsonPath = normalizeResult.match(jsonJsExtRe);
-  // if (!jsExtRe.test(normalizeResult) &&
-  //   !jsxExtRe.test(normalizeResult) &&
-  //   !jsonExtRe.test(normalizeResult) &&
-  //   !nodeModRe.test(normalizeResult) &&
-  //   !nodeExtRe.test(normalizeResult)) {
-  //   // make sure this is not a package name
-  //   normalizeResult += '.js';
-  // }
-  System.debug && console.log(`>> [postNormalize] ${jsonPath ? jsonPath[1] : normalizeResult}`);
-  return jsonPath ? jsonPath[1] : normalizeResult;
+  return normalizeResult;
 }
 
 async function checkExistence (url, System) {
@@ -476,7 +487,7 @@ async function checkExistence (url, System) {
 
 async function normalizeHook (proceed, name, parent, parentAddress) {
   const System = this;
-  if (System.transpiler !== 'lively.transpiler') return await proceed(name, parent, true);
+  if (System.transpiler !== 'lively.transpiler.babel') return await proceed(name, parent, true);
   if (parent && name === 'cjs') {
     return 'cjs';
   }
@@ -514,7 +525,7 @@ async function normalizeHook (proceed, name, parent, parentAddress) {
       const indexjs = stage3.replace('.js', '/index.js');
       if (await checkExistence(indexjs, System) || !isNodePath) return indexjs;
       return stage3.replace('.js', '/index.node');
-    } else if (!stage3.includes('jspm.dev') && stage3 !== '@empty') {
+    } else if (!stage3.startsWith('esm://') && !stage3.includes('jspm.dev') && stage3 !== '@empty') {
       if (await checkExistence(stage3 + '.js', System)) return stage3 + '.js';
       if (await checkExistence(stage3 + '/index.js', System)) return stage3 + '/index.js';
     }

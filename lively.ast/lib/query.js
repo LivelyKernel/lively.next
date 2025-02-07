@@ -443,7 +443,7 @@ function statementOf (parsed, node, options) {
   // Find the statement that a target node is in. Example:
   // let source be "var x = 1; x + 1;" and we are looking for the
   // Identifier "x" in "x+1;". The second statement is what will be found.
-  const nodes = nodesAt(node.start, parsed);
+  const nodes = nodesAt(node.start + 1, parsed);
   const found = nodes.reverse().find(node => _stmtTypes.includes(node.type));
   if (options && options.asPath) {
     const v = new BaseVisitor(); let foundPath;

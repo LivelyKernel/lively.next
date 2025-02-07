@@ -42,11 +42,15 @@ async function availableFonts(fontCSSFile) {
   ]
 }
 
+function isCdnImport(url) {
+   return  url.includes('jspm.dev') ||
+   url.includes('esm://');
+}
+
 function isAlreadyResolved(url) {
   if (url.startsWith('file://') ||
       url.startsWith('https://') ||
-      url.includes('jspm.dev') ||
-      url.includes('esm://') ||
+      isCdnImport(url) ||
       url.startsWith('node:')) return true;
 }
 
@@ -85,6 +89,9 @@ function decanonicalizeFileName (fileName) {
 }
 
 function resolvePackage (moduleName) {
+  // if the moduleName is from a ESM cdn, we cannot determine the
+  // package based on the module path
+  if (isCdnImport(moduleName)) return;
   return findPackageConfig(moduleName);
 }
 
@@ -208,6 +215,10 @@ function supportingPlugins(context = 'node', self) {
         }
       }
     },
+    {
+       name: 'lively-resolve',
+       resolveId: (id, importer) => self.resolveId(id, importer)
+    }, // but only do resolutions so that polyfills does not screw us up
     context == 'browser' && nodePolyfills(), // only if we bundle for the browser
     commonjs({
       sourceMap: false,

@@ -1,5 +1,5 @@
 import { arr, obj, graph, string } from 'lively.lang';
-import { parse, query } from 'lively.ast';
+import { parse, fuzzyParse, query } from 'lively.ast';
 import { computeRequireMap } from './dependencies.js';
 import { moduleSourceChange } from './change.js';
 import { scheduleModuleExportsChange, runScheduledExportChanges } from './import-export.js';
@@ -17,7 +17,7 @@ export const detectModuleFormat = (function () {
   const esmFormatCommentRegExp = /['"]format (esm|es6)['"];/;
   const cjsFormatCommentRegExp = /['"]format cjs['"];/;
   // Stolen from SystemJS
-  const esmRegEx = /(^\s*|[}\);\n]\s*)(import\s+(['"]|(\*\s+as\s+)?[^"'\(\)\n;]+\s+from\s+['"]|\{)|export\s+\*\s+from\s+["']|export\s+(\{|default|function|class|var|const|let|async\s+function))/;
+  const esmRegEx = /(^\s*|[}\);\n]\s*)(import\s*(['"]|(\*\s*as\s+)?[^"'\(\)\n;]+\s+from\s*['"]|\{)|export\s+\*\s+from\s+["']|export\s*(\{|default|function|class|var|const|let|async\s+function))/;
 
   return (source, metadata) => {
     if (metadata && metadata.format) {
@@ -473,7 +473,7 @@ class ModuleInterface {
 
   isMochaTest () {
     if (!this._source) { return false; }
-    const scope = this._scope || (this._scope = query.topLevelDeclsAndRefs(parse(this._source)).scope);
+    const scope = this._scope || (this._scope = query.topLevelDeclsAndRefs(fuzzyParse(this._source)).scope);
     const deps = query.imports(scope).map(imp => imp.fromModule);
     if (!deps.some(ea => ea.endsWith('mocha-es6') || ea.endsWith('mocha-es6/index.js'))) { return false; }
     return true;
@@ -527,6 +527,11 @@ class ModuleInterface {
       const require = _require.bind(null, this);
       require.resolve = _resolve.bind(null, this);
       nodejsDescriptors.require = { configurable: true, writable: true, value: require };
+      nodejsDescriptors.Buffer = {
+        configurable: true,
+        get: () => this._overriddenBuffer || Buffer,
+        set: (buf) => this._overriddenBuffer = buf
+      };
     }
 
     this._recorder = Object.create(S.global, {
@@ -627,8 +632,10 @@ class ModuleInterface {
     recorder[varName] = value;
 
     // exports update
-    scheduleModuleExportsChange(
-      System, id, varName, value, false/* force adding export */);
+    if (!meta?.exportConflict) {
+      scheduleModuleExportsChange(
+        System, id, varName, value, false/* force adding export */);
+    }
 
     // system event
     this.notifyTopLevelObservers(varName);

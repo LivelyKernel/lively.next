@@ -395,6 +395,52 @@ class ScopeVisitor extends Visitor {
     return node;
   }
 
+  visitForStatement (node, scope, path) {
+    const visitor = this;
+    // init is of types VariableDeclaration, Expression
+    if (node.init) {
+      node.init = visitor.accept(node.init, scope, path.concat(['init']));
+    }
+    // test is of types Expression
+    if (node.test) {
+      node.test = visitor.accept(node.test, scope, path.concat(['test']));
+    }
+    // update is of types Expression
+    if (node.update) {
+      node.update = visitor.accept(node.update, scope, path.concat(['update']));
+    }
+    // body is of types Statement
+    node.body = visitor.accept(node.body, this.newScope(node, scope), path.concat(['body']));
+    return node;
+  }
+
+  visitForInStatement (node, scope, path) {
+    const visitor = this;
+    // left is of types VariableDeclaration, Pattern
+    node.left = visitor.accept(node.left, scope, path.concat(['left']));
+    // right is of types Expression
+    node.right = visitor.accept(node.right, scope, path.concat(['right']));
+    // body is of types Statement
+    node.body = visitor.accept(node.body, this.newScope(node, scope), path.concat(['body']));
+    return node;
+  }
+
+  visitIfStatement (node, scope, path) {
+    const visitor = this;
+
+    node.test = visitor.accept(node.test, scope, path.concat(['test']));
+
+    const consequentScope = this.newScope(node, scope);
+    node.consequent = visitor.accept(node.consequent, consequentScope, path.concat(['consequent']));
+
+    if (node.alternate) {
+      const alternateScope = this.newScope(node, scope);
+      node.alternate = visitor.accept(node.alternate, alternateScope, path.concat(['alternate']));
+    }
+
+    return node;
+  }
+
   visitLabeledStatement (node, scope, path) {
     const visitor = this;
     // ignore label
