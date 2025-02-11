@@ -540,7 +540,7 @@ class DOMTextMeasure {
           measuringState.emptySpace -= hit;
           break;
         case 'by-words':
-          if (measuringState.wordLength < morph.width) {
+          if (measuringState.wordLength < emptySpace) {
             if (measuringState.emptySpaceForWord < measuringState.wordLength && code !== 32) {
               measuringState.virtualRow++;
               measuringState.currentWord.forEach(entry => entry[1] = measuringState.virtualRow);
