@@ -1344,12 +1344,15 @@ export class Morph {
           to the rendered div container of a scrollable morph, such that HTML will end up with the
           same scrollable area as morphic, but that somehow does not work.
     */
-    return (this.submorphs.length
+    const scrollDefinedBySubmorphs = (this.submorphs.length
       ? this.innerBounds().union(this.submorphBounds())
-      : this.innerBounds()).extent().addPt(this.scrollbarOffset);
+      : this.innerBounds()).extent();
+    if (!this.hideScrollbars) { return scrollDefinedBySubmorphs.addPt(this.scrollbarOffset); }
+    return scrollDefinedBySubmorphs;
   }
 
   get scrollbarVisible () {
+    if (this.hideScrollbars) return { horizontal: false, vertical: false };
     if (this.clipMode === 'visible' || this.clipMode === 'hidden') return { horizontal: false, vertical: false };
     if (this.clipMode === 'scroll') return { horizontal: true, vertical: true };
     const extent = this.extent;
