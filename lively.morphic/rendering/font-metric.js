@@ -121,16 +121,16 @@ export default class FontMetric {
     style.overflow = isRoot ? 'hidden' : 'visible';
   }
 
-  measure (style, text) {
+  measure (style, stringOrTextAndAttr) {
     ensureElementMounted(this.element, this.parentEl);
     let {
       fontFamily, fontSize, fontWeight,
       fontStyle, textDecoration,
       textStyleClasses, transform, lineHeight
     } = style;
-    const el = this.element;
+    let { element: el } = this;
+    const doc = this._domMeasure.doc;
     if (transform) transform = transform.inverse();
-    el.textContent = text;
     Object.assign(el.style, {
       '-webkit-text-size-adjust': 'none',
       fontFamily,
@@ -142,6 +142,17 @@ export default class FontMetric {
       fontSize: fontSize + 'px'
     });
     el.className = textStyleClasses ? textStyleClasses.join(' ') : '';
+    if (Array.isArray(stringOrTextAndAttr)) {
+      const [text, attr] = stringOrTextAndAttr;
+      const spanH = doc.createElement('span');
+      spanH.className = 'line';
+      spanH.style.whiteSpace = 'pre';
+      if (attr.fontFamily) spanH.style = `font-family: ${attr.fontFamily};`;
+      spanH.textContent = text;
+      el.replaceChildren(spanH);
+    } else {
+      el.textContent = stringOrTextAndAttr;
+    }
     let width, height;
     try {
       ({ width, height } = el.getBoundingClientRect());
@@ -205,7 +216,7 @@ export default class FontMetric {
     return this.isProportionalCache[fontFamily] = w_width !== i_width;
   }
 
-  sizeFor (style, string = '', forceCache = false) {
+  sizeFor (style, stringOrTextAndAttr = '', forceCache = false) {
     // Select style properties relevant to individual character size
     const {
       fontFamily, fontSize, lineHeight,
@@ -221,12 +232,17 @@ export default class FontMetric {
       textStyleClasses
     };
 
-    if (!forceCache && string.length > 1) return this.measure(relevantStyle, string);
+    if (Array.isArray(stringOrTextAndAttr) && stringOrTextAndAttr[1]?.fontFamily) {
+      relevantStyle.nestedFontFamily = stringOrTextAndAttr[1]?.fontFamily;
+    }
+
+    if (!forceCache && stringOrTextAndAttr.length > 1) return this.measure(relevantStyle, stringOrTextAndAttr);
 
     const styleKey = this._domMeasure.generateStyleKey(relevantStyle);
+    const string = typeof stringOrTextAndAttr === 'string' ? stringOrTextAndAttr : stringOrTextAndAttr[0];
 
     if (!this.charMap[styleKey]) { this.charMap[styleKey] = {}; }
-    if (!this.charMap[styleKey][string]) { this.charMap[styleKey][string] = this.measure(relevantStyle, string); }
+    if (!this.charMap[styleKey][string]) { this.charMap[styleKey][string] = this.measure(relevantStyle, stringOrTextAndAttr); }
 
     return this.charMap[styleKey][string];
   }
@@ -387,6 +403,7 @@ class DOMTextMeasure {
       const {
 
         fontFamily,
+        nestedFontFamily,
         fontSize,
         fontWeight,
         fontStyle,
@@ -398,7 +415,7 @@ class DOMTextMeasure {
         width, height, clipMode, lineWrapping, textAlign
       } = styleOpts;
       return [
-        fontFamily,
+        fontFamily + (nestedFontFamily ? `@${nestedFontFamily}` : ''),
         fontSize,
         fontWeight,
         fontStyle,
@@ -498,6 +515,9 @@ class DOMTextMeasure {
       }
       ++i;
     }
+
+    const localStyle = { ...morph.defaultTextStyle, ...styleOpts };
+
     for (let i = 0; i < codePoints.length; i++) {
       const code = codePoints[i];
       if (code === 32 && measuringState.currentWord.length > 0) {
@@ -511,7 +531,7 @@ class DOMTextMeasure {
         if (isMonospace && Array.isArray(code)) {
           hit = fontMetric.defaultCharExtent(morph).width * 2; // for emojis
         } else {
-          const metrics = Array.isArray(code) ? fontMetric.measure(morph, code.map(c => String.fromCharCode(c)).join('')) : ctx.measureText(String.fromCharCode(code));
+          const metrics = Array.isArray(code) ? fontMetric.measure(localStyle, code.map(c => String.fromCharCode(c)).join('')) : ctx.measureText(String.fromCharCode(code));
           const writeToCache = document.fonts.status === 'loaded' && morph.allFontsLoaded();
           hit = metrics.width;
           if (writeToCache) cache[Array.isArray(code) ? code.join(',') : code] = hit;
@@ -795,8 +815,9 @@ export function charBoundsOfLineViaCanvas (line, textMorph, fontMetric, measure)
       }
       const style = { ...textMorph.defaultTextStyle, ...attrs };
       style.fontSize = Math.max(style.fontSize, textMorph.fontSize);
+      const charHeight = attrs.fontFamily ? fontMetric.sizeFor(textMorph.defaultTextStyle, ['.', attrs], true).height : fontMetric.defaultLineHeight(style);
       measure.measureCharWidthsInCanvas(textMorph, textOrMorph, attrs, measuringState).forEach((res) => {
-        characterBounds.push([fontMetric.defaultLineHeight(style), res]);
+        characterBounds.push([charHeight, res]);
       });
     } else {
       console.warn('Can not measure', textOrMorph); // eslint-disable-line no-console
