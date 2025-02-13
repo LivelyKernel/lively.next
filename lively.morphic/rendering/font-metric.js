@@ -216,7 +216,7 @@ export default class FontMetric {
     return this.isProportionalCache[fontFamily] = w_width !== i_width;
   }
 
-  sizeFor (style, string = '', forceCache = false) {
+  sizeFor (style, stringOrTextAndAttr = '', forceCache = false) {
     // Select style properties relevant to individual character size
     const {
       fontFamily, fontSize, lineHeight,
@@ -232,12 +232,17 @@ export default class FontMetric {
       textStyleClasses
     };
 
-    if (!forceCache && string.length > 1) return this.measure(relevantStyle, string);
+    if (Array.isArray(stringOrTextAndAttr) && stringOrTextAndAttr[1]?.fontFamily) {
+      relevantStyle.nestedFontFamily = stringOrTextAndAttr[1]?.fontFamily;
+    }
+
+    if (!forceCache && stringOrTextAndAttr.length > 1) return this.measure(relevantStyle, stringOrTextAndAttr);
 
     const styleKey = this._domMeasure.generateStyleKey(relevantStyle);
+    const string = typeof stringOrTextAndAttr === 'string' ? stringOrTextAndAttr : stringOrTextAndAttr[0];
 
     if (!this.charMap[styleKey]) { this.charMap[styleKey] = {}; }
-    if (!this.charMap[styleKey][string]) { this.charMap[styleKey][string] = this.measure(relevantStyle, string); }
+    if (!this.charMap[styleKey][string]) { this.charMap[styleKey][string] = this.measure(relevantStyle, stringOrTextAndAttr); }
 
     return this.charMap[styleKey][string];
   }
@@ -398,6 +403,7 @@ class DOMTextMeasure {
       const {
 
         fontFamily,
+        nestedFontFamily,
         fontSize,
         fontWeight,
         fontStyle,
@@ -409,7 +415,7 @@ class DOMTextMeasure {
         width, height, clipMode, lineWrapping, textAlign
       } = styleOpts;
       return [
-        fontFamily,
+        fontFamily + (nestedFontFamily ? `@${nestedFontFamily}` : ''),
         fontSize,
         fontWeight,
         fontStyle,
