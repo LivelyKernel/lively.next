@@ -515,6 +515,9 @@ class DOMTextMeasure {
       }
       ++i;
     }
+
+    const localStyle = { ...morph.defaultTextStyle, ...styleOpts };
+
     for (let i = 0; i < codePoints.length; i++) {
       const code = codePoints[i];
       if (code === 32 && measuringState.currentWord.length > 0) {
@@ -528,7 +531,7 @@ class DOMTextMeasure {
         if (isMonospace && Array.isArray(code)) {
           hit = fontMetric.defaultCharExtent(morph).width * 2; // for emojis
         } else {
-          const metrics = Array.isArray(code) ? fontMetric.measure(morph, code.map(c => String.fromCharCode(c)).join('')) : ctx.measureText(String.fromCharCode(code));
+          const metrics = Array.isArray(code) ? fontMetric.measure(localStyle, code.map(c => String.fromCharCode(c)).join('')) : ctx.measureText(String.fromCharCode(code));
           const writeToCache = document.fonts.status === 'loaded' && morph.allFontsLoaded();
           hit = metrics.width;
           if (writeToCache) cache[Array.isArray(code) ? code.join(',') : code] = hit;
@@ -812,8 +815,9 @@ export function charBoundsOfLineViaCanvas (line, textMorph, fontMetric, measure)
       }
       const style = { ...textMorph.defaultTextStyle, ...attrs };
       style.fontSize = Math.max(style.fontSize, textMorph.fontSize);
+      const charHeight = attrs.fontFamily ? fontMetric.sizeFor(textMorph.defaultTextStyle, ['.', attrs], true).height : fontMetric.defaultLineHeight(style);
       measure.measureCharWidthsInCanvas(textMorph, textOrMorph, attrs, measuringState).forEach((res) => {
-        characterBounds.push([fontMetric.defaultLineHeight(style), res]);
+        characterBounds.push([charHeight, res]);
       });
     } else {
       console.warn('Can not measure', textOrMorph); // eslint-disable-line no-console
