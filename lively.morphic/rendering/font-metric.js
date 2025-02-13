@@ -121,16 +121,16 @@ export default class FontMetric {
     style.overflow = isRoot ? 'hidden' : 'visible';
   }
 
-  measure (style, text) {
+  measure (style, stringOrTextAndAttr) {
     ensureElementMounted(this.element, this.parentEl);
     let {
       fontFamily, fontSize, fontWeight,
       fontStyle, textDecoration,
       textStyleClasses, transform, lineHeight
     } = style;
-    const el = this.element;
+    let { element: el } = this;
+    const doc = this._domMeasure.doc;
     if (transform) transform = transform.inverse();
-    el.textContent = text;
     Object.assign(el.style, {
       '-webkit-text-size-adjust': 'none',
       fontFamily,
@@ -142,6 +142,17 @@ export default class FontMetric {
       fontSize: fontSize + 'px'
     });
     el.className = textStyleClasses ? textStyleClasses.join(' ') : '';
+    if (Array.isArray(stringOrTextAndAttr)) {
+      const [text, attr] = stringOrTextAndAttr;
+      const spanH = doc.createElement('span');
+      spanH.className = 'line';
+      spanH.style.whiteSpace = 'pre';
+      if (attr.fontFamily) spanH.style = `font-family: ${attr.fontFamily};`;
+      spanH.textContent = text;
+      el.replaceChildren(spanH);
+    } else {
+      el.textContent = stringOrTextAndAttr;
+    }
     let width, height;
     try {
       ({ width, height } = el.getBoundingClientRect());
