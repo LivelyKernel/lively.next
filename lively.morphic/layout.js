@@ -324,6 +324,14 @@ class Layout {
     this.active = false;
   }
 
+  estimateSubmorphExtents (containerSpec) {
+
+  }
+
+  estimateContainerExtent (containerSpec) {
+
+  }
+
   resizesMorphVertically (aMorph) { // eslint-disable-line no-unused-vars
     return false;
   }
@@ -1374,6 +1382,103 @@ export class TilingLayout extends Layout {
   /*************
    * JS LAYOUT *
    *************/
+
+  estimateTotalFixedExtent (containerSpec, extractBuildSpecs) {
+    const policies = this.config.resizePolicies;
+    const totalExtent = pt(
+      this.spacing * (containerSpec.submorphs.length - 1) + this.padding.left() + this.padding.right(),
+      this.spacing * (containerSpec.submorphs.length - 1) + this.padding.top() + this.padding.bottom()
+    );
+    totalExtent.horizontalFill = 0;
+    totalExtent.verticalFill = 0;
+    for (let i = 0; i < containerSpec.submorphs.length; i++) {
+      let match; let fixedTotalHeight; let fixedTotalWidth; let m = containerSpec.submorphs[i];
+      if (m.isPolicy) m = m.spec;
+      let ext = m.extent;
+      if (!ext && (m.width || m.height)) ext = pt(m.width || 10, m.height || 10);
+      if (m.isLayoutable === false) continue;
+      if (match = policies.find(([name, policy]) => name === m.name)) {
+        const [_, policy] = match;
+        if (policy.width === 'fixed') {
+          if (!ext) {
+            m = containerSpec.submorphs[i] = extractBuildSpecs(containerSpec.submorphs[i]);
+            ext = m.extent;
+          }
+          totalExtent.x += ext.x;
+        } else {
+          totalExtent.horizontalFill++;
+        }
+        if (policy.height === 'fixed') {
+          if (!ext) {
+            m = containerSpec.submorphs[i] = extractBuildSpecs(containerSpec.submorphs[i]);
+            ext = m.extent;
+          }
+          totalExtent.y += ext.y;
+        } else {
+          totalExtent.verticalFill++;
+        }
+      } else if (ext) {
+        totalExtent.x += ext.x;
+        totalExtent.y += ext.y;
+      }
+    }
+    return totalExtent;
+  }
+
+  estimateSubmorphExtents (containerSpec, extractBuildSpecs) {
+    if (!containerSpec.extent) return;
+    if (!containerSpec.submorphs?.length) return;
+    const policies = this.config.resizePolicies;
+    if (!policies) return;
+
+    for (let m of containerSpec.submorphs) {
+      let match, fixedTotalExtent;
+      if (m.isPolicy) m = m.spec;
+      if (match = policies.find(([name, policy]) => name === m.name)) {
+        const [_, policy] = match;
+        if (policy.width === 'fill') {
+          if (this.axis === 'column') {
+            m.width = containerSpec.extent.x - this.padding.left() - this.padding.right();
+          }
+          if (this.axis === 'row') {
+            if (!fixedTotalExtent) fixedTotalExtent = this.estimateTotalFixedExtent(containerSpec, extractBuildSpecs);
+            m.width = (containerSpec.extent.x - fixedTotalExtent.x) / fixedTotalExtent.horizontalFill;
+          }
+        }
+
+        if (policy.height === 'fill') {
+          if (this.axis === 'row') {
+            m.height = containerSpec.extent.y - this.padding.top() - this.padding.bottom();
+          }
+          if (this.axis === 'column') {
+            if (!fixedTotalExtent) fixedTotalExtent = this.estimateTotalFixedExtent(containerSpec, extractBuildSpecs);
+            m.height = (containerSpec.extent.y - fixedTotalExtent.y) / fixedTotalExtent.verticalHeight;
+          }
+        }
+      }
+    }
+  }
+
+  estimateContainerExtent (containerSpec, submorphs) {
+    if (submorphs.length == 0) return;
+    if (!this.hugContentsVertically && !this.hugContentsHorizontally) return;
+
+    if (this.axis === 'column') {
+      const height = arr.sum(submorphs.map(m => m.extent.y)) + this.spacing * (submorphs.length - 1) + this.padding.top() + this.padding.bottom();
+      const width = arr.max(submorphs.map(m => m.extent.x)) + this.padding.left() + this.padding.right();
+      const ext = containerSpec.extent || pt(10, 10);
+      if (this.hugContentsVertically) containerSpec.extent = ext.withY(height);
+      if (this.hugContentsHorizontally) containerSpec.extent = ext.withX(width);
+    }
+
+    if (this.axis === 'row') {
+      const height = arr.max(submorphs.map(m => m.extent.y)) + this.padding.top() + this.padding.bottom();
+      const width = arr.sum(submorphs.map(m => m.extent.x)) + this.spacing * (submorphs.length - 1) + this.padding.left() + this.padding.right();
+      const ext = containerSpec.extent || pt(10, 10);
+      if (this.hugContentsVertically) containerSpec.extent = ext.withY(height);
+      if (this.hugContentsHorizontally) containerSpec.extent = ext.withX(width);
+    }
+  }
 
   apply (animate = false) {
     if (this.active || !this.container || this.renderViaCSS) return;
