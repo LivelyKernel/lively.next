@@ -1661,11 +1661,6 @@ export class Morph {
       submorph.withAllSubmorphsDo(ea => {
         ea.onOwnerChanged(this);
       });
-
-      if (this.world() && !this.isText) {
-        this.env.forceUpdate(this);
-        this.withAllSubmorphsDo(m => m.makeDirty());
-      }
     });
 
     return submorph;
