@@ -969,14 +969,22 @@ export class StylePolicy {
 
   asFullySynthesizedSpec () {
     const extractBuildSpecs = (specOrPolicy, submorphs) => {
+      if (specOrPolicy.__alreadySynthesized__) return specOrPolicy;
       if (specOrPolicy.COMMAND === 'add') {
         specOrPolicy = specOrPolicy.props;
       }
       if (specOrPolicy.COMMAND === 'remove') return null; // target is already removed so just ignore the command
       if (specOrPolicy.isPolicy) return specOrPolicy.asFullySynthesizedSpec();
+      if (!submorphs) submorphs = specOrPolicy.submorphs || [];
       const modelClass = specOrPolicy.defaultViewModel || specOrPolicy.viewModelClass;
       const modelParams = { ...specOrPolicy.viewModel } || {}; // accumulate the derivation chain for the viewModel
-      const synthesized = this.synthesizeSubSpec(specOrPolicy === this.spec ? null : specOrPolicy.name);
+      const virtualMorph = {
+        env: {},
+        width: specOrPolicy.width || specOrPolicy.extent?.x || 10,
+        height: specOrPolicy.height || specOrPolicy.extent?.y || 10
+      };
+      // if the owner of this morph has a layout, the extent or width may be different
+      const synthesized = this.synthesizeSubSpec(specOrPolicy === this.spec ? null : specOrPolicy.name, virtualMorph, virtualMorph);
       if (specOrPolicy.__wasAddedToDerived__) synthesized.__wasAddedToDerived__ = true;
       if (specOrPolicy.name) synthesized.name = specOrPolicy.name;
       // remove the props that are equal to the default value
@@ -993,7 +1001,7 @@ export class StylePolicy {
           return textOrAttr;
         });
       }
-      if (synthesized.layout) synthesized.layout = synthesized.layout.copy();
+
       if (submorphs.length > 0) {
         let transformedSubmorphs = submorphs.filter(spec => spec && !spec.__before__);
         for (let spec of submorphs) {
@@ -1007,8 +1015,18 @@ export class StylePolicy {
         }
         synthesized.submorphs = transformedSubmorphs;
       }
+
+      if (synthesized.layout) {
+        synthesized.layout = synthesized.layout.copy();
+        synthesized.layout.estimateSubmorphExtents(synthesized, extractBuildSpecs); // should be done before the submorph specs are synthesized
+        // however for submorphs which themselves are resized by layouts, the extent information is not yet determined
+        // estimate the container extent
+      }
+
       if (modelClass) synthesized.viewModel = new modelClass(modelParams);
       else delete synthesized.viewModel;
+
+      synthesized.__alreadySynthesized__ = true;
 
       if (!synthesized.isPolicy) {
         return sanitizeSpec(synthesized);
@@ -1016,7 +1034,21 @@ export class StylePolicy {
 
       return synthesized;
     };
-    const buildSpec = tree.mapTree(this.spec, extractBuildSpecs, node => node.props?.submorphs || node.submorphs);
+    const extractedBuildSpecs = new WeakMap();
+    const buildSpec = tree.mapTree(this.spec, (node, submorphs) => {
+      node = extractedBuildSpecs.get(node);
+      if (node.layout) {
+        node.layout.estimateContainerExtent(node, submorphs); // should be done after submorph specs are synthesized
+      }
+      if (submorphs.length > 0) node.submorphs = submorphs;
+      return node;
+    }, node => {
+      let submorphs = node.props?.submorphs || node.submorphs || [];
+      const synthesized = extractBuildSpecs(node, submorphs);
+      extractedBuildSpecs.set(node, synthesized);
+      if (node.isPolicy) return []; // no need to traverse further
+      return synthesized.submorphs;
+    });
     const self = this;
     buildSpec.onLoad = function () {
       const policy = self;
