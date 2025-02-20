@@ -1431,9 +1431,14 @@ export class TilingLayout extends Layout {
     const policies = this.config.resizePolicies;
     if (!policies) return;
 
-    for (let m of containerSpec.submorphs) {
-      let match, fixedTotalExtent;
-      if (m.isPolicy) m = m.spec;
+    for (let i = 0; i < containerSpec.submorphs.length; i++) {
+      let match; let fixedTotalExtent; let m = containerSpec.submorphs[i];
+      if (m.isPolicy) {
+        m = containerSpec.submorphs[i] = m.copy();
+        m = m.spec;
+      } else {
+        m = containerSpec.submorphs[i] = { ...m };
+      }
       if (match = policies.find(([name, policy]) => name === m.name)) {
         const [_, policy] = match;
         if (policy.width === 'fill') {
