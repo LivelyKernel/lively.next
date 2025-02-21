@@ -1019,8 +1019,7 @@ export class StylePolicy {
       if (synthesized.layout) {
         synthesized.layout = synthesized.layout.copy();
         synthesized.layout.estimateSubmorphExtents(synthesized, extractBuildSpecs); // should be done before the submorph specs are synthesized
-        // however for submorphs which themselves are resized by layouts, the extent information is not yet determined
-        // estimate the container extent
+        // however for submorphs which themselves are resized by layouts, the extent information is not yet determined, instead estimate the container extent below
       }
 
       if (modelClass) synthesized.viewModel = new modelClass(modelParams);
