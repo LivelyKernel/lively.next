@@ -1242,6 +1242,8 @@ export class StylePolicy {
       parentSpec,
       nextLevelSpec);
 
+    subSpec = handleTextProps({ ...subSpec });
+
     for (let prop in subSpec) {
       if (!subSpec[prop]?.isDefaultValue) synthesized[prop] = subSpec[prop];
     }
