@@ -28,6 +28,10 @@ fun.timeToRunN(() => {
 }, 10)
 */
 
+export function babel_parse (source) {
+  return babel.parse(source).program.body;
+}
+
 export const defaultDeclarationWrapperName = 'lively.capturing-declaration-wrapper';
 export const defaultClassToFunctionConverter = t.Identifier('initializeES6ClassForLively');
 
@@ -749,7 +753,7 @@ export function rewriteToCaptureTopLevelVariables (path, options) {
   path.pushContainer('body', footer);
 }
 
-function ensureComponentDescriptors (path, moduleId, options) {
+export function ensureComponentDescriptors (path, moduleId, options) {
   // check first for top level decls
   const varDecls = getVarDecls(path.scope);
   let earlyReturn = false;
@@ -793,6 +797,80 @@ function ensureComponentDescriptors (path, moduleId, options) {
       );
     }
   });
+}
+
+export function replaceExportedVarDeclarations (path, moduleId, options) {
+  path.traverse({
+    ExportNamedDeclaration (path) {
+      const variableDeclaration = path.get('declaration');
+      if (variableDeclaration.type !== 'VariableDeclaration') return;
+      const [exportedVariable] = variableDeclaration.get('declarations')[0].node;
+      const exportExpression = babel.parse(`var ${exportedVariable.id.name}; export { ${exportedVariable.id.name} }`).body;
+      path.replaceWithMultiple([variableDeclaration.node, ...exportExpression]);
+    }
+  });
+
+  if (moduleId.includes('lively.morphic/config.js')) {
+    for (let i = 0; i < path.node.body.length; i++) {
+      const stmt = path.get('body')[i];
+      if (stmt.type === 'VariableDeclaration' && stmt.node.declarations?.[0].init?.type === 'ObjectExpression') {
+        const { id, init } = stmt.node.declarations[0];
+        stmt.get('declarations.0.init').replaceWith(t.LogicalExpression('||', babel.parse(`${options.recorderName}.${id.name}`).program.body[0].expression, init));
+      }
+    }
+  }
+}
+
+export function replaceExportedNamespaces (path, moduleName, bundler) {
+  // namespace that are directly imported or getting re-exported need to be chanelled through the module recorder
+  const insertNodes = [];
+  let i = 0;
+  // such that the namespaces are getting correctly updated in case a module is getting revived
+  path.traverse({
+    ExportAllDeclaration (path) {
+      let dep = bundler.resolveId(path.node.source.value, moduleName);
+      let name = path.node.exported?.name;
+      const isNamed = !!name;
+      if (isNamed) {
+        insertNodes.push(
+          babel.parse(`const ${name} = (lively.FreezerRuntime || lively.frozenModules).exportsOf("${bundler.normalizedId(dep)}") || ${name}_namespace;`).program.body[0],
+          babel.parse(`export { ${name} }`).program.body[0]
+        );
+        path.replaceWith(babel.parse(`import * as ${name}_namespace from "${path.node.source.value}";`).program.body[0]);
+      }
+      insertNodes.push(
+        babel.parse(`import * as tmp_${i++} from "${path.node.source.value}";`).program.body[0],
+        babel.parse(`Object.assign((lively.FreezerRuntime || lively.frozenModules).recorderFor("${bundler.normalizedId(dep)}"), mp_${i++})`).program.body[0]
+      );
+    }
+  });
+
+  let insertFrom = path.body.find(n => n.type !== 'ImportDeclaration' && n.type !== 'ExportAllDeclaration');
+  insertFrom.insertAfter(insertNodes);
+}
+
+export function replaceImportedNamespaces (path, moduleName, bundler) {
+  // namespace that are directly imported or getting re-exported need to be chanelled through the module recorder
+  const namespaceVars = [];
+  // such that the namespaces are getting correctly updated in case a module is getting revived
+
+  path.traverse({
+    ImportDeclaration (path) {
+      let dep = bundler.resolveId(path.node.source.value, moduleName);
+      let name = path.node.specifiers[0]?.local?.name;
+      if (name) {
+        namespaceVars.push([name, dep]);
+        path.node.specifiers[0].local.name += '_namespace';
+      }
+    }
+  });
+
+  // now we have to insert the the assignments of the tmp namespace imports to the initial names,
+  // but filtered by the recorder object
+  const insertFrom = path.get('body').find(n => n.type !== 'ImportDeclaration' && n.type !== 'ExportAllDeclaration');
+  for (let [namespaceVar, importedModule] of namespaceVars) {
+    insertFrom.insertAfter(...babel.parse(`const ${namespaceVar} = (lively.FreezerRuntime || lively.frozenModules).exportsOf("${bundler.normalizedId(importedModule)}") || ${namespaceVar}_namespace;`).program.body);
+  }
 }
 
 function getExportDecls (scope) {
