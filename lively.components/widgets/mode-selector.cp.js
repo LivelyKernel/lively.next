@@ -118,7 +118,7 @@ class ModeSelectorModel extends ViewModel {
   createLabels () {
     this.view.submorphs = this.items.map((item) => {
       const label = part(this.labelMaster, {
-        textString: item.text,
+        textAndAttributes: [item.text, null],
         name: item.name,
         tooltip: item.tooltip
       });
