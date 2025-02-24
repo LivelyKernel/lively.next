@@ -11,6 +11,14 @@ import {
   replaceExportedNamespaces
 } from 'lively.source-transform';
 import {
+  ensureComponentDescriptors as babel_ensureComponentDescriptors,
+  replaceExportedVarDeclarations as babel_replaceExportedVarDeclarations,
+  replaceExportedNamespaces as babel_replaceExportedNamespaces,
+  replaceImportedNamespaces as babel_replaceImportedNamespaces,
+  rewriteToCaptureTopLevelVariables as babel_rewriteToCaptureTopLevelVariables,
+  babel_parse
+} from 'lively.source-transform/babel/plugin.js';
+import {
   rewriteToCaptureTopLevelVariables,
   insertCapturesForFunctionDeclarations,
   insertCapturesForExportedImports
@@ -84,7 +92,7 @@ export function bulletProofNamespaces (code) {
       if (!matchingGetter) return node;
       const getterBody = matchingGetter.value.body;
       const [returnStmt] = getterBody.body;
-      rewrites.push([getterBody, `\nif (typeof ${returnStmt.argument.name} === 'undefined') throw new Error('Module not yet initialized!');\n`])
+      rewrites.push([getterBody, `\nif (typeof ${returnStmt.argument.name} === 'undefined') throw new Error('Module not yet initialized!');\n`]);
     }
     return node;
   });
@@ -151,7 +159,6 @@ function resolutionId (id, importer) {
  * @returns { boolean } Wether or not the module was served from an ESM CDN.
  */
 function isCdnImport (id, importer, resolver) {
-
   if (ESM_CDNS.find(cdn => id.match(cdn) || importer.match(cdn)) && importer && importer !== ROOT_ID) {
     const { url } = resource(resolver.ensureFileFormat(importer)).root(); // get the cdn host root
     return ESM_CDNS.find(cdn => url.match(cdn));
@@ -257,6 +264,7 @@ export default class LivelyRollup {
    */
   getTransformOptions (modId, parsedSource) {
     if (modId === '@empty.js') return {};
+    const parsedGlobals = parsedSource.scope?.globals && Object.keys(parsedSource.scope?.globals) || GlobalInjector.getGlobals(null, parsedSource);
     let version, name;
     const pkg = this.resolver.resolvePackage(modId);
     if (pkg) {
@@ -290,7 +298,7 @@ export default class LivelyRollup {
       exclude: [
         'System',
         '__contextModule__',
-        ...this.resolver.dontTransform(modId, [...ast.query.knownGlobals, ...GlobalInjector.getGlobals(null, parsedSource)]),
+        ...this.resolver.dontTransform(modId, [...ast.query.knownGlobals, ...parsedGlobals]),
         ...arr.range(0, 50).map(i => `__captured${i}__`)
       ],
       classToFunction
@@ -422,6 +430,24 @@ export default class LivelyRollup {
     });
   }
 
+  babel_instrumentDynamicLoads (path, moduleId) {
+    path.traverse({
+      CallExpression (path) {
+        if (path.get('callee').type === 'MemberExpression' && path.get('arguments').length === 1) {
+          const { property, object } = path.get('callee').node;
+          if (property.name === 'import' && object.name === 'System') {
+            try {
+              const resolvedImport = eval(ast.stringify(path.node.arguments[0]));
+              if (resolvedImport) this.hasDynamicImports = true;
+              return babel_parse(`import("${resolvedImport}")`)[0].expression;
+            } catch (err) {
+            }
+          }
+        }
+      }
+    });
+  }
+
   /**
    * A custom transform() callback for RollupJS.
    * @param { string } source - The source code of a module.
@@ -450,12 +476,37 @@ export default class LivelyRollup {
         return `projectAsset(\'${newName}\')`;
       };
 
-      source = source.replaceAll(projectAssetRegex, assetNameRewriter);
+      source = source.replaceAll(projectAssetRegex, assetNameRewriter); // needs to be performed in a way to preserve sourcemap
+    }
+
+    // FIXME: here we need to move over to a babel transform and also pass over the sourcemap
+    // The easiest way to achieve thatis via an inline visitor that basically performs the same steps as below within babel.
+
+    const needsLoadInstrumentation = this.needsDynamicLoadTransform(source);
+
+    function inlinePlugin (api, options) {
+      return {
+        visitor: {
+          async Program (path, state) {
+            if (id === ROOT_ID && !needsLoadInstrumentation) return;
+            if (needsLoadInstrumentation) {
+              this.babel_instrumentDynamicLoads(path, state, id);
+            }
+            if (id === ROOT_ID) return;
+            // this capturing stuff needs to behave differently when we have dynamic imports. Why??
+            const instrumentClasses = this.needsClassInstrumentation(id, path);
+            if (instrumentClasses || this.needsScopeToBeCaptured(id, null, path)) {
+              const sourceHash = string.hashCode(this.moduleSources[id]); // why cant we use the original source here? because other plugins already scrambled the code...
+              this.babel_captureScope(path, id, sourceHash, instrumentClasses);
+            }
+          }
+        }
+      };
     }
 
     let parsed = ast.parse(source);
 
-    if (this.needsDynamicLoadTransform(source)) {
+    if (needsLoadInstrumentation) {
       parsed = this.instrumentDynamicLoads(parsed, id);
     }
 
@@ -747,6 +798,117 @@ export default class LivelyRollup {
     ];
 
     return instrumented;
+  }
+
+  babel_captureScope (path, id, hashCode, instrumentClasses) {
+    let classRuntimeImport = '';
+    const recorderName = '__varRecorder__';
+
+    const exports = [];
+    for (let exp of path.scope.exportDecls) {
+      if (exp.local && exp.exported !== 'default' && exp.exported !== exp.local) {
+        // retrieve all the exports of the module
+        exports.push(JSON.stringify('__rename__' + exp.local + '->' + exp.exported));
+        continue;
+      }
+      if (exp.exported === '*') {
+        // retrieve all the exports of the module
+        exports.push(JSON.stringify('__reexport__' + this.normalizedId(this.resolveId(exp.fromModule, id))));
+        continue;
+      }
+      if (exp.exported === 'default') {
+        exports.push(JSON.stringify('__default__' + exp.local)); // in order to capture this
+      }
+      exports.push(JSON.stringify(exp.exported));
+    }
+    const localLivelyVar = path.scope.refs.find(ref => ref.name === 'lively');
+    const recorderString = this.captureModuleScope
+      ? `${localLivelyVar ? GLOBAL_FETCH : ''} const ${recorderName} = (${localLivelyVar ? 'G.' : ''}lively.FreezerRuntime || ${localLivelyVar ? 'G.' : ''}lively.frozenModules).recorderFor("${this.normalizedId(id)}", __contextModule__);\n`
+      : '';
+    const moduleHash = `${recorderName}.__module_hash__ = ${hashCode};\n`;
+    const moduleExports = `${recorderName}.__module_exports__ = ${recorderName}.__module_exports__ || [${exports.join(',')}];\n`;
+    const captureObj = { name: recorderName, type: 'Identifier' };
+    const opts = this.getTransformOptions(this.resolver.resolveModuleId(id), path);
+    const currentModuleAccessor = opts.classToFunction.currentModuleAccessor;
+
+    if (instrumentClasses) {
+      classRuntimeImport = `import { initializeClass as initializeES6ClassForLively } from "${this.isResurrectionBuild ? 'livelyClassesRuntime.js' : 'lively.classes/runtime.js'}";\n`;
+    } else {
+      opts.classToFunction = false;
+    }
+
+    const normalizedId = this.normalizedId(id);
+    if (this.isComponentModule(id)) {
+      babel_ensureComponentDescriptors(path, normalizedId, { recorderName });
+    }
+
+    let defaultExport = '';
+    if (this.captureModuleScope) {
+      babel_replaceExportedVarDeclarations(path, recorderName, normalizedId);
+      if (this.isResurrectionBuild) {
+        babel_replaceImportedNamespaces(path, id, this);
+        babel_replaceExportedNamespaces(path, id, this);
+      }
+      babel_rewriteToCaptureTopLevelVariables(path, {
+        ...opts,
+        captureObj,
+        declarationWrapper: ast.nodes.member(captureObj, ast.nodes.literal(normalizedId + '__define__')),
+        currentModuleAccessor
+      });
+
+      const imports = [];
+      const toBeReplaced = [];
+
+      path.traverse({
+        ImportDeclaration (path) {
+          arr.pushIfNotIncluded(imports, path.node);
+        },
+        ExportDefaultDeclaration (path) {
+          let exp;
+          switch (path.get('declaration').type) {
+            case 'Literal':
+              exp = path.get('declaration.raw').node;
+              break;
+            case 'Identifier':
+              exp = path.get('declaration.name').node;
+              break;
+            case 'ClassDeclaration':
+            case 'FunctionDeclaration':
+              exp = path.get('declaration.id.name').node;
+              break;
+          }
+          if (exp) defaultExport = `${captureObj.name}.default = ${exp};\n`;
+        }
+      });
+
+      for (const stmts of Object.values(arr.groupBy(imports, imp => imp.source.value))) {
+        const toBeMerged = stmts.filter(stmt => stmt.specifiers.every(spec => spec.type === 'ImportSpecifier'));
+        if (toBeMerged.length > 1) {
+        // merge statements
+        // fixme: if specifiers are not named, these can not be merged
+        // fixme: properly handle default export
+          const mergedSpecifiers = arr.uniqBy(
+            toBeMerged.map(stmt => stmt.specifiers).flat(),
+            (spec1, spec2) =>
+              spec1.type === 'ImportSpecifier' &&
+            spec2.type === 'ImportSpecifier' &&
+            spec1.imported.name === spec2.imported.name &&
+            spec1.local.name === spec2.local.name
+          );
+          toBeMerged[0].specifiers = mergedSpecifiers;
+          toBeReplaced.push(...toBeMerged.slice(1).map(stmt => {
+            stmt.body = [];
+            stmt.type = 'Program';
+            return stmt;
+          }));
+        }
+      }
+    }
+    path.insertBefore(babel_parse(classRuntimeImport));
+    path.insertBefore(babel_parse(this.isResurrectionBuild ? moduleHash + moduleExports : ''));
+    path.insertBefore(babel_parse(recorderString));
+
+    path.insertAfter(babel_parse(defaultExport));
   }
 
   /**
