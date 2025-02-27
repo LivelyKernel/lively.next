@@ -71,6 +71,32 @@ const ADVANCED_EXCLUDED_MODULES = [
 
 const baseURL = typeof System !== 'undefined' ? System.baseURL : ensureFolder(process.env.lv_next_dir || process.cwd());
 
+export function bulletProofNamespaces (code) {
+  let rewrites = [];
+  let parsed = ast.parse(code, { withComments: true });
+  const pureComments = parsed.allComments.filter(c => c.text === '#__PURE__');
+  if (pureComments.length === 0) return null;
+  parsed = ast.ReplaceVisitor.run(parsed, (node) => {
+    if (node.type === 'VariableDeclaration') {
+      const matchingComment = pureComments.find(c => node.start < c.start && c.end > node.end);
+      if (!matchingComment) return node;
+      const matchingGetter = node.declarations[0]?.init?.arguments?.[0]?.properties?.find(prop => prop.key.name === 'default' && prop.kind === 'get');
+      if (!matchingGetter) return node;
+      const getterBody = matchingGetter.value.body;
+      const [returnStmt] = getterBody.body;
+      rewrites.push([getterBody, `\nif (typeof ${returnStmt.argument.name} === 'undefined') throw new Error('Module not yet initialized!');\n`])
+    }
+    return node;
+  });
+  if (rewrites.length > 0) {
+    arr.sortBy(rewrites, ([node]) => node.start).forEach(([node, snippet]) => {
+      code = code.slice(0, node.start + 1) + snippet + code.slice(node.start + 1);
+    });
+    return code;
+  }
+  return null;
+}
+
 /**
  * Custom warn() that is triggered by RollupJS to inidicate problems with the bundle.
  * @param { object } warning - The warning object.
