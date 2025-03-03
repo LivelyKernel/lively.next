@@ -147,7 +147,7 @@ export default class FontMetric {
       const spanH = doc.createElement('span');
       spanH.className = 'line';
       spanH.style.whiteSpace = 'pre';
-      if (attr.fontFamily) spanH.style = `font-family: ${attr.fontFamily};`;
+      spanH.style = `font-family: ${attr.fontFamily || fontFamily}; font-size: ${attr.fontSize || fontSize}px;`;
       spanH.textContent = text;
       el.replaceChildren(spanH);
     } else {
