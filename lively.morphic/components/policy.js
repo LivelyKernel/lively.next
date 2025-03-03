@@ -1052,7 +1052,7 @@ export class StylePolicy {
     });
     const self = this;
     buildSpec.onLoad = function () {
-      const policy = self;
+      const policy = self._preEstimatePolicy || self;
       // do not trigger master setter, since that would cause an application
       this.setProperty('master', policy);
       policy.attach(this);
