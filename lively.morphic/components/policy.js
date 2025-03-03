@@ -1507,12 +1507,10 @@ export class PolicyApplicator extends StylePolicy {
         const synthesizedSpec = this.synthesizeSubSpec(submorphName, targetMorph, previousTarget, false);
         if (obj.isEmpty(synthesizedSpec)) return;
         if (synthesizedSpec.isPolicy) {
-          if (morphInScope._skipMasterReplacement) {
-            delete morphInScope._skipMasterReplacement;
-            return;
+          if (!morphInScope.master) {
+            morphInScope.setProperty('master', synthesizedSpec); // how can we carry over overridden props?
+            synthesizedSpec.targetMorph = morphInScope;
           }
-          morphInScope.setProperty('master', synthesizedSpec); // might be redundant
-          synthesizedSpec.targetMorph = morphInScope;
         } else this.applySpecToMorph(morphInScope, synthesizedSpec); // this step enforces the master distribution
 
         if (morphInScope !== targetMorph && morphInScope.master) {
