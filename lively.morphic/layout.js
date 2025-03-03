@@ -1434,8 +1434,9 @@ export class TilingLayout extends Layout {
     for (let i = 0; i < containerSpec.submorphs.length; i++) {
       let match; let fixedTotalExtent; let m = containerSpec.submorphs[i];
       if (m.isPolicy) {
-        m = containerSpec.submorphs[i] = m.copy();
-        m = m.spec;
+        containerSpec.submorphs[i] = m.copy();
+        containerSpec.submorphs[i]._preEstimatePolicy = m;
+        m = containerSpec.submorphs[i].spec;
       } else {
         m = containerSpec.submorphs[i] = { ...m };
       }
