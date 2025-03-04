@@ -8,6 +8,7 @@ import { Icons } from '../text/icons.js';
 
 const skippedValue = Symbol.for('lively.skip-property');
 const PROPS_TO_RESET = ['dropShadow', 'fill', 'opacity', 'borderWidth', 'fontColor'];
+const TEXT_TYPES = ['text', 'label', Text, Label];
 const expressionSerializer = new ExpressionSerializer();
 
 export function sanitizeSpec (spec) {
@@ -79,8 +80,6 @@ export function replace (replacedSiblingName, props) {
 }
 
 function handleTextProps (props) {
-  if (arr.intersect(
-    ['text', 'label', Text, Label], withSuperclasses(props.type)).length === 0) { return props; }
   if (props.textAndAttributes) {
     delete props.textString;
     delete props.value;
@@ -849,6 +848,8 @@ export class StylePolicy {
           parentSpec.viewModel = obj.deepMerge(parentViewModel, localSpec.viewModel);
         }
 
+        const isTextSpec = arr.intersect(TEXT_TYPES, withSuperclasses(parentSpec.type)).length > 0;
+
         // handle text and attribute merging
         if (localSpec.textAndAttributes && parentSpec.textAndAttributes &&
             localSpec.textAndAttributes.length === parentSpec.textAndAttributes.length) {
@@ -870,6 +871,7 @@ export class StylePolicy {
         // for convenience sake
         if (localSpec === spec) {
           if (!localSpec.name && parentSpec.name) localSpec.name = parentSpec.name;
+          if (isTextSpec) handleTextProps(localSpec);
           return;
         }
 
@@ -890,8 +892,8 @@ export class StylePolicy {
           localMaster = localMaster.isComponentDescriptor ? localMaster.stylePolicy : localMaster; // ensure the local master
           return replace(parentSpec, new klass({ ...localSpec, master: localMaster }, this.parent.extractStylePolicyFor(parentSpec.name)));
         }
-
-        Object.assign(parentSpec, obj.dissoc(localSpec, ['submorphs'])); // just apply the current local spec
+        localSpec = obj.dissoc(localSpec, ['submorphs']);
+        Object.assign(parentSpec, isTextSpec ? handleTextProps(localSpec) : localSpec); // just apply the current local spec
       };
 
       mergeInHierarchy(baseSpec, spec, mergeSpecs, true, handleRemove, handleAdd);
@@ -1242,7 +1244,11 @@ export class StylePolicy {
       parentSpec,
       nextLevelSpec);
 
-    subSpec = handleTextProps({ ...subSpec });
+    const isTextSpec = arr.intersect(TEXT_TYPES, withSuperclasses(subSpec.type)).length > 0;
+
+    if (isTextSpec) {
+      subSpec = handleTextProps({ ...subSpec });
+    }
 
     for (let prop in subSpec) {
       if (!subSpec[prop]?.isDefaultValue) synthesized[prop] = subSpec[prop];
@@ -1252,7 +1258,7 @@ export class StylePolicy {
     delete synthesized.master;
     delete synthesized.name;
 
-    return handleTextProps(synthesized);
+    return isTextSpec ? handleTextProps(synthesized) : synthesized;
   }
 
   /**

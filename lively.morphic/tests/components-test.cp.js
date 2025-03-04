@@ -920,6 +920,17 @@ describe('components', () => {
     expect(m.get('holly').getSubmorphNamed('alice').fill).to.eql(Color.lively);
   });
 
+  it('properly handles overridden text properties', () => {
+    const C = ComponentDescriptor.for(() => component(c5, {
+      textString: 'hello world'
+    }), {
+      exportedName: 'C',
+      moduleId
+    });
+    const m = part(C);
+    expect(m.textString).to.eql('hello world');
+  });
+
   it('properly assigns custom generated names in case of a conflict', () => {
     const C = ComponentDescriptor.for(() => component(c6, {
       submorphs: [
