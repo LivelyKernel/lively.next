@@ -495,31 +495,23 @@ function imports (scope) {
   return imports;
 }
 
-function exports (scope, resolve = false) {
-  if (resolve) resolveReferences(scope);
-
-  const exports = [];
-  for (const node of scope.exportDecls) {
-    var exportsStmt = statementOf(scope.node, node);
-    if (!exportsStmt) continue;
-
-    var from = exportsStmt.source ? exportsStmt.source.value : null;
+function handleExportStmt (exportsStmt, scope, node = exportsStmt) {
+  var from = exportsStmt.source ? exportsStmt.source.value : null;
 
     if (exportsStmt.type === 'ExportAllDeclaration') {
-      exports.push({
+      return [{
         local: null,
         exported: '*',
         imported: '*',
         fromModule: from,
         node: node,
         type: 'all'
-      });
-      continue;
+      }];  
     }
 
     if (exportsStmt.type === 'ExportDefaultDeclaration') {
       if (helpers.isDeclaration(exportsStmt.declaration)) {
-        exports.push({
+        return [{
           local: exportsStmt.declaration.id ? exportsStmt.declaration.id.name : null,
           exported: 'default',
           type: exportsStmt.declaration.type === 'FunctionDeclaration'
@@ -531,13 +523,12 @@ function exports (scope, resolve = false) {
           node: node,
           decl: exportsStmt.declaration,
           declId: exportsStmt.declaration.id
-        });
-        continue;
+        }];
       }
 
       if (exportsStmt.declaration.type === 'Identifier') {
         const { decl, declId } = scope.resolvedRefMap.get(exportsStmt.declaration) || {};
-        exports.push({
+        return [{
           local: exportsStmt.declaration.name,
           exported: 'default',
           fromModule: null,
@@ -545,12 +536,11 @@ function exports (scope, resolve = false) {
           type: 'id',
           decl,
           declId
-        });
-        continue;
+        }]
       }
 
       // exportsStmt.declaration is an expression
-      exports.push({
+      return [{
         local: null,
         exported: 'default',
         fromModule: null,
@@ -558,12 +548,11 @@ function exports (scope, resolve = false) {
         type: 'expr',
         decl: exportsStmt.declaration,
         declId: exportsStmt.declaration
-      });
-      continue;
+      }];
     }
 
     if (exportsStmt.specifiers && exportsStmt.specifiers.length) {
-      exports.push(...exportsStmt.specifiers.map(exportSpec => {
+      return exportsStmt.specifiers.map(exportSpec => {
         let decl, declId;
         if (from) {
           // "export { x as y } from 'foo'" is the only case where export
@@ -585,12 +574,11 @@ function exports (scope, resolve = false) {
           decl,
           declId
         };
-      }));
-      continue;
+      })
     }
 
     if (exportsStmt.declaration && exportsStmt.declaration.declarations) {
-      exports.push(...exportsStmt.declaration.declarations.map(decl => {
+      return exportsStmt.declaration.declarations.map(decl => {
         return {
           local: decl.id ? decl.id.name : 'default',
           exported: decl.id ? decl.id.name : 'default',
@@ -600,12 +588,11 @@ function exports (scope, resolve = false) {
           decl: decl,
           declId: decl.id
         };
-      }));
-      continue;
+      })
     }
 
     if (exportsStmt.declaration) {
-      exports.push({
+      return [{
         local: exportsStmt.declaration.id ? exportsStmt.declaration.id.name : 'default',
         exported: exportsStmt.declaration.id ? exportsStmt.declaration.id.name : 'default',
         type: exportsStmt.declaration.type === 'FunctionDeclaration'
@@ -617,9 +604,21 @@ function exports (scope, resolve = false) {
         node: node,
         decl: exportsStmt.declaration,
         declId: exportsStmt.declaration.id
-      });
-      continue;
+      }]
     }
+
+    return [];
+}
+
+function exports (scope, resolve = false) {
+  if (resolve) resolveReferences(scope);
+
+  const exports = [];
+  for (const node of scope.exportDecls) {
+    var exportsStmt = statementOf(scope.node, node);
+    if (!exportsStmt) continue;
+
+    exports.push(...handleExportStmt(exportsStmt, scope, node));
   }
 
   return arr.uniqBy(exports, (a, b) =>
@@ -665,5 +664,6 @@ export {
   refWithDeclAt,
   imports,
   exports,
+  handleExportStmt,
   queryNodes
 };
