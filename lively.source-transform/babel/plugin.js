@@ -28,10 +28,6 @@ fun.timeToRunN(() => {
 }, 10)
 */
 
-export function babel_parse (source) {
-  return babel.parse(source).program.body;
-}
-
 export const defaultDeclarationWrapperName = 'lively.capturing-declaration-wrapper';
 export const defaultClassToFunctionConverter = t.Identifier('initializeES6ClassForLively');
 
