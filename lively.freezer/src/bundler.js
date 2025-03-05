@@ -529,7 +529,7 @@ export default class LivelyRollup {
    * @param { string } id - The module id to be resolved.
    * @param { string } importer - The module id that is importing said module.
    */
-  async resolveId (id, importer) {
+  resolveId (id, importer) {
     if (this.resolved[resolutionId(id, importer)]) return this.resolved[resolutionId(id, importer)];
     if (id === ROOT_ID) return id;
     // handle standalone
@@ -583,7 +583,7 @@ export default class LivelyRollup {
 
     if (id.startsWith('.')) { // handle some kind of relative import
       try {
-        absolutePath = await this.resolveRelativeImport(importer, id);
+        absolutePath = this.resolveRelativeImport(importer, id);
         if (this.belongsToExcludedPackage(absolutePath)) return null;
         return this.resolved[resolutionId(id, importer)] = absolutePath;
       } catch (err) {
