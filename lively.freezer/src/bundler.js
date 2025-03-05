@@ -212,6 +212,7 @@ export default class LivelyRollup {
     this.customFontFiles = [];
     this.projectsInBundle = new Set();
     this.moduleToPkg = new Map();
+    this.moduleSources = {};
 
     this.resolver.setStatus({ label: 'Freezing in Progress' });
   }
@@ -632,7 +633,12 @@ export default class LivelyRollup {
    * @param { string } id - The module id to getch the source code for.
    * @returns { string } The source code.
    */
-  async load (id) {
+
+  async load(id) {
+    return this.moduleSources[id] = await this.perform_load(id);
+  }
+
+  async perform_load (id) {
     if (this.excludedModules.find(m => id.startsWith(m))) {
       if (id === 'lively.ast') {
         return `
