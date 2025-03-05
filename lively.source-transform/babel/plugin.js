@@ -6,9 +6,9 @@ import dynamicImport from '@babel/plugin-proposal-dynamic-import';
 import { arr, Path } from 'lively.lang';
 import { topLevelFuncDecls } from 'lively.ast/lib/visitors.js';
 import { query } from 'lively.ast';
+import { classToFunctionTransformBabel } from 'lively.classes';
 import { getGlobal } from 'lively.vm/lib/util.js';
 import { declarationWrapperCall, annotationSym, assignExpr, varDeclOrAssignment, transformPattern, generateUniqueName, varDeclAndImportCall, importCallStmt, shouldDeclBeCaptured, importCall, exportCallStmt, exportFromImport, additionalIgnoredDecls, additionalIgnoredRefs } from './helpers.js';
-import { classToFunctionTransformBabel } from 'lively.classes/class-to-function-transform.js';
 
 /*
 import { module } from 'lively.modules'
