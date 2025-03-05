@@ -852,6 +852,10 @@ export class Morph {
         defaultValue: false
       },
 
+      forceSceneGraphInclusion: {
+        defaultValue: false
+      },
+
       respondsToVisibleWindow: {
         group: 'interaction',
         doc: "Morphs will respond to changes to the visible browser window and a call will be made to the morph's relayout function, supplying the event generated",
