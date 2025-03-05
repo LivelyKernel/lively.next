@@ -49,6 +49,7 @@ try {
   await build.write({
     format: 'system',
     dir: 'loading-screen',
+    sourcemap: 'inline',
     globals: {
       chai: 'chai',
       mocha: 'mocha',
