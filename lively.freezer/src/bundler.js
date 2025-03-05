@@ -1,4 +1,5 @@
 /* global process */
+import babel from '@babel/core';
 import { resource } from 'lively.resources';
 import * as ast from 'lively.ast';
 import * as classes from 'lively.classes';
@@ -16,7 +17,6 @@ import {
   replaceExportedNamespaces as babel_replaceExportedNamespaces,
   replaceImportedNamespaces as babel_replaceImportedNamespaces,
   rewriteToCaptureTopLevelVariables as babel_rewriteToCaptureTopLevelVariables,
-  babel_parse
 } from 'lively.source-transform/babel/plugin.js';
 import {
   rewriteToCaptureTopLevelVariables,
@@ -276,10 +276,10 @@ export default class LivelyRollup {
       name = modId.split('npm:')[1].split('@')[0];
     }
     const classToFunction = {
-      classHolder: ast.parse(`((lively.FreezerRuntime || lively.frozenModules).recorderFor("${this.normalizedId(modId)}", __contextModule__))`),
+      classHolder: babel.parse(`((lively.FreezerRuntime || lively.frozenModules).recorderFor("${this.normalizedId(modId)}", __contextModule__))`).program.body[0].expression,
       functionNode: { type: 'Identifier', name: 'initializeES6ClassForLively' },
       transform: classes.classToFunctionTransform,
-      currentModuleAccessor: ast.parse(`({
+      currentModuleAccessor: babel.parse(`({
         pathInPackage: () => {
            return "${this.resolver.pathInPackageFor(modId)}"
         },
@@ -291,7 +291,7 @@ export default class LivelyRollup {
             version: "${version}"
           } 
         } 
-      })`).body[0].expression
+      })`).program.body[0].expression
     };
     return {
       captureImports: false, // we do not need to support inline evals within bundled modules,
@@ -439,7 +439,7 @@ export default class LivelyRollup {
             try {
               const resolvedImport = eval(ast.stringify(path.node.arguments[0]));
               if (resolvedImport) this.hasDynamicImports = true;
-              return babel_parse(`import("${resolvedImport}")`)[0].expression;
+              path.replaceWith(babel.parse(`import("${resolvedImport}")`).program.body[0].expression);
             } catch (err) {
             }
           }
@@ -904,11 +904,14 @@ export default class LivelyRollup {
         }
       }
     }
-    path.insertBefore(babel_parse(classRuntimeImport));
-    path.insertBefore(babel_parse(this.isResurrectionBuild ? moduleHash + moduleExports : ''));
-    path.insertBefore(babel_parse(recorderString));
+    
+    path.unshiftContainer('body', [
+      ...babel.parse(recorderString).program.body,
+      ...babel.parse(this.isResurrectionBuild ? moduleHash + moduleExports : '').program.body,
+      ...babel.parse(classRuntimeImport).program.body
+    ]);
 
-    path.insertAfter(babel_parse(defaultExport));
+    path.pushContainer('body', babel.parse(defaultExport).program.body);
   }
 
   /**
