@@ -1,5 +1,6 @@
 /* global process */
 import babel from '@babel/core';
+import t from '@babel/types';
 import { resource } from 'lively.resources';
 import * as ast from 'lively.ast';
 import * as classes from 'lively.classes';
@@ -859,7 +860,7 @@ export default class LivelyRollup {
       : '';
     const moduleHash = `${recorderName}.__module_hash__ = ${hashCode};\n`;
     const moduleExports = `${recorderName}.__module_exports__ = ${recorderName}.__module_exports__ || [${exports.join(',')}];\n`;
-    const captureObj = { name: recorderName, type: 'Identifier' };
+    const captureObj = t.Identifier(recorderName);
     const opts = this.getTransformOptions(this.resolver.resolveModuleId(id), path);
     const currentModuleAccessor = opts.classToFunction.currentModuleAccessor;
 
@@ -884,7 +885,7 @@ export default class LivelyRollup {
       babel_rewriteToCaptureTopLevelVariables(path, {
         ...opts,
         captureObj,
-        declarationWrapper: ast.nodes.member(captureObj, ast.nodes.literal(normalizedId + '__define__')),
+        // declarationWrapper: t.MemberExpression(captureObj, t.StringLiteral(normalizedId + '__define__'), true),
         currentModuleAccessor
       });
 
