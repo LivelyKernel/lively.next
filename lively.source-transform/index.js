@@ -191,7 +191,7 @@ export async function replaceExportedNamespaces (translated, moduleName, bundler
       }
       insertNodes.push(
         parse(`import * as tmp_${i++} from "${exportAllDecl.source.value}";`).body[0],
-        (async () => parse(`Object.assign((lively.FreezerRuntime || lively.frozenModules).recorderFor("${bundler.normalizedId(await dep)}"), mp_${i++})`).body[0])()
+        (async () => parse(`Object.assign((lively.FreezerRuntime || lively.frozenModules).recorderFor("${bundler.normalizedId(await dep)}"), tmp_${i})`).body[0])()
       );
       return exportAllDecl;
     });
