@@ -344,7 +344,12 @@ function replaceClass (node, state, options) {
         : classId
           ? [n.varDecl(classId, constructorTemplate(classId.name, fields, options)), n.varDecl(n.id(tempLivelyClassVar), classId)]
           : [n.varDecl(n.id(tempLivelyClassVar), constructorTemplate(null, fields, options))],
-      n.ifStmt(n.funcCall(n.member(n.id('Object'), n.id('isFrozen')), [n.id(tempLivelyClassHolderVar)]), n.block([n.returnStmt(n.id(tempLivelyClassVar))]), null),
+      n.ifStmt(
+        n.logicalExpr('||', 
+          n.funcCall(n.member(n.id('Object'), n.id('isFrozen')), [n.id(tempLivelyClassHolderVar)]),
+          n.funcCall(n.member(n.id('Object'), n.id('isFrozen')), [n.member(n.id(tempLivelyClassVar), n.id('prototype'))])),
+        n.block([n.returnStmt(n.id(tempLivelyClassVar))]),
+      null),
       n.returnStmt(
         n.funcCall(
           options.functionNode,
