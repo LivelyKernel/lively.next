@@ -436,15 +436,16 @@ export default class LivelyRollup {
     });
   }
 
-  babel_instrumentDynamicLoads (path, moduleId) {
+  babel_instrumentDynamicLoads (path) {
+    const self = this;
     path.traverse({
       CallExpression (path) {
         if (path.get('callee').type === 'MemberExpression' && path.get('arguments').length === 1) {
           const { property, object } = path.get('callee').node;
           if (property.name === 'import' && object.name === 'System') {
             try {
-              const resolvedImport = eval(ast.stringify(path.node.arguments[0]));
-              if (resolvedImport) this.hasDynamicImports = true;
+              const resolvedImport = eval(path.get('arguments')[0].getSource());
+              if (resolvedImport) self.hasDynamicImports = true;
               path.replaceWith(babel.parse(`import("${resolvedImport}")`).program.body[0].expression);
             } catch (err) {
             }
@@ -460,7 +461,6 @@ export default class LivelyRollup {
    * @param { string } id - The id of the module to be transformed.
    */
   async transform (source, id) {
-    const originalSource = source;
     if (id.startsWith('\0') || id.endsWith('.json') || this.excludedModules.find(m => id.startsWith(m))) {
       return source;
     }
@@ -489,21 +489,24 @@ export default class LivelyRollup {
     // The easiest way to achieve thatis via an inline visitor that basically performs the same steps as below within babel.
 
     const needsLoadInstrumentation = this.needsDynamicLoadTransform(source);
+    const self = this;
 
-    function inlinePlugin (api, options) {
+    function inlinePlugin () {
       return {
         visitor: {
-          async Program (path, state) {
+          Program (path, state) {
+            const source = self.moduleSources[id];
+            if (!source) return;
             if (id === ROOT_ID && !needsLoadInstrumentation) return;
             if (needsLoadInstrumentation) {
-              this.babel_instrumentDynamicLoads(path, state, id);
+              self.babel_instrumentDynamicLoads(path, state, id);
             }
             if (id === ROOT_ID) return;
             // this capturing stuff needs to behave differently when we have dynamic imports. Why??
-            const instrumentClasses = this.needsClassInstrumentation(id, path);
-            if (instrumentClasses || this.needsScopeToBeCaptured(id, null, path)) {
-              const sourceHash = string.hashCode(this.moduleSources[id]); // why cant we use the original source here? because other plugins already scrambled the code...
-              this.babel_captureScope(path, id, sourceHash, instrumentClasses);
+            const instrumentClasses = self.needsClassInstrumentation(id, source);
+            if (instrumentClasses || self.needsScopeToBeCaptured(id, null, source)) {
+              const sourceHash = string.hashCode(source); // why cant we use the original source here? because other plugins already scrambled the code...
+              self.babel_captureScope(path, id, sourceHash, instrumentClasses);
             }
           }
         }
@@ -816,23 +819,41 @@ export default class LivelyRollup {
     const recorderName = '__varRecorder__';
 
     const exports = [];
-    for (let exp of path.scope.exportDecls) {
-      if (exp.local && exp.exported !== 'default' && exp.exported !== exp.local) {
-        // retrieve all the exports of the module
-        exports.push(JSON.stringify('__rename__' + exp.local + '->' + exp.exported));
-        continue;
+    const self = this;
+
+    const scope = { resolvedRefMap: new Map(), decls: [] };
+
+    Object.values(path.scope.bindings).map(binding => {
+      let decl = binding.path.node;
+      if (decl.type === 'ImportSpecifier' || decl.type === 'ImportDefaultSpecifier') decl = binding.path.parent;
+      scope.decls.push([decl, binding.identifier]); // this data format is just weird af?
+      binding.referencePaths.forEach(ref => {
+        scope.resolvedRefMap.set(ref.node, { decl, declId: binding.identifier, ref });
+      });
+    });
+    
+    path.traverse({
+      ExportDeclaration (path) {
+        for (let exp of ast.query.handleExportStmt(path.node, scope)) {
+          if (exp.local && exp.exported !== 'default' && exp.exported !== exp.local) {
+            // retrieve all the exports of the module
+            exports.push(JSON.stringify('__rename__' + exp.local + '->' + exp.exported));
+            continue;
+          }
+          if (exp.exported === '*') {
+            // retrieve all the exports of the module
+            exports.push(JSON.stringify('__reexport__' + self.normalizedId(self.resolveId(exp.fromModule, id))));
+            continue;
+          }
+          if (exp.exported === 'default' && exp.local) {
+            exports.push(JSON.stringify('__default__' + exp.local)); // in order to capture this
+          }
+          exports.push(JSON.stringify(exp.exported));
+        }
       }
-      if (exp.exported === '*') {
-        // retrieve all the exports of the module
-        exports.push(JSON.stringify('__reexport__' + this.normalizedId(this.resolveId(exp.fromModule, id))));
-        continue;
-      }
-      if (exp.exported === 'default') {
-        exports.push(JSON.stringify('__default__' + exp.local)); // in order to capture this
-      }
-      exports.push(JSON.stringify(exp.exported));
-    }
-    const localLivelyVar = path.scope.refs.find(ref => ref.name === 'lively');
+    })
+    
+    const localLivelyVar = Object.keys(path.scope.references).includes('lively');
     const recorderString = this.captureModuleScope
       ? `${localLivelyVar ? GLOBAL_FETCH : ''} const ${recorderName} = (${localLivelyVar ? 'G.' : ''}lively.FreezerRuntime || ${localLivelyVar ? 'G.' : ''}lively.frozenModules).recorderFor("${this.normalizedId(id)}", __contextModule__);\n`
       : '';
