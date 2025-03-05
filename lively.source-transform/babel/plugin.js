@@ -26,7 +26,7 @@ function getVarDecls (scope) {
   return new Set(Object.values(scope.bindings).filter(decl => decl.kind !== 'module' && decl.kind !== 'hoisted').map(m => m.path.parentPath).filter(node => node.type === 'VariableDeclaration'));
 }
 
-const babelNodes = {
+export const babelNodes = {
   member: t.MemberExpression,
   property: t.ObjectProperty,
   property: (kind, key, val) => t.ObjectProperty(key, val),
@@ -769,6 +769,8 @@ export function rewriteToCaptureTopLevelVariables (path, options) {
 
   path.unshiftContainer('body', header);
   path.pushContainer('body', footer);
+
+  return options;
 }
 
 export function ensureComponentDescriptors (path, moduleId, options) {
@@ -902,6 +904,15 @@ function getExportDecls (scope) {
   return [...new Set(Object.values(scope.bindings).map(m => m.referencePaths.filter(m => m.parentPath.parentPath?.type.match(/ExportNamedDeclaration|ExportDefaultDeclaration/))).flat().map(m => m.parent))];
 }
 
+export function getScopeFromPath (path) {
+  return {
+    classDecls: getClassDecls(path.scope),
+    funcDecls: getFuncDecls(path.scope),
+    refs: getRefs(path.scope),
+    varDecls: getVarDecls(path.scope),
+  }
+}
+
 function evalCodeTransform (path, state, options) {
   // A: Rewrite the component definitions to create component descriptors.
   let { moduleName } = options;
@@ -922,12 +933,7 @@ function evalCodeTransform (path, state, options) {
 
   // 2. Annotate definitions with code location. This is being used by the
   // function-wrapper-source transform.
-  options.scope = {
-    classDecls: getClassDecls(path.scope),
-    funcDecls: getFuncDecls(path.scope),
-    refs: getRefs(path.scope),
-    varDecls: getVarDecls(path.scope)
-  };
+  options.scope = getScopeFromPath(path);
 
   if (options.hasOwnProperty('evalId')) annotation.evalId = options.evalId;
   if (options.sourceAccessorName) annotation.sourceAccessorName = options.sourceAccessorName;
