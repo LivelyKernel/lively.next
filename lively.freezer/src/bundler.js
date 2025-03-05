@@ -241,11 +241,11 @@ export default class LivelyRollup {
    * @param { string } path - The relative path to be imported.
    */
   // FIXME: the reason this is async is because we still keep the browser resolver around...
-  async resolveRelativeImport (moduleId, path) {
+  resolveRelativeImport (moduleId, path) {
     if (!path.startsWith('.')) return this.resolver.normalizeFileName(path);
     // how to achieve that without the nasty file handle
-    return await this.resolver.normalizeFileName(
-      string.joinPath(await this.resolver.normalizeFileName(moduleId), '..', path));
+    return this.resolver.normalizeFileName(
+      string.joinPath(this.resolver.normalizeFileName(moduleId), '..', path));
   }
 
   /**
@@ -328,7 +328,7 @@ export default class LivelyRollup {
    * world as the argument.
    */
   async synthesizeMainModule () {
-    let mainModuleSource = await resource(this.resolver.ensureFileFormat(await this.resolver.normalizeFileName('lively.freezer/src/util/main-module.js'))).read();
+    let mainModuleSource = await resource(this.resolver.ensureFileFormat(this.resolver.normalizeFileName('lively.freezer/src/util/main-module.js'))).read();
     mainModuleSource = mainModuleSource.replaceAll('TRACE', this.isResurrectionBuild ? 'true' : 'false');
     return mainModuleSource.replace('prepare()', `const { main, WORLD_CLASS = World, TITLE } = await System.import('${this.rootModuleId}')`);
   }
@@ -992,9 +992,9 @@ export default class LivelyRollup {
       // however that does not allow us to transition to the dynamic lively.modules system
       // so we can only utilize s.js in case we do not want to resurrect
       if (this.needsOldSystem) {
-        code += await resource(this.resolver.ensureFileFormat(await this.resolver.normalizeFileName('lively.freezer/src/util/system.0.21.js'))).read();
+        code += await resource(this.resolver.ensureFileFormat(this.resolver.normalizeFileName('lively.freezer/src/util/system.0.21.js'))).read();
       } else {
-        code += await resource(this.resolver.ensureFileFormat(await this.resolver.normalizeFileName('lively.freezer/src/util/system.6.js'))).read();
+        code += await resource(this.resolver.ensureFileFormat(this.resolver.normalizeFileName('lively.freezer/src/util/system.6.js'))).read();
       }
       // stub the globals
       code += `(${instrumentStaticSystemJS.toString()})(System);\n`;
@@ -1025,9 +1025,9 @@ export default class LivelyRollup {
 
   async getRuntimeCode () {
     const includePolyfills = this.includePolyfills && this.asBrowserModule;
-    let runtimeCode = await resource(this.resolver.ensureFileFormat(await this.resolver.normalizeFileName('lively.freezer/src/util/runtime.js'))).read();
-    const regeneratorSource = await resource(this.resolver.ensureFileFormat(await this.resolver.normalizeFileName('lively.freezer/src/util/regenerator-runtime.js'))).read();
-    const polyfills = includePolyfills ? await resource(this.resolver.ensureFileFormat(await this.resolver.normalizeFileName('lively.freezer/deps/fetch.umd.js'))).read() : '';
+    let runtimeCode = await resource(this.resolver.ensureFileFormat(this.resolver.normalizeFileName('lively.freezer/src/util/runtime.js'))).read();
+    const regeneratorSource = await resource(this.resolver.ensureFileFormat(this.resolver.normalizeFileName('lively.freezer/src/util/regenerator-runtime.js'))).read();
+    const polyfills = includePolyfills ? await resource(this.resolver.ensureFileFormat(this.resolver.normalizeFileName('lively.freezer/deps/fetch.umd.js'))).read() : '';
     runtimeCode = `(${runtimeCode.slice(0, -1).replace('export ', '')})();\n`;
     if (!this.hasDynamicImports) {
       // If there are no dynamic imports, we compile without systemjs and
@@ -1094,7 +1094,7 @@ export default class LivelyRollup {
       plugin.emitFile({
         type: 'asset',
         fileName: 'livelyClassesRuntime.js',
-        source: await this.resolver.load(await this.resolver.normalizeFileName('lively.classes/build/runtime.js'))
+        source: await this.resolver.load(this.resolver.normalizeFileName('lively.classes/build/runtime.js'))
       });
     }
 
