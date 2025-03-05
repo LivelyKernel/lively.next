@@ -17,6 +17,8 @@ import {
   replaceExportedNamespaces as babel_replaceExportedNamespaces,
   replaceImportedNamespaces as babel_replaceImportedNamespaces,
   rewriteToCaptureTopLevelVariables as babel_rewriteToCaptureTopLevelVariables,
+  getScopeFromPath,
+  babelNodes
 } from 'lively.source-transform/babel/plugin.js';
 import {
   rewriteToCaptureTopLevelVariables,
@@ -282,6 +284,7 @@ export default class LivelyRollup {
       transform: (path, options) => {
         classes.classToFunctionTransformBabel(path, {}, options);
       },
+      nodes: babelNodes,
       currentModuleAccessor: babel.parse(`({
         pathInPackage: () => {
            return "${this.resolver.pathInPackageFor(modId)}"
