@@ -4,8 +4,8 @@ import babel from '@babel/core';
 import systemjsTransform from '@babel/plugin-transform-modules-systemjs';
 import dynamicImport from '@babel/plugin-proposal-dynamic-import';
 import { arr, Path } from 'lively.lang';
-import { topLevelFuncDecls } from 'lively.ast/lib/visitors.js';
 import { query } from 'lively.ast';
+import { topLevelFuncDecls } from 'lively.ast/lib/visitors.js';
 import { classToFunctionTransformBabel } from 'lively.classes';
 import { getGlobal } from 'lively.vm/lib/util.js';
 import { declarationWrapperCall, annotationSym, assignExpr, varDeclOrAssignment, transformPattern, generateUniqueName, varDeclAndImportCall, importCallStmt, shouldDeclBeCaptured, importCall, exportCallStmt, exportFromImport, additionalIgnoredDecls, additionalIgnoredRefs } from './helpers.js';
@@ -364,7 +364,7 @@ function ensureGlobalBinding (ref, options) {
 
 function replaceVarDeclsAndRefs (path, options) {
   const globalInitStmt = '_global = typeof globalThis !== "undefined" ? globalThis : typeof self !== "undefined" ? self : global';
-  const refsToReplace = new Set(options.scope.refs.filter(ref => !options?.excludeRefs.includes(ref.name)));
+  const refsToReplace = new Set(options.scope.refs.filter(ref => !options?.excludeRefs.includes(ref.name) && path.scope.bindings[ref.name].kind !== 'module'));
   const varDeclsToReplace = getVarDecls(path.scope);
   const declaredNames = Object.keys(path.scope.bindings);
   const currentModuleAccessor = options.classToFunction?.currentModuleAccessor;
@@ -598,6 +598,7 @@ function splitExportDeclarations (path) {
 }
 
 function insertCapturesForImportAndExportDeclarations (path, options) {
+  let i = 0;
   const declaredNames = new Set(Object.keys(path.scope.bindings));
   function handleDeclarations (path) {
     const stmt = path.node;
@@ -635,6 +636,42 @@ function insertCapturesForImportAndExportDeclarations (path, options) {
           declaredNames.has(specifier.local.name)
             ? null
             : varDeclOrAssignment(declaredNames, specifier.local, t.MemberExpression(options.captureObj, specifier.local)))));
+      }
+
+      if (stmt.specifiers.length && stmt.source) {
+        const specifiers = stmt.specifiers;
+        ([path] = path.replaceWithMultiple(babel.parse(`import { ${specifiers.map(spec => {
+          if (spec.local.name === 'default' && spec.exported.name === 'default') {
+            defaultImport = true;
+            return `default as __default${++i}__`;
+          } else if (spec.local.name !== spec.exported.name) {
+            spec.shadow = spec.exported.name;
+            return `${spec.local.name} as ${spec.exported.name}`;
+          } else {
+            spec.shadow = `__${spec.local.name}__`;
+            return `${spec.local.name} as ${spec.shadow}`;
+          }
+        }).join(',')} } from "${stmt.source.value}";
+        export { ${specifiers.map(spec => {
+          if (spec.local.name === 'default' && spec.exported.name === 'default') {
+            return '__default${i}__ as default';
+          }
+          declaredNames.add(spec.shadow);
+          return `${spec.shadow} as ${spec.exported.name}`;
+        }).filter(Boolean)} }
+        `).program.body));
+        // insert an import of default instead
+
+        // if (options.captureImports) return; // this will be handled by other callbacks
+
+        for (let spec of specifiers) {
+          if (spec.local.name === 'default' && spec.exported.name === 'default')
+            path.insertAfter(assignExpr(options.captureObj, t.Identifier('default'), t.Identifier(`__default${i}__`), false));
+          else
+            path.insertAfter(assignExpr(options.captureObj, t.Identifier(spec.exported.name), t.Identifier(spec.shadow), false));
+        }
+
+        path.skip();
       }
     },
     ExportDefaultDeclaration (path) {
@@ -800,9 +837,10 @@ export function replaceExportedVarDeclarations (path, moduleId, options) {
     ExportNamedDeclaration (path) {
       const variableDeclaration = path.get('declaration');
       if (variableDeclaration.type !== 'VariableDeclaration') return;
-      const [exportedVariable] = variableDeclaration.get('declarations')[0].node;
-      const exportExpression = babel.parse(`var ${exportedVariable.id.name}; export { ${exportedVariable.id.name} }`).body;
-      path.replaceWithMultiple([variableDeclaration.node, ...exportExpression]);
+      const [exportedVariable] = variableDeclaration.get('declarations');
+      if (!exportedVariable) return;
+      const exportExpression = babel.parse(`var ${exportedVariable.node.id.name}; export { ${exportedVariable.node.id.name} }`).program.body[1];
+      path.replaceWithMultiple([variableDeclaration.node, exportExpression]);
     }
   });
 
@@ -817,7 +855,7 @@ export function replaceExportedVarDeclarations (path, moduleId, options) {
   }
 }
 
-export function replaceExportedNamespaces (path, moduleName, bundler) {
+export function replaceExportedNamespaces (path, moduleName, bundle, options) {
   // namespace that are directly imported or getting re-exported need to be chanelled through the module recorder
   const insertNodes = [];
   let i = 0;
@@ -833,30 +871,36 @@ export function replaceExportedNamespaces (path, moduleName, bundler) {
           babel.parse(`export { ${name} }`).program.body[0]
         );
         path.replaceWith(babel.parse(`import * as ${name}_namespace from "${path.node.source.value}";`).program.body[0]);
+        options.exclude.push(`${name}_namespace`);
+        return;
       }
       insertNodes.push(
         babel.parse(`import * as tmp_${i++} from "${path.node.source.value}";`).program.body[0],
         babel.parse(`Object.assign((lively.FreezerRuntime || lively.frozenModules).recorderFor("${bundler.normalizedId(dep)}"), tmp_${i})`).program.body[0]
       );
+      options.exclude.push(`tmp_${i}`);
     }
   });
 
-  let insertFrom = path.body.find(n => n.type !== 'ImportDeclaration' && n.type !== 'ExportAllDeclaration');
-  insertFrom.insertAfter(insertNodes);
+  const insertFrom = path.get('body').find(n => n.type !== 'ImportDeclaration' && n.type !== 'ExportAllDeclaration');
+  if (insertFrom) insertFrom.insertBefore(insertNodes);
+  else path.pushContainer('body', insertNodes);
 }
 
-export function replaceImportedNamespaces (path, moduleName, bundler) {
+export function replaceImportedNamespaces (path, moduleName, bundler, options) {
   // namespace that are directly imported or getting re-exported need to be chanelled through the module recorder
   const namespaceVars = [];
   // such that the namespaces are getting correctly updated in case a module is getting revived
 
   path.traverse({
     ImportDeclaration (path) {
+      if (path.node.specifiers[0].type !== 'ImportNamespaceSpecifier') return;
       let dep = bundler.resolveId(path.node.source.value, moduleName);
       let name = path.node.specifiers[0]?.local?.name;
       if (name) {
         namespaceVars.push([name, dep]);
-        path.node.specifiers[0].local.name += '_namespace';
+        path.get('specifiers.0.local').replaceWith(t.Identifier(name + '_namespace'));
+        options.exclude.push(`${name}_namespace`);
       }
     }
   });
@@ -865,7 +909,7 @@ export function replaceImportedNamespaces (path, moduleName, bundler) {
   // but filtered by the recorder object
   const insertFrom = path.get('body').find(n => n.type !== 'ImportDeclaration' && n.type !== 'ExportAllDeclaration');
   for (let [namespaceVar, importedModule] of namespaceVars) {
-    insertFrom.insertAfter(...babel.parse(`const ${namespaceVar} = (lively.FreezerRuntime || lively.frozenModules).exportsOf("${bundler.normalizedId(importedModule)}") || ${namespaceVar}_namespace;`).program.body);
+    insertFrom.insertBefore(babel.parse(`const ${namespaceVar} = (lively.FreezerRuntime || lively.frozenModules).exportsOf("${bundler.normalizedId(importedModule)}") || ${namespaceVar}_namespace;`).program.body[0]);
   }
 }
 
