@@ -72,7 +72,7 @@ function detectFormatFromSource (source) {
 
 }
 
-async function normalizeFileName (fileName) {
+function normalizeFileName (fileName) {
   if (isAlreadyResolved(fileName)) return fileName;
   return require.resolve(fileName);
 }
