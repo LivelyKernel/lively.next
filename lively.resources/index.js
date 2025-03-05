@@ -49,7 +49,7 @@ export async function importModuleViaNative (url) {
   return mod;
 }
 
-export function loadViaScript (url, onLoadCb) {
+export function loadViaScript (url) {
   // load JS code by inserting a <script src="..." /> tag into the
   // DOM. This allows cross domain script loading and JSONP
 
