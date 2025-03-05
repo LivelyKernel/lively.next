@@ -1,3 +1,4 @@
+/* global process */
 import LivelyRollup, { customWarn, bulletProofNamespaces } from '../bundler.js';
 import { ROOT_ID } from '../util/helpers.js';
 import { obj, arr } from 'lively.lang';
@@ -103,6 +104,9 @@ export function lively (args) {
         } else {
           opts.globals = { ...opts.globals, ...globals };
         }
+      }
+      opts.chunkFileNames = (chunk) => {
+        return `${chunk.name.replace('!cjs', '_CJS_')}-[hash].js`;
       }
       return opts;
     },
