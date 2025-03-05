@@ -278,7 +278,9 @@ export default class LivelyRollup {
     const classToFunction = {
       classHolder: babel.parse(`((lively.FreezerRuntime || lively.frozenModules).recorderFor("${this.normalizedId(modId)}", __contextModule__))`).program.body[0].expression,
       functionNode: { type: 'Identifier', name: 'initializeES6ClassForLively' },
-      transform: classes.classToFunctionTransform,
+      transform: (path, options) => {
+        classes.classToFunctionTransformBabel(path, {}, options);
+      },
       currentModuleAccessor: babel.parse(`({
         pathInPackage: () => {
            return "${this.resolver.pathInPackageFor(modId)}"
