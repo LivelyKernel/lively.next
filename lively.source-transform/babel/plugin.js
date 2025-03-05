@@ -840,7 +840,7 @@ export function replaceExportedNamespaces (path, moduleName, bundler) {
       }
       insertNodes.push(
         babel.parse(`import * as tmp_${i++} from "${path.node.source.value}";`).program.body[0],
-        babel.parse(`Object.assign((lively.FreezerRuntime || lively.frozenModules).recorderFor("${bundler.normalizedId(dep)}"), mp_${i++})`).program.body[0]
+        babel.parse(`Object.assign((lively.FreezerRuntime || lively.frozenModules).recorderFor("${bundler.normalizedId(dep)}"), tmp_${i})`).program.body[0]
       );
     }
   });
