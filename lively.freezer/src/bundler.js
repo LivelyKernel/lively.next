@@ -188,7 +188,8 @@ export default class LivelyRollup {
     compress = true,
     minify = true,
     captureModuleScope = true,
-    verbose = false
+    verbose = false,
+    sourceMap = false
   }) {
     this.verbose = verbose; // wether or not to log the warnings to the console that happen during build
     this.resolver = resolver; // resolves the modules to the respective urls, for either client or browser
@@ -205,6 +206,7 @@ export default class LivelyRollup {
     this.includeLivelyAssets = includeLivelyAssets; // If set to true, will include the default fonts and css from lively.next into the bundle. Disabling this is probably a bad idea.
     this.compress = compress; // If true, this will perform custom compression of the files to brotli and gzip.
     this.minify = minify; // If true, will invoke the google closure minification to further reduce source code size.
+    this.sourceMap = sourceMap;
 
     this.globalMap = {}; // accumulates the package -> url mappings that are provided by each of the packages
     this.modulesWithDynamicLoads = new Set(); // collection of all modules that include System.import()
@@ -282,29 +284,46 @@ export default class LivelyRollup {
       version = modId.split('@')[1];
       name = modId.split('npm:')[1].split('@')[0];
     }
-    const classToFunction = {
-      classHolder: babel.parse(`((lively.FreezerRuntime || lively.frozenModules).recorderFor("${this.normalizedId(modId)}", __contextModule__))`).program.body[0].expression,
-      functionNode: { type: 'Identifier', name: 'initializeES6ClassForLively' },
-      transform: (path, options) => {
-        classes.classToFunctionTransformBabel(path, {}, options);
-      },
-      nodes: babelNodes,
-      currentModuleAccessor: babel.parse(`({
-        pathInPackage: () => {
-           return "${this.resolver.pathInPackageFor(modId)}"
+    const classToFunction = this.sourceMap ? {
+        classHolder: babel.parse(`((lively.FreezerRuntime || lively.frozenModules).recorderFor("${this.normalizedId(modId)}", __contextModule__))`).program.body[0].expression,
+        functionNode: t.Identifier('initializeES6ClassForLively'),
+        transform: (path, options) => {
+          classes.classToFunctionTransformBabel(path, {}, options);
         },
-        unsubscribeFromToplevelDefinitionChanges: () => () => {},
-        subscribeToToplevelDefinitionChanges: () => () => {},
-        package: () => { 
-          return {
-            name: "${name}",
-            version: "${version}"
+        nodes: babelNodes,
+        currentModuleAccessor: babel.parse(`({
+          pathInPackage: () => {
+             return "${this.resolver.pathInPackageFor(modId)}"
+          },
+          unsubscribeFromToplevelDefinitionChanges: () => () => {},
+          subscribeToToplevelDefinitionChanges: () => () => {},
+          package: () => { 
+            return {
+              name: "${name}",
+              version: "${version}"
+            } 
           } 
-        } 
-      })`).program.body[0].expression
-    };
+        })`).program.body[0].expression
+      } : {
+        classHolder: ast.parse(`((lively.FreezerRuntime || lively.frozenModules).recorderFor("${this.normalizedId(modId)}", __contextModule__))`).body[0].expression,
+        functionNode: { type: 'Identifier', name: 'initializeES6ClassForLively' },
+        transform: classes.classToFunctionTransform,
+        currentModuleAccessor: ast.parse(`({
+          pathInPackage: () => {
+             return "${this.resolver.pathInPackageFor(modId)}"
+          },
+          unsubscribeFromToplevelDefinitionChanges: () => () => {},
+          subscribeToToplevelDefinitionChanges: () => () => {},
+          package: () => { 
+            return {
+              name: "${name}",
+              version: "${version}"
+            } 
+          } 
+        })`).body[0].expression
+      };
     return {
-      captureImports: true,
+      captureImports: this.sourceMap, // for the babel transform, we need to capture imports as well
       exclude: [
         'System',
         '__contextModule__',
@@ -515,6 +534,18 @@ export default class LivelyRollup {
           }
         }
       };
+    }
+
+    if (this.sourceMap) {
+
+      const { code, map } = babel.transform(source, {
+        sourceMaps: true,
+        comments: false,
+        plugins: [inlinePlugin]
+      });
+
+      return { code, map };
+
     }
 
     let parsed = ast.parse(source);
