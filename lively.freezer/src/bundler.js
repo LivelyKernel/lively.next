@@ -304,7 +304,7 @@ export default class LivelyRollup {
       })`).program.body[0].expression
     };
     return {
-      captureImports: false, // we do not need to support inline evals within bundled modules,
+      captureImports: true,
       exclude: [
         'System',
         '__contextModule__',
@@ -880,13 +880,16 @@ export default class LivelyRollup {
 
     let defaultExport = '';
     if (this.captureModuleScope) {
-      babel_replaceExportedVarDeclarations(path, recorderName, normalizedId);
+      babel_replaceExportedVarDeclarations(path, normalizedId, { recorderName });
       if (this.isResurrectionBuild) {
-        babel_replaceImportedNamespaces(path, id, this);
-        babel_replaceExportedNamespaces(path, id, this);
+        babel_replaceImportedNamespaces(path, id, this, opts);
+        babel_replaceExportedNamespaces(path, id, this, opts);
       }
+      path.scope.crawl();
+      Object.assign(scope, getScopeFromPath(path));
       babel_rewriteToCaptureTopLevelVariables(path, {
         ...opts,
+        scope,
         captureObj,
         // declarationWrapper: t.MemberExpression(captureObj, t.StringLiteral(normalizedId + '__define__'), true),
         currentModuleAccessor
@@ -897,7 +900,7 @@ export default class LivelyRollup {
 
       path.traverse({
         ImportDeclaration (path) {
-          arr.pushIfNotIncluded(imports, path.node);
+          arr.pushIfNotIncluded(imports, path);
         },
         ExportDefaultDeclaration (path) {
           let exp;
@@ -917,26 +920,24 @@ export default class LivelyRollup {
         }
       });
 
-      for (const stmts of Object.values(arr.groupBy(imports, imp => imp.source.value))) {
-        const toBeMerged = stmts.filter(stmt => stmt.specifiers.every(spec => spec.type === 'ImportSpecifier'));
+      for (const stmts of Object.values(arr.groupBy(imports, imp => imp.node.source.value))) {
+        const toBeMerged = stmts.filter(stmt => stmt.get('specifiers').every(spec => spec.type === 'ImportSpecifier'));
         if (toBeMerged.length > 1) {
         // merge statements
         // fixme: if specifiers are not named, these can not be merged
         // fixme: properly handle default export
           const mergedSpecifiers = arr.uniqBy(
-            toBeMerged.map(stmt => stmt.specifiers).flat(),
+            toBeMerged.map(stmt => stmt.node.specifiers).flat(),
             (spec1, spec2) =>
               spec1.type === 'ImportSpecifier' &&
             spec2.type === 'ImportSpecifier' &&
             spec1.imported.name === spec2.imported.name &&
             spec1.local.name === spec2.local.name
           );
-          toBeMerged[0].specifiers = mergedSpecifiers;
-          toBeReplaced.push(...toBeMerged.slice(1).map(stmt => {
-            stmt.body = [];
-            stmt.type = 'Program';
-            return stmt;
-          }));
+          toBeMerged[0].set('specifiers', mergedSpecifiers);
+          toBeMerged.slice(1).map(stmt => {
+            stmt.remove();
+          });
         }
       }
     }
