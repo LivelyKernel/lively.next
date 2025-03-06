@@ -274,6 +274,9 @@ export default class LivelyRollup {
     if (pkg) {
       name = pkg.name;
       version = pkg.version;
+    } else if (modId.startsWith('esm://')) {
+      [name, version] = resource(modId).path().slice(1).split('@');
+      if (version) version = version.split('/')[0];
     } else {
       // assuming the module comes from jspm
       version = modId.split('@')[1];
