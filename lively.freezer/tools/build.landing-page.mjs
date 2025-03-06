@@ -8,7 +8,7 @@ import PresetEnv from '@babel/preset-env';
 
 const verbose = process.argv[2] === '--verbose';
 const minify = !process.env.CI;
-
+const sourceMap = true;
 try {
   const build = await rollup({
     input: './src/landing-page.cp.js',
@@ -25,6 +25,7 @@ try {
         },
         minify,
         verbose,
+        sourceMap,
         isResurrectionBuild: true,
         asBrowserModule: true,
         excludedModules: [
@@ -51,7 +52,7 @@ try {
   await build.write({
     format: 'system',
     dir: 'landing-page',
-    sourcemap: 'inline',
+    sourcemap: sourceMap ? 'inline' : false,
     globals: {
       chai: 'chai',
       mocha: 'mocha',
