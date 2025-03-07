@@ -94,6 +94,7 @@ export default class Workspace extends Window {
   onLoad () {
     this.jsPlugin.requestHighlight();
     this.doNotAcceptDropsForThisAndSubmorphs();
+    this.jsPlugin.setFormat('esm');
   }
 
   async setEvalBackend (choice) {
