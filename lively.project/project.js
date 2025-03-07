@@ -469,6 +469,8 @@ export class Project {
 
     for (let i = 0; i < dependencies.length; i++) {
       const dep = dependencies[i];
+      if (!dep.privateRepo) continue;
+
       const normalizedDep = normalizedDeps[i];
       if (alreadySetupDependencies.includes(normalizedDep)) continue;
       const [priv, pub] = await generateKeyPair();
