@@ -374,6 +374,10 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
     return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.module(${JSON.stringify(moduleName)}).format();`);
   }
 
+  setModuleFormat (moduleName, format) {
+    return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.module(${JSON.stringify(moduleName)}).setFormat(${JSON.stringify(format)});`);
+  }
+
   moduleRead (moduleName) {
     return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.module(${JSON.stringify(moduleName)}).source()`);
   }
