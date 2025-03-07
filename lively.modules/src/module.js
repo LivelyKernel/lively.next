@@ -204,7 +204,8 @@ class ModuleInterface {
   }
 
   setFormat (format) {
-    // assume esm by default
+    const meta = this.metadata();
+    if (meta && meta.load.format) delete meta.load.format;
     return this.addMetadata({ format });
   }
 
