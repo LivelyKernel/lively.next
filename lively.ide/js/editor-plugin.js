@@ -35,6 +35,11 @@ export default class JavaScriptEditorPlugin extends CodeMirrorEnabledEditorPlugi
   get shortName () { return 'js'; }
   get longName () { return 'javascript'; }
 
+  setFormat (format) {
+    const { targetModule, systemInterface } = this.evalEnvironment;
+    systemInterface.setModuleFormat(targetModule, format);
+  }
+
   attach (editor) {
     super.attach(editor);
     this.evalEnvironment = { ...this.evalEnvironment, context: editor };
@@ -127,7 +132,7 @@ export default class JavaScriptEditorPlugin extends CodeMirrorEnabledEditorPlugi
 
   sanatizedJsEnv (envMixin) {
     const env = { ...this.evalEnvironment, ...envMixin };
-    if (!env.format) env.formatd = 'esm';
+    if (!env.format) env.format = 'esm';
     if (!env.context) env.context = this.textMorph;
     if (!env.sourceURL) { env.sourceURL = env.targetModule + '_doit_' + Date.now(); }
     // targetModule = targetModule || "lively://lively.next-prototype_2016_08_23/" + morph.id,
