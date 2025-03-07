@@ -63,6 +63,7 @@ export class Interface {
   forgetModule (name, opts) { return this.coreInterface.forgetModule(name, opts); }
   reloadModule (name, opts) { return this.coreInterface.reloadModule(name, opts); }
   moduleFormat (name) { return this.coreInterface.moduleFormat(name); }
+  setModuleFormat (name, format) { return this.coreInterface.setModuleFormat(name, format); }
   moduleRead (name) { return name.endsWith('js') ? this.coreInterface.moduleRead(name) : this.coreInterface.resourceRead(name); }
   moduleWrite (name, content) { return this.coreInterface.moduleWrite(name, content); }
   getModulesInPackage (name) { return modulesInPackage(this.coreInterface, name); }
