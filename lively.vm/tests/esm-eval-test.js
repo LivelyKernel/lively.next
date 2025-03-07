@@ -20,9 +20,9 @@ describe('eval', () => {
     if (modules) {
       S = modules.getSystem('test', { baseURL: dir });
       S.babelOptions = System.babelOptions;
-      S.set('lively.transpiler', System.get('lively.transpiler'));
-      S.config({ transpiler: 'lively.transpiler' });
-      S.translate = async (load) => await System.translate.bind(S)(load);
+      S.set('lively.transpiler.babel', System.get('lively.transpiler.babel'));
+      S.config({ transpiler: 'lively.transpiler.babel' });
+      S.translate = async (load, opts) => await System.translate.bind(S)(load, opts);
     }
 
     return S.import(module1);
