@@ -36,6 +36,7 @@ jobs:
         cp lively.morphic/assets/favicon.ico docs/favicon.ico
     - name: Upload Documentation Build
       uses: actions/upload-pages-artifact@v3
+      if: github.event_name == 'workflow_dispatch'
       with:
         name: docs
         path: docs/
@@ -51,7 +52,7 @@ jobs:
         with:
           artifact_name: docs
   cleanup:
-    if: ${{ always() }}
+    if: github.event_name == 'workflow_dispatch'
     needs: [build, deploy]
     runs-on: ubuntu-latest
     steps:
