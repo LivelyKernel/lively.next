@@ -217,6 +217,8 @@ function prepareSystem (System, config) {
     ? config.useModuleTranslationCache
     : !urlQuery().noModuleCache;
   System.useModuleTranslationCache = useModuleTranslationCache;
+  
+  System.importMapCache = new Map();
 
   if (config._nodeRequire) System._nodeRequire = config._nodeRequire;
 
@@ -395,9 +397,9 @@ function preNormalize (System, name, parent) {
       mappedObject = map?.[name] || System.map[name];
     }
 
-    if (importMap) {
+    if (importMap || (importMap = System.importMapCache.get(parent))) {
       let remapped = importMap.imports?.[name];
-      let scope, prefix;
+      let scope;
       if (scope = Object.entries(importMap.scopes)
         .filter(([k, v]) => parent.startsWith(k))
         .sort((a, b) => a[0].length - b[0].length)
@@ -408,7 +410,11 @@ function preNormalize (System, name, parent) {
       if (remapped) {
         name = remapped;
         if (mappedObject) mappedObject = name;
-        packageRegistry.moduleUrlToPkg.set(name, pkg);
+        const cachedImportMap = System.importMapCache.get(name);
+        if (cachedImportMap) {
+          if (cachedImportMap !== importMap)
+            System.importMapCache.set(name, obj.deepMerge(cachedImportMap, importMap));
+        } else System.importMapCache.set(name, importMap)
       }
     }
 
@@ -430,8 +436,8 @@ function preNormalize (System, name, parent) {
       name = resolved;
     }
 
-    if (pkg && importMap && !packageRegistry.moduleUrlToPkg.get(name)) {
-      packageRegistry.moduleUrlToPkg.set(name, pkg);
+    if (importMap && !System.importMapCache.get(name)) {
+      System.importMapCache.set(name, importMap);
     }
   }
 
