@@ -110,11 +110,8 @@ export function lively (args) {
       }
       return opts;
     },
-    renderChunk(code) {
-      if (code.includes('get default ()')) {
-        return bulletProofNamespaces(code);
-      }
-      return null;
+    renderChunk(code, chunk) {
+      return bulletProofNamespaces(code, chunk.fileName, bundler.isResurrectionBuild, bundler.sourceMap); // this completely messes up the source mapping
     },
     renderDynamicImport: () => {
       bundler.hasDynamicImports = true; // set flag to handle dynamic imports
