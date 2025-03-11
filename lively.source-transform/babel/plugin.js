@@ -673,12 +673,12 @@ function insertCapturesForImportAndExportDeclarations (path, options) {
 
         for (let spec of specifiers) {
           if (spec.local.name === 'default' && spec.exported.name === 'default')
-            path.insertAfter(assignExpr(options.captureObj, t.Identifier('default'), t.Identifier(`__default${i}__`), false));
+            paths[0].insertAfter(assignExpr(options.captureObj, t.Identifier('default'), t.Identifier(`__default${i}__`), false));
           else
-            path.insertAfter(assignExpr(options.captureObj, t.Identifier(spec.exported.name), t.Identifier(spec.shadow), false));
+            paths[0].insertAfter(assignExpr(options.captureObj, t.Identifier(spec.exported.name), t.Identifier(spec.shadow), false));
         }
 
-        path.skip();
+        paths.forEach(path => path.skip());
       }
     },
     ExportDefaultDeclaration (path) {
@@ -903,7 +903,7 @@ export function replaceImportedNamespaces (path, moduleName, bundler, options) {
 
   path.traverse({
     ImportDeclaration (path) {
-      if (path.node.specifiers[0].type !== 'ImportNamespaceSpecifier') return;
+      if (path.node.specifiers[0]?.type !== 'ImportNamespaceSpecifier') return;
       let dep = bundler.resolveId(path.node.source.value, moduleName);
       let name = path.node.specifiers[0]?.local?.name;
       if (name) {
