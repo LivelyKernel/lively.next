@@ -1375,8 +1375,8 @@ export function setupBabelTranspiler (System) {
     transpiler: 'lively.transpiler.babel',
     babelOptions: {
       sourceMaps: true,
-      compact: false,
-      comments: true,
+      compact: true, // since we enable source maps, we can also compact
+      comments: false,
       presets: []
     }
   });
