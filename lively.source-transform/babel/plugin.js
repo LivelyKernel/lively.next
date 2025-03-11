@@ -364,7 +364,7 @@ function ensureGlobalBinding (ref, options) {
 
 function replaceVarDeclsAndRefs (path, options) {
   const globalInitStmt = '_global = typeof globalThis !== "undefined" ? globalThis : typeof self !== "undefined" ? self : global';
-  const refsToReplace = new Set(options.scope.refs.filter(ref => !options?.excludeRefs.includes(ref.name) && path.scope.bindings[ref.name].kind !== 'module'));
+  const refsToReplace = new Set(options.scope.refs.filter(ref => !options?.excludeRefs.includes(ref.name) && path.scope.bindings[ref.name]?.kind !== 'module'));
   const varDeclsToReplace = getVarDecls(path.scope);
   const declaredNames = Object.keys(path.scope.bindings);
   const currentModuleAccessor = options.classToFunction?.currentModuleAccessor;
@@ -644,16 +644,14 @@ function insertCapturesForImportAndExportDeclarations (path, options) {
           t.ImportDeclaration(specifiers.map(spec => {
             if (spec.local.name === 'default' && spec.exported.name === 'default') {
               return t.ImportSpecifier(t.Identifier(`__default${++i}__`), t.Identifier('default'));
-            } else if (spec.local.name !== spec.exported.name  && spec.exported.name === 'default') {
+            } else if (spec.local.name !== spec.exported.name && spec.exported.name === 'default') {
               spec.shadow = `__default${++i}__`;
               return t.ImportSpecifier(t.Identifier(spec.shadow), t.Identifier(spec.local.name));
-            }
-            else if (spec.local.name !== spec.exported.name && spec.local.name === 'default') {
+            } else if (spec.local.name !== spec.exported.name && spec.local.name === 'default') {
               spec.shadow = spec.exported.name;
               if (declaredNames.has(spec.exported.name)) return false;
               return t.ImportSpecifier(t.Identifier(spec.exported.name), t.Identifier(spec.local.name));
-            } 
-            else if (spec.local.name !== spec.exported.name) {
+            } else if (spec.local.name !== spec.exported.name) {
               spec.shadow = spec.exported.name;
               if (declaredNames.has(spec.exported.name)) return false;
               return t.ImportSpecifier(t.Identifier(spec.exported.name), t.Identifier(spec.local.name));
@@ -664,7 +662,7 @@ function insertCapturesForImportAndExportDeclarations (path, options) {
           }).filter(Boolean), t.StringLiteral(stmt.source.value)),
           t.ExportNamedDeclaration(null, specifiers.map(spec => {
             if (spec.local.name === 'default' && spec.exported.name === 'default') {
-              return t.ExportSpecifier(t.Identifier( `__default${i}__`), t.Identifier('default'));
+              return t.ExportSpecifier(t.Identifier(`__default${i}__`), t.Identifier('default'));
             }
             declaredNames.add(spec.shadow);
             return t.ExportSpecifier(t.Identifier(spec.shadow), t.Identifier(spec.exported.name));
@@ -672,10 +670,7 @@ function insertCapturesForImportAndExportDeclarations (path, options) {
         ]);
 
         for (let spec of specifiers) {
-          if (spec.local.name === 'default' && spec.exported.name === 'default')
-            paths[0].insertAfter(assignExpr(options.captureObj, t.Identifier('default'), t.Identifier(`__default${i}__`), false));
-          else
-            paths[0].insertAfter(assignExpr(options.captureObj, t.Identifier(spec.exported.name), t.Identifier(spec.shadow), false));
+          if (spec.local.name === 'default' && spec.exported.name === 'default') { paths[0].insertAfter(assignExpr(options.captureObj, t.Identifier('default'), t.Identifier(`__default${i}__`), false)); } else { paths[0].insertAfter(assignExpr(options.captureObj, t.Identifier(spec.exported.name), t.Identifier(spec.shadow), false)); }
         }
 
         paths.forEach(path => path.skip());
@@ -864,7 +859,7 @@ export function replaceExportedVarDeclarations (path, moduleId, options) {
   }
 }
 
-export function replaceExportedNamespaces (path, moduleName, bundle, options) {
+export function replaceExportedNamespaces (path, moduleName, bundler, options) {
   // namespace that are directly imported or getting re-exported need to be chanelled through the module recorder
   const insertNodes = [];
   let i = 0;
@@ -931,8 +926,8 @@ export function getScopeFromPath (path) {
     classDecls: getClassDecls(path.scope),
     funcDecls: getFuncDecls(path.scope),
     refs: getRefs(path.scope),
-    varDecls: getVarDecls(path.scope),
-  }
+    varDecls: getVarDecls(path.scope)
+  };
 }
 
 function evalCodeTransform (path, state, options) {
