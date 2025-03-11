@@ -595,6 +595,7 @@ export default class LivelyRollup {
 
       const { code, map } = babel.transform(source, {
         sourceMaps: true,
+        compact: true,
         comments: false,
         plugins: [inlinePlugin]
       });
