@@ -640,29 +640,36 @@ function insertCapturesForImportAndExportDeclarations (path, options) {
 
       if (stmt.specifiers.length && stmt.source) {
         const specifiers = stmt.specifiers;
-        ([path] = path.replaceWithMultiple(babel.parse(`import { ${specifiers.map(spec => {
-          if (spec.local.name === 'default' && spec.exported.name === 'default') {
-            defaultImport = true;
-            return `default as __default${++i}__`;
-          } else if (spec.local.name !== spec.exported.name) {
-            spec.shadow = spec.exported.name;
-            return `${spec.local.name} as ${spec.exported.name}`;
-          } else {
-            spec.shadow = `__${spec.local.name}__`;
-            return `${spec.local.name} as ${spec.shadow}`;
-          }
-        }).join(',')} } from "${stmt.source.value}";
-        export { ${specifiers.map(spec => {
-          if (spec.local.name === 'default' && spec.exported.name === 'default') {
-            return '__default${i}__ as default';
-          }
-          declaredNames.add(spec.shadow);
-          return `${spec.shadow} as ${spec.exported.name}`;
-        }).filter(Boolean)} }
-        `).program.body));
-        // insert an import of default instead
-
-        // if (options.captureImports) return; // this will be handled by other callbacks
+        let paths = path.replaceWithMultiple([
+          t.ImportDeclaration(specifiers.map(spec => {
+            if (spec.local.name === 'default' && spec.exported.name === 'default') {
+              return t.ImportSpecifier(t.Identifier(`__default${++i}__`), t.Identifier('default'));
+            } else if (spec.local.name !== spec.exported.name  && spec.exported.name === 'default') {
+              spec.shadow = `__default${++i}__`;
+              return t.ImportSpecifier(t.Identifier(spec.shadow), t.Identifier(spec.local.name));
+            }
+            else if (spec.local.name !== spec.exported.name && spec.local.name === 'default') {
+              spec.shadow = spec.exported.name;
+              if (declaredNames.has(spec.exported.name)) return false;
+              return t.ImportSpecifier(t.Identifier(spec.exported.name), t.Identifier(spec.local.name));
+            } 
+            else if (spec.local.name !== spec.exported.name) {
+              spec.shadow = spec.exported.name;
+              if (declaredNames.has(spec.exported.name)) return false;
+              return t.ImportSpecifier(t.Identifier(spec.exported.name), t.Identifier(spec.local.name));
+            } else {
+              spec.shadow = `__${spec.local.name}__`;
+              return t.ImportSpecifier(t.Identifier(spec.shadow), t.Identifier(spec.local.name));
+            }
+          }).filter(Boolean), t.StringLiteral(stmt.source.value)),
+          t.ExportNamedDeclaration(null, specifiers.map(spec => {
+            if (spec.local.name === 'default' && spec.exported.name === 'default') {
+              return t.ExportSpecifier(t.Identifier( `__default${i}__`), t.Identifier('default'));
+            }
+            declaredNames.add(spec.shadow);
+            return t.ExportSpecifier(t.Identifier(spec.shadow), t.Identifier(spec.exported.name));
+          }).filter(Boolean))
+        ]);
 
         for (let spec of specifiers) {
           if (spec.local.name === 'default' && spec.exported.name === 'default')
