@@ -82,7 +82,58 @@ const ADVANCED_EXCLUDED_MODULES = [
 
 const baseURL = typeof System !== 'undefined' ? System.baseURL : ensureFolder(process.env.lv_next_dir || process.cwd());
 
-export function bulletProofNamespaces (code) {
+export function bulletProofNamespaces (code, chunkFileName, isResurrectionBuild, sourceMap = false) {
+  if (sourceMap) {
+    let { code: transformedCode, map } = babel.transform(code, {
+      sourceMaps: true,
+      comments: true,
+      compact: true,
+      plugins: [() => ({
+        visitor: {
+          Program (path) {
+            const functionBody = path.get('body.0.expression.arguments.1.body')
+            const [useStrictDirective] = functionBody.get('directives');
+            if (useStrictDirective) {
+              useStrictDirective.remove();
+              functionBody.unshiftContainer('body', babel.parse("var __contextModule__ = typeof module !== 'undefined' ? module : arguments[1];").program.body[0]);
+            }
+            if (isResurrectionBuild) {
+              path.get('body.0.expression.callee.object').replaceWith(t.Identifier('BootstrapSystem'));
+              path.unshiftContainer('body', babel.parse(`BootstrapSystem._currentFile = "${chunkFileName}";`).program.body[0]);
+            }
+          },
+          VariableDeclaration (path) {
+            let hasPureComment = false;
+            for (const declarator of path.node.declarations) {
+              const init = declarator.init;
+              if (!init) continue;
+              const leading = init.leadingComments;
+              if (Array.isArray(leading)) {
+                hasPureComment = leading.some(comment => {
+                  return comment.value.trim() === "#__PURE__";
+                });
+    
+                if (hasPureComment) {
+                  break;
+                }
+              }
+            }
+            if (!hasPureComment) return;
+            try {
+              const matchingGetter = path.get('declarations.0.init.arguments.0.properties').find(({ node: prop }) => prop?.key?.name === 'default' && prop.kind === 'get');
+              const [returnStmt] = matchingGetter.get('body.body');
+              if (!returnStmt?.isReturnStatement()) return;
+              matchingGetter.get('body').unshiftContainer('body', babel.parse(`if (typeof ${returnStmt.node.argument.name} === 'undefined') throw new Error('Module not yet initialized!');`).program.body[0])
+            } catch (err) {
+
+            }
+          }
+        }
+      })]
+    });
+    return { code: transformedCode, map }
+  }
+
   let rewrites = [];
   let parsed = ast.parse(code, { withComments: true });
   const pureComments = parsed.allComments.filter(c => c.text === '#__PURE__');
@@ -103,9 +154,13 @@ export function bulletProofNamespaces (code) {
     arr.sortBy(rewrites, ([node]) => node.start).forEach(([node, snippet]) => {
       code = code.slice(0, node.start + 1) + snippet + code.slice(node.start + 1);
     });
-    return code;
   }
-  return null;
+  if (isResurrectionBuild) {
+    // this messes up the source map
+    code = code.replace('System.register', `BootstrapSystem._currentFile = "${chunkFileName}";\nBootstrapSystem.register`);
+  }
+  code = code.replace("'use strict'", "var __contextModule__ = typeof module !== 'undefined' ? module : arguments[1];\n");
+  return { code };
 }
 
 /**
@@ -1117,15 +1172,7 @@ export default class LivelyRollup {
 
   async generateBundle (plugin, bundle, depsCode, importMap, opts) {
     const modules = Object.values(bundle);
-    modules.forEach(chunk => {
-      if (chunk.code) {
-        if (this.isResurrectionBuild) {
-          chunk.code = chunk.code.replace('System.register', `BootstrapSystem._currentFile = "${chunk.fileName}";\nBootstrapSystem.register`);
-        }
-        chunk.code = chunk.code.replace("'use strict'", "var __contextModule__ = typeof module !== 'undefined' ? module : arguments[1];\n");
-      }
-    });
-    if (this.minify && opts.format !== 'esm') {
+    if (this.minify && opts.format !== 'esm' && !this.sourceMap) {
       modules.forEach((chunk, i) => {
         chunk.instrumentedCode = `"${separator}",${i};\n` + chunk.code;
       });
