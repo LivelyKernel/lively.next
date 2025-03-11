@@ -8,7 +8,7 @@ import PresetEnv from '@babel/preset-env';
 
 const verbose = process.argv[2] === '--verbose';
 const minify = !process.env.CI;
-const sourceMap = true;
+const sourceMap = !process.env.CI;
 try {
   const build = await rollup({
     input: './src/landing-page.cp.js',
