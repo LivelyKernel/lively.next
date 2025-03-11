@@ -569,29 +569,29 @@ export default class LivelyRollup {
     const needsLoadInstrumentation = this.needsDynamicLoadTransform(source);
     const self = this;
 
-    function inlinePlugin () {
-      return {
-        visitor: {
-          Program (path, state) {
-            const source = self.moduleSources[id];
-            if (!source) return;
-            if (id === ROOT_ID && !needsLoadInstrumentation) return;
-            if (needsLoadInstrumentation) {
-              self.babel_instrumentDynamicLoads(path, state, id);
-            }
-            if (id === ROOT_ID) return;
-            // this capturing stuff needs to behave differently when we have dynamic imports. Why??
-            const instrumentClasses = self.needsClassInstrumentation(id, source);
-            if (instrumentClasses || self.needsScopeToBeCaptured(id, null, source)) {
-              const sourceHash = string.hashCode(source); // why cant we use the original source here? because other plugins already scrambled the code...
-              self.babel_captureScope(path, id, sourceHash, instrumentClasses);
+    if (this.sourceMap) {
+
+      function inlinePlugin () {
+        return {
+          visitor: {
+            Program (path, state) {
+              const source = self.moduleSources[id];
+              if (!source) return;
+              if (id === ROOT_ID && !needsLoadInstrumentation) return;
+              if (needsLoadInstrumentation) {
+                self.babel_instrumentDynamicLoads(path, state, id);
+              }
+              if (id === ROOT_ID) return;
+              // this capturing stuff needs to behave differently when we have dynamic imports. Why??
+              const instrumentClasses = self.needsClassInstrumentation(id, source);
+              if (instrumentClasses || self.needsScopeToBeCaptured(id, null, source)) {
+                const sourceHash = string.hashCode(source); // why cant we use the original source here? because other plugins already scrambled the code...
+                self.babel_captureScope(path, id, sourceHash, instrumentClasses);
+              }
             }
           }
-        }
-      };
-    }
-
-    if (this.sourceMap) {
+        };
+      }
 
       const { code, map } = babel.transform(source, {
         sourceMaps: true,
