@@ -622,7 +622,7 @@ function insertCapturesForImportAndExportDeclarations (path, options) {
     ExportDefaultDeclaration (path) {
       const stmt = path.node;
       if (!stmt.declaration) return;
-      if (stmt.declaration.type.match(/StringLiteral|NumericLiteral/)) {
+      if (stmt.declaration.type.match(/StringLiteral|NumericLiteral|DecimalLiteral/)) {
         // default export of an unnamed primitive value, i.e.
         // "export default "foo"", "export default 27;"
         const decl = stmt.declaration;
