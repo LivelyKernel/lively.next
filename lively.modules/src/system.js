@@ -217,6 +217,8 @@ function prepareSystem (System, config) {
     ? config.useModuleTranslationCache
     : !urlQuery().noModuleCache;
   System.useModuleTranslationCache = useModuleTranslationCache;
+  
+  System.importMapCache = new Map();
 
   if (config._nodeRequire) System._nodeRequire = config._nodeRequire;
 
@@ -255,7 +257,7 @@ function prepareSystem (System, config) {
     fetch: function (load, proceed) {
       const s = this.moduleSources?.[load.name];
       if (s) return s;
-      if (this.transpiler !== 'lively.transpiler') return proceed(load);
+      if (this.transpiler !== 'lively.transpiler.babel') return proceed(load);
       return fetchResource.call(this, proceed, load);
     },
     translate: function (load, opts) {
@@ -317,11 +319,11 @@ function prepareSystem (System, config) {
 
   if (!config.transpiler && System.transpiler === 'traceur') {
     const initialSystem = GLOBAL.System;
-    if (initialSystem.transpiler === 'lively.transpiler') {
-      System.set('lively.transpiler', initialSystem.get('lively.transpiler'));
+    if (initialSystem.transpiler === 'lively.transpiler.babel') {
+      System.set('lively.transpiler.babel', initialSystem.get('lively.transpiler.babel'));
       System._loader.transpilerPromise = initialSystem._loader.transpilerPromise;
       System.config({
-        transpiler: 'lively.transpiler',
+        transpiler: 'lively.transpiler.babel',
         babelOptions: Object.assign(initialSystem.babelOptions || {}, config.babelOptions)
       });
     } else {
@@ -395,9 +397,9 @@ function preNormalize (System, name, parent) {
       mappedObject = map?.[name] || System.map[name];
     }
 
-    if (importMap) {
+    if (importMap || (importMap = System.importMapCache.get(parent))) {
       let remapped = importMap.imports?.[name];
-      let scope, prefix;
+      let scope;
       if (scope = Object.entries(importMap.scopes)
         .filter(([k, v]) => parent.startsWith(k))
         .sort((a, b) => a[0].length - b[0].length)
@@ -408,7 +410,11 @@ function preNormalize (System, name, parent) {
       if (remapped) {
         name = remapped;
         if (mappedObject) mappedObject = name;
-        packageRegistry.moduleUrlToPkg.set(name, pkg);
+        const cachedImportMap = System.importMapCache.get(name);
+        if (cachedImportMap) {
+          if (cachedImportMap !== importMap)
+            System.importMapCache.set(name, obj.deepMerge(cachedImportMap, importMap));
+        } else System.importMapCache.set(name, importMap)
       }
     }
 
@@ -430,8 +436,8 @@ function preNormalize (System, name, parent) {
       name = resolved;
     }
 
-    if (pkg && importMap && !packageRegistry.moduleUrlToPkg.get(name)) {
-      packageRegistry.moduleUrlToPkg.set(name, pkg);
+    if (importMap && !System.importMapCache.get(name)) {
+      System.importMapCache.set(name, importMap);
     }
   }
 
@@ -471,18 +477,7 @@ function postNormalize (System, normalizeResult, isSync) {
     }
   }
 
-  // Fix issue with accidentally adding .js
-  const jsonPath = normalizeResult.match(jsonJsExtRe);
-  // if (!jsExtRe.test(normalizeResult) &&
-  //   !jsxExtRe.test(normalizeResult) &&
-  //   !jsonExtRe.test(normalizeResult) &&
-  //   !nodeModRe.test(normalizeResult) &&
-  //   !nodeExtRe.test(normalizeResult)) {
-  //   // make sure this is not a package name
-  //   normalizeResult += '.js';
-  // }
-  System.debug && console.log(`>> [postNormalize] ${jsonPath ? jsonPath[1] : normalizeResult}`);
-  return jsonPath ? jsonPath[1] : normalizeResult;
+  return normalizeResult;
 }
 
 async function checkExistence (url, System) {
@@ -498,7 +493,7 @@ async function checkExistence (url, System) {
 
 async function normalizeHook (proceed, name, parent, parentAddress) {
   const System = this;
-  if (System.transpiler !== 'lively.transpiler') return await proceed(name, parent, true);
+  if (System.transpiler !== 'lively.transpiler.babel') return await proceed(name, parent, true);
   if (parent && name === 'cjs') {
     return 'cjs';
   }

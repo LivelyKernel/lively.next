@@ -72,7 +72,7 @@ function detectFormatFromSource (source) {
 
 }
 
-async function normalizeFileName (fileName) {
+function normalizeFileName (fileName) {
   if (isAlreadyResolved(fileName)) return fileName;
   return require.resolve(fileName);
 }
@@ -215,6 +215,10 @@ function supportingPlugins(context = 'node', self) {
         }
       }
     },
+    {
+       name: 'lively-resolve',
+       resolveId: (id, importer) => self.resolveId(id, importer)
+    }, // but only do resolutions so that polyfills does not screw us up
     context == 'browser' && nodePolyfills(), // only if we bundle for the browser
     commonjs({
       sourceMap: false,
