@@ -13,7 +13,7 @@ import { timeToRunN } from './function.js';
 /**
  * An interval defining an upper and a lower bound.
  * @typedef { number[] } Interval
- * @property {number} 0 - The lower bound of the interval. 
+ * @property {number} 0 - The lower bound of the interval.
  * @property {number} 1 - The upper bound of the interval.
  */
 
@@ -91,7 +91,7 @@ function compare (a, b) {
  *   interval.coalesce([3,6], [4,5]) // => [3,6]
  */
 function coalesce (interval1, interval2, optMergeCallback) {
-  const cmpResult = this.compare(interval1, interval2);
+  const cmpResult = compare(interval1, interval2);
   let temp;
   switch (cmpResult) {
     case -3:
@@ -134,7 +134,7 @@ function coalesceOverlapping (intervals, optMergeCallback) {
     }
     condensed.push(ival);
   }
-  return this.sort(condensed);
+  return sort(condensed);
 }
 
 /**
@@ -181,7 +181,7 @@ function mergeOverlapping (intervalsA, intervalsB, mergeFunc) {
 function intervalsInRangeDo (start, end, intervals, iterator, mergeFunc, context) {
   context = context || GLOB;
   // need to be sorted for the algorithm below
-  intervals = this.sort(intervals);
+  intervals = sort(intervals);
   let nextInterval; const collected = [];
   // merged intervals are already sorted, simply "negate" the interval array;
   while ((nextInterval = intervals.shift())) {
