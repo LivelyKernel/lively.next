@@ -85,7 +85,7 @@ function classTemplate (className, superClassName, methodString, classMethodStri
       return this[Symbol.for("lively-instance-initialize")].apply(this, arguments);
     }
   };${useClassHolder ? '' : '\nvar __lively_class__ = Foo;'}
-  if (Object.isFrozen(__lively_classholder__)) {
+  if (Object.isFrozen(__lively_classholder__) || Object.isFrozen(__lively_class__.prototype)) {
     return __lively_class__;
   }
   return _createOrExtendClass(__lively_class__, superclass, ${methodString}, ${classMethodString}, ${ useClassHolder ? '__lively_classholder__' : 'null'}, ${moduleMeta}${pos});
@@ -592,11 +592,17 @@ bar;`);
 
       testVarTfm('re-export named',
         'export { name1, name2 } from "foo";',
-        'export {\n  name1,\n  name2\n} from "foo";');
+        `import { name1 as __name1__, name2 as __name2__ } from "foo";
+_rec.name2 = __name2__;
+_rec.name1 = __name1__;
+export { __name1__ as name1, __name2__ as name2 };`);
 
       testVarTfm('export from named',
         'export { name1 as foo1, name2 as bar2 } from "foo";',
-        'export {\n  name1 as foo1,\n  name2 as bar2\n} from "foo";');
+        `import { name1 as foo1, name2 as bar2 } from "foo";
+_rec.bar2 = bar2;
+_rec.foo1 = foo1;
+export { foo1, bar2 };`);
 
       testVarTfm('export bug 1',
         'foo();\nexport function a() {}\nexport function b() {}',
@@ -610,7 +616,9 @@ bar;`);
                '_rec.b = b;\n' +
                'function c() {\n}\n' +
                '_rec.c = c;\n' +
-               'export {\n  a\n} from "./package-commands.js";\n' +
+               'import {\n  a as __a__\n} from "./package-commands.js";\n' +
+               '_rec.a = __a__;\n' +
+               'export {\n  __a__ as a\n};\n' +
                'export {\n  b\n};\n' +
                'export {\n  c\n};');
     });

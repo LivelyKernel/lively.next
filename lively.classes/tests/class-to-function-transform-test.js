@@ -32,7 +32,7 @@ function classTemplate (className, superClassName, methodString, classMethodStri
       return this[Symbol.for("lively-instance-initialize")].apply(this, arguments);
     }
   };${(useClassHolder || !className) ? '' : '\n  var __lively_class__ = Foo;'}
-  if (Object.isFrozen(__lively_classholder__)) {
+  if (Object.isFrozen(__lively_classholder__) || Object.isFrozen(__lively_class__.prototype)) {
     return __lively_class__;
   }
   return initializeClass(__lively_class__, superclass, ${methodString}, ${classMethodString}, ${ useClassHolder ? '__lively_classholder__' : 'null'}, ${moduleMeta}${pos});
