@@ -8,6 +8,7 @@ import { Icons } from '../text/icons.js';
 
 const skippedValue = Symbol.for('lively.skip-property');
 const PROPS_TO_RESET = ['dropShadow', 'fill', 'opacity', 'borderWidth', 'fontColor'];
+const TRANSFORM_PROPS = ['extent', 'position', 'rotation', 'scale', 'lineHeight'];
 const TEXT_TYPES = ['text', 'label', Text, Label];
 const expressionSerializer = new ExpressionSerializer();
 
@@ -1196,7 +1197,6 @@ export class StylePolicy {
    */
   synthesizeSubSpec (submorphNameInPolicyContext, ownerOfScope, previousTarget) {
     const isRoot = !submorphNameInPolicyContext;
-    const transformProps = ['extent', 'position', 'rotation', 'scale', 'lineHeight'];
     let subSpec = this.getSubSpecFor(submorphNameInPolicyContext) || {}; // get the sub spec for the submorphInPolicyContext
 
     if (subSpec.isPolicy) {
@@ -1225,7 +1225,7 @@ export class StylePolicy {
     }
 
     if (isRoot) {
-      for (let prop of transformProps) {
+      for (let prop of TRANSFORM_PROPS) {
         if (parentSpec[prop]) delete nextLevelSpec[prop];
       }
     }
