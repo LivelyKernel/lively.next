@@ -12,6 +12,7 @@ import {
   writeFileSync as node_writeFileSync,
   mkdirSync as node_mkdirSync
 } from 'fs';
+import { getSystem } from '../index.js';
 
 import { obj } from 'lively.lang';
 
@@ -127,10 +128,21 @@ function runInIframe (id, func) {
     .catch(err => { iframe && iframe.parentNode.removeChild(iframe); throw err; });
 }
 
+function prepareSystem (name, testProjectDir) {
+  const S = getSystem(name, { baseURL: testProjectDir });
+  S.set('lively.transpiler.babel', System.get('lively.transpiler.babel'));
+  S.config({ transpiler: 'lively.transpiler.babel' });
+  S.translate = async (load, opts) => await System.translate.bind(S)(load, opts);
+  S.useModuleTranslationCache = false;
+  S.babelOptions = System.babelOptions;
+  return S;
+}
+
 export {
   createFiles, removeDir,
   modifyFile, modifyJSON, readFile, writeFile, removeFile,
   noTrailingSlash,
   inspect,
-  runInIframe
+  runInIframe,
+  prepareSystem
 };
