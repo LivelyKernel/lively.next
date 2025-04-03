@@ -605,8 +605,8 @@ function insertCapturesForImportAndExportDeclarations (path, options) {
     path.insertAfter(stmt.declaration.declarations.map(decl => {
       let assignVal = decl.id;
       if (options.declarationWrapper) {
-        const alreadyWrapped = decl.init.callee &&
-                            decl.init.callee.name === options.declarationWrapper.name;
+        const alreadyWrapped = decl.init?.callee &&
+                            decl.init?.callee.name === options.declarationWrapper.name;
         if (!alreadyWrapped) {
           assignVal = declarationWrapperCall(
             options.declarationWrapper,
@@ -683,7 +683,7 @@ function insertCapturesForImportAndExportDeclarations (path, options) {
         // default export of an unnamed primitive value, i.e.
         // "export default "foo"", "export default 27;"
         const decl = stmt.declaration;
-        const refId = generateUniqueName(declaredNames, '$' + decl.extra.raw.split('"').join(''));
+        const refId = generateUniqueName(declaredNames, '$exportedLiteral');
         path.insertBefore(assignExpr(options.captureObj, t.Identifier(refId), stmt.declaration, false));
         path.get('declaration').replaceWith(t.Identifier(refId));
       } else if (stmt.declaration.declarations) {
