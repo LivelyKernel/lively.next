@@ -546,6 +546,12 @@ class ModuleInterface {
         value: undefined
       },
 
+      process: {
+        configurable: true,
+        writable: true,
+        value: S.global.process
+      },
+
       System: { configurable: true, writable: true, value: S },
 
       __currentLivelyModule: { value: self },
