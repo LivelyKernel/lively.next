@@ -1,7 +1,7 @@
 /* global require,process,__dirname, module */
 let path = require('path');
 let fs = require('fs');
-let { ensurePackageMap, packageDirsFromEnv } = require('./flatn-cjs.js');
+let { ensurePackageMap, packageDirsFromEnv, resolveExportMapping } = require('./flatn-cjs.js');
 
 process.execPath = process.argv[0] = path.join(__dirname, 'bin/node');
 
@@ -73,31 +73,6 @@ function depMap (packageConfig) {
       Object.assign(deps, packageConfig[field]);
       return deps;
     }, {});
-}
-
-function resolveExportMapping(mapping, context) {
-  if (!mapping) throw Error('Cannot resolve undefined mapping!');
-  if (typeof mapping === 'string') return mapping;
-  let adjustedPath;
-  if (Array.isArray(mapping)) {
-    for (let subMapping of mapping) {
-      adjustedPath = resolveExportMapping(subMapping, context);
-      if (adjustedPath) {
-        mapping = adjustedPath;
-        break; 
-      }
-    }
-  }
-  if (typeof mapping === 'object') {
-    switch (context) {
-      case 'node-require': adjustedPath = mapping.node || mapping.require || mapping.default; break;
-      case 'node-import': adjustedPath = mapping.node || mapping.import || mapping.default; break;
-      default: adjustedPath = mapping.default;
-    }
-    return resolveExportMapping(adjustedPath, context);
-  }
-  
-  return adjustedPath;
 }
 
 /**
