@@ -245,6 +245,8 @@ export async function customTranslate (load) {
               '[lively.modules customTranslate] loaded %s from filesystem cache after %sms',
               load.name,
               Date.now() - start);
+          
+          if (stored.sourceMap) meta.sourceMap = stored.sourceMap;
           return Promise.resolve(stored.source);
         }
       }

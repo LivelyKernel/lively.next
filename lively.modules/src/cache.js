@@ -77,10 +77,12 @@ export class NodeModuleTranslationCache extends ModuleTranslationCache {
     const { birthtime: timestamp } = await r.stat();
     const source = await r.read();
     const hash = await this.moduleCacheDir.join(fpath + '/.hash_' + fname).read();
-    return { source, timestamp, hash };
+    const sourceMap = await this.moduleCacheDir.join(fpath + '/.source_map_' + fname).readJson();
+    const exports = await this.moduleCacheDir.join(fpath + '/.exports_' + fname).readJson();
+      return { source, timestamp, hash, sourceMap, exports };
   }
 
-  async cacheModuleSource (moduleId, hash, source) {
+  async cacheModuleSource (moduleId, hash, source, exports = [], sourceMap = {}) {
     if (moduleId.endsWith('package.json')) return;
     moduleId = moduleId.replace('file://', '');
     const fname = this.getFileName(moduleId);
@@ -88,6 +90,10 @@ export class NodeModuleTranslationCache extends ModuleTranslationCache {
     await this.ensurePath(fpath);
     await this.moduleCacheDir.join(moduleId).write(source);
     await this.moduleCacheDir.join(fpath + '/.hash_' + fname).write(hash);
+    await this.moduleCacheDir.join(fpath + '/.source_map_' + fname).writeJson(sourceMap);
+    await this.moduleCacheDir.join(fpath + '/.exports_' + fname).writeJson(exports.map(({
+      type, exported, local, fromModule
+    }) => ({ type, exported, local, fromModule })));
   }
 
   async deleteCachedData (moduleId) {
