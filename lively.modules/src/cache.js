@@ -76,9 +76,9 @@ export class NodeModuleTranslationCache extends ModuleTranslationCache {
     if (!await r.exists()) return null;
     const { birthtime: timestamp } = await r.stat();
     const source = await r.read();
-    const hash = await this.moduleCacheDir.join(fpath + '/.hash_' + fname).read();
-    const sourceMap = await this.moduleCacheDir.join(fpath + '/.source_map_' + fname).readJson();
-    const exports = await this.moduleCacheDir.join(fpath + '/.exports_' + fname).readJson();
+    const hash = await this.moduleCacheDir.join(fpath).join('.hash_' + fname).read();
+    const sourceMap = await this.moduleCacheDir.join(fpath).join('.source_map_' + fname).readJson();
+    const exports = await this.moduleCacheDir.join(fpath).join('.exports_' + fname).readJson();
       return { source, timestamp, hash, sourceMap, exports };
   }
 
@@ -89,9 +89,9 @@ export class NodeModuleTranslationCache extends ModuleTranslationCache {
     const fpath = moduleId.replace(fname, '');
     await this.ensurePath(fpath);
     await this.moduleCacheDir.join(moduleId).write(source);
-    await this.moduleCacheDir.join(fpath + '/.hash_' + fname).write(hash);
-    await this.moduleCacheDir.join(fpath + '/.source_map_' + fname).writeJson(sourceMap);
-    await this.moduleCacheDir.join(fpath + '/.exports_' + fname).writeJson(exports.map(({
+    await this.moduleCacheDir.join(fpath).join('.hash_' + fname).write(hash);
+    await this.moduleCacheDir.join(fpath).join('.source_map_' + fname).writeJson(sourceMap);
+    await this.moduleCacheDir.join(fpath).join('.exports_' + fname).writeJson(exports.map(({
       type, exported, local, fromModule
     }) => ({ type, exported, local, fromModule })));
   }
