@@ -142,7 +142,7 @@ class Package {
     this.version = config.version;
     this.dependencies = config.dependencies || {};
     this.devDependencies = config.devDependencies || {};
-    this.main = config.main || 'index.js';
+    this.main = config.main;
     this.systemjs = config.systemjs;
     this.lively = config.lively;
     this.author = config.author;
