@@ -588,7 +588,9 @@ function decanonicalizeHook (proceed, name, parent, isPlugin) {
   }
   let stage2 = proceed(stage1, parent, isPlugin);
   if (stage1.endsWith('/')) {
-    const main = this.CONFIG.packages[stage1.replace(/\/*$/, '')]?.main;
+    const isNodePath = stage2.startsWith('file:');
+    let main = this.CONFIG.packages[(isNodePath ? 'file://' : '') + stage1.replace(/\/*$/, '')]?.main || 'index.js';
+    if (main?.startsWith('./')) main = main.replace('./', '');
     // SystemJS 0.21 has appended the main module, which is something we do not like
     // if we decanonicalize a '/' terminated url
     if (stage2.endsWith(main)) stage2 = stage2.replace(main, '');
