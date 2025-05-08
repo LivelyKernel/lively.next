@@ -1191,8 +1191,8 @@ function rewriteToRegisterModuleToCaptureSetters (path, state, options) {
   if (registerCall.node.callee.property.name !== 'register') {
     throw new Error(`rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call: ${printAst()}...`);
   }
-  const registerBody = registerCall.get('arguments.1.body.body');
-  const registerReturn = arr.last(registerBody);
+  const registerBody = registerCall.get('arguments.1.body');
+  const registerReturn = arr.last(registerBody.get('body'));
 
   if (registerReturn.node.type !== 'ReturnStatement') {
     throw new Error(`rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call, at return statement: ${printAst()}...`);
@@ -1206,6 +1206,7 @@ function rewriteToRegisterModuleToCaptureSetters (path, state, options) {
     throw new Error(`rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call, at finding execute: ${printAst()}...`);
   }
 
+  registerBody.get('directives').find(d => d.get('value.value').node === 'use strict')?.remove(); // remove the strict directive that systemjs appears to insert
   path.get('directives').find(d => d.get('value.value').node === 'format esm')?.remove(); // remove esm directive if still present
 
   // in each setter function: intercept the assignments to local vars and inject capture object
@@ -1245,7 +1246,7 @@ function rewriteToRegisterModuleToCaptureSetters (path, state, options) {
                          stmt.declarations[0].id.name === options.captureObj.name);
 
   if (captureInitialize) {
-    registerBody[0].insertAfter(captureInitialize.node);
+    registerBody.get('body.0').insertAfter(captureInitialize.node);
     captureInitialize.remove();
   }
 
@@ -1260,7 +1261,7 @@ function rewriteToRegisterModuleToCaptureSetters (path, state, options) {
                            stmt.declarations[0].id &&
                            stmt.declarations[0].id.name === options.sourceAccessorName);
     if (origSourceInitialize) {
-      registerBody[0].insertAfter(origSourceInitialize.node);
+      registerBody.get('body.0').insertAfter(origSourceInitialize.node);
       origSourceInitialize.remove();
     }
   }
