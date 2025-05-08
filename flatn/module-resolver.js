@@ -1,7 +1,7 @@
 /* global require,process,__dirname, module */
 let path = require('path');
 let fs = require('fs');
-let { ensurePackageMap, packageDirsFromEnv, resolveExportMapping } = require('./flatn-cjs.js');
+let { ensurePackageMap, packageDirsFromEnv, resolveExportMapping, resolveViaImportMap } = require('./flatn-cjs.js');
 
 process.execPath = process.argv[0] = path.join(__dirname, 'bin/node');
 
