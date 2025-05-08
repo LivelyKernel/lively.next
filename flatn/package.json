@@ -17,7 +17,7 @@
     "node-gyp": "9.0.0",
     "babel-plugin-transform-es2015-modules-systemjs": "^6.19.0",
     "node-fetch": "3.2.10",
-    "rollup": "2.68.0",
+    "@rollup/wasm-node": "4.27.3",
     "@rollup/plugin-commonjs": "22.0.0",
     "minimist": "1.2.6",
     "semver": "5.7.2",

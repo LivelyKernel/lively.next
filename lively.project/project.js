@@ -135,7 +135,7 @@ export class Project {
       // TODO: How do we manage the necessity to upgrade this nicely?
       dependencies: {
         '@rollup/plugin-json': '4.1.0',
-        rollup: '^2.70.2',
+        '@rollup/wasm-node': '4.27.3',
         'rollup-plugin-export-default': '1.4.0',
         'rollup-plugin-polyfill-node': '0.9.0'
       },
