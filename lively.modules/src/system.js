@@ -8,7 +8,7 @@ import { wrapResource, fetchResource } from './resource.js';
 import { emit } from 'lively.notifications';
 import { join, urlResolve } from './url-helpers.js';
 import { resource } from 'lively.resources';
-import { resolveExportMapping, resolveImportMapping } from 'flatn/helpers.mjs';
+import { resolveExportMapping, resolveImportMapping, resolveViaImportMap } from 'flatn/helpers.mjs';
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 const isNode = System.get('@system-env').node;
@@ -405,27 +405,6 @@ function preNormalize (System, name, parent) {
       mappedObject = map?.[name] || System.map[name];
     }
 
-    if (importMap || (importMap = System.importMapCache.get(parent))) {
-      let remapped = importMap.imports?.[name];
-      let scope;
-      if (scope = Object.entries(importMap.scopes)
-        .filter(([k, v]) => parent.startsWith(k))
-        .sort((a, b) => a[0].length - b[0].length)
-        .map(([prefix, scope]) => scope)
-        .reduce((a, b) => ({ ...a, ...b }), false)) {
-        if (scope[name]) remapped = scope[name];
-      }
-      if (remapped) {
-        name = remapped;
-        if (mappedObject) mappedObject = name;
-        const cachedImportMap = System.importMapCache.get(name);
-        if (cachedImportMap) {
-          if (cachedImportMap !== importMap)
-            System.importMapCache.set(name, obj.deepMerge(cachedImportMap, importMap));
-        } else System.importMapCache.set(name, importMap)
-      }
-    }
-
     if (mappedObject) {
       if (typeof mappedObject === 'object') {
         mappedObject = normalize_doMapWithObject(mappedObject, pkg, System);
@@ -436,6 +415,16 @@ function preNormalize (System, name, parent) {
       // relative to package
       if (name.startsWith('.')) name = urlResolve(join(packageURL, name));
     }
+
+    if (importMap) {
+      let remapped = resolveViaImportMap(name, importMap, parent);
+      if (remapped) {
+        name = remapped;
+        packageRegistry.moduleUrlToPkg.set(name, pkg);
+      }
+    }
+
+    if (!importMap && name.startsWith('node:')) name = '@node/' + name.slice(5); // some jspm bullshit
 
     let resolved = packageRegistry.resolvePath(name, parent);
     if (resolved) {
