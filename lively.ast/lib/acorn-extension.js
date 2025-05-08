@@ -1,6 +1,6 @@
 import { obj, arr, string, Path } from 'lively.lang';
 import { withMozillaAstDo } from './mozilla-ast-visitor-interface.js';
-import _Decorators from './acorn-decorators.cjs';
+import Decorators from './acorn-decorators.mjs';
 import _ClassFields from 'acorn-class-fields';
 import _StaticClassFeatures from 'acorn-static-class-features';
 import _PrivateMethods from 'acorn-private-methods';
@@ -21,17 +21,15 @@ const isNode = typeof System !== 'undefined'
   ? System.get('@system-env').node
   : false;
 
-let Decorators, ClassFields, StaticClassFeatures, PrivateMethods;
+let ClassFields, StaticClassFeatures, PrivateMethods;
 if (isNode) {
   // we need to utilize the native require here to bypass the source transform of the class
   // we can not use the native import, since that is asynchronous.
   // top level import is causing class instrumentation
-  Decorators = _ClassFields ? _Decorators : System._nodeRequire('lively.ast/lib/acorn-decorators.cjs');
   ClassFields = _ClassFields || System._nodeRequire('acorn-class-fields');
   StaticClassFeatures = _StaticClassFeatures || System._nodeRequire('acorn-static-class-features');
   PrivateMethods = _PrivateMethods || System._nodeRequire('acorn-private-methods');
 } else {
-  Decorators = _Decorators;
   ClassFields = _ClassFields;
   StaticClassFeatures = _StaticClassFeatures;
   PrivateMethods = _PrivateMethods;
