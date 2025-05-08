@@ -28,7 +28,7 @@ import { promise } from 'lively.lang';
 import { setupLively2Lively, setupLivelyShell } from 'lively.morphic/world-loading.js';
 import { GitHubAPIWrapper } from 'lively.git';
 import { generateKeyPair } from 'lively.git/js-keygen/js-keygen.js';
-import * as semver from 'esm://cache/semver';
+import * as semver from 'semver';
 
 export const repositoryOwnerAndNameRegex = /\.com\/(.+)\/(.*)/;
 const fontCSSWarningString = `/*\nDO NOT CHANGE THE CONTENTS OF THIS FILE!
