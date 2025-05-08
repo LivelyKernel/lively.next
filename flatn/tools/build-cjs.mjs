@@ -1,5 +1,5 @@
 /* global global, process */
-import { rollup } from 'rollup';
+import { rollup } from '@rollup/wasm-node';
 import commonjs from '@rollup/plugin-commonjs';
 import { flatnResolve } from '../module-resolver.js';
 
