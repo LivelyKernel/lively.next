@@ -22,13 +22,9 @@
     "lively.resources": "https://github.com/LivelyKernel/lively.resources",
     "lively.shell": "https://github.com/LivelyKernel/lively.shell",
     "lively.lang": "^1.0.0",
-    "prettier": "1.18.2"
-  },
-  "systemjs": {
-    "map": {
-      "semver": "esm://cache/semver",
-      "mermaid-it-markdown": "esm://run/mermaid-it-markdown"
-    }
+    "prettier": "1.18.2",
+    "semver": "5.3.0",
+    "mermaid-it-markdown": "1.0.8"
   },
   "devDependencies": {
     "mocha-es6": "^0.5"
