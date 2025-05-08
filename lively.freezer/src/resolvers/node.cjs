@@ -173,12 +173,6 @@ function supportingPlugins(context = 'node', self) {
   	       return code.replaceAll(/\s(System|this)._nodeRequire\(/g, ' require(');
       }
     },
-    context == 'browser' && {
-       name: 'node-prefix-remover',
-       resolveId(id, importer, options) {
-         return this.resolve(id.replace('node:', ''), importer, { skipSelf: true, ...options });       
-       }
-    },
     context == 'node' && {
       // source-map and related packages are written in AMD format
       // we transform this here to ESM in order to be properly consumed by rollup. 
