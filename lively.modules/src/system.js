@@ -554,7 +554,6 @@ async function normalizeHook (proceed, name, parent, parentAddress) {
   }
   if (name === 'lively.fetch') return name;
   if (name === '@system-env') return name;
-  if (name.startsWith('node:')) name = '@node/' + name.slice(5); // some jspm bullshit
   const stage1 = preNormalize(System, name, parent);
   const stage2 = await proceed(stage1, parent, true);
   let stage3 = postNormalize(System, stage2 || stage1, false);
