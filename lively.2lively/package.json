@@ -26,7 +26,6 @@
   "systemjs": {
     "map": {
       "socket.io-client": {
-        "~node": "esm://cache/socket.io-client@4.4.1",
         "node": "@empty"
       }
     },

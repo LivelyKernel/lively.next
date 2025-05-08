@@ -49,12 +49,10 @@
     "main": "index.js",
     "map": {
       "pouchdb": {
-        "node": "pouchdb/lib/index.js",
-        "~node": "esm://cache/pouchdb@7.2.1"
+        "node": "pouchdb/lib/index.js"
       },
       "pouchdb-adapter-memory": {
-        "node": "./dist/pouchdb-adapter-mem.js",
-        "~node": "esm://cache/pouchdb-adapter-memory@7.2.1"
+        "node": "./dist/pouchdb-adapter-mem.js"
       }
     }
   }
