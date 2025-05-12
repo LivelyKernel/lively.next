@@ -7,6 +7,7 @@ import "socket.io";
 import util from 'node:util';
 import winston from "winston";
 import { setupSystem } from "lively.installer";
+import { Generator } from "@jspm/generator";
 
 const defaultServerDir = process.cwd();
 var livelySystem;
@@ -65,6 +66,7 @@ export default async function start(hostname, port, configFile, rootDirectory, s
      })
 
     // 2. this loads and starts the server
+    .then(() => livelySystem.set('@jspm_generator', livelySystem.newModule({ default: Generator })))
     .then(() => console.log(`[lively.server] ${step++}. starting server`))
     .then(() => livelySystem.import(config.serverDir + "/server.js"))
     .then(serverMod => startServer(serverMod, config))
