@@ -4,6 +4,7 @@ import { exec } from "./shell-exec.js";
 import { Package } from "./package.js";
 import { resource } from 'lively.resources';
 import { promise, string } from 'lively.lang';
+import { Generator } from "@jspm/generator";
 
 var modules, join, getPackageSpec, readPackageSpec;
 // var baseDir = "/home/lively/lively-web.org/lively.next/";
@@ -26,7 +27,8 @@ export async function install(baseDir, dependenciesDir, verbose) {
       step6_setupObjectDB = true,
       step6_syncWithObjectDB = false,
       step7_setupAssets = true,
-      step8_runPackageBuildScripts = false;
+      step8_runPackageBuildScripts = false,
+      step9_createImportMap = true;
 
   try {
 
@@ -161,8 +163,9 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // ObjectDB init
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+    const System = await setupSystem(baseDir);
+
     if (step6_setupObjectDB) {
-      await setupSystem(baseDir);
       await setupObjectDB(baseDir, packageMap);
     }
 
@@ -170,7 +173,6 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // ObjectDB sync
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     if (step6_syncWithObjectDB) {
-      await setupSystem(baseDir);
       await replicateObjectDB(baseDir);
     }
 
@@ -212,6 +214,16 @@ export async function install(baseDir, dependenciesDir, verbose) {
         } else {
           await exec(`ln -sf ${from.path()} ${to.path()}`);
         }
+      }
+    }
+
+    // the paths need to be updated now, so that we can properly resolve installed deps
+    if (step9_createImportMap) {
+      System.set('@jspm_generator', System.newModule({ default: Generator }));
+      const { generateImportMap } = await System.import('lively.server/plugins/lib-lookup.js');
+      for (let p of packages) {
+        console.log(`generating import map of ${p.name}`);
+        await generateImportMap(p.name);
       }
     }
 
