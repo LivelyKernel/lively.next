@@ -1,7 +1,7 @@
 /* global process, require, module */
 const { findPackageConfig } = require('flatn/flatn-cjs.js');
 const babel = require('@babel/core');
-const { flatnResolve, findPackagePathForModule } = require('flatn/module-resolver.js');
+const { flatnResolve, findPackagePathForModule, findPackageConfig: findPackageConfigBrowser } = require('flatn/module-resolver.js');
 const path = require('node:path');
 const fs = require('node:fs');
 const { builtinModules } = require('node:module');
@@ -88,11 +88,11 @@ function decanonicalizeFileName (fileName) {
   return url;
 }
 
-function resolvePackage (moduleName) {
+function resolvePackage (moduleName, context) {
   // if the moduleName is from a ESM cdn, we cannot determine the
   // package based on the module path
   if (isCdnImport(moduleName)) return;
-  return findPackageConfig(moduleName);
+  return context === 'systemjs-browser' ? findPackageConfigBrowser(moduleName) : findPackageConfig(moduleName);
 }
 
 function dontTransform (moduleId, knownGlobals) {
