@@ -18,6 +18,7 @@ user-server.sh
 package-lock.json
 /mocha-es6/.cachedImportMap.json
 /lively.*/.cachedImportMap.json
+/flatn/.cachedImportMap.json
 /lively.server/usage_log.json
 /lively.installer.log
 /lively-system-interface/.lively.next-eval-server-for-test.js
