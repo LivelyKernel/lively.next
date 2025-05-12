@@ -260,7 +260,7 @@ export default class LivelyRollup {
   getTransformOptions (modId, parsedSource) {
     if (modId === '@empty.js') return {};
     let version, name;
-    const pkg = this.resolver.resolvePackage(modId);
+    const pkg = this.resolver.resolvePackage(modId, this.getResolutionContext()) || this.moduleToPkg.get(modId);
     if (pkg) {
       name = pkg.name;
       version = pkg.version;
@@ -492,7 +492,7 @@ export default class LivelyRollup {
       }
     }
 
-    const importingPackage = this.resolver.resolvePackage(importer) || this.moduleToPkg.get(importer);
+    const importingPackage = this.resolver.resolvePackage(importer, this.getResolutionContext()) || this.moduleToPkg.get(importer);
     // honor the systemjs options within the package config
     const { map: mapping, importMap } = importingPackage?.systemjs || {};
     if (mapping) {
@@ -534,7 +534,7 @@ export default class LivelyRollup {
 
   belongsToExcludedPackage (id) {
     if (id === null) return true;
-    const pkg = this.resolver.resolvePackage(id);
+    const pkg = this.resolver.resolvePackage(id, this.getResolutionContext());
     if (pkg && this.excludedModules.includes(pkg.name)) {
       return true;
     }
@@ -585,7 +585,7 @@ export default class LivelyRollup {
       const res = await this.getRootModule();
       return res;
     }
-    const pkg = this.resolver.resolvePackage(id);
+    const pkg = this.resolver.resolvePackage(id, this.getResolutionContext());
     if (pkg && this.excludedModules.includes(pkg.name) &&
         !id.endsWith('.json')) {
       return '';
