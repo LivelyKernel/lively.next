@@ -6,7 +6,7 @@ import { lively } from 'lively.freezer/src/plugins/rollup';
 import resolver from 'lively.freezer/src/resolvers/node.cjs';
 import PresetEnv from '@babel/preset-env';
 
-const verbose = process.argv[2] === '--verbose';
+const verbose = true; // process.argv[2] === '--verbose';
 const minify = !process.env.CI;
 try {
   const build = await rollup({
@@ -22,7 +22,7 @@ try {
   <link rel="preload" id="registry" href="/package-registry.json" as="fetch" crossOrigin>
           `
         },
-        minify,
+        minify: false,
         verbose,
         isResurrectionBuild: true,
         asBrowserModule: true,
@@ -41,8 +41,20 @@ try {
       jsonPlugin({ exclude: [/https\:\/\/jspm.dev\/.*\.json/, /esm\:\/\/cache\/.*\.json/]}),
       babel({
        babelHelpers: 'bundled', 
-       presets: [PresetEnv]
-      })
+       presets: [
+        [PresetEnv,
+        {
+          "targets": "> 3%, not dead"
+        }]
+      ]
+      }),
+      {
+        name: 'inspect-transform',
+        transform(code, id) {
+          if (id === 'esm://ga.jspm.io/npm:@rollup/wasm-node@4.27.3/_/mFQR6yrQ.js') debugger;
+          return null; // returning null means we don't modify the code
+        }
+      }
      ]
   });
   
