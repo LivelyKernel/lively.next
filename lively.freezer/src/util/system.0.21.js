@@ -3963,8 +3963,13 @@
   SystemJSLoader.prototype.global = envGlobal;
 
   SystemJSLoader.prototype.import = function () {
-    return RegisterLoader.prototype.import.apply(this, arguments)
-    .then(function (m) {
+    const System = this;
+    let [moduleName] = arguments;
+    if (moduleName.startsWith('./')) {
+      moduleName = System.baseURL + moduleName.slice(2);
+    }
+    return RegisterLoader.prototype.import.apply(this, arguments).then(function (m) {
+      if (!m) m = System.loads[moduleName].exports;
       return '__useDefault' in m ? m.__useDefault : m;
     });
   };
