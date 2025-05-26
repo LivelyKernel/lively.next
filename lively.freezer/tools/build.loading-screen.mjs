@@ -30,11 +30,10 @@ try {
         asBrowserModule: true,
         excludedModules: [
           'mocha', 'chai', 'picomatch', // references old lgtg that breaks the build
-          'path-is-absolute', 'fs.realpath', 'rollup', // has a dist file that cant be parsed by rollup
+          'path-is-absolute', 'fs.realpath', // has a dist file that cant be parsed by rollup
           '@babel/preset-env',
           '@babel/plugin-syntax-import-meta',
           '@rollup/plugin-json', 
-          '@rollup/plugin-commonjs',
           'rollup-plugin-polyfill-node',
           'babel-plugin-transform-es2015-modules-systemjs'
         ],
