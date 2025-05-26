@@ -402,7 +402,7 @@ function preNormalize (System, name, parent) {
       }
       if (config.optionalDependencies?.[name]) return '@empty';
       importMap = !isNode && systemjs?.importMap; // only works in the browser
-      mappedObject = map?.[name] || System.map[name];
+      mappedObject = map?.[name] || isNode && System.map[name]; // only consider the global map if no local importMap
     }
 
     if (mappedObject) {
