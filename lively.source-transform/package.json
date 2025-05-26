@@ -44,11 +44,6 @@
     "rollup-plugin-babel": "^2.6.1"
   },
   "systemjs": {
-    "main": "index.js",
-    "map": {
-      "@babel/plugin-syntax-import-meta": {
-        "node": "@empty"
-      }
-    }
+    "main": "index.js"
   }
 }
