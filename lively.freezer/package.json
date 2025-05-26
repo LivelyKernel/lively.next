@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
+    "css": "3.0.0",
+    "bowser": "1.4.1",
     "@babel/core": "7.27.1",
     "@babel/cli": "^7.12.1",
     "@babel/preset-env": "7.27.1",
@@ -16,8 +18,7 @@
     "@rollup/browser": "4.27.3",
     "@rollup/rollup-linux-x64-gnu": "4.27.3",
     "@rollup/rollup-darwin-arm64": "4.27.3",
-    "css": "3.0.0",
-    "bowser": "1.4.1",
+    "@rollup/plugin-commonjs": "22.0.0",
     "@rollup/plugin-babel": "5.3.1",
     "@rollup/plugin-json": "6.0.0",
     "rollup-plugin-polyfill-node": "0.9.0"
