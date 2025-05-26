@@ -5,7 +5,7 @@ import { setPrototypeOf } from 'lively.lang/object.js';
 import { isNativeFunction } from 'lively.lang/function.js';
 
 const constructorArgMatcher = /\([^\\)]*\)/;
-const NEW_ONLY_CLASSES = [Proxy, Map, WeakMap];
+const NEW_ONLY_CLASSES = [Proxy, Map, WeakMap, Set];
 if (typeof HTMLElement !== 'undefined') NEW_ONLY_CLASSES.push(HTMLElement);
 
 const defaultPropertyDescriptorForGetterSetter = {
@@ -105,6 +105,15 @@ function ensureInitializeStub (superclass) {
       superclass.prototype[initializeSymbol]) return;
   let wrappedSuperclass;
   if (NEW_ONLY_CLASSES.includes(superclass)) wrappedSuperclass = wrapNativeClassAsSuper(superclass);
+  else {
+    try {
+      superclass();
+    } catch (err) {
+      if (/class constructor/i.test(err.message)) {
+        wrappedSuperclass = wrapNativeClassAsSuper(superclass);
+      }
+    }
+  }
   Object.defineProperty(superclass.prototype, initializeSymbol, {
     enumerable: false,
     configurable: true,
