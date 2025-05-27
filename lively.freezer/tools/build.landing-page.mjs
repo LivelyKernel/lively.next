@@ -1,5 +1,5 @@
 /* global process */
-import { rollup } from 'rollup';
+import { rollup } from '@rollup/wasm-node';
 import jsonPlugin from '@rollup/plugin-json';
 import { babel } from '@rollup/plugin-babel';
 import { lively } from 'lively.freezer/src/plugins/rollup';
@@ -21,8 +21,6 @@ try {
           head: `
   <link rel="preload" id="compressed" href="/compressed-sources" as="fetch" crossOrigin>
   <link rel="preload" id="registry" href="/package-registry.json" as="fetch" crossOrigin>
-  <link rel="preload" id="babel" href="/lively.next-node_modules/@babel/standalone/babel.js" as="fetch" crossOrigin>
-  <link rel="preload" id="system" href="/lively.modules/systemjs-init.js" as="fetch" crossOrigin>
           `
         },
         minify,
