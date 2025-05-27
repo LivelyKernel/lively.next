@@ -4,7 +4,6 @@ import { exec } from "./shell-exec.js";
 import { Package } from "./package.js";
 import { resource } from 'lively.resources';
 import { promise, string } from 'lively.lang';
-import { Generator } from "@jspm/generator";
 
 var modules, join, getPackageSpec, readPackageSpec;
 // var baseDir = "/home/lively/lively-web.org/lively.next/";
@@ -219,6 +218,7 @@ export async function install(baseDir, dependenciesDir, verbose) {
 
     // the paths need to be updated now, so that we can properly resolve installed deps
     if (step9_createImportMap) {
+      const { Generator } = await import('@jspm/generator');
       System.set('@jspm_generator', System.newModule({ default: Generator }));
       const { generateImportMap } = await System.import('lively.server/plugins/lib-lookup.js');
       for (let p of packages) {
