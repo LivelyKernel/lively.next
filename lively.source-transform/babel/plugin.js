@@ -1370,11 +1370,15 @@ export function setupBabelTranspiler (System) {
     // this also overrides native requires, which is not what we want really
     Module._load = (...args) => {
       let exports = origLoad(...args);
-      const isCoreModule = !!System.loads?.['@node/' + args[0]];
+      const isCoreModule = Module.isBuiltin(args[0]);
       if (isCoreModule && !args[1].loaded && !exports.prototype) {
-        exports = Object.assign(Object.create(exports.prototype || {}), exports);
-        if (!exports.default) exports.default = exports;
-        exports.__esModule = true;
+        const newExports = Object.create(exports.prototype || {});
+        for (const key in Object.getOwnPropertyDescriptors(exports)) {
+          newExports[key] = exports[key];
+        }
+        if (!newExports.default) newExports.default = newExports;
+        newExports.__esModule = true;
+        return newExports;
       }
       return exports;
     };
