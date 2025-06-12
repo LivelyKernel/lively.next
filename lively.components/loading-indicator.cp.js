@@ -256,11 +256,9 @@ const LoadingIndicator = component({
       name: 'top float',
       fill: Color.transparent,
       layout: new TilingLayout({
-        hugContentsVertically: true,
-        hugContentsHorizontally: true,
         align: 'center',
-        axis: 'row',
-        axisAlign: 'top',
+        hugContentsHorizontally: true,
+        hugContentsVertically: true,
         padding: rect(22, 0, -22, 0)
       }),
       submorphs: [{
@@ -301,7 +299,7 @@ const LoadingIndicator = component({
           fill: Color.rgba(255, 255, 255, 0),
           fontColor: Color.rgb(253, 254, 254),
           fontSize: 16,
-          padding: rect(0, 0, 10, 0),
+          padding: rect(0, 8, 10, -8),
           fontWeight: 'bold',
           nativeCursor: 'pointer',
           textAndAttributes: ['test test test test ', null]
