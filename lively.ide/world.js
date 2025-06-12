@@ -425,6 +425,7 @@ export class LivelyWorld extends World {
     await localInterface.exportsOfModules({
       excludedPackages: config.ide.js.ignoredPackages
     });
+    this.opacity = 1;
   }
 
   async initializeTopBar () {
