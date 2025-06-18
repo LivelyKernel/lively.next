@@ -27,6 +27,8 @@ import {
   compileOnServer
 } from './util/helpers.js';
 import { joinPath, ensureFolder } from 'lively.lang/string.js';
+import { resolveViaImportMap } from 'flatn/helpers.mjs';
+
 
 const separator = `__${'Separator'}__`; // obscure formatting to prevent breaking builds when this files in included
 
@@ -70,6 +72,32 @@ const ADVANCED_EXCLUDED_MODULES = [
 ];
 
 const baseURL = typeof System !== 'undefined' ? System.baseURL : ensureFolder(process.env.lv_next_dir || process.cwd());
+
+export function bulletProofNamespaces (code) {
+  let rewrites = [];
+  let parsed = ast.parse(code, { withComments: true });
+  const pureComments = parsed.allComments.filter(c => c.text === '#__PURE__');
+  if (pureComments.length === 0) return null;
+  parsed = ast.ReplaceVisitor.run(parsed, (node) => {
+    if (node.type === 'VariableDeclaration') {
+      const matchingComment = pureComments.find(c => node.start < c.start && c.end > node.end);
+      if (!matchingComment) return node;
+      const matchingGetter = node.declarations[0]?.init?.arguments?.[0]?.properties?.find(prop => prop.key.name === 'default' && prop.kind === 'get');
+      if (!matchingGetter) return node;
+      const getterBody = matchingGetter.value.body;
+      const [returnStmt] = getterBody.body;
+      rewrites.push([getterBody, `\nif (typeof ${returnStmt.argument.name} === 'undefined') throw new Error('Module not yet initialized!');\n`])
+    }
+    return node;
+  });
+  if (rewrites.length > 0) {
+    arr.sortBy(rewrites, ([node]) => node.start).forEach(([node, snippet]) => {
+      code = code.slice(0, node.start + 1) + snippet + code.slice(node.start + 1);
+    });
+    return code;
+  }
+  return null;
+}
 
 /**
  * Custom warn() that is triggered by RollupJS to inidicate problems with the bundle.
@@ -232,7 +260,7 @@ export default class LivelyRollup {
   getTransformOptions (modId, parsedSource) {
     if (modId === '@empty.js') return {};
     let version, name;
-    const pkg = this.resolver.resolvePackage(modId);
+    const pkg = this.resolver.resolvePackage(modId, this.getResolutionContext()) || this.moduleToPkg.get(modId);
     if (pkg) {
       name = pkg.name;
       version = pkg.version;
@@ -464,40 +492,25 @@ export default class LivelyRollup {
       }
     }
 
-    const importingPackage = this.resolver.resolvePackage(importer) || this.moduleToPkg.get(importer);
+    const importingPackage = this.resolver.resolvePackage(importer, this.getResolutionContext()) || this.moduleToPkg.get(importer);
     // honor the systemjs options within the package config
     const { map: mapping, importMap } = importingPackage?.systemjs || {};
-    if (importMap) {
-      let remapped;
-      if (remapped = importMap.imports?.[id]) {
-        id = remapped;
-      }
-      let scope, prefix;
-      if (scope = Object.entries(importMap.scopes)
-        .filter(([k, v]) => importer.startsWith(k))
-        .sort((a, b) => a[0].length - b[0].length)
-        .map(([prefix, scope]) => scope)
-        .reduce((a, b) => ({ ...a, ...b }), false)) {
-        remapped = scope[id];
-      }
-      if (remapped) {
-        id = remapped;
-      }
-    }
-    this.moduleToPkg.set(id, importingPackage);
     if (mapping) {
-      this.globalMap = { ...this.globalMap, ...mapping };
-      if (mapping[id] || this.globalMap[id]) {
-        if (!mapping[id] && this.globalMap[id]) {
-          console.warn(`[freezer] No mapping for "${id}" provided by package "${importingPackage.name}". Guessing "${this.globalMap[id]}" based on past resolutions. Please consider adding a map entry to this package config in oder to make the package definition sound and work independently of the current setup!`); // eslint-disable-line no-console
-        }
+      let remapped = mapping[id];
+      if (remapped) {
         if (this.excludedModules.includes(id)) return id;
-        let remapped = mapping[id] || this.globalMap[id];
         const ctx = this.asBrowserModule ? '~node' : 'node';
         if (remapped[ctx]) remapped = remapped[ctx];
         if (typeof remapped === 'string') id = remapped;
       }
     }
+
+    if (importMap) {
+      let remapped = resolveViaImportMap(id, importMap, importer)
+      if (remapped) id = remapped;
+    }
+    
+    this.moduleToPkg.set(id, importingPackage);
 
     let absolutePath;
 
@@ -521,7 +534,7 @@ export default class LivelyRollup {
 
   belongsToExcludedPackage (id) {
     if (id === null) return true;
-    const pkg = this.resolver.resolvePackage(id);
+    const pkg = this.resolver.resolvePackage(id, this.getResolutionContext());
     if (pkg && this.excludedModules.includes(pkg.name)) {
       return true;
     }
@@ -572,7 +585,7 @@ export default class LivelyRollup {
       const res = await this.getRootModule();
       return res;
     }
-    const pkg = this.resolver.resolvePackage(id);
+    const pkg = this.resolver.resolvePackage(id, this.getResolutionContext());
     if (pkg && this.excludedModules.includes(pkg.name) &&
         !id.endsWith('.json')) {
       return '';

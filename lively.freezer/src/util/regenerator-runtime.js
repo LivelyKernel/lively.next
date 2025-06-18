@@ -7,8 +7,6 @@
  */
 
 let runtime = (function (exports) {
-  'use strict';
-
   let Op = Object.prototype;
   let hasOwn = Op.hasOwnProperty;
   let undefined; // More compressible than void 0.

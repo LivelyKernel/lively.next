@@ -1,9 +1,9 @@
 /* global System, beforeEach, afterEach, describe, it */
 
-import { removeDir, createFiles } from './helpers.js';
+import { removeDir, prepareSystem, createFiles } from './helpers.js';
 import { expect } from 'mocha-es6';
 
-import { getSystem, removeSystem } from 'lively.modules/src/system.js';
+import { removeSystem } from 'lively.modules/src/system.js';
 import module from 'lively.modules/src/module.js';
 import { runEval } from 'lively.vm';
 
@@ -18,11 +18,7 @@ const file1m = testProjectDir + 'file1.js';
 describe('lively.modules aware eval', () => {
   let S, module1;
   beforeEach(async () => {
-    S = getSystem('test', { baseURL: testProjectDir });
-    S.set('lively.transpiler', System.get('lively.transpiler'));
-    S.config({ transpiler: 'lively.transpiler' });
-    S.babelOptions = System.babelOptions;
-    S.translate = async (load) => await System.translate.bind(S)(load);
+    S = prepareSystem('test', testProjectDir);
     await createFiles(testProjectDir, testProjectSpec);
     module1 = module(S, file1m);
   });
