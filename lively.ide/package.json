@@ -43,5 +43,12 @@
   },
   "scripts": {
     "test": "mocha-es6 tests/{,diff/,js/,shell/}*-test.js"
+  },
+  "systemjs": {
+    "map": {
+      "highlight.js/lib/core": "https://ga.jspm.io/npm:highlight.js@11.11.1/es/core.js",
+      "highlight.js/lib/languages/javascript": "https://ga.jspm.io/npm:highlight.js@11.11.1/es/languages/javascript.js",
+      "highlight.js/lib/languages/shell": "https://ga.jspm.io/npm:highlight.js@11.11.1/es/languages/shell.js"
+    }
   }
 }
