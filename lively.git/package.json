@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "lively.resources": "*",
-    "lively.storage": "*"
+    "lively.storage": "*",
+    "libsodium-wrappers": "0.7.15"
   }
 }

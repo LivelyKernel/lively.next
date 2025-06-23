@@ -1,9 +1,9 @@
-import markdownIt from 'esm://cache/markdown-it@12.3.2';
-import markdownCheckbox from 'esm://cache/markdown-it-checkbox@1.1.0';
-import markdownCaption from 'esm://cache/markdown-it-implicit-figures';
-import { html5Media } from 'esm://cache/markdown-it-html5-media';
+import markdownIt from 'markdown-it';
+import markdownCheckbox from 'markdown-it-checkbox';
+import markdownCaption from 'markdown-it-implicit-figures';
+import { html5Media } from 'markdown-it-html5-media';
 
-import markdownAttrs from 'esm://cache/markdown-it-attrs';
+import markdownAttrs from 'markdown-it-attrs';
 import { string } from 'lively.lang';
 import markdownMermaid from 'mermaid-it-markdown';
 

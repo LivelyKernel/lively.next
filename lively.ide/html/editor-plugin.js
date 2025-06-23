@@ -8,7 +8,7 @@ import {
 import { localInterface, systemInterfaceNamed } from 'lively-system-interface';
 import HTMLNavigator from './navigator.js';
 import HTMLChecker from './checker.js';
-import * as parse5 from 'esm://cache/parse5@7.0.0';
+import * as parse5 from 'parse5';
 import { IFrameMorph } from 'lively.morphic';
 import { string } from 'lively.lang';
 import { Color } from 'lively.graphics';

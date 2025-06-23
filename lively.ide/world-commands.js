@@ -695,7 +695,7 @@ const commands = [
         ({ a, b, format } = findFormat(a, b)); // eslint-disable-line no-use-before-define
       } else { a = String(a); b = String(b); }
 
-      const diff = await System.import('esm://cache/diff@5.0.0');
+      const diff = await System.import('diff');
 
       let diffed;
 
