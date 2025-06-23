@@ -71,10 +71,12 @@ export async function updateBundledModules (system, modulesToUpdate) {
     let mod = S['__lively.modules__loadedModules'][m];
     if (!mod) {
       S.delete(m);
+      system.SUPPRESS_DEFINE_ERRORS = true;
       await S.import(m);
       mod = S['__lively.modules__loadedModules'][m] || module(S, m);
     }
     await mod.reload();
+    system.SUPPRESS_DEFINE_ERRORS = false;
     S['__lively.modules__loadedModules'][m] = mod; // ensure module stays here even when the source and initialization are skipped.
   }
   // finally update the frozen records that require update
