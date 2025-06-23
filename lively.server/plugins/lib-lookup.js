@@ -37,7 +37,7 @@ export async function generateImportMap (packageName) {
   const failed = inputMap?._failed || {}; // collect the packages where we fail to generate import maps, likely due to incompatibility with the browser
   await installDeps(
     generator, 
-    Object.entries(pkg.config.dependencies || {}).filter(([dep]) => !dep.startsWith('lively.')),
+    Object.entries(pkg.config.dependencies || {}).filter(([dep]) => !dep.match(/lively(\.|-)/)),
     failed
   );
   const importMap = JSON.parse(JSON.stringify(generator.getMap()).replace(/https:\/\//g, 'esm://'))
