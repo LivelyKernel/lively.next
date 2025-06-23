@@ -11,7 +11,7 @@ import { Project } from 'lively.project/project.js';
 import { pathForBrowserHistory } from 'lively.morphic/helpers.js';
 import { installLinter } from 'lively.ide/js/linter.js';
 import { setupBabelTranspiler } from 'lively.source-transform/babel/plugin.js'; 
-import untar from 'esm://cache/js-untar';
+import untar from 'js-untar';
 import bowser from 'bowser';
 
 if (bowser.safari) {

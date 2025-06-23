@@ -1,4 +1,4 @@
-import THREE from 'esm://cache/three@0.126';
+import THREE from 'three';
 import { Canvas } from './canvas.js';
 const { Scene, SpotLight, MeshBasicMaterial, BackSide, Color, MeshPhongMaterial, SphereGeometry, Mesh, AmbientLight, WebGLRenderer, PerspectiveCamera, TextureLoader } = THREE;
 

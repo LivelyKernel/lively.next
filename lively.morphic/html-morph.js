@@ -3,7 +3,7 @@ import { promise, arr } from 'lively.lang';
 import { pt, Rectangle } from 'lively.graphics';
 import { Morph } from './morph.js';
 import { addOrChangeCSSDeclaration } from './rendering/dom-helper.js';
-import css from 'esm://cache/css@3.0.0';
+import css from 'css';
 
 // Usage:
 // var htmlMorph = $world.addMorph(new HTMLMorph({position: pt(10,10)}));

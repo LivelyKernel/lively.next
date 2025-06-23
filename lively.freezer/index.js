@@ -152,7 +152,7 @@ export async function bundlePart (partOrSnapshot, {
   requester,
   useTerser
 }) {
-  const jsonPlugin = await System.import('esm://cache/@rollup/plugin-json');
+  const jsonPlugin = await System.import('@rollup/plugin-json');
   const snapshot = partOrSnapshot.isMorph
     ? await createMorphSnapshot(partOrSnapshot, {
       frozenSnapshot: true
@@ -195,7 +195,7 @@ export async function bundleModule (moduleId, {
   htmlConfig,
   useTerser
 }) {
-  const { default: jsonPlugin } = await System.import('esm://cache/@rollup/plugin-json');
+  const { default: jsonPlugin } = await System.import('@rollup/plugin-json');
   // fixme: maybe its better to make the plugin devoid of state...?
   const bundle = await rollup({
     input: moduleId,
@@ -218,7 +218,7 @@ export async function bundleModule (moduleId, {
 }
 
 export async function jspmCompile (url, out, globalName, redirect = {}) {
-  const jsonPlugin = await System.import('esm://cache/@rollup/plugin-json');
+  const jsonPlugin = await System.import('@rollup/plugin-json');
   const freezerPlugin = lively({
     includePolyfills: false,
     redirect,
@@ -240,7 +240,7 @@ export async function jspmCompile (url, out, globalName, redirect = {}) {
 }
 
 export async function bootstrapLibrary (url, out, asBrowserModule = true, globalName) {
-  const jsonPlugin = await System.import('esm://cache/@rollup/plugin-json');
+  const jsonPlugin = await System.import('@rollup/plugin-json');
   const bundle = await rollup({
     input: url,
     plugins: [

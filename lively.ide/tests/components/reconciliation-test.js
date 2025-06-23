@@ -1,17 +1,13 @@
 /* global it, describe, beforeEach, afterEach, after, System */
 import { expect, chai } from 'mocha-es6';
-import sinonChai from 'esm://cache/sinon-chai';
-import sinon from 'esm://cache/sinon';
+import sinonChai from 'sinon-chai';
+import sinon from 'sinon';
 import { createFiles, resource } from 'lively.resources';
 import module from 'lively.modules/src/module.js';
-import { getSystem, PackageRegistry, removeSystem } from 'lively.modules';
-import { importPackage } from 'lively.modules/src/packages/package.js';
 import { Color, pt, rect } from 'lively.graphics';
-import { morph, component, add, without, TilingLayout, Label, part } from 'lively.morphic';
-import { GlobalInjector } from 'lively.modules/src/import-modification.js';
+import { morph, add, without, TilingLayout, Label, part } from 'lively.morphic';
 import { Reconciliation } from '../../components/reconciliation.js';
 import { promise } from 'lively.lang';
-import { getPathFromMorphToMaster } from '../../components/helpers.js';
 
 chai.use(sinonChai);
 

@@ -2,8 +2,8 @@
  * Methods for running eslint on JS code as well as the linter configuration used in lively.next.
  */
 
-import config from 'esm://cache/eslint-config-standard@16.0.3';
-import eslint from 'esm://cache/eslint@7.32.0';
+import config from 'eslint-config-standard';
+import eslint from 'eslint';
 
 const rules = {
   // These are all rules from the default ruleset that are fixable
