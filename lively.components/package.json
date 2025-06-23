@@ -11,7 +11,8 @@
     "svg-intersections": "0.2.5",
     "kld-intersections": "^0.4.2",
     "lite-youtube-embed": "0.3.0",
-    "bowser": "1.4.1"
+    "bowser": "1.4.1",
+    "three": "0.126"
   },
   "devDependencies": {
     "mocha-es6": "*"

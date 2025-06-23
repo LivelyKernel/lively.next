@@ -5,9 +5,9 @@ import { connect } from 'lively.bindings/index.js';
 import { fun, promise } from 'lively.lang/index.js';
 import { rect, Color } from 'lively.graphics/index.js';
 import { ExpressionSerializer } from 'lively.serializer2';
-import hljs from 'esm://cache/highlight.js@11.9.0/lib/core';
-import javascript from 'esm://cache/highlight.js@11.9.0/lib/languages/javascript';
-import shell from 'esm://cache/highlight.js@11.9.0/lib/languages/shell';
+import hljs from 'highlight.js/lib/core';
+import javascript from 'highlight.js/lib/languages/javascript';
+import shell from 'highlight.js/lib/languages/shell';
 import { module } from 'lively.modules/index.js';
 
 hljs.registerLanguage('javascript', javascript);

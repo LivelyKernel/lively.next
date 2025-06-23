@@ -31,13 +31,13 @@
     "lively.lang": "*",
     "flatn": "*",
     "lively.freezer": "*",
-    "@jspm/generator": "2.5.1",
+    "@jspm/generator": "2.6.1",
     "@rollup/plugin-json": "4.1.0",
     "@rollup/wasm-node": "4.27.3",
     "rollup-plugin-polyfill-node": "0.9.0",
     "acorn": "8.0.4",
     "@buxlabs/amd-to-es6": "0.16.3",
-    "@babel/core": "7.27.1",
+    "@babel/core": "7.26.10",
     "@babel/plugin-transform-modules-systemjs": "7.18.0",
     "@babel/plugin-transform-modules-commonjs": "7.14.0"
   }

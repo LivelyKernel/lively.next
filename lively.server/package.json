@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
-    "@jspm/generator": "2.5.1",
+    "@jspm/generator": "2.6.1",
     "http-proxy": "^1.16.2",
     "jsDAV": "mnutt/jsDAV",
     "minimist": "^1.2.0",
@@ -12,7 +12,7 @@
     "systemjs": "^0.21.6",
     "winston": "^3.7.2",
     "formidable": "^1.2.2",
-    "@babel/core": "7.27.1",
+    "@babel/core": "7.26.10",
     "tar-fs": "^3.0.5",
     "lively-system-interface": "https://github.com/LivelyKernel/lively-system-interface",
     "lively.2lively": "https://github.com/LivelyKernel/lively.2lively.git",
