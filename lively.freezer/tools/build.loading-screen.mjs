@@ -20,8 +20,6 @@ try {
           head: `
   <link rel="preload" id="compressed" href="/compressed-sources" as="fetch" crossOrigin>
   <link rel="preload" id="registry" href="/package-registry.json" as="fetch" crossOrigin>
-  <link rel="preload" id="babel" href="/lively.next-node_modules/@babel/standalone/babel.js" as="fetch" crossOrigin>
-  <link rel="preload" id="system" href="/lively.modules/systemjs-init.js" as="fetch" crossOrigin>
           `
         },
         minify,
