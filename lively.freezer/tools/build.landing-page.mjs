@@ -43,8 +43,13 @@ try {
       }),
       jsonPlugin({ exclude: [/https\:\/\/jspm.dev\/.*\.json/, /esm\:\/\/cache\/.*\.json/]}),
       babel({
-       babelHelpers: 'bundled', 
-       presets: [PresetEnv]
+        babelHelpers: 'bundled', 
+        presets: [
+        [PresetEnv,
+        {
+          "targets": "> 3%, not dead"
+        }]
+      ]
       })
      ]
   });
