@@ -48,14 +48,7 @@ try {
           "targets": "> 3%, not dead"
         }]
       ]
-      }),
-      {
-        name: 'inspect-transform',
-        transform(code, id) {
-          if (id === 'esm://ga.jspm.io/npm:@rollup/wasm-node@4.27.3/_/mFQR6yrQ.js') debugger;
-          return null; // returning null means we don't modify the code
-        }
-      }
+      })
      ]
   });
   
