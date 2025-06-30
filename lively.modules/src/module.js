@@ -528,6 +528,11 @@ class ModuleInterface {
       const require = _require.bind(null, this);
       require.resolve = _resolve.bind(null, this);
       nodejsDescriptors.require = { configurable: true, writable: true, value: require };
+      nodejsDescriptors.Buffer = {
+        configurable: true,
+        get: () => this._overriddenBuffer || Buffer,
+        set: (buf) => this._overriddenBuffer = buf
+      };
     }
 
     this._recorder = Object.create(S.global, {
