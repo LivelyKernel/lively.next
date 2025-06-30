@@ -3,7 +3,8 @@ import {
   Morph,
   Path,
   Text,
-  part
+  part,
+  TilingLayout
 } from 'lively.morphic';
 import { Color, pt, Rectangle } from 'lively.graphics';
 import { arr } from 'lively.lang';
@@ -360,7 +361,7 @@ class RowHalo extends AxisHalo {
   fetchExtent () { return pt(40, this.targetAxis.length - 10); }
 
   getMenuOffset (menu) { return this.targetAxis.length > menu.height ? pt(2, 5) : pt(26, 10); }
-  getMenuLayout () { return new VerticalLayout(); }
+  getMenuLayout () { return new TilingLayout({ axis: 'column' }); }
 
   getResizeCursor () { return 'row-resize'; }
 
@@ -399,7 +400,7 @@ class ColumnHalo extends AxisHalo {
   fetchExtent () { return pt(this.targetAxis.length - 10, 40); }
 
   getMenuOffset (menu) { return this.targetAxis.length > menu.width ? pt(5, 3) : pt(8, 26); }
-  getMenuLayout () { return new HorizontalLayout(); }
+  getMenuLayout () { return new TilingLayout(); }
 
   getResizeCursor () { return 'col-resize'; }
 
