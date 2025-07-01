@@ -1600,11 +1600,11 @@ const ComponentBrowser = component({
     }), {
       type: Text,
       name: 'search clear button',
-      nativeCursor: 'pointer',
       visible: false,
+      nativeCursor: 'pointer',
       fontColor: Color.rgba(0, 0, 0, 0.5),
       fontSize: 25,
-      lineHeight: 2,
+      lineHeight: 1,
       padding: rect(1, 1, 9, 0),
       textAndAttributes: ['', {
         fontFamily: 'Font Awesome',
