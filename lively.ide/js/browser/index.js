@@ -1246,13 +1246,17 @@ export class BrowserModel extends ViewModel {
     return moduleLists.map(list => list.items.map(m => m.value)).flat();
   }
 
+  alreadySelectedModule (moduleUrl) {
+    return this.state.selectedModule?.url === moduleUrl && this.selectedModule.url === moduleUrl;
+  }
+
   async selectModuleNamed (mName, animated = true) {
     const columnView = this.ui.columnView;
     let m = this.getDisplayedModuleNodes().find(({ nameInPackage, url }) =>
       mName === url || mName === nameInPackage);
 
     if (m) {
-      if (this.state.selectedModule?.url === m.url) return;
+      if (this.alreadySelectedModule(m.url)) return;
       this.state.selectedModule = { url: m.url };
       await columnView.selectNode(m, animated);
       columnView.submorphs.forEach(list => {
@@ -1274,7 +1278,7 @@ export class BrowserModel extends ViewModel {
       }
 
       if (url) {
-        if (this.state.selectedModule?.url === url) return;
+        if (this.alreadySelectedModule(m.url)) return;
         this.state.selectedModule = { url };
         const td = columnView.treeData;
         await columnView.setExpandedPath(node => {
