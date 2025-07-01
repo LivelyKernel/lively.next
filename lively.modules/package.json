@@ -11,7 +11,17 @@
     "build": "node tools/build.js"
   },
   "systemjs": {
-    "main": "./index.js"
+    "main": "./index.js",
+    "map": {
+      "fs": {
+        "node": "@node/fs",
+        "~node": "@empty"
+      },
+      "node-fetch": {
+        "node": "@empty",
+        "~node": "@empty"
+      }
+    }
   },
   "dependencies": {
     "babel-core": "^6.21.0",
