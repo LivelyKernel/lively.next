@@ -769,7 +769,7 @@ describe('declarations', () => {
     'wraps literals that are exported as defaults',
     opts,
     'export default 32',
-    '_rec.$32 = 32;\nvar $32 = _rec.$32;\nexport default $32;');
+    '_rec.$exportedLiteral = 32;\nvar $exportedLiteral = _rec.$exportedLiteral;\nexport default $exportedLiteral;');
 
   testVarTfm(
     'can be wrapped in define call',
@@ -868,7 +868,6 @@ return {
   \"foo:a.js\",
   \"http://zork/b.js\"
 ], function (_export, _context) {
-  \"use strict\";
   var x, y, z, _rec;
   _rec = System.get(\"@lively-env\").moduleEnv(\"c.js\").recorder;
   return {
@@ -895,7 +894,6 @@ return {
   \"foo:a.js\",
   \"http://zork/b.js\"
 ], function (_export, _context) {
-  \"use strict\";
   var x, y, z, _rec;
   _rec = System.get(\"@lively-env\").moduleEnv(\"c.js\").recorder;
   return {
