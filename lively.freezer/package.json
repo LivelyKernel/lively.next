@@ -3,50 +3,39 @@
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
-    "@babel/core": "^7.12.3",
+    "css": "3.0.0",
+    "bowser": "1.4.1",
+    "@babel/core": "7.26.10",
+    "@babel/types": "7.26.0",
     "@babel/cli": "^7.12.1",
-    "@babel/preset-env": "^7.12.1",
+    "@babel/preset-env": "7.27.1",
     "@babel/plugin-transform-runtime": "^7.12.1",
     "babel-standalone": "^6.21.1-0",
     "uglify-es": "^3.3.9",
     "google-closure-compiler-linux": "^20200927.0.0",
     "google-closure-compiler-osx": "^20200927.0.0",
-    "wasm-brotli": "1.0.2",
-    "rollup": "2.68.0",
-    "css": "3.0.0",
+    "wasm-brotli": "2.0.2",
+    "@rollup/wasm-node": "4.27.3",
+    "@rollup/browser": "4.27.3",
+    "@rollup/rollup-linux-x64-gnu": "4.27.3",
+    "@rollup/rollup-darwin-arm64": "4.27.3",
+    "@rollup/plugin-commonjs": "22.0.0",
     "@rollup/plugin-babel": "5.3.1",
     "@rollup/plugin-json": "6.0.0",
-    "rollup-plugin-polyfill-node": "0.9.0"
+    "rollup-plugin-polyfill-node": "0.9.0",
+    "js-untar": "2.0.0"
   },
   "scripts": {
     "build-loading-screen": "./tools/build-loading-screen.sh",
     "build-landing-page": "./tools/build-landing-page.sh"
   },
   "systemjs": {
-    "meta": {
-      "https://unpkg.com/wasm-flate@0.1.11-alpha/dist/bootstrap.js": {
-        "format": "global"
-      }
-    },
     "map": {
-      "wasm-flate": "https://unpkg.com/wasm-flate@0.1.11-alpha/dist/bootstrap.js",
-      "semver": "esm://cache/semver",
-      "rollup": "esm://cache/rollup@2.68.0",
-      "@rollup/plugin-json": "esm://cache/@rollup/plugin-json",
-      "bowser": "esm://cache/bowser@1.4.1",
-      "@rollup/plugin-commonjs": {
-        "~node": "esm://cache/@rollup/plugin-commonjs"
+      "rollup": {
+        "node": "@rollup/wasm-node",
+        "~node": "@rollup/browser"
       },
-      "rollup-plugin-polyfill-node": "esm://cache/rollup-plugin-polyfill-node",
-      "flatn/resolver.mjs": {
-        "~node": "@empty"
-      },
-      "node:module": {
-        "~node": "@empty"
-      },
-      "zlib": {
-        "~node": "@empty"
-      }
+      "zlib": { "~node": "@empty" }
     }
   },
   "lively": {

@@ -22,7 +22,10 @@
     "vdom-parser": "^1.4.1",
     "web-animations-js": "^2.3.1",
     "flubber": "^0.4.2",
-    "bezier-easing": "^2.1.0"
+    "bezier-easing": "^2.1.0",
+    "css": "3.0.0",
+    "dom-to-image-more": "2.8.0",
+    "yoga-layout": "3.2.0"
   },
   "devDependencies": {
     "babel-plugin-external-helpers": "^6.8.0",
@@ -42,13 +45,7 @@
   "systemjs": {
     "main": "index.js",
     "map": {
-      "bezier-easing": "esm://cache/bezier-easing",
-      "flubber": "esm://cache/flubber",
-      "jsdiff": "esm://cache/jsdiff",
-      "dom-to-image": "esm://cache/dom-to-image",
-      "bowser": "esm://cache/bowser@1.4.1",
-      "webfontloader": "esm://cache/webfontloader",
-      "yoga-layout/dist/src/load.js": "esm://run/yoga-layout@3.0.4/dist/src/load.js"
+      "yoga-layout/load": "https://ga.jspm.io/npm:yoga-layout@3.2.1/dist/src/load.js"
     }
   },
   "scripts": {

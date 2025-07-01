@@ -1,7 +1,7 @@
 /* global process, require, module */
 const { findPackageConfig } = require('flatn/flatn-cjs.js');
 const babel = require('@babel/core');
-const { flatnResolve, findPackagePathForModule } = require('flatn/module-resolver.js');
+const { flatnResolve, findPackagePathForModule, findPackageConfig: findPackageConfigBrowser } = require('flatn/module-resolver.js');
 const path = require('node:path');
 const fs = require('node:fs');
 const { builtinModules } = require('node:module');
@@ -72,7 +72,7 @@ function detectFormatFromSource (source) {
 
 }
 
-async function normalizeFileName (fileName) {
+function normalizeFileName (fileName) {
   if (isAlreadyResolved(fileName)) return fileName;
   return require.resolve(fileName);
 }
@@ -88,11 +88,11 @@ function decanonicalizeFileName (fileName) {
   return url;
 }
 
-function resolvePackage (moduleName) {
+function resolvePackage (moduleName, context) {
   // if the moduleName is from a ESM cdn, we cannot determine the
   // package based on the module path
   if (isCdnImport(moduleName)) return;
-  return findPackageConfig(moduleName);
+  return context === 'systemjs-browser' ? findPackageConfigBrowser(moduleName) : findPackageConfig(moduleName);
 }
 
 function dontTransform (moduleId, knownGlobals) {
@@ -173,12 +173,6 @@ function supportingPlugins(context = 'node', self) {
   	       return code.replaceAll(/\s(System|this)._nodeRequire\(/g, ' require(');
       }
     },
-    context == 'browser' && {
-       name: 'node-prefix-remover',
-       resolveId(id, importer, options) {
-         return this.resolve(id.replace('node:', ''), importer, { skipSelf: true, ...options });       
-       }
-    },
     context == 'node' && {
       // source-map and related packages are written in AMD format
       // we transform this here to ESM in order to be properly consumed by rollup. 
@@ -215,6 +209,10 @@ function supportingPlugins(context = 'node', self) {
         }
       }
     },
+    {
+       name: 'lively-resolve',
+       resolveId: (id, importer) => self.resolveId(id, importer)
+    }, // but only do resolutions so that polyfills does not screw us up
     context == 'browser' && nodePolyfills(), // only if we bundle for the browser
     commonjs({
       sourceMap: false,

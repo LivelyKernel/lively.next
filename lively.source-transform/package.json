@@ -2,7 +2,6 @@
   "name": "lively.source-transform",
   "version": "0.1.7",
   "description": "EcmaScript 6 classes for live development",
-  "main": "dist/lively.source-transform.js",
   "type": "module",
   "scripts": {
     "test": "mocha-es6 tests/*-test.js",
@@ -27,8 +26,11 @@
     "lively.ast": "https://github.com/LivelyKernel/lively.ast",
     "lively.lang": "https://github.com/LivelyKernel/lively.lang",
     "lively.classes": "https://github.com/LivelyKernel/lively.classes",
-    "@babel/plugin-proposal-optional-catch-binding": "7.16.7",
-    "@babel/plugin-syntax-import-meta": "7.10.4"
+    "@babel/plugin-syntax-import-meta": "7.10.4",
+    "@babel/plugin-proposal-dynamic-import": "7.18.6",
+    "@babel/plugin-transform-modules-systemjs": "7.25.9",
+    "@babel/types": "7.26.0",
+    "@babel/core": "7.26.10"
   },
   "devDependencies": {
     "lively.vm": "*",
@@ -42,16 +44,6 @@
     "rollup-plugin-babel": "^2.6.1"
   },
   "systemjs": {
-    "main": "index.js",
-    "map": {
-      "@babel/plugin-proposal-optional-catch-binding": {
-        "~node": "esm://cache/@babel/plugin-proposal-optional-catch-binding",
-        "node": "@empty"
-      },
-      "@babel/plugin-syntax-import-meta": {
-        "~node": "esm://cache/@babel/plugin-syntax-import-meta",
-        "node": "@empty"
-      }
-    }
+    "main": "index.js"
   }
 }
