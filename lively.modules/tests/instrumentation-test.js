@@ -1,8 +1,9 @@
 /* global beforeEach, afterEach, describe, it */
 
 import { expect } from 'mocha-es6';
+import { prepareSystem } from './helpers.js';
 
-import { getSystem, removeSystem } from '../src/system.js';
+import { removeSystem } from '../src/system.js';
 import module from '../src/module.js';
 import { registerPackage } from '../src/packages/package.js';
 import { runEval } from 'lively.vm';
@@ -27,11 +28,7 @@ let testProjectSpec = {
 let S, module1, module3, module4, module5;
 
 async function setup () {
-  S = getSystem('test', { baseURL: dir });
-  S.set('lively.transpiler', System.get('lively.transpiler'));
-  S.config({ transpiler: 'lively.transpiler' });
-  S.babelOptions = System.babelOptions;
-  S.translate = async (load) => await System.translate.bind(S)(load);
+  S = prepareSystem('test', dir);
   module1 = module(S, testProjectDir + 'file1.js');
   module3 = module(S, testProjectDir + 'file3.js');
   module4 = module(S, testProjectDir + 'file4.js');
@@ -52,8 +49,8 @@ describe('instrumentation', () => {
   afterEach(teardown);
 
   it('gets access to internal module state', async () => {
-    expect(module1).to.have.deep.property('recorder.y', 1);
-    expect(module1).to.have.deep.property('recorder.x', 3);
+    expect(module1).to.have.nested.property('recorder.y', 1);
+    expect(module1).to.have.nested.property('recorder.x', 3);
   });
 
   it('modules can (re)define captures', async () => {
@@ -103,7 +100,7 @@ describe('instrumentation', () => {
     it('can access local state', () =>
       S.import(`${testProjectDir}file3.js`)
         .then(() => {
-          expect(module3).to.have.deep.property('recorder.zzz', 4);
+          expect(module3).to.have.nested.property('recorder.zzz', 4);
           expect(S.get(testProjectDir + 'file3.js').default).to.have.property('z', 2);
         }));
   });
@@ -114,7 +111,7 @@ describe('instrumentation', () => {
     it('class export is recorded', async () => {
       let exports = await S.import(`${testProjectDir}file4.js`);
       expect(exports.default).is.a('function');
-      expect(module4).to.have.deep.property('recorder.Foo');
+      expect(module4).to.have.nested.property('recorder.Foo');
       expect(exports.default).to.equal(module4.recorder.Foo);
     });
 
