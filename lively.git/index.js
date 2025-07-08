@@ -1,6 +1,6 @@
 /* global fetch */
 import { currentUserToken } from 'lively.user';
-import { default as libsod } from 'esm://cache/libsodium-wrappers';
+import { default as libsod } from 'libsodium-wrappers';
 
 // TODO: This could all use some sensible error handling -lh 15.02.2024
 

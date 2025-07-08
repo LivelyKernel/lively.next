@@ -1,5 +1,5 @@
 export const buildScript = `/* global process */
-import { rollup } from 'rollup';
+import { rollup } from '@rollup/wasm-node';
 import jsonPlugin from '@rollup/plugin-json';
 import { babel } from '@rollup/plugin-babel';
 import { lively } from 'lively.freezer/src/plugins/rollup';

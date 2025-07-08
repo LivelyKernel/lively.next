@@ -8,31 +8,35 @@ import { member } from 'lively.ast/lib/nodes.js';
 import { parse } from 'lively.ast/lib/parser.js';
 import stringify from 'lively.ast/lib/stringify.js';
 
-function classTemplate (className, superClassName, methodString, classMethodString, classHolder, moduleMeta, useClassHolder = true, start, end) {
-  if (methodString.includes('\n')) methodString = string.indent(methodString, '  ', 2).replace(/^\s+/, '');
-  if (classMethodString.includes('\n')) classMethodString = string.indent(classMethodString, '  ', 2).replace(/^\s+/, '');
+function classTemplate (className, superClassName, methodString, classMethodString, classHolder, moduleMeta, useClassHolder = true, start, end, evalId) {
+  if (methodString.includes('\n')) methodString = string.indent(methodString, ' ', 4).replace(/^\s+/, '');
+  if (classMethodString.includes('\n')) classMethodString = string.indent(classMethodString, ' ', 4).replace(/^\s+/, '');
 
   if (!className) useClassHolder = false;
 
   let classFunctionHeader = className ? `function ${className}` : 'function ';
   if (useClassHolder) { classFunctionHeader = `__lively_classholder__.hasOwnProperty("${className}") && typeof __lively_classholder__.${className} === "function" ? __lively_classholder__.${className} : __lively_classholder__.${className} = ${classFunctionHeader}`; }
 
-  return `function (superclass) {
+  let pos = '';
+  if (start !== undefined && end !== undefined) {
+    pos = `, {
+    start: ${start},
+    end: ${end}${evalId ? `,\n    evalId: ${evalId}` : ''}
+  }`;
+  }
+  return `${useClassHolder ? 'function (superclass)' : '(superclass =>'} {
   var __lively_classholder__ = ${classHolder};
-  var __lively_class__ = ${classFunctionHeader}(__first_arg__) {
+  var ${useClassHolder ? '__lively_class__' : (className ? 'Foo' : '__lively_class__')} = ${classFunctionHeader}(__first_arg__) {
     if (__first_arg__ && __first_arg__[Symbol.for("lively-instance-restorer")]) {
     } else {
       return this[Symbol.for("lively-instance-initialize")].apply(this, arguments);
     }
-  };
-  if (Object.isFrozen(__lively_classholder__)) {
+  };${(useClassHolder || !className) ? '' : '\n  var __lively_class__ = Foo;'}
+  if (Object.isFrozen(__lively_classholder__) || Object.isFrozen(__lively_class__.prototype)) {
     return __lively_class__;
   }
-  return initializeClass(__lively_class__, superclass, ${methodString}, ${classMethodString}, ${ useClassHolder ? '__lively_classholder__' : 'null'}, ${moduleMeta}, {
-    start: ${start},
-    end: ${end}
-  });
-}(${superClassName});`;
+  return initializeClass(__lively_class__, superclass, ${methodString}, ${classMethodString}, ${ useClassHolder ? '__lively_classholder__' : 'null'}, ${moduleMeta}${pos});
+}${useClassHolder ? '' : ')'}(${superClassName});`;
 }
 
 function classTemplateDecl (className, superClassName, methodString, classMethodString, classHolder, moduleMeta, start, end) {

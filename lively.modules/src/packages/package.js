@@ -142,7 +142,7 @@ class Package {
     this.version = config.version;
     this.dependencies = config.dependencies || {};
     this.devDependencies = config.devDependencies || {};
-    this.main = config.main || 'index.js';
+    this.main = config.main;
     this.systemjs = config.systemjs;
     this.lively = config.lively;
     this.author = config.author;
@@ -329,10 +329,15 @@ class Package {
 
     try {
       let config = System.get(packageConfigURL) || await System.import(packageConfigURL);
-      if (config.__useDefault) config = config.default;
+      const importMap = await this.hasResource('.cachedImportMap.json') && await resource(url + '/.cachedImportMap.json').readJson();
       let packageConfigPaths = [...System.packageConfigPaths];
       arr.pushIfNotIncluded(packageConfigPaths, packageConfigURL); // to inform systemjs that there is a config
       System.config({ packageConfigPaths });
+      if (config.__useDefault) config = config.default;
+      if (importMap) {
+        if (!config.systemjs) config.systemjs = {};
+        config.systemjs.importMap = importMap;
+      }
       return config;
     } catch (err) {
       console.log('[lively.modules package] Unable loading package config %s for package: ', packageConfigURL, err); // eslint-disable-line no-console

@@ -37,6 +37,7 @@ export default class PackageConfiguration {
           meta: {
             'package.json': { format: 'json' },
             '*.cjs': { defaultExtension: false },
+            '*.mjs': { defaultExtension: false },
             ...sysConfig.meta
           },
           configured: true

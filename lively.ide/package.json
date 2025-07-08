@@ -22,18 +22,33 @@
     "lively.resources": "https://github.com/LivelyKernel/lively.resources",
     "lively.shell": "https://github.com/LivelyKernel/lively.shell",
     "lively.lang": "^1.0.0",
-    "prettier": "1.18.2"
-  },
-  "systemjs": {
-    "map": {
-      "semver": "esm://cache/semver",
-      "mermaid-it-markdown": "esm://run/mermaid-it-markdown"
-    }
+    "prettier": "1.18.2",
+    "semver": "5.3.0",
+    "mermaid-it-markdown": "1.0.8",
+    "diff": "5.0.0",
+    "parse5": "7.0.0",
+    "eslint": "7.32.0",
+    "eslint-config-standard": "16.0.3",
+    "markdown-it": "12.3.2",
+    "markdown-it-checkbox": "1.1.0",
+    "markdown-it-implicit-figures": "0.12.0",
+    "markdown-it-html5-media": "0.7.1",
+    "markdown-it-attrs": "4.3.1",
+    "highlight.js": "11.9.0",
+    "sinon-chai": "4.0.0",
+    "sinon": "21.0.0"
   },
   "devDependencies": {
     "mocha-es6": "^0.5"
   },
   "scripts": {
     "test": "mocha-es6 tests/{,diff/,js/,shell/}*-test.js"
+  },
+  "systemjs": {
+    "map": {
+      "highlight.js/lib/core": "https://ga.jspm.io/npm:highlight.js@11.11.1/es/core.js",
+      "highlight.js/lib/languages/javascript": "https://ga.jspm.io/npm:highlight.js@11.11.1/es/languages/javascript.js",
+      "highlight.js/lib/languages/shell": "https://ga.jspm.io/npm:highlight.js@11.11.1/es/languages/shell.js"
+    }
   }
 }
