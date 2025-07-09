@@ -703,8 +703,7 @@ function putFunctionDeclsInFront (path, options) {
       else declPath.replaceWith(funcId);
     } else if (parentPath.type === 'ExportNamedDeclaration') {
       // If the function is exported we change the export declaration into a reference
-      // const parentIndexInBody = scope.node.body.indexOf(parent);
-      parentPath.replaceWith(t.ExportNamedDeclaration(null, [t.ExportSpecifier(funcId, funcId)], null));
+        parentPath.replaceWith(t.ExportNamedDeclaration(null, [t.ExportSpecifier(funcId, funcId)], null));
     } else if (parentPath.type === 'ExportDefaultDeclaration') {
       parentPath.replaceWith(t.ExportDefaultDeclaration(funcId));
     }
@@ -844,10 +843,6 @@ function evalCodeTransform (path, state, options) {
         }
       }));
   }
-
-  // transforming experimental ES features into accepted es6 form...
-  // This can be done by babel...
-  // objectSpreadTransform(path);
 
   // 3. capture top level vars into topLevelVarRecorder "environment"
 
@@ -989,8 +984,7 @@ export function livelyPreTranspile (api, options) {
       dontTransform: [
         'global', 'self',
         '_moduleExport', '_moduleImport',
-        'localStorage', // for Firefox, see fetch
-        // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
+        'localStorage', // for Firefox, doesn't like to be called as a method, same as fetch, i.e. __lvVarRecorder.fetch
         module.recorderName, module.sourceAccessorName,
         'prompt', 'alert', 'fetch', 'getComputedStyle'
       ].concat(query.knownGlobals),
