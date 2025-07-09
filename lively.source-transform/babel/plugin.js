@@ -10,24 +10,6 @@ import { getGlobal } from 'lively.vm/lib/util.js';
 import { declarationWrapperCall, annotationSym, assignExpr, varDeclOrAssignment, transformPattern, generateUniqueName, varDeclAndImportCall, importCallStmt, shouldDeclBeCaptured, importCall, exportCallStmt, exportFromImport, additionalIgnoredDecls, additionalIgnoredRefs } from './helpers.js';
 import { classToFunctionTransformBabel } from 'lively.classes/class-to-function-transform.js';
 
-/*
-import { module } from 'lively.modules'
-let mod = module('lively.morphic/morph.js');
-s = await mod.source()
-fun.timeToRunN(() => {
-  let res = babel.transform(s, {
-    sourceMaps: 'inline',
-    //compact: true,
-    comments: false,
-    plugins: [
-      [livelyPreTranspile, { module: mod, }],
-      systemjsTransform,
-      [livelyPostTranspile, { module: mod }]
-    ]
-  });
-}, 10)
-*/
-
 export const defaultDeclarationWrapperName = 'lively.capturing-declaration-wrapper';
 export const defaultClassToFunctionConverter = t.Identifier('initializeES6ClassForLively');
 
@@ -531,7 +513,7 @@ function replaceVarDeclsAndRefs (path, options) {
         const rewrittenDecl = assignExpr(options.captureObj, decl.id, initWrapped, false);
         rewrittenDecl.loc = decl.loc;
         // This is rewriting normal vars
-        replaced.push(rewrittenDecl); // FIXME: also update the refs here
+        replaced.push(rewrittenDecl);
 
         if (options.keepTopLevelVarDecls) {
           replaced.push(varDecl(decl.id, t.MemberExpression(options.captureObj, decl.id)));
@@ -689,7 +671,7 @@ function putFunctionDeclsInFront (path, options) {
     const init = options.declarationWrapper
       ? declarationWrapperCall(
         options.declarationWrapper,
-        decl, // FIXME: this is not babel compatible
+        decl,
         t.StringLiteral(funcId.name),
         t.StringLiteral('function'),
         funcId, options.captureObj,
@@ -703,8 +685,7 @@ function putFunctionDeclsInFront (path, options) {
       else declPath.replaceWith(funcId);
     } else if (parentPath.type === 'ExportNamedDeclaration') {
       // If the function is exported we change the export declaration into a reference
-      // const parentIndexInBody = scope.node.body.indexOf(parent);
-      parentPath.replaceWith(t.ExportNamedDeclaration(null, [t.ExportSpecifier(funcId, funcId)], null));
+        parentPath.replaceWith(t.ExportNamedDeclaration(null, [t.ExportSpecifier(funcId, funcId)], null));
     } else if (parentPath.type === 'ExportDefaultDeclaration') {
       parentPath.replaceWith(t.ExportDefaultDeclaration(funcId));
     }
@@ -845,10 +826,6 @@ function evalCodeTransform (path, state, options) {
       }));
   }
 
-  // transforming experimental ES features into accepted es6 form...
-  // This can be done by babel...
-  // objectSpreadTransform(path);
-
   // 3. capture top level vars into topLevelVarRecorder "environment"
 
   if (!options.topLevelVarRecorder && options.topLevelVarRecorderName) {
@@ -971,7 +948,6 @@ export function livelyPreTranspile (api, options) {
       sourceAccessorName,
       recorder,
       recorderName,
-      // dontTransform,
       varDefinitionCallbackName,
       embedOriginalCode = true
     } = module;
@@ -989,8 +965,7 @@ export function livelyPreTranspile (api, options) {
       dontTransform: [
         'global', 'self',
         '_moduleExport', '_moduleImport',
-        'localStorage', // for Firefox, see fetch
-        // doesn't like to be called as a method, i.e. __lvVarRecorder.fetch
+        'localStorage', // for Firefox, doesn't like to be called as a method, same as fetch, i.e. __lvVarRecorder.fetch
         module.recorderName, module.sourceAccessorName,
         'prompt', 'alert', 'fetch', 'getComputedStyle'
       ].concat(query.knownGlobals),
