@@ -767,7 +767,7 @@ export default class TestRunner extends HTMLMorph {
         historyId: 'lively.morphic-test-runner-load-tests-pkg-hist'
       });
 
-    // if (!pkg) return null
+    if (!pkg) return null;
     const li = LoadingIndicator.open('Finding Testmodules in Package');
     const tests = await findTestModulesInPackage(sys, pkg.url);
     li.remove();
