@@ -20,6 +20,7 @@ package-lock.json
 /lively.installer.log
 /lively-system-interface/.lively.next-eval-server-for-test.js
 /lively.server/.lively.next-eval-server-for-test.js
+/lively-system-interface/tests/http-server-for-interface.js
 components_cache/*
 lively.freezer/landing-page/
 lively.freezer/loading-screen/
