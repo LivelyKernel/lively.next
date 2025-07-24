@@ -10,20 +10,14 @@
     "lively.halos": "https://github.com/LivelyKernel/lively.halos",
     "svg-intersections": "0.2.5",
     "kld-intersections": "^0.4.2",
-    "lite-youtube-embed": "0.3.0"
+    "lite-youtube-embed": "0.3.0",
+    "bowser": "1.4.1",
+    "three": "0.126"
   },
   "devDependencies": {
     "mocha-es6": "*"
   },
   "scripts": {
     "test": "mocha-es6 tests/*-test.js"
-  },
-  "systemjs": {
-    "map": {
-      "bowser": "esm://cache/bowser@1.4.1",
-      "svg-intersections": "esm://cache/svg-intersections",
-      "kld-intersections": "esm://cache/kld-intersections",
-      "lite-youtube-embed": "esm://cache/lite-youtube-embed@0.3.0"
-    }
   }
 }

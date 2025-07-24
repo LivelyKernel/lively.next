@@ -1,8 +1,51 @@
 /*global System*/
-import LivelyServer from "../server.js";
 import fs from "fs";
-import { basename, join } from "path";
+import { join } from "path";
 import { resource } from "lively.resources";
+import { parseQuery } from "lively.resources";
+import { arr, obj } from "lively.lang";
+const Generator = System.get('@jspm_generator').default;
+
+async function installDeps(generator, deps, failed) {
+  for (let dep of deps) {
+    if (dep[0] == 'tar-fs' || !!generator.map.imports[dep[0]] || failed[dep[0]]) continue;
+    try {
+      await generator.install(dep.join('@'));
+    } catch (err) {
+      console.error('Failed to install ' + dep.join('@'));
+      failed[dep[0]] = true;
+    }
+  }
+  const toUninstall = arr.withoutAll(Object.keys(generator.map.imports), deps.map(d => d[0]));
+  await generator.uninstall(toUninstall);
+}
+
+export async function generateImportMap (packageName) {
+  let inputMap = false;
+  const packageRegistry = System.get("@lively-env").packageRegistry;
+  const pkg = packageName && packageRegistry.lookup(packageName);
+  if (!pkg) return {};
+  const cachedImportMap = resource(pkg.url).join('.cachedImportMap.json');
+  if (await cachedImportMap.exists()) {
+    inputMap = JSON.parse((await cachedImportMap.read()).replace(/esm:\/\//g, 'https://')); // replace esm to make generator install again
+  }
+  const generator = new Generator({
+    env: ["browser"],
+    defaultProvider: 'jspm.io', 
+    inputMap
+  });
+  const failed = inputMap?._failed || {}; // collect the packages where we fail to generate import maps, likely due to incompatibility with the browser
+  await installDeps(
+    generator, 
+    Object.entries(pkg.config.dependencies || {}).filter(([dep]) => !dep.match(/lively(\.|-)/)),
+    failed
+  );
+  const importMap = JSON.parse(JSON.stringify(generator.getMap()).replace(/https:\/\//g, 'esm://'))
+  if (!obj.isEmpty(failed)) importMap._failed = failed;
+  if (!obj.isEmpty(importMap)) await cachedImportMap.writeJson(importMap);
+  else if (inputMap) { await cachedImportMap.remove() }
+  return importMap;
+}
 
 export default class LibLookupPlugin {
 
@@ -40,10 +83,17 @@ export default class LibLookupPlugin {
     res.end(JSON.stringify(r.toJSON()));
   }
 
+  async sendImportmap (req, res) {
+    const { projectName } = parseQuery(req.url);
+    res.writeHead(200,  {"Content-Type": "application/json"});
+    res.end(JSON.stringify( await generateImportMap(projectName)));
+  }
+
   async handleRequest(req, res, next) {
     let {libPath, fsRootDir} = this, {url: path} = req;
 
     if (path === "/package-registry.json") return this.sendPackageRegistry(req, res);
+    if (path.startsWith("/import-map.json")) return await this.sendImportmap(req, res);
 
     if (!path.startsWith(libPath) || path === libPath) return next();
     if (fs.existsSync(join(fsRootDir, path))) return next();

@@ -3,8 +3,8 @@
 import { expect } from 'mocha-es6';
 import { subscribe, unsubscribe } from 'lively.notifications';
 
-import { removeDir, createFiles } from './helpers.js';
-import { getSystem, removeSystem } from '../src/system.js';
+import { removeDir, prepareSystem, createFiles } from './helpers.js';
+import { removeSystem } from '../src/system.js';
 import module from '../src/module.js';
 import { ensurePackage } from '../src/packages/package.js';
 import { promise } from 'lively.lang';
@@ -34,11 +34,7 @@ describe('notify', () => {
   function onPackageRemoved (n) { packageremoved.push(n); }
 
   beforeEach(() => {
-    system = getSystem('test', { baseURL: dir });
-    system.set('lively.transpiler', System.get('lively.transpiler'));
-    system.config({ transpiler: 'lively.transpiler' });
-    system.babelOptions = System.babelOptions;
-    system.translate = async (load) => await System.translate.bind(system)(load);
+    system = prepareSystem('test', dir);
     modulechanged = [];
     moduleloaded = [];
     moduleunloaded = [];

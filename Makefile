@@ -19,10 +19,20 @@ landing-page:
 	rm -rf lively.freezer/landing-page
 	env CI=true npm --prefix lively.freezer run build-landing-page
 
+landing-page-debug:
+	rm -rf lively.server/.module_cache
+	rm -rf lively.freezer/landing-page
+	env CI=true DEBUG=true npm --prefix lively.freezer run build-landing-page
+
 loading-screen:
 	rm -rf lively.server/.module_cache
 	rm -rf lively.freezer/loading-screen
 	env CI=true npm --prefix lively.freezer run build-loading-screen
+
+loading-screen-debug:
+	rm -rf lively.server/.module_cache
+	rm -rf lively.freezer/loading-screen
+	env CI=true DEBUG=true npm --prefix lively.freezer run build-loading-screen
 
 clear-freezer-dir:
 	rm -rf lively.freezer/landing-page

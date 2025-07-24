@@ -17,25 +17,6 @@ import BrowserResolver from './src/resolvers/browser.js';
 import { lively } from './src/plugins/rollup.js'; // for rollup
 import { currentUsername } from 'lively.user';
 
-
-/*
-
-How to build the bootstrap and memory adapters with the freezer. Will replace build scripts completely in the future.
-
-await bootstrapLibrary('lively.classes/runtime.js', '/classes.runtime.min.js',);
-await bootstrapLibrary('/lively.server/index-base.js', 'lively.server/bin/server.min.js', false)
-await bootstrapLibrary('lively.morphic/web/bootstrap.js', 'lively.morphic/web/lively.bootstrap.min.js');
-await bootstrapLibrary('lively.modules/tools/bootstrap.js', 'lively.modules/dist/new_lively.modules.bootstrap.min.js', false, 'lively.modules');
-
-await jspmCompile(
-  url = 'https://dev.jspm.io/pouchdb-adapter-memory',
-  out = 'lively.storage/dist/pouchdb-adapter-mem.min.js',
-  globalName = 'window.pouchdbAdapterMem', redirect = {
-   "https://dev.jspm.io/npm:ltgt@2.1.3/index.dew.js": "https://dev.jspm.io/npm:ltgt@2.2.1/index.dew.js"
-  }
-)
-*/
-
 // fixme: Why is that a difference between parts and worlds? Why do we need kld-intersections at all?
 const DEFAULT_EXCLUDED_MODULES_PART = [
   'kld-intersections'
@@ -171,7 +152,7 @@ export async function bundlePart (partOrSnapshot, {
   requester,
   useTerser
 }) {
-  const jsonPlugin = await System.import('esm://cache/@rollup/plugin-json');
+  const jsonPlugin = await System.import('@rollup/plugin-json');
   const snapshot = partOrSnapshot.isMorph
     ? await createMorphSnapshot(partOrSnapshot, {
       frozenSnapshot: true
@@ -214,7 +195,7 @@ export async function bundleModule (moduleId, {
   htmlConfig,
   useTerser
 }) {
-  const { default: jsonPlugin } = await System.import('esm://cache/@rollup/plugin-json');
+  const { default: jsonPlugin } = await System.import('@rollup/plugin-json');
   // fixme: maybe its better to make the plugin devoid of state...?
   const bundle = await rollup({
     input: moduleId,
@@ -237,7 +218,7 @@ export async function bundleModule (moduleId, {
 }
 
 export async function jspmCompile (url, out, globalName, redirect = {}) {
-  const jsonPlugin = await System.import('esm://cache/@rollup/plugin-json');
+  const jsonPlugin = await System.import('@rollup/plugin-json');
   const freezerPlugin = lively({
     includePolyfills: false,
     redirect,
@@ -259,7 +240,7 @@ export async function jspmCompile (url, out, globalName, redirect = {}) {
 }
 
 export async function bootstrapLibrary (url, out, asBrowserModule = true, globalName) {
-  const jsonPlugin = await System.import('esm://cache/@rollup/plugin-json');
+  const jsonPlugin = await System.import('@rollup/plugin-json');
   const bundle = await rollup({
     input: url,
     plugins: [

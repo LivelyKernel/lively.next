@@ -9,7 +9,6 @@
   "author": "Robert Krahn <robert.krahn@gmail.com>",
   "license": "MIT",
   "main": "index.js",
-  "systemjs": {},
   "lively": {
     "main": "index.js",
     "packageMap": {
@@ -26,7 +25,8 @@
     "js-github": "^1.0.0"
   },
   "dependencies": {
-    "lively.resources": "^0.1.20",
-    "lively.storage": "^0.1.7"
+    "lively.resources": "*",
+    "lively.storage": "*",
+    "libsodium-wrappers": "0.7.15"
   }
 }

@@ -116,3 +116,24 @@ Object.defineProperty(Set.prototype, '__deserialize__', {
     }
   }
 });
+
+if (hasSystem) {
+  const originalDefineProperties = Object.defineProperties;
+
+  // Global flag to toggle behavior
+  System.SUPPRESS_DEFINE_ERRORS = false;
+
+  // Override
+  Object.defineProperties = function (obj, props) {
+    if (System.SUPPRESS_DEFINE_ERRORS) {
+      try {
+        return originalDefineProperties(obj, props);
+      } catch (err) {
+        if (!err.message.includes('Cannot redefine property')) throw err;
+        return obj; // or a fallback behavior
+      }
+    } else {
+      return originalDefineProperties(obj, props);
+    }
+  };
+}

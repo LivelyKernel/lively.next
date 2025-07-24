@@ -1,7 +1,5 @@
 'use strict';
 
-Object.defineProperty(exports, '__esModule', { value: true });
-
 var path = require('path');
 var fs = require('fs');
 var util = require('util');
@@ -15,16 +13,6 @@ var net = require('net');
 var _events = require('events');
 var child_process = require('child_process');
 var os = require('os');
-
-function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
-
-var path__default = /*#__PURE__*/_interopDefaultLegacy(path);
-var fs__default = /*#__PURE__*/_interopDefaultLegacy(fs);
-var http__default = /*#__PURE__*/_interopDefaultLegacy(http);
-var https__default = /*#__PURE__*/_interopDefaultLegacy(https);
-var zlib__default = /*#__PURE__*/_interopDefaultLegacy(zlib);
-var Stream__default = /*#__PURE__*/_interopDefaultLegacy(Stream);
-var _events__default = /*#__PURE__*/_interopDefaultLegacy(_events);
 
 var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
@@ -7541,6 +7529,7 @@ try {
 
 /*! fetch-blob. MIT License. Jimmy Wärting <https://jimmy.warting.se/opensource> */
 
+
 // 64 KiB (same size chrome slice theirs blob into Uint8array's)
 const POOL_SIZE = 65536;
 
@@ -7833,6 +7822,7 @@ const File = _File;
 
 /*! formdata-polyfill. MIT License. Jimmy Wärting <https://jimmy.warting.se/opensource> */
 
+
 var {toStringTag:t,iterator:i,hasInstance:h}=Symbol,
 r=Math.random,
 m='append,set,get,getAll,delete,keys,values,entries,forEach,constructor'.split(','),
@@ -7997,7 +7987,7 @@ const isSameProtocol = (destination, original) => {
 	return orig === dest;
 };
 
-const pipeline = util.promisify(Stream__default["default"].pipeline);
+const pipeline = util.promisify(Stream.pipeline);
 const INTERNALS$2 = Symbol('Body internals');
 
 /**
@@ -8027,7 +8017,7 @@ class Body {
 		} else if (ArrayBuffer.isView(body)) {
 			// Body is ArrayBufferView
 			body = buffer.Buffer.from(body.buffer, body.byteOffset, body.byteLength);
-		} else if (body instanceof Stream__default["default"]) ; else if (body instanceof FormData) {
+		} else if (body instanceof Stream) ; else if (body instanceof FormData) {
 			// Body is FormData
 			body = formDataToBlob(body);
 			boundary = body.type.split('=')[1];
@@ -8040,9 +8030,9 @@ class Body {
 		let stream = body;
 
 		if (buffer.Buffer.isBuffer(body)) {
-			stream = Stream__default["default"].Readable.from(body);
+			stream = Stream.Readable.from(body);
 		} else if (isBlob(body)) {
-			stream = Stream__default["default"].Readable.from(body.stream());
+			stream = Stream.Readable.from(body.stream());
 		}
 
 		this[INTERNALS$2] = {
@@ -8054,7 +8044,7 @@ class Body {
 		};
 		this.size = size;
 
-		if (body instanceof Stream__default["default"]) {
+		if (body instanceof Stream) {
 			body.on('error', error_ => {
 				const error = error_ instanceof FetchBaseError ?
 					error_ :
@@ -8185,7 +8175,7 @@ async function consumeBody(data) {
 	}
 
 	/* c8 ignore next 3 */
-	if (!(body instanceof Stream__default["default"])) {
+	if (!(body instanceof Stream)) {
 		return buffer.Buffer.alloc(0);
 	}
 
@@ -8244,7 +8234,7 @@ const clone = (instance, highWaterMark) => {
 
 	// Check that body is a stream and not form-data object
 	// note: we can't clone the form-data object without having it as a dependency
-	if ((body instanceof Stream__default["default"]) && (typeof body.getBoundary !== 'function')) {
+	if ((body instanceof Stream) && (typeof body.getBoundary !== 'function')) {
 		// Tee instance body
 		p1 = new Stream.PassThrough({highWaterMark});
 		p2 = new Stream.PassThrough({highWaterMark});
@@ -8310,7 +8300,7 @@ const extractContentType = (body, request) => {
 	}
 
 	// Body is stream - can't really do much about this
-	if (body instanceof Stream__default["default"]) {
+	if (body instanceof Stream) {
 		return null;
 	}
 
@@ -8377,9 +8367,10 @@ const writeToStream = async (dest, {body}) => {
  * Headers class offers convenient helpers
  */
 
+
 /* c8 ignore next 9 */
-const validateHeaderName = typeof http__default["default"].validateHeaderName === 'function' ?
-	http__default["default"].validateHeaderName :
+const validateHeaderName = typeof http.validateHeaderName === 'function' ?
+	http.validateHeaderName :
 	name => {
 		if (!/^[\^`\-\w!#$%&'*+.|~]+$/.test(name)) {
 			const error = new TypeError(`Header name must be a valid HTTP token [${name}]`);
@@ -8389,8 +8380,8 @@ const validateHeaderName = typeof http__default["default"].validateHeaderName ==
 	};
 
 /* c8 ignore next 9 */
-const validateHeaderValue = typeof http__default["default"].validateHeaderValue === 'function' ?
-	http__default["default"].validateHeaderValue :
+const validateHeaderValue = typeof http.validateHeaderValue === 'function' ?
+	http.validateHeaderValue :
 	(name, value) => {
 		if (/[^\t\u0020-\u007E\u0080-\u00FF]/.test(value)) {
 			const error = new TypeError(`Invalid character in header content ["${name}"]`);
@@ -8651,6 +8642,7 @@ const isRedirect = code => {
  *
  * Response class provides content decoding
  */
+
 
 const INTERNALS$1 = Symbol('Response internals');
 
@@ -9141,6 +9133,7 @@ function parseReferrerPolicyFromHeader(headers) {
  * All spec algorithm step numbers are based on https://fetch.spec.whatwg.org/commit-snapshots/ae716822cb3a61843226cd090eefc6589446c1d2/.
  */
 
+
 const INTERNALS = Symbol('Request internals');
 
 /**
@@ -9473,6 +9466,7 @@ if (!globalThis.DOMException) {
  * All spec algorithm step numbers are based on https://fetch.spec.whatwg.org/commit-snapshots/ae716822cb3a61843226cd090eefc6589446c1d2/.
  */
 
+
 const supportedSchemas = new Set(['data:', 'http:', 'https:']);
 
 /**
@@ -9499,14 +9493,14 @@ async function fetch$1(url, options_) {
 		}
 
 		// Wrap http.request into fetch
-		const send = (parsedURL.protocol === 'https:' ? https__default["default"] : http__default["default"]).request;
+		const send = (parsedURL.protocol === 'https:' ? https : http).request;
 		const {signal} = request;
 		let response = null;
 
 		const abort = () => {
 			const error = new AbortError('The operation was aborted.');
 			reject(error);
-			if (request.body && request.body instanceof Stream__default["default"].Readable) {
+			if (request.body && request.body instanceof Stream.Readable) {
 				request.body.destroy(error);
 			}
 
@@ -9650,7 +9644,7 @@ async function fetch$1(url, options_) {
 						}
 
 						// HTTP-redirect fetch step 9
-						if (response_.statusCode !== 303 && request.body && options_.body instanceof Stream__default["default"].Readable) {
+						if (response_.statusCode !== 303 && request.body && options_.body instanceof Stream.Readable) {
 							reject(new FetchError('Cannot follow redirect with body being a readable stream', 'unsupported-redirect'));
 							finalize();
 							return;
@@ -9731,13 +9725,13 @@ async function fetch$1(url, options_) {
 			// by common browsers.
 			// Always using Z_SYNC_FLUSH is what cURL does.
 			const zlibOptions = {
-				flush: zlib__default["default"].Z_SYNC_FLUSH,
-				finishFlush: zlib__default["default"].Z_SYNC_FLUSH
+				flush: zlib.Z_SYNC_FLUSH,
+				finishFlush: zlib.Z_SYNC_FLUSH
 			};
 
 			// For gzip
 			if (codings === 'gzip' || codings === 'x-gzip') {
-				body = Stream.pipeline(body, zlib__default["default"].createGunzip(zlibOptions), error => {
+				body = Stream.pipeline(body, zlib.createGunzip(zlibOptions), error => {
 					if (error) {
 						reject(error);
 					}
@@ -9759,13 +9753,13 @@ async function fetch$1(url, options_) {
 				raw.once('data', chunk => {
 					// See http://stackoverflow.com/questions/37519828
 					if ((chunk[0] & 0x0F) === 0x08) {
-						body = Stream.pipeline(body, zlib__default["default"].createInflate(), error => {
+						body = Stream.pipeline(body, zlib.createInflate(), error => {
 							if (error) {
 								reject(error);
 							}
 						});
 					} else {
-						body = Stream.pipeline(body, zlib__default["default"].createInflateRaw(), error => {
+						body = Stream.pipeline(body, zlib.createInflateRaw(), error => {
 							if (error) {
 								reject(error);
 							}
@@ -9788,7 +9782,7 @@ async function fetch$1(url, options_) {
 
 			// For br
 			if (codings === 'br') {
-				body = Stream.pipeline(body, zlib__default["default"].createBrotliDecompress(), error => {
+				body = Stream.pipeline(body, zlib.createBrotliDecompress(), error => {
 					if (error) {
 						reject(error);
 					}
@@ -10281,6 +10275,7 @@ const windowsRootPathRe = /^[a-z]:\/$/i;
 
 /* global clearTimeout, setTimeout */
 
+
 /**
 * Throws a well behaved error on purpopse, when accessing unimplemented
 * functionality.
@@ -10328,6 +10323,7 @@ function argumentNames (f) {
  * Utility functions that help to inspect, enumerate, and create JS objects
  * @module lively.lang/object
  */
+
 
 // -=-=-=-=-=-=-=-=-
 // internal helper
@@ -13873,6 +13869,8 @@ exports$1.find;
       exports$1.articlize;
 
 /* global btoa,JsDiff */
+/* lively.vm dontTransform: ["btoa"] */
+
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-
 // file system path support
@@ -14202,6 +14200,7 @@ class Resource {
  * @module lively.lang/number
  */
 
+
 /**
  * Returns wether `x` is between `a` and `b` and keeps `eps` distance from both of them.
  * @param {number} x - The number that should be between two bounds
@@ -14213,11 +14212,12 @@ class Resource {
 function between (x, a, b, eps) {
   eps = eps || 0;
   let min, max;
-  if (a < b) { min = a, max = b; } else { max = a, min = b; }
+  { min = a, max = b; }
   return (max - x + eps >= 0) && (min - x - eps <= 0);
 }
 
 /* global Promise */
+
 
 /**
  * Returns an object that conveniently gives access to the promise itself and 
@@ -14234,6 +14234,9 @@ function deferred () {
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-
+// js object path accessor
+// -=-=-=-=-=-=-=-=-=-=-=-=-=-
+
 
 function Path (p, splitter) {
   if (p instanceof Path) return p;
@@ -14531,6 +14534,7 @@ Object.assign(Path.prototype, {
  * @module lively.lang/graph 
  */
 
+
 /**
  * Sorts graph into an array of arrays. Each "bucket" contains the graph
  * nodes that have no other incoming nodes than those already visited. This
@@ -14618,7 +14622,7 @@ function sortByReference (depGraph, startNode) {
 /**
  * An interval defining an upper and a lower bound.
  * @typedef { number[] } Interval
- * @property {number} 0 - The lower bound of the interval. 
+ * @property {number} 0 - The lower bound of the interval.
  * @property {number} 1 - The upper bound of the interval.
  */
 
@@ -14627,6 +14631,7 @@ typeof System !== 'undefined'
   : (typeof window !== 'undefined' ? window : global);
 
 /* global process */
+
 
 /*
  * A simple node.js-like cross-platform event emitter implementation that can
@@ -14651,7 +14656,7 @@ const isNode$1 = typeof process !== 'undefined' && process.versions && process.v
 const makeEmitter = isNode$1
   ? function (obj, options) {
     if (obj.on && obj.removeListener) { return obj; }
-    let events = _events__default["default"];
+    let events = _events;
     if (!events) events = System._nodeRequire('events');
     Object.assign(obj, events.EventEmitter.prototype);
     events.EventEmitter.call(obj);
@@ -14710,6 +14715,7 @@ const makeEmitter = isNode$1
 typeof process !== 'undefined' && process.env && typeof process.exit === 'function';
 
 /* global System */
+
 
 // type EventType = string
 // type EventTime = number
@@ -14774,6 +14780,7 @@ function log (notification) { // Notification -> ()
 }
 
 /* global fetch, DOMParser, XPathEvaluator, XPathResult, Namespace,System,global,process,XMLHttpRequest,Buffer */
+
 
 class XPathQuery {
   constructor (expression) {
@@ -16013,7 +16020,7 @@ function isAbsolute (path) {
 
 function parentDir (p) {
   if (p.isResource) return p.parent();
-  return path__default["default"].basename(p);
+  return path.basename(p);
 }
 
 function equalLocation (a, b) {
@@ -16023,37 +16030,37 @@ function equalLocation (a, b) {
 
 function join (a, b) {
   if (a.isResource) return a.join(b);
-  return path__default["default"].join(a, b);
+  return path.join(a, b);
 }
 
 function normalizePath (p) {
   if (p.isResource) return p.withRelativePartsResolved();
-  return path__default["default"].normalize(p);
+  return path.normalize(p);
 }
 
 function fs_isDirectory (location) {
   if (location.isResource) return location.isDirectory();
-  return fs__default["default"].statSync(location).isDirectory();
+  return fs.statSync(location).isDirectory();
 }
 
 function fs_exists (location) {
   if (location.isResource) return location.exists();
-  return fs__default["default"].existsSync(location);
+  return fs.existsSync(location);
 }
 
 function fs_read (location) {
   if (location.isResource) return location.read();
-  return fs__default["default"].readFileSync(location);
+  return fs.readFileSync(location);
 }
 
 function fs_write (location, content) {
   if (location.isResource) return location.write(content);
-  return fs__default["default"].writeFileSync(location, content);
+  return fs.writeFileSync(location, content);
 }
 
 function fs_readJson (location) {
   if (location.isResource) return location.exists().then(exists => exists ? location.readJson() : null);
-  return fs__default["default"].existsSync(location) ? JSON.parse(String(fs_read(location))) : null;
+  return fs.existsSync(location) ? JSON.parse(String(fs_read(location))) : null;
 }
 
 function fs_writeJson (location, jso) {
@@ -16063,7 +16070,7 @@ function fs_writeJson (location, jso) {
 
 function fs_dirList (location) {
   if (location.isResource) return location.dirList(1);
-  return fs__default["default"].readdirSync(location).map(ea => join(location, ea));
+  return fs.readdirSync(location).map(ea => join(location, ea));
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -16221,7 +16228,7 @@ class PackageMap {
     let key = this.keyFor(packageCollectionDirs, individualPackageDirs, devPackageDirs);
     return this.cache[key] || (this.cache[key] = this.build(packageCollectionDirs, individualPackageDirs, devPackageDirs),
      [...packageCollectionDirs, ...individualPackageDirs, ...devPackageDirs].forEach(dir => {
-       let watcher = fs__default["default"].watch(dir, {persistent: false}, () => {
+       let watcher = fs.watch(dir, {persistent: false}, () => {
          delete this.cache[key];
          watcher.close();
        });
@@ -16608,7 +16615,6 @@ function depGraph (packageSpec, packageMap, dependencyFields = ['dependencies'])
 }
 
 function buildStages (packageSpec, packageMap, dependencyFields) {
-  let { name, version } = packageSpec;
   let { deps, resolvedVersions } = depGraph(packageSpec, packageMap);
 
   for (let dep in deps) {
@@ -16617,7 +16623,7 @@ function buildStages (packageSpec, packageMap, dependencyFields) {
     }
   }
 
-  return sortByReference(deps, `${name}@${version}`);
+  return sortByReference(deps);
 }
 
 /* global System,process,__dirname */
@@ -16631,15 +16637,15 @@ let _npmEnv;
 function npmEnv () {
   return _npmEnv || (_npmEnv = (() => {
     let dir; let cacheFile = path.join(tmpdir(), 'npm-env.json'); let env = {};
-    if (fs__default["default"].existsSync(cacheFile)) {
-      let cached = JSON.parse(String(fs__default["default"].readFileSync(cacheFile)));
+    if (fs.existsSync(cacheFile)) {
+      let cached = JSON.parse(String(fs.readFileSync(cacheFile)));
       if (Date.now() - cached.time < 1000 * 60) return cached.env;
     }
     try {
       dir = path.join(tmpdir(), 'npm-test-env-project');
-      if (!fs__default["default"].existsSync(dir)) fs__default["default"].mkdirSync(dir);
-      fs__default["default"].writeFileSync(path.join(dir, 'package.json'), `{"scripts": {"print-env": "${process.env.npm_node_execpath || 'node'} ./print-env.js"}}`);
-      fs__default["default"].writeFileSync(path.join(dir, 'print-env.js'), 'console.log(JSON.stringify(process.env))');
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+      fs.writeFileSync(path.join(dir, 'package.json'), `{"scripts": {"print-env": "${process.env.npm_node_execpath || 'node'} ./print-env.js"}}`);
+      fs.writeFileSync(path.join(dir, 'print-env.js'), 'console.log(JSON.stringify(process.env))');
       let PATH = process.env.PATH.split(':').filter(ea => ea !== helperBinDir).join(':');
       Object.keys(process.env).forEach(ea => {
         if (ea.toLowerCase().startsWith('npm_config_')) { env[ea] = process.env[ea]; }
@@ -16655,12 +16661,12 @@ function npmEnv () {
       env = {};
     } finally {
       try {
-        if (fs__default["default"].existsSync(path.join(dir, 'package.json'))) { fs__default["default"].unlinkSync(path.join(dir, 'package.json')); }
-        fs__default["default"].unlinkSync(path.join(dir, 'print-env.js'));
-        fs__default["default"].rmdirSync(dir);
+        if (fs.existsSync(path.join(dir, 'package.json'))) { fs.unlinkSync(path.join(dir, 'package.json')); }
+        fs.unlinkSync(path.join(dir, 'print-env.js'));
+        fs.rmdirSync(dir);
       } catch (err) { }
     }
-    fs__default["default"].writeFileSync(cacheFile, JSON.stringify({ time: Date.now(), env }));
+    fs.writeFileSync(cacheFile, JSON.stringify({ time: Date.now(), env }));
     return env;
   })());
 }
@@ -16683,7 +16689,7 @@ function npmCreateEnvVars (configObj, env = {}, path = 'npm_package') {
 
 function linkBins (packageSpecs, linkState = {}, verbose = false) {
   let linkLocation = path.join(tmpdir(), 'npm-helper-bin-dir');
-  if (!fs__default["default"].existsSync(linkLocation)) fs__default["default"].mkdirSync(linkLocation);
+  if (!fs.existsSync(linkLocation)) fs.mkdirSync(linkLocation);
   packageSpecs.forEach(({ bin, location }) => {
     if (location.startsWith('file://')) { location = location.replace(/^file:\/\//, ''); }
     if (!bin) return;
@@ -16692,11 +16698,11 @@ function linkBins (packageSpecs, linkState = {}, verbose = false) {
       let realFile = bin[linkName];
       try {
         // fs.existsSync follows links, so broken links won't be reported as existing
-        fs__default["default"].lstatSync(path.join(linkLocation, linkName));
-        fs__default["default"].unlinkSync(path.join(linkLocation, linkName));
+        fs.lstatSync(path.join(linkLocation, linkName));
+        fs.unlinkSync(path.join(linkLocation, linkName));
       } catch (err) { }
       verbose && console.log(`[flatn build] linking ${path.join(location, realFile)} => ${path.join(linkLocation, linkName)}`);
-      fs__default["default"].symlinkSync(path.join(location, realFile), path.join(linkLocation, linkName));
+      fs.symlinkSync(path.join(location, realFile), path.join(linkLocation, linkName));
     }
     linkState[location] = true;
   });
@@ -16749,7 +16755,7 @@ class BuildProcess {
 
   normalizeScripts ({ scripts, location }) {
     if (!scripts || !scripts.install) {
-      let hasBindingGyp = fs__default["default"].existsSync(path.join(location, 'binding.gyp'));
+      let hasBindingGyp = fs.existsSync(path.join(location, 'binding.gyp'));
       if (hasBindingGyp) {
         scripts = Object.assign({ install: 'node-gyp rebuild' }, scripts);
       }
@@ -16821,6 +16827,68 @@ class BuildProcess {
       }
       throw err;
     }
+  }
+}
+
+function resolveExportMapping (mapping, context) {
+  if (!mapping) throw Error('Cannot resolve undefined mapping!');
+  if (typeof mapping === 'string') return mapping;
+  let adjustedPath;
+  if (Array.isArray(mapping)) {
+    for (let subMapping of mapping) {
+      adjustedPath = resolveExportMapping(subMapping, context);
+      if (adjustedPath) {
+        mapping = adjustedPath;
+        break; 
+      }
+    }
+  }
+  if (typeof mapping === 'object') {
+    switch (context) {
+      case 'node-require': adjustedPath = mapping.node || mapping.require || mapping.default; break;
+      case 'systemjs-browser': 
+      case 'node-import': adjustedPath = mapping.node || mapping.import || mapping.default; break;
+      case 'module': adjustedPath = mapping.module ||  mapping.node || mapping.import || mapping.default; break;
+      default: adjustedPath = mapping.default;
+    }
+    return resolveExportMapping(adjustedPath, context);
+  }
+  
+  return adjustedPath;
+}
+
+function resolveImportMapping(name, mapping, context) {
+  if (!mapping) throw Error('Cannot resolve undefined mapping!');
+  mapping = mapping[name];
+  if (!mapping) throw Error('Cannot resolve undefined mapping!');
+  while (typeof mapping === 'object') {
+    switch (context) {
+      case 'node-require': mapping = mapping.node || mapping.require || mapping.default; break;
+      case 'systemjs-browser': 
+      case 'node-import': mapping = mapping.node || mapping.import || mapping.default; break;
+      case 'module': mapping = mapping.module ||  mapping.node || mapping.import || mapping.default; break;
+      default: mapping = mapping.default;
+    }
+  }
+  if (!mapping) throw Error('Cannot resolve undefined mapping!');
+  return mapping;
+}
+
+function resolveViaImportMap (id, importMap, importer) {
+  let scope, remapped = importMap.imports?.[id] || null;
+  if (scope = Object.entries(importMap.scopes || {})
+    .filter(([k]) => importer.startsWith(k))
+    .sort((a, b) => a[0].length - b[0].length)
+    .map(([_, scope]) => scope)
+    .reduce((a, b) => ({ ...a, ...b }), false)) {
+    if (scope[id]) remapped = scope[id];
+    else {
+      const prefixMapping = Object.keys(scope).find(k => k.endsWith('/') && id.startsWith(k));
+      if (prefixMapping) remapped = id.replace(prefixMapping, scope[prefixMapping]);
+    }
+  }
+  if (remapped) {
+    return remapped;
   }
 }
 
@@ -16917,7 +16985,7 @@ async function installPackage (
 
   destinationDir = ensurePathFormat(destinationDir);
 
-  if (!fs__default["default"].existsSync(destinationDir)) { fs__default["default"].mkdirSync(destinationDir); }
+  if (!fs.existsSync(destinationDir)) { fs.mkdirSync(destinationDir); }
 
   let atIndex = pNameAndVersion.lastIndexOf('@');
   if (atIndex === -1) atIndex = pNameAndVersion.length;
@@ -17012,12 +17080,12 @@ function addDependencyToPackage (
     if (dep) {
       if (!depVersion || !semver.parse(depVersion, true) || !semver.satisfies(depVersion, depVersionRange, true)) {
         packageSpec[dependencyField][depName] = depVersionRange;
-        let config = fs__default["default"].existsSync(path.join(location, 'package.json'))
-          ? JSON.parse(String(fs__default["default"].readFileSync(path.join(location, 'package.json'))))
+        let config = fs.existsSync(path.join(location, 'package.json'))
+          ? JSON.parse(String(fs.readFileSync(path.join(location, 'package.json'))))
           : { name: depName, version: dep.version };
         if (!config[dependencyField]) config[dependencyField] = {};
         config[dependencyField][depName] = depVersionRange;
-        fs__default["default"].writeFileSync(path.join(location, 'package.json'), JSON.stringify(config, null, 2));
+        fs.writeFileSync(path.join(location, 'package.json'), JSON.stringify(config, null, 2));
       }
     }
     return result;
@@ -17519,6 +17587,9 @@ exports.npmSearchForVersions = npmSearchForVersions;
 exports.packageDirsFromEnv = packageDirsFromEnv;
 exports.parseArgs = _1_2_6;
 exports.resetPackageMap = resetPackageMap;
+exports.resolveExportMapping = resolveExportMapping;
+exports.resolveImportMapping = resolveImportMapping;
+exports.resolveViaImportMap = resolveViaImportMap;
 exports.setPackageDirsOfEnv = setPackageDirsOfEnv;
 exports.tmpdir = tmpdir;
 exports.untar = untar;

@@ -2,9 +2,9 @@
 
 import { expect } from 'mocha-es6';
 
-import { removeDir, createFiles } from './helpers.js';
+import { removeDir, prepareSystem, createFiles } from './helpers.js';
 
-import { getSystem, searchLoadedModules } from '../src/system.js';
+import { searchLoadedModules } from '../src/system.js';
 import mod from '../src/module.js';
 import { importPackage, removePackage, getPackage } from '../src/packages/package.js';
 
@@ -23,11 +23,7 @@ describe('search', () => {
 
   before(async () => {
     await createFiles(testProjectDir, testProjectSpec);
-    S = getSystem('test', { baseURL: dir });
-    S.set('lively.transpiler', System.get('lively.transpiler'));
-    S.config({ transpiler: 'lively.transpiler' });
-    S.babelOptions = System.babelOptions;
-    S.translate = async (load) => await System.translate.bind(S)(load);
+    S = prepareSystem('test', dir);
     module1 = mod(S, file1m);
     module2 = mod(S, file2m);
   });

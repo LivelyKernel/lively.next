@@ -124,7 +124,7 @@ export class MorphHighlighter extends Morph {
   show () {
     if (this.target && this.target.layout && this.showLayout) {
       this.layoutHalo =
-        this.layoutHalo || this.world().showLayoutHaloFor(this.target, this.pointerId);
+        this.layoutHalo || $world.showLayoutHaloFor(this.target, this.pointerId);
       if (this.layoutHalo && this.layoutHalo.previewDrop) {
         this.visible = false;
         this.alignWithHalo();

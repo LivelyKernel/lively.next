@@ -1,27 +1,35 @@
 /* global require,process,__dirname, module */
 let path = require('path');
 let fs = require('fs');
-let { ensurePackageMap, packageDirsFromEnv } = require('./flatn-cjs.js');
+let { ensurePackageMap, packageDirsFromEnv, resolveExportMapping, resolveViaImportMap } = require('./flatn-cjs.js');
 
 process.execPath = process.argv[0] = path.join(__dirname, 'bin/node');
+
+const moduleUrlToConfig = new Map();
 
 /**
  * Handles the proper base name resolution of @ prefixed package names or
  * SystemJS specific import mappings.
  * @param { string } request - The module reference.
  * @param { object } config - The package config the module belongs to.
- * @param {  'node-import'|'node-require'|'system-browser'|'system-node' } context - The resolution context.
+ * @param {  'node-import'|'node-require'|'systemjs-browser'|'systemjs-node' } context - The resolution context.
  */
-function resolveBaseName (request, config, context) {
+function resolveBaseName (request, config, context, importer) {
   let map; let baseName = request;
   if (context.startsWith('systemjs-') && (map = config.systemjs?.map)) {
     const envName = context === 'systemjs-node' ? 'node' : '~node';
     let remapping;
     if (remapping = map[request]?.[envName] || map[request]) {
-      baseName = remapping;
+      if (typeof remapping === 'string')
+        baseName = remapping;
     }
   }
-  if (baseName.match(/^https?\:\/\//)) return baseName;
+  if (context.startsWith('systemjs-') && (map = config.systemjs?.importMap)) {
+    const remapping = resolveViaImportMap(baseName, map, importer);
+    if (remapping) 
+      baseName = remapping;
+  }
+  if (baseName.match(/^https|esm?\:\/\//)) return baseName;
   if (baseName.startsWith('@')) return baseName.split('/').slice(0, 2).join('/');
   return baseName.split('/')[0];
 }
@@ -56,9 +64,17 @@ function traverseUntilPkgDir (modulePath, cb) {
  */
 function findPackageConfig (modulePath) {
   let configs = [];
+  if (moduleUrlToConfig.has(modulePath)) {
+    return moduleUrlToConfig.get(modulePath);
+  }
   traverseUntilPkgDir(modulePath, (dir) => {
+    let config;
     if (fs.existsSync(path.join(dir, 'package.json'))) {
-      configs.push(JSON.parse(fs.readFileSync(path.join(dir, 'package.json'))));
+      config = JSON.parse(fs.readFileSync(path.join(dir, 'package.json')));
+      configs.push(config);
+    }
+    if (config && fs.existsSync(path.join(dir, '.cachedImportMap.json'))) {
+      config.systemjs = { ...config.systemjs, importMap: JSON.parse(fs.readFileSync(path.join(dir, '.cachedImportMap.json'))) };
     }
   });
   return configs.reduce(function (configA, configB) {
@@ -73,31 +89,6 @@ function depMap (packageConfig) {
       Object.assign(deps, packageConfig[field]);
       return deps;
     }, {});
-}
-
-function resolveExportMapping(mapping, context) {
-  if (!mapping) throw Error('Cannot resolve undefined mapping!');
-  if (typeof mapping === 'string') return mapping;
-  let adjustedPath;
-  if (Array.isArray(mapping)) {
-    for (let subMapping of mapping) {
-      adjustedPath = resolveExportMapping(subMapping, context);
-      if (adjustedPath) {
-        mapping = adjustedPath;
-        break; 
-      }
-    }
-  }
-  if (typeof mapping === 'object') {
-    switch (context) {
-      case 'node-require': adjustedPath = mapping.node || mapping.require || mapping.default; break;
-      case 'node-import': adjustedPath = mapping.node || mapping.import || mapping.default; break;
-      default: adjustedPath = mapping.default;
-    }
-    return resolveExportMapping(adjustedPath, context);
-  }
-  
-  return adjustedPath;
 }
 
 /**
@@ -177,7 +168,7 @@ function findModuleInPackage (requesterPackage, basename, request, context) {
 function flatnResolve (request, parentId = '', context = 'node') {
   let config = findPackageConfig(parentId);
   let deps = config ? depMap(config) : {};
-  let basename = resolveBaseName(request, config, context);
+  let basename = resolveBaseName(request, config, context, parentId);
   let { packageCollectionDirs, individualPackageDirs, devPackageDirs } = packageDirsFromEnv();
   let packageMap = ensurePackageMap(packageCollectionDirs, individualPackageDirs, devPackageDirs);
   let packageFound = packageMap.lookup(basename, deps[basename]) ||
@@ -194,8 +185,13 @@ function flatnResolve (request, parentId = '', context = 'node') {
   }
 
   if (basename === '@empty') return '@empty';
-  if (basename && basename.match(/^https?\:\/\//)) return basename;
-  if (resolved) return resolved;
+  if (basename && basename.match(/^(https|esm)?\:\/\//)) {
+    if (config && !moduleUrlToConfig.has(basename)) moduleUrlToConfig.set(basename, config);
+    return basename;
+  }
+  if (resolved) {
+    return resolved;
+  }
   process.env.FLATN_VERBOSE && console.error(`Failing to require "${request}" from ${parentId}`);
   return null;
 }
@@ -206,4 +202,4 @@ function findPackagePathForModule (modulePath) {
   return dir;
 }
 
-module.exports = { flatnResolve, findModuleInPackage, depMap, findPackageConfig, findPackagePathForModule };
+module.exports = { flatnResolve, findModuleInPackage, depMap, findPackageConfig, findPackagePathForModule, resolveViaImportMap };

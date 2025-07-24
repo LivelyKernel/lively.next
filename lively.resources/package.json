@@ -9,11 +9,7 @@
     "map": {
       "fs": {
         "node": "@node/fs",
-        "~node": "esm://cache/fs@0.0.2"
-      },
-      "fetch-ponyfill": {
-        "node": "https://jspm.dev/fetch-ponyfill",
-        "~node": "fetch-ponyfill/build/fetch-browser.js"
+        "~node": "@empty"
       }
     }
   },

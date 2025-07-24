@@ -28,7 +28,7 @@ import { promise } from 'lively.lang';
 import { setupLively2Lively, setupLivelyShell } from 'lively.morphic/world-loading.js';
 import { GitHubAPIWrapper } from 'lively.git';
 import { generateKeyPair } from 'lively.git/js-keygen/js-keygen.js';
-import * as semver from 'esm://cache/semver';
+import * as semver from 'semver';
 
 export const repositoryOwnerAndNameRegex = /\.com\/(.+)\/(.*)/;
 const fontCSSWarningString = `/*\nDO NOT CHANGE THE CONTENTS OF THIS FILE!
@@ -135,7 +135,7 @@ export class Project {
       // TODO: How do we manage the necessity to upgrade this nicely?
       dependencies: {
         '@rollup/plugin-json': '4.1.0',
-        rollup: '^2.70.2',
+        '@rollup/wasm-node': '4.27.3',
         'rollup-plugin-export-default': '1.4.0',
         'rollup-plugin-polyfill-node': '0.9.0'
       },

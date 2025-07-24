@@ -8,6 +8,7 @@ import { wrapResource, fetchResource } from './resource.js';
 import { emit } from 'lively.notifications';
 import { join, urlResolve } from './url-helpers.js';
 import { resource } from 'lively.resources';
+import { resolveExportMapping, resolveImportMapping, resolveViaImportMap } from 'flatn/helpers.mjs';
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 const isNode = System.get('@system-env').node;
@@ -217,6 +218,8 @@ function prepareSystem (System, config) {
     ? config.useModuleTranslationCache
     : !urlQuery().noModuleCache;
   System.useModuleTranslationCache = useModuleTranslationCache;
+  
+  System.importMapCache = new Map();
 
   if (config._nodeRequire) System._nodeRequire = config._nodeRequire;
 
@@ -255,7 +258,7 @@ function prepareSystem (System, config) {
     fetch: function (load, proceed) {
       const s = this.moduleSources?.[load.name];
       if (s) return s;
-      if (this.transpiler !== 'lively.transpiler') return proceed(load);
+      if (this.transpiler !== 'lively.transpiler.babel') return proceed(load);
       return fetchResource.call(this, proceed, load);
     },
     translate: function (load, opts) {
@@ -317,11 +320,11 @@ function prepareSystem (System, config) {
 
   if (!config.transpiler && System.transpiler === 'traceur') {
     const initialSystem = GLOBAL.System;
-    if (initialSystem.transpiler === 'lively.transpiler') {
-      System.set('lively.transpiler', initialSystem.get('lively.transpiler'));
+    if (initialSystem.transpiler === 'lively.transpiler.babel') {
+      System.set('lively.transpiler.babel', initialSystem.get('lively.transpiler.babel'));
       System._loader.transpilerPromise = initialSystem._loader.transpilerPromise;
       System.config({
-        transpiler: 'lively.transpiler',
+        transpiler: 'lively.transpiler.babel',
         babelOptions: Object.assign(initialSystem.babelOptions || {}, config.babelOptions)
       });
     } else {
@@ -360,7 +363,7 @@ function urlQuery () {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 const dotSlashStartRe = /^\.?\//;
 const trailingSlashRe = /\/$/;
-const jsExtRe = /\.js$/;
+const jsExtRe = /(\.js|\.mjs)$/;
 const cjsExtRe = /\.cjs$/;
 const jsxExtRe = /\.jsx$/;
 const nodeExtRe = /\.node$/;
@@ -387,29 +390,19 @@ function preNormalize (System, name, parent) {
   const { packageRegistry } = System.get('@lively-env');
   if (packageRegistry) {
     let importMap, mappedObject, packageURL;
-    const pkg = parent && packageRegistry.findPackageHavingURL(parent);
+    let pkg = parent && packageRegistry.findPackageHavingURL(parent);
     if (pkg) {
-      let map, systemjs;
-      ({ map, url: packageURL, systemjs } = pkg);
+      let map, systemjs, config;
+      ({ map, url: packageURL, systemjs, config } = pkg);
+      if (config.imports) {
+        try {
+          name = resolveImportMapping(name, config.imports, 'module');
+          if (name.startsWith('.')) name = urlResolve(join(packageURL, name));
+        } catch (err) {}
+      }
+      if (config.optionalDependencies?.[name]) return '@empty';
       importMap = !isNode && systemjs?.importMap; // only works in the browser
-      mappedObject = map?.[name] || System.map[name];
-    }
-
-    if (importMap) {
-      let remapped = importMap.imports?.[name];
-      let scope, prefix;
-      if (scope = Object.entries(importMap.scopes)
-        .filter(([k, v]) => parent.startsWith(k))
-        .sort((a, b) => a[0].length - b[0].length)
-        .map(([prefix, scope]) => scope)
-        .reduce((a, b) => ({ ...a, ...b }), false)) {
-        if (scope[name]) remapped = scope[name];
-      }
-      if (remapped) {
-        name = remapped;
-        if (mappedObject) mappedObject = name;
-        packageRegistry.moduleUrlToPkg.set(name, pkg);
-      }
+      mappedObject = map?.[name] || isNode && System.map[name]; // only consider the global map if no local importMap
     }
 
     if (mappedObject) {
@@ -423,6 +416,16 @@ function preNormalize (System, name, parent) {
       if (name.startsWith('.')) name = urlResolve(join(packageURL, name));
     }
 
+    if (importMap) {
+      let remapped = resolveViaImportMap(name, importMap, parent);
+      if (remapped) {
+        name = remapped;
+        packageRegistry.moduleUrlToPkg.set(name, pkg);
+      }
+    }
+
+    if (!importMap && name.startsWith('node:')) name = '@node/' + name.slice(5); // some jspm bullshit
+
     let resolved = packageRegistry.resolvePath(name, parent);
     if (resolved) {
       if (resolved.endsWith('/') && !name.endsWith('/')) resolved = resolved.slice(0, -1);
@@ -430,8 +433,28 @@ function preNormalize (System, name, parent) {
       name = resolved;
     }
 
-    if (pkg && importMap && !packageRegistry.moduleUrlToPkg.get(name)) {
-      packageRegistry.moduleUrlToPkg.set(name, pkg);
+    if (importMap && !System.importMapCache.get(name))
+      System.importMapCache.set(name, importMap);
+    
+    if (pkg && importMap && !packageRegistry.moduleUrlToPkg.has(name)) {
+      packageRegistry.moduleUrlToPkg.set(name, pkg); // orphaned ESM modules, that do not have their own packages
+    } else if (pkg = packageRegistry.findPackageWithURL(name)) {
+      // check if the exports exports are defined here, and adjust them now!
+      let { exports: exportMappings } = pkg.config
+
+      if (exportMappings?.['.']) { // only in case the request was root
+          let adjustedPath = resolveExportMapping(exportMappings['.'], 'module');
+          name = join(pkg.url, adjustedPath);
+      }
+    } else if (pkg = packageRegistry.findPackageHavingURL(name)) {
+      // for cases where we import a package via subpath like packageName/subpath
+      // which are not captured properly by packageWithURL
+      let { exports: exportMappings } = pkg.config
+      const subPath = name.replace(pkg.url, '.');
+      if (exportMappings?.[subPath]) {
+         let adjustedPath = resolveExportMapping(exportMappings[subPath], 'module');
+        name = join(pkg.url, adjustedPath);
+      }
     }
   }
 
@@ -442,7 +465,7 @@ function preNormalize (System, name, parent) {
 function postNormalize (System, normalizeResult, isSync) {
 // console.log(`> [postNormalize] ${normalizeResult}`);
   // lookup package main
-  const base = normalizeResult.replace(jsExtRe, '');
+  const base = normalizeResult.replace('/index.js', '')
 
   // rk 2017-05-13: FIXME, we currently use a form like
   // System.decanonicalize("lively.lang/") to figure out the package base path...
@@ -454,10 +477,10 @@ function postNormalize (System, normalizeResult, isSync) {
   const { packageRegistry } = System.get('@lively-env');
   if (packageRegistry) {
     const referencedPackage = packageRegistry.findPackageWithURL(base);
+
     if (referencedPackage) {
-      let main = (referencedPackage.main || 'index.js').replace(dotSlashStartRe, '');
-      let withMain = base.replace(trailingSlashRe, '') + '/' + main;
-      // console.log(`>> [postNormalize] ${withMain} (main 1)`);
+      let { main = 'index.js' } = referencedPackage.config
+      let withMain = join(referencedPackage.url, main.replace(dotSlashStartRe, ''));
       return withMain;
     }
   } else {
@@ -465,24 +488,12 @@ function postNormalize (System, normalizeResult, isSync) {
       let main = System.CONFIG.packages[base].main;
       if (main) {
         let withMain = base.replace(trailingSlashRe, '') + '/' + main.replace(dotSlashStartRe, '');
-        // console.log(`>> [postNormalize] ${withMain} (main 2)`);
         return withMain;
       }
     }
   }
 
-  // Fix issue with accidentally adding .js
-  const jsonPath = normalizeResult.match(jsonJsExtRe);
-  // if (!jsExtRe.test(normalizeResult) &&
-  //   !jsxExtRe.test(normalizeResult) &&
-  //   !jsonExtRe.test(normalizeResult) &&
-  //   !nodeModRe.test(normalizeResult) &&
-  //   !nodeExtRe.test(normalizeResult)) {
-  //   // make sure this is not a package name
-  //   normalizeResult += '.js';
-  // }
-  System.debug && console.log(`>> [postNormalize] ${jsonPath ? jsonPath[1] : normalizeResult}`);
-  return jsonPath ? jsonPath[1] : normalizeResult;
+  return normalizeResult;
 }
 
 async function checkExistence (url, System) {
@@ -496,9 +507,43 @@ async function checkExistence (url, System) {
   return System._fileCheckMap[url] = await resource(url).exists();
 }
 
+async function finalizeNormalization (System, name, normalized) {
+  const isNodePath = normalized.startsWith('file:');
+  if (
+    // Make sure we did not ask for a js or jsx file in the initial query.
+    !jsExtRe.test(name) &&
+    !jsxExtRe.test(name) &&
+    !cjsExtRe.test(name) &&
+    // Make sure SystemJS has not yet resolved to a json or node module.
+    // If this happens, the resolution algorithm most likely has already
+    // figured out things and we assume that it has come up with a reasonable
+    // answer.
+    !jsonExtRe.test(normalized) &&
+    !nodeModRe.test(normalized) &&
+    !nodeExtRe.test(normalized) &&
+    // Make sure that the module as not been loaded.
+    !(System.loads && System.loads[normalized]) &&
+    !normalized.startsWith('node:')
+  ) {
+    if (jsExtRe.test(normalized)) {
+      if (await checkExistence(normalized, System)) return normalized;
+      const indexjs = normalized.replace('.js', '/index.js');
+      if (await checkExistence(indexjs, System) || !isNodePath) return indexjs;
+      return normalized.replace('.js', '/index.node');
+    } else if (!normalized.startsWith('esm://') && !normalized.includes('jspm.dev') && normalized !== '@empty') {
+      if (await checkExistence(normalized + '.js', System)) return normalized + '.js';
+      if (await checkExistence(normalized + '/index.js', System)) return normalized + '/index.js';
+    }
+  }
+
+  if (jsxJsExtRe.test(normalized)) normalized = normalized.replace('.jsx.js', '.jsx');
+
+  return normalized;
+}
+
 async function normalizeHook (proceed, name, parent, parentAddress) {
   const System = this;
-  if (System.transpiler !== 'lively.transpiler') return await proceed(name, parent, true);
+  if (System.transpiler !== 'lively.transpiler.babel') return await proceed(name, parent, true);
   if (parent && name === 'cjs') {
     return 'cjs';
   }
@@ -509,40 +554,16 @@ async function normalizeHook (proceed, name, parent, parentAddress) {
   }
   if (name === 'lively.fetch') return name;
   if (name === '@system-env') return name;
-  if (name.startsWith('node:')) name = '@node/' + name.slice(5); // some jspm bullshit
   const stage1 = preNormalize(System, name, parent);
   const stage2 = await proceed(stage1, parent, true);
   let stage3 = postNormalize(System, stage2 || stage1, false);
-  const isNodePath = stage3.startsWith('file:');
+  stage3 = await finalizeNormalization(System, name, stage3);
   System.debug && console.log(`[normalize] ${name} => ${stage3}`);
-  if (
-    // Make sure we did not ask for a js or jsx file in the initial query.
-    !jsExtRe.test(name) &&
-    !jsxExtRe.test(name) &&
-    !cjsExtRe.test(name) &&
-    // Make sure SystemJS has not yet resolved to a json or node module.
-    // If this happens, the resolution algorithm most likely has already
-    // figured out things and we assume that it has come up with a reasonable
-    // answer.
-    !jsonExtRe.test(stage3) &&
-    !nodeModRe.test(stage3) &&
-    !nodeExtRe.test(stage3) &&
-    // Make sure that the module as not been loaded.
-    !(System.loads && System.loads[stage3]) &&
-    !stage3.startsWith('node:')
-  ) {
-    if (jsExtRe.test(stage3)) {
-      if (await checkExistence(stage3, System)) return stage3;
-      const indexjs = stage3.replace('.js', '/index.js');
-      if (await checkExistence(indexjs, System) || !isNodePath) return indexjs;
-      return stage3.replace('.js', '/index.node');
-    } else if (!stage3.startsWith('esm://') && !stage3.includes('jspm.dev') && stage3 !== '@empty') {
-      if (await checkExistence(stage3 + '.js', System)) return stage3 + '.js';
-      if (await checkExistence(stage3 + '/index.js', System)) return stage3 + '/index.js';
-    }
+
+  if (System.METADATA[stage2] && !System.METADATA[stage3]) {
+    System.METADATA[stage3] = System.METADATA[stage2]; 
   }
 
-  if (jsxJsExtRe.test(stage3)) stage3 = stage3.replace('.jsx.js', '.jsx');
   return stage3;
 }
 
@@ -555,10 +576,13 @@ function decanonicalizeHook (proceed, name, parent, isPlugin) {
   }
   let stage2 = proceed(stage1, parent, isPlugin);
   if (stage1.endsWith('/')) {
-    const main = this.CONFIG.packages[stage1.replace(/\/*$/, '')]?.main;
+    const isNodePath = stage2.startsWith('file:');
+    let main = this.CONFIG.packages[(isNodePath ? 'file://' : '') + stage1.replace(/\/*$/, '')]?.main || 'index.js';
+    if (main?.startsWith('./')) main = main.replace('./', '');
     // SystemJS 0.21 has appended the main module, which is something we do not like
     // if we decanonicalize a '/' terminated url
     if (stage2.endsWith(main)) stage2 = stage2.replace(main, '');
+    else if (!stage2.endsWith('/')) stage2 += '/';
   }
   let stage3 = postNormalize(System, stage2, true);
   if (plugin) stage3 += plugin;

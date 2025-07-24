@@ -8,6 +8,11 @@
     "url": "https://github.com/LivelyKernel/lively.installer"
   },
   "systemjs": {
+    "meta": {
+      "packages-config.json": {
+        "format": "json"
+      }
+    },
     "map": {
       "child_process": {
         "node": "@node/child_process",
@@ -26,14 +31,13 @@
     "lively.lang": "*",
     "flatn": "*",
     "lively.freezer": "*",
-    "systemjs": "^0.21.6",
+    "@jspm/generator": "2.6.1",
     "@rollup/plugin-json": "4.1.0",
-    "rollup": "^2.70.2",
+    "@rollup/wasm-node": "4.27.3",
     "rollup-plugin-polyfill-node": "0.9.0",
-    "babel-runtime": "6.20.0",
     "acorn": "8.0.4",
     "@buxlabs/amd-to-es6": "0.16.3",
-    "@babel/core": "^7.12.0",
+    "@babel/core": "7.26.10",
     "@babel/plugin-transform-modules-systemjs": "7.18.0",
     "@babel/plugin-transform-modules-commonjs": "7.14.0"
   }

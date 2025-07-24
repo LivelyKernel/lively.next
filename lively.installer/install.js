@@ -26,7 +26,8 @@ export async function install(baseDir, dependenciesDir, verbose) {
       step6_setupObjectDB = true,
       step6_syncWithObjectDB = false,
       step7_setupAssets = true,
-      step8_runPackageBuildScripts = false;
+      step8_runPackageBuildScripts = false,
+      step9_createImportMap = true;
 
   try {
 
@@ -161,8 +162,9 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // ObjectDB init
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+    const System = await setupSystem(baseDir);
+
     if (step6_setupObjectDB) {
-      await setupSystem(baseDir);
       await setupObjectDB(baseDir, packageMap);
     }
 
@@ -170,7 +172,6 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // ObjectDB sync
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     if (step6_syncWithObjectDB) {
-      await setupSystem(baseDir);
       await replicateObjectDB(baseDir);
     }
 
@@ -212,6 +213,17 @@ export async function install(baseDir, dependenciesDir, verbose) {
         } else {
           await exec(`ln -sf ${from.path()} ${to.path()}`);
         }
+      }
+    }
+
+    // the paths need to be updated now, so that we can properly resolve installed deps
+    if (step9_createImportMap) {
+      const { Generator } = await import('@jspm/generator');
+      System.set('@jspm_generator', System.newModule({ default: Generator }));
+      const { generateImportMap } = await System.import('lively.server/plugins/lib-lookup.js');
+      for (let p of packages) {
+        console.log(`generating import map of ${p.name}`);
+        await generateImportMap(p.name);
       }
     }
 
@@ -262,7 +274,6 @@ export async function setupSystem(baseURL) {
   modules = await import("lively.modules");
   let livelySystem = modules.getSystem("lively", {baseURL, _nodeRequire: System._nodeRequire });
   modules.changeSystem(livelySystem, true);
-  await import("lively.modules/systemjs-init.js");
   var registry = livelySystem["__lively.modules__packageRegistry"] = new modules.PackageRegistry(livelySystem);
   registry.packageBaseDirs = process.env.FLATN_PACKAGE_COLLECTION_DIRS.split(":").map(ea => resource(`file://${ea}`));
   registry.devPackageDirs = process.env.FLATN_DEV_PACKAGE_DIRS.split(":").map(ea => resource(`file://${ea}`));
@@ -270,6 +281,10 @@ export async function setupSystem(baseURL) {
   await registry.update();
   // also reset the flatn package map, so that native requires wont fail
   resetPackageMap();
+
+  const { setupBabelTranspiler } = await import('lively.source-transform/babel/plugin.js');
+  await setupBabelTranspiler(livelySystem);
+
   return livelySystem;
 }
 

@@ -17,7 +17,7 @@ export const detectModuleFormat = (function () {
   const esmFormatCommentRegExp = /['"]format (esm|es6)['"];/;
   const cjsFormatCommentRegExp = /['"]format cjs['"];/;
   // Stolen from SystemJS
-  const esmRegEx = /(^\s*|[}\);\n]\s*)(import\s*(['"]|(\*\s*as\s+)?[^"'\(\)\n;]+\s+from\s*['"]|\{)|export\s+\*\s+from\s+["']|export\s*(\{|default|function|class|var|const|let|async\s+function))/;
+  const esmRegEx = /(^\s*|[}\);\n]\s*)(import\s*(['"]|(\*\s*as\s+)?[^"'\(\)\n;]+\s+from\s*['"]|\{)|export\s*\*\s*from\s*["']|export\s*(\{|default|function|class|var|const|let|async\s+function))/;
 
   return (source, metadata) => {
     if (metadata && metadata.format) {
@@ -71,10 +71,12 @@ export async function updateBundledModules (system, modulesToUpdate) {
     let mod = S['__lively.modules__loadedModules'][m];
     if (!mod) {
       S.delete(m);
+      system.SUPPRESS_DEFINE_ERRORS = true;
       await S.import(m);
       mod = S['__lively.modules__loadedModules'][m] || module(S, m);
     }
     await mod.reload();
+    system.SUPPRESS_DEFINE_ERRORS = false;
     S['__lively.modules__loadedModules'][m] = mod; // ensure module stays here even when the source and initialization are skipped.
   }
   // finally update the frozen records that require update
@@ -528,6 +530,11 @@ class ModuleInterface {
       const require = _require.bind(null, this);
       require.resolve = _resolve.bind(null, this);
       nodejsDescriptors.require = { configurable: true, writable: true, value: require };
+      nodejsDescriptors.Buffer = {
+        configurable: true,
+        get: () => this._overriddenBuffer || Buffer,
+        set: (buf) => this._overriddenBuffer = buf
+      };
     }
 
     this._recorder = Object.create(S.global, {
@@ -539,6 +546,12 @@ class ModuleInterface {
         configurable: true,
         writable: true,
         value: undefined
+      },
+
+      process: {
+        configurable: true,
+        writable: true,
+        value: S.global.process
       },
 
       System: { configurable: true, writable: true, value: S },

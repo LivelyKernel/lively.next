@@ -1,6 +1,6 @@
 import { Rectangle, pt, rect, Color } from 'lively.graphics';
 import { connect, noUpdate, signal } from 'lively.bindings';
-import { ConstraintLayout, Icon, HorizontalLayout, VerticalLayout, Morph, part } from 'lively.morphic';
+import { ConstraintLayout, Icon, TilingLayout, Morph, part } from 'lively.morphic';
 import { Checkbox } from 'lively.components';
 
 import MorphicDB from './db.js';
@@ -315,7 +315,7 @@ class MorphicDBWidget extends Morph {
         ? []
         : [{
             name: 'controls',
-            layout: new HorizontalLayout({ spacing: 2 }),
+            layout: new TilingLayout({ spacing: 2 }),
             fill: null,
             submorphs: controls
           }]
@@ -367,7 +367,7 @@ export class MorphicDBList extends Morph {
     let {
       layout, itemSettings, dbInfos, showAddButton, showCloseButton, showOKButton
     } = this;
-    if (!layout) { layout = this.layout = new VerticalLayout({ align: 'center', spacing: 4 }); }
+    if (!layout) { layout = this.layout = new TilingLayout({ axis: 'column', align: 'center', spacing: 4 }); }
     this.submorphs = dbInfos.map(info => new MorphicDBWidget({ ...itemSettings, selected: info.selected, dbInfo: info }));
     this.submorphs.forEach(ea => connect(ea, 'selected', this, 'onDBSelected'));
 
@@ -377,7 +377,7 @@ export class MorphicDBList extends Morph {
       this.addMorph({
         name: 'buttons',
         fill: null,
-        layout: new HorizontalLayout({ spacing: 5 }),
+        layout: new TilingLayout({ spacing: 5 }),
         submorphs: [okBtn, addBtn].filter(Boolean)
       });
       addBtn && connect(addBtn, 'fire', this, 'interactivelyAddDB');

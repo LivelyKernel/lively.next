@@ -113,8 +113,8 @@ function getEs6Transpiler (System, options, env) {
         babelPluginTranspilerForAsyncAwaitCode(System, babelPlugin, options.targetModule, env));
   }
 
-  if (System.transpiler === 'lively.transpiler') {
-    let Transpiler = System.get('lively.transpiler').default;
+  if (System.transpiler === 'lively.transpiler.babel') {
+    let Transpiler = System.get('lively.transpiler.babel').default;
     let transpiler = new Transpiler(System, options.targetModule, env);
     return (source, options) => transpiler.transpileDoit(source, options);
   }

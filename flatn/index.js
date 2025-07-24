@@ -10,6 +10,7 @@ import { packageDownload } from './download.js';
 import { PackageMap, PackageSpec } from './package-map.js';
 import { BuildProcess } from './build.js';
 export * from './util.js';
+export * from './helpers.mjs';
 
 if (!global.fetch) {
   Object.assign(

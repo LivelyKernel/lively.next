@@ -2,10 +2,11 @@
 
 import { expect } from 'mocha-es6';
 import { createFiles, resource } from 'lively.resources';
-import { getSystem, removeSystem } from '../src/system.js';
+import { removeSystem } from '../src/system.js';
 import module from '../src/module.js';
 import ExportLookup from '../src/export-lookup.js';
 import { importPackage } from '../src/packages/package.js';
+import { prepareSystem } from './helpers.js';
 
 let dir = 'local://lively.modules.export-lookup-test/';
 let testProjectDir = dir + 'project/';
@@ -38,11 +39,8 @@ let testProject2Spec = {
 let S;
 describe('export lookup', () => {
   beforeEach(async () => {
-    S = getSystem('test', { baseURL: testProjectDir });
-    S.set('lively.transpiler', System.get('lively.transpiler'));
-    S.config({ transpiler: 'lively.transpiler' });
-    S.babelOptions = System.babelOptions;
-    S.translate = async (load) => await System.translate.bind(S)(load);
+    S = prepareSystem('test', testProjectDir);
+    S.useModuleTranslationCache = true;
     await createFiles(testProjectDir, testProjectSpec);
     await importPackage(S, testProjectDir);
   });

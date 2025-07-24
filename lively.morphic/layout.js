@@ -1,7 +1,7 @@
-import { pt, Transform, Point, Rectangle, rect } from 'lively.graphics';
+import { pt, Point, Rectangle, rect } from 'lively.graphics';
 import { arr, promise, Closure, num, obj, fun } from 'lively.lang';
 import { once, signal } from 'lively.bindings';
-import { loadYoga } from 'yoga-layout/dist/src/load.js';
+import { loadYoga } from 'yoga-layout/load';
 
 let Yoga, _yoga, yogaConfig, ALIGN, ALIGN_CSS, JUSTIFY, JUSTIFY_CSS;
 if (!Yoga) {

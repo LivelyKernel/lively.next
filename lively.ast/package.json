@@ -32,12 +32,12 @@
     "@javascript-obfuscator/estraverse": "5.4.0",
     "astq": "2.7.5",
     "escodegen": "2.0.0",
-    "acorn": "8.0.4",
-    "acorn-walk": "8.2.0",
-    "acorn-loose": "8.3.0",
-    "acorn-private-methods": "1.0.0",
     "acorn-class-fields": "1.0.0",
-    "acorn-static-class-features": "1.0.0"
+    "acorn-loose": "8.0.2",
+    "acorn-private-methods": "1.0.0",
+    "acorn-static-class-features": "1.0.0",
+    "acorn-walk": "8.2.0",
+    "acorn": "8.0.4"
   },
   "devDependencies": {
     "acorn": "8.0.4",
@@ -58,39 +58,17 @@
   "systemjs": {
     "main": "index.js",
     "map": {
-      "escodegen": {
-        "~node": "esm://cache/escodegen@2.0.0"
-      },
-      "acorn-walk": {
-        "~node": "esm://cache/acorn-walk@8.2.0"
-      },
-      "acorn-loose": {
-        "~node": "esm://cache/acorn-loose@8.3.0"
-      },
-      "acorn": {
-        "~node": "esm://cache/acorn@8.0.4"
-      },
-      "esutils": {
-        "~node": "esm://cache/esutils@2.0.3"
-      },
       "astq": {
-        "~node": "esm://cache/astq@2.7.5",
         "node": "@empty"
       },
       "acorn-private-methods": {
-        "~node": "esm://cache/acorn-private-methods@1.0.0",
         "node": "@empty"
       },
       "acorn-class-fields": {
-        "~node": "esm://cache/acorn-class-fields@1.0.0",
         "node": "@empty"
       },
       "acorn-static-class-features": {
-        "~node": "esm://cache/acorn-static-class-features@1.0.0",
         "node": "@empty"
-      },
-      "@javascript-obfuscator/estraverse": {
-        "~node": "esm://cache/@javascript-obfuscator/estraverse@5.4.0"
       },
       "util": {
         "node": "@node/util",

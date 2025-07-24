@@ -7,11 +7,6 @@
     "lively.lang": "^1.0.5",
     "semver": "^5.3.0"
   },
-  "systemjs": {
-    "map": {
-      "semver": "esm://cache/semver@7.3.7"
-    }
-  },
   "devDependencies": {
     "mocha-es6": "*",
     "rollup": "^0.36.1",
