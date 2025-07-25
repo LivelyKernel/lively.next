@@ -1,6 +1,5 @@
 import t from '@babel/types';
 import { helpers } from 'lively.ast/lib/query.js';
-import { Path } from 'lively.lang';
 
 export function getAncestryPath (path) {
   return path.getAncestry().map(m => m.inList ? [m.key, m.listKey] : m.key).flat().slice(0, -1).reverse();
@@ -259,7 +258,7 @@ export function additionalIgnoredDecls ({ varDecls, catches }) {
     }).flat());
 }
 
-export function additionalIgnoredRefs ({ varDecls, catches, importSpecifiers }, options) {
+export function additionalIgnoredRefs ({ varDecls, catches, importSpecifiers = [] }, options) {
   const ignoreDecls = [];
   varDecls.forEach(pathToNode => {
     const decl = pathToNode.node;

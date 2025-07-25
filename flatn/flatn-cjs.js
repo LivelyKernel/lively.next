@@ -14618,7 +14618,7 @@ function sortByReference (depGraph, startNode) {
 /**
  * An interval defining an upper and a lower bound.
  * @typedef { number[] } Interval
- * @property {number} 0 - The lower bound of the interval. 
+ * @property {number} 0 - The lower bound of the interval.
  * @property {number} 1 - The upper bound of the interval.
  */
 

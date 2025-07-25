@@ -8,6 +8,7 @@ import PresetEnv from '@babel/preset-env';
 
 const verbose = process.argv[2] === '--verbose';
 const minify = !process.env.CI;
+const sourceMap = !!process.env.DEBUG;
 try {
   const build = await rollup({
     input: './src/loading-screen.cp.js',
@@ -22,6 +23,7 @@ try {
   <link rel="preload" id="registry" href="/package-registry.json" as="fetch" crossOrigin>
           `
         },
+        sourceMap,
         minify,
         verbose,
         isResurrectionBuild: true,
@@ -49,6 +51,7 @@ try {
   await build.write({
     format: 'system',
     dir: 'loading-screen',
+    sourcemap: sourceMap ? 'inline' : false,
     globals: {
       chai: 'chai',
       mocha: 'mocha',

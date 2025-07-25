@@ -1,3 +1,4 @@
+/* global process */
 import LivelyRollup, { customWarn, bulletProofNamespaces } from '../bundler.js';
 import { ROOT_ID } from '../util/helpers.js';
 import { obj, arr } from 'lively.lang';
@@ -104,13 +105,13 @@ export function lively (args) {
           opts.globals = { ...opts.globals, ...globals };
         }
       }
+      opts.chunkFileNames = (chunk) => {
+        return `${chunk.name.replace('!cjs', '_CJS_')}-[hash].js`;
+      }
       return opts;
     },
-    renderChunk(code) {
-      if (code.includes('get default ()')) {
-        return bulletProofNamespaces(code);
-      }
-      return null;
+    renderChunk(code, chunk) {
+      return bulletProofNamespaces(code, chunk.fileName, bundler.isResurrectionBuild, bundler.sourceMap); // this completely messes up the source mapping
     },
     renderDynamicImport: () => {
       bundler.hasDynamicImports = true; // set flag to handle dynamic imports

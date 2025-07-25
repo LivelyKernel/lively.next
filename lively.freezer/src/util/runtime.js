@@ -590,7 +590,8 @@ export function runtimeDefinition () {
           const [local, exported] = exp.replace('__rename__', '').split('->');
           exports[exported] = rec[local];
         } else if (exp.startsWith('__reexport__')) Object.assign(exports, this.exportsOf(exp.replace('__reexport__', '')));
-        else exports[exp] = rec[exp];
+        else if (exp.startsWith('__default__')) exports.default = rec[exp.replace('__default__', '')] ;
+        else if (exp in rec) exports[exp] = rec[exp];
       }
       return exports;
     },
