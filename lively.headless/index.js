@@ -61,7 +61,9 @@ export class HeadlessSession {
           // However, removing this option lead to instant crashes of chromium on some of our machines and in CI.
           // Wo do not know why that is, since the flag was not necessary previous to the introduction of the docker setup.
           "--no-sandbox",
-         ]
+         ],
+        // Set to 120s as lively.lang tests began to time-out reliably and mysterously in CI
+        protocolTimeout: 120_000
        }));
        return this.constructor.browser || newBrowser;
   }
