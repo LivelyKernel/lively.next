@@ -1278,7 +1278,7 @@ export class BrowserModel extends ViewModel {
       }
 
       if (url) {
-        if (this.alreadySelectedModule(m.url)) return;
+        if (this.alreadySelectedModule(url)) return;
         this.state.selectedModule = { url };
         const td = columnView.treeData;
         await columnView.setExpandedPath(node => {
