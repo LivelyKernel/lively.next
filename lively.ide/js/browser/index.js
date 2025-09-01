@@ -1257,8 +1257,9 @@ export class BrowserModel extends ViewModel {
 
     if (m) {
       if (this.alreadySelectedModule(m.url)) return;
-      this.state.selectedModule = { url: m.url };
+
       await columnView.selectNode(m, animated);
+      this.state.selectedModule = { url: m.url };
       columnView.submorphs.forEach(list => {
         list.scrollSelectionIntoView();
       });
@@ -1377,7 +1378,8 @@ export class BrowserModel extends ViewModel {
   async onModuleSelected (m, cleanupComponents = true) {
     const pack = this.selectedPackage;
 
-    if (this._return) return;
+    if (this._return || this.alreadySelectedModule(m.url)) return;
+
     let proceed = true;
     if (this.selectedModule && this.hasUnsavedChanges()) {
       proceed = await this.warnForUnsavedChanges();
