@@ -1693,8 +1693,7 @@ const ComponentBrowser = component({
         textAndAttributes: ['', {
           fontColor: Color.rgb(74, 174, 79),
           fontFamily: 'Font Awesome',
-          fontWeight: '900',
-          lineHeight: 1
+          fontWeight: '900'
         }, ' Open', {
           fontFamily: 'IBM Plex Sans'
         }]
