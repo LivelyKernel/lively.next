@@ -51,7 +51,7 @@ else
 fi
 
 # set the options for all of the following node invocations
-export NODE_OPTIONS="--no-experimental-fetch --no-warnings --experimental-modules --loader $lv_next_dir/flatn/resolver.mjs";
+export NODE_OPTIONS="--no-warnings --experimental-modules --loader $lv_next_dir/flatn/resolver.mjs";
 
 node lively.installer/install-with-node.js $PWD \
 

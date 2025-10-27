@@ -35,10 +35,10 @@ You need to install `lively.next` on your system.
 Currently, MacOS, Linux, and the Linux Subsystem for Windows are supported.
 Make sure you have the following software installed:
 
-1. `node.js v20.10`
+1. `node.js v24` or higher
 2. `git`.
 
-We try to require/support the current LTS version of `node`.
+We require Node.js v24 or higher for compatibility with modern JavaScript features.
 
 For some more advanced development operations (such as bulk testing from the command line and spell checking inside of `lively.next`), you will also need 
 
