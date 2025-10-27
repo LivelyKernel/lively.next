@@ -15,7 +15,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: '20.10'
+          node-version: '24'
       - name: Install `sultan`
         run: pip3 install sultan 
       - name: Checkout repository

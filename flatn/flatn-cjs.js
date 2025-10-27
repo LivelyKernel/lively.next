@@ -16894,13 +16894,12 @@ function resolveViaImportMap (id, importMap, importer) {
 
 /* global process, global */
 
-if (!global.fetch) {
-  Object.assign(
-    global,
-    { fetch: fetch$1 },
-    ['Response', 'Headers', 'Request'].reduce((all, name) =>
-      Object.assign(all, fetch$1[name]), {}));
-}
+// Always use node-fetch since it supports file:// URLs, which native fetch doesn't
+Object.assign(
+  global,
+  { fetch: fetch$1 },
+  ['Response', 'Headers', 'Request'].reduce((all, name) =>
+    Object.assign(all, fetch$1[name]), {}));
 
 const debug = false;
 

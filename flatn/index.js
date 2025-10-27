@@ -12,13 +12,12 @@ import { BuildProcess } from './build.js';
 export * from './util.js';
 export * from './helpers.mjs';
 
-if (!global.fetch) {
-  Object.assign(
-    global,
-    { fetch: node_fetch },
-    ['Response', 'Headers', 'Request'].reduce((all, name) =>
-      Object.assign(all, node_fetch[name]), {}));
-}
+// Always use node-fetch since it supports file:// URLs, which native fetch doesn't
+Object.assign(
+  global,
+  { fetch: node_fetch },
+  ['Response', 'Headers', 'Request'].reduce((all, name) =>
+    Object.assign(all, node_fetch[name]), {}));
 
 const debug = false;
 
