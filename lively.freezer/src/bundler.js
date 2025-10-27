@@ -1162,28 +1162,18 @@ export default class LivelyRollup {
   async generateBundle (plugin, bundle, depsCode, importMap, opts) {
     const modules = Object.values(bundle);
     if (this.minify && opts.format !== 'esm' && !this.sourceMap) {
-      modules.forEach((chunk, i) => {
-        chunk.instrumentedCode = `"${separator}",${i};\n` + chunk.code;
-      });
-      let codeToMinify = modules.map(chunk => chunk.instrumentedCode).join('\n');
-      const { min: minfiedCode } = await compileOnServer(codeToMinify, this.resolver, this.useTerser);
-      let compiledSnippets = minfiedCode.split(new RegExp(`"${separator}";\n?`));
-      const adjustedSnippets = new Map(); // ensure order
-      modules.forEach((snippet, i) => {
-        adjustedSnippets.set(i, snippet.code); // populate with original source in case the transpiler kicked the chunk away
-      });
-      compiledSnippets.forEach((compiledSnippet, i) => {
-        const hit = compiledSnippet.match(/^[0-9]+;\n?/);
-        if (!hit) return; // fixme: google closure seems to add some weird polyfill stuff...
-        const hint = Number(hit[0].replace(/;\n?/, ''));
-        adjustedSnippets.set(hint, compiledSnippet.replace(/^[0-9]+;\n?/, ''));
-      });
-      const polyfills = compiledSnippets[0];
-      compiledSnippets = [...adjustedSnippets.values()];
-      compiledSnippets[0] = polyfills + compiledSnippets[0];
-      for (const [snippet, compiled] of arr.zip(modules, compiledSnippets)) {
-        snippet.code = compiled.replace("'use strict';", '');
-      } // override the code attribute
+      // Parallelize minification per chunk instead of concatenating all chunks
+      this.resolver.setStatus({ status: 'Minifying chunks in parallel...', progress: 0.5 });
+
+      await Promise.all(modules.map(async (chunk, i) => {
+        try {
+          const { min: minifiedCode } = await compileOnServer(chunk.code, this.resolver, this.useTerser);
+          chunk.code = minifiedCode.replace("'use strict';", '');
+        } catch (err) {
+          // If minification fails for a chunk, keep the original code
+          console.warn(`Minification failed for chunk ${i}: ${err.message}`);
+        }
+      }));
     }
 
     if (this.isResurrectionBuild) {
@@ -1195,18 +1185,19 @@ export default class LivelyRollup {
     }
 
     if (this.compress) {
-      for (let chunk of modules) {
-        plugin.emitFile({
+      // Parallelize compression - gzip and brotli for all chunks
+      await Promise.all(modules.flatMap(chunk => [
+        gzip(chunk.code).then(source => plugin.emitFile({
           type: 'asset',
           fileName: chunk.fileName + '.gz',
-          source: await gzip(chunk.code)
-        });
-        plugin.emitFile({
+          source
+        })),
+        brotli(chunk.code).then(source => plugin.emitFile({
           type: 'asset',
           fileName: chunk.fileName + '.br',
-          source: await brotli(chunk.code)
-        });
-      }
+          source
+        }))
+      ]));
     }
 
     const morphicUrl = this.resolver.ensureFileFormat(this.resolver.decanonicalizeFileName('lively.morphic').replace('index.js', ''));
@@ -1214,27 +1205,35 @@ export default class LivelyRollup {
       const fontBundleDir = resource(config.css.fontBundle).parent();
       const fontFiles = await fontBundleDir.dirList();
 
-      for (let file of fontFiles) {
+      // Parallelize font file loading
+      const fontPromises = fontFiles.map(async (file) => {
         file.beBinary();
         let source = await file.read();
-        if (source instanceof ArrayBuffer) source = new Uint8Array(source); // this fucks up font files...
-        plugin.emitFile({
+        if (source instanceof ArrayBuffer) source = new Uint8Array(source);
+        return {
           type: 'asset',
           fileName: joinPath(fontBundleDir.url.replace(morphicUrl, ''), file.name()),
           source
-        });
-      }
+        };
+      });
 
       const assetDir = resource(config.css.fontBundle).parent().parent();
       const morphicCSS = assetDir.join('morphic.css');
       morphicCSS.beBinary();
-      let source = await morphicCSS.read();
-      if (source instanceof ArrayBuffer) source = new Uint8Array(source); // this fucks up font files...
-      plugin.emitFile({
-        type: 'asset',
-        fileName: joinPath(assetDir.url.replace(morphicUrl, ''), 'morphic.css'),
-        source
+
+      // Load morphic.css in parallel with fonts
+      const morphicCSSPromise = morphicCSS.read().then(source => {
+        if (source instanceof ArrayBuffer) source = new Uint8Array(source);
+        return {
+          type: 'asset',
+          fileName: joinPath(assetDir.url.replace(morphicUrl, ''), 'morphic.css'),
+          source
+        };
       });
+
+      // Wait for all assets to load and emit them
+      const allAssets = await Promise.all([...fontPromises, morphicCSSPromise]);
+      allAssets.forEach(asset => plugin.emitFile(asset));
     }
 
     const livelyDir = resource(morphicUrl).join('..').withRelativePartsResolved();
@@ -1242,32 +1241,55 @@ export default class LivelyRollup {
     let bundledProjectCSS = '';
     let bundledProjectFontCSS = '';
     // In contrast to `assets`, we cannot tell which CSS and font files are actually used. We need to collect them for the project to be bundled and all its dependencies.
-    for (let [project] of this.projectsInBundle.entries()) {
-      const indexCSSFile = projectsDir.join(project).join('index.css');
-      const indexCSSContents = await indexCSSFile.read();
-      bundledProjectCSS = indexCSSContents + '\n' + bundledProjectCSS;
-      const fontCSSFile = projectsDir.join(project).join('fonts.css');
-      // Inside of the projects, font files are in the assets folder, with font.css being a hierarchy above.
-      // Inside of the bundles, font.css itself is part of the assets folder.
-      const fontCSSContents = (await fontCSSFile.read()).replaceAll(/\.\/assets\//g, './');
-      bundledProjectFontCSS = fontCSSContents + '\n' + bundledProjectFontCSS;
 
-      const assetDir = await projectsDir.join(project).join('assets');
-      // Each project can have multiple font files
+    // Process all projects in parallel
+    const projectPromises = Array.from(this.projectsInBundle.entries()).map(async ([project]) => {
+      const indexCSSFile = projectsDir.join(project).join('index.css');
+      const fontCSSFile = projectsDir.join(project).join('fonts.css');
+
+      // Load both CSS files in parallel
+      const [indexCSSContents, fontCSSContents] = await Promise.all([
+        indexCSSFile.read(),
+        fontCSSFile.read().then(content => content.replaceAll(/\.\/assets\//g, './'))
+      ]);
+
+      const assetDir = projectsDir.join(project).join('assets');
+      let fontAssets = [];
+
+      // Check if asset directory exists and load font files
       if (await assetDir.exists()) {
         const fontFiles = (await assetDir.dirList()).filter(f => f.url.includes('woff2'));
-        this.customFontFiles.push(...fontFiles);
-        for (let file of fontFiles) {
+
+        // Parallelize font file reading
+        fontAssets = await Promise.all(fontFiles.map(async (file) => {
           file.beBinary();
           let source = await file.read();
           if (source instanceof ArrayBuffer) source = new Uint8Array(source);
-          plugin.emitFile({
-            type: 'asset',
-            fileName: joinPath('assets', file.name()),
-            source
-          });
-        }
+          return {
+            file,
+            asset: {
+              type: 'asset',
+              fileName: joinPath('assets', file.name()),
+              source
+            }
+          };
+        }));
       }
+
+      return { indexCSSContents, fontCSSContents, fontAssets };
+    });
+
+    const projectResults = await Promise.all(projectPromises);
+
+    // Concatenate CSS in order and emit font assets
+    for (const { indexCSSContents, fontCSSContents, fontAssets } of projectResults) {
+      bundledProjectCSS = indexCSSContents + '\n' + bundledProjectCSS;
+      bundledProjectFontCSS = fontCSSContents + '\n' + bundledProjectFontCSS;
+
+      fontAssets.forEach(({ file, asset }) => {
+        this.customFontFiles.push(file);
+        plugin.emitFile(asset);
+      });
     }
 
     const bundledCSS = bundledProjectFontCSS + '\n' + bundledProjectCSS;
@@ -1277,18 +1299,24 @@ export default class LivelyRollup {
       source: bundledCSS
     });
 
-    for (let asset of this.projectAssets) {
+    // Parallelize project asset loading
+    const assetPromises = this.projectAssets.map(async (asset) => {
       const file = resource(projectsDir).join(asset.project).join('assets').join(`${asset.oldName}`);
-      if (file.isDirectory()) continue;
+      if (file.isDirectory()) return null;
       file.beBinary();
       let source = await file.read();
       if (source instanceof ArrayBuffer) source = new Uint8Array(source);
-      plugin.emitFile({
+      return {
         type: 'asset',
         fileName: joinPath('assets', `${asset.newName}`),
         source
-      });
-    }
+      };
+    });
+
+    const loadedAssets = await Promise.all(assetPromises);
+    loadedAssets.forEach(asset => {
+      if (asset) plugin.emitFile(asset);
+    });
     // add the blank import file to make systemjs happy
     plugin.emitFile({
       type: 'asset',
