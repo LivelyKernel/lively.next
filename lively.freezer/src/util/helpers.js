@@ -124,8 +124,6 @@ export async function getConfig (resolver) {
 }
 
 export async function compileOnServer (code, resolver, useTerser) {
-  const transpilationSpeed = 100000;
-  const compressionSpeed = 150000;
   const { cwd, tmp, min, presetPath, babelPath, babelConfig, pathToGoogleClosure, preprocessViaBabel } = await getConfig(resolver);
   tmp.onProgress = (evt) => {
     // set progress of loading indicator
@@ -147,19 +145,14 @@ export async function compileOnServer (code, resolver, useTerser) {
       presets: [[presetPath, { modules: false }]]
     });
     c = await resolver.spawn({ command: `${babelPath} -o tmp.es5.js tmp.js`, cwd });
-    resolver.setStatus({ status: 'Transpiling source...', progress: 0.01 });
-    for (const i of arr.range(0, code.length / transpilationSpeed)) {
-      await promise.delay(400);
-      if (c.status.startsWith('exited')) break;
-      resolver.setStatus({ status: 'Transpiling source', progress: (i + 1) / (code.length / transpilationSpeed) });
-    }
+    resolver.setStatus({ status: 'Transpiling source...', progress: 0.5 });
     await promise.waitFor(100 * 1000, () => c.status.startsWith('exited'));
     c = await resolver.spawn({ command: 'mv tmp.es5.js tmp.js', cwd });
     await promise.waitFor(100 * 1000, () => c.status.startsWith('exited'));
     babelConfig.remove();
   }
 
-  resolver.setStatus({ status: 'Minifying source files...', progress: 0.01 });
+  resolver.setStatus({ status: 'Minifying source files...', progress: 0.5 });
 
   if (useTerser) {
     c = await resolver.spawn({
@@ -172,11 +165,6 @@ export async function compileOnServer (code, resolver, useTerser) {
       command: `${pathToGoogleClosure} tmp.js > tmp.min.js --warning_level=QUIET --language_out=ECMASCRIPT_2018 --language_in=ECMASCRIPT_NEXT`,
       cwd
     });
-  }
-  for (const i of arr.range(0, code.length / compressionSpeed)) {
-    await promise.delay(400);
-    if (c.status.startsWith('exited')) break;
-    resolver.setStatus({ status: 'Minifying source files ', progress: (i + 1) / (code.length / compressionSpeed) });
   }
   await promise.waitFor(100 * 1000, () => c.status.startsWith('exited'));
   if (c.stderr && c.exitCode !== 0) {
