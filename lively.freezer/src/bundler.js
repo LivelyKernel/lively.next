@@ -34,6 +34,7 @@ import {
   brotli,
   ROOT_ID,
   generateLoadHtml,
+  generateLoadHtmlForEntry,
   instrumentStaticSystemJS,
   compileOnServer
 } from './util/helpers.js';
@@ -69,6 +70,12 @@ const CLASS_INSTRUMENTATION_MODULES_EXCLUSION = ['lively.lang'];
 
 // rsm 30.7.24: There are packages which when bundled will crash any build reliably. We exclude these from any build by default.
 const ALWAYS_EXCLUDED_MODULES = ['mermaid-it-markdown'];
+
+// Pre-compiled regex patterns for performance optimization
+const LIVELY_CLASS_EXTENSIONS_REGEX = /extends\s+(Morph|Image|Ellipse|HTMLMorph|Path|Polygon|Text|InteractiveMorph|ViewModel)/;
+const LIVELY_CLASS_NAMES = ['Morph', 'Image', 'Ellipse', 'HTMLMorph', 'Path', 'Polygon', 'Text', 'InteractiveMorph', 'ViewModel'];
+const SYSTEM_IMPORT_REGEX = /System\.import/;
+const PROJECT_ASSET_REGEX = /projectAsset\('(?<assetName>.*)'\)/g;
 
 const ADVANCED_EXCLUDED_MODULES = [
   'lively.ast',
@@ -276,6 +283,7 @@ export default class LivelyRollup {
     this.projectsInBundle = new Set();
     this.moduleToPkg = new Map();
     this.moduleSources = {};
+    this.entryPaths = null; // for multi-entry builds, stores the original entry paths
 
     this.resolver.setStatus({ label: 'Freezing in Progress' });
   }
@@ -406,6 +414,15 @@ export default class LivelyRollup {
     }
   }
 
+  async getRootModuleForEntry (entryPath) {
+    // Generate a synthetic root module for a specific entry point
+    // This is used in multi-entry builds where each entry needs its own wrapper
+    if (!this.autoRun) {
+      return `export * from "${entryPath}";`;
+    }
+    return await this.synthesizeMainModuleForEntry(entryPath);
+  }
+
   /**
    * Returns the source code of a synthesized modules that creates plain
    * morphic world and then calls the configured main method with that
@@ -415,6 +432,13 @@ export default class LivelyRollup {
     let mainModuleSource = await resource(this.resolver.ensureFileFormat(this.resolver.normalizeFileName('lively.freezer/src/util/main-module.js'))).read();
     mainModuleSource = mainModuleSource.replaceAll('TRACE', this.isResurrectionBuild ? 'true' : 'false');
     return mainModuleSource.replace('prepare()', `const { main, WORLD_CLASS = World, TITLE } = await System.import('${this.rootModuleId}')`);
+  }
+
+  async synthesizeMainModuleForEntry (entryPath) {
+    // Generate a synthetic main module for a specific entry point
+    let mainModuleSource = await resource(this.resolver.ensureFileFormat(this.resolver.normalizeFileName('lively.freezer/src/util/main-module.js'))).read();
+    mainModuleSource = mainModuleSource.replaceAll('TRACE', this.isResurrectionBuild ? 'true' : 'false');
+    return mainModuleSource.replace('prepare()', `const { main, WORLD_CLASS = World, TITLE } = await System.import('${entryPath}')`);
   }
 
   /**
@@ -613,9 +637,14 @@ export default class LivelyRollup {
       parsed = this.instrumentDynamicLoads(parsed, id);
     }
 
-    if (id === ROOT_ID) return ast.stringify(parsed);
-    // this capturing stuff needs to behave differently when we have dynamic imports. Why??
+    // Root modules (both single-entry ROOT_ID and multi-entry synthetic modules)
+    // only need dynamic load instrumentation, not scope capturing
+    if (id === ROOT_ID || id.startsWith('__rootModule__:')) {
+      return ast.stringify(parsed);
+    }
+
     const instrumentClasses = this.needsClassInstrumentation(id, source);
+    
     if (this.needsScopeToBeCaptured(id, null, source) || instrumentClasses) {
       const sourceHash = string.hashCode(await this.resolver.load(id));
       parsed = await this.captureScope(parsed, id, sourceHash, instrumentClasses);
@@ -632,6 +661,8 @@ export default class LivelyRollup {
   resolveId (id, importer) {
     if (this.resolved[resolutionId(id, importer)]) return this.resolved[resolutionId(id, importer)];
     if (id === ROOT_ID) return id;
+    // Handle synthetic root modules for multi-entry builds
+    if (id.startsWith('__rootModule__:')) return id;
     // handle standalone
     if (!importer) return this.resolver.resolveModuleId(id, importer, this.getResolutionContext());
 
@@ -742,6 +773,18 @@ export default class LivelyRollup {
       const res = await this.getRootModule();
       return res;
     }
+
+    // Handle entry-specific root modules for multi-entry builds
+    // Format: __rootModule__:<hash>
+    // Look up the actual entry path from the entryPaths mapping
+    if (id.startsWith('__rootModule__:')) {
+      const entryPath = this.entryPaths[id];
+      if (!entryPath) {
+        throw new Error(`No entry path found for root module ID: ${id}`);
+      }
+      const res = await this.getRootModuleForEntry(entryPath);
+      return res;
+    }
     const pkg = this.resolver.resolvePackage(id, this.getResolutionContext());
     if (pkg && this.excludedModules.includes(pkg.name) &&
         !id.endsWith('.json')) {
@@ -760,7 +803,9 @@ export default class LivelyRollup {
   async buildStart (plugin) {
     this.resolver.setStatus({ status: 'Bundling...' });
     await this.resolver.whenReady();
-    if (this.autoRun) {
+    // Only emit ROOT_ID chunk for single-entry builds with autoRun
+    // For multi-entry builds, we use the actual entry points instead
+    if (this.autoRun && this.rootModuleId) {
       plugin.emitFile({
         type: 'chunk',
         id: ROOT_ID
@@ -1159,6 +1204,13 @@ export default class LivelyRollup {
     }, importMap, this.resolver, modules, this.isResurrectionBuild);
   }
 
+  async generateIndexHtmlForEntry (importMap, modules, entryFileName) {
+    return await generateLoadHtmlForEntry({
+      ...this.autoRun || {},
+      head: (this.autoRun?.head || '') + this.generateAssetPreloads()
+    }, importMap, this.resolver, modules, this.isResurrectionBuild, entryFileName);
+  }
+
   async generateBundle (plugin, bundle, depsCode, importMap, opts) {
     const modules = Object.values(bundle);
     if (this.minify && opts.format !== 'esm' && !this.sourceMap) {
@@ -1331,11 +1383,32 @@ export default class LivelyRollup {
         fileName: 'deps.js',
         source: depsCode
       });
-      plugin.emitFile({
-        type: 'asset',
-        fileName: 'index.html',
-        source: await this.generateIndexHtml(importMap, modules)
-      });
+
+      // For multi-entry builds, generate an index.html for each entry point
+      const entryModules = modules.filter(m => m.isEntry);
+      if (entryModules.length > 1) {
+        // Generate separate HTML for each entry point
+        for (const entryModule of entryModules) {
+          plugin.emitFile({
+            type: 'asset',
+            fileName: `index-${entryModule.name}.html`,
+            source: await this.generateIndexHtmlForEntry(importMap, modules, entryModule.fileName)
+          });
+        }
+        // Also generate a default index.html pointing to the first entry
+        plugin.emitFile({
+          type: 'asset',
+          fileName: 'index.html',
+          source: await this.generateIndexHtmlForEntry(importMap, modules, entryModules[0].fileName)
+        });
+      } else {
+        // Single entry point - original behavior
+        plugin.emitFile({
+          type: 'asset',
+          fileName: 'index.html',
+          source: await this.generateIndexHtml(importMap, modules)
+        });
+      }
     }
 
     this.resolver.finish();
