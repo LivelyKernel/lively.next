@@ -27,7 +27,9 @@
   },
   "scripts": {
     "build-loading-screen": "./tools/build-loading-screen.sh",
-    "build-landing-page": "./tools/build-landing-page.sh"
+    "build-landing-page": "./tools/build-landing-page.sh",
+    "build-unified": "./tools/build-unified.sh",
+    "build": "./tools/build-unified.sh"
   },
   "systemjs": {
     "map": {

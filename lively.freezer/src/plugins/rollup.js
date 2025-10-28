@@ -1,7 +1,7 @@
 /* global process */
 import LivelyRollup, { customWarn, bulletProofNamespaces } from '../bundler.js';
 import { ROOT_ID } from '../util/helpers.js';
-import { obj, arr } from 'lively.lang';
+import { obj, arr, string } from 'lively.lang';
 
 /**
  * Checks wether or not a given module is an internal module
@@ -71,13 +71,31 @@ export function lively (args) {
           ? arr.pushIfNotIncluded(opts.external, 'livelyClassesRuntime.js')
           : (opts.external = ['livelyClassesRuntime.js']);
       }
-      if (bundler.snapshot || !!bundler.autoRun) {
+      // Handle autoRun for single-entry builds only
+      // For multi-entry builds (when input is an object), skip autoRun logic
+      const isMultiEntry = obj.isObject(opts.input) && !obj.isString(opts.input);
+      if ((bundler.snapshot || !!bundler.autoRun) && !isMultiEntry) {
         // since we are supposed to resolve from the snapshot, we set the input
         // to be the synthesized module.
         // delete the input
         bundler.rootModuleId = opts.input;
         delete opts.input;
         // emit the root module
+      } else if (bundler.autoRun && isMultiEntry) {
+        // For multi-entry builds, create synthetic root modules with hash-based names
+        // Store mapping from hash to entry path instead of embedding path in name
+        const syntheticEntries = {};
+        const entryPathsMap = {};
+        for (const [name, entryPath] of Object.entries(opts.input)) {
+          // Generate a hash for this entry path instead of embedding the path directly
+          // This avoids issues with slashes in module IDs breaking resolution
+          const entryHash = string.hashCode(entryPath).toString(36);
+          const rootModuleId = `__rootModule__:${entryHash}`;
+          syntheticEntries[name] = rootModuleId;
+          entryPathsMap[rootModuleId] = entryPath;
+        }
+        bundler.entryPaths = entryPathsMap;
+        opts.input = syntheticEntries;
       }
       if (bundler.excludedModules.length > 0) {
         opts.shimMissingExports = true; // since we are asked to exclude some of the lively modules, we set this flag to true. Can we isolate this??

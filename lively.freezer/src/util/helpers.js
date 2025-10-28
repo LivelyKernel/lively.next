@@ -301,6 +301,47 @@ export async function generateLoadHtml (htmlConfig, importMap, resolver, modules
     .replace('__CRAWLER_HTML__', crawler);
 }
 
+export async function generateLoadHtmlForEntry (htmlConfig, importMap, resolver, modules, isResurrectionBuild, entryFileName) {
+  const htmlTemplate = await resource(resolver.ensureFileFormat(resolver.decanonicalizeFileName('lively.freezer/src/util/load-template.html'))).read();
+  // Use the specified entry point instead of searching for one
+  const entryPoint = entryFileName;
+  // fixme: this only makes sense for auto run builds
+  const loadCode = `
+    window.frozenPart = {
+      renderFrozenPart: (domNode, baseURL) => {
+        if (baseURL) System.config( { baseURL });
+        if (!baseURL) baseURL = './';
+        System.config({
+          meta: {
+           ${
+            modules.map(snippet =>
+              `[baseURL + '${snippet.fileName}']: {format: "system", nonce: "lively" }`
+            ).join(',\n') // makes sure that compressed modules are still recognized as such
+            }
+          }
+        });
+        ${isResurrectionBuild ? 'window.BootstrapSystem = System;' : ''}
+        System.trace = ${isResurrectionBuild ? 'true' : 'false'};
+        System.import("./${entryPoint}").then(m => { m.renderFrozenPart(domNode); });
+      }
+    }
+  `;
+  let title = htmlConfig.title || 'lively.next app';
+  let head = htmlConfig.head || '';
+  let load = htmlConfig.load || '';
+  let crawler = htmlConfig.crawler || '';
+  // extract stuff from the source code
+  if (importMap) {
+    head += importMap;
+  }
+  head += '<script>' + loadCode + '</script>';
+  return htmlTemplate
+    .replace('__TITLE_TAG__', title)
+    .replace('__HEAD_HTML__', head)
+    .replace('__LOADING_HTML__', load)
+    .replace('__CRAWLER_HTML__', crawler);
+}
+
 /**
  * Handles the writing of all the files of a finished frozen bundle.
  * @param { object } frozen - A finished build.
