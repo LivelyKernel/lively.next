@@ -12,21 +12,10 @@ import * as parse5 from 'parse5';
 import { IFrameMorph } from 'lively.morphic';
 import { string } from 'lively.lang';
 import { Color } from 'lively.graphics';
-
-// export async function tidyHtml(htmlSrc) {
-//   let {stdout} = await runCommand("tidy --indent", {stdin: htmlSrc}).whenDone();
-//   stdout = stdout.replace(/\s*<meta name="generator"[^>]+>/, "");
-//   return stdout;
-// }
+import js_beautify from 'js-beautify';
 
 export async function tidyHtml (htmlSrc) {
-  let beautify;
-  try {
-    ({ default: beautify } = await lively.modules.module('esm://cache/js-beautify').load({ format: 'global' }));
-  } catch (err) {
-    ({ default: beautify } = await lively.modules.module('esm://cache/js-beautify').load({ format: 'global' }));
-  }
-  return beautify.html(htmlSrc);
+  return js_beautify.html(htmlSrc);
 }
 
 let commands = [
@@ -334,6 +323,8 @@ export default class HTMLEditorPlugin extends CodeMirrorEnabledEditorPlugin {
     let endpoint = this.systemInterface(env);
     return endpoint.runEval(code, env);
   }
+
+  setFormat () {}
 
   get parser () { return parse5; }
 
