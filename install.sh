@@ -64,7 +64,7 @@ fi
 
 if [ -z "${CI}" ];
 then
-  env CI=true npm --prefix $lv_next_dir/lively.freezer/ run build-landing-page
+  env CI=true npm --prefix $lv_next_dir/lively.freezer/ run build-unified
+else
+  env CI=true npm --prefix $lv_next_dir/lively.freezer/ run build-loading-screen
 fi
-
-env CI=true npm --prefix $lv_next_dir/lively.freezer/ run build-loading-screen
