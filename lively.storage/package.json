@@ -44,18 +44,5 @@
     "test": "mocha-es6 tests/*-test.js",
     "build": "node ./tools/build.js"
   },
-  "main": "index.js",
-  "systemjs": {
-    "main": "index.js",
-    "map": {
-      "pouchdb": {
-        "node": "pouchdb/lib/index.js",
-        "~node": "esm://cache/pouchdb@7.2.1"
-      },
-      "pouchdb-adapter-memory": {
-        "node": "./dist/pouchdb-adapter-mem.js",
-        "~node": "esm://cache/pouchdb-adapter-memory@7.2.1"
-      }
-    }
-  }
+  "main": "index.js"
 }
