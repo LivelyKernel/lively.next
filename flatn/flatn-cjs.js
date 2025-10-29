@@ -15534,15 +15534,8 @@ class ESMResource extends Resource {
   }
 
   getEsmURL () {
-    let baseUrl;
-    if (this.url.startsWith('esm://run/npm/')) baseUrl = 'https://cdn.jsdelivr.net/';
-    else if (this.url.startsWith('esm://run/')) baseUrl = 'https://esm.run/';
-    else if (this.url.startsWith('esm://cache/')) baseUrl = 'https://jspm.dev/';
-    else {
-      const domain = this.url.match(/esm:\/\/([^\/]*)\//)?.[1];
-      baseUrl = `https://${domain}/`;
-    }
-    return baseUrl;
+    const domain = this.url.match(/esm:\/\/([^\/]*)\//)?.[1];
+    return `https://${domain}/`;
   }
 
   async read () {
