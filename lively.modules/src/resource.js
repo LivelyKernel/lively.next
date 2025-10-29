@@ -1,6 +1,5 @@
 import { resource, Resource } from 'lively.resources';
 import { ESMResource } from 'lively.resources/src/esm-resource.js';
-import { promise } from 'lively.lang';
 import {
   install as installHook,
   remove as removeHook,
@@ -50,7 +49,7 @@ export async function fetchResource (proceed, load) {
   if (!System.get('@system-env').node && useCache && indexdb && cache) {
     const stored = await cache.fetchStoredModuleSource(load.name);
     let normalizedName = load.name.replace(System.baseURL, '/');
-    if (normalizedName.startsWith('esm://cache')) { normalizedName = '/esm_cache/' + ESMResource.normalize(normalizedName).join('/'); }
+    if (normalizedName.startsWith('esm://')) { normalizedName = '/esm_cache/' + ESMResource.normalize(normalizedName).join('/'); }
     if (stored && (jsFileHashMap?.[normalizedName] === Number.parseInt(stored.hash))) {
       load.metadata.instrument = false; // skip instrumentation
       if (stored.sourceMap) load.metadata.sourceMap = JSON.parse(stored.sourceMap);
