@@ -1722,7 +1722,7 @@ export class ImportControllerModel extends ViewModel {
       let importStmt = 'import ... from "module";';
 
       if (importStyle === 'jspm') {
-        let jspmModule = await this.world().filterableListPrompt('Browse NPM', [], {
+        let npmModule = await this.world().filterableListPrompt('Browse NPM', [], {
           requester,
           onFilter: fun.debounce(500, async (param) => {
             const list = param.target.owner; // gets a MethodCallChange as parameter
@@ -1732,11 +1732,67 @@ export class ImportControllerModel extends ViewModel {
           }),
           fuzzy: true
         });
-        if (jspmModule.status !== 'accepted') return;
-        [jspmModule] = jspmModule.selected;
-        const { version, name } = jspmModule.package;
-        // fixme: use custom esm://cache mechanism per default here?
-        importStmt = `import ... from "https://jspm.dev/${name}@${version}";`;
+        if (npmModule.status !== 'accepted') return;
+        [npmModule] = npmModule.selected;
+        const { version, name } = npmModule.package;
+
+        // Add package to package.json and regenerate import map
+        const li = LoadingIndicator.open('Adding package to project...');
+        try {
+          const { pkgName, pkgUrl } = await editor.withContextDo(async (ctx) => {
+            const pkg = ctx.selectedModule.package();
+            if (!pkg) {
+              throw new Error('No package found for the current module');
+            }
+            const packageJsonUrl = pkg.url + '/package.json';
+            const packageJsonResource = resource(packageJsonUrl);
+
+            // Read current package.json
+            let packageConfig = await packageJsonResource.readJson();
+
+            // Add to dependencies
+            if (!packageConfig.dependencies) packageConfig.dependencies = {};
+            packageConfig.dependencies[name] = `^${version}`;
+
+            // Write updated package.json
+            await packageJsonResource.writeJson(packageConfig, true);
+
+            return { pkgName: pkg.name, pkgUrl: pkg.url };
+          }, { name, version });
+
+          // Trigger server to regenerate import map and fetch it
+          li.label = 'Regenerating import map...';
+          const importMapUrl = resource(System.baseURL).join(`/import-map.json?projectName=${encodeURIComponent(pkgName)}`).url;
+          const importMapResponse = await resource(importMapUrl).readJson();
+
+          if (!importMapResponse) {
+            throw new Error('Failed to retrieve import map from server');
+          }
+
+          // Write the cached import map to the package
+          li.label = 'Applying import map...';
+          const cachedImportMapResource = resource(pkgUrl).join('.cachedImportMap.json');
+          await cachedImportMapResource.writeJson(importMapResponse, true);
+
+          // Update the package config with the new import map
+          await editor.withContextDo(async (ctx) => {
+            const pkg = ctx.selectedModule.package();
+            if (!pkg.systemjs) pkg.systemjs = {};
+            pkg.systemjs.importMap = importMapResponse;
+            // Also update the package config object
+            if (!pkg.config.systemjs) pkg.config.systemjs = {};
+            pkg.config.systemjs.importMap = importMapResponse;
+          }, { importMapResponse });
+
+          li.remove();
+          requester.setStatusMessage(`Added ${name}@${version} to package.json and updated import map`);
+        } catch (err) {
+          li.remove();
+          requester.showError(new Error(`Failed to add package: ${err.message}`));
+          return;
+        }
+
+        importStmt = `import ... from "${name}";`;
         importStyle = 'free text'; // transition to free text mode
       }
 
