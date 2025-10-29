@@ -63,31 +63,13 @@ const CLASS_INSTRUMENTATION_MODULES = [
   'https://jspm.dev/npm:rollup@2.28.2' // this contains a bunch of class definitions which right now screws up the closure compiler
 ];
 
-const ESM_CDNS = ['jspm.dev', 'jspm.io', 'skypack.dev', 'esm://cache', 'esm://run', /esm:\/\/([^\/]*)\//];
+const ESM_CDNS = [/esm:\/\/([^\/]*)\//];
 
 // fixme: Why is a blacklist nessecary if there is a whitelist?
 const CLASS_INSTRUMENTATION_MODULES_EXCLUSION = ['lively.lang'];
 
 // rsm 30.7.24: There are packages which when bundled will crash any build reliably. We exclude these from any build by default.
 const ALWAYS_EXCLUDED_MODULES = ['mermaid-it-markdown'];
-
-// Pre-compiled regex patterns for performance optimization
-const LIVELY_CLASS_EXTENSIONS_REGEX = /extends\s+(Morph|Image|Ellipse|HTMLMorph|Path|Polygon|Text|InteractiveMorph|ViewModel)/;
-const LIVELY_CLASS_NAMES = ['Morph', 'Image', 'Ellipse', 'HTMLMorph', 'Path', 'Polygon', 'Text', 'InteractiveMorph', 'ViewModel'];
-const SYSTEM_IMPORT_REGEX = /System\.import/;
-const PROJECT_ASSET_REGEX = /projectAsset\('(?<assetName>.*)'\)/g;
-
-const ADVANCED_EXCLUDED_MODULES = [
-  'lively.ast',
-  'lively.vm',
-  'lively.ide',
-  'lively.modules',
-  'babel-plugin-transform-jsx',
-  'lively-system-interface',
-  'lively.storage',
-  'lively.collab',
-  'localconfig.js'
-];
 
 const baseURL = typeof System !== 'undefined' ? System.baseURL : ensureFolder(process.env.lv_next_dir || process.cwd());
 
@@ -324,7 +306,7 @@ export default class LivelyRollup {
    * @param { string } id - The id of the module.
    */
   normalizedId (id) {
-    return id.replace(baseURL, '').replace('local://lively-object-modules/', '').replace('local_projects/', '').replace('https://jspm.dev/', 'esm://cache/');
+    return id.replace(baseURL, '').replace('local://lively-object-modules/', '').replace('local_projects/', '');
   }
 
   /**

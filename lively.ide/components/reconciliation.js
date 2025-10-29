@@ -649,8 +649,6 @@ export class Reconciliation {
     const [openEditor] = openEditors = this.getEligibleSourceEditors(modId, sourceCode);
     if (openEditor) sourceCode = openEditor.textString;
 
-    // FIXME: cache the AST node and transform them with a source mods library that understands how to patch the ast
-    // This can be done with: import { print, parse } from 'esm://cache/recast@0.21.5'
     const parsedModule = parse(sourceCode);
     const scope = query.topLevelDeclsAndRefs(parsedModule).scope;
     const parsedComponent = descr.getASTNode(parsedModule);
