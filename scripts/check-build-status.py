@@ -8,6 +8,9 @@
 import json
 from sultan.api import Sultan
 import os
+import difflib
+import tempfile
+import subprocess
 
 # branch against which to diff changes
 target_branch_name = "main"
@@ -16,6 +19,54 @@ target_branch_name = "main"
 artifacts_to_check = ["flatn/flatn-cjs.js"]
 # flag used to check if the script should fail (i.e. at least one dependent needs to be rebuild)
 fail = False
+
+def show_file_diff(artifact_path):
+    """Show the differences between committed and newly built version of a file."""
+    try:
+        # Get the committed version using git show
+        result = subprocess.run(
+            ['git', 'show', f'HEAD:{artifact_path}'],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        committed_content = result.stdout.splitlines(keepends=True)
+
+        # Read the newly built version
+        with open(artifact_path, 'r', encoding='utf-8', errors='replace') as f:
+            new_content = f.readlines()
+
+        # Generate unified diff
+        diff = difflib.unified_diff(
+            committed_content,
+            new_content,
+            fromfile=f'{artifact_path} (committed)',
+            tofile=f'{artifact_path} (new build)',
+            lineterm=''
+        )
+
+        print("\n📝 Differences found:")
+        print("=" * 80)
+
+        # Show diff with line limit to avoid overwhelming output
+        diff_lines = list(diff)
+        max_lines = 100
+
+        for i, line in enumerate(diff_lines):
+            if i >= max_lines:
+                remaining = len(diff_lines) - max_lines
+                print(f"\n... ({remaining} more lines of differences omitted)")
+                break
+            print(line)
+
+        print("=" * 80)
+
+    except subprocess.CalledProcessError as e:
+        print(f"⚠️  Could not get committed version: {e}")
+    except FileNotFoundError:
+        print(f"⚠️  Could not read file: {artifact_path}")
+    except Exception as e:
+        print(f"⚠️  Error showing diff: {e}")
 for artifact in artifacts_to_check:
     # flag to determine if this specific dependent is ok, just for nicer output
     single_fail = False
@@ -26,6 +77,7 @@ for artifact in artifacts_to_check:
         new_checksum = s.md5sum(f"{artifact}").run().stdout
         if new_checksum != committed_checksum:
             print(f"❌ {artifact} needs to be rebuild!")
+            show_file_diff(artifact)
             fail = True
             single_fail = True
             break
