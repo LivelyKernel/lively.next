@@ -244,8 +244,8 @@ describe('l2l', function () {
       tracker.addService('test', (tracker, msg, ackFn, sender) => { /* nothing */ });
       tracker.addService('test-2', (tracker, msg, ackFn, sender) => { ackFn('OK'); });
       let answer = await client1.sendToAndWait(tracker.id, 'test', {});
-      expect(answer).deep.property('data.isError');
-      expect(answer).deep.property('data.error').match(/timeout/i);
+      expect(answer.data).to.have.property('isError');
+      expect(answer.data).to.have.property('error').match(/timeout/i);
       expect(await client1.sendToAndWait(tracker.id, 'test-2', {})).property('data', 'OK');
     });
 
