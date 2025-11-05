@@ -77,6 +77,13 @@ export default class PackageConfiguration {
     if (sysConfig.globalmap) { System.config({ map: sysConfig.globalmap }); }
     if (sysConfig.babelOptions) { System.config({ babelOptions: sysConfig.babelOptions }); }
     if (sysConfig.meta) { System.config({ meta: sysConfig.meta }); }
+    // Only apply nodeRequirePackages in Node.js environment
+    if (sysConfig.nodeRequirePackages && System._nodeRequire) {
+      // Store packages that should be loaded via System._nodeRequire()
+      const env = System.get('@lively-env');
+      if (!env.nodeRequirePackages) env.nodeRequirePackages = new Set();
+      sysConfig.nodeRequirePackages.forEach(pkg => env.nodeRequirePackages.add(pkg));
+    }
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
