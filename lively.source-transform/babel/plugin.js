@@ -728,7 +728,7 @@ function putFunctionDeclsInFront (path, options) {
       else declPath.replaceWith(funcId);
     } else if (parentPath.type === 'ExportNamedDeclaration') {
       // If the function is exported we change the export declaration into a reference
-        parentPath.replaceWith(t.ExportNamedDeclaration(null, [t.ExportSpecifier(funcId, funcId)], null));
+      parentPath.replaceWith(t.ExportNamedDeclaration(null, [t.ExportSpecifier(funcId, funcId)], null));
     } else if (parentPath.type === 'ExportDefaultDeclaration') {
       parentPath.replaceWith(t.ExportDefaultDeclaration(funcId));
     }
@@ -1281,7 +1281,8 @@ export function livelyModuleLoadTranspile (api, options) {
   return {
     visitor: {
       CallExpression (path) {
-        if (path.get('callee.property').node?.name === 'register') {
+        if (path.get('callee.property').node?.name === 'register' &&
+           path.get('callee.object.name').node === 'System') {
           options.depNames.push(...path.node.arguments[0].elements.map(ea => ea.value));
           const declareFuncNode = path.node.arguments[1];
           const body = path.parentPath;
