@@ -5450,7 +5450,7 @@ function requirePonyfill_es2018 () {
 	return ponyfill_es2018.exports;
 }
 
-var _5_6_0 = {};
+var _5_2_1 = {};
 
 var b64 = {};
 
@@ -5459,123 +5459,114 @@ var hasRequiredB64;
 function requireB64 () {
 	if (hasRequiredB64) return b64;
 	hasRequiredB64 = 1;
-	(function (exports) {
-(function (exports) {
 
-		  var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+	b64.toByteArray = toByteArray;
+	b64.fromByteArray = fromByteArray;
 
-		  var Arr = (typeof Uint8Array !== 'undefined')
-		    ? Uint8Array
-		    : Array;
+	var lookup = [];
+	var revLookup = [];
+	var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array;
 
-		  var PLUS = '+'.charCodeAt(0);
-		  var SLASH = '/'.charCodeAt(0);
-		  var NUMBER = '0'.charCodeAt(0);
-		  var LOWER = 'a'.charCodeAt(0);
-		  var UPPER = 'A'.charCodeAt(0);
-		  var PLUS_URL_SAFE = '-'.charCodeAt(0);
-		  var SLASH_URL_SAFE = '_'.charCodeAt(0);
+	function init () {
+	  var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+	  for (var i = 0, len = code.length; i < len; ++i) {
+	    lookup[i] = code[i];
+	    revLookup[code.charCodeAt(i)] = i;
+	  }
 
-		  function decode (elt) {
-		    var code = elt.charCodeAt(0);
-		    if (code === PLUS || code === PLUS_URL_SAFE) return 62 // '+'
-		    if (code === SLASH || code === SLASH_URL_SAFE) return 63 // '/'
-		    if (code < NUMBER) return -1 // no match
-		    if (code < NUMBER + 10) return code - NUMBER + 26 + 26
-		    if (code < UPPER + 26) return code - UPPER
-		    if (code < LOWER + 26) return code - LOWER + 26
-		  }
+	  revLookup['-'.charCodeAt(0)] = 62;
+	  revLookup['_'.charCodeAt(0)] = 63;
+	}
 
-		  function b64ToByteArray (b64) {
-		    var i, j, l, tmp, placeHolders, arr;
+	init();
 
-		    if (b64.length % 4 > 0) {
-		      throw new Error('Invalid string. Length must be a multiple of 4')
-		    }
+	function toByteArray (b64) {
+	  var i, j, l, tmp, placeHolders, arr;
+	  var len = b64.length;
 
-		    // the number of equal signs (place holders)
-		    // if there are two placeholders, than the two characters before it
-		    // represent one byte
-		    // if there is only one, then the three characters before it represent 2 bytes
-		    // this is just a cheap hack to not do indexOf twice
-		    var len = b64.length;
-		    placeHolders = b64.charAt(len - 2) === '=' ? 2 : b64.charAt(len - 1) === '=' ? 1 : 0;
+	  if (len % 4 > 0) {
+	    throw new Error('Invalid string. Length must be a multiple of 4')
+	  }
 
-		    // base64 is 4/3 + up to two characters of the original data
-		    arr = new Arr(b64.length * 3 / 4 - placeHolders);
+	  // the number of equal signs (place holders)
+	  // if there are two placeholders, than the two characters before it
+	  // represent one byte
+	  // if there is only one, then the three characters before it represent 2 bytes
+	  // this is just a cheap hack to not do indexOf twice
+	  placeHolders = b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0;
 
-		    // if there are placeholders, only get up to the last complete 4 chars
-		    l = placeHolders > 0 ? b64.length - 4 : b64.length;
+	  // base64 is 4/3 + up to two characters of the original data
+	  arr = new Arr(len * 3 / 4 - placeHolders);
 
-		    var L = 0;
+	  // if there are placeholders, only get up to the last complete 4 chars
+	  l = placeHolders > 0 ? len - 4 : len;
 
-		    function push (v) {
-		      arr[L++] = v;
-		    }
+	  var L = 0;
 
-		    for (i = 0, j = 0; i < l; i += 4, j += 3) {
-		      tmp = (decode(b64.charAt(i)) << 18) | (decode(b64.charAt(i + 1)) << 12) | (decode(b64.charAt(i + 2)) << 6) | decode(b64.charAt(i + 3));
-		      push((tmp & 0xFF0000) >> 16);
-		      push((tmp & 0xFF00) >> 8);
-		      push(tmp & 0xFF);
-		    }
+	  for (i = 0, j = 0; i < l; i += 4, j += 3) {
+	    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)];
+	    arr[L++] = (tmp >> 16) & 0xFF;
+	    arr[L++] = (tmp >> 8) & 0xFF;
+	    arr[L++] = tmp & 0xFF;
+	  }
 
-		    if (placeHolders === 2) {
-		      tmp = (decode(b64.charAt(i)) << 2) | (decode(b64.charAt(i + 1)) >> 4);
-		      push(tmp & 0xFF);
-		    } else if (placeHolders === 1) {
-		      tmp = (decode(b64.charAt(i)) << 10) | (decode(b64.charAt(i + 1)) << 4) | (decode(b64.charAt(i + 2)) >> 2);
-		      push((tmp >> 8) & 0xFF);
-		      push(tmp & 0xFF);
-		    }
+	  if (placeHolders === 2) {
+	    tmp = (revLookup[b64.charCodeAt(i)] << 2) | (revLookup[b64.charCodeAt(i + 1)] >> 4);
+	    arr[L++] = tmp & 0xFF;
+	  } else if (placeHolders === 1) {
+	    tmp = (revLookup[b64.charCodeAt(i)] << 10) | (revLookup[b64.charCodeAt(i + 1)] << 4) | (revLookup[b64.charCodeAt(i + 2)] >> 2);
+	    arr[L++] = (tmp >> 8) & 0xFF;
+	    arr[L++] = tmp & 0xFF;
+	  }
 
-		    return arr
-		  }
+	  return arr
+	}
 
-		  function uint8ToBase64 (uint8) {
-		    var i;
-		    var extraBytes = uint8.length % 3; // if we have 1 byte left, pad 2 bytes
-		    var output = '';
-		    var temp, length;
+	function tripletToBase64 (num) {
+	  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
+	}
 
-		    function encode (num) {
-		      return lookup.charAt(num)
-		    }
+	function encodeChunk (uint8, start, end) {
+	  var tmp;
+	  var output = [];
+	  for (var i = start; i < end; i += 3) {
+	    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2]);
+	    output.push(tripletToBase64(tmp));
+	  }
+	  return output.join('')
+	}
 
-		    function tripletToBase64 (num) {
-		      return encode(num >> 18 & 0x3F) + encode(num >> 12 & 0x3F) + encode(num >> 6 & 0x3F) + encode(num & 0x3F)
-		    }
+	function fromByteArray (uint8) {
+	  var tmp;
+	  var len = uint8.length;
+	  var extraBytes = len % 3; // if we have 1 byte left, pad 2 bytes
+	  var output = '';
+	  var parts = [];
+	  var maxChunkLength = 16383; // must be multiple of 3
 
-		    // go through the array every three bytes, we'll deal with trailing stuff later
-		    for (i = 0, length = uint8.length - extraBytes; i < length; i += 3) {
-		      temp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2]);
-		      output += tripletToBase64(temp);
-		    }
+	  // go through the array every three bytes, we'll deal with trailing stuff later
+	  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
+	    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)));
+	  }
 
-		    // pad the end with zeros, but make sure to not forget the extra bytes
-		    switch (extraBytes) {
-		      case 1:
-		        temp = uint8[uint8.length - 1];
-		        output += encode(temp >> 2);
-		        output += encode((temp << 4) & 0x3F);
-		        output += '==';
-		        break
-		      case 2:
-		        temp = (uint8[uint8.length - 2] << 8) + (uint8[uint8.length - 1]);
-		        output += encode(temp >> 10);
-		        output += encode((temp >> 4) & 0x3F);
-		        output += encode((temp << 2) & 0x3F);
-		        output += '=';
-		        break
-		    }
+	  // pad the end with zeros, but make sure to not forget the extra bytes
+	  if (extraBytes === 1) {
+	    tmp = uint8[len - 1];
+	    output += lookup[tmp >> 2];
+	    output += lookup[(tmp << 4) & 0x3F];
+	    output += '==';
+	  } else if (extraBytes === 2) {
+	    tmp = (uint8[len - 2] << 8) + (uint8[len - 1]);
+	    output += lookup[tmp >> 10];
+	    output += lookup[(tmp >> 4) & 0x3F];
+	    output += lookup[(tmp << 2) & 0x3F];
+	    output += '=';
+	  }
 
-		    return output
-		  }
+	  parts.push(output);
 
-		  exports.toByteArray = b64ToByteArray;
-		  exports.fromByteArray = uint8ToBase64;
-		}(exports));
-} (b64));
+	  return parts.join('')
+	}
 	return b64;
 }
 
@@ -5680,19 +5671,15 @@ function require_1_1_4 () {
  * @license  MIT
  */
 
-var hasRequired_5_6_0;
+var hasRequired_5_2_1;
 
-function require_5_6_0 () {
-	if (hasRequired_5_6_0) return _5_6_0;
-	hasRequired_5_6_0 = 1;
+function require_5_2_1 () {
+	if (hasRequired_5_2_1) return _5_2_1;
+	hasRequired_5_2_1 = 1;
 	(function (exports) {
 
 		var base64 = requireB64();
 		var ieee754 = require_1_1_4();
-		var customInspectSymbol =
-		  (typeof Symbol === 'function' && typeof Symbol.for === 'function')
-		    ? Symbol.for('nodejs.util.inspect.custom')
-		    : null;
 
 		exports.Buffer = Buffer;
 		exports.SlowBuffer = SlowBuffer;
@@ -5729,9 +5716,7 @@ function require_5_6_0 () {
 		  // Can typed array instances can be augmented?
 		  try {
 		    var arr = new Uint8Array(1);
-		    var proto = { foo: function () { return 42 } };
-		    Object.setPrototypeOf(proto, Uint8Array.prototype);
-		    Object.setPrototypeOf(arr, proto);
+		    arr.__proto__ = { __proto__: Uint8Array.prototype, foo: function () { return 42 } };
 		    return arr.foo() === 42
 		  } catch (e) {
 		    return false
@@ -5760,7 +5745,7 @@ function require_5_6_0 () {
 		  }
 		  // Return an augmented `Uint8Array` instance
 		  var buf = new Uint8Array(length);
-		  Object.setPrototypeOf(buf, Buffer.prototype);
+		  buf.__proto__ = Buffer.prototype;
 		  return buf
 		}
 
@@ -5787,6 +5772,17 @@ function require_5_6_0 () {
 		  return from(arg, encodingOrOffset, length)
 		}
 
+		// Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
+		if (typeof Symbol !== 'undefined' && Symbol.species != null &&
+		    Buffer[Symbol.species] === Buffer) {
+		  Object.defineProperty(Buffer, Symbol.species, {
+		    value: null,
+		    configurable: true,
+		    enumerable: false,
+		    writable: false
+		  });
+		}
+
 		Buffer.poolSize = 8192; // not used by this implementation
 
 		function from (value, encodingOrOffset, length) {
@@ -5799,7 +5795,7 @@ function require_5_6_0 () {
 		  }
 
 		  if (value == null) {
-		    throw new TypeError(
+		    throw TypeError(
 		      'The first argument must be one of type string, Buffer, ArrayBuffer, Array, ' +
 		      'or Array-like Object. Received type ' + (typeof value)
 		    )
@@ -5807,12 +5803,6 @@ function require_5_6_0 () {
 
 		  if (isInstance(value, ArrayBuffer) ||
 		      (value && isInstance(value.buffer, ArrayBuffer))) {
-		    return fromArrayBuffer(value, encodingOrOffset, length)
-		  }
-
-		  if (typeof SharedArrayBuffer !== 'undefined' &&
-		      (isInstance(value, SharedArrayBuffer) ||
-		      (value && isInstance(value.buffer, SharedArrayBuffer)))) {
 		    return fromArrayBuffer(value, encodingOrOffset, length)
 		  }
 
@@ -5857,8 +5847,8 @@ function require_5_6_0 () {
 
 		// Note: Change prototype *after* Buffer.from is defined to workaround Chrome bug:
 		// https://github.com/feross/buffer/pull/148
-		Object.setPrototypeOf(Buffer.prototype, Uint8Array.prototype);
-		Object.setPrototypeOf(Buffer, Uint8Array);
+		Buffer.prototype.__proto__ = Uint8Array.prototype;
+		Buffer.__proto__ = Uint8Array;
 
 		function assertSize (size) {
 		  if (typeof size !== 'number') {
@@ -5962,8 +5952,7 @@ function require_5_6_0 () {
 		  }
 
 		  // Return an augmented `Uint8Array` instance
-		  Object.setPrototypeOf(buf, Buffer.prototype);
-
+		  buf.__proto__ = Buffer.prototype;
 		  return buf
 		}
 
@@ -6285,9 +6274,6 @@ function require_5_6_0 () {
 		  if (this.length > max) str += ' ... ';
 		  return '<Buffer ' + str + '>'
 		};
-		if (customInspectSymbol) {
-		  Buffer.prototype[customInspectSymbol] = Buffer.prototype.inspect;
-		}
 
 		Buffer.prototype.compare = function compare (target, start, end, thisStart, thisEnd) {
 		  if (isInstance(target, Uint8Array)) {
@@ -6413,7 +6399,7 @@ function require_5_6_0 () {
 		        return Uint8Array.prototype.lastIndexOf.call(buffer, val, byteOffset)
 		      }
 		    }
-		    return arrayIndexOf(buffer, [val], byteOffset, encoding, dir)
+		    return arrayIndexOf(buffer, [ val ], byteOffset, encoding, dir)
 		  }
 
 		  throw new TypeError('val must be string, number or Buffer')
@@ -6742,7 +6728,7 @@ function require_5_6_0 () {
 
 		  var out = '';
 		  for (var i = start; i < end; ++i) {
-		    out += hexSliceLookupTable[buf[i]];
+		    out += toHex(buf[i]);
 		  }
 		  return out
 		}
@@ -6779,8 +6765,7 @@ function require_5_6_0 () {
 
 		  var newBuf = this.subarray(start, end);
 		  // Return an augmented `Uint8Array` instance
-		  Object.setPrototypeOf(newBuf, Buffer.prototype);
-
+		  newBuf.__proto__ = Buffer.prototype;
 		  return newBuf
 		};
 
@@ -7269,8 +7254,6 @@ function require_5_6_0 () {
 		    }
 		  } else if (typeof val === 'number') {
 		    val = val & 255;
-		  } else if (typeof val === 'boolean') {
-		    val = Number(val);
 		  }
 
 		  // Invalid ranges are not set to a default, so can range check early.
@@ -7326,6 +7309,11 @@ function require_5_6_0 () {
 		    str = str + '=';
 		  }
 		  return str
+		}
+
+		function toHex (n) {
+		  if (n < 16) return '0' + n.toString(16)
+		  return n.toString(16)
 		}
 
 		function utf8ToBytes (string, units) {
@@ -7457,22 +7445,8 @@ function require_5_6_0 () {
 		  // For IE11 support
 		  return obj !== obj // eslint-disable-line no-self-compare
 		}
-
-		// Create lookup table for `toString('hex')`
-		// See: https://github.com/feross/buffer/issues/219
-		var hexSliceLookupTable = (function () {
-		  var alphabet = '0123456789abcdef';
-		  var table = new Array(256);
-		  for (var i = 0; i < 16; ++i) {
-		    var i16 = i * 16;
-		    for (var j = 0; j < 16; ++j) {
-		      table[i16 + j] = alphabet[i] + alphabet[j];
-		    }
-		  }
-		  return table
-		})();
-} (_5_6_0));
-	return _5_6_0;
+} (_5_2_1));
+	return _5_2_1;
 }
 
 /* c8 ignore start */
@@ -7504,7 +7478,7 @@ if (!globalThis.ReadableStream) {
 try {
   // Don't use node: prefix for this, require+node: is not supported until node v14.14
   // Only `import()` can use prefix in 12.20 and later
-  const { Blob } = require_5_6_0();
+  const { Blob } = require_5_2_1();
   if (Blob && !Blob.prototype.stream) {
     Blob.prototype.stream = function name (params) {
       let position = 0;
