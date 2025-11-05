@@ -19,6 +19,19 @@ SKIPPED_TESTS=0
 STARTED_SERVER=0
 FAILURE=0
 
+# Clean up any lingering headless Chrome processes and lock files
+# These can remain from previous test runs and block new browser instances
+echo "Cleaning up any lingering Chrome processes..."
+pkill -f "chrome.*--headless" 2>/dev/null || true
+pkill -f "chromium.*--headless" 2>/dev/null || true
+
+# Remove Chrome singleton lock file if it exists
+CHROME_LOCK_FILE="lively.headless/chrome-data-dir/SingletonLock"
+if [ -f "$CHROME_LOCK_FILE" ]; then
+  echo "Removing stale Chrome lock file: $CHROME_LOCK_FILE"
+  rm -f "$CHROME_LOCK_FILE"
+fi
+
 testfiles=(
 "lively.lang"
 "lively.resources"
@@ -78,10 +91,10 @@ fi
 if [ ! "$CI" ];
 then
   if uname | grep 'Linux' > /dev/null; then
-    ACTIVE_PORTS=$(ss -lt)
+    ACTIVE_PORTS=$(ss -lt 2>/dev/null)
   elif uname | grep 'Darwin' > /dev/null; then
-    ACTIVE_PORTS=$(netstat -tunlp tcp)
-  else 
+    ACTIVE_PORTS=$(netstat -tunlp tcp 2>/dev/null)
+  else
     cat "Only MacOS and Linux are supported at the moment."
     exit 1
   fi
@@ -144,6 +157,11 @@ if [ "$STARTED_SERVER" = "1" ];
 then
     pkill -f -n lively.*start
 fi
+
+# Clean up any headless Chrome processes that may have been started during tests
+echo "Cleaning up Chrome processes after tests..."
+pkill -f "chrome.*--headless" 2>/dev/null || true
+pkill -f "chromium.*--headless" 2>/dev/null || true
 
 ((ALL_TESTS=GREEN_TESTS + RED_TESTS + SKIPPED_TESTS))
 if [ ! "$1" ];
