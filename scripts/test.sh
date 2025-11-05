@@ -86,7 +86,7 @@ then
     exit 1
   fi
 
-  if grep -E '(:9011|.9011)' > /dev/null <<< "$ACTIVE_PORTS"; then
+  if grep -E '(:9011|\.9011)' > /dev/null <<< "$ACTIVE_PORTS"; then
     echo "Found a running lively server on port 9011 that will be used for testing."
   else
     STARTED_SERVER=1
