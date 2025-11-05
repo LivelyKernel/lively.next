@@ -60,6 +60,7 @@ clean: clear-freezer-dir clear-headless-cache clear-esm-cache
 	rm -rf lively.server/.module_cache
 	rm -rf custom-npm-modules/*
 	rm -rf lively.next-node_modules/*
+	find . -name ".cachedImportMap.json" -type f -delete
 
 clean-install: clean
 	./install.sh
