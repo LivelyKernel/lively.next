@@ -2,6 +2,7 @@
 
 import * as modules from 'lively.modules';
 import { withMozillaAstDo } from 'lively.ast';
+import { obj } from 'lively.lang';
 import mocha from 'mocha';
 import chai from 'chai';
 import chaiSubset from 'chai-subset';
@@ -37,11 +38,6 @@ chai.Assertion.addChainableMethod('stringEquals', function (obj) {
 });
 
 function lively_equals (_super) {
-  return function (other) {
-    if (this.__flags.deep) return _super.apply(this, arguments);
-    else if (Array.isArray(this._obj) && arrayEquals(this._obj, other)) { /* do nothin' */ } else if (this._obj && typeof this._obj.equals === 'function' && this._obj.equals(other)) { /* do nothin' */ } else _super.apply(this, arguments);
-  };
-
   function arrayEquals (array, otherArray) {
     let len = array.length;
     if (!otherArray || len !== otherArray.length) return false;
@@ -61,6 +57,11 @@ function lively_equals (_super) {
     }
     return true;
   }
+
+  return function (other) {
+    if (this.__flags.deep) return _super.apply(this, arguments);
+    else if (Array.isArray(this._obj) && arrayEquals(this._obj, other)) { /* do nothin' */ } else if (this._obj && typeof this._obj.equals === 'function' && this._obj.equals(other)) { /* do nothin' */ } else _super.apply(this, arguments);
+  };
 }
 
 chai.Assertion.overwriteMethod('equal', lively_equals);
@@ -70,8 +71,6 @@ chai.Assertion.overwriteMethod('equals', lively_equals);
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // default reporter, logs to console
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-export { loadTestModuleAndExtractTestState, runTestFiles, chai, mocha, expect };
 
 function ConsoleReporter (runner) {
   let passes = 0;
@@ -189,6 +188,15 @@ async function test () {
   await runTestFiles([file], { package: 'http://localhost:9001/node_modules/lively.ast' });
 }
 
+function installMochaEs6ModuleExecute (load, executable, options = {}) {
+  // this is called from a System.instantiate hook to wrap the execution of the
+  // test module body. This is needed b/c mocha expects globals to be present.
+  // We can't just simply install those globally b/c the test context needs to be
+  // bound into those functions and it is individual for each test module
+  let origExecute = executable.execute;
+  executable.execute = () => recordTestsWhile(load.name, origExecute);
+}
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // System loader extension
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -232,15 +240,6 @@ export async function isMochaTestLoad (load, executable) {
   return isTest;
 }
 
-function installMochaEs6ModuleExecute (load, executable, options = {}) {
-  // this is called from a System.instantiate hook to wrap the execution of the
-  // test module body. This is needed b/c mocha expects globals to be present.
-  // We can't just simply install those globally b/c the test context needs to be
-  // bound into those functions and it is individual for each test module
-  let origExecute = executable.execute;
-  executable.execute = () => recordTestsWhile(load.name, origExecute);
-}
-
 function recordTestsWhile (file, whileFn, options = {}) {
   let module = modules.module(file);
   var options = {
@@ -249,8 +248,7 @@ function recordTestsWhile (file, whileFn, options = {}) {
     ...options
   };
   let logger = options.logger || console;
-  let _mocha = mocha || global.mocha;
-  let _Mocha = _mocha.constructor || global.Mocha;
+  let _Mocha = (obj.isFunction(mocha.constructor) ? mocha : mocha.constructor) || global.Mocha;
   let m = options.mocha || (options.mocha = new _Mocha({ reporter: options.reporter || ConsoleReporter }));
 
   module.define('mocha', m);
@@ -287,3 +285,5 @@ function recordTestsWhile (file, whileFn, options = {}) {
 // System.instantiate = System.instantiate.originalFunction.originalFunction
 
 installSystemInstantiateHook();
+
+export { loadTestModuleAndExtractTestState, runTestFiles, chai, mocha, expect };
