@@ -1,15 +1,10 @@
 /* global System */
-import { parse, nodes, isValidIdentifier } from 'lively.ast';
+import { nodes, isValidIdentifier } from 'lively.ast';
 const { funcCall, member, literal } = nodes;
 import { evalCodeTransform, evalCodeTransformOfSystemRegisterSetters } from 'lively.vm';
 import { string, obj, properties } from 'lively.lang';
 import { classToFunctionTransform } from 'lively.classes';
 
-import {
-  install as installHook,
-  remove as removeHook,
-  isInstalled as isHookInstalled
-} from './hooks.js';
 import module, { detectModuleFormat } from './module.js';
 import { BrowserModuleTranslationCache, NodeModuleTranslationCache } from './cache.js';
 
@@ -130,7 +125,27 @@ export function prepareTranslatedCodeForSetterCapture (System, source, moduleId,
   }
 }
 
-function getCachedNodejsModule (System, load) {
+function isMarkedForNodeRequire (System, load) {
+  // Check if this module's package is marked to use System._nodeRequire()
+  const env = System.get('@lively-env');
+  if (!env.nodeRequirePackages || env.nodeRequirePackages.size === 0) return null;
+
+  const { packageRegistry } = env;
+  if (!packageRegistry) return null;
+
+  const pkg = packageRegistry.findPackageHavingURL(load.name);
+  if (!pkg) return null;
+
+  // Check if this package is in the nodeRequirePackages set
+  for (const pkgName of env.nodeRequirePackages) {
+    if (pkg.name === pkgName) {
+      return pkgName; // Return the package name to require
+    }
+  }
+  return null;
+}
+
+function getCachedNodejsModule (System, load, markedPackageName) {
   // On nodejs we might run alongside normal node modules. To not load those
   // twice we have this little hack...
   try {
@@ -138,7 +153,19 @@ function getCachedNodejsModule (System, load) {
     const id = Module._resolveFilename(load.name
       .replace(/^file:\/\//, '') // unix
       .replace(/^\/([a-z]:\/)/i, '$1')); // windows
-    const nodeModule = Module._cache[id];
+    let nodeModule = Module._cache[id];
+
+    // If not in cache but marked for node require, pre-load it
+    if (!nodeModule && markedPackageName) {
+      System.debug && console.log('[lively.modules getCachedNodejsModule] pre-loading %s via System._nodeRequire', markedPackageName);
+      try {
+        System._nodeRequire(id);
+        nodeModule = Module._cache[id];
+      } catch (e) {
+        System.debug && console.log('[lively.modules getCachedNodejsModule] failed to pre-load %s: %s', markedPackageName, e.message);
+      }
+    }
+
     return nodeModule;
   } catch (e) {
     System.debug && console.log('[lively.modules getCachedNodejsModule] %s unknown to nodejs', load.name);
@@ -146,10 +173,10 @@ function getCachedNodejsModule (System, load) {
   return null;
 }
 
-function addNodejsWrapperSource (System, load) {
+function addNodejsWrapperSource (System, load, markedPackageName) {
   // On nodejs we might run alongside normal node modules. To not load those
   // twice we have this little hack...
-  const m = getCachedNodejsModule(System, load);
+  const m = getCachedNodejsModule(System, load, markedPackageName);
   if (m) {
     load.metadata.format = 'esm';
     load.source = `var exports = System._nodeRequire('${m.id}'); export default exports;\n` +
@@ -175,15 +202,20 @@ export async function customTranslate (load) {
 
   const System = this; const debug = System.debug;
   const meta = load.metadata;
+
+  // Check if this module should be loaded via System._nodeRequire()
+  const markedForNodeRequire = isNode && isMarkedForNodeRequire(System, load);
+
   const ignored = (meta && meta.hasOwnProperty('instrument') && !meta.instrument) ||
               exceptions.some(exc => exc(load.name));
 
-  if (ignored) {
+  // Only ignore if explicitly marked as ignored AND not marked for nodeRequire
+  if (ignored && !markedForNodeRequire) {
     debug && console.log('[lively.modules customTranslate ignoring] %s', load.name);
     return load.source;
   }
 
-  if (isNode && addNodejsWrapperSource(System, load)) {
+  if (isNode && addNodejsWrapperSource(System, load, markedForNodeRequire)) {
     debug && console.log('[lively.modules] loaded %s from nodejs cache', load.name);
     return load.source;
   }

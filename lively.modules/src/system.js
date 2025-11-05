@@ -164,7 +164,8 @@ function livelySystemEnv (System) {
     notificationSubscribers: System['__lively.modules__notificationSubscribers'] || (System['__lively.modules__notificationSubscribers'] = {}),
     options: System['__lively.modules__options'] || (System['__lively.modules__options'] = obj.deepCopy(defaultOptions)),
     onLoadCallbacks: System['__lively.modules__onLoadCallbacks'] || (System['__lively.modules__onLoadCallbacks'] = []),
-    modulePackageMapCache: System['__lively.modules__modulePackageMapCache']
+    modulePackageMapCache: System['__lively.modules__modulePackageMapCache'],
+    nodeRequirePackages: System['__lively.modules__nodeRequirePackages'] || (System['__lively.modules__nodeRequirePackages'] = new Set())
   };
 }
 
