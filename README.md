@@ -93,7 +93,7 @@ Manually updating can be done by pulling the latest version and just executing `
 
 ### Interactive Explanations and Guide
 
-We provide all information necessary to start developing in `lively.next` on our [website](https://lively-next.org/#explanations). We recommend this as an entry point for all users.
+We provide all information necessary to start developing in `lively.next` on our [website](https://lively-next.org/#documentation). We recommend this as an entry point for all users.
 
 ### Wiki
 Some more hints and documentation can be found in the [project wiki](https://github.com/LivelyKernel/lively.next/wiki). Note, that these are much less polished than the contents provided on the website.
