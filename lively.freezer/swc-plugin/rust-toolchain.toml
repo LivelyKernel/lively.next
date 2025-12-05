@@ -1,0 +1,5 @@
+[toolchain]
+# Updated to use stable for newer swc versions
+channel = "stable"
+targets = [ "wasm32-wasip1", "wasm32-unknown-unknown" ]
+profile = "minimal"
