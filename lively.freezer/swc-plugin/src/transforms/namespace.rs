@@ -1,4 +1,4 @@
-use swc_core::common::{Spanned, SyntaxContext, DUMMY_SP};
+use swc_core::common::{SyntaxContext, DUMMY_SP};
 use swc_core::ecma::{
     ast::*,
     visit::{VisitMut, VisitMutWith},
@@ -109,7 +109,7 @@ impl VisitMut for NamespaceTransform {
                 }
 
                 // Create fallback const declaration
-                let module_src: String = (&*import.src.value).to_owned().into_string_lossy();
+                let module_src: String = import.src.value.to_string();
                 let fallback_expr = self.create_namespace_fallback(&module_src, &namespace_name);
 
                 let const_decl = ModuleItem::Stmt(Stmt::Decl(create_const_decl(

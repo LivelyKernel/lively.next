@@ -85,7 +85,7 @@ This is a drop-in replacement for the existing Babel-based freezer bundler, prov
 2. **Rust toolchain** (1.70+)
    ```bash
    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   rustup target add wasm32-wasi
+   rustup target add wasm32-wasip1
    ```
 
 ### Installation
@@ -105,7 +105,7 @@ This is a drop-in replacement for the existing Babel-based freezer bundler, prov
 
 3. **Verify the build**:
    ```bash
-   ls -lh swc-plugin/target/wasm32-wasi/release/lively_swc_plugin.wasm
+   ls -lh swc-plugin/target/wasm32-wasip1/release/lively_swc_plugin.wasm
    ```
 
 ### Usage
@@ -384,12 +384,12 @@ npm run build-swc-plugin
 ### Wasm Target Not Installed
 
 ```
-error: target 'wasm32-wasi' may not be installed
+error: target 'wasm32-wasip1' may not be installed
 ```
 
-**Solution**: Install the wasm32-wasi target:
+**Solution**: Install the wasm32-wasip1 target:
 ```bash
-rustup target add wasm32-wasi
+rustup target add wasm32-wasip1
 ```
 
 ### Transform Errors
@@ -402,7 +402,7 @@ If you see "Using JavaScript fallback", the Rust plugin isn't loaded. This means
 **Solution**: Rebuild and check paths:
 ```bash
 npm run build-swc-plugin
-ls -lh swc-plugin/target/wasm32-wasi/release/lively_swc_plugin.wasm
+ls -lh swc-plugin/target/wasm32-wasip1/release/lively_swc_plugin.wasm
 ```
 
 ### Performance Not Improved

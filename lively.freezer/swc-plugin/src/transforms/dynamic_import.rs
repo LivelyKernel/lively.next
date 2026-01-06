@@ -1,4 +1,4 @@
-use swc_core::common::{Spanned, SyntaxContext, DUMMY_SP};
+use swc_core::common::SyntaxContext;
 use swc_core::ecma::{
     ast::*,
     visit::{VisitMut, VisitMutWith},

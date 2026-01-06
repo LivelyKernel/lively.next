@@ -1,4 +1,4 @@
-use swc_core::common::{Spanned, SyntaxContext, DUMMY_SP};
+use swc_core::common::{SyntaxContext, DUMMY_SP};
 use swc_core::ecma::{
     ast::*,
     visit::{VisitMut, VisitMutWith},
@@ -20,27 +20,26 @@ impl ExportSplitTransform {
 }
 
 impl VisitMut for ExportSplitTransform {
-    fn visit_mut_module_item(&mut self, item: &mut ModuleItem) {
-        if let ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(export_decl)) = item {
-            if let Decl::Var(var_decl) = &export_decl.decl {
-                // Only split if there are multiple declarators
-                if var_decl.decls.len() > 1 {
-                    let mut var_decls = Vec::new();
+    fn visit_mut_module(&mut self, module: &mut Module) {
+        let mut new_body = Vec::with_capacity(module.body.len());
+
+        for mut item in module.body.drain(..) {
+            if let ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(export_decl)) = &item {
+                if let Decl::Var(var_decl) = &export_decl.decl {
                     let mut export_names = Vec::new();
+                    let mut split_items = Vec::new();
 
                     for decl in &var_decl.decls {
-                        // Create individual variable declaration
                         let single_var = VarDecl {
                             span: var_decl.span,
-                            ctxt: SyntaxContext::empty(),
+                            ctxt: var_decl.ctxt,
                             kind: var_decl.kind,
-                            declare: false,
+                            declare: var_decl.declare,
                             decls: vec![decl.clone()],
                         };
 
-                        var_decls.push(single_var);
+                        split_items.push(ModuleItem::Stmt(Stmt::Decl(Decl::Var(Box::new(single_var)))));
 
-                        // Collect export names
                         let ids = extract_idents_from_pat(&decl.name);
                         for id in ids {
                             export_names.push(ExportSpecifier::Named(ExportNamedSpecifier {
@@ -52,15 +51,34 @@ impl VisitMut for ExportSplitTransform {
                         }
                     }
 
-                    // Replace with first var declaration (others would need parent context to insert)
-                    *item = ModuleItem::Stmt(Stmt::Decl(Decl::Var(Box::new(var_decls.remove(0)))));
+                    if !export_names.is_empty() {
+                        split_items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(
+                            NamedExport {
+                                span: DUMMY_SP,
+                                specifiers: export_names,
+                                src: None,
+                                type_only: false,
+                                with: None,
+                            },
+                        )));
+                    }
 
-                    // Note: In practice, we'd need to handle multiple statements here
-                    // This simplified version handles the basic case
+                    for mut split_item in split_items {
+                        split_item.visit_mut_children_with(self);
+                        new_body.push(split_item);
+                    }
+                    continue;
                 }
             }
+
+            item.visit_mut_children_with(self);
+            new_body.push(item);
         }
 
+        module.body = new_body;
+    }
+
+    fn visit_mut_module_item(&mut self, item: &mut ModuleItem) {
         item.visit_mut_children_with(self);
     }
 }

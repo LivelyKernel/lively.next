@@ -25,15 +25,17 @@
     "@rollup/pluginutils": "^5.0.2",
     "rollup-plugin-polyfill-node": "0.9.0",
     "js-untar": "2.0.0",
-    "@swc/core": "^1.10.1"
+    "@swc/core": "^1.10.1",
+    "@swc/core-darwin-arm64": "^1.10.1"
   },
   "scripts": {
     "build-loading-screen": "./tools/build-loading-screen.sh",
     "build-landing-page": "./tools/build-landing-page.sh",
     "build-unified": "./tools/build-unified.sh",
     "build": "./tools/build-unified.sh",
-    "build-swc-plugin": "cd swc-plugin && cargo build --release --target wasm32-wasi",
-    "build-swc-plugin-dev": "cd swc-plugin && cargo build --target wasm32-wasi",
+    "build-swc-plugin": "cd swc-plugin && cargo build --release --target wasm32-wasip1",
+    "build-swc-plugin-dev": "cd swc-plugin && cargo build --target wasm32-wasip1",
+    "example-swc-bundler": "./tools/run-swc-example.sh",
     "test-swc-plugin": "cd swc-plugin && cargo test"
   },
   "systemjs": {

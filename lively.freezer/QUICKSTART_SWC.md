@@ -12,7 +12,7 @@ rustc --version
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 # Add WebAssembly target
-rustup target add wasm32-wasi
+rustup target add wasm32-wasip1
 ```
 
 ## Installation
@@ -32,7 +32,7 @@ npm run build-swc-plugin
 
 ```bash
 # Check if the plugin was built
-ls -lh swc-plugin/target/wasm32-wasi/release/lively_swc_plugin.wasm
+ls -lh swc-plugin/target/wasm32-wasip1/release/lively_swc_plugin.wasm
 
 # Should show a .wasm file (~2-5 MB)
 
@@ -88,11 +88,11 @@ node examples/use-swc-bundler.js
 npm run build-swc-plugin
 ```
 
-### "target 'wasm32-wasi' may not be installed"
+### "target 'wasm32-wasip1' may not be installed"
 
 **Solution**: Install the Wasm target
 ```bash
-rustup target add wasm32-wasi
+rustup target add wasm32-wasip1
 ```
 
 ### "Using JavaScript fallback" warning
@@ -101,7 +101,7 @@ rustup target add wasm32-wasi
 ```bash
 npm run build-swc-plugin
 # Verify the .wasm file exists
-ls swc-plugin/target/wasm32-wasi/release/*.wasm
+ls swc-plugin/target/wasm32-wasip1/release/*.wasm
 ```
 
 ### Build takes too long

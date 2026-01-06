@@ -103,7 +103,7 @@ Rewrites SystemJS register calls to capture setters (for resurrection builds).
 
 ### Build for Wasm (recommended for distribution)
 ```bash
-cargo build --release --target wasm32-wasi
+cargo build --release --target wasm32-wasip1
 ```
 
 ### Build for native

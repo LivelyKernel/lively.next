@@ -9,15 +9,19 @@ import { livelySwcBundlerPlugin } from '../src/plugins/rollup-swc.js';
 import { rollup } from '@rollup/wasm-node';
 import path from 'path';
 
+const defaultEntry = path.resolve(process.cwd(), 'examples/swc-entry.js');
+
 async function buildWithSwc() {
   console.log('🚀 Building with SWC-based bundler...\n');
 
   const startTime = Date.now();
+  const entryArg = process.argv[2];
+  const entry = entryArg ? path.resolve(process.cwd(), entryArg) : defaultEntry;
 
   try {
     // Configure Rollup with SWC plugin
     const bundle = await rollup({
-      input: 'src/index.js', // Your entry point
+      input: entry, // Your entry point
       plugins: [
         livelySwcBundlerPlugin({
           // Lively-specific options

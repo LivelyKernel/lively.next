@@ -6,7 +6,9 @@
  */
 
 import { transformSync } from '@swc/core';
+import { existsSync } from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { createHash } from 'crypto';
 
 /**
@@ -74,7 +76,7 @@ export class LivelySwcTransform {
       };
 
       // Configure lively transform plugin
-      const livelyCon = {
+      const livelyConfig = {
         captureObj: this.options.captureObj,
         declarationWrapper,
         classToFunction: classToFunction || {
@@ -96,19 +98,43 @@ export class LivelySwcTransform {
       };
 
       // Check if we have the Rust plugin available
-      const pluginPath = path.join(__dirname, '../swc-plugin/target/wasm32-wasi/release/lively_swc_plugin.wasm');
+      const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+      const pluginPath = path.join(moduleDir, '../swc-plugin/target/wasm32-wasip1/release/lively_swc_plugin.wasm');
+      const hasPlugin = existsSync(pluginPath);
 
-      // For now, use SWC's JavaScript API to apply our own transforms
-      // Once the Rust plugin is compiled, we can use it directly
-      const result = transformSync(code, {
+      const swcOptions = {
         ...swcConfig,
-        // TODO: Uncomment when Rust plugin is compiled
-        // plugin: (m) => [[pluginPath, livelyConfig]],
-      });
+        jsc: {
+          ...swcConfig.jsc,
+          ...(hasPlugin
+            ? {
+              experimental: {
+                plugins: [[pluginPath, livelyConfig]],
+              },
+            }
+            : {}),
+        },
+      };
+
+      let result;
+      let usedPlugin = false;
+      try {
+        result = transformSync(code, swcOptions);
+        usedPlugin = hasPlugin;
+      } catch (error) {
+        if (hasPlugin) {
+          console.warn('⚠️  Failed to load SWC Rust plugin, falling back to JS transforms:', error.message);
+          result = transformSync(code, swcConfig);
+        } else {
+          throw error;
+        }
+      }
 
       // For now, apply post-processing transforms in JavaScript
       // This is a temporary solution until the Rust plugin is fully integrated
-      const transformedCode = this.applyLivelyTransformsJs(result.code, livelyCon);
+      const transformedCode = usedPlugin
+        ? result.code
+        : this.applyLivelyTransformsJs(result.code, livelyConfig);
 
       return {
         code: transformedCode,
@@ -131,7 +157,7 @@ export class LivelySwcTransform {
     // For now, just return the code as-is
     // The full implementation would require babel/lively.ast transforms
     console.warn('⚠️  Using JavaScript fallback - Rust plugin not yet compiled');
-    console.warn('   Run: cd swc-plugin && cargo build --release --target wasm32-wasi');
+    console.warn('   Run: cd swc-plugin && cargo build --release --target wasm32-wasip1');
 
     return code;
   }

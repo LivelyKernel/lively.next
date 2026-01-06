@@ -7,12 +7,12 @@ use swc_core::ecma::{
 ///
 /// For resurrection builds, captures imported values in module setters
 pub struct SystemJsTransform {
-    capture_obj: String,
+    _capture_obj: String,
 }
 
 impl SystemJsTransform {
     pub fn new(capture_obj: String) -> Self {
-        Self { capture_obj }
+        Self { _capture_obj: capture_obj }
     }
 }
 

@@ -14,6 +14,7 @@ use transforms::*;
 /// Main plugin entry point
 #[plugin_transform]
 pub fn process_transform(mut program: Program, metadata: TransformPluginProgramMetadata) -> Program {
+    // Avoid binding conflicts with swc_core 9.x by not importing PluginDiagnosticsEmitter.
     let config = serde_json::from_str::<LivelyTransformConfig>(
         &metadata
             .get_transform_plugin_config()
