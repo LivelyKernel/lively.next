@@ -1,8 +1,8 @@
 use swc_core::ecma::{
     ast::*,
-    utils::{quote_ident, quote_str},
+    utils::quote_str,
 };
-use swc_core::common::{Spanned, SyntaxContext, DUMMY_SP};
+use swc_core::common::{SyntaxContext, DUMMY_SP};
 
 /// Create a member expression: obj.prop
 pub fn create_member_expr(obj: Expr, prop: &str) -> Expr {
@@ -93,6 +93,7 @@ pub fn to_expr_or_spread(expr: Expr) -> ExprOrSpread {
 }
 
 /// Check if an identifier is in a specific context (e.g., function parameter)
+#[allow(dead_code)]
 pub fn is_binding_identifier(ident: &Ident, pat: &Pat) -> bool {
     match pat {
         Pat::Ident(BindingIdent { id, .. }) => id.sym == ident.sym,
@@ -212,6 +213,7 @@ pub fn create_var_decl(kind: VarDeclKind, name: &str, init: Option<Expr>) -> Dec
 }
 
 /// Clone an identifier
+#[allow(dead_code)]
 pub fn clone_ident(ident: &Ident) -> Ident {
     Ident {
         span: ident.span,
@@ -247,6 +249,7 @@ pub fn create_assign_expr(left: AssignTarget, right: Expr) -> Expr {
 }
 
 /// Create a sequence expression: (expr1, expr2, ...)
+#[allow(dead_code)]
 pub fn create_seq_expr(exprs: Vec<Box<Expr>>) -> Expr {
     Expr::Seq(SeqExpr {
         span: Default::default(),
@@ -255,6 +258,7 @@ pub fn create_seq_expr(exprs: Vec<Box<Expr>>) -> Expr {
 }
 
 /// Create an IIFE: (function() { ... })()
+#[allow(dead_code)]
 pub fn create_iife(body: BlockStmt) -> Expr {
     let func = Expr::Fn(FnExpr {
         ident: None,

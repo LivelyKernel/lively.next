@@ -1,4 +1,4 @@
-use swc_core::common::{Spanned, SyntaxContext, DUMMY_SP};
+use swc_core::common::DUMMY_SP;
 use std::collections::HashSet;
 use swc_core::ecma::{
     ast::*,
@@ -25,7 +25,7 @@ pub struct ScopeCapturingTransform {
     excluded: HashSet<String>,
 
     /// Whether to capture imports
-    capture_imports: bool,
+    _capture_imports: bool,
 
     /// Whether this is a resurrection build
     resurrection: bool,
@@ -55,7 +55,7 @@ impl ScopeCapturingTransform {
             capture_obj,
             declaration_wrapper,
             excluded: excluded.into_iter().collect(),
-            capture_imports,
+            _capture_imports: capture_imports,
             resurrection,
             capturable_vars: HashSet::new(),
             hoisted_functions: Vec::new(),
@@ -102,25 +102,44 @@ impl ScopeCapturingTransform {
         }
     }
 
-    /// Transform a pattern into assignments to the capture object
-    fn transform_pattern_to_assignments(
+    /// Check if a pattern includes any capturable identifiers
+    fn should_capture_pattern(&self, pat: &Pat) -> bool {
+        extract_idents_from_pat(pat)
+            .into_iter()
+            .any(|id| self.should_capture(&id))
+    }
+
+    /// Create a default initializer for an uninitialized binding
+    fn create_default_init(&self, name: &str) -> Expr {
+        Expr::Bin(BinExpr {
+            span: DUMMY_SP,
+            op: BinaryOp::LogicalOr,
+            left: Box::new(self.create_captured_member(name)),
+            right: Box::new(create_ident_expr("undefined")),
+        })
+    }
+
+    /// Transform a pattern into statements assigning to the capture object
+    fn transform_pattern_to_stmts(
         &self,
         pat: &Pat,
         init: Option<Box<Expr>>,
-    ) -> Vec<Expr> {
-        let mut assignments = Vec::new();
+    ) -> Vec<Stmt> {
+        let mut stmts = Vec::new();
 
         match pat {
             Pat::Ident(BindingIdent { id, .. }) => {
                 if self.should_capture(&id.to_id()) {
                     let member = self.create_captured_member(id.sym.as_ref());
-                    if let Some(init_expr) = init {
-                        let value = self.wrap_declaration(id.sym.as_ref(), *init_expr);
-                        assignments.push(create_assign_expr(
+                    let init_expr = init.unwrap_or_else(|| Box::new(self.create_default_init(id.sym.as_ref())));
+                    let value = self.wrap_declaration(id.sym.as_ref(), *init_expr);
+                    stmts.push(Stmt::Expr(ExprStmt {
+                        span: DUMMY_SP,
+                        expr: Box::new(create_assign_expr(
                             expr_to_assign_target(member),
                             value,
-                        ));
-                    }
+                        )),
+                    }));
                 }
             }
             Pat::Array(ArrayPat { elems, .. }) => {
@@ -132,10 +151,11 @@ impl ScopeCapturingTransform {
                     let temp_ident = create_ident_expr(&temp_name);
 
                     // First assignment: _tmp = init
-                    assignments.push(create_assign_expr(
-                        expr_to_assign_target(temp_ident.clone()),
-                        *init_expr,
-                    ));
+                    stmts.push(Stmt::Decl(create_var_decl(
+                        VarDeclKind::Var,
+                        &temp_name,
+                        Some(*init_expr),
+                    )));
 
                     // Then assign each element
                     for (i, elem) in elems.iter().enumerate() {
@@ -148,9 +168,9 @@ impl ScopeCapturingTransform {
                                     raw: None,
                                 })),
                             );
-                            let elem_assignments =
-                                self.transform_pattern_to_assignments(elem_pat, Some(Box::new(indexed)));
-                            assignments.extend(elem_assignments);
+                            let elem_stmts =
+                                self.transform_pattern_to_stmts(elem_pat, Some(Box::new(indexed)));
+                            stmts.extend(elem_stmts);
                         }
                     }
                 }
@@ -164,10 +184,11 @@ impl ScopeCapturingTransform {
                     let temp_ident = create_ident_expr(&temp_name);
 
                     // First assignment: _tmp = init
-                    assignments.push(create_assign_expr(
-                        expr_to_assign_target(temp_ident.clone()),
-                        *init_expr,
-                    ));
+                    stmts.push(Stmt::Decl(create_var_decl(
+                        VarDeclKind::Var,
+                        &temp_name,
+                        Some(*init_expr),
+                    )));
 
                     // Then assign each property
                     for prop in props {
@@ -175,16 +196,16 @@ impl ScopeCapturingTransform {
                             ObjectPatProp::KeyValue(kv) => {
                                 let key_name: String = match &kv.key {
                                     PropName::Ident(id) => (&*id.sym).to_owned(),
-                                    PropName::Str(s) => (&*s.value).to_owned().into_string_lossy(),
+                                    PropName::Str(s) => s.value.to_string(),
                                     _ => continue,
                                 };
 
                                 let member = create_member_expr(temp_ident.clone(), &key_name);
-                                let prop_assignments = self.transform_pattern_to_assignments(
+                                let prop_stmts = self.transform_pattern_to_stmts(
                                     &kv.value,
                                     Some(Box::new(member)),
                                 );
-                                assignments.extend(prop_assignments);
+                                stmts.extend(prop_stmts);
                             }
                             ObjectPatProp::Assign(assign) => {
                                 let key_name = assign.key.sym.to_string();
@@ -204,17 +225,20 @@ impl ScopeCapturingTransform {
                                         member
                                     };
 
-                                    assignments.push(create_assign_expr(
-                                        expr_to_assign_target(captured),
-                                        value,
-                                    ));
+                                    stmts.push(Stmt::Expr(ExprStmt {
+                                        span: DUMMY_SP,
+                                        expr: Box::new(create_assign_expr(
+                                            expr_to_assign_target(captured),
+                                            value,
+                                        )),
+                                    }));
                                 }
                             }
                             ObjectPatProp::Rest(rest) => {
                                 // Handle rest properties: {...rest}
-                                let rest_assignments =
-                                    self.transform_pattern_to_assignments(&rest.arg, Some(Box::new(temp_ident.clone())));
-                                assignments.extend(rest_assignments);
+                                let rest_stmts =
+                                    self.transform_pattern_to_stmts(&rest.arg, Some(Box::new(temp_ident.clone())));
+                                stmts.extend(rest_stmts);
                             }
                         }
                     }
@@ -222,8 +246,8 @@ impl ScopeCapturingTransform {
             }
             Pat::Rest(RestPat { arg, .. }) => {
                 // Rest pattern in function params or arrays
-                let rest_assignments = self.transform_pattern_to_assignments(arg, init);
-                assignments.extend(rest_assignments);
+                let rest_stmts = self.transform_pattern_to_stmts(arg, init);
+                stmts.extend(rest_stmts);
             }
             Pat::Assign(AssignPat { left, right, .. }) => {
                 // Assignment pattern with default: x = 5
@@ -234,18 +258,18 @@ impl ScopeCapturingTransform {
                         left: init_expr,
                         right: right.clone(),
                     });
-                    let assign_assignments =
-                        self.transform_pattern_to_assignments(left, Some(Box::new(value)));
-                    assignments.extend(assign_assignments);
+                    let assign_stmts =
+                        self.transform_pattern_to_stmts(left, Some(Box::new(value)));
+                    stmts.extend(assign_stmts);
                 } else {
-                    let assign_assignments = self.transform_pattern_to_assignments(left, Some(right.clone()));
-                    assignments.extend(assign_assignments);
+                    let assign_stmts = self.transform_pattern_to_stmts(left, Some(right.clone()));
+                    stmts.extend(assign_stmts);
                 }
             }
             _ => {}
         }
 
-        assignments
+        stmts
     }
 
     /// Enter a new scope
@@ -263,6 +287,93 @@ impl ScopeCapturingTransform {
     /// Check if we're at module level
     fn is_module_level(&self) -> bool {
         self.depth == 0
+    }
+
+    /// Transform a module item at module level, allowing expansion into multiple items
+    fn transform_module_item(&self, item: ModuleItem) -> Vec<ModuleItem> {
+        match item {
+            ModuleItem::Stmt(Stmt::Decl(Decl::Var(var_decl))) => {
+                let mut items = Vec::new();
+
+                for decl in &var_decl.decls {
+                    if self.should_capture_pattern(&decl.name) {
+                        let stmts = self.transform_pattern_to_stmts(&decl.name, decl.init.clone());
+                        for stmt in stmts {
+                            items.push(ModuleItem::Stmt(stmt));
+                        }
+                        if let Pat::Ident(BindingIdent { id, .. }) = &decl.name {
+                            if self.should_capture(&id.to_id()) {
+                                items.push(ModuleItem::Stmt(Stmt::Decl(create_var_decl(
+                                    var_decl.kind,
+                                    id.sym.as_ref(),
+                                    Some(self.create_captured_member(id.sym.as_ref())),
+                                ))));
+                            }
+                        }
+                    } else {
+                        let single_var = VarDecl {
+                            span: var_decl.span,
+                            ctxt: var_decl.ctxt,
+                            kind: var_decl.kind,
+                            declare: var_decl.declare,
+                            decls: vec![decl.clone()],
+                        };
+                        items.push(ModuleItem::Stmt(Stmt::Decl(Decl::Var(Box::new(single_var)))));
+                    }
+                }
+
+                items
+            }
+            ModuleItem::Stmt(Stmt::Decl(Decl::Fn(fn_decl))) => {
+                if self.should_capture(&fn_decl.ident.to_id()) {
+                    let fn_name = fn_decl.ident.sym.to_string();
+                    let member = self.create_captured_member(&fn_name);
+
+                    let fn_expr = Expr::Fn(FnExpr {
+                        ident: Some(fn_decl.ident.clone()),
+                        function: fn_decl.function.clone(),
+                    });
+
+                    let value = self.wrap_declaration(&fn_name, fn_expr);
+
+                    let assign = create_assign_expr(
+                        expr_to_assign_target(member),
+                        value,
+                    );
+
+                    vec![ModuleItem::Stmt(Stmt::Expr(ExprStmt {
+                        span: DUMMY_SP,
+                        expr: Box::new(assign),
+                    }))]
+                } else {
+                    vec![ModuleItem::Stmt(Stmt::Decl(Decl::Fn(fn_decl)))]
+                }
+            }
+            ModuleItem::Stmt(Stmt::Decl(Decl::Class(class_decl))) => {
+                if self.should_capture(&class_decl.ident.to_id()) {
+                    let class_name = class_decl.ident.sym.to_string();
+                    let member = self.create_captured_member(&class_name);
+
+                    let class_expr = Expr::Class(ClassExpr {
+                        ident: Some(class_decl.ident.clone()),
+                        class: class_decl.class.clone(),
+                    });
+
+                    let assign = create_assign_expr(
+                        expr_to_assign_target(member),
+                        class_expr,
+                    );
+
+                    vec![ModuleItem::Stmt(Stmt::Expr(ExprStmt {
+                        span: DUMMY_SP,
+                        expr: Box::new(assign),
+                    }))]
+                } else {
+                    vec![ModuleItem::Stmt(Stmt::Decl(Decl::Class(class_decl)))]
+                }
+            }
+            other => vec![other],
+        }
     }
 }
 
@@ -291,8 +402,15 @@ impl VisitMut for ScopeCapturingTransform {
             }
         }
 
-        // Transform module items
-        module.visit_mut_children_with(self);
+        let mut new_body = Vec::with_capacity(module.body.len());
+        for item in module.body.drain(..) {
+            let mut transformed_items = self.transform_module_item(item);
+            for transformed in &mut transformed_items {
+                transformed.visit_mut_children_with(self);
+            }
+            new_body.extend(transformed_items);
+        }
+        module.body = new_body;
 
         // Prepend hoisted functions (if resurrection build)
         if self.resurrection && !self.hoisted_functions.is_empty() {
@@ -306,134 +424,6 @@ impl VisitMut for ScopeCapturingTransform {
         if !self.is_module_level() {
             item.visit_mut_children_with(self);
             return;
-        }
-
-        match item {
-            ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(export)) => {
-                // Handle: export var x = 1
-                // Transform to: __varRecorder__.x = 1; export { x }
-                if let Decl::Var(var_decl) = &mut export.decl {
-                    let mut new_stmts = Vec::new();
-                    let mut export_names = Vec::new();
-
-                    for decl in &var_decl.decls {
-                        let ids = extract_idents_from_pat(&decl.name);
-
-                        for id in &ids {
-                            if self.should_capture(id) {
-                                export_names.push(ExportSpecifier::Named(ExportNamedSpecifier {
-                                    span: DUMMY_SP,
-                                    orig: ModuleExportName::Ident(Ident::new(id.0.clone(), DUMMY_SP, SyntaxContext::empty())),
-                                    exported: None,
-                                    is_type_only: false,
-                                }));
-                            }
-                        }
-
-                        if let Some(init) = &decl.init {
-                            let assignments =
-                                self.transform_pattern_to_assignments(&decl.name, Some(init.clone()));
-
-                            for assign in assignments {
-                                new_stmts.push(ModuleItem::Stmt(Stmt::Expr(ExprStmt {
-                                    span: DUMMY_SP,
-                                    expr: Box::new(assign),
-                                })));
-                            }
-                        }
-                    }
-
-                    // Replace with assignment statements + named export
-                    if !export_names.is_empty() {
-                        new_stmts.push(ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(
-                            NamedExport {
-                                span: DUMMY_SP,
-                                specifiers: export_names,
-                                src: None,
-                                type_only: false,
-                                with: None,
-                            },
-                        )));
-
-                        *item = new_stmts.remove(0);
-                        // Note: Can't insert multiple items here, would need parent context
-                    }
-                }
-            }
-            ModuleItem::Stmt(Stmt::Decl(Decl::Var(var_decl))) => {
-                // Transform: var x = 1
-                // Into: __varRecorder__.x = 1
-                let mut assignments = Vec::new();
-
-                for decl in &var_decl.decls {
-                    let assign_exprs =
-                        self.transform_pattern_to_assignments(&decl.name, decl.init.clone());
-                    assignments.extend(assign_exprs);
-                }
-
-                if !assignments.is_empty() {
-                    // Replace with expression statement(s)
-                    let expr = if assignments.len() == 1 {
-                        assignments.into_iter().next().unwrap()
-                    } else {
-                        create_seq_expr(assignments.into_iter().map(Box::new).collect())
-                    };
-
-                    *item = ModuleItem::Stmt(Stmt::Expr(ExprStmt {
-                        span: DUMMY_SP,
-                        expr: Box::new(expr),
-                    }));
-                }
-            }
-            ModuleItem::Stmt(Stmt::Decl(Decl::Fn(fn_decl))) => {
-                // Transform function declarations
-                // function foo() {} → __varRecorder__.foo = function foo() {}
-                if self.should_capture(&fn_decl.ident.to_id()) {
-                    let fn_name = fn_decl.ident.sym.to_string();
-                    let member = self.create_captured_member(&fn_name);
-
-                    let fn_expr = Expr::Fn(FnExpr {
-                        ident: Some(fn_decl.ident.clone()),
-                        function: fn_decl.function.clone(),
-                    });
-
-                    let value = self.wrap_declaration(&fn_name, fn_expr);
-
-                    let assign = create_assign_expr(
-                        expr_to_assign_target(member),
-                        value,
-                    );
-
-                    *item = ModuleItem::Stmt(Stmt::Expr(ExprStmt {
-                        span: DUMMY_SP,
-                        expr: Box::new(assign),
-                    }));
-                }
-            }
-            ModuleItem::Stmt(Stmt::Decl(Decl::Class(class_decl))) => {
-                // Transform class declarations
-                // class Foo {} → __varRecorder__.Foo = class Foo {}
-                if self.should_capture(&class_decl.ident.to_id()) {
-                    let class_name = class_decl.ident.sym.to_string();
-                    let member = self.create_captured_member(&class_name);
-
-                    let class_expr = Expr::Class(ClassExpr {
-                        ident: Some(class_decl.ident.clone()),
-                        class: class_decl.class.clone(),
-                    });
-
-                    let assign = create_assign_expr(
-                        expr_to_assign_target(member),
-                        class_expr,
-                    );
-
-                    *item = ModuleItem::Stmt(Stmt::Expr(ExprStmt {
-                        span: DUMMY_SP,
-                        expr: Box::new(assign),
-                    }));
-                }
-            }
-            _ => {}
         }
 
         item.visit_mut_children_with(self);

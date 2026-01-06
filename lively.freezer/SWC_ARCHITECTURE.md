@@ -227,7 +227,7 @@ interface LivelyTransformConfig {
 ### Rust Plugin Build
 ```bash
 cd swc-plugin
-cargo build --release --target wasm32-wasi  # For Wasm plugin
+cargo build --release --target wasm32-wasip1  # For Wasm plugin
 # or
 cargo build --release  # For native plugin
 ```

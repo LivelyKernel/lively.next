@@ -178,7 +178,7 @@ Total: ~15 new files, ~4,200 lines of code
 
 2. **Verify Build**
    ```bash
-   ls -lh swc-plugin/target/wasm32-wasi/release/lively_swc_plugin.wasm
+   ls -lh swc-plugin/target/wasm32-wasip1/release/lively_swc_plugin.wasm
    ```
 
 3. **Run Unit Tests**

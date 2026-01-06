@@ -1,4 +1,4 @@
-use swc_core::common::{Spanned, SyntaxContext, DUMMY_SP};
+use swc_core::common::{SyntaxContext, DUMMY_SP};
 use swc_core::ecma::{
     ast::*,
     visit::{VisitMut, VisitMutWith},
@@ -124,7 +124,7 @@ impl ClassTransform {
     }
 
     /// Transform constructor body to include lively hooks
-    fn transform_constructor_body(&self, body: BlockStmt, has_super: bool, class: &Class) -> BlockStmt {
+    fn transform_constructor_body(&self, body: BlockStmt, _has_super: bool, class: &Class) -> BlockStmt {
         let mut stmts = Vec::new();
 
         // Add lively restoration check

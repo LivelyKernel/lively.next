@@ -9,6 +9,7 @@ pub struct ScopeAnalyzer {
     pub top_level_vars: HashSet<Id>,
 
     /// Variables that should be excluded from capturing
+    #[allow(dead_code)]
     pub excluded_vars: HashSet<Id>,
 
     /// Current scope depth (0 = top level)
@@ -23,6 +24,7 @@ impl ScopeAnalyzer {
         Self::default()
     }
 
+    #[allow(dead_code)]
     pub fn with_exclusions(excluded: HashSet<Id>) -> Self {
         Self {
             excluded_vars: excluded,
@@ -31,6 +33,7 @@ impl ScopeAnalyzer {
     }
 
     /// Check if a variable is at the top level and not excluded
+    #[allow(dead_code)]
     pub fn is_capturable(&self, id: &Id) -> bool {
         self.top_level_vars.contains(id)
             && !self.excluded_vars.contains(id)
