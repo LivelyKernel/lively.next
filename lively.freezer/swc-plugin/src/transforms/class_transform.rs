@@ -33,6 +33,146 @@ pub struct ClassTransform {
     package_version: Option<String>,
 }
 
+struct SuperRewriter {
+    class_name: String,
+    function_node: String,
+    is_static: bool,
+    saw_direct_super_call: bool,
+}
+
+impl SuperRewriter {
+    fn new(class_name: &str, function_node: &str, is_static: bool) -> Self {
+        Self {
+            class_name: class_name.to_string(),
+            function_node: function_node.to_string(),
+            is_static,
+            saw_direct_super_call: false,
+        }
+    }
+
+    fn super_holder_expr(&self) -> Expr {
+        let class_ident = create_ident_expr(&self.class_name);
+        let target = if self.is_static {
+            class_ident
+        } else {
+            create_member_expr(class_ident, "prototype")
+        };
+        create_call_expr(
+            create_member_expr(create_ident_expr("Object"), "getPrototypeOf"),
+            vec![to_expr_or_spread(target)],
+        )
+    }
+
+    fn function_node_expr(&self) -> Expr {
+        create_ident_expr(&self.function_node)
+    }
+
+    fn super_prop_expr(&self, prop: &SuperProp) -> Option<Expr> {
+        match prop {
+            SuperProp::Ident(ident) => Some(create_string_expr(ident.sym.as_ref())),
+            SuperProp::Computed(computed) => Some(*computed.expr.clone()),
+        }
+    }
+
+    fn replace_super_get(&self, prop: Expr) -> Expr {
+        create_call_expr(
+            create_member_expr(self.function_node_expr(), "_get"),
+            vec![
+                to_expr_or_spread(self.super_holder_expr()),
+                to_expr_or_spread(prop),
+                to_expr_or_spread(create_ident_expr("this")),
+            ],
+        )
+    }
+
+    fn replace_super_set(&self, prop: Expr, value: Expr) -> Expr {
+        create_call_expr(
+            create_member_expr(self.function_node_expr(), "_set"),
+            vec![
+                to_expr_or_spread(self.super_holder_expr()),
+                to_expr_or_spread(prop),
+                to_expr_or_spread(value),
+                to_expr_or_spread(create_ident_expr("this")),
+            ],
+        )
+    }
+
+    fn replace_super_method_call(&self, prop: Expr, args: Vec<ExprOrSpread>) -> Expr {
+        let get_call = self.replace_super_get(prop);
+        create_call_expr(
+            create_member_expr(get_call, "call"),
+            {
+                let mut call_args = Vec::with_capacity(args.len() + 1);
+                call_args.push(to_expr_or_spread(create_ident_expr("this")));
+                call_args.extend(args);
+                call_args
+            },
+        )
+    }
+
+    fn replace_direct_super_call(&mut self, args: Vec<ExprOrSpread>) -> Expr {
+        self.saw_direct_super_call = true;
+        let symbol_for = create_call_expr(
+            create_member_expr(create_ident_expr("Symbol"), "for"),
+            vec![to_expr_or_spread(create_string_expr("lively-instance-initialize"))],
+        );
+        let get_call = self.replace_super_get(symbol_for);
+        let call_expr = create_call_expr(
+            create_member_expr(get_call, "call"),
+            {
+                let mut call_args = Vec::with_capacity(args.len() + 1);
+                call_args.push(to_expr_or_spread(create_ident_expr("this")));
+                call_args.extend(args);
+                call_args
+            },
+        );
+        create_assign_expr(expr_to_assign_target(create_ident_expr("_this")), call_expr)
+    }
+}
+
+impl VisitMut for SuperRewriter {
+    fn visit_mut_expr(&mut self, expr: &mut Expr) {
+        match expr {
+            Expr::Call(call) => {
+                match &mut call.callee {
+                    Callee::Super(_) => {
+                        let new_expr = self.replace_direct_super_call(call.args.clone());
+                        *expr = new_expr;
+                        return;
+                    }
+                    Callee::Expr(callee_expr) => {
+                        if let Expr::SuperProp(super_prop) = &mut **callee_expr {
+                            if let Some(prop_expr) = self.super_prop_expr(&super_prop.prop) {
+                                let new_expr = self.replace_super_method_call(prop_expr, call.args.clone());
+                                *expr = new_expr;
+                                return;
+                            }
+                        }
+                    }
+                    Callee::Import(_) => {}
+                }
+            }
+            Expr::SuperProp(super_prop) => {
+                if let Some(prop_expr) = self.super_prop_expr(&super_prop.prop) {
+                    *expr = self.replace_super_get(prop_expr);
+                    return;
+                }
+            }
+            Expr::Assign(assign) => {
+                if let AssignTarget::Simple(SimpleAssignTarget::SuperProp(super_prop)) = &assign.left {
+                    if let Some(prop_expr) = self.super_prop_expr(&super_prop.prop) {
+                        let new_expr = self.replace_super_set(prop_expr, *assign.right.clone());
+                        *expr = new_expr;
+                        return;
+                    }
+                }
+            }
+            _ => {}
+        }
+        expr.visit_mut_children_with(self);
+    }
+}
+
 impl ClassTransform {
     pub fn new(
         config: ClassToFunctionConfig,
@@ -51,7 +191,7 @@ impl ClassTransform {
     /// Transform a class into an initializeES6ClassForLively call
     fn transform_class(&self, class_name: &str, class: &Class) -> Expr {
         // 1. Extract constructor
-        let constructor = self.extract_constructor(class);
+        let constructor = self.extract_constructor(class_name, class);
 
         // 2. Extract superclass
         let superclass = class
@@ -61,7 +201,7 @@ impl ClassTransform {
             .unwrap_or_else(|| create_ident_expr("Object"));
 
         // 3. Extract method descriptors
-        let methods = self.extract_method_descriptors(class);
+        let methods = self.extract_method_descriptors(class_name, class);
 
         // 4. Create class metadata
         let metadata = self.create_class_metadata(class_name);
@@ -85,7 +225,7 @@ impl ClassTransform {
     }
 
     /// Extract the constructor function from a class
-    fn extract_constructor(&self, class: &Class) -> Expr {
+    fn extract_constructor(&self, class_name: &str, class: &Class) -> Expr {
         // Find the constructor
         let mut constructor_body = None;
         let mut has_super = false;
@@ -101,10 +241,10 @@ impl ClassTransform {
 
         // Create constructor function
         let body = if let Some(body) = constructor_body {
-            self.transform_constructor_body(body, has_super, class)
+            self.transform_constructor_body(class_name, body, has_super, class)
         } else {
             // Default constructor
-            self.create_default_constructor(has_super, class)
+            self.create_default_constructor(class_name, has_super, class)
         };
 
         Expr::Fn(FnExpr {
@@ -124,13 +264,21 @@ impl ClassTransform {
     }
 
     /// Transform constructor body to include lively hooks
-    fn transform_constructor_body(&self, body: BlockStmt, _has_super: bool, class: &Class) -> BlockStmt {
+    fn transform_constructor_body(&self, class_name: &str, mut body: BlockStmt, _has_super: bool, class: &Class) -> BlockStmt {
+        let mut rewriter = SuperRewriter::new(class_name, &self.config.function_node, false);
+        body.visit_mut_with(&mut rewriter);
+        let saw_direct_super_call = rewriter.saw_direct_super_call;
+
         let mut stmts = Vec::new();
 
         // Add lively restoration check
         // if (this[Symbol.for('lively-instance-restorer')]) return this[Symbol.for('lively-instance-restorer')](this);
         let restorer_check = self.create_restorer_check();
         stmts.push(restorer_check);
+
+        if saw_direct_super_call {
+            stmts.push(Stmt::Decl(create_var_decl(VarDeclKind::Var, "_this", None)));
+        }
 
         // Add original constructor statements
         stmts.extend(body.stmts);
@@ -143,6 +291,13 @@ impl ClassTransform {
         let init_hook = self.create_init_hook();
         stmts.push(init_hook);
 
+        if saw_direct_super_call {
+            stmts.push(Stmt::Return(ReturnStmt {
+                span: DUMMY_SP,
+                arg: Some(Box::new(create_ident_expr("_this"))),
+            }));
+        }
+
         BlockStmt {
             span: DUMMY_SP,
             ctxt: SyntaxContext::empty(),
@@ -151,7 +306,7 @@ impl ClassTransform {
     }
 
     /// Create default constructor
-    fn create_default_constructor(&self, has_super: bool, class: &Class) -> BlockStmt {
+    fn create_default_constructor(&self, class_name: &str, has_super: bool, class: &Class) -> BlockStmt {
         let mut stmts = Vec::new();
 
         // Add restorer check
@@ -182,11 +337,23 @@ impl ClassTransform {
         // Add initialization hook
         stmts.push(self.create_init_hook());
 
-        BlockStmt {
+        let mut block = BlockStmt {
             span: DUMMY_SP,
             ctxt: SyntaxContext::empty(),
             stmts,
+        };
+
+        let mut rewriter = SuperRewriter::new(class_name, &self.config.function_node, false);
+        block.visit_mut_with(&mut rewriter);
+        if rewriter.saw_direct_super_call {
+            block.stmts.insert(1, Stmt::Decl(create_var_decl(VarDeclKind::Var, "_this", None)));
+            block.stmts.push(Stmt::Return(ReturnStmt {
+                span: DUMMY_SP,
+                arg: Some(Box::new(create_ident_expr("_this"))),
+            }));
         }
+
+        block
     }
 
     /// Create restorer check statement
@@ -264,7 +431,7 @@ impl ClassTransform {
     }
 
     /// Extract method descriptors as an array
-    fn extract_method_descriptors(&self, class: &Class) -> Expr {
+    fn extract_method_descriptors(&self, class_name: &str, class: &Class) -> Expr {
         let mut methods = Vec::new();
 
         for member in &class.body {
@@ -272,6 +439,10 @@ impl ClassTransform {
                 ClassMember::Method(method) => {
                     if let PropName::Ident(key) = &method.key {
                         if key.sym.as_ref() != "constructor" {
+                            let mut function = method.function.clone();
+                            let mut rewriter = SuperRewriter::new(class_name, &self.config.function_node, method.is_static);
+                            function.visit_mut_with(&mut rewriter);
+
                             // Create method descriptor: { name: "method", kind: "method", value: function() {...} }
                             let descriptor = create_object_lit(vec![
                                 create_prop("name", create_string_expr(key.sym.as_ref())),
@@ -287,7 +458,7 @@ impl ClassTransform {
                                     "value",
                                     Expr::Fn(FnExpr {
                                         ident: None,
-                                        function: method.function.clone(),
+                                        function,
                                     }),
                                 ),
                             ]);
