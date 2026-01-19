@@ -129,7 +129,7 @@ export function lively (args) {
       return opts;
     },
     renderChunk(code, chunk) {
-      return bulletProofNamespaces(code, chunk.fileName, bundler.isResurrectionBuild, bundler.sourceMap); // this completely messes up the source mapping
+      return bulletProofNamespaces(code, chunk.fileName, bundler.isResurrectionBuild, bundler.sourceMap && !bundler.useSwc); // this completely messes up the source mapping
     },
     renderDynamicImport: () => {
       bundler.hasDynamicImports = true; // set flag to handle dynamic imports

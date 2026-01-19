@@ -40,6 +40,7 @@ import {
 } from './util/helpers.js';
 import { joinPath, ensureFolder } from 'lively.lang/string.js';
 import { resolveViaImportMap } from 'flatn/helpers.mjs';
+import { LivelySwcTransform } from './bundler-swc.js';
 
 
 const separator = `__${'Separator'}__`; // obscure formatting to prevent breaking builds when this files in included
@@ -229,6 +230,7 @@ export default class LivelyRollup {
     autoRun = false,
     asBrowserModule = true,
     useTerser = false,
+    useSwc = false,
     isResurrectionBuild = false,
     includePolyfills = true,
     includeLivelyAssets = true,
@@ -241,6 +243,7 @@ export default class LivelyRollup {
     this.verbose = verbose; // wether or not to log the warnings to the console that happen during build
     this.resolver = resolver; // resolves the modules to the respective urls, for either client or browser
     this.useTerser = useTerser; // needed because google closure sometimes does crazy stuff during optimization
+    this.useSwc = useSwc;
     this.includePolyfills = includePolyfills; // wether or not to include the pointer event polyfill
     this.snapshot = null; // DEPRECATED
     if (rootModule) { this.rootModuleId = resolver.resolveModuleId(rootModule); } // the root module to use as an entry point
@@ -254,6 +257,7 @@ export default class LivelyRollup {
     this.compress = compress; // If true, this will perform custom compression of the files to brotli and gzip.
     this.minify = minify; // If true, will invoke the google closure minification to further reduce source code size.
     this.sourceMap = sourceMap;
+    this.swcTransform = this.useSwc ? new LivelySwcTransform({ captureObj: '__varRecorder__' }) : null;
 
     this.globalMap = {}; // accumulates the package -> url mappings that are provided by each of the packages
     this.modulesWithDynamicLoads = new Set(); // collection of all modules that include System.import()
@@ -379,6 +383,60 @@ export default class LivelyRollup {
         ...arr.range(0, 50).map(i => `__captured${i}__`)
       ],
       classToFunction
+    };
+  }
+
+  getSwcTransformOptions (modId, source, { instrumentClasses } = {}) {
+    if (modId === '@empty.js') return {};
+    let parsedSource;
+    try {
+      parsedSource = ast.parse(source);
+    } catch (err) {
+      parsedSource = { scope: { globals: {} } };
+    }
+    const parsedGlobals = parsedSource.scope?.globals && Object.keys(parsedSource.scope.globals) || GlobalInjector.getGlobals(null, parsedSource);
+    let version, name;
+    const pkg = this.resolver.resolvePackage(modId, this.getResolutionContext()) || this.moduleToPkg.get(modId);
+    if (pkg) {
+      name = pkg.name;
+      version = pkg.version;
+    } else if (modId.startsWith('esm://')) {
+      [name, version] = resource(modId).path().slice(1).split('@');
+      if (version) version = version.split('/')[0];
+    } else {
+      version = modId.split('@')[1];
+      name = modId.split('npm:')[1].split('@')[0];
+    }
+    const normalizedId = this.normalizedId(modId);
+    const classHolder = `((lively.FreezerRuntime || lively.frozenModules).recorderFor(${JSON.stringify(normalizedId)}, __contextModule__))`;
+    const currentModuleAccessor = `({
+      pathInPackage: () => ${JSON.stringify(this.resolver.pathInPackageFor(modId))},
+      unsubscribeFromToplevelDefinitionChanges: () => () => {},
+      subscribeToToplevelDefinitionChanges: () => () => {},
+      package: () => ({
+        name: ${JSON.stringify(name)},
+        version: ${JSON.stringify(version)}
+      })
+    })`;
+    return {
+      moduleId: normalizedId,
+      packageName: name,
+      packageVersion: version,
+      captureImports: true,
+      resurrection: this.isResurrectionBuild,
+      classToFunction: instrumentClasses ? {
+        classHolder,
+        functionNode: 'initializeES6ClassForLively',
+        currentModuleAccessor
+      } : null,
+      exclude: [
+        'System',
+        '__contextModule__',
+        ...this.resolver.dontTransform(modId, [...ast.query.knownGlobals, ...parsedGlobals]),
+        ...arr.range(0, 50).map(i => `__captured${i}__`)
+      ],
+      sourceMap: this.sourceMap,
+      filename: modId
     };
   }
 
@@ -572,11 +630,31 @@ export default class LivelyRollup {
       source = source.replaceAll(projectAssetRegex, assetNameRewriter); // needs to be performed in a way to preserve sourcemap
     }
 
-    // FIXME: here we need to move over to a babel transform and also pass over the sourcemap
-    // The easiest way to achieve thatis via an inline visitor that basically performs the same steps as below within babel.
-
     const needsLoadInstrumentation = this.needsDynamicLoadTransform(source);
     const self = this;
+
+    if (this.useSwc) {
+      if (id === ROOT_ID || id.startsWith('__rootModule__:')) {
+        if (!needsLoadInstrumentation) return source;
+        let parsed = ast.parse(source);
+        parsed = this.instrumentDynamicLoads(parsed, id);
+        return ast.stringify(parsed);
+      }
+      const instrumentClasses = this.needsClassInstrumentation(id, source);
+      const needsScopeCapture = this.needsScopeToBeCaptured(id, null, source) || instrumentClasses;
+      if (!needsScopeCapture) {
+        if (!needsLoadInstrumentation) return source;
+        let parsed = ast.parse(source);
+        parsed = this.instrumentDynamicLoads(parsed, id);
+        return ast.stringify(parsed);
+      }
+      const swcOptions = this.getSwcTransformOptions(id, source, { instrumentClasses });
+      const { code, map } = this.swcTransform.transform(source, swcOptions);
+      return { code, map };
+    }
+
+    // FIXME: here we need to move over to a babel transform and also pass over the sourcemap
+    // The easiest way to achieve thatis via an inline visitor that basically performs the same steps as below within babel.
 
     if (this.sourceMap) {
 

@@ -75,15 +75,19 @@ export class LivelySwcTransform {
         },
       };
 
+      const classToFunctionConfig = classToFunction === false
+        ? null
+        : (classToFunction || {
+          classHolder: this.options.captureObj,
+          functionNode: 'initializeES6ClassForLively',
+          currentModuleAccessor: 'module.id',
+        });
+
       // Configure lively transform plugin
       const livelyConfig = {
         captureObj: this.options.captureObj,
         declarationWrapper,
-        classToFunction: classToFunction || {
-          classHolder: this.options.captureObj,
-          functionNode: 'initializeES6ClassForLively',
-          currentModuleAccessor: 'module.id',
-        },
+        classToFunction: classToFunctionConfig,
         exclude: this.options.exclude,
         captureImports,
         resurrection,
