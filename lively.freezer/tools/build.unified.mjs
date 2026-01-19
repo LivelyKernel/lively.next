@@ -1,10 +1,8 @@
 /* global process */
 import { rollup } from '@rollup/wasm-node';
 import jsonPlugin from '@rollup/plugin-json';
-import { babel } from '@rollup/plugin-babel';
 import { lively } from 'lively.freezer/src/plugins/rollup';
 import resolver from 'lively.freezer/src/resolvers/node.cjs';
-import PresetEnv from '@babel/preset-env';
 
 const verbose = process.argv[2] === '--verbose';
 const minify = !process.env.CI;
@@ -16,8 +14,7 @@ const commonExcludedModules = [
   'rollup', // has a dist file that cant be parsed by rollup
   'picomatch', 'path-is-absolute', 'fs.realpath', // from loading-screen build
   // other stuff that is only needed by rollup
-  '@babel/preset-env',
-  '@babel/plugin-syntax-import-meta',
+  '@swc/core',
   '@rollup/plugin-json',
   '@rollup/plugin-commonjs',
   'rollup-plugin-polyfill-node',
@@ -34,15 +31,7 @@ const commonAutoRunConfig = {
 
 // Common plugins configuration
 const commonPlugins = [
-  jsonPlugin({ exclude: [/https\:\/\/jspm.dev\/.*\.json/, /esm\:\/\/cache\/.*\.json/] }),
-  babel({
-    babelHelpers: 'bundled',
-    presets: [
-      [PresetEnv, {
-        "targets": "> 3%, not dead"
-      }]
-    ]
-  })
+  jsonPlugin({ exclude: [/https\:\/\/jspm.dev\/.*\.json/, /esm\:\/\/cache\/.*\.json/] })
 ];
 
 try {
@@ -65,6 +54,7 @@ try {
         minify,
         verbose,
         sourceMap,
+        useSwc: true,
         isResurrectionBuild: true,
         asBrowserModule: true,
         excludedModules: commonExcludedModules,
