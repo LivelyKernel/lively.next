@@ -4055,7 +4055,7 @@ export class Text extends Morph {
       },
 
       async report () {
-        const jsDiff = await System.import('jsdiff', System.decanonicalize('lively.morphic'));
+        const jsDiff = await System.import('diff', System.decanonicalize('lively.morphic'));
         const { default: DiffEditorPlugin } = await System.import('lively.ide/diff/editor-plugin.js');
         let indent = 0;
         let report = ''; const reportStyles = []; let row = 0;

@@ -25,7 +25,7 @@
     "prettier": "1.18.2",
     "semver": "5.3.0",
     "mermaid-it-markdown": "1.0.8",
-    "diff": "5.0.0",
+    "diff": "7.0.0",
     "parse5": "7.0.0",
     "eslint": "7.32.0",
     "eslint-config-standard": "16.0.3",
