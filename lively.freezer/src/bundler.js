@@ -40,7 +40,6 @@ import {
 } from './util/helpers.js';
 import { joinPath, ensureFolder } from 'lively.lang/string.js';
 import { resolveViaImportMap } from 'flatn/helpers.mjs';
-import { LivelySwcTransform } from './bundler-swc.js';
 
 
 const separator = `__${'Separator'}__`; // obscure formatting to prevent breaking builds when this files in included
@@ -257,7 +256,8 @@ export default class LivelyRollup {
     this.compress = compress; // If true, this will perform custom compression of the files to brotli and gzip.
     this.minify = minify; // If true, will invoke the google closure minification to further reduce source code size.
     this.sourceMap = sourceMap;
-    this.swcTransform = this.useSwc ? new LivelySwcTransform({ captureObj: '__varRecorder__' }) : null;
+    this.swcTransform = null;
+    this._swcTransformPromise = null;
 
     this.globalMap = {}; // accumulates the package -> url mappings that are provided by each of the packages
     this.modulesWithDynamicLoads = new Set(); // collection of all modules that include System.import()
@@ -272,6 +272,21 @@ export default class LivelyRollup {
     this.entryPaths = null; // for multi-entry builds, stores the original entry paths
 
     this.resolver.setStatus({ label: 'Freezing in Progress' });
+  }
+
+  async ensureSwcTransform () {
+    if (!this.useSwc) return null;
+    if (this.swcTransform) return this.swcTransform;
+    if (!this._swcTransformPromise) {
+      const dynamicImport = new Function('specifier', 'return import(specifier);');
+      // Keep this import non-static so browser-targeted rollup bundles
+      // do not try to include the node-only SWC module.
+      this._swcTransformPromise = dynamicImport('./bundler-swc.js').then(({ LivelySwcTransform }) => {
+        this.swcTransform = new LivelySwcTransform({ captureObj: '__varRecorder__' });
+        return this.swcTransform;
+      });
+    }
+    return this._swcTransformPromise;
   }
 
   /**
@@ -634,6 +649,7 @@ export default class LivelyRollup {
     const self = this;
 
     if (this.useSwc) {
+      const swcTransform = await this.ensureSwcTransform();
       if (id === ROOT_ID || id.startsWith('__rootModule__:')) {
         if (!needsLoadInstrumentation) return source;
         let parsed = ast.parse(source);
@@ -649,7 +665,7 @@ export default class LivelyRollup {
         return ast.stringify(parsed);
       }
       const swcOptions = this.getSwcTransformOptions(id, source, { instrumentClasses });
-      const { code, map } = this.swcTransform.transform(source, swcOptions);
+      const { code, map } = swcTransform.transform(source, swcOptions);
       return { code, map };
     }
 
