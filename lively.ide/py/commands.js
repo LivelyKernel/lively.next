@@ -30,7 +30,7 @@ export var commands = [
 
       text.undoManager.group();
       let jsdiff = await System.import(
-          "jsdiff",
+          "diff",
           System.decanonicalize("lively.morphic")
         ),
         diff = jsdiff.diffChars(text.textString, formattedCode);
