@@ -425,6 +425,27 @@ class ScopeVisitor extends Visitor {
     return node;
   }
 
+  visitBlockStatement (node, scope, path) {
+    const visitor = this;
+    // Function bodies already execute inside a dedicated function scope.
+    // Other blocks need their own scope so block-local let/const declarations
+    // do not leak into the surrounding scope model.
+    const isFunctionBody = (scope.node.type === 'FunctionDeclaration' ||
+      scope.node.type === 'FunctionExpression' ||
+      scope.node.type === 'ArrowFunctionExpression') &&
+      scope.node.body === node;
+    const blockScope = isFunctionBody ? scope : this.newScope(node, scope);
+
+    node.body = node.body.reduce((result, stmt, i) => {
+      const accepted = stmt ? visitor.accept(stmt, blockScope, path.concat(['body', i])) : stmt;
+      if (Array.isArray(accepted)) result.push(...accepted);
+      else result.push(accepted);
+      return result;
+    }, []);
+
+    return node;
+  }
+
   visitIfStatement (node, scope, path) {
     const visitor = this;
 

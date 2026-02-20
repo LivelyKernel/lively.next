@@ -128,7 +128,20 @@ export default class LivelyDAVPlugin {
     let compressedLibrary = new WMStrm('compressedLibrary');
     const cachedDirs = ['esm_cache', 'lively.morphic', 'lively.lang', 'lively.bindings', 'lively.ast', 'lively.source-transform', 'lively.classes', 'lively.vm', 'lively.resources', 'lively.storage', 'lively.storage', 'lively.notifications', 'lively.modules', 'lively-system-interface', 'lively.installer', 'lively.serializer2', 'lively.graphics', 'lively.keyboard', 'lively.changesets', 'lively.2lively', 'lively.git', 'lively.traits', 'lively.components', 'lively.ide', 'lively.headless', 'lively.freezer', 'lively.collab', 'lively.project', 'lively.user'];
 
-    const excludedDirs = ['lively.morphic/objectdb', 'lively.morphic/assets', 'lively.morphic/web', 'lively.ast/dist', 'lively.classes/build', 'lively.ide/jsdom.worker.js', 'lively.headless/chrome-data-dir', 'lively.freezer/landing-page', 'lively.freezer/loading-screen', 'lively.modules/dist'];
+    const excludedDirs = [
+      'lively.morphic/objectdb',
+      'lively.morphic/assets',
+      'lively.morphic/web',
+      'lively.ast/dist',
+      'lively.classes/build',
+      'lively.ide/jsdom.worker.js',
+      'lively.headless/chrome-data-dir',
+      'lively.freezer/landing-page',
+      'lively.freezer/loading-screen',
+      'lively.freezer/.swc',
+      'lively.freezer/swc-plugin/target',
+      'lively.modules/dist'
+    ];
     tar.pack(System.baseURL.replace('file://', ''), {
       ignore (name) {
         if (excludedDirs.find(path => name.includes(path))) return true;

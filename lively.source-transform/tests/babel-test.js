@@ -152,6 +152,21 @@ foo.baz = 42;
 var baz = foo.baz;
 bar;`);
 
+  testVarTfm('captures top-level vars referenced outside plain block shadowing scopes',
+    { varRecorderName: 'foo' },
+    'const p = x => x + 1; function f() { { const p = 3; } return p(2); }',
+    `function f() {
+  {
+    const p = 3;
+  }
+
+  return foo.p(2);
+}
+
+foo.f = f;
+foo.p = x => x + 1;
+f;`);
+
   describe('try-catch', () => {
     testVarTfm("isn't transformed",
       'try { throw {} } catch (e) { e }\n',

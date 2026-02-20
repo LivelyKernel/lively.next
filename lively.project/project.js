@@ -69,6 +69,30 @@ export class Project {
     return resource(baseURL).join('local_projects').join(projectName).asDirectory();
   }
 
+  static async ensureImportMapForProject (fullName, projectURL = null) {
+    // import maps are only relevant in browser sessions and unavailable in offline mode
+    if (System.get('@system-env').node || (typeof lively !== 'undefined' && lively.isInOfflineMode)) return false;
+    if (!fullName) return false;
+
+    try {
+      const projectDir = projectURL
+        ? resource(projectURL).asDirectory()
+        : await Project.projectDirectory(fullName);
+      const cachedImportMap = projectDir.join('.cachedImportMap.json');
+      if (await cachedImportMap.exists()) return false;
+
+      const importMapUrl = resource(System.baseURL).join(`/import-map.json?projectName=${encodeURIComponent(fullName)}`).url;
+      const importMap = await resource(importMapUrl).readJson();
+      if (!importMap || obj.isEmpty(importMap)) return false;
+
+      await cachedImportMap.writeJson(importMap, true);
+      return true;
+    } catch (err) {
+      console.warn(`[lively.project] Failed to create import map for ${fullName}`, err);
+      return false;
+    }
+  }
+
   static async resetConfigFiles (gitResource) {
     await gitResource.resetFile('package.json');
     await gitResource.resetFile('.github/workflows/ci-tests.yml');
@@ -288,6 +312,7 @@ export class Project {
     }
 
     loadedProject.config = await loadedProject.configFile.readJson();
+    await Project.ensureImportMapForProject(fullName, loadedProject.url);
 
     // We reset uncommitted changes in `package.json` above. This should usually only concern the bound lively version or dependencies.
     // We reintroduce those changes here, if necessary.
@@ -782,6 +807,7 @@ export class Project {
 
       // Load the dependency and mount its CSS.
       const adr = await Project.projectDirectory(depToEnsure.name);
+      await Project.ensureImportMapForProject(depToEnsure.name, adr.url);
       await loadPackage(Project.systemInterface, {
         name: depToEnsure.name,
         url: adr.url,
