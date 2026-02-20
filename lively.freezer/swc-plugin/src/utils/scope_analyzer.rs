@@ -155,15 +155,10 @@ impl Visit for ScopeAnalyzer {
     }
 
     fn visit_block_stmt(&mut self, block: &BlockStmt) {
-        // Block statements create a new scope for let/const
-        let had_block_scope = !self.is_top_level();
-        if had_block_scope {
-            self.enter_scope();
-        }
+        // Block statements always create a lexical scope for let/const bindings.
+        self.enter_scope();
         block.visit_children_with(self);
-        if had_block_scope {
-            self.exit_scope();
-        }
+        self.exit_scope();
     }
 
     fn visit_for_stmt(&mut self, stmt: &ForStmt) {

@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -31,6 +32,10 @@ pub struct LivelyTransformConfig {
     #[serde(default)]
     pub module_id: String,
 
+    /// Expression string used by legacy transforms as the current module accessor.
+    #[serde(default)]
+    pub current_module_accessor: Option<String>,
+
     /// Package name for class metadata
     #[serde(default)]
     pub package_name: Option<String>,
@@ -58,6 +63,10 @@ pub struct LivelyTransformConfig {
     /// Whether to split export variable declarations
     #[serde(default = "default_true")]
     pub enable_export_split: bool,
+
+    /// Resolved import source -> normalized module id
+    #[serde(default)]
+    pub resolved_imports: HashMap<String, String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -116,6 +125,7 @@ impl Default for LivelyTransformConfig {
             capture_imports: true,
             resurrection: false,
             module_id: String::new(),
+            current_module_accessor: None,
             package_name: None,
             package_version: None,
             enable_component_transform: true,
@@ -123,6 +133,7 @@ impl Default for LivelyTransformConfig {
             enable_dynamic_import_transform: true,
             enable_systemjs_transform: false,
             enable_export_split: true,
+            resolved_imports: HashMap::new(),
         }
     }
 }
