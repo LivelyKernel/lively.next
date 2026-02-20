@@ -14,13 +14,17 @@ use crate::utils::ast_helpers::*;
 pub struct ComponentTransform {
     module_id: String,
     capture_obj: String,
+    excluded: Vec<String>,
+    depth: usize,
 }
 
 impl ComponentTransform {
-    pub fn new(module_id: String, capture_obj: String) -> Self {
+    pub fn new(module_id: String, capture_obj: String, excluded: Vec<String>) -> Self {
         Self {
             module_id,
             capture_obj,
+            excluded,
+            depth: 0,
         }
     }
 
@@ -71,21 +75,86 @@ impl ComponentTransform {
         ]);
 
         // Create: component.for(arrowFn, metadata, System, __varRecorder__, "MyComp")
+        let mut args = vec![
+            to_expr_or_spread(arrow_fn),
+            to_expr_or_spread(metadata),
+            to_expr_or_spread(create_ident_expr("System")),
+        ];
+
+        if !self.excluded.contains(&export_name.to_string()) {
+            args.push(to_expr_or_spread(create_ident_expr(&self.capture_obj)));
+            args.push(to_expr_or_spread(create_string_expr(export_name)));
+        }
+
         create_call_expr(
             create_member_expr(create_ident_expr("component"), "for"),
-            vec![
-                to_expr_or_spread(arrow_fn),
-                to_expr_or_spread(metadata),
-                to_expr_or_spread(create_ident_expr("System")),
-                to_expr_or_spread(create_ident_expr(&self.capture_obj)),
-                to_expr_or_spread(create_string_expr(export_name)),
-            ],
+            args,
         )
     }
 }
 
 impl VisitMut for ComponentTransform {
+    fn visit_mut_module(&mut self, module: &mut Module) {
+        self.depth = 0;
+        module.visit_mut_children_with(self);
+    }
+
+    fn visit_mut_function(&mut self, func: &mut Function) {
+        self.depth += 1;
+        func.visit_mut_children_with(self);
+        self.depth -= 1;
+    }
+
+    fn visit_mut_arrow_expr(&mut self, arrow: &mut ArrowExpr) {
+        self.depth += 1;
+        arrow.visit_mut_children_with(self);
+        self.depth -= 1;
+    }
+
+    fn visit_mut_block_stmt(&mut self, block: &mut BlockStmt) {
+        if self.depth > 0 {
+            self.depth += 1;
+            block.visit_mut_children_with(self);
+            self.depth -= 1;
+            return;
+        }
+        block.visit_mut_children_with(self);
+    }
+
+    fn visit_mut_expr_stmt(&mut self, stmt: &mut ExprStmt) {
+        if self.depth > 0 {
+            stmt.visit_mut_children_with(self);
+            return;
+        }
+        if self.is_component_call(&stmt.expr) {
+            let metadata = create_object_lit(vec![
+                create_prop("module", create_string_expr(&self.module_id)),
+            ]);
+            let arrow_fn = create_arrow_fn(
+                vec![],
+                BlockStmtOrExpr::Expr(stmt.expr.clone()),
+            );
+            *stmt = ExprStmt {
+                span: stmt.span,
+                expr: Box::new(create_call_expr(
+                    create_member_expr(create_ident_expr("component"), "for"),
+                    vec![
+                        to_expr_or_spread(arrow_fn),
+                        to_expr_or_spread(metadata),
+                    ],
+                )),
+            };
+            return;
+        }
+
+        stmt.visit_mut_children_with(self);
+    }
+
     fn visit_mut_var_declarator(&mut self, declarator: &mut VarDeclarator) {
+        if self.depth > 0 {
+            declarator.visit_mut_children_with(self);
+            return;
+        }
         // Check if this is: const MyComp = component(...)
         if let Pat::Ident(BindingIdent { id, .. }) = &declarator.name {
             if let Some(init) = &mut declarator.init {
@@ -126,6 +195,7 @@ mod tests {
         let mut transform = ComponentTransform::new(
             "test/module.js".to_string(),
             "__varRecorder__".to_string(),
+            vec![],
         );
         module.visit_mut_with(&mut transform);
 

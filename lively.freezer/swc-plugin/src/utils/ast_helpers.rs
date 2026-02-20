@@ -30,6 +30,19 @@ pub fn create_ident_expr(name: &str) -> Expr {
     Expr::Ident(Ident::new(name.into(), DUMMY_SP, SyntaxContext::empty()))
 }
 
+/// Compatibility helper for expression-valued config fields.
+/// Without parser support in plugin builds, we preserve historical behavior:
+/// emit the source string as an identifier-shaped expr node.
+#[allow(dead_code)]
+pub fn parse_expression(_source: &str) -> Option<Expr> {
+    None
+}
+
+/// Parse-like helper that falls back to identifier emission.
+pub fn parse_expr_or_ident(source: &str) -> Expr {
+    create_ident_expr(source)
+}
+
 /// Create a string literal expression
 pub fn create_string_expr(value: &str) -> Expr {
     Expr::Lit(Lit::Str(quote_str!(value)))
@@ -174,17 +187,17 @@ pub fn is_member_expr_with_names(expr: &Expr, obj_name: &str, prop_name: &str) -
     }
 }
 
-/// Create a variable declaration: const name = init
-pub fn create_const_decl(name: &str, init: Option<Expr>) -> Decl {
+/// Create a variable declaration: const/let/var ident = init
+pub fn create_var_decl_with_ident(kind: VarDeclKind, ident: Ident, init: Option<Expr>) -> Decl {
     Decl::Var(Box::new(VarDecl {
         span: Default::default(),
         ctxt: SyntaxContext::empty(),
-        kind: VarDeclKind::Const,
+        kind,
         declare: false,
         decls: vec![VarDeclarator {
             span: Default::default(),
             name: Pat::Ident(BindingIdent {
-                id: Ident::new(name.into(), DUMMY_SP, SyntaxContext::empty()),
+                id: ident,
                 type_ann: None,
             }),
             init: init.map(Box::new),
@@ -195,21 +208,11 @@ pub fn create_const_decl(name: &str, init: Option<Expr>) -> Decl {
 
 /// Create a variable declaration: var/let/const name = init
 pub fn create_var_decl(kind: VarDeclKind, name: &str, init: Option<Expr>) -> Decl {
-    Decl::Var(Box::new(VarDecl {
-        span: Default::default(),
-        ctxt: SyntaxContext::empty(),
+    create_var_decl_with_ident(
         kind,
-        declare: false,
-        decls: vec![VarDeclarator {
-            span: Default::default(),
-            name: Pat::Ident(BindingIdent {
-                id: Ident::new(name.into(), DUMMY_SP, SyntaxContext::empty()),
-                type_ann: None,
-            }),
-            init: init.map(Box::new),
-            definite: false,
-        }],
-    }))
+        Ident::new(name.into(), DUMMY_SP, SyntaxContext::empty()),
+        init,
+    )
 }
 
 /// Clone an identifier

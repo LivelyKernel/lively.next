@@ -1,4 +1,4 @@
-use swc_core::common::SyntaxContext;
+use swc_core::common::{SyntaxContext, DUMMY_SP};
 use swc_core::ecma::{
     ast::*,
     visit::{VisitMut, VisitMutWith},
@@ -20,6 +20,32 @@ impl DynamicImportTransform {
     }
 }
 
+fn resolve_static_import_specifier(expr: &Expr) -> Option<String> {
+    match expr {
+        Expr::Lit(Lit::Str(s)) => Some(s.value.to_string()),
+        Expr::Tpl(tpl) if tpl.exprs.is_empty() => {
+            let mut result = String::new();
+            for quasi in &tpl.quasis {
+                let cooked = quasi.cooked.as_ref()?;
+                result.push_str(&cooked.to_string());
+            }
+            Some(result)
+        }
+        Expr::Bin(BinExpr {
+            op: BinaryOp::Add,
+            left,
+            right,
+            ..
+        }) => {
+            let left = resolve_static_import_specifier(left)?;
+            let right = resolve_static_import_specifier(right)?;
+            Some(format!("{left}{right}"))
+        }
+        Expr::Paren(ParenExpr { expr, .. }) => resolve_static_import_specifier(expr),
+        _ => None,
+    }
+}
+
 impl VisitMut for DynamicImportTransform {
     fn visit_mut_expr(&mut self, expr: &mut Expr) {
         // Transform System.import(arg) to import(arg)
@@ -29,19 +55,33 @@ impl VisitMut for DynamicImportTransform {
             ..
         }) = expr
         {
-            if is_member_expr_with_names(callee_expr, "System", "import") && !args.is_empty() {
-                // Replace with native import()
-                *expr = Expr::Call(CallExpr {
-                    span: Default::default(),
-                    ctxt: SyntaxContext::empty(),
-                    callee: Callee::Import(Import {
-                        span: Default::default(),
-                        phase: Default::default(),
-                    }),
-                    args: vec![args[0].clone()],
-                    type_args: None,
-                });
-                return;
+            if is_member_expr_with_names(callee_expr, "System", "import") && args.len() == 1 {
+                let arg = &args[0];
+                if arg.spread.is_none() {
+                    if let Some(specifier) = resolve_static_import_specifier(&arg.expr) {
+                        if !specifier.is_empty() {
+                            // Mirror legacy behavior: only rewrite when we can resolve a concrete specifier.
+                            *expr = Expr::Call(CallExpr {
+                                span: Default::default(),
+                                ctxt: SyntaxContext::empty(),
+                                callee: Callee::Import(Import {
+                                    span: Default::default(),
+                                    phase: Default::default(),
+                                }),
+                                args: vec![ExprOrSpread {
+                                    spread: None,
+                                    expr: Box::new(Expr::Lit(Lit::Str(Str {
+                                        span: DUMMY_SP,
+                                        value: specifier.into(),
+                                        raw: None,
+                                    }))),
+                                }],
+                                type_args: None,
+                            });
+                            return;
+                        }
+                    }
+                }
             }
         }
 
@@ -93,5 +133,42 @@ mod tests {
         let output = transform_code(r#"System.import("./module.js");"#);
         assert!(output.contains(r#"import("./module.js")"#));
         assert!(!output.contains("System.import"));
+    }
+
+    #[test]
+    fn test_system_import_static_concat() {
+        let output = transform_code(r#"System.import("./" + "module.js");"#);
+        assert!(output.contains(r#"import("./module.js")"#));
+        assert!(!output.contains("System.import"));
+    }
+
+    #[test]
+    fn test_system_import_static_template() {
+        let output = transform_code(r#"System.import(`./module.js`);"#);
+        assert!(output.contains(r#"import("./module.js")"#));
+        assert!(!output.contains("System.import"));
+    }
+
+    #[test]
+    fn test_system_import_dynamic_identifier_is_not_rewritten() {
+        let output = transform_code(
+            r#"
+const mod = "./module.js";
+System.import(mod);
+"#,
+        );
+        assert!(output.contains("System.import(mod)"));
+        assert!(!output.contains("import(\"./module.js\")"));
+    }
+
+    #[test]
+    fn test_system_import_dynamic_template_is_not_rewritten() {
+        let output = transform_code(
+            r#"
+const name = "module";
+System.import(`./${name}.js`);
+"#,
+        );
+        assert!(output.contains("System.import"));
     }
 }
