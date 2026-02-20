@@ -1,10 +1,8 @@
 /* global process */
 import { rollup } from '@rollup/wasm-node';
 import jsonPlugin from '@rollup/plugin-json';
-import { babel } from '@rollup/plugin-babel';
 import { lively } from 'lively.freezer/src/plugins/rollup';
 import resolver from 'lively.freezer/src/resolvers/node.cjs';
-import PresetEnv from '@babel/preset-env';
 
 const verbose = true; // process.argv[2] === '--verbose';
 const minify = !process.env.CI;
@@ -26,6 +24,7 @@ try {
         sourceMap,
         minify,
         verbose,
+        useSwc: true,
         isResurrectionBuild: true,
         asBrowserModule: true,
         excludedModules: [
@@ -33,22 +32,15 @@ try {
           'path-is-absolute', 'fs.realpath', // has a dist file that cant be parsed by rollup
           '@babel/preset-env',
           '@babel/plugin-syntax-import-meta',
-          '@rollup/plugin-json', 
+          '@rollup/plugin-json',
+          '@rollup/plugin-commonjs',
+          '@swc/core',
           'rollup-plugin-polyfill-node',
           'babel-plugin-transform-es2015-modules-systemjs'
         ],
         resolver
       }),
-      jsonPlugin({ exclude: [/https\:\/\/jspm.dev\/.*\.json/, /esm\:\/\/cache\/.*\.json/]}),
-      babel({
-       babelHelpers: 'bundled', 
-       presets: [
-        [PresetEnv,
-        {
-          "targets": "> 3%, not dead"
-        }]
-      ]
-      })
+      jsonPlugin({ exclude: [/https\:\/\/jspm.dev\/.*\.json/, /esm\:\/\/cache\/.*\.json/] })
      ]
   });
   
