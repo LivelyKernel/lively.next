@@ -140,6 +140,23 @@ var baz = foo.baz;
 bar;`);
   });
 
+  it('captures top-level vars referenced outside plain block shadowing scopes', function () {
+    let code = 'const p = x => x + 1; function f() { { const p = 3; } return p(2); }';
+    let recorder = { name: 'foo', type: 'Identifier' };
+    let result = stringify(rewriteToCaptureTopLevelVariables(
+      parse(code), recorder, { captureObj: recorder }));
+    ignoreFormatCompare(result, `function f() {
+  {
+    const p = 3;
+  }
+  return foo.p(2);
+}
+
+foo.f = f;
+foo.p = x => x + 1;
+f;`);
+  });
+
   describe('try-catch', () => {
     testVarTfm("isn't transformed",
       'try { throw {} } catch (e) { e }\n',
