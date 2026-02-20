@@ -123,6 +123,17 @@ export function lively (args) {
           opts.globals = { ...opts.globals, ...globals };
         }
       }
+
+      // Preserve var-style live binding behavior for cyclic module execution
+      // in SWC/unified builds without changing legacy Babel build behavior.
+      if (bundler.useSwc) {
+        if (typeof opts.generatedCode === 'string') {
+          opts.generatedCode = { preset: opts.generatedCode, constBindings: false };
+        } else {
+          opts.generatedCode = { ...(opts.generatedCode || {}), constBindings: false };
+        }
+      }
+
       opts.chunkFileNames = (chunk) => {
         return `${chunk.name.replace('!cjs', '_CJS_')}-[hash].js`;
       }
