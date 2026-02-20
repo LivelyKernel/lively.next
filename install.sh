@@ -64,6 +64,24 @@ fi
 
 if [ -z "${CI}" ];
 then
+  if ! command -v cargo >/dev/null 2>&1; then
+    echo "Rust cargo is required to build the SWC freezer plugin. Please install Rust (https://rustup.rs)."
+    exit 1
+  fi
+
+  if ! command -v rustup >/dev/null 2>&1; then
+    echo "rustup is required to ensure the wasm32-wasip1 target is installed."
+    exit 1
+  fi
+
+  if ! rustup target list --installed | grep -q "^wasm32-wasip1$"; then
+    echo "Installing Rust target wasm32-wasip1..."
+    rustup target add wasm32-wasip1 || exit 1
+  fi
+
+  echo "Building lively.freezer SWC plugin..."
+  env CI=true npm --prefix $lv_next_dir/lively.freezer/ run build-swc-plugin || exit 1
+
   env CI=true npm --prefix $lv_next_dir/lively.freezer/ run build-unified
 else
   env CI=true npm --prefix $lv_next_dir/lively.freezer/ run build-loading-screen

@@ -16,6 +16,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '24'
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
       - name: Install `sultan`
         run: pip3 install sultan 
       - name: Checkout repository
