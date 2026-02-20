@@ -410,6 +410,24 @@ export default class LivelyRollup {
       parsedSource = { scope: { globals: {} } };
     }
     const parsedGlobals = parsedSource.scope?.globals && Object.keys(parsedSource.scope.globals) || GlobalInjector.getGlobals(null, parsedSource);
+    let resolvedImports = {};
+    try {
+      const scope = ast.query.topLevelDeclsAndRefs(parsedSource).scope;
+      const imports = ast.query.imports(scope);
+      const exports = ast.query.exports(scope);
+      const moduleSources = new Set([
+        ...imports.map(imp => imp.fromModule).filter(Boolean),
+        ...exports.map(exp => exp.fromModule).filter(Boolean)
+      ]);
+      for (const sourceId of moduleSources) {
+        const resolved = this.resolveId(sourceId, modId);
+        if (resolved && typeof resolved === 'string') {
+          resolvedImports[sourceId] = this.normalizedId(resolved);
+        }
+      }
+    } catch (err) {
+      resolvedImports = {};
+    }
     let version, name;
     const pkg = this.resolver.resolvePackage(modId, this.getResolutionContext()) || this.moduleToPkg.get(modId);
     if (pkg) {
@@ -437,8 +455,12 @@ export default class LivelyRollup {
       moduleId: normalizedId,
       packageName: name,
       packageVersion: version,
-      captureImports: true,
+      currentModuleAccessor,
+      // Keep parity with legacy transform pipeline:
+      // import capture is only enabled for source-map builds.
+      captureImports: this.sourceMap,
       resurrection: this.isResurrectionBuild,
+      resolvedImports,
       classToFunction: instrumentClasses ? {
         classHolder,
         functionNode: 'initializeES6ClassForLively',
@@ -615,6 +637,118 @@ export default class LivelyRollup {
     });
   }
 
+  getInvalidLocalExports (source) {
+    try {
+      const parsed = ast.parse(source);
+      const topLevel = ast.query.topLevelDeclsAndRefs(parsed);
+      const exports = ast.query.exports(topLevel.scope, true);
+      return exports
+        .filter(exp => !exp.fromModule && exp.local && !exp.decl)
+        .map(exp => `${exp.exported}<=${exp.local}`);
+    } catch (err) {
+      return [];
+    }
+  }
+
+  getExportedNames (source) {
+    try {
+      const parsed = ast.parse(source);
+      const topLevel = ast.query.topLevelDeclsAndRefs(parsed);
+      const exports = ast.query.exports(topLevel.scope, true);
+      return new Set(exports.map(exp => exp.exported).filter(Boolean));
+    } catch (err) {
+      return new Set();
+    }
+  }
+
+  shouldCompareSwcForModule (id) {
+    const patterns = (process.env.LV_SWC_COMPARE_MODULES || '')
+      .split(',')
+      .map(ea => ea.trim())
+      .filter(Boolean);
+    if (patterns.length === 0) return false;
+    return patterns.some(pattern => id.includes(pattern));
+  }
+
+  async writeSwcComparisonArtifacts (id, swcCode, legacyCode) {
+    try {
+      const outputDir = process.env.LV_SWC_COMPARE_DIR || '/tmp/lively-swc-compare';
+      const safeModuleName = id.replace(/[^\w.-]+/g, '_').slice(-180);
+      const swcFile = joinPath(outputDir, `${safeModuleName}.swc.js`);
+      const legacyFile = joinPath(outputDir, `${safeModuleName}.legacy.js`);
+      await Promise.all([
+        resource(this.resolver.ensureFileFormat(swcFile)).write(swcCode),
+        resource(this.resolver.ensureFileFormat(legacyFile)).write(legacyCode)
+      ]);
+      if (this.verbose) {
+        console.warn(`[lively.freezer] SWC comparison artifacts written:`);
+        console.warn(`  ${swcFile}`);
+        console.warn(`  ${legacyFile}`);
+      }
+    } catch (err) {
+      if (this.verbose) console.warn(`[lively.freezer] Failed writing SWC comparison artifacts: ${err.message}`);
+    }
+  }
+
+  async transformWithLegacyPipeline (source, id, needsLoadInstrumentation) {
+    const self = this;
+
+    // FIXME: here we need to move over to a babel transform and also pass over the sourcemap
+    // The easiest way to achieve thatis via an inline visitor that basically performs the same steps as below within babel.
+    if (this.sourceMap) {
+      function inlinePlugin () {
+        return {
+          visitor: {
+            Program (path, state) {
+              const source = self.moduleSources[id];
+              if (!source) return;
+              if (id === ROOT_ID && !needsLoadInstrumentation) return;
+              if (needsLoadInstrumentation) {
+                self.babel_instrumentDynamicLoads(path, state, id);
+              }
+              if (id === ROOT_ID) return;
+              // this capturing stuff needs to behave differently when we have dynamic imports. Why??
+              const instrumentClasses = self.needsClassInstrumentation(id, source);
+              if (instrumentClasses || self.needsScopeToBeCaptured(id, null, source)) {
+                const sourceHash = string.hashCode(source); // why cant we use the original source here? because other plugins already scrambled the code...
+                self.babel_captureScope(path, id, sourceHash, instrumentClasses);
+              }
+            }
+          }
+        };
+      }
+
+      const { code, map } = babel.transform(source, {
+        sourceMaps: true,
+        compact: true,
+        comments: false,
+        plugins: [inlinePlugin]
+      });
+
+      return { code, map };
+    }
+
+    let parsed = ast.parse(source);
+
+    if (needsLoadInstrumentation) {
+      parsed = this.instrumentDynamicLoads(parsed, id);
+    }
+
+    // Root modules (both single-entry ROOT_ID and multi-entry synthetic modules)
+    // only need dynamic load instrumentation, not scope capturing
+    if (id === ROOT_ID || id.startsWith('__rootModule__:')) {
+      return ast.stringify(parsed);
+    }
+
+    const instrumentClasses = this.needsClassInstrumentation(id, source);
+    if (this.needsScopeToBeCaptured(id, null, source) || instrumentClasses) {
+      const sourceHash = string.hashCode(await this.resolver.load(id));
+      parsed = await this.captureScope(parsed, id, sourceHash, instrumentClasses);
+    }
+
+    return ast.stringify(parsed);
+  }
+
   /**
    * A custom transform() callback for RollupJS.
    * @param { string } source - The source code of a module.
@@ -646,7 +780,6 @@ export default class LivelyRollup {
     }
 
     const needsLoadInstrumentation = this.needsDynamicLoadTransform(source);
-    const self = this;
 
     if (this.useSwc) {
       const swcTransform = await this.ensureSwcTransform();
@@ -666,67 +799,37 @@ export default class LivelyRollup {
       }
       const swcOptions = this.getSwcTransformOptions(id, source, { instrumentClasses });
       const { code, map } = swcTransform.transform(source, swcOptions);
-      return { code, map };
-    }
-
-    // FIXME: here we need to move over to a babel transform and also pass over the sourcemap
-    // The easiest way to achieve thatis via an inline visitor that basically performs the same steps as below within babel.
-
-    if (this.sourceMap) {
-
-      function inlinePlugin () {
-        return {
-          visitor: {
-            Program (path, state) {
-              const source = self.moduleSources[id];
-              if (!source) return;
-              if (id === ROOT_ID && !needsLoadInstrumentation) return;
-              if (needsLoadInstrumentation) {
-                self.babel_instrumentDynamicLoads(path, state, id);
-              }
-              if (id === ROOT_ID) return;
-              // this capturing stuff needs to behave differently when we have dynamic imports. Why??
-              const instrumentClasses = self.needsClassInstrumentation(id, source);
-              if (instrumentClasses || self.needsScopeToBeCaptured(id, null, source)) {
-                const sourceHash = string.hashCode(source); // why cant we use the original source here? because other plugins already scrambled the code...
-                self.babel_captureScope(path, id, sourceHash, instrumentClasses);
-              }
-            }
-          }
-        };
+      if (this.shouldCompareSwcForModule(id)) {
+        if (!this._swcComparedModules) this._swcComparedModules = new Set();
+        if (!this._swcComparedModules.has(id)) {
+          this._swcComparedModules.add(id);
+          const legacyResult = await this.transformWithLegacyPipeline(source, id, needsLoadInstrumentation);
+          const legacyCode = typeof legacyResult === 'string' ? legacyResult : legacyResult.code;
+          await this.writeSwcComparisonArtifacts(id, code, legacyCode || '');
+        }
       }
-
-      const { code, map } = babel.transform(source, {
-        sourceMaps: true,
-        compact: true,
-        comments: false,
-        plugins: [inlinePlugin]
-      });
-
+      const invalidExports = this.getInvalidLocalExports(code);
+      const sourceExports = this.getExportedNames(source);
+      const transformedExports = this.getExportedNames(code);
+      const missingExports = [...sourceExports].filter(name => !transformedExports.has(name));
+      const skipMissingExportFallback = id.includes('dompurify@3.3.0/dist/purify.es.mjs');
+      if (invalidExports.length > 0 || (missingExports.length > 0 && !skipMissingExportFallback)) {
+        if (this.verbose) {
+          const diagnostics = [
+            invalidExports.length > 0 ? `unresolved exports: ${invalidExports.join(', ')}` : '',
+            missingExports.length > 0 ? `missing exports: ${missingExports.join(', ')}` : ''
+          ].filter(Boolean).join('; ');
+          console.warn(`[lively.freezer] SWC fallback for ${id}; ${diagnostics}`);
+        }
+        return await this.transformWithLegacyPipeline(source, id, needsLoadInstrumentation);
+      }
+      if (skipMissingExportFallback && missingExports.length > 0 && this.verbose) {
+        console.warn(`[lively.freezer] SWC export parity warning for ${id}; missing exports: ${missingExports.join(', ')} (keeping SWC output for dompurify)`);
+      }
       return { code, map };
-
     }
 
-    let parsed = ast.parse(source);
-
-    if (needsLoadInstrumentation) {
-      parsed = this.instrumentDynamicLoads(parsed, id);
-    }
-
-    // Root modules (both single-entry ROOT_ID and multi-entry synthetic modules)
-    // only need dynamic load instrumentation, not scope capturing
-    if (id === ROOT_ID || id.startsWith('__rootModule__:')) {
-      return ast.stringify(parsed);
-    }
-
-    const instrumentClasses = this.needsClassInstrumentation(id, source);
-    
-    if (this.needsScopeToBeCaptured(id, null, source) || instrumentClasses) {
-      const sourceHash = string.hashCode(await this.resolver.load(id));
-      parsed = await this.captureScope(parsed, id, sourceHash, instrumentClasses);
-    }
-
-    return ast.stringify(parsed);
+    return await this.transformWithLegacyPipeline(source, id, needsLoadInstrumentation);
   }
 
   /**

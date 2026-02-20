@@ -1,6 +1,7 @@
 /* global process */
 import { rollup } from '@rollup/wasm-node';
 import jsonPlugin from '@rollup/plugin-json';
+import util from 'node:util';
 import { lively } from 'lively.freezer/src/plugins/rollup';
 import resolver from 'lively.freezer/src/resolvers/node.cjs';
 
@@ -120,5 +121,22 @@ try {
 } catch (err) {
   console.error('[lively.freezer] Build failed:');
   console.error(err);
+  console.error(util.inspect(err, { depth: 6, colors: false }));
+  if (err && typeof err === 'object') {
+    const details = {
+      name: err.name,
+      code: err.code,
+      id: err.id,
+      plugin: err.plugin,
+      pluginCode: err.pluginCode,
+      hook: err.hook,
+      watchFiles: err.watchFiles,
+      loc: err.loc,
+      frame: err.frame,
+      stack: err.stack
+    };
+    console.error('[lively.freezer] Error details:');
+    console.error(util.inspect(details, { depth: 6, colors: false }));
+  }
   process.exit(1);
 }

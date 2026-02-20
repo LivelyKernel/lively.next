@@ -38,17 +38,19 @@ export class LivelySwcTransform {
    * @returns {object} - Transformed code and sourcemap
    */
   transform(code, options = {}) {
-    const {
-      moduleId = 'unknown',
-      packageName = null,
-      packageVersion = null,
-      resurrection = false,
-      declarationWrapper = null,
-      classToFunction = null,
-      captureImports = true,
-      sourceMap = true,
-      filename = 'unknown.js',
-    } = options;
+      const {
+        moduleId = 'unknown',
+        packageName = null,
+        packageVersion = null,
+        currentModuleAccessor = null,
+        resurrection = false,
+        declarationWrapper = null,
+        classToFunction = null,
+        resolvedImports = {},
+        captureImports = true,
+        sourceMap = true,
+        filename = 'unknown.js',
+      } = options;
 
     try {
       // Build SWC configuration
@@ -75,13 +77,18 @@ export class LivelySwcTransform {
         },
       };
 
-      const classToFunctionConfig = classToFunction === false
-        ? null
-        : (classToFunction || {
+      let classToFunctionConfig = null;
+      if (classToFunction === undefined) {
+        classToFunctionConfig = {
           classHolder: this.options.captureObj,
           functionNode: 'initializeES6ClassForLively',
           currentModuleAccessor: 'module.id',
-        });
+        };
+      } else if (classToFunction === false || classToFunction === null) {
+        classToFunctionConfig = null;
+      } else {
+        classToFunctionConfig = classToFunction;
+      }
 
       // Configure lively transform plugin
       const livelyConfig = {
@@ -92,6 +99,7 @@ export class LivelySwcTransform {
         captureImports,
         resurrection,
         moduleId,
+        currentModuleAccessor: currentModuleAccessor || classToFunctionConfig?.currentModuleAccessor || null,
         packageName,
         packageVersion,
         enableComponentTransform: true,
@@ -99,7 +107,18 @@ export class LivelySwcTransform {
         enableDynamicImportTransform: true,
         enableSystemjsTransform: false,
         enableExportSplit: true,
+        resolvedImports,
       };
+
+      // Legacy pipeline prepends this import when class instrumentation is enabled.
+      // Keep SWC behavior aligned so `_get/_set` helpers have a bound identifier and
+      // recorder capture can wire `initializeES6ClassForLively` correctly.
+      const classRuntimeModule = resurrection ? 'livelyClassesRuntime.js' : 'lively.classes/runtime.js';
+      const classRuntimeImport = `import { initializeClass as initializeES6ClassForLively } from "${classRuntimeModule}";\n`;
+      const sourceForTransform = classToFunctionConfig &&
+        !code.includes('initializeClass as initializeES6ClassForLively')
+        ? classRuntimeImport + code
+        : code;
 
       // Check if we have the Rust plugin available
       const moduleDir = path.dirname(fileURLToPath(import.meta.url));
@@ -123,12 +142,12 @@ export class LivelySwcTransform {
       let result;
       let usedPlugin = false;
       try {
-        result = transformSync(code, swcOptions);
+        result = transformSync(sourceForTransform, swcOptions);
         usedPlugin = hasPlugin;
       } catch (error) {
         if (hasPlugin) {
           console.warn('⚠️  Failed to load SWC Rust plugin, falling back to JS transforms:', error.message);
-          result = transformSync(code, swcConfig);
+          result = transformSync(sourceForTransform, swcConfig);
         } else {
           throw error;
         }
