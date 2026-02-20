@@ -17,6 +17,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '24'
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Cache `lively.next` dependencies
