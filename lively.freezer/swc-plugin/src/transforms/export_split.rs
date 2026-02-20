@@ -1,4 +1,4 @@
-use swc_core::common::{SyntaxContext, DUMMY_SP};
+use swc_core::common::DUMMY_SP;
 use swc_core::ecma::{
     ast::*,
     visit::{VisitMut, VisitMutWith},
@@ -41,10 +41,10 @@ impl VisitMut for ExportSplitTransform {
                         split_items.push(ModuleItem::Stmt(Stmt::Decl(Decl::Var(Box::new(single_var)))));
 
                         let ids = extract_idents_from_pat(&decl.name);
-                        for id in ids {
+                        for (sym, ctxt) in ids {
                             export_names.push(ExportSpecifier::Named(ExportNamedSpecifier {
                                 span: DUMMY_SP,
-                                orig: ModuleExportName::Ident(Ident::new(id.0.clone(), DUMMY_SP, SyntaxContext::empty())),
+                                orig: ModuleExportName::Ident(Ident::new(sym, DUMMY_SP, ctxt)),
                                 exported: None,
                                 is_type_only: false,
                             }));

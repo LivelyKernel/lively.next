@@ -64,13 +64,14 @@ impl swc_core::ecma::visit::VisitMut for LivelyTransformVisitor {
             let mut component_transform = ComponentTransform::new(
                 self.config.module_id.clone(),
                 self.config.capture_obj.clone(),
+                self.config.exclude.clone(),
             );
             program.visit_mut_with(&mut component_transform);
         }
 
         // 4. Transform namespace imports/exports (for resurrection builds)
         if self.config.enable_namespace_transform && self.config.resurrection {
-            let mut namespace_transform = NamespaceTransform::new();
+            let mut namespace_transform = NamespaceTransform::new(self.config.resolved_imports.clone());
             program.visit_mut_with(&mut namespace_transform);
         }
 
@@ -82,7 +83,11 @@ impl swc_core::ecma::visit::VisitMut for LivelyTransformVisitor {
 
         // 6. Rewrite SystemJS register calls (if enabled)
         if self.config.enable_systemjs_transform {
-            let mut systemjs_transform = SystemJsTransform::new(self.config.capture_obj.clone());
+            let mut systemjs_transform = SystemJsTransform::new(
+                self.config.capture_obj.clone(),
+                self.config.declaration_wrapper.clone(),
+                self.config.exclude.clone(),
+            );
             program.visit_mut_with(&mut systemjs_transform);
         }
 
@@ -93,6 +98,8 @@ impl swc_core::ecma::visit::VisitMut for LivelyTransformVisitor {
             self.config.exclude.clone(),
             self.config.capture_imports,
             self.config.resurrection,
+            self.config.module_id.clone(),
+            self.config.current_module_accessor.clone(),
         );
         program.visit_mut_with(&mut scope_transform);
     }
@@ -144,5 +151,26 @@ mod tests {
         let input = "var x = 1; x + 2;";
         let output = transform_code(input, LivelyTransformConfig::default());
         assert!(output.contains("__varRecorder__"));
+    }
+
+    #[test]
+    fn test_export_class_is_captured_after_class_transform() {
+        let mut config = LivelyTransformConfig::default();
+        config.class_to_function = Some(crate::config::ClassToFunctionConfig {
+            class_holder: "__varRecorder__".to_string(),
+            function_node: "initializeES6ClassForLively".to_string(),
+            current_module_accessor: "module.id".to_string(),
+        });
+        let input = "export class Color {}";
+        let output = transform_code(input, config);
+        assert!(output.contains("__varRecorder__.Color = Color"));
+    }
+
+    #[test]
+    fn test_export_var_keeps_local_binding_after_capture() {
+        let input = "export var rainbow = [1];";
+        let output = transform_code(input, LivelyTransformConfig::default());
+        assert!(output.contains("export { rainbow"));
+        assert!(output.contains("var rainbow = __varRecorder__.rainbow"));
     }
 }
