@@ -188,6 +188,7 @@ impl VisitMut for NamespaceTransform {
             ))),
             args: vec![
                 to_expr_or_spread(create_string_expr(&resolved)),
+                to_expr_or_spread(create_ident_expr("__contextModule__")),
             ],
             type_args: None,
         });
