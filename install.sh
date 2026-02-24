@@ -62,23 +62,22 @@ then
   exit
 fi
 
-if ! command -v cargo >/dev/null 2>&1; then
-  echo "Rust cargo is required to build the SWC freezer plugin. Please install Rust (https://rustup.rs)."
+PREBUILT_WASM=$lv_next_dir/lively.freezer/swc-plugin/lively_swc_plugin.wasm
+
+if command -v cargo >/dev/null 2>&1 && command -v rustup >/dev/null 2>&1; then
+  if ! rustup target list --installed | grep -q "^wasm32-wasip1$"; then
+    echo "Installing Rust target wasm32-wasip1..."
+    rustup target add wasm32-wasip1 || exit 1
+  fi
+  echo "Building lively.freezer SWC plugin..."
+  env CI=true npm --prefix $lv_next_dir/lively.freezer/ run build-swc-plugin || exit 1
+elif [ -f "$PREBUILT_WASM" ]; then
+  echo "Rust not available, using pre-built SWC WASM plugin."
+else
+  echo "Error: Rust is not installed and no pre-built SWC WASM plugin found."
+  echo "Either install Rust (https://rustup.rs) or ensure $PREBUILT_WASM exists."
   exit 1
 fi
-
-if ! command -v rustup >/dev/null 2>&1; then
-  echo "rustup is required to ensure the wasm32-wasip1 target is installed."
-  exit 1
-fi
-
-if ! rustup target list --installed | grep -q "^wasm32-wasip1$"; then
-  echo "Installing Rust target wasm32-wasip1..."
-  rustup target add wasm32-wasip1 || exit 1
-fi
-
-echo "Building lively.freezer SWC plugin..."
-env CI=true npm --prefix $lv_next_dir/lively.freezer/ run build-swc-plugin || exit 1
 
 if [ -z "${CI}" ];
 then

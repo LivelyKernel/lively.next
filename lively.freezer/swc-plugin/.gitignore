@@ -3,6 +3,9 @@
 **/*.rs.bk
 *.pdb
 
+# Pre-built WASM binary (committed so Rust is not required to install)
+!lively_swc_plugin.wasm
+
 # Cargo lock file (for libraries, optionally committed)
 # Cargo.lock
 

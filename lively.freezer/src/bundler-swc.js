@@ -120,9 +120,11 @@ export class LivelySwcTransform {
         ? classRuntimeImport + code
         : code;
 
-      // Check if we have the Rust plugin available
+      // Check if we have the Rust plugin available (pre-built or cargo output)
       const moduleDir = path.dirname(fileURLToPath(import.meta.url));
-      const pluginPath = path.join(moduleDir, '../swc-plugin/target/wasm32-wasip1/release/lively_swc_plugin.wasm');
+      const prebuiltPath = path.join(moduleDir, '../swc-plugin/lively_swc_plugin.wasm');
+      const cargoPath = path.join(moduleDir, '../swc-plugin/target/wasm32-wasip1/release/lively_swc_plugin.wasm');
+      const pluginPath = existsSync(cargoPath) ? cargoPath : prebuiltPath;
       const hasPlugin = existsSync(pluginPath);
 
       const swcOptions = {
