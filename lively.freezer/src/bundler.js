@@ -797,8 +797,18 @@ export default class LivelyRollup {
         parsed = this.instrumentDynamicLoads(parsed, id);
         return ast.stringify(parsed);
       }
-      const swcOptions = this.getSwcTransformOptions(id, source, { instrumentClasses });
-      const { code, map } = swcTransform.transform(source, swcOptions);
+      // Instrument System.import() -> import() BEFORE SWC scope capture,
+      // since scope capture rewrites System references (e.g. __varRecorder__.System)
+      // which would prevent instrumentDynamicLoads from detecting the pattern.
+      // This matches the legacy pipeline order: instrumentDynamicLoads then captureScope.
+      let swcInput = source;
+      if (needsLoadInstrumentation) {
+        let parsed = ast.parse(source);
+        parsed = this.instrumentDynamicLoads(parsed, id);
+        swcInput = ast.stringify(parsed);
+      }
+      const swcOptions = this.getSwcTransformOptions(id, swcInput, { instrumentClasses });
+      let { code, map } = swcTransform.transform(swcInput, swcOptions);
       if (this.shouldCompareSwcForModule(id)) {
         if (!this._swcComparedModules) this._swcComparedModules = new Set();
         if (!this._swcComparedModules.has(id)) {
