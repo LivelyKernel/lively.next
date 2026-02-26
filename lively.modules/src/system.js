@@ -657,7 +657,25 @@ function normalize_packageOfURL (url, System) {
   return systemPackage ? { systemPackage, packageURL: pName } : null;
 }
 
+function normalizeCjsUseDefaultNamespace (exports) {
+  if (!exports || (!exports.__useDefault && !exports.default)) return exports;
+  if (typeof exports !== 'object' && typeof exports !== 'function') return exports;
+
+  const defaultExport = exports.default;
+  if (!exports.__useDefault) return exports;
+  if (!defaultExport || (typeof defaultExport !== 'object' && typeof defaultExport !== 'function')) return exports;
+
+  const descriptors = Object.getOwnPropertyDescriptors(defaultExport);
+  for (const key in descriptors) {
+    if (key === 'default' || key === '__useDefault' || key === '__esModule') continue;
+    if (Object.prototype.hasOwnProperty.call(exports, key)) continue;
+    try { Object.defineProperty(exports, key, descriptors[key]); } catch (e) { /* non-critical */ }
+  }
+  return exports;
+}
+
 function newModule_volatile (proceed, exports) {
+  exports = normalizeCjsUseDefaultNamespace(exports);
   const freeze = Object.freeze;
   Object.freeze = x => x;
   const m = proceed(exports);
