@@ -28,9 +28,9 @@ use crate::utils::ast_helpers::*;
 /// ```
 pub struct ClassTransform {
     config: ClassToFunctionConfig,
-    module_id: String,
-    package_name: Option<String>,
-    package_version: Option<String>,
+    _module_id: String,
+    _package_name: Option<String>,
+    _package_version: Option<String>,
     default_class_counter: usize,
 }
 
@@ -212,9 +212,9 @@ impl ClassTransform {
     ) -> Self {
         Self {
             config,
-            module_id,
-            package_name,
-            package_version,
+            _module_id: module_id,
+            _package_name: package_name,
+            _package_version: package_version,
             default_class_counter: 0,
         }
     }
