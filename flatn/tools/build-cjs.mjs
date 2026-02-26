@@ -1,18 +1,26 @@
 /* global global, process */
 import { rollup } from '@rollup/wasm-node';
 import commonjs from '@rollup/plugin-commonjs';
+import { builtinModules } from 'node:module';
 import { flatnResolve } from '../module-resolver.js';
 
 try {
+  const nodeBuiltins = new Set(
+    builtinModules
+      .flatMap(m => [m, m.startsWith('node:') ? m.slice(5) : `node:${m}`])
+      .concat(['buffer', 'node:buffer'])
+  );
   
   const bundle = await rollup({
     input: './index.js',
     plugins: [
       {
         resolveId: async (id, parentURL) => {
-          // directly use flatn to resolve this shit
-          if (id.startsWith('node:'))
-            return { id: id.replace('node:', ''), external: true };
+          // Keep Node builtins external for the cjs bundle to avoid
+          // environment-dependent polyfill resolution via flatn package lookup.
+          if (nodeBuiltins.has(id)) {
+            return { id: id.startsWith('node:') ? id.slice(5) : id, external: true };
+          }
           try {
             if (id.startsWith('lively.')) {
               return await flatnResolve(id, parentURL);
