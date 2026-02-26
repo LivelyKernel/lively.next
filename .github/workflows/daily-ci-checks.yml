@@ -28,7 +28,7 @@ jobs:
           path: |
             lively.next-node_modules/ 
             .puppeteer-browser-cache/          
-          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json') }}
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json', 'flatn/package.json', 'mocha-es6/package.json') }}
       - name: Prepare to install `lively.next`
         run: |
           chmod a+x ./install.sh
@@ -48,7 +48,7 @@ jobs:
           path: |
             lively.next-node_modules/
             .puppeteer-browser-cache/           
-          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json') }}
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json', 'flatn/package.json', 'mocha-es6/package.json') }}
       - name: Run CI Test Script
         run:  ./scripts/test.sh
       - name: Circumvent buggy behavior of GHA Job Summaries
