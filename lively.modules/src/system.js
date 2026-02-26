@@ -510,6 +510,13 @@ async function checkExistence (url, System) {
 
 async function finalizeNormalization (System, name, normalized) {
   const isNodePath = normalized.startsWith('file:');
+  // SystemJS may append ".js" to non-JS extensions during normalization.
+  // Normalize those cases before trying JS index fallbacks.
+  // IMPORTANT: Only do this for node file paths. Browser/JSPM import maps
+  // intentionally use "*.json.js" / "*.cjs.js" resources.
+  if (isNodePath && jsonJsExtRe.test(normalized)) normalized = normalized.replace(/\.json\.js$/i, '.json');
+  if (isNodePath && cjsJsExtRe.test(normalized)) normalized = normalized.replace(/\.cjs\.js$/i, '.cjs');
+  if (isNodePath && jsxJsExtRe.test(normalized)) normalized = normalized.replace(/\.jsx\.js$/i, '.jsx');
   if (
     // Make sure we did not ask for a js or jsx file in the initial query.
     !jsExtRe.test(name) &&
@@ -528,16 +535,14 @@ async function finalizeNormalization (System, name, normalized) {
   ) {
     if (jsExtRe.test(normalized)) {
       if (await checkExistence(normalized, System)) return normalized;
-      const indexjs = normalized.replace('.js', '/index.js');
+      const indexjs = normalized.replace(/\.js$/, '/index.js');
       if (await checkExistence(indexjs, System) || !isNodePath) return indexjs;
-      return normalized.replace('.js', '/index.node');
+      return normalized.replace(/\.js$/, '/index.node');
     } else if (!normalized.startsWith('esm://') && !normalized.includes('jspm.dev') && normalized !== '@empty') {
       if (await checkExistence(normalized + '.js', System)) return normalized + '.js';
       if (await checkExistence(normalized + '/index.js', System)) return normalized + '/index.js';
     }
   }
-
-  if (jsxJsExtRe.test(normalized)) normalized = normalized.replace('.jsx.js', '.jsx');
 
   return normalized;
 }
