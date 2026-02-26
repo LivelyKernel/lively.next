@@ -47,8 +47,18 @@ export default class TestRunner {
       const results = await runner.runTestsInPackage('${module_to_test}');
       results.forEach(r => {
         r.tests?.forEach(t => {
-          if (t.error) t.error = true
-          else t.error = false;
+          if (t.error) {
+            const err = t.error;
+            t.error = {
+              message: err.message || String(err),
+              stack: err.stack || null,
+              expected: err.expected,
+              actual: err.actual,
+              name: err.name || null
+            };
+          } else {
+            t.error = false;
+          }
         })
       });
       JSON.stringify(results);
