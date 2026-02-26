@@ -40,6 +40,16 @@ let exceptions = [
 function getExceptions () { return exceptions; }
 function setExceptions (v) { return exceptions = v; }
 
+function applyKnownModuleFixups (loadName, source) {
+  // Whitelisted runtime fixups for known jspm transpilation/runtime issues.
+  if (/^esm:\/\/ga\.jspm\.io\/npm:readable-stream@1\.1\.14\/_\/5d62078e\.js$/.test(loadName)) {
+    const from = 'function chunkInvalid(e,t){var n=null;p.isBuffer(t)||p.isString(t)||p.isNullOrUndefined(t)||e.objectMode||(n=new TypeError("Invalid non-string/buffer chunk"));return n}';
+    const to = 'function chunkInvalid(e,t){var n=null;if(!p.isBuffer(t)&&!p.isString(t)&&!p.isNullOrUndefined(t)&&!e.objectMode){if(t&&typeof t==="object"){e.objectMode=true;return null}n=new TypeError("Invalid non-string/buffer chunk")}return n}';
+    if (source.includes(from)) return source.replace(from, to);
+  }
+  return source;
+}
+
 export function prepareCodeForCustomCompile (System, source, moduleId, module, debug) {
   source = String(source);
 
@@ -203,6 +213,15 @@ export async function customTranslate (load) {
   const System = this; const debug = System.debug;
   const meta = load.metadata;
 
+  // JSON files should be handled by SystemJS's native JSON format handler.
+  // Without this, detectLegacyFormat() classifies JSON as 'global' format,
+  // which causes require('./file.json') in CJS modules to return an incorrect
+  // value instead of the parsed JSON.
+  if (load.name.endsWith('.json')) {
+    load.metadata.format = 'json';
+    return load.source;
+  }
+
   // Check if this module should be loaded via System._nodeRequire()
   const markedForNodeRequire = isNode && isMarkedForNodeRequire(System, load);
 
@@ -219,6 +238,8 @@ export async function customTranslate (load) {
     debug && console.log('[lively.modules] loaded %s from nodejs cache', load.name);
     return load.source;
   }
+
+  load.source = applyKnownModuleFixups(load.name, String(load.source));
 
   const start = load.metadata.ts = Date.now();
 
