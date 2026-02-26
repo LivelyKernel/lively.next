@@ -3,3 +3,4 @@ frozenParts/
 dynamicParts/
 package-lock.json
 runtime-deps.js
+.swc/

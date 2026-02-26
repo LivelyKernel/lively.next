@@ -64,7 +64,9 @@ fi
 
 PREBUILT_WASM=$lv_next_dir/lively.freezer/swc-plugin/lively_swc_plugin.wasm
 
-if command -v cargo >/dev/null 2>&1 && command -v rustup >/dev/null 2>&1; then
+if [ -n "${CI}" ] && [ -f "$PREBUILT_WASM" ]; then
+  echo "Pre-built SWC WASM plugin found, skipping build in CI."
+elif command -v cargo >/dev/null 2>&1 && command -v rustup >/dev/null 2>&1; then
   if ! rustup target list --installed | grep -q "^wasm32-wasip1$"; then
     echo "Installing Rust target wasm32-wasip1..."
     rustup target add wasm32-wasip1 || exit 1
