@@ -47,6 +47,14 @@ function applyKnownModuleFixups (loadName, source) {
     const to = 'function chunkInvalid(e,t){var n=null;if(!p.isBuffer(t)&&!p.isString(t)&&!p.isNullOrUndefined(t)&&!e.objectMode){if(t&&typeof t==="object"){e.objectMode=true;return null}n=new TypeError("Invalid non-string/buffer chunk")}return n}';
     if (source.includes(from)) return source.replace(from, to);
   }
+  // fetch-cookie@2.2.0 expects `import * as tough from "tough-cookie"` to
+  // expose CookieJar at `tough.CookieJar`. Depending on cjs interop shape this
+  // can end up at `tough.default.CookieJar`.
+  if (/fetch-cookie(?:@|\/)2\.2\.0\/esm\/index\.js$/.test(loadName)) {
+    const from = 'const actualJar = jar != null ? jar : new tough.CookieJar();';
+    const to = 'const toughCookieNS = tough && tough.CookieJar ? tough : tough && tough.default && tough.default.CookieJar ? tough.default : tough;const actualJar = jar != null ? jar : new toughCookieNS.CookieJar();';
+    if (source.includes(from)) return source.replace(from, to);
+  }
   return source;
 }
 
