@@ -7,14 +7,30 @@ import { arr, obj } from "lively.lang";
 const Generator = System.get('@jspm_generator').default;
 
 async function installDeps(generator, deps, failed) {
+  const depNames = deps.map(([name]) => name);
   for (let dep of deps) {
-    if (dep[0] == 'tar-fs' || !!generator.map.imports[dep[0]] || failed[dep[0]]) continue;
+    if (dep[0] == 'tar-fs' || !!generator.map.imports[dep[0]]) continue;
+    const depName = dep[0];
+    const depSpec = dep.join('@');
     try {
-      await generator.install(dep.join('@'));
+      await generator.install(depSpec);
+      delete failed[depName];
+      continue;
     } catch (err) {
-      console.error('Failed to install ' + dep.join('@'));
-      failed[dep[0]] = true;
+      // jspm generator occasionally throws on a first attempt; retry once
+      // before persisting a failure to the cached import map.
+      try {
+        await generator.install(depSpec);
+        delete failed[depName];
+        continue;
+      } catch (err) {
+        console.error('Failed to install ' + depSpec);
+        failed[depName] = true;
+      }
     }
+  }
+  for (const failedDep of Object.keys(failed)) {
+    if (!depNames.includes(failedDep)) delete failed[failedDep];
   }
   const toUninstall = arr.withoutAll(Object.keys(generator.map.imports), deps.map(d => d[0]));
   await generator.uninstall(toUninstall);
