@@ -90,7 +90,7 @@ function fs_writeJson (location, jso) {
 
 function fs_dirList (location) {
   if (location.isResource) return location.dirList(1);
-  return fs.readdirSync(location).map(ea => join(location, ea));
+  return fs.readdirSync(location).sort().map(ea => join(location, ea));
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -582,9 +582,13 @@ class AsyncPackageMap extends PackageMap {
     let found = [];
     for (let dir of packageCollectionDirs) {
       if (!await dir.exists()) continue;
-      for (let packageDir of await dir.dirList()) {
+      let packageDirs = await dir.dirList();
+      packageDirs = packageDirs.sort((a, b) => a.url.localeCompare(b.url));
+      for (let packageDir of packageDirs) {
         if (!packageDir.isDirectory()) continue;
-        for (let versionDir of await packageDir.dirList()) { found.push(...await this._discoverPackagesInPackageDir(versionDir, seen)); }
+        let versionDirs = await packageDir.dirList();
+        versionDirs = versionDirs.sort((a, b) => a.url.localeCompare(b.url));
+        for (let versionDir of versionDirs) { found.push(...await this._discoverPackagesInPackageDir(versionDir, seen)); }
       }
     }
     return found;
