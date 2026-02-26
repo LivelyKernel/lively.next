@@ -16037,7 +16037,7 @@ function fs_writeJson (location, jso) {
 
 function fs_dirList (location) {
   if (location.isResource) return location.dirList(1);
-  return fs.readdirSync(location).map(ea => join(location, ea));
+  return fs.readdirSync(location).sort().map(ea => join(location, ea));
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
