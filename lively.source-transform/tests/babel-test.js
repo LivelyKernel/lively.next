@@ -873,10 +873,30 @@ return {
   return {
     setters: [
       function (foo_a_js = {}) {
-        _rec.x = x = foo_a_js.x;
+        _rec.x = x = (__modNS => {
+          if (!__modNS || !__modNS.__useDefault || !__modNS.default || typeof __modNS.default !== \"object\" && typeof __modNS.default !== \"function\") return __modNS;
+          var __modDefault = __modNS.default;
+          var __normalizedNS = Object.create(__modNS);
+          for (var __modKey of Object.getOwnPropertyNames(__modDefault)) {
+            if (__modKey === \"default\" || __modKey === \"__useDefault\" || __modKey === \"__esModule\") continue;
+            if (__modKey in __normalizedNS) continue;
+            __normalizedNS[__modKey] = __modDefault[__modKey];
+          }
+          return __normalizedNS;
+        })(foo_a_js.x);
       },
       function (_zork_b_js = {}) {
-        _rec.y = y = _zork_b_js.default;
+        _rec.y = y = (__modNS => {
+          if (!__modNS || !__modNS.__useDefault || !__modNS.default || typeof __modNS.default !== \"object\" && typeof __modNS.default !== \"function\") return __modNS;
+          var __modDefault = __modNS.default;
+          var __normalizedNS = Object.create(__modNS);
+          for (var __modKey of Object.getOwnPropertyNames(__modDefault)) {
+            if (__modKey === \"default\" || __modKey === \"__useDefault\" || __modKey === \"__esModule\") continue;
+            if (__modKey in __normalizedNS) continue;
+            __normalizedNS[__modKey] = __modDefault[__modKey];
+          }
+          return __normalizedNS;
+        })(_zork_b_js.default);
         z = _zork_b_js.z;
       }
     ],
@@ -899,11 +919,41 @@ return {
   return {
     setters: [
       function (foo_a_js = {}) {
-        _rec.x = _define(\"x\", \"var\", x = foo_a_js.x, _rec);
+        _rec.x = _define(\"x\", \"var\", x = (__modNS => {
+          if (!__modNS || !__modNS.__useDefault || !__modNS.default || typeof __modNS.default !== \"object\" && typeof __modNS.default !== \"function\") return __modNS;
+          var __modDefault = __modNS.default;
+          var __normalizedNS = Object.create(__modNS);
+          for (var __modKey of Object.getOwnPropertyNames(__modDefault)) {
+            if (__modKey === \"default\" || __modKey === \"__useDefault\" || __modKey === \"__esModule\") continue;
+            if (__modKey in __normalizedNS) continue;
+            __normalizedNS[__modKey] = __modDefault[__modKey];
+          }
+          return __normalizedNS;
+        })(foo_a_js.x), _rec);
       },
       function (_zork_b_js = {}) {
-        _rec.y = _define(\"y\", \"var\", y = _zork_b_js.default, _rec);
-        _rec.z = _define(\"z\", \"var\", z = _zork_b_js.z, _rec);
+        _rec.y = _define(\"y\", \"var\", y = (__modNS => {
+          if (!__modNS || !__modNS.__useDefault || !__modNS.default || typeof __modNS.default !== \"object\" && typeof __modNS.default !== \"function\") return __modNS;
+          var __modDefault = __modNS.default;
+          var __normalizedNS = Object.create(__modNS);
+          for (var __modKey of Object.getOwnPropertyNames(__modDefault)) {
+            if (__modKey === \"default\" || __modKey === \"__useDefault\" || __modKey === \"__esModule\") continue;
+            if (__modKey in __normalizedNS) continue;
+            __normalizedNS[__modKey] = __modDefault[__modKey];
+          }
+          return __normalizedNS;
+        })(_zork_b_js.default), _rec);
+        _rec.z = _define(\"z\", \"var\", z = (__modNS => {
+          if (!__modNS || !__modNS.__useDefault || !__modNS.default || typeof __modNS.default !== \"object\" && typeof __modNS.default !== \"function\") return __modNS;
+          var __modDefault = __modNS.default;
+          var __normalizedNS = Object.create(__modNS);
+          for (var __modKey of Object.getOwnPropertyNames(__modDefault)) {
+            if (__modKey === \"default\" || __modKey === \"__useDefault\" || __modKey === \"__esModule\") continue;
+            if (__modKey in __normalizedNS) continue;
+            __normalizedNS[__modKey] = __modDefault[__modKey];
+          }
+          return __normalizedNS;
+        })(_zork_b_js.z), _rec);
       }
     ],
     execute: function () {
