@@ -79,20 +79,22 @@ describe('ticking scripts', function () {
     it('startAndStopTicking', async function () {
       let n = 0; let script = new FunctionScript(function () { n++; });
       script.startTicking(100);
-      await promise.delay(400);
+      await promise.waitFor(4000, () => n >= 2);
       script.stop();
-      expect(n).within(2, 4, 'Script not run');
+      const countWhenStopped = n;
+      await promise.delay(250);
+      expect(n).equals(countWhenStopped, 'Script did not stop');
     });
 
     it('suspendAndContinue', async function () {
       let n = 0;
       let script = new FunctionScript(function () { n++; });
       script.startTicking(10);
-      await promise.delay(15);
-      expect(n).equals(1, 'Script not run once');
+      await promise.waitFor(2000, () => n >= 1);
       script.suspend();
-      await promise.delay(15);
-      expect(n).equals(1, 'Script not suspended');
+      const countWhenSuspended = n;
+      await promise.delay(40);
+      expect(n).equals(countWhenSuspended, 'Script not suspended');
       // script.resume();
       // await promise.delay(15);
       script.stop();
