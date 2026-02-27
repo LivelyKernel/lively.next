@@ -1138,6 +1138,81 @@ export function livelyPreTranspile (api, options) {
   };
 }
 
+function normalizeImportedNamespace (expr) {
+  const m = t.Identifier('__modNS');
+  const d = t.Identifier('__modDefault');
+  const ns = t.Identifier('__normalizedNS');
+  const k = t.Identifier('__modKey');
+  return t.CallExpression(
+    t.ArrowFunctionExpression(
+      [m],
+      t.BlockStatement([
+        t.IfStatement(
+          t.LogicalExpression(
+            '||',
+            t.LogicalExpression(
+              '||',
+              t.LogicalExpression(
+                '||',
+                t.UnaryExpression('!', t.cloneNode(m)),
+                t.UnaryExpression('!', t.MemberExpression(t.cloneNode(m), t.Identifier('__useDefault')))
+              ),
+              t.UnaryExpression('!', t.MemberExpression(t.cloneNode(m), t.Identifier('default')))
+            ),
+            t.LogicalExpression(
+              '&&',
+              t.BinaryExpression(
+                '!==',
+                t.UnaryExpression('typeof', t.MemberExpression(t.cloneNode(m), t.Identifier('default'))),
+                t.StringLiteral('object')
+              ),
+              t.BinaryExpression(
+                '!==',
+                t.UnaryExpression('typeof', t.MemberExpression(t.cloneNode(m), t.Identifier('default'))),
+                t.StringLiteral('function')
+              )
+            )
+          ),
+          t.ReturnStatement(t.cloneNode(m))
+        ),
+        t.VariableDeclaration('var', [t.VariableDeclarator(t.cloneNode(d), t.MemberExpression(t.cloneNode(m), t.Identifier('default')))]),
+        t.VariableDeclaration('var', [t.VariableDeclarator(t.cloneNode(ns), t.CallExpression(t.MemberExpression(t.Identifier('Object'), t.Identifier('create')), [t.cloneNode(m)]))]),
+        t.ForOfStatement(
+          t.VariableDeclaration('var', [t.VariableDeclarator(t.cloneNode(k))]),
+          t.CallExpression(t.MemberExpression(t.Identifier('Object'), t.Identifier('getOwnPropertyNames')), [t.cloneNode(d)]),
+          t.BlockStatement([
+            t.IfStatement(
+              t.LogicalExpression(
+                '||',
+                t.LogicalExpression(
+                  '||',
+                  t.BinaryExpression('===', t.cloneNode(k), t.StringLiteral('default')),
+                  t.BinaryExpression('===', t.cloneNode(k), t.StringLiteral('__useDefault'))
+                ),
+                t.BinaryExpression('===', t.cloneNode(k), t.StringLiteral('__esModule'))
+              ),
+              t.ContinueStatement()
+            ),
+            t.IfStatement(
+              t.BinaryExpression('in', t.cloneNode(k), t.cloneNode(ns)),
+              t.ContinueStatement()
+            ),
+            t.ExpressionStatement(
+              t.AssignmentExpression(
+                '=',
+                t.MemberExpression(t.cloneNode(ns), t.cloneNode(k), true),
+                t.MemberExpression(t.cloneNode(d), t.cloneNode(k), true)
+              )
+            )
+          ])
+        ),
+        t.ReturnStatement(t.cloneNode(ns))
+      ])
+    ),
+    [expr]
+  );
+}
+
 function rewriteToRegisterModuleToCaptureSetters (path, state, options) {
   // for rewriting the setters part in code like
   // ```js
@@ -1202,16 +1277,21 @@ function rewriteToRegisterModuleToCaptureSetters (path, state, options) {
         id['x-lively-object-meta'] = { exportConflict: renamedExports[id.name] };
       }
       // FIXME: at this point, we lost the info about the renamed export from preTranspile... how do we get that info to here?
+      const rhsExpr = t.AssignmentExpression(
+        stmt.expression.operator || '=',
+        t.cloneNode(stmt.expression.left),
+        normalizeImportedNamespace(t.cloneNode(stmt.expression.right))
+      );
       const rhs = options.declarationWrapper
         ? declarationWrapperCall(
           options.declarationWrapper,
           id,
           t.StringLiteral(id.name),
           t.StringLiteral('var'),
-          stmt.expression,
+          rhsExpr,
           options.captureObj,
           options)
-        : stmt.expression;
+        : rhsExpr;
       return t.ExpressionStatement(t.AssignmentExpression('=', t.MemberExpression(options.captureObj, id), rhs));
     }))));
   });
