@@ -13,6 +13,10 @@ import { _require, _resolve } from './nodejs.js';
 import { classHolder } from './cycle-breaker.js';
 import { regExpEscape } from 'lively.lang/string.js';
 
+// Used by the recorder Proxy to detect native browser functions that need
+// to be bound to the global object when stored in local variable slots.
+const nativeCodeRe = /\[native code\]/;
+
 export const detectModuleFormat = (function () {
   const esmFormatCommentRegExp = /['"]format (esm|es6)['"];/;
   const cjsFormatCommentRegExp = /['"]format cjs['"];/;
@@ -513,14 +517,32 @@ class ModuleInterface {
 
     if (!globalProps.initialized) {
       globalProps.initialized = true;
+      // Collect native functions that are own properties of the global object.
+      // These need to be bound to the global when stored in recorder variable
+      // slots, because calling them with a different `this` throws
+      // "Illegal invocation". Prototype methods (e.g. Function.prototype.toString)
+      // are NOT included — they need `this` to be the correct instance.
+      globalProps.globalNativeFunctions = new WeakSet();
       for (const prop in S.global) {
         if (S.global.__lookupGetter__(prop) || prop === 'closed') {
           globalProps.descriptors[prop] = {
-            value: undefined,
             configurable: true,
-            writable: true
+            get () { return S.global[prop]; },
+            set (v) {
+              // Once a value is explicitly assigned, replace the getter/setter
+              // with a plain value property so subsequent access is fast.
+              Object.defineProperty(this, prop, { value: v, configurable: true, writable: true });
+            }
           };
         }
+      }
+      for (const prop of Object.getOwnPropertyNames(S.global)) {
+        try {
+          const val = S.global[prop];
+          if (typeof val === 'function' && nativeCodeRe.test(Function.prototype.toString.call(val))) {
+            globalProps.globalNativeFunctions.add(val);
+          }
+        } catch (e) { /* some properties may throw on access */ }
       }
     }
 
@@ -537,7 +559,7 @@ class ModuleInterface {
       };
     }
 
-    this._recorder = Object.create(S.global, {
+    const recorderTarget = Object.create(S.global, {
 
       ...globalProps.descriptors,
       ...nodejsDescriptors,
@@ -602,6 +624,27 @@ class ModuleInterface {
 
           return depExports[key];
         }
+      }
+    });
+
+    // Wrap the recorder in a Proxy that auto-binds native browser functions
+    // when they are stored in local variable slots. Without this, patterns like
+    //   var nextTick = queueMicrotask;  // becomes __lvVarRecorder.m = queueMicrotask
+    //   nextTick(fn);                   // becomes __lvVarRecorder.m(fn) → Illegal invocation
+    // fail because the native function receives the recorder as `this` instead
+    // of `window`. The Proxy intercepts assignments and binds native functions
+    // to the global object so they work correctly regardless of call site.
+    this._recorder = new Proxy(recorderTarget, {
+      set (target, prop, value) {
+        // Only bind non-constructor native functions (no .prototype).
+        // Constructors like Promise, Map, Array have static methods
+        // (e.g. Promise.resolve) that are lost by .bind().
+        if (typeof value === 'function' && !value.prototype && globalProps.globalNativeFunctions.has(value)) {
+          target[prop] = value.bind(S.global);
+        } else {
+          target[prop] = value;
+        }
+        return true;
       }
     });
 
