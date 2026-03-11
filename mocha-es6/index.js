@@ -248,7 +248,16 @@ function recordTestsWhile (file, whileFn, options = {}) {
     ...options
   };
   let logger = options.logger || console;
-  let _Mocha = (obj.isFunction(mocha.constructor) ? mocha : mocha.constructor) || global.Mocha;
+  let _Mocha =
+    (obj.isFunction(mocha) && mocha) ||
+    (mocha && obj.isFunction(mocha.default) && mocha.default) ||
+    (mocha && obj.isFunction(mocha.Mocha) && mocha.Mocha) ||
+    (mocha && mocha.default && obj.isFunction(mocha.default.Mocha) && mocha.default.Mocha) ||
+    (mocha && obj.isFunction(mocha.constructor) && mocha.constructor !== Object && mocha.constructor) ||
+    global.Mocha;
+  if (!obj.isFunction(_Mocha)) {
+    throw new Error('Unable to resolve Mocha constructor from imported "mocha" module');
+  }
   let m = options.mocha || (options.mocha = new _Mocha({ reporter: options.reporter || ConsoleReporter }));
 
   module.define('mocha', m);
