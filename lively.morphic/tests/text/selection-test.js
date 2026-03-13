@@ -17,6 +17,10 @@ function range (startRow, startCol, endRow, endCol) {
   return { start: { row: startRow, column: startCol }, end: { row: endRow, column: endCol } };
 }
 
+function selectionRangeStrings (selection) {
+  return selection.ranges.map(range => range.toString()).sort();
+}
+
 let t;
 
 function text (string, props) {
@@ -202,9 +206,13 @@ describeInBrowser('text selection', () => {
 describeInBrowser('multi select', () => {
   beforeEach(async () => {
     t = text('Hello World').openInWorld();
+    await t.whenFontLoaded();
     t.env.forceUpdate();
     t._selection = new MultiSelection(t);
-    await promise.waitFor(() => t.editorPlugin);
+    await promise.waitFor(() =>
+      t.editorPlugin &&
+      t.allFontsLoaded() &&
+      !t.renderingState?.needsRemeasure);
   });
 
   afterEach(() => t.remove());
@@ -257,29 +265,46 @@ describeInBrowser('multi select', () => {
   describe('range merging', () => {
     it('same empty range', function () {
       t.textString = 'Hello\nWorld';
+      t.selection.range = range(1, 5, 1, 5);
       t.selection.addRange(range(0, 4, 0, 4));
       t.selection.addRange(range(0, 4, 0, 4));
       expect(t.selection.ranges).to.have.length(2);
-      expect(t.selection).stringEquals('MultiSelection(Selection(1/5 -> 1/5), Selection(0/4 -> 0/4))');
+      expect(selectionRangeStrings(t.selection)).deep.equals([
+        'Range(0/4 -> 0/4)',
+        'Range(1/5 -> 1/5)'
+      ]);
     });
 
     it('same range', function () {
       t.textString = 'Hello\nWorld';
+      t.selection.range = range(1, 5, 1, 5);
       t.selection.addRange(range(0, 1, 0, 4));
       t.selection.addRange(range(0, 4, 0, 4));
-      // expect(t.selection.ranges).to.have.length(2);
-      expect(t.selection).stringEquals('MultiSelection(Selection(1/5 -> 1/5), Selection(0/1 -> 0/4))');
+      expect(t.selection.ranges).to.have.length(2);
+      expect(selectionRangeStrings(t.selection)).deep.equals([
+        'Range(0/1 -> 0/4)',
+        'Range(1/5 -> 1/5)'
+      ]);
     });
 
     it('overlapping', function () {
       t.textString = 'Hello\nWorld';
       t.selectLine(1);
       t.selection.addRange(range(0, 2, 0, 5));
-      expect(t.selection).stringEquals('MultiSelection(Selection(1/0 -> 1/5), Selection(0/2 -> 0/5))');
+      expect(t.selection.ranges).to.have.length(2);
+      expect(selectionRangeStrings(t.selection)).deep.equals([
+        'Range(0/2 -> 0/5)',
+        'Range(1/0 -> 1/5)'
+      ]);
       t.selection.addRange(range(0, 2, 1, 0));
-      expect(t.selection).stringEquals('MultiSelection(Selection(1/0 -> 1/5), Selection(0/2 -> 1/0))');
+      expect(t.selection.ranges).to.have.length(2);
+      expect(selectionRangeStrings(t.selection)).deep.equals([
+        'Range(0/2 -> 1/0)',
+        'Range(1/0 -> 1/5)'
+      ]);
       t.selection.addRange(range(0, 2, 1, 1));
-      expect(t.selection).stringEquals('MultiSelection(Selection(0/2 -> 1/5))');
+      expect(t.selection.ranges).to.have.length(1);
+      expect(selectionRangeStrings(t.selection)).deep.equals(['Range(0/2 -> 1/5)']);
     });
   });
 });
