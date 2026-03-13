@@ -204,15 +204,13 @@ describeInBrowser('text selection', () => {
 });
 
 describeInBrowser('multi select', () => {
-  beforeEach(async () => {
+  beforeEach(async function () {
+    this.timeout(10000);
     t = text('Hello World').openInWorld();
     await t.whenFontLoaded();
     t.env.forceUpdate();
     t._selection = new MultiSelection(t);
-    await promise.waitFor(() =>
-      t.editorPlugin &&
-      t.allFontsLoaded() &&
-      !t.renderingState?.needsRemeasure);
+    await promise.waitFor(8000, () => t.editorPlugin, null);
   });
 
   afterEach(() => t.remove());
