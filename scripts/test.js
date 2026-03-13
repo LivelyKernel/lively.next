@@ -104,6 +104,13 @@ const req = http.request(options, res => {
               markdownListOfFailingTests = markdownListOfFailingTests + `- ${test.fullTitle} failed ❌\n`;
             } else {
               console.log(`${test.fullTitle} failed ❌`);
+              if (test.error) {
+                console.log(`  ERROR: ${test.error.message || test.error}`);
+                if (test.error.actual !== undefined && test.error.expected !== undefined) {
+                  console.log(`  EXPECTED: ${JSON.stringify(test.error.expected).slice(0, 500)}`);
+                  console.log(`  ACTUAL:   ${JSON.stringify(test.error.actual).slice(0, 500)}`);
+                }
+              }
             }
           }
         });

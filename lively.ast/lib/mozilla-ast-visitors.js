@@ -397,31 +397,52 @@ class ScopeVisitor extends Visitor {
 
   visitForStatement (node, scope, path) {
     const visitor = this;
+    // let/const in the init clause creates a block scope for the entire
+    // for-statement (init, test, update, and body) per the ECMAScript spec.
+    const needsForScope = node.init?.type === 'VariableDeclaration' && node.init.kind !== 'var';
+    const forScope = needsForScope ? this.newScope(node, scope) : scope;
     // init is of types VariableDeclaration, Expression
     if (node.init) {
-      node.init = visitor.accept(node.init, scope, path.concat(['init']));
+      node.init = visitor.accept(node.init, forScope, path.concat(['init']));
     }
     // test is of types Expression
     if (node.test) {
-      node.test = visitor.accept(node.test, scope, path.concat(['test']));
+      node.test = visitor.accept(node.test, forScope, path.concat(['test']));
     }
     // update is of types Expression
     if (node.update) {
-      node.update = visitor.accept(node.update, scope, path.concat(['update']));
+      node.update = visitor.accept(node.update, forScope, path.concat(['update']));
     }
     // body is of types Statement
-    node.body = visitor.accept(node.body, this.newScope(node, scope), path.concat(['body']));
+    node.body = visitor.accept(node.body, this.newScope(node, forScope), path.concat(['body']));
     return node;
   }
 
   visitForInStatement (node, scope, path) {
     const visitor = this;
+    // let/const creates a block scope for the for-in statement
+    const needsForScope = node.left?.type === 'VariableDeclaration' && node.left.kind !== 'var';
+    const forScope = needsForScope ? this.newScope(node, scope) : scope;
     // left is of types VariableDeclaration, Pattern
-    node.left = visitor.accept(node.left, scope, path.concat(['left']));
+    node.left = visitor.accept(node.left, forScope, path.concat(['left']));
     // right is of types Expression
-    node.right = visitor.accept(node.right, scope, path.concat(['right']));
+    node.right = visitor.accept(node.right, forScope, path.concat(['right']));
     // body is of types Statement
-    node.body = visitor.accept(node.body, this.newScope(node, scope), path.concat(['body']));
+    node.body = visitor.accept(node.body, this.newScope(node, forScope), path.concat(['body']));
+    return node;
+  }
+
+  visitForOfStatement (node, scope, path) {
+    const visitor = this;
+    // let/const creates a block scope for the for-of statement
+    const needsForScope = node.left?.type === 'VariableDeclaration' && node.left.kind !== 'var';
+    const forScope = needsForScope ? this.newScope(node, scope) : scope;
+    // left is of types VariableDeclaration, Pattern
+    node.left = visitor.accept(node.left, forScope, path.concat(['left']));
+    // right is of types Expression
+    node.right = visitor.accept(node.right, forScope, path.concat(['right']));
+    // body is of types Statement
+    node.body = visitor.accept(node.body, this.newScope(node, forScope), path.concat(['body']));
     return node;
   }
 
