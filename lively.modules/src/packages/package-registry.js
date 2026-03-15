@@ -482,7 +482,7 @@ export class PackageRegistry {
     if (isOverride) {
       let msg = `Redefining version ${version} of package ${pkg.url}`;
       if (!allowOverride) throw new Error(msg + ' not allowed');
-      else console.warn(msg);
+      // duplicate version entries are expected when bun + flatn both install packages
     }
     packageEntry.versions[version] = pkg;
   }

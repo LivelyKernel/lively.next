@@ -6,15 +6,85 @@ import { resource } from 'lively.resources';
 import { promise, string } from 'lively.lang';
 
 var modules, join, getPackageSpec, readPackageSpec;
-// var baseDir = "/home/lively/lively-web.org/lively.next/";
-// var baseDir = "/Users/robert/Lively/lively-dev4/";
-// var dependenciesDir = "/Users/robert/Lively/lively-dev4/lively.next-node_modules";
+
+// ── Logging helpers ──
+const log = {
+  step:    (msg) => console.log(`   ${msg}`),
+  warn:    (msg) => console.log(`   [!] ${msg}`),
+  error:   (msg) => console.error(`   [ERROR] ${msg}`),
+  indent:  (msg) => console.log(`       ${msg}`),
+};
+
+function elapsed (t0) { return ((Date.now() - t0) / 1000).toFixed(1) + 's'; }
+
+const spinner = {
+  frames: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
+  idx: 0, timer: null, text: '', baseText: '', active: false,
+  _origLog: console.log, _origWarn: console.warn, _origError: console.error,
+  start (text) {
+    if (this.text === text && this.active) return;
+    if (this.active) this._completeLine();
+    this.text = text; this.baseText = text; this.idx = 0; this.active = true;
+    this._hookConsole();
+    if (!process.stdout.isTTY) { this._origLog.call(console, `   ${text}`); return; }
+    this.render();
+    if (this.timer) clearInterval(this.timer);
+    this.timer = setInterval(() => this.render(), 80);
+  },
+  update (text) {
+    // Update spinner text without completing the previous line
+    this.text = text;
+    if (this.active && process.stdout.isTTY) this.render();
+  },
+  render () {
+    const frame = this.frames[this.idx++ % this.frames.length];
+    process.stdout.write(`\r   ${frame} ${this.text}\x1b[K`);
+  },
+  _completeLine () {
+    if (this.timer) { clearInterval(this.timer); this.timer = null; }
+    if (process.stdout.isTTY && this.baseText) {
+      process.stdout.write(`\r   \x1b[32m✓\x1b[0m ${this.baseText}\x1b[K\n`);
+    }
+  },
+  _hookConsole () {
+    if (console.log === this._wrappedLog) return;
+    const self = this;
+    this._wrappedLog = function (...args) {
+      if (self.active && process.stdout.isTTY) process.stdout.write('\r\x1b[K');
+      self._origLog.apply(console, args);
+      if (self.active && process.stdout.isTTY) self.render();
+    };
+    this._wrappedWarn = function (...args) {
+      if (self.active && process.stdout.isTTY) process.stdout.write('\r\x1b[K');
+      self._origWarn.apply(console, args);
+      if (self.active && process.stdout.isTTY) self.render();
+    };
+    this._wrappedError = function (...args) {
+      if (self.active && process.stdout.isTTY) process.stdout.write('\r\x1b[K');
+      self._origError.apply(console, args);
+      if (self.active && process.stdout.isTTY) self.render();
+    };
+    console.log = this._wrappedLog;
+    console.warn = this._wrappedWarn;
+    console.error = this._wrappedError;
+  },
+  _unhookConsole () {
+    console.log = this._origLog;
+    console.warn = this._origWarn;
+    console.error = this._origError;
+  },
+  stop () {
+    this._completeLine();
+    this._unhookConsole();
+    this.text = ''; this.baseText = ''; this.active = false;
+  }
+};
 
 export async function install(baseDir, dependenciesDir, verbose) {
   ({ join, getPackageSpec, readPackageSpec } = await import("./helpers.cjs"));
   var packageSpecFile = getPackageSpec(),
     timestamp = new Date().toJSON().replace(/[\.\:]/g, "_");
-  var log = [],
+  var installLog = [],
       hasUI = typeof $world !== "undefined",
       errored = false;
 
@@ -43,7 +113,6 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // reading package spec + init base dir
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     if (step1_ensureDirectories) {
-      console.log("=> Ensuring existance of " + baseDir);
       if (baseDir.startsWith("/")) baseDir = "file://" + baseDir;
       if (dependenciesDir.startsWith("/")) dependenciesDir = "file://" + dependenciesDir;
       await resource(baseDir).asDirectory().ensureExistance();
@@ -51,10 +120,9 @@ export async function install(baseDir, dependenciesDir, verbose) {
       await resource(baseDir).join("custom-npm-modules/").ensureExistance();
     }
 
-    console.log("=> Reading package specs from " + packageSpecFile);
     var knownProjects = await readPackageSpec(packageSpecFile),
         packages = await Promise.all(knownProjects.map(spec =>
-          new Package(join(baseDir, spec.name), spec, log).readConfig()));
+          new Package(join(baseDir, spec.name), spec, installLog).readConfig()));
 
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -63,10 +131,8 @@ export async function install(baseDir, dependenciesDir, verbose) {
     var pBar = false && hasUI && $world.addProgressBar(), i;
 
     if (step2_cloneLivelyPackages) {
-      console.log(`=> Installing and updating ${packages.length} packages`);
       i = 0; for (let p of packages) {
         if (pBar) pBar.setLabel(`updating ${p.name}`);
-        else console.log(`${p.name}`);
         await p.installOrUpdate();
         pBar && pBar.setValue(++i / packages.length);
       }
@@ -78,18 +144,14 @@ export async function install(baseDir, dependenciesDir, verbose) {
     var packageMap = await buildPackageMap([dependenciesDir], [], packages.map(ea => ea.directory));
     var flatnBinDir = join(packageMap.lookup("flatn").location, "bin");
     if (step3_setupFlatn) {
-      console.log("=> Preparing flatn environment");
       let env = process.env;
       if (!env.PATH.includes(flatnBinDir)) {
-        console.log(`Adding ${flatnBinDir} to PATH`);
         env.PATH = flatnBinDir + ":" + env.PATH;
       }
       if (env.FLATN_DEV_PACKAGE_DIRS !== packageMap.devPackageDirs.join(":")) {
-        console.log("Setting FLATN_DEV_PACKAGE_DIRS");
         env.FLATN_DEV_PACKAGE_DIRS = packageMap.devPackageDirs.join(":");
       }
       if (env.FLATN_PACKAGE_COLLECTION_DIRS !== packageMap.packageCollectionDirs.join(":")) {
-        console.log("Setting FLATN_PACKAGE_COLLECTION_DIRS");
         env.FLATN_PACKAGE_COLLECTION_DIRS = packageMap.packageCollectionDirs.join(":");
       }
     }
@@ -98,42 +160,50 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // installing dependencies
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     if (step4_installPackageDeps) {
-      console.log(`=> installing dependencies`);
+      // Hook flatn progress into our spinner — shows download/build sub-steps
+      globalThis.__flatnProgress = (msg) => {
+        if (spinner.active) spinner.update(`${spinner.baseText} › ${msg}`);
+      };
 
       let usedBun = false;
       try {
         const { detectBun, bunInstall } = await import("../flatn/bun-install.js");
         const bunPath = detectBun();
         if (bunPath) {
-          console.log(`=> Using bun (${bunPath}) for parallel package download`);
+          log.step(`Downloading packages via bun...`);
           const livelyDirs = packages.map(p => p.directory);
           const depsDirPath = dependenciesDir.replace(/^file:\/\//, "");
           const baseDirPath = baseDir.replace(/^file:\/\//, "");
+          const tBun = Date.now();
           const { newPackages: bunPkgs } = await bunInstall(bunPath, livelyDirs, depsDirPath, baseDirPath, verbose);
-          // Rebuild the package map once instead of calling addPackage per package (O(n²))
           packageMap = buildPackageMap([dependenciesDir], [], packages.map(ea => ea.directory));
-          console.log(`=> bun installed ${bunPkgs.length} packages`);
-          // Fill in any version conflicts bun couldn't resolve (bun deduplicates to one version
-          // per dep name, but different lively packages may pin different exact versions)
-          console.log(`=> resolving any remaining version gaps via flatn...`);
+          log.step(`${bunPkgs.length} packages installed via bun (${elapsed(tBun)})`);
+          spinner.start(`Resolving version gaps...`);
+          const tGap = Date.now();
           for (let p of packages) {
             await installDependenciesOfPackage(
               p.directory, dependenciesDir, packageMap, ["dependencies"], verbose);
           }
+          spinner.stop();
+          const gapCount = packageMap.allPackages().length - bunPkgs.length;
+          if (gapCount > 0) log.step(`${gapCount} additional packages via flatn (${elapsed(tGap)})`);
+          else log.step(`No version gaps (${elapsed(tGap)})`);
           usedBun = true;
         } else {
-          console.log(`=> bun not found, using flatn sequential install`);
+          log.step(`bun not available, using flatn sequential install`);
         }
       } catch (err) {
-        console.warn(`[bun-install] bun install failed (${err.message}), falling back to flatn sequential install`);
+        log.warn(`bun install failed: ${err.message}`);
+        log.step(`Falling back to flatn sequential install...`);
       }
 
       if (!usedBun) {
         for (let p of packages) {
-          console.log(`installing dependencies of ${p.name}`);
+          spinner.start(`Installing deps: ${p.name}`);
           await installDependenciesOfPackage(
             p.directory, dependenciesDir, packageMap, ["dependencies"], verbose);
         }
+        spinner.stop();
       }
     }
 
@@ -141,7 +211,7 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // build scripts
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     if (step5_runPackageInstallScripts) {
-      console.log(`=> running install scripts of ${packageMap.allPackages().length} packages`);
+      const tBuild = Date.now();
       // upon first install this is not yet inside the lookup
       const nodeGyp = packageMap.lookup('node-gyp');
       const tmpGyp = join(flatnBinDir, 'node-gyp');
@@ -152,10 +222,12 @@ export async function install(baseDir, dependenciesDir, verbose) {
       pBar && pBar.setValue(0)
       i = 0; for (let p of packages) {
         pBar && pBar.setLabel(`npm setup ${p.name}`);
-        console.log(`build ${p.name} and its dependencies`);
+        spinner.start(`Building ${p.name}...`);
         await buildPackage(p.directory, packageMap, ["dependencies"]);
         pBar && pBar.setValue(++i / packages.length)
       }
+      spinner.stop();
+      log.step(`${packages.length} packages built (${elapsed(tBuild)})`);
       await exec(`rm ${tmpGyp}`);
       await exec(`rm ${tmpGypBuild}`);
     }
@@ -163,8 +235,6 @@ export async function install(baseDir, dependenciesDir, verbose) {
     if (step8_runPackageBuildScripts) {
       let env = process.env, status;
       pBar && pBar.setValue(0)
-      console.log(env.FLATN_DEV_PACKAGE_DIRS)
-      console.log(env.FLATN_PACKAGE_COLLECTION_DIRS) 
       const nodeGyp = packageMap.lookup('node-gyp');
       await exec('ln -s ' + string.joinPath(nodeGyp.location, nodeGyp.bin['node-gyp']) + ' node-gyp')
       const nodeGypBuild = packageMap.lookup('node-gyp-build');
@@ -174,11 +244,9 @@ export async function install(baseDir, dependenciesDir, verbose) {
           pBar && pBar.setLabel(`npm build ${p.name}`);
           await installDependenciesOfPackage(
             p.directory, dependenciesDir, packageMap, ["devDependencies"], verbose);
-          console.log(`compiling ${p.name}`);
+          log.step(`Compiling ${p.name}...`);
           status = await exec('npm run build', {cwd: p.directory});
-          //if (status.code) {
-            console.log(status.output)
-          //}
+          if (status.code) console.log(status.output);
         }
         pBar && pBar.setValue(++i / packages.length)
       }
@@ -187,17 +255,23 @@ export async function install(baseDir, dependenciesDir, verbose) {
     }
 
     // by this time, all of the dependencies have been installed, and we can import them now
+    const tInit = Date.now();
+    spinner.start('Initializing module system...');
     ({ default: global.System } = await import('systemjs'));
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-    // ObjectDB init
+    // System + ObjectDB init
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+    spinner.start('Building package registry...');
     const System = await setupSystem(baseDir);
 
     if (step6_setupObjectDB) {
+      spinner.start('Setting up ObjectDB...');
       await setupObjectDB(baseDir, packageMap);
     }
+    spinner.stop();
+    log.step(`System initialized (${elapsed(tInit)})`);
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // ObjectDB sync
@@ -210,8 +284,6 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // initial world files
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     if (step7_setupAssets) {
-      console.log(`=> setting up scripts and assets`);
-
       // FIXME, this is old stuff...
       let toRemove = [
         "rebuild.sh",
@@ -247,15 +319,20 @@ export async function install(baseDir, dependenciesDir, verbose) {
       }
     }
 
-    // the paths need to be updated now, so that we can properly resolve installed deps
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+    // import maps
+    // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     if (step9_createImportMap) {
+      const tMaps = Date.now();
       const { Generator } = await import('@jspm/generator');
       System.set('@jspm_generator', System.newModule({ default: Generator }));
       const { generateImportMap } = await System.import('lively.server/plugins/lib-lookup.js');
       for (let p of packages) {
-        console.log(`generating import map of ${p.name}`);
+        spinner.start(`Import map: ${p.name}`);
         await generateImportMap(p.name);
       }
+      spinner.stop();
+      log.step(`${packages.length} import maps generated (${elapsed(tMaps)})`);
     }
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -264,19 +341,18 @@ export async function install(baseDir, dependenciesDir, verbose) {
     indicator && indicator.remove();
 
     var livelyServerDir = baseDir
-    if (hasUI) $world.inform("Packages successfully updated!\n" + packages.map(ea => ea.name).join("\n"));
-    else console.log(`=> Done!\npackages installed and / or updated! `
-                   + `You can start a lively server by running './start.sh' inside ${livelyServerDir}.\n`
-                   + `Afterwards your first lively.next world is ready to run at http://localhost:9011/index.html`);
+    if (hasUI) {
+      $world.inform("Packages successfully updated!\n" + packages.map(ea => ea.name).join("\n"));
+    }
 
   } catch (e) {
     errored = true;
-    console.error("Error occurred during installation: " + e.stack);
-    log.push(e.stack || e);
+    console.error("\n   [ERROR] Installation failed: " + e.stack);
+    installLog.push(e.stack || e);
     throw e;
 
   } finally {
-    resource(join(baseDir, "lively.installer.log")).write(log.join(""));
+    resource(join(baseDir, "lively.installer.log")).write(installLog.join(""));
     pBar && pBar.remove();
     indicator && indicator.remove();
 
@@ -286,8 +362,6 @@ export async function install(baseDir, dependenciesDir, verbose) {
 
 
 async function safelyRemove(baseDir, file) {
-  // stores conflicting files of the base directory into a backup dir
-
   if (!await file.exists()) return;
 
   let backupDir = baseDir.join(`${timestamp}_install-backup/`);
@@ -296,8 +370,6 @@ async function safelyRemove(baseDir, file) {
   let backupFile = backupDir.join(file.relativePathFrom(baseDir));
   await backupFile.parent().ensureExistance();
   await file.rename(backupFile);
-
-  console.log(`>>> Moving old file ${file.url} to ${backupDir.url} <<<`);
 }
 
 export async function setupSystem(baseURL) {
@@ -310,7 +382,6 @@ export async function setupSystem(baseURL) {
   registry.devPackageDirs = process.env.FLATN_DEV_PACKAGE_DIRS.split(":").map(ea => resource(`file://${ea}`));
   registry.individualPackageDirs = process.env.FLATN_PACKAGE_DIRS.split(":").map(ea => ea.length > 0 ? resource(`file://${ea}`) : false).filter(Boolean);
   await registry.update();
-  // also reset the flatn package map, so that native requires wont fail
   resetPackageMap();
 
   const { setupBabelTranspiler } = await import('lively.source-transform/babel/plugin.js');
@@ -332,20 +403,20 @@ async function setupObjectDB(baseDir, packageMap) {
 
 async function replicateObjectDB(baseDir) {
   let config = await System.import(resource(baseDir).join("config.js").url);
-  console.log(`=> synchronizing with object database from ${resource(config.remoteCommitDB).host()}...`);
-  
-  console.time("replication");
+  log.step(`Syncing ObjectDB from ${resource(config.remoteCommitDB).host()}...`);
+
+  console.time("   replication");
 
   let remoteCommitDB = Database.ensureDB(config.remoteCommitDB),
       remoteVersionDB = Database.ensureDB(config.remoteVersionDB),
       toSnapshotLocation = resource(config.remoteSnapshotLocation);
 
   try {
-    
+
     let db = ObjectDB.named("lively.morphic/objectdb/morphicdb", {
       snapshotLocation: resource(System.decanonicalize(baseDir + "/lively.morphic/objectdb/morphicdb/snapshots/"))
     });
-    
+
     let sync = db.replicateFrom(remoteCommitDB, remoteVersionDB, toSnapshotLocation, {debug: false, retry: true, live: true});
 
     await sync.whenPaused();
@@ -357,6 +428,6 @@ async function replicateObjectDB(baseDir) {
     await remoteCommitDB.close();
 
   } finally {
-    console.timeEnd("replication");
+    console.timeEnd("   replication");
   }
 }

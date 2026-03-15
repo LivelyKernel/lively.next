@@ -54,7 +54,7 @@ export async function bunInstall (bunPath, livelyDirs, destDir, projectRoot, ver
   }
 
   const depCount = Object.keys(aggregatedDeps).length;
-  console.log(`[bun-install] aggregated ${depCount} external dependencies`);
+  console.log(`       Aggregated ${depCount} external dependencies`);
 
   // 3. Prepare bun work directory
   fs.mkdirSync(bunWorkDir, { recursive: true });
@@ -77,7 +77,6 @@ export async function bunInstall (bunPath, livelyDirs, destDir, projectRoot, ver
   );
 
   // 4. Run bun install
-  console.log('[bun-install] running bun install...');
   const result = spawnSync(bunPath, ['install', '--no-progress'], {
     cwd: bunWorkDir,
     stdio: verbose ? 'inherit' : 'pipe',
@@ -88,7 +87,7 @@ export async function bunInstall (bunPath, livelyDirs, destDir, projectRoot, ver
     const stderr = result.stderr ? result.stderr.toString() : '';
     throw new Error(`bun install failed (exit ${result.status}): ${stderr}`);
   }
-  console.log('[bun-install] bun install completed');
+  // bun install completed
 
   // 5. Build git spec map from original dependency version strings
   const gitDepMap = buildGitDepMap(aggregatedDeps, bunWorkDir, bunPath);
@@ -110,7 +109,7 @@ export async function bunInstall (bunPath, livelyDirs, destDir, projectRoot, ver
   // Sort deepest paths first so nested packages are extracted before parents move
   uniquePackages.sort((a, b) => b.srcDir.split(path.sep).length - a.srcDir.split(path.sep).length);
 
-  console.log(`[bun-install] found ${uniquePackages.length} unique packages to migrate`);
+  console.log(`       Migrating ${uniquePackages.length} packages to flatn layout...`);
 
   // 7. Migrate each package to flatn layout
   const newPackages = [];
@@ -129,7 +128,11 @@ export async function bunInstall (bunPath, livelyDirs, destDir, projectRoot, ver
     fs.rmSync(path.join(bunWorkDir, 'node_modules'), { recursive: true, force: true });
   } catch (e) {}
 
-  console.log(`[bun-install] migrated ${newPackages.length} packages, skipped ${skipped} already installed`);
+  if (skipped > 0) {
+    console.log(`       ${newPackages.length} migrated, ${skipped} already installed`);
+  } else {
+    console.log(`       ${newPackages.length} packages migrated`);
+  }
 
   return { newPackages };
 }
@@ -192,13 +195,12 @@ function buildGitDepMap (aggregatedDeps, bunWorkDir, bunPath) {
         }
       }
     } catch (e) {
-      console.warn('[bun-install] warning: could not parse bun lockfile for git deps:', e.message);
+      console.warn('   [!] Could not parse bun lockfile for git deps:', e.message);
     }
   }
 
   if (Object.keys(gitDepMap).length > 0) {
-    console.log(`[bun-install] found ${Object.keys(gitDepMap).length} git dependencies:`,
-      Object.keys(gitDepMap).join(', '));
+    console.log(`       Found ${Object.keys(gitDepMap).length} git dependencies: ${Object.keys(gitDepMap).join(', ')}`);
   }
 
   return gitDepMap;

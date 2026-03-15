@@ -145,7 +145,7 @@ async function installPackage (
     }
   }
 
-  if (newPackages.length > 0) { console.log(`[flatn] installed ${newPackages.length} new packages into ${destinationDir}`); }
+  if (newPackages.length > 0) { console.log(`       ${newPackages.length} packages installed via flatn`); }
 
   return { packageMap, newPackages };
 }

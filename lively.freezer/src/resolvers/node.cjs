@@ -108,23 +108,92 @@ function detectFormat (moduleId) {
   // return module(moduleId).format();
 }
 
-function setStatus ({ status = '', progress, label }) {
-  if (Boolean(process.stdout.isTTY)) process.stdout.clearLine();
-  if (progress) {
-    process.stdout.write(chalk.cyan('[lively.freezer]: ') + status + (progress * 100).toFixed() + '%\n');
-    if (Boolean(process.stdout.isTTY)) {
-      process.stdout.moveCursor(0, -1);
-    } else {
-      readline.moveCursor(process.stdout, 0, -1);
+const spinner = {
+  frames: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
+  idx: 0,
+  timer: null,
+  text: '',
+  active: false,
+  _origLog: console.log,
+  _origWarn: console.warn,
+  _origError: console.error,
+
+  start (text) {
+    if (this.text === text && this.active) return; // deduplicate
+    if (this.active) this._completeLine();
+    this.text = text;
+    this.idx = 0;
+    this.active = true;
+    this._hookConsole();
+    if (!process.stdout.isTTY) {
+      this._origLog.call(console, `   ${text}`);
+      return;
     }
-    return;
+    this.render();
+    if (this.timer) clearInterval(this.timer);
+    this.timer = setInterval(() => this.render(), 80);
+  },
+
+  render () {
+    const frame = this.frames[this.idx++ % this.frames.length];
+    process.stdout.write(`\r   ${frame} ${this.text}\x1b[K`);
+  },
+
+  _completeLine () {
+    if (this.timer) { clearInterval(this.timer); this.timer = null; }
+    if (process.stdout.isTTY && this.text) {
+      process.stdout.write(`\r   \x1b[32m✓\x1b[0m ${this.text}\x1b[K\n`);
+    }
+  },
+
+  // While spinner is active, intercept console methods so they
+  // clear the spinner line first, print, then re-render the spinner.
+  _hookConsole () {
+    if (console.log === this._wrappedLog) return; // already hooked
+    const self = this;
+    this._wrappedLog = function (...args) {
+      if (self.active && process.stdout.isTTY) process.stdout.write('\r\x1b[K');
+      self._origLog.apply(console, args);
+      if (self.active && process.stdout.isTTY) self.render();
+    };
+    this._wrappedWarn = function (...args) {
+      if (self.active && process.stdout.isTTY) process.stdout.write('\r\x1b[K');
+      self._origWarn.apply(console, args);
+      if (self.active && process.stdout.isTTY) self.render();
+    };
+    this._wrappedError = function (...args) {
+      if (self.active && process.stdout.isTTY) process.stdout.write('\r\x1b[K');
+      self._origError.apply(console, args);
+      if (self.active && process.stdout.isTTY) self.render();
+    };
+    console.log = this._wrappedLog;
+    console.warn = this._wrappedWarn;
+    console.error = this._wrappedError;
+  },
+
+  _unhookConsole () {
+    console.log = this._origLog;
+    console.warn = this._origWarn;
+    console.error = this._origError;
+  },
+
+  stop () {
+    this._completeLine();
+    this._unhookConsole();
+    this.text = '';
+    this.active = false;
   }
-  if (status) console.log(chalk.cyan('[lively.freezer]:'), status);
-  if (label) console.log(chalk.cyan('[lively.freezer]:'), label);
+};
+
+function setStatus ({ status = '', progress, label }) {
+  const msg = progress
+    ? `${status} ${(progress * 100).toFixed()}%`
+    : status || label || '';
+  if (msg) spinner.start(msg);
 }
 
 function finish () {
-
+  spinner.stop();
 }
 
 function whenReady () {

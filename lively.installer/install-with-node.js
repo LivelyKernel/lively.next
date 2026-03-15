@@ -20,7 +20,7 @@ var installDir = path.resolve(process.argv[2]),
 
 // misses a system-install...
 
-console.log("Installing lively.system packages into %s", installDir);
+// install.sh handles the logging header
 global.$__curScript = undefined;
 import('lively.installer/install.js').then(installer => {
   installer.install(installDir, dependenciesDir, verbose)

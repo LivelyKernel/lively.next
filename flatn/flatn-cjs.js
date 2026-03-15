@@ -13717,7 +13717,8 @@ async function npmDownloadArchive (pname, range, destinationDir) {
   if (!archiveURL) {
     archiveURL = `https://registry.npmjs.org/${name}/-/${archive}`;
   }
-  console.log(`[flatn] downloading ${name}@${version} - ${archiveURL}`);
+  if (typeof globalThis.__flatnProgress === 'function') globalThis.__flatnProgress(`Downloading ${name}@${version}`);
+  else console.log(`       downloading ${name}@${version}`);
   let downloadedArchive = destinationDir.join(archive);
   await resource(archiveURL).beBinary().copyTo(downloadedArchive);
   return { downloadedArchive, name, version };
@@ -14751,12 +14752,18 @@ class BuildProcess {
     if (needsBuilt) {
       let scripts = this.normalizeScripts(packageSpec);
       if (this.hasBuiltScripts(scripts)) {
-        console.log(`[flatn] ${packageSpec.name} build starting`);
+        if (typeof globalThis.__flatnProgress === 'function') {
+          globalThis.__flatnProgress(`native: ${packageSpec.name}`);
+        } else {
+          process.stdout.write(`       native: ${packageSpec.name}...`);
+        }
         await this.runScript(scripts, 'preinstall', packageSpec, env);
         await this.runScript(scripts, 'install', packageSpec, env);
         await this.runScript(scripts, 'postinstall', packageSpec, env);
         await packageSpec.changeLvInfo(info => Object.assign({}, info, { build: true }));
-        console.log(`[flatn] ${packageSpec.name} build done`);
+        if (typeof globalThis.__flatnProgress !== 'function') {
+          process.stdout.write(' done\n');
+        }
       }
     }
 
@@ -14789,11 +14796,11 @@ class BuildProcess {
         env
       });
     } catch (err) {
-      console.error(`[build ${name}] error running ${scripts[scriptName]}:\n${err}`);
+      process.stdout.write(' FAILED\n');
+      console.error(`       [ERROR] ${name} ${scriptName}: ${err.message}`);
       if (err.stdout || err.stderr) {
-        console.log('The command output:');
-        console.log(err.stdout);
-        console.log(err.stderr);
+        if (err.stdout) console.error(`       ${err.stdout}`);
+        if (err.stderr) console.error(`       ${err.stderr}`);
       }
       throw err;
     }
@@ -14997,7 +15004,7 @@ async function installPackage (
     }
   }
 
-  if (newPackages.length > 0) { console.log(`[flatn] installed ${newPackages.length} new packages into ${destinationDir}`); }
+  if (newPackages.length > 0) { console.log(`       ${newPackages.length} packages installed via flatn`); }
 
   return { packageMap, newPackages };
 }

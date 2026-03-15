@@ -74,12 +74,18 @@ export class NodeModuleTranslationCache extends ModuleTranslationCache {
     const fpath = moduleId.replace(fname, '');
     const r = this.moduleCacheDir.join(moduleId);
     if (!await r.exists()) return null;
-    const { birthtime: timestamp } = await r.stat();
-    const source = await r.read();
-    const hash = await this.moduleCacheDir.join(fpath).join('.hash_' + fname).read();
-    const sourceMap = await this.moduleCacheDir.join(fpath).join('.source_map_' + fname).readJson();
-    const exports = await this.moduleCacheDir.join(fpath).join('.exports_' + fname).readJson();
+    try {
+      const { birthtime: timestamp } = await r.stat();
+      const source = await r.read();
+      const hash = await this.moduleCacheDir.join(fpath).join('.hash_' + fname).read();
+      const sourceMap = await this.moduleCacheDir.join(fpath).join('.source_map_' + fname).readJson();
+      const exports = await this.moduleCacheDir.join(fpath).join('.exports_' + fname).readJson();
       return { source, timestamp, hash, sourceMap, exports };
+    } catch (e) {
+      // Stale or corrupt cache entry — delete it and return null so the module is re-transformed
+      await this.deleteCachedData(moduleId);
+      return null;
+    }
   }
 
   async cacheModuleSource (moduleId, hash, source, exports = [], sourceMap = {}) {
