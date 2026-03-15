@@ -99,10 +99,41 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     if (step4_installPackageDeps) {
       console.log(`=> installing dependencies`);
-      for (let p of packages) {
-        console.log(`installing dependencies of ${p.name}`);
-        await installDependenciesOfPackage(
-          p.directory, dependenciesDir, packageMap, ["dependencies"], verbose);
+
+      let usedBun = false;
+      try {
+        const { detectBun, bunInstall } = await import("../flatn/bun-install.js");
+        const bunPath = detectBun();
+        if (bunPath) {
+          console.log(`=> Using bun (${bunPath}) for parallel package download`);
+          const livelyDirs = packages.map(p => p.directory);
+          const depsDirPath = dependenciesDir.replace(/^file:\/\//, "");
+          const baseDirPath = baseDir.replace(/^file:\/\//, "");
+          const { newPackages: bunPkgs } = await bunInstall(bunPath, livelyDirs, depsDirPath, baseDirPath, verbose);
+          // Rebuild the package map once instead of calling addPackage per package (O(n²))
+          packageMap = buildPackageMap([dependenciesDir], [], packages.map(ea => ea.directory));
+          console.log(`=> bun installed ${bunPkgs.length} packages`);
+          // Fill in any version conflicts bun couldn't resolve (bun deduplicates to one version
+          // per dep name, but different lively packages may pin different exact versions)
+          console.log(`=> resolving any remaining version gaps via flatn...`);
+          for (let p of packages) {
+            await installDependenciesOfPackage(
+              p.directory, dependenciesDir, packageMap, ["dependencies"], verbose);
+          }
+          usedBun = true;
+        } else {
+          console.log(`=> bun not found, using flatn sequential install`);
+        }
+      } catch (err) {
+        console.warn(`[bun-install] bun install failed (${err.message}), falling back to flatn sequential install`);
+      }
+
+      if (!usedBun) {
+        for (let p of packages) {
+          console.log(`installing dependencies of ${p.name}`);
+          await installDependenciesOfPackage(
+            p.directory, dependenciesDir, packageMap, ["dependencies"], verbose);
+        }
       }
     }
 

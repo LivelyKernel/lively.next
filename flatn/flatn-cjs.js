@@ -14783,7 +14783,7 @@ class BuildProcess {
       });
 
     try {
-      return await x(`/bin/sh -c '${scripts[scriptName]}'`, {
+      return await x(`/bin/sh -c ${JSON.stringify(scripts[scriptName])}`, {
         verbose: true,
         cwd: location.replace(/^file:\/\//, ''),
         env

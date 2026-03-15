@@ -6,11 +6,46 @@ lv_next_dir=$PWD
 
 ./scripts/node_version_checker.sh || exit 1
 
+# --- Check external dependencies ---
+echo "Checking external dependencies..."
+
+# Check for bun (required for fast package install)
+if command -v bun >/dev/null 2>&1; then
+  export BUN_PATH=$(command -v bun)
+  echo "  bun: $(bun --version) (${BUN_PATH})"
+elif [ -f "$HOME/.bun/bin/bun" ]; then
+  export BUN_PATH="$HOME/.bun/bin/bun"
+  echo "  bun: $($BUN_PATH --version) (${BUN_PATH})"
+else
+  echo "  bun: NOT FOUND - using slow sequential flatn download"
+  echo "        Install bun for ~50x faster installs: curl -fsSL https://bun.sh/install | bash"
+fi
+
+# Check for Rust toolchain (needed to build SWC plugin)
+PREBUILT_WASM=$lv_next_dir/lively.freezer/swc-plugin/lively_swc_plugin.wasm
+if command -v cargo >/dev/null 2>&1 && command -v rustup >/dev/null 2>&1; then
+  echo "  rust: $(rustc --version 2>/dev/null || echo 'available')"
+  if ! rustup target list --installed 2>/dev/null | grep -q "^wasm32-wasip1$"; then
+    echo "        wasm32-wasip1 target not installed (will be added during build)"
+  fi
+elif [ -f "$PREBUILT_WASM" ]; then
+  echo "  rust: not installed (using pre-built SWC WASM plugin)"
+elif [ -n "${CI}" ]; then
+  echo "  rust: not installed (CI will use pre-built plugin if available)"
+else
+  echo "  rust: NOT FOUND - required to build SWC plugin"
+  echo "        Install Rust: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+  echo "        Or ensure pre-built plugin exists at: $PREBUILT_WASM"
+  exit 1
+fi
+
+echo ""
+
 export PATH=$lv_next_dir:$lv_next_dir/flatn/bin:$PATH
 export PUPPETEER_CACHE_DIR=$lv_next_dir/.puppeteer-browser-cache
 export FLATN_PACKAGE_DIRS=
 export FLATN_PACKAGE_COLLECTION_DIRS=$lv_next_dir/lively.next-node_modules
-eval $(node -p 'let PWD=process.cwd();let packages = JSON.parse(require("fs").readFileSync(PWD+"/lively.installer/packages-config.json")).map(ea => require("path").join(PWD, ea.name));`export FLATN_DEV_PACKAGE_DIRS=${packages.join(":")}`')                                                              
+eval $(node -p 'let PWD=process.cwd();let packages = JSON.parse(require("fs").readFileSync(PWD+"/lively.installer/packages-config.json")).map(ea => require("path").join(PWD, ea.name));`export FLATN_DEV_PACKAGE_DIRS=${packages.join(":")}`')
 mkdir lively.next-node_modules
 mkdir snapshots
 mkdir esm_cache
@@ -62,23 +97,18 @@ then
   exit
 fi
 
-PREBUILT_WASM=$lv_next_dir/lively.freezer/swc-plugin/lively_swc_plugin.wasm
-
+# Build SWC plugin (Rust availability already checked above)
 if [ -n "${CI}" ] && [ -f "$PREBUILT_WASM" ]; then
   echo "Pre-built SWC WASM plugin found, skipping build in CI."
-elif command -v cargo >/dev/null 2>&1 && command -v rustup >/dev/null 2>&1; then
+elif command -v cargo >/dev/null 2>&1; then
   if ! rustup target list --installed | grep -q "^wasm32-wasip1$"; then
     echo "Installing Rust target wasm32-wasip1..."
     rustup target add wasm32-wasip1 || exit 1
   fi
   echo "Building lively.freezer SWC plugin..."
   env CI=true npm --prefix $lv_next_dir/lively.freezer/ run build-swc-plugin || exit 1
-elif [ -f "$PREBUILT_WASM" ]; then
-  echo "Rust not available, using pre-built SWC WASM plugin."
 else
-  echo "Error: Rust is not installed and no pre-built SWC WASM plugin found."
-  echo "Either install Rust (https://rustup.rs) or ensure $PREBUILT_WASM exists."
-  exit 1
+  echo "Using pre-built SWC WASM plugin."
 fi
 
 if [ -z "${CI}" ];
