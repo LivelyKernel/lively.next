@@ -148,7 +148,7 @@ export class LivelySwcTransform {
         usedPlugin = hasPlugin;
       } catch (error) {
         if (hasPlugin) {
-          console.warn('⚠️  Failed to load SWC Rust plugin, falling back to JS transforms:', error.message);
+          console.warn('\x1b[33m       [!] SWC Rust plugin failed, falling back to JS transforms: ' + error.message + '\x1b[0m');
           result = transformSync(sourceForTransform, swcConfig);
         } else {
           throw error;
@@ -166,7 +166,7 @@ export class LivelySwcTransform {
         map: result.map,
       };
     } catch (error) {
-      console.error('SWC Transform Error:', error);
+      console.error('\x1b[31m       [ERROR] SWC transform: ' + error.message + '\x1b[0m');
       throw error;
     }
   }
@@ -181,8 +181,7 @@ export class LivelySwcTransform {
 
     // For now, just return the code as-is
     // The full implementation would require babel/lively.ast transforms
-    console.warn('⚠️  Using JavaScript fallback - Rust plugin not yet compiled');
-    console.warn('   Run: cd swc-plugin && cargo build --release --target wasm32-wasip1');
+    console.warn('\x1b[33m       [!] Using JS fallback — Rust plugin not compiled. Run: cd swc-plugin && cargo build --release --target wasm32-wasip1\x1b[0m');
 
     return code;
   }

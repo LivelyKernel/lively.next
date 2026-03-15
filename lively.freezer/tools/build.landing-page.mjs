@@ -10,6 +10,8 @@ const verbose = process.argv[2] === '--verbose';
 const minify = !process.env.CI;
 const sourceMap = !!process.env.DEBUG;
 try {
+  console.log('   Bundling landing-page...');
+
   const build = await rollup({
     input: './src/landing-page.cp.js',
     shimMissingExports: true,
@@ -34,7 +36,7 @@ try {
           // other stuff that is only needed by rollup
           '@babel/preset-env',
           '@babel/plugin-syntax-import-meta',
-          '@rollup/plugin-json', 
+          '@rollup/plugin-json',
           '@rollup/plugin-commonjs',
           'rollup-plugin-polyfill-node',
           'babel-plugin-transform-es2015-modules-systemjs'
@@ -43,7 +45,7 @@ try {
       }),
       jsonPlugin({ exclude: [/https\:\/\/jspm.dev\/.*\.json/, /esm\:\/\/cache\/.*\.json/]}),
       babel({
-        babelHelpers: 'bundled', 
+        babelHelpers: 'bundled',
         presets: [
         [PresetEnv,
         {
@@ -53,7 +55,7 @@ try {
       })
      ]
   });
-  
+
   await build.write({
     format: 'system',
     dir: 'landing-page',
@@ -64,7 +66,10 @@ try {
     },
   });
 
+  console.log('   Landing page build complete');
+
 } catch (err) {
-  console.log(err);
+  console.error('\x1b[31m   [ERROR] Landing page build failed:\x1b[0m');
+  console.error('   ' + (err.message || err));
   process.exit(1);
 }

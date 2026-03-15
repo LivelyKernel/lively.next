@@ -88,7 +88,8 @@ async function npmDownloadArchive (pname, range, destinationDir) {
   if (!archiveURL) {
     archiveURL = `https://registry.npmjs.org/${name}/-/${archive}`;
   }
-  console.log(`[flatn] downloading ${name}@${version} - ${archiveURL}`);
+  if (typeof globalThis.__flatnProgress === 'function') globalThis.__flatnProgress(`Downloading ${name}@${version}`);
+  else console.log(`       downloading ${name}@${version}`);
   let downloadedArchive = destinationDir.join(archive);
   await resource(archiveURL).beBinary().copyTo(downloadedArchive);
   return { downloadedArchive, name, version };

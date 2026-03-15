@@ -8,6 +8,8 @@ const verbose = true; // process.argv[2] === '--verbose';
 const minify = !process.env.CI;
 const sourceMap = !!process.env.DEBUG;
 try {
+  console.log('   Bundling loading-screen...');
+
   const build = await rollup({
     input: './src/loading-screen.cp.js',
     shimMissingExports: true,
@@ -43,7 +45,7 @@ try {
       jsonPlugin({ exclude: [/https\:\/\/jspm.dev\/.*\.json/, /esm\:\/\/cache\/.*\.json/] })
      ]
   });
-  
+
   await build.write({
     format: 'system',
     dir: 'loading-screen',
@@ -54,7 +56,10 @@ try {
     }
   });
 
+  console.log('   Loading screen build complete');
+
 } catch (err) {
-  console.log(err);
+  console.error('\x1b[31m   [ERROR] Loading screen build failed:\x1b[0m');
+  console.error('   ' + (err.message || err));
   process.exit(1);
 }

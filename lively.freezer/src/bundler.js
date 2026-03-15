@@ -271,7 +271,7 @@ export default class LivelyRollup {
     this.moduleSources = {};
     this.entryPaths = null; // for multi-entry builds, stores the original entry paths
 
-    this.resolver.setStatus({ label: 'Freezing in Progress' });
+    this.resolver.setStatus({ label: 'Preparing bundle...' });
   }
 
   async ensureSwcTransform () {
@@ -681,12 +681,10 @@ export default class LivelyRollup {
         resource(this.resolver.ensureFileFormat(legacyFile)).write(legacyCode)
       ]);
       if (this.verbose) {
-        console.warn(`[lively.freezer] SWC comparison artifacts written:`);
-        console.warn(`  ${swcFile}`);
-        console.warn(`  ${legacyFile}`);
+        console.warn(`       SWC comparison: ${swcFile}, ${legacyFile}`);
       }
     } catch (err) {
-      if (this.verbose) console.warn(`[lively.freezer] Failed writing SWC comparison artifacts: ${err.message}`);
+      if (this.verbose) console.warn(`\x1b[33m       [!] SWC comparison write failed: ${err.message}\x1b[0m`);
     }
   }
 
@@ -829,12 +827,12 @@ export default class LivelyRollup {
             invalidExports.length > 0 ? `unresolved exports: ${invalidExports.join(', ')}` : '',
             missingExports.length > 0 ? `missing exports: ${missingExports.join(', ')}` : ''
           ].filter(Boolean).join('; ');
-          console.warn(`[lively.freezer] SWC fallback for ${id}; ${diagnostics}`);
+          console.warn(`\x1b[33m       [!] SWC fallback for ${id}; ${diagnostics}\x1b[0m`);
         }
         return await this.transformWithLegacyPipeline(source, id, needsLoadInstrumentation);
       }
       if (skipMissingExportFallback && missingExports.length > 0 && this.verbose) {
-        console.warn(`[lively.freezer] SWC export parity warning for ${id}; missing exports: ${missingExports.join(', ')} (keeping SWC output for dompurify)`);
+        console.warn(`\x1b[33m       [!] SWC export parity: ${id}; missing: ${missingExports.join(', ')} (keeping SWC output)\x1b[0m`);
       }
       return { code, map };
     }
@@ -990,7 +988,7 @@ export default class LivelyRollup {
   }
 
   async buildStart (plugin) {
-    this.resolver.setStatus({ status: 'Bundling...' });
+    this.resolver.setStatus({ status: 'Transforming modules...' });
     await this.resolver.whenReady();
     // Only emit ROOT_ID chunk for single-entry builds with autoRun
     // For multi-entry builds, we use the actual entry points instead
@@ -1404,7 +1402,7 @@ export default class LivelyRollup {
     const modules = Object.values(bundle);
     if (this.minify && opts.format !== 'esm' && !this.sourceMap) {
       // Parallelize minification per chunk instead of concatenating all chunks
-      this.resolver.setStatus({ status: 'Minifying chunks in parallel...', progress: 0.5 });
+      this.resolver.setStatus({ status: 'Minifying chunks...' });
 
       await Promise.all(modules.map(async (chunk, i) => {
         try {
@@ -1412,7 +1410,7 @@ export default class LivelyRollup {
           chunk.code = minifiedCode.replace("'use strict';", '');
         } catch (err) {
           // If minification fails for a chunk, keep the original code
-          console.warn(`Minification failed for chunk ${i}: ${err.message}`);
+          console.warn(`\x1b[33m       [!] Minification failed for chunk ${i}: ${err.message}\x1b[0m`);
         }
       }));
     }

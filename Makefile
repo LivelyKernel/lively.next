@@ -56,6 +56,9 @@ clear-freezer-dir:
 hooks:
 	git config --local core.hooksPath $(shell pwd)/.githooks
 
+install:
+	./install.sh
+
 clean: clear-freezer-dir clear-headless-cache clear-esm-cache
 	rm -rf lively.server/.module_cache
 	rm -rf .module_cache

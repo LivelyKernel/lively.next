@@ -24,7 +24,7 @@ async function installDeps(generator, deps, failed) {
         delete failed[depName];
         continue;
       } catch (err) {
-        console.error('Failed to install ' + depSpec);
+        console.warn('\x1b[33m       [!] Import map: failed to resolve ' + depSpec + '\x1b[0m');
         failed[depName] = true;
       }
     }

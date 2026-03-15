@@ -3,11 +3,9 @@
 # THIS FILE EXISTS FOR LEGACY PURPOSES ONLY
 # DO NOT USE IT FOR NEWER CODE. USE `lively-next-env.sh` INSTEAD.
 function lively_next_flatn_env {
-    echo "Setting V8 memory size limit to allow space for builds"
     export NODE_OPTIONS=--max_old_space_size=8192
     lv_next_dir=$1
     export PUPPETEER_CACHE_DIR=$lv_next_dir/.puppeteer-browser-cache
-    echo "Setting env vars for FLATN_PACKAGE_DIRS, FLATN_PACKAGE_COLLECTION_DIRS, FLATN_DEV_PACKAGE_DIRS for lively.next"
     export PATH=$lv_next_dir/flatn/bin:$PATH
     export FLATN_PACKAGE_DIRS=
     export FLATN_PACKAGE_COLLECTION_DIRS=$lv_next_dir/lively.next-node_modules:$lv_next_dir/custom-npm-modules

@@ -36,7 +36,7 @@ const commonPlugins = [
 ];
 
 try {
-  console.log('[lively.freezer] Starting unified build for landing-page and loading-screen...');
+  console.log('   Bundling landing-page + loading-screen...');
 
   // Single rollup build with multiple entry points
   // Rollup will automatically share module parsing, transformation, and resolution
@@ -65,7 +65,7 @@ try {
     ]
   });
 
-  console.log('[lively.freezer] Build complete, writing outputs...');
+  console.log('   Writing outputs...');
 
   // Write landing-page output
   await build.write({
@@ -79,11 +79,9 @@ try {
       mocha: 'mocha',
     },
   });
-  console.log('[lively.freezer] ✓ Landing page written to landing-page/');
+  console.log('   Landing page written to landing-page/');
 
   // Write loading-screen output
-  // Note: We need a second write() call to output to a different directory
-  // The build is already done, so this is just writing the same build to a different location
   await build.write({
     format: 'system',
     dir: 'loading-screen',
@@ -95,33 +93,28 @@ try {
       mocha: 'mocha',
     }
   });
-  console.log('[lively.freezer] ✓ Loading screen written to loading-screen/');
+  console.log('   Loading screen written to loading-screen/');
 
   // Post-process: Copy the correct index.html for each directory
-  // The build generates index-landing-page.html and index-loading-screen.html
-  // We copy the appropriate one to index.html in each directory
   const fs = await import('fs/promises');
 
   try {
     await fs.copyFile('landing-page/index-landing-page.html', 'landing-page/index.html');
-    console.log('[lively.freezer] ✓ Set landing-page/index.html to load landing-page entry');
   } catch (err) {
-    console.warn('[lively.freezer] ⚠ Could not copy landing-page index.html:', err.message);
+    console.warn('\x1b[33m   [!] Could not copy landing-page index.html: ' + err.message + '\x1b[0m');
   }
 
   try {
     await fs.copyFile('loading-screen/index-loading-screen.html', 'loading-screen/index.html');
-    console.log('[lively.freezer] ✓ Set loading-screen/index.html to load loading-screen entry');
   } catch (err) {
-    console.warn('[lively.freezer] ⚠ Could not copy loading-screen index.html:', err.message);
+    console.warn('\x1b[33m   [!] Could not copy loading-screen index.html: ' + err.message + '\x1b[0m');
   }
 
-  console.log('[lively.freezer] ✓ Unified build complete!');
+  console.log('   Unified build complete');
 
 } catch (err) {
-  console.error('[lively.freezer] Build failed:');
-  console.error(err);
-  console.error(util.inspect(err, { depth: 6, colors: false }));
+  console.error('\x1b[31m   [ERROR] Freezer build failed:\x1b[0m');
+  console.error('   ' + (err.message || err));
   if (err && typeof err === 'object') {
     const details = {
       name: err.name,
@@ -130,13 +123,13 @@ try {
       plugin: err.plugin,
       pluginCode: err.pluginCode,
       hook: err.hook,
-      watchFiles: err.watchFiles,
       loc: err.loc,
       frame: err.frame,
-      stack: err.stack
     };
-    console.error('[lively.freezer] Error details:');
-    console.error(util.inspect(details, { depth: 6, colors: false }));
+    const filtered = Object.fromEntries(Object.entries(details).filter(([, v]) => v != null));
+    if (Object.keys(filtered).length > 0) {
+      console.error('   ' + util.inspect(filtered, { depth: 4, colors: true }));
+    }
   }
   process.exit(1);
 }
