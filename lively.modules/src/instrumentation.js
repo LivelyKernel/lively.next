@@ -190,6 +190,7 @@ function addNodejsWrapperSource (System, load, markedPackageName) {
   if (m) {
     load.metadata.format = 'esm';
     load.source = `var exports = System._nodeRequire('${m.id}'); export default exports;\n` +
+                `export var __useDefault = exports;\n` +
                 properties.allOwnPropertiesOrFunctions(m.exports).map(k =>
                   isValidIdentifier(k)
                     ? `export var ${k} = exports['${k}'];`
