@@ -16,6 +16,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '24'
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
