@@ -63,11 +63,17 @@ describe('fun', function () {
         fun._queues = {};
         this._debouncedByName = fun._debouncedByName;
         fun._debouncedByName = {};
+        this._throttledByName = fun._throttledByName;
+        fun._throttledByName = {};
+        this._queueUntilCallbacks = fun._queueUntilCallbacks;
+        fun._queueUntilCallbacks = {};
       });
 
       afterEach(function () {
         fun._queues = this._queues;
         fun._debouncedByName = this._debouncedByName;
+        fun._throttledByName = this._throttledByName;
+        fun._queueUntilCallbacks = this._queueUntilCallbacks;
       });
 
       it('debounce function is looked up by name', function (done) {
@@ -107,23 +113,24 @@ describe('fun', function () {
 
       it('throttles calls', function (done) {
         let called = 0; let result = [];
+        const wait = 50;
 
         [1, 2, 3, 4].forEach(function (i) {
-          fun.throttleNamed('testThrottleCommand', 20, function (i) { result.push(i); called++; })(i);
+          fun.throttleNamed('testThrottleCommand', wait, function (i) { result.push(i); called++; })(i);
         });
 
         setTimeout(function () {
-          fun.throttleNamed('testThrottleCommand', 20, function (i) { result.push(i); called++; })(5);
-        }, 80);
+          fun.throttleNamed('testThrottleCommand', wait, function (i) { result.push(i); called++; })(5);
+        }, wait * 4);
 
         setTimeout(function () {
-          // call 1 immediatelly in the loop,
+          // call 1 immediately in the loop,
           // call 2 after waiting for timeout with arg from last (fourth) invocation
           // call 3 invocation after first throttle
           expect(3).to.equal(called, 'throttle call count');
           expect([1, 4, 5]).to.eql(result, 'throttle result');
           done();
-        }, 120);
+        }, wait * 6);
       });
     });
 
@@ -248,6 +255,7 @@ describe('fun', function () {
       });
 
       it('associates workers with callbacks and can be canceled', function (done) {
+        this.timeout(5000);
         let calls = [];
         function worker (thenDo) {
           calls.push('workerCalled');
@@ -259,13 +267,19 @@ describe('fun', function () {
 
         let proc = fun.workerWithCallbackQueue('testWorkerWithCallbackQueue', worker).whenDone(thenDo1);
         proc.cancel();
-        setTimeout(function () { fun.workerWithCallbackQueue('testWorkerWithCallbackQueue', worker).whenDone(thenDo2); }, 20);
+        setTimeout(function () { fun.workerWithCallbackQueue('testWorkerWithCallbackQueue', worker).whenDone(thenDo2); }, 50);
 
-        setTimeout(function () {
-          let expected = ['workerCalled', 'thenDo2Called'];
-          expect(expected).to.eql(calls);
-          done();
-        }, 120);
+        // Poll for completion instead of relying on a fixed timeout
+        let expected = ['workerCalled', 'thenDo2Called'];
+        function check () {
+          if (calls.length >= expected.length) {
+            expect(expected).to.eql(calls);
+            done();
+          } else {
+            setTimeout(check, 20);
+          }
+        }
+        setTimeout(check, 120);
       });
     });
 
