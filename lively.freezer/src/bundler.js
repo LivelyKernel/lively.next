@@ -783,30 +783,21 @@ export default class LivelyRollup {
       const swcTransform = await this.ensureSwcTransform();
       if (id === ROOT_ID || id.startsWith('__rootModule__:')) {
         if (!needsLoadInstrumentation) return source;
-        let parsed = ast.parse(source);
-        parsed = this.instrumentDynamicLoads(parsed, id);
-        return ast.stringify(parsed);
+        // Only rewrite System.import() → import(), skip scope capture
+        return swcTransform.transformDynamicImportsOnly(source, { filename: id }).code;
       }
       const instrumentClasses = this.needsClassInstrumentation(id, source);
       const needsScopeCapture = this.needsScopeToBeCaptured(id, null, source) || instrumentClasses;
       if (!needsScopeCapture) {
         if (!needsLoadInstrumentation) return source;
-        let parsed = ast.parse(source);
-        parsed = this.instrumentDynamicLoads(parsed, id);
-        return ast.stringify(parsed);
+        // Only rewrite System.import() → import(), skip scope capture
+        return swcTransform.transformDynamicImportsOnly(source, { filename: id }).code;
       }
-      // Instrument System.import() -> import() BEFORE SWC scope capture,
-      // since scope capture rewrites System references (e.g. __varRecorder__.System)
-      // which would prevent instrumentDynamicLoads from detecting the pattern.
-      // This matches the legacy pipeline order: instrumentDynamicLoads then captureScope.
-      let swcInput = source;
-      if (needsLoadInstrumentation) {
-        let parsed = ast.parse(source);
-        parsed = this.instrumentDynamicLoads(parsed, id);
-        swcInput = ast.stringify(parsed);
-      }
-      const swcOptions = this.getSwcTransformOptions(id, swcInput, { instrumentClasses });
-      let { code, map } = swcTransform.transform(swcInput, swcOptions);
+      // Full SWC transform: DynamicImportTransform runs at step 5 (before
+      // ScopeCapturingTransform at step 7), so System.import() is rewritten
+      // before System references get captured as __varRecorder__.System.
+      const swcOptions = this.getSwcTransformOptions(id, source, { instrumentClasses });
+      let { code, map } = await swcTransform.transformAsync(source, swcOptions);
       if (this.shouldCompareSwcForModule(id)) {
         if (!this._swcComparedModules) this._swcComparedModules = new Set();
         if (!this._swcComparedModules.has(id)) {
