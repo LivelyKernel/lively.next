@@ -92,16 +92,18 @@ impl swc_core::ecma::visit::VisitMut for LivelyTransformVisitor {
         }
 
         // 7. Scope capturing transform (must be last as it wraps everything)
-        let mut scope_transform = ScopeCapturingTransform::new(
-            self.config.capture_obj.clone(),
-            self.config.declaration_wrapper.clone(),
-            self.config.exclude.clone(),
-            self.config.capture_imports,
-            self.config.resurrection,
-            self.config.module_id.clone(),
-            self.config.current_module_accessor.clone(),
-        );
-        program.visit_mut_with(&mut scope_transform);
+        if self.config.enable_scope_capture {
+            let mut scope_transform = ScopeCapturingTransform::new(
+                self.config.capture_obj.clone(),
+                self.config.declaration_wrapper.clone(),
+                self.config.exclude.clone(),
+                self.config.capture_imports,
+                self.config.resurrection,
+                self.config.module_id.clone(),
+                self.config.current_module_accessor.clone(),
+            );
+            program.visit_mut_with(&mut scope_transform);
+        }
     }
 }
 

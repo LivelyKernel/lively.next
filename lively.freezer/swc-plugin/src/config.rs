@@ -64,6 +64,12 @@ pub struct LivelyTransformConfig {
     #[serde(default = "default_true")]
     pub enable_export_split: bool,
 
+    /// Whether to enable scope capturing (default: true).
+    /// Set to false for lightweight transforms that only need
+    /// dynamic import rewriting without scope capture overhead.
+    #[serde(default = "default_true")]
+    pub enable_scope_capture: bool,
+
     /// Resolved import source -> normalized module id
     #[serde(default)]
     pub resolved_imports: HashMap<String, String>,
@@ -133,6 +139,7 @@ impl Default for LivelyTransformConfig {
             enable_dynamic_import_transform: true,
             enable_systemjs_transform: false,
             enable_export_split: true,
+            enable_scope_capture: true,
             resolved_imports: HashMap::new(),
         }
     }
