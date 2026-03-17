@@ -226,8 +226,8 @@ export async function swcMinify (code) {
     compress: {
       dead_code: true,
       conditionals: true,
-      evaluate: true,
-      unused: true
+      unused: false,
+      evaluate: false
     },
     mangle: true,
     ecma: 2018
