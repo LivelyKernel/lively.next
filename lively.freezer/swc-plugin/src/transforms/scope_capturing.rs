@@ -568,10 +568,12 @@ impl ScopeCapturingTransform {
         )))
     }
 
-    /// Build import.meta replacement expression with legacy parity:
-    /// ({ url: currentModuleAccessor.id }) or fallback eval-based accessor.
+    /// Build import.meta replacement expression.
+    /// Uses the module_id directly as the URL since it's known at bundle time.
     fn create_import_meta_expr(&self) -> Expr {
-        let url_expr = if let Some(accessor) = &self.current_module_accessor {
+        let url_expr = if !self.module_id.is_empty() {
+            create_string_expr(&self.module_id)
+        } else if let Some(accessor) = &self.current_module_accessor {
             create_member_expr(parse_expr_or_ident(accessor), "id")
         } else {
             create_ident_expr(r#"eval("typeof _context !== 'undefined' ? _context : {}").id"#)
