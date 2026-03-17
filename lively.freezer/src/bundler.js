@@ -1401,18 +1401,32 @@ export default class LivelyRollup {
   async generateBundle (plugin, bundle, depsCode, importMap, opts) {
     const modules = Object.values(bundle);
     if (this.minify && opts.format !== 'esm' && !this.sourceMap) {
-      // Parallelize minification per chunk instead of concatenating all chunks
       this.resolver.setStatus({ status: 'Minifying chunks...' });
 
-      await Promise.all(modules.map(async (chunk, i) => {
-        try {
-          const { min: minifiedCode } = await compileOnServer(chunk.code, this.resolver, this.useTerser);
-          chunk.code = minifiedCode.replace("'use strict';", '');
-        } catch (err) {
-          // If minification fails for a chunk, keep the original code
-          console.warn(`\x1b[33m       [!] Minification failed for chunk ${i}: ${err.message}\x1b[0m`);
-        }
-      }));
+      if (this.useTerser) {
+        // Legacy subprocess-based minification (Terser/Closure)
+        await Promise.all(modules.map(async (chunk, i) => {
+          try {
+            const { min: minifiedCode } = await compileOnServer(chunk.code, this.resolver, true);
+            chunk.code = minifiedCode.replace("'use strict';", '');
+          } catch (err) {
+            console.warn(`\x1b[33m       [!] Minification failed for chunk ${i}: ${err.message}\x1b[0m`);
+          }
+        }));
+      } else {
+        // In-process SWC minification — no subprocess, no temp files.
+        // Use new Function() to hide from static import analysis (same pattern as ensureSwcTransform)
+        const dynamicImport = new Function('specifier', 'return import(specifier)');
+        const { swcMinify } = await dynamicImport('./bundler-swc.js');
+        await Promise.all(modules.map(async (chunk, i) => {
+          try {
+            const { code: minified } = await swcMinify(chunk.code);
+            chunk.code = minified.replace("'use strict';", '');
+          } catch (err) {
+            console.warn(`\x1b[33m       [!] Minification failed for chunk ${i}: ${err.message}\x1b[0m`);
+          }
+        }));
+      }
     }
 
     if (this.isResurrectionBuild) {

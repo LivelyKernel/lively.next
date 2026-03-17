@@ -5,7 +5,7 @@
  * using custom Rust SWC plugins for 5-10x faster transforms.
  */
 
-import { transformSync } from '@swc/core';
+import { transformSync, minify } from '@swc/core';
 import { existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -211,6 +211,27 @@ export function createLivelySwcTransform(options) {
 export function transformLivelyCode(code, options = {}) {
   const transform = new LivelySwcTransform(options);
   return transform.transform(code, options);
+}
+
+/**
+ * Minify code using SWC's native minifier.
+ * Uses the async API so multiple chunks can be minified in parallel
+ * across SWC's native thread pool.
+ *
+ * @param {string} code - Source code to minify
+ * @returns {Promise<{code: string, map?: string}>}
+ */
+export async function swcMinify (code) {
+  return minify(code, {
+    compress: {
+      dead_code: true,
+      conditionals: true,
+      evaluate: true,
+      unused: true
+    },
+    mangle: true,
+    ecma: 2018
+  });
 }
 
 export default LivelySwcTransform;

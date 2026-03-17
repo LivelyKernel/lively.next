@@ -1,6 +1,6 @@
 /*global System, require*/
 import { arr } from "lively.lang";
-import socketio from "socket.io";
+import { Server as SocketIOServer } from "socket.io";
 
 export default class SocketioPlugin {
 
@@ -28,7 +28,7 @@ export default class SocketioPlugin {
     // the socket.io handler so we can inject cors headers. In newer nodes
     // emitter.prependListener can be used instead    
     var listeners1 = server.listeners("request").slice(),
-        _ = this.io = socketio(server, {path: this.socketIOPath}),
+        _ = this.io = new SocketIOServer(server, {path: this.socketIOPath}),
         listeners2 = server.listeners("request"),
         listeners3 = arr.withoutAll(listeners2, listeners1);
 
