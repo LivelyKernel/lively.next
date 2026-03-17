@@ -226,8 +226,26 @@ export async function swcMinify (code) {
     compress: {
       dead_code: true,
       conditionals: true,
+      comparisons: true,
+      booleans: true,
+      typeofs: true,
+      if_return: true,
+      join_vars: true,
+      collapse_vars: true,
+      sequences: true,
+      switches: true,
+      negate_iife: true,
+      properties: true,
+      drop_debugger: true,
+      loops: true,
+      // Unsafe for per-chunk minification — these reason about
+      // variable values/usage that may span chunk boundaries
+      evaluate: false,
       unused: false,
-      evaluate: false
+      reduce_vars: false,
+      reduce_funcs: false,
+      hoist_vars: false,
+      toplevel: false
     },
     mangle: true,
     ecma: 2018
