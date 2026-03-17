@@ -784,6 +784,7 @@ export default class LivelyRollup {
       if (id === ROOT_ID || id.startsWith('__rootModule__:')) {
         if (!needsLoadInstrumentation) return source;
         // Only rewrite System.import() → import(), skip scope capture
+        this.hasDynamicImports = true;
         return swcTransform.transformDynamicImportsOnly(source, { filename: id }).code;
       }
       const instrumentClasses = this.needsClassInstrumentation(id, source);
@@ -791,11 +792,13 @@ export default class LivelyRollup {
       if (!needsScopeCapture) {
         if (!needsLoadInstrumentation) return source;
         // Only rewrite System.import() → import(), skip scope capture
+        this.hasDynamicImports = true;
         return swcTransform.transformDynamicImportsOnly(source, { filename: id }).code;
       }
       // Full SWC transform: DynamicImportTransform runs at step 5 (before
       // ScopeCapturingTransform at step 7), so System.import() is rewritten
       // before System references get captured as __varRecorder__.System.
+      if (needsLoadInstrumentation) this.hasDynamicImports = true;
       const swcOptions = this.getSwcTransformOptions(id, source, { instrumentClasses });
       let { code, map } = await swcTransform.transformAsync(source, swcOptions);
       if (this.shouldCompareSwcForModule(id)) {
