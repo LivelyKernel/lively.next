@@ -1,0 +1,22 @@
+[package]
+name = "lively-swc-browser"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+lively-swc-transforms = { path = "../lively-swc-transforms" }
+swc_ecma_ast = "=5.0.1"
+swc_ecma_visit = "=5.0.0"
+swc_ecma_parser = "=6.0.2"
+swc_ecma_codegen = "=5.0.1"
+swc_common = { version = "=5.0.1", features = ["sourcemap"] }
+wasm-bindgen = "0.2.106"
+serde_json = "1"
+swc_ecma_transforms_module = "=6.0.0"
+swc_ecma_transforms_base = "=6.0.2"
+swc_ecma_utils = "=6.0.1"
+getrandom = { version = "0.3", features = ["wasm_js"] }
+js-sys = "0.3"

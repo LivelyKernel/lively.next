@@ -1,0 +1,18 @@
+[package]
+name = "lively-swc-plugin"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+lively-swc-transforms = { path = "../lively-swc-transforms" }
+swc_core = { version = "9.0.0", features = [
+    "ecma_plugin_transform",
+    "ecma_visit",
+    "ecma_utils",
+    "ecma_ast",
+] }
+swc_plugin_macro = "=1.0.0"
+serde_json = "1"
