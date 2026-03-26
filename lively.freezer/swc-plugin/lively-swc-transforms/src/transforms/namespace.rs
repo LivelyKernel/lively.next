@@ -1,8 +1,6 @@
-use swc_core::common::{SyntaxContext, DUMMY_SP};
-use swc_core::ecma::{
-    ast::*,
-    visit::{VisitMut, VisitMutWith},
-};
+use swc_common::{SyntaxContext, DUMMY_SP};
+use swc_ecma_ast::*;
+use swc_ecma_visit::{VisitMut, VisitMutWith};
 
 use crate::utils::ast_helpers::*;
 
@@ -311,10 +309,10 @@ impl VisitMut for NamespaceTransform {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use swc_core::common::{sync::Lrc, FileName, SourceMap};
-    use swc_core::ecma::codegen::{text_writer::JsWriter, Emitter, Config};
-    use swc_core::ecma::parser::{parse_file_as_module, Syntax};
-    use swc_core::ecma::visit::VisitMutWith;
+    use swc_common::{sync::Lrc, FileName, SourceMap};
+    use swc_ecma_codegen::{text_writer::JsWriter, Emitter, Config};
+    use swc_ecma_parser::{parse_file_as_module, Syntax};
+    use swc_ecma_visit::VisitMutWith;
 
     fn transform_code(code: &str) -> String {
         let cm = Lrc::new(SourceMap::default());

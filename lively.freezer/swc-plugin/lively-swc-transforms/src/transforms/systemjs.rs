@@ -1,9 +1,7 @@
 use std::collections::HashSet;
-use swc_core::common::DUMMY_SP;
-use swc_core::ecma::{
-    ast::*,
-    visit::{VisitMut, VisitMutWith},
-};
+use swc_common::DUMMY_SP;
+use swc_ecma_ast::*;
+use swc_ecma_visit::{VisitMut, VisitMutWith};
 use crate::utils::ast_helpers::*;
 
 /// Transform that rewrites SystemJS register calls to capture setters
@@ -63,7 +61,10 @@ impl SystemJsTransform {
     fn wrap_setter_assignment(&self, name: &str, assignment_expr: Expr) -> Expr {
         if let Some(wrapper) = &self.declaration_wrapper {
             create_call_expr(
-                create_ident_expr(wrapper),
+                create_computed_member_expr(
+                    create_ident_expr(&self.capture_obj),
+                    create_string_expr(wrapper),
+                ),
                 vec![
                     to_expr_or_spread(create_string_expr(name)),
                     to_expr_or_spread(create_string_expr("var")),

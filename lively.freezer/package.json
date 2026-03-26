@@ -34,10 +34,11 @@
     "build-landing-page": "./tools/build-landing-page.sh",
     "build-unified": "./tools/build-unified.sh",
     "build": "./tools/build-unified.sh",
-    "build-swc-plugin": "cd swc-plugin && cargo build --release --target wasm32-wasip1 && cp target/wasm32-wasip1/release/lively_swc_plugin.wasm lively_swc_plugin.wasm",
-    "build-swc-plugin-dev": "cd swc-plugin && cargo build --target wasm32-wasip1 && cp target/wasm32-wasip1/debug/lively_swc_plugin.wasm lively_swc_plugin.wasm",
+    "build-swc-plugin": "cd swc-plugin && cargo build --release --target wasm32-wasip1 -p lively-swc-plugin && cp target/wasm32-wasip1/release/lively_swc_plugin.wasm lively_swc_plugin.wasm",
+    "build-swc-plugin-dev": "cd swc-plugin && cargo build --target wasm32-wasip1 -p lively-swc-plugin && cp target/wasm32-wasip1/debug/lively_swc_plugin.wasm lively_swc_plugin.wasm",
+    "build-swc-browser": "cd swc-plugin && cargo build --release --target wasm32-unknown-unknown -p lively-swc-browser && wasm-bindgen --target web --out-dir ../swc-browser-wasm target/wasm32-unknown-unknown/release/lively_swc_browser.wasm",
     "example-swc-bundler": "./tools/run-swc-example.sh",
-    "test-swc-plugin": "cd swc-plugin && cargo test"
+    "test-swc-plugin": "cd swc-plugin && cargo test -p lively-swc-transforms"
   },
   "systemjs": {
     "map": {

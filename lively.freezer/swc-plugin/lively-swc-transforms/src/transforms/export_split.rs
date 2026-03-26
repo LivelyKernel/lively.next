@@ -1,8 +1,6 @@
-use swc_core::common::DUMMY_SP;
-use swc_core::ecma::{
-    ast::*,
-    visit::{VisitMut, VisitMutWith},
-};
+use swc_common::DUMMY_SP;
+use swc_ecma_ast::*;
+use swc_ecma_visit::{VisitMut, VisitMutWith};
 use crate::utils::ast_helpers::extract_idents_from_pat;
 
 /// Transform that splits export variable declarations

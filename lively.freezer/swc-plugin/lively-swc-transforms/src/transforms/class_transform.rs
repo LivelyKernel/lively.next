@@ -1,8 +1,6 @@
-use swc_core::common::{SyntaxContext, DUMMY_SP};
-use swc_core::ecma::{
-    ast::*,
-    visit::{VisitMut, VisitMutWith},
-};
+use swc_common::{SyntaxContext, DUMMY_SP};
+use swc_ecma_ast::*;
+use swc_ecma_visit::{VisitMut, VisitMutWith};
 
 use crate::config::ClassToFunctionConfig;
 use crate::utils::ast_helpers::*;
@@ -32,6 +30,9 @@ pub struct ClassTransform {
     _package_name: Option<String>,
     _package_version: Option<String>,
     default_class_counter: usize,
+    /// Depth > 0 means we're inside a function body — skip classToFunction
+    /// for nested classes (Babel only transforms top-level class declarations).
+    fn_depth: u32,
 }
 
 struct SuperRewriter {
@@ -216,6 +217,7 @@ impl ClassTransform {
             _package_name: package_name,
             _package_version: package_version,
             default_class_counter: 0,
+            fn_depth: 0,
         }
     }
 
@@ -796,29 +798,44 @@ impl VisitMut for ClassTransform {
         module.visit_mut_children_with(self);
     }
 
-    fn visit_mut_decl(&mut self, decl: &mut Decl) {
-        if let Decl::Class(class_decl) = decl {
-            let transformed = self.transform_class(Some(&class_decl.ident), &class_decl.class, true);
+    fn visit_mut_function(&mut self, f: &mut Function) {
+        self.fn_depth += 1;
+        f.visit_mut_children_with(self);
+        self.fn_depth -= 1;
+    }
 
-            // Replace with variable declaration
-            *decl = create_var_decl_with_ident(
-                // Keep parity with lively.classes/class-to-function-transform.js
-                // (`result = n.varDecl(..., 'var')`).
-                VarDeclKind::Var,
-                class_decl.ident.clone(),
-                Some(transformed),
-            );
-            return;
+    fn visit_mut_arrow_expr(&mut self, f: &mut ArrowExpr) {
+        self.fn_depth += 1;
+        f.visit_mut_children_with(self);
+        self.fn_depth -= 1;
+    }
+
+    fn visit_mut_decl(&mut self, decl: &mut Decl) {
+        // Only transform top-level class declarations (fn_depth == 0).
+        // Babel's classToFunction only targets module-level classes.
+        if self.fn_depth == 0 {
+            if let Decl::Class(class_decl) = decl {
+                let transformed = self.transform_class(Some(&class_decl.ident), &class_decl.class, true);
+                *decl = create_var_decl_with_ident(
+                    VarDeclKind::Var,
+                    class_decl.ident.clone(),
+                    Some(transformed),
+                );
+                return;
+            }
         }
 
         decl.visit_mut_children_with(self);
     }
 
     fn visit_mut_expr(&mut self, expr: &mut Expr) {
-        if let Expr::Class(class_expr) = expr {
-            let transformed = self.transform_class(class_expr.ident.as_ref(), &class_expr.class, false);
-            *expr = transformed;
-            return;
+        // Only transform top-level class expressions (fn_depth == 0).
+        if self.fn_depth == 0 {
+            if let Expr::Class(class_expr) = expr {
+                let transformed = self.transform_class(class_expr.ident.as_ref(), &class_expr.class, false);
+                *expr = transformed;
+                return;
+            }
         }
         expr.visit_mut_children_with(self);
     }
@@ -827,10 +844,10 @@ impl VisitMut for ClassTransform {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use swc_core::common::{sync::Lrc, FileName, SourceMap};
-    use swc_core::ecma::codegen::{text_writer::JsWriter, Emitter, Config};
-    use swc_core::ecma::parser::{parse_file_as_module, Syntax};
-    use swc_core::ecma::visit::VisitMutWith;
+    use swc_common::{sync::Lrc, FileName, SourceMap};
+    use swc_ecma_codegen::{text_writer::JsWriter, Emitter, Config};
+    use swc_ecma_parser::{parse_file_as_module, Syntax};
+    use swc_ecma_visit::VisitMutWith;
 
     fn transform_code(code: &str) -> String {
         let cm = Lrc::new(SourceMap::default());
