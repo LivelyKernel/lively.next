@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
-use swc_core::ecma::ast::*;
-use swc_core::ecma::visit::{Visit, VisitWith};
+use swc_ecma_ast::*;
+use swc_ecma_visit::{Visit, VisitWith};
 
 /// Analyzes variable scope and determines which variables are top-level
 #[derive(Default)]
@@ -237,8 +237,8 @@ fn extract_ids_recursive(pat: &Pat, ids: &mut Vec<Id>) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use swc_core::ecma::parser::{parse_file_as_module, Syntax};
-    use swc_core::common::{FileName, SourceMap, sync::Lrc};
+    use swc_ecma_parser::{parse_file_as_module, Syntax};
+    use swc_common::{FileName, SourceMap, sync::Lrc};
 
     fn analyze_code(code: &str) -> ScopeAnalyzer {
         let cm = Lrc::new(SourceMap::default());

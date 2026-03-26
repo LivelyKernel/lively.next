@@ -1,33 +1,13 @@
-use swc_core::ecma::{
-    ast::Program,
-    visit::VisitMutWith,
-};
-use swc_core::plugin::{plugin_transform, proxies::TransformPluginProgramMetadata};
-
-mod config;
-mod transforms;
-mod utils;
+pub mod config;
+pub mod transforms;
+pub mod utils;
 
 use config::LivelyTransformConfig;
+use swc_ecma_visit::VisitMutWith;
 use transforms::*;
 
-/// Main plugin entry point
-#[plugin_transform]
-pub fn process_transform(mut program: Program, metadata: TransformPluginProgramMetadata) -> Program {
-    // Avoid binding conflicts with swc_core 9.x by not importing PluginDiagnosticsEmitter.
-    let config = serde_json::from_str::<LivelyTransformConfig>(
-        &metadata
-            .get_transform_plugin_config()
-            .expect("Failed to get plugin config"),
-    )
-    .unwrap_or_default();
-
-    let mut visitor = LivelyTransformVisitor::new(config);
-    program.visit_mut_with(&mut visitor);
-    program
-}
-
-/// Main transform visitor that orchestrates all lively transforms
+/// Main transform visitor that orchestrates all lively transforms.
+/// Shared between the SWC plugin (wasm32-wasip1) and the browser WASM module.
 pub struct LivelyTransformVisitor {
     config: LivelyTransformConfig,
 }
@@ -38,8 +18,8 @@ impl LivelyTransformVisitor {
     }
 }
 
-impl swc_core::ecma::visit::VisitMut for LivelyTransformVisitor {
-    fn visit_mut_program(&mut self, program: &mut Program) {
+impl swc_ecma_visit::VisitMut for LivelyTransformVisitor {
+    fn visit_mut_program(&mut self, program: &mut swc_ecma_ast::Program) {
         // Apply transforms in the correct order:
 
         // 1. Split export variable declarations first (preprocessing)
@@ -127,15 +107,14 @@ impl swc_core::ecma::visit::VisitMut for LivelyTransformVisitor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use swc_core::common::{sync::Lrc, SourceMap, FileName};
+    use swc_common::{sync::Lrc, SourceMap, FileName};
 
     fn transform_code(code: &str, config: LivelyTransformConfig) -> String {
         let cm = Lrc::new(SourceMap::default());
         let fm = cm.new_source_file(FileName::Anon.into(), code.to_string());
 
-        // Parse the code
-        use swc_core::ecma::parser::{parse_file_as_module, Syntax};
-        let mut program = parse_file_as_module(
+        use swc_ecma_parser::{parse_file_as_module, Syntax};
+        let module = parse_file_as_module(
             &fm,
             Syntax::Es(Default::default()),
             Default::default(),
@@ -144,17 +123,16 @@ mod tests {
         )
         .unwrap();
 
-        // Transform (wrap Module in Program for visit_mut_program)
-        let mut prog = Program::Module(program);
+        let mut program = swc_ecma_ast::Program::Module(module);
         let mut visitor = LivelyTransformVisitor::new(config);
-        prog.visit_mut_with(&mut visitor);
-        let program = match prog {
-            Program::Module(m) => m,
-            _ => unreachable!(),
+        program.visit_mut_with(&mut visitor);
+
+        let module = match &program {
+            swc_ecma_ast::Program::Module(m) => m,
+            _ => panic!("Expected module"),
         };
 
-        // Generate code
-        use swc_core::ecma::codegen::{text_writer::JsWriter, Emitter, Config};
+        use swc_ecma_codegen::{text_writer::JsWriter, Emitter, Config};
         let mut buf = vec![];
         {
             let mut emitter = Emitter {
@@ -163,8 +141,7 @@ mod tests {
                 comments: None,
                 wr: JsWriter::new(cm, "\n", &mut buf, None),
             };
-
-            emitter.emit_module(&program).unwrap();
+            emitter.emit_module(module).unwrap();
         }
 
         String::from_utf8(buf).unwrap()
@@ -180,7 +157,7 @@ mod tests {
     #[test]
     fn test_export_class_is_captured_after_class_transform() {
         let mut config = LivelyTransformConfig::default();
-        config.class_to_function = Some(crate::config::ClassToFunctionConfig {
+        config.class_to_function = Some(config::ClassToFunctionConfig {
             class_holder: "__varRecorder__".to_string(),
             function_node: "initializeES6ClassForLively".to_string(),
             current_module_accessor: "module.id".to_string(),
@@ -397,5 +374,22 @@ export { EvalStrategy, SimpleEvalStrategy };
         // Should have import + captures from ExportedImportCapturePass
         assert!(output.contains("__varRecorder__.name1") || output.contains("__varRecorder__.name2"),
             "non-resurrection export-from should get captures: {}", output);
+    }
+
+    #[test]
+    fn test_declaration_wrapper_uses_computed_member() {
+        let mut config = LivelyTransformConfig::default();
+        config.capture_obj = "__lvVarRecorder".to_string();
+        config.declaration_wrapper = Some("defVar_http://localhost:9011/test.js".to_string());
+        config.module_id = "http://localhost:9011/test.js".to_string();
+        let input = "function createLivelyLangObject() { return 1; }";
+        let output = transform_code(input, config);
+        eprintln!("Output: {}", output);
+        assert!(
+            output.contains("__lvVarRecorder[\"defVar_http://localhost:9011/test.js\"]"),
+            "Expected computed member access __lvVarRecorder[\"defVar_...\"] but got:\n{}",
+            output
+        );
+        assert!(!output.contains("defVar_http:"), "Must NOT emit bare identifier with colon");
     }
 }

@@ -90,7 +90,10 @@ export class LivelySwcTransform {
       captureImports,
       resurrection,
       moduleId,
-      currentModuleAccessor: currentModuleAccessor || classToFunctionConfig?.currentModuleAccessor || null,
+      // Scope capture in bundle mode always uses FreezerRuntime.recorderFor().
+      // The class transform has its own currentModuleAccessor via classToFunction.currentModuleAccessor.
+      // Setting this to null ensures the FreezerRuntime path is used (not System.get("@lively-env").moduleEnv()).
+      currentModuleAccessor: null,
       packageName,
       packageVersion,
       enableComponentTransform: true,

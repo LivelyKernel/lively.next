@@ -1,8 +1,5 @@
-use swc_core::ecma::{
-    ast::*,
-    utils::quote_str,
-};
-use swc_core::common::{SyntaxContext, DUMMY_SP};
+use swc_ecma_ast::*;
+use swc_common::{SyntaxContext, DUMMY_SP};
 
 /// Create a member expression: obj.prop
 pub fn create_member_expr(obj: Expr, prop: &str) -> Expr {
@@ -69,7 +66,11 @@ pub fn parse_expr_or_ident(source: &str) -> Expr {
 
 /// Create a string literal expression
 pub fn create_string_expr(value: &str) -> Expr {
-    Expr::Lit(Lit::Str(quote_str!(value)))
+    Expr::Lit(Lit::Str(Str {
+        span: DUMMY_SP,
+        value: value.into(),
+        raw: None,
+    }))
 }
 
 /// Create a call expression: callee(args...)
@@ -303,4 +304,19 @@ pub fn create_iife(body: BlockStmt) -> Expr {
     });
 
     create_call_expr(func, vec![])
+}
+
+/// Check if a name is a JavaScript reserved keyword that cannot be used as
+/// a variable name.
+pub fn is_reserved_keyword(name: &str) -> bool {
+    matches!(name,
+        "break" | "case" | "catch" | "continue" | "debugger" | "default" |
+        "delete" | "do" | "else" | "export" | "extends" | "finally" |
+        "for" | "function" | "if" | "import" | "in" | "instanceof" |
+        "new" | "return" | "super" | "switch" | "this" | "throw" |
+        "try" | "typeof" | "var" | "void" | "while" | "with" |
+        "yield" | "enum" | "class" | "const" | "let" | "await" |
+        "implements" | "interface" | "package" | "private" |
+        "protected" | "public" | "static" | "null" | "true" | "false"
+    )
 }

@@ -1,9 +1,7 @@
-use swc_core::common::{SyntaxContext, DUMMY_SP};
+use swc_common::{SyntaxContext, DUMMY_SP};
 use std::collections::{HashSet, HashMap};
-use swc_core::ecma::{
-    ast::*,
-    visit::{VisitMut, VisitMutWith},
-};
+use swc_ecma_ast::*;
+use swc_ecma_visit::{VisitMut, VisitMutWith};
 
 use crate::utils::ast_helpers::*;
 use crate::utils::scope_analyzer::ScopeAnalyzer;
@@ -45,11 +43,18 @@ pub struct ScopeCapturingTransform {
     /// Top-level imported bindings
     imported_vars: HashSet<Id>,
 
+    /// Map from imported local name → (source module, original/imported name)
+    /// Used to convert `export { importedVar }` to `export { orig } from 'src'`
+    /// to work around SWC system_js dropping re-exported import bindings.
+    import_sources: HashMap<String, (String, String)>,
+
     /// Top-level function capture assignments that must run before body code
     hoisted_function_captures: Vec<ModuleItem>,
 
     /// Current depth (0 = module level, >0 = nested)
     depth: usize,
+    /// Function nesting depth (0 = module level, >0 = inside function body)
+    fn_depth: usize,
 
     /// Lexically declared variable names in nested scopes (for shadowing detection)
     scope_stack: Vec<ScopeFrame>,
@@ -101,10 +106,12 @@ impl ScopeCapturingTransform {
             current_module_accessor,
             capturable_vars: HashSet::new(),
             imported_vars: HashSet::new(),
+            import_sources: HashMap::new(),
             hoisted_function_captures: Vec::new(),
             collected_exports: Vec::new(),
             resolved_imports,
             depth: 0,
+            fn_depth: 0,
             scope_stack: vec![ScopeFrame {
                 names: HashSet::new(),
                 is_function_scope: true,
@@ -115,6 +122,9 @@ impl ScopeCapturingTransform {
 
     /// Check if an identifier should be captured
     fn should_capture(&self, id: &Id) -> bool {
+        // Note: Babel captures inside ALL functions including nested ones.
+        // No fn_depth skip here.
+
         // Never rewrite identifiers that are shadowed in a nested lexical scope.
         // This keeps locals (params/vars/lets) untouched while still rewriting
         // references to captured top-level bindings in nested functions/blocks.
@@ -167,7 +177,10 @@ impl ScopeCapturingTransform {
     /// __moduleMeta__ is only used in insertCapturesForFunctionDeclarations (the LAST step).
     fn wrap_declaration(&self, name: &str, kind: &str, value: Expr) -> Expr {
         if let Some(ref wrapper) = self.declaration_wrapper {
-            // declarationWrapper("name", "kind", value, __varRecorder__)
+            // capture_obj[wrapper]("name", "kind", value, capture_obj)
+            // Use computed member access because wrapper names like
+            // "defVar_http://localhost:9011/module.js" contain characters
+            // that are invalid in bare JS identifiers.
             create_call_expr(
                 parse_expr_or_ident(wrapper),
                 vec![
@@ -534,6 +547,72 @@ impl ScopeCapturingTransform {
         });
     }
 
+    /// Pre-scan a block of statements for `var` declarations and add them
+    /// to the current (function) scope. This simulates JS var hoisting —
+    /// `var` names are visible from the start of the function, not just
+    /// from the declaration position. Without this, `should_capture` might
+    /// incorrectly capture a reference that appears before the `var` decl.
+    fn prescan_var_decls_in_block(&mut self, stmts: &[Stmt]) {
+        use swc_ecma_visit::Visit;
+        struct VarCollector {
+            /// Names from `var x = fn()/obj/array/...` (substantial init)
+            var_names: Vec<String>,
+            /// Names from `function x() {}` declarations
+            fn_decl_names: Vec<String>,
+        }
+        impl Visit for VarCollector {
+            fn visit_var_decl(&mut self, decl: &VarDecl) {
+                if matches!(decl.kind, VarDeclKind::Var) {
+                    for d in &decl.decls {
+                        // Only collect vars that have a NON-TRIVIAL initializer.
+                        // `var a;` (no init) or `var a = simple` are hoisting
+                        // artifacts that Babel ignores. But `var Le = function(t){...}`
+                        // is a genuinely new binding that should shadow.
+                        let has_substantial_init = d.init.as_ref().map_or(false, |init| {
+                            matches!(&**init,
+                                Expr::Fn(_) | Expr::Arrow(_) | Expr::Class(_) |
+                                Expr::Call(_) | Expr::New(_) | Expr::Object(_) |
+                                Expr::Array(_))
+                        });
+                        if has_substantial_init {
+                            for (sym, _) in extract_idents_from_pat(&d.name) {
+                                self.var_names.push(sym.to_string());
+                            }
+                        }
+                    }
+                }
+            }
+            fn visit_fn_decl(&mut self, decl: &FnDecl) {
+                self.fn_decl_names.push(decl.ident.sym.to_string());
+            }
+            // Don't descend into nested functions — their vars are separate
+            fn visit_function(&mut self, _: &Function) {}
+            fn visit_arrow_expr(&mut self, _: &ArrowExpr) {}
+        }
+        let mut collector = VarCollector { var_names: vec![], fn_decl_names: vec![] };
+        for stmt in stmts {
+            stmt.visit_children_with(&mut collector);
+        }
+        // Function declarations inside nested functions ALWAYS shadow,
+        // even if the name exists at module level (capturable_vars).
+        // e.g. crypto.js: `function x() {}` inside dew() is a genuinely
+        // different binding from module-level `var x`.
+        for name in &collector.fn_decl_names {
+            self.declare_in_nearest_function_scope(name);
+        }
+        // Var declarations with substantial initializers ALWAYS shadow.
+        // The has_substantial_init check already filters out bare `var a;`
+        // (hoisting artifacts that Babel ignores), so no capturable_vars
+        // check is needed here.
+        // - fs.js: `var Le = function(t){...}(parent)` inside dew() —
+        //   Call init (substantial) → shadows even though Le is module-level.
+        // - @babel/generator: `var a;` inside s() — no init → not collected
+        //   → module-level `a` stays captured.
+        for name in &collector.var_names {
+            self.declare_in_nearest_function_scope(name);
+        }
+    }
+
     fn declare_in_current_scope(&mut self, name: &str) {
         if let Some(scope) = self.scope_stack.last_mut() {
             scope.names.insert(name.to_string());
@@ -570,8 +649,8 @@ impl ScopeCapturingTransform {
         let meta_init = if let Some(ref accessor) = self.current_module_accessor {
             // The currentModuleAccessor is a complex JS expression (object literal).
             // Use SWC's parser to parse it properly.
-            use swc_core::ecma::parser::{parse_file_as_expr, Syntax};
-            use swc_core::common::{sync::Lrc, FileName, SourceMap as SwcSourceMap};
+            use swc_ecma_parser::{parse_file_as_expr, Syntax};
+            use swc_common::{sync::Lrc, FileName, SourceMap as SwcSourceMap};
             let cm = Lrc::new(SwcSourceMap::default());
             let fm = cm.new_source_file(FileName::Anon.into(), accessor.clone());
             match parse_file_as_expr(
@@ -711,21 +790,42 @@ impl ScopeCapturingTransform {
         })
     }
 
-    /// Build:
-    /// const __varRecorder__ = (..runtime..).recorderFor("<moduleId>", __contextModule__);
+    /// Build the recorder init declaration.
+    /// In lively.modules/browser context (current_module_accessor set):
+    ///   const __varRecorder__ = System.get("@lively-env").moduleEnv("<moduleId>").recorder;
+    /// In FreezerRuntime/bundle context:
+    ///   const __varRecorder__ = (..runtime..).recorderFor("<moduleId>", __contextModule__);
     fn create_recorder_init_decl(&self, has_local_lively_binding: bool) -> ModuleItem {
-        let recorder_call = create_call_expr(
-            create_member_expr(self.recorder_runtime_expr(has_local_lively_binding), "recorderFor"),
-            vec![
-                to_expr_or_spread(create_string_expr(&self.module_id)),
-                to_expr_or_spread(create_ident_expr("__contextModule__")),
-            ],
-        );
+        let recorder_init = if self.current_module_accessor.is_some() {
+            // Browser/lively.modules context: recorder lives on the lively-env module environment
+            create_member_expr(
+                create_call_expr(
+                    create_member_expr(
+                        create_call_expr(
+                            create_member_expr(create_ident_expr("System"), "get"),
+                            vec![to_expr_or_spread(create_string_expr("@lively-env"))],
+                        ),
+                        "moduleEnv",
+                    ),
+                    vec![to_expr_or_spread(create_string_expr(&self.module_id))],
+                ),
+                "recorder",
+            )
+        } else {
+            // FreezerRuntime/bundle context
+            create_call_expr(
+                create_member_expr(self.recorder_runtime_expr(has_local_lively_binding), "recorderFor"),
+                vec![
+                    to_expr_or_spread(create_string_expr(&self.module_id)),
+                    to_expr_or_spread(create_ident_expr("__contextModule__")),
+                ],
+            )
+        };
 
         ModuleItem::Stmt(Stmt::Decl(create_var_decl(
             VarDeclKind::Const,
             &self.capture_obj,
-            Some(recorder_call),
+            Some(recorder_init),
         )))
     }
 
@@ -1001,10 +1101,29 @@ impl ScopeCapturingTransform {
                         }
                     }
                     if self.should_capture_pattern(&decl.name) {
-                        let declaration_kind = match var_decl.kind {
-                            VarDeclKind::Var => "var",
-                            VarDeclKind::Let => "let",
-                            VarDeclKind::Const => "const",
+                        // After classToFunction, `class X` becomes `var X = IIFE(...)`.
+                        // Detect this pattern and use "class" as the kind so the
+                        // declarationWrapper callback sets lively-module-meta correctly.
+                        let is_class_to_function = init.as_ref().map_or(false, |expr| {
+                            if let Expr::Call(call) = &**expr {
+                                // classToFunction wraps as: (function(superclass) { ... return initializeES6ClassForLively(...) })({...})
+                                if let swc_ecma_ast::Callee::Expr(callee) = &call.callee {
+                                    if let Expr::Paren(paren) = &**callee {
+                                        if let Expr::Fn(_) = &*paren.expr { return true; }
+                                    }
+                                    if let Expr::Fn(_) = &**callee { return true; }
+                                }
+                            }
+                            false
+                        });
+                        let declaration_kind = if is_class_to_function {
+                            "class"
+                        } else {
+                            match var_decl.kind {
+                                VarDeclKind::Var => "var",
+                                VarDeclKind::Let => "let",
+                                VarDeclKind::Const => "const",
+                            }
                         };
                         let stmts =
                             self.transform_pattern_to_stmts(&decl.name, init.clone(), declaration_kind);
@@ -1035,7 +1154,45 @@ impl ScopeCapturingTransform {
                 if !self.capture_imports || import_decl.specifiers.is_empty() {
                     return vec![ModuleItem::ModuleDecl(ModuleDecl::Import(import_decl))];
                 }
-                let mut items = vec![ModuleItem::ModuleDecl(ModuleDecl::Import(import_decl.clone()))];
+                // Workaround for SWC system_js bug: when an import combines
+                // default + named specifiers (`import X, { y } from 'mod'`),
+                // system_js uses the default import's name as the setter
+                // parameter, shadowing the local variable.  Rename the
+                // default specifier to a unique name and add an alias var.
+                let has_default = import_decl.specifiers.iter().any(|s| matches!(s, ImportSpecifier::Default(_)));
+                let has_named = import_decl.specifiers.iter().any(|s| matches!(s, ImportSpecifier::Named(_)));
+                let mut items = if has_default && has_named {
+                    // Rename default import: `import X, {y} from 'mod'`
+                    // → `import __default_X__, {y} from 'mod'; var X = __default_X__;`
+                    let mut new_specs = Vec::new();
+                    let mut alias_stmts = Vec::new();
+                    for spec in &import_decl.specifiers {
+                        match spec {
+                            ImportSpecifier::Default(def) => {
+                                let orig_name = def.local.sym.to_string();
+                                let temp_name = format!("__default_{}__", orig_name);
+                                new_specs.push(ImportSpecifier::Default(ImportDefaultSpecifier {
+                                    span: DUMMY_SP,
+                                    local: Ident::new(temp_name.as_str().into(), DUMMY_SP, SyntaxContext::empty()),
+                                }));
+                                alias_stmts.push(ModuleItem::Stmt(Stmt::Decl(create_var_decl(
+                                    VarDeclKind::Var,
+                                    &orig_name,
+                                    Some(Expr::Ident(Ident::new(temp_name.as_str().into(), DUMMY_SP, SyntaxContext::empty()))),
+                                ))));
+                            }
+                            other => new_specs.push(other.clone()),
+                        }
+                    }
+                    let mut v = vec![ModuleItem::ModuleDecl(ModuleDecl::Import(ImportDecl {
+                        specifiers: new_specs,
+                        ..import_decl.clone()
+                    }))];
+                    v.extend(alias_stmts);
+                    v
+                } else {
+                    vec![ModuleItem::ModuleDecl(ModuleDecl::Import(import_decl.clone()))]
+                };
                 for spec in &import_decl.specifiers {
                     let local = match spec {
                         ImportSpecifier::Named(named) => named.local.clone(),
@@ -1059,9 +1216,14 @@ impl ScopeCapturingTransform {
                 // Only for capture_imports mode (source-map builds).
                 // Resurrection builds use a different approach below.
                 if self.capture_imports && export_decl.src.is_some() {
+                    // Keep the original re-export as-is (system_js handles
+                    // `export { X } from 'mod'` correctly via the setter).
+                    // Add a SEPARATE import so scope capture can access the
+                    // bindings via the recorder.  Previously this replaced the
+                    // re-export with a local `export { X }` which system_js
+                    // silently drops for imported bindings.
                     let src = export_decl.src.as_ref().unwrap().value.to_string();
                     let mut import_specs = Vec::new();
-                    let mut export_specs = Vec::new();
                     let mut assigns = Vec::new();
 
                     for spec in &export_decl.specifiers {
@@ -1081,7 +1243,7 @@ impl ScopeCapturingTransform {
                             };
 
                             let local_name = if exported_name == "default" {
-                                format!("__default_export_{}__", import_name)
+                                format!("__default_{}__", import_name)
                             } else {
                                 exported_name.clone()
                             };
@@ -1090,15 +1252,6 @@ impl ScopeCapturingTransform {
                                 span: DUMMY_SP,
                                 local: Ident::new(local_name.as_str().into(), DUMMY_SP, SyntaxContext::empty()),
                                 imported: Some(ModuleExportName::Ident(Ident::new(import_name.as_str().into(), DUMMY_SP, SyntaxContext::empty()))),
-                                is_type_only: false,
-                            }));
-
-                            export_specs.push(ExportSpecifier::Named(ExportNamedSpecifier {
-                                span: DUMMY_SP,
-                                orig: ModuleExportName::Ident(Ident::new(local_name.as_str().into(), DUMMY_SP, SyntaxContext::empty())),
-                                exported: if exported_name == local_name { None } else {
-                                    Some(ModuleExportName::Ident(Ident::new(exported_name.as_str().into(), DUMMY_SP, SyntaxContext::empty())))
-                                },
                                 is_type_only: false,
                             }));
 
@@ -1122,19 +1275,159 @@ impl ScopeCapturingTransform {
                         with: None,
                         phase: Default::default(),
                     }));
-                    let export_decl = ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(NamedExport {
-                        span: DUMMY_SP,
-                        specifiers: export_specs,
-                        src: None,
-                        type_only: false,
-                        with: None,
-                    }));
 
-                    let mut items = vec![import_decl, export_decl];
+                    // Keep original re-export, add import + captures
+                    let mut items = vec![
+                        ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(export_decl)),
+                        import_decl,
+                    ];
                     items.extend(assigns);
                     return items;
                 }
-                vec![ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(export_decl))]
+                // Workaround for SWC system_js bug #2: system_js drops
+                // `export { importedBinding }` (no _export call generated).
+                // Split specifiers that reference imported bindings into
+                // per-source re-exports (`export { X } from 'mod'`) which
+                // system_js handles correctly via the setter.
+                if export_decl.src.is_none() {
+                    let mut reexport_specs: HashMap<String, Vec<ExportSpecifier>> = HashMap::new();
+                    let mut local_specs: Vec<ExportSpecifier> = Vec::new();
+
+                    for spec in &export_decl.specifiers {
+                        let local_name = match spec {
+                            ExportSpecifier::Named(n) => match &n.orig {
+                                ModuleExportName::Ident(id) => Some(id.sym.to_string()),
+                                _ => None,
+                            },
+                            _ => None,
+                        };
+                        let src_info = local_name.as_ref().and_then(|n| self.import_sources.get(n));
+                        // Skip namespace imports ("*") — they can't be
+                        // re-exported as named specifiers in this path.
+                        if let (Some(ExportSpecifier::Named(named)), Some((src, orig_name))) = (Some(spec), src_info) {
+                            if orig_name == "*" {
+                                local_specs.push(spec.clone());
+                                continue;
+                            }
+                            let local_name_str = local_name.unwrap();
+                            let exported_name = match &named.exported {
+                                Some(ModuleExportName::Ident(id)) => id.sym.to_string(),
+                                Some(ModuleExportName::Str(s)) => s.value.to_string(),
+                                None => local_name_str.clone(),
+                            };
+                            let reexport_spec = ExportSpecifier::Named(ExportNamedSpecifier {
+                                span: DUMMY_SP,
+                                orig: ModuleExportName::Ident(Ident::new(
+                                    orig_name.as_str().into(), DUMMY_SP, SyntaxContext::empty(),
+                                )),
+                                exported: if *orig_name == exported_name {
+                                    None
+                                } else {
+                                    Some(ModuleExportName::Ident(Ident::new(
+                                        exported_name.as_str().into(), DUMMY_SP, SyntaxContext::empty(),
+                                    )))
+                                },
+                                is_type_only: false,
+                            });
+                            reexport_specs.entry(src.clone()).or_default().push(reexport_spec);
+                        } else {
+                            local_specs.push(spec.clone());
+                        }
+                    }
+
+                    if !reexport_specs.is_empty() {
+                        let mut items = Vec::new();
+                        if !local_specs.is_empty() {
+                            items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(NamedExport {
+                                span: DUMMY_SP,
+                                specifiers: local_specs,
+                                src: None,
+                                type_only: false,
+                                with: None,
+                            })));
+                        }
+                        for (src, specs) in reexport_specs {
+                            items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(NamedExport {
+                                span: DUMMY_SP,
+                                specifiers: specs,
+                                src: Some(Box::new(Str { span: DUMMY_SP, value: src.into(), raw: None })),
+                                type_only: false,
+                                with: None,
+                            })));
+                        }
+                        return items;
+                    }
+                }
+
+                // Desugar `export { X as Y }` → `var __export_Y__ = X; export { __export_Y__ }`
+                // to prevent system_js from hoisting the short alias `Y` that
+                // collides with locals in minified code.  The long prefix
+                // `__export_` avoids collisions.  Phase 3 (restore_export_aliases)
+                // rewrites _export("__export_Y__", ...) → _export("Y", ...).
+                let has_alias = export_decl.src.is_none() && export_decl.specifiers.iter().any(|s| {
+                    matches!(s, ExportSpecifier::Named(n) if n.exported.is_some())
+                });
+                if has_alias {
+                    let mut items = Vec::new();
+                    let mut new_specs = Vec::new();
+                    for spec in &export_decl.specifiers {
+                        if let ExportSpecifier::Named(named) = spec {
+                            if let Some(ref exported) = named.exported {
+                                let exported_name = match exported {
+                                    ModuleExportName::Ident(id) => id.sym.to_string(),
+                                    ModuleExportName::Str(s) => s.value.to_string(),
+                                };
+                                let local_ident = match &named.orig {
+                                    ModuleExportName::Ident(id) => id.clone(),
+                                    ModuleExportName::Str(_) => {
+                                        new_specs.push(spec.clone());
+                                        continue;
+                                    }
+                                };
+                                // Only desugar if the orig name is a module-level
+                                // declaration (in capturable_vars). CJS-to-ESM
+                                // converters can create exports referencing
+                                // function-scoped vars (e.g. `export { Le as X }`
+                                // where Le is inside dew()). Skip these.
+                                if !self.capturable_vars.iter().any(|id| id.0.as_ref() == local_ident.sym.as_ref()) {
+                                    new_specs.push(spec.clone());
+                                    continue;
+                                }
+                                // Use a long internal name to avoid collision
+                                let internal_name = format!("__export_{}__", exported_name);
+                                items.push(ModuleItem::Stmt(Stmt::Decl(create_var_decl(
+                                    VarDeclKind::Var,
+                                    &internal_name,
+                                    Some(Expr::Ident(local_ident)),
+                                ))));
+                                new_specs.push(ExportSpecifier::Named(ExportNamedSpecifier {
+                                    span: DUMMY_SP,
+                                    orig: ModuleExportName::Ident(Ident::new(
+                                        internal_name.as_str().into(), DUMMY_SP, SyntaxContext::empty(),
+                                    )),
+                                    exported: Some(ModuleExportName::Ident(Ident::new(
+                                        exported_name.as_str().into(), DUMMY_SP, SyntaxContext::empty(),
+                                    ))),
+                                    is_type_only: false,
+                                }));
+                            } else {
+                                new_specs.push(spec.clone());
+                            }
+                        } else {
+                            new_specs.push(spec.clone());
+                        }
+                    }
+                    items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(NamedExport {
+                        span: DUMMY_SP,
+                        specifiers: new_specs,
+                        src: None,
+                        type_only: false,
+                        with: None,
+                    })));
+                    items
+                } else {
+                    vec![ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(export_decl))]
+                }
             }
             ModuleItem::ModuleDecl(ModuleDecl::ExportAll(export_all)) => {
                 // For capture_imports builds, add namespace import + Object.assign.
@@ -1464,18 +1757,28 @@ impl VisitMut for ScopeCapturingTransform {
     fn visit_mut_module(&mut self, module: &mut Module) {
         // First pass: analyze scope to determine capturable variables
         let mut analyzer = ScopeAnalyzer::new();
-        use swc_core::ecma::visit::VisitWith;
+        use swc_ecma_visit::VisitWith;
         module.visit_with(&mut analyzer);
 
         self.imported_vars.clear();
+        self.import_sources.clear();
         for item in &module.body {
             if let ModuleItem::ModuleDecl(ModuleDecl::Import(import_decl)) = item {
+                let src = import_decl.src.value.to_string();
                 for spec in &import_decl.specifiers {
-                    let id = match spec {
-                        ImportSpecifier::Named(named) => named.local.to_id(),
-                        ImportSpecifier::Default(def) => def.local.to_id(),
-                        ImportSpecifier::Namespace(ns) => ns.local.to_id(),
+                    let (id, orig_name) = match spec {
+                        ImportSpecifier::Named(named) => {
+                            let orig = match &named.imported {
+                                Some(ModuleExportName::Ident(id)) => id.sym.to_string(),
+                                Some(ModuleExportName::Str(s)) => s.value.to_string(),
+                                None => named.local.sym.to_string(),
+                            };
+                            (named.local.to_id(), orig)
+                        }
+                        ImportSpecifier::Default(def) => (def.local.to_id(), "default".to_string()),
+                        ImportSpecifier::Namespace(ns) => (ns.local.to_id(), "*".to_string()),
                     };
+                    self.import_sources.insert(id.0.to_string(), (src.clone(), orig_name));
                     self.imported_vars.insert(id);
                 }
             }
@@ -1663,22 +1966,69 @@ impl VisitMut for ScopeCapturingTransform {
         prop.visit_mut_children_with(self);
     }
 
+    // Scope tracking for constructors (separate AST node from Function)
+    fn visit_mut_constructor(&mut self, cons: &mut Constructor) {
+        self.enter_scope(true);
+        for param in &cons.params {
+            match param {
+                ParamOrTsParamProp::Param(p) => self.declare_pattern_in_current_scope(&p.pat),
+                ParamOrTsParamProp::TsParamProp(tp) => {
+                    match &tp.param {
+                        TsParamPropParam::Ident(id) => self.declare_in_current_scope(id.id.sym.as_ref()),
+                        TsParamPropParam::Assign(assign) => self.declare_pattern_in_current_scope(&assign.left),
+                    }
+                }
+            }
+        }
+        cons.visit_mut_children_with(self);
+        self.exit_scope();
+    }
+
     // Scope tracking for nested functions/blocks
     fn visit_mut_function(&mut self, func: &mut Function) {
+        self.fn_depth += 1;
         self.enter_scope(true);
         for param in &func.params {
             self.declare_pattern_in_current_scope(&param.pat);
         }
+        // Pre-scan: hoist all `var` declarations in the function body
+        // to the function scope BEFORE transforming. This ensures
+        // `should_capture` sees var-hoisted names even when the var
+        // declaration appears later in the source (JS var hoisting).
+        if let Some(body) = &func.body {
+            self.prescan_var_decls_in_block(&body.stmts);
+        }
         func.visit_mut_children_with(self);
         self.exit_scope();
+        self.fn_depth -= 1;
     }
 
     fn visit_mut_arrow_expr(&mut self, arrow: &mut ArrowExpr) {
+        self.fn_depth += 1;
         self.enter_scope(true);
         for param in &arrow.params {
             self.declare_pattern_in_current_scope(param);
         }
         arrow.visit_mut_children_with(self);
+        self.exit_scope();
+        self.fn_depth -= 1;
+    }
+
+    fn visit_mut_for_stmt(&mut self, stmt: &mut ForStmt) {
+        self.enter_scope(false);
+        stmt.visit_mut_children_with(self);
+        self.exit_scope();
+    }
+
+    fn visit_mut_for_in_stmt(&mut self, stmt: &mut ForInStmt) {
+        self.enter_scope(false);
+        stmt.visit_mut_children_with(self);
+        self.exit_scope();
+    }
+
+    fn visit_mut_for_of_stmt(&mut self, stmt: &mut ForOfStmt) {
+        self.enter_scope(false);
+        stmt.visit_mut_children_with(self);
         self.exit_scope();
     }
 
@@ -1713,18 +2063,24 @@ impl VisitMut for ScopeCapturingTransform {
     }
 
     fn visit_mut_fn_expr(&mut self, fn_expr: &mut FnExpr) {
-        self.enter_scope(true);
         if let Some(ident) = &fn_expr.ident {
+            // Named fn expressions: the name is visible inside the function
+            // but declared in a scope between the outer and inner scopes.
+            self.enter_scope(false);
             self.declare_in_current_scope(ident.sym.as_ref());
         }
-        fn_expr.function.visit_mut_children_with(self);
-        self.exit_scope();
+        // visit_mut_function handles entering the function scope + params
+        fn_expr.visit_mut_children_with(self);
+        if fn_expr.ident.is_some() {
+            self.exit_scope();
+        }
     }
 
     fn visit_mut_fn_decl(&mut self, fn_decl: &mut FnDecl) {
         if self.depth > 0 {
             self.declare_in_current_scope(fn_decl.ident.sym.as_ref());
         }
+        // visit_mut_function handles entering the function scope + params
         fn_decl.visit_mut_children_with(self);
     }
 
@@ -1755,9 +2111,9 @@ fn rand_id() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use swc_core::common::{sync::Lrc, FileName, SourceMap};
-    use swc_core::ecma::codegen::{text_writer::JsWriter, Emitter, Config};
-    use swc_core::ecma::parser::{parse_file_as_module, Syntax};
+    use swc_common::{sync::Lrc, FileName, SourceMap};
+    use swc_ecma_codegen::{text_writer::JsWriter, Emitter, Config};
+    use swc_ecma_parser::{parse_file_as_module, Syntax};
 
     fn transform_code(code: &str) -> String {
         let cm = Lrc::new(SourceMap::default());
