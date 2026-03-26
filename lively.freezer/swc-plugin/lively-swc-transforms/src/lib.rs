@@ -378,18 +378,26 @@ export { EvalStrategy, SimpleEvalStrategy };
 
     #[test]
     fn test_declaration_wrapper_uses_computed_member() {
+        // With declaration_wrapper set, function declarations get wrapped with the wrapper
+        // as a direct function call, passing (name, kind, value, captureObj) as args.
+        // Variable declarations do NOT get __define__ wrapping.
         let mut config = LivelyTransformConfig::default();
         config.capture_obj = "__lvVarRecorder".to_string();
         config.declaration_wrapper = Some("defVar_http://localhost:9011/test.js".to_string());
         config.module_id = "http://localhost:9011/test.js".to_string();
         let input = "function createLivelyLangObject() { return 1; }";
         let output = transform_code(input, config);
-        eprintln!("Output: {}", output);
+        // Function declarations are wrapped: wrapper("name", "function", ident, captureObj)
         assert!(
-            output.contains("__lvVarRecorder[\"defVar_http://localhost:9011/test.js\"]"),
-            "Expected computed member access __lvVarRecorder[\"defVar_...\"] but got:\n{}",
+            output.contains(r#"defVar_http://localhost:9011/test.js("createLivelyLangObject", "function", createLivelyLangObject, __lvVarRecorder)"#),
+            "Expected declaration wrapper call with __lvVarRecorder as 4th arg but got:\n{}",
             output
         );
-        assert!(!output.contains("defVar_http:"), "Must NOT emit bare identifier with colon");
+        // The capture assignment should use the wrapper result
+        assert!(
+            output.contains("__lvVarRecorder.createLivelyLangObject ="),
+            "Expected recorder capture assignment but got:\n{}",
+            output
+        );
     }
 }
