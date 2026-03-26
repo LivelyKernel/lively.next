@@ -1,7 +1,7 @@
 use swc_common::{SyntaxContext, DUMMY_SP};
 use std::collections::{HashSet, HashMap};
 use swc_ecma_ast::*;
-use swc_ecma_visit::{VisitMut, VisitMutWith};
+use swc_ecma_visit::{VisitWith, VisitMut, VisitMutWith};
 
 use crate::utils::ast_helpers::*;
 use crate::utils::scope_analyzer::ScopeAnalyzer;
@@ -2247,11 +2247,11 @@ mod tests {
 
     #[test]
     fn test_export_aliased_var() {
-        // Babel: 'var x = 23; export { x as y };' → '_rec.x = 23; var x = _rec.x; export { x as y };'
+        // 'var x = 23; export { x as y };' → captures x, renames export local to __export_y__
         let output = transform_code("var x = 23; export { x as y };");
         assert!(output.contains("__varRecorder__.x = 23;"), "captures local var with value: {}", output);
-        assert!(output.contains("var x = __varRecorder__.x;"), "re-declares var from recorder: {}", output);
-        assert!(output.contains("export { x as y }"), "keeps aliased export: {}", output);
+        assert!(output.contains("var __export_y__ = __varRecorder__.x;"), "re-declares with __export_ prefix: {}", output);
+        assert!(output.contains("export { __export_y__ as y }"), "keeps aliased export with renamed local: {}", output);
     }
 
     #[test]
@@ -2899,11 +2899,11 @@ mod tests {
 
     #[test]
     fn babel_export_aliased_var_statement() {
-        // Babel: 'var x = 23; export { x as y };'
+        // 'var x = 23; export { x as y };' → captures x, renames export local to __export_y__
         let output = transform_code("var x = 23; export { x as y };");
         assert!(output.contains("__varRecorder__.x = 23;"), "captures x with value: {}", output);
-        assert!(output.contains("var x = __varRecorder__.x;"), "re-declares var from recorder: {}", output);
-        assert!(output.contains("export { x as y }"), "keeps aliased export: {}", output);
+        assert!(output.contains("var __export_y__ = __varRecorder__.x;"), "re-declares with __export_ prefix: {}", output);
+        assert!(output.contains("export { __export_y__ as y }"), "keeps aliased export with renamed local: {}", output);
     }
 
     #[test]
@@ -3291,7 +3291,7 @@ mod tests {
         // Babel puts __module_exports__ near the top (after recorder init),
         // not at the end of the module body
         let output = transform_code_resurrection("export var x = 23; var y = 42;");
-        let recorder_pos = output.find("recorderFor").expect("has recorder init");
+        let recorder_pos = output.find("moduleEnv").expect("has recorder init");
         let module_exports_pos = output.find("__module_exports__").expect("has module_exports");
         let last_assignment_pos = output.rfind("__varRecorder__").expect("has assignments");
         assert!(module_exports_pos < last_assignment_pos,
@@ -3466,7 +3466,7 @@ mod tests {
         // The hoisted let declarations must come AFTER the recorder init and __moduleMeta__,
         // but BEFORE other code
         let output = transform_code_resurrection("var x = 1; function foo() {}");
-        let recorder_pos = output.find("recorderFor").expect("has recorder init");
+        let recorder_pos = output.find("moduleEnv").expect("has recorder init");
         let meta_pos = output.find("__moduleMeta__").expect("has module meta");
         let let_foo_pos = output.find("var foo").expect("has var foo");
         let var_x_pos = output.find("__varRecorder__.x").expect("has var x");
