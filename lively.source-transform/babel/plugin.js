@@ -937,20 +937,20 @@ function evalCodeTransform (path, state, options) {
   // function-wrapper-source transform.
   options.scope = getScopeFromPath(path);
 
-  if (options.hasOwnProperty('evalId')) annotation.evalId = options.evalId;
+  if (Object.hasOwn(options, 'evalId')) annotation.evalId = options.evalId;
   if (options.sourceAccessorName) annotation.sourceAccessorName = options.sourceAccessorName;
   if (options.addSourceMeta !== false) {
     [...options.scope.classDecls, ...options.scope.funcDecls].forEach(({ node }) => {
       node['x-lively-object-meta'] = { ...annotation, start: node.start, end: node.end };
-      if (renamedExports.hasOwnProperty(node.id.name)) { node['x-lively-object-meta'] = { exportConflict: renamedExports[node.id.name] }; }
+      if (Object.hasOwn(renamedExports,node.id.name)) { node['x-lively-object-meta'] = { exportConflict: renamedExports[node.id.name] }; }
     });
     options.scope.refs.forEach(ref => {
-      if (renamedExports.hasOwnProperty(ref.name)) { ref['x-lively-object-meta'] = { exportConflict: renamedExports[ref.name] }; }
+      if (Object.hasOwn(renamedExports,ref.name)) { ref['x-lively-object-meta'] = { exportConflict: renamedExports[ref.name] }; }
     });
     options.scope.varDecls.forEach(({ node }) =>
       node.declarations.forEach(decl => {
         decl['x-lively-object-meta'] = { ...annotation, start: decl.start, end: decl.end };
-        if (renamedExports.hasOwnProperty(decl.id.name)) {
+        if (Object.hasOwn(renamedExports,decl.id.name)) {
           decl['x-lively-object-meta'].exportConflict = renamedExports[decl.id.name];
         }
       }));
@@ -994,7 +994,7 @@ function evalCodeTransform (path, state, options) {
       if (options.declarationCallback) { options.topLevelVarRecorder[declarationWrapperName] = options.declarationCallback; }
     }
 
-    let transformES6Classes = options.hasOwnProperty('transformES6Classes')
+    let transformES6Classes = Object.hasOwn(options, 'transformES6Classes')
       ? options.transformES6Classes
       : true;
     if (transformES6Classes) {
@@ -1273,7 +1273,7 @@ function rewriteToRegisterModuleToCaptureSetters (path, state, options) {
        options.exclude.includes(stmt.expression.left.name)) return stmt;
 
       const id = stmt.expression.left;
-      if (renamedExports.hasOwnProperty(id.name)) {
+      if (Object.hasOwn(renamedExports,id.name)) {
         id['x-lively-object-meta'] = { exportConflict: renamedExports[id.name] };
       }
       // FIXME: at this point, we lost the info about the renamed export from preTranspile... how do we get that info to here?
