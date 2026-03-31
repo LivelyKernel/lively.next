@@ -37,6 +37,8 @@ Make sure you have the following software installed:
 
 1. `node.js v24` or higher
 2. `git`.
+3. `bun`
+4. `rust` via `rustup` (this also installs `cargo`)
 
 We require Node.js v24 or higher for compatibility with modern JavaScript features.
 
@@ -54,6 +56,22 @@ For some more advanced development operations (such as bulk testing from the com
 > If you want to change files outside of `lively` (i.e., in a normal editor), while still having the changes be available in lively when opening the file, you'll need to install `entr` from its [repository](https://github.com/eradman/entr). Usually, when working inside of `lively.next`, this will not be an issue, but it can be handy when working heavily on the core of `lively`. *This feature works semi-reliable at the moment. If you are interested in this and would like to help debug this, please reach out!*
 
 ### Installation Instructions
+
+If you are on macOS, install the required tooling first:
+
+```bash
+xcode-select --install
+curl -fsSL https://bun.sh/install | bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+After that, close the terminal, open a new one, and verify:
+
+```bash
+bun --version
+rustc --version
+cargo --version
+```
 
 1. Clone this repository and run the `install.sh` script. This will install the necessary dependencies and build some bundles that are necessary for the bootstrapping process of `lively.next`. Please note, that this process will take a few minutes.
 2. Run the `start.sh` script.

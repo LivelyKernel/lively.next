@@ -18,7 +18,13 @@ jobs:
       - name: Setup \`node\`
         uses: actions/setup-node@v3
         with:
-          node-version: '20.10'
+          node-version: '24'
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
       - name: Restore \`lively.next\` repo
         id: cache-lively
         uses: actions/cache/restore@v3
