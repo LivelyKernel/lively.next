@@ -73,6 +73,11 @@ pub struct LivelyTransformConfig {
     /// Resolved import source -> normalized module id
     #[serde(default)]
     pub resolved_imports: HashMap<String, String>,
+
+    /// Optional module hash code for resurrection builds.
+    /// When set, emits `__varRecorder__.__module_hash__ = <hash>` after the recorder init.
+    #[serde(default)]
+    pub module_hash: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -141,6 +146,7 @@ impl Default for LivelyTransformConfig {
             enable_export_split: true,
             enable_scope_capture: true,
             resolved_imports: HashMap::new(),
+            module_hash: None,
         }
     }
 }

@@ -39,7 +39,31 @@ pub fn parse_expression(_source: &str) -> Option<Expr> {
 }
 
 /// Parse-like helper that falls back to identifier emission.
+/// Supports `ident["prop"]` and `ident.prop` patterns for member expressions.
 pub fn parse_expr_or_ident(source: &str) -> Expr {
+    // Handle obj["prop"] pattern (computed member expression with string key)
+    if let Some(bracket_pos) = source.find('[') {
+        if source.ends_with(']') {
+            let obj_str = &source[..bracket_pos];
+            let prop_str = &source[bracket_pos + 1..source.len() - 1];
+            // Strip surrounding quotes from the property
+            let prop_str = prop_str.trim_matches('"').trim_matches('\'');
+            let obj = parse_expr_or_ident(obj_str);
+            return create_computed_member_expr(obj, create_string_expr(prop_str));
+        }
+    }
+    // Handle obj.prop pattern (dot member expression)
+    if let Some(dot_pos) = source.rfind('.') {
+        let obj_str = &source[..dot_pos];
+        let prop_str = &source[dot_pos + 1..];
+        // Only treat as member expr if both parts look like identifiers
+        if !obj_str.is_empty() && !prop_str.is_empty()
+            && obj_str.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '$')
+            && prop_str.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '$')
+        {
+            return create_member_expr(create_ident_expr(obj_str), prop_str);
+        }
+    }
     create_ident_expr(source)
 }
 
