@@ -401,7 +401,7 @@ export default class LivelyRollup {
     };
   }
 
-  getSwcTransformOptions (modId, source, { instrumentClasses } = {}) {
+  getSwcTransformOptions (modId, source, { instrumentClasses, moduleHash } = {}) {
     if (modId === '@empty.js') return {};
     let parsedSource;
     try {
@@ -458,8 +458,13 @@ export default class LivelyRollup {
       currentModuleAccessor,
       // Keep parity with legacy transform pipeline:
       // import capture is only enabled for source-map builds.
+      // Re-exported imports are handled separately by the SWC transform's
+      // export { x } from '...' splitting (when capture_imports is false,
+      // it still splits re-export-from statements for capture).
       captureImports: this.sourceMap,
       resurrection: this.isResurrectionBuild,
+      // For resurrection builds, wrap function declarations through __define__
+      ...(this.isResurrectionBuild ? { declarationWrapper: `__varRecorder__["${normalizedId}__define__"]` } : {}),
       resolvedImports,
       classToFunction: instrumentClasses ? {
         classHolder,
@@ -473,7 +478,8 @@ export default class LivelyRollup {
         ...arr.range(0, 50).map(i => `__captured${i}__`)
       ],
       sourceMap: this.sourceMap,
-      filename: modId
+      filename: modId,
+      ...(moduleHash != null ? { moduleHash } : {})
     };
   }
 
@@ -657,7 +663,24 @@ export default class LivelyRollup {
       const exports = ast.query.exports(topLevel.scope, true);
       return new Set(exports.map(exp => exp.exported).filter(Boolean));
     } catch (err) {
-      return new Set();
+      // Fallback: regex-based export detection for code that acorn can't parse
+      // in strict module mode (e.g., class-to-function transformed output).
+      const names = new Set();
+      const exportRe = /export\s*\{([^}]+)\}/g;
+      const defaultRe = /export\s+default\b/g;
+      let m;
+      while ((m = exportRe.exec(source)) !== null) {
+        m[1].split(',').forEach(spec => {
+          const parts = spec.trim().split(/\s+as\s+/);
+          const exported = (parts[1] || parts[0]).trim();
+          if (exported) names.add(exported);
+        });
+      }
+      if (defaultRe.test(source)) names.add('default');
+      // Also match `export function/class/const/let/var`
+      const declRe = /export\s+(?:async\s+)?(?:function|class|const|let|var)\s+(\w+)/g;
+      while ((m = declRe.exec(source)) !== null) names.add(m[1]);
+      return names;
     }
   }
 
@@ -799,7 +822,8 @@ export default class LivelyRollup {
       // ScopeCapturingTransform at step 7), so System.import() is rewritten
       // before System references get captured as __varRecorder__.System.
       if (needsLoadInstrumentation) this.hasDynamicImports = true;
-      const swcOptions = this.getSwcTransformOptions(id, source, { instrumentClasses });
+      const moduleHash = this.isResurrectionBuild ? string.hashCode(await this.resolver.load(id)) : undefined;
+      const swcOptions = this.getSwcTransformOptions(id, source, { instrumentClasses, moduleHash });
       let { code, map } = await swcTransform.transformAsync(source, swcOptions);
       if (this.shouldCompareSwcForModule(id)) {
         if (!this._swcComparedModules) this._swcComparedModules = new Set();
@@ -816,14 +840,11 @@ export default class LivelyRollup {
       const missingExports = [...sourceExports].filter(name => !transformedExports.has(name));
       const skipMissingExportFallback = id.includes('dompurify@3.3.0/dist/purify.es.mjs');
       if (invalidExports.length > 0 || (missingExports.length > 0 && !skipMissingExportFallback)) {
-        if (this.verbose) {
-          const diagnostics = [
-            invalidExports.length > 0 ? `unresolved exports: ${invalidExports.join(', ')}` : '',
-            missingExports.length > 0 ? `missing exports: ${missingExports.join(', ')}` : ''
-          ].filter(Boolean).join('; ');
-          console.warn(`\x1b[33m       [!] SWC fallback for ${id}; ${diagnostics}\x1b[0m`);
-        }
-        return await this.transformWithLegacyPipeline(source, id, needsLoadInstrumentation);
+        const diagnostics = [
+          invalidExports.length > 0 ? `unresolved exports: ${invalidExports.join(', ')}` : '',
+          missingExports.length > 0 ? `missing exports: ${missingExports.join(', ')}` : ''
+        ].filter(Boolean).join('; ');
+        throw new Error(`SWC transform produced mismatched exports for ${id}: ${diagnostics}`);
       }
       if (skipMissingExportFallback && missingExports.length > 0 && this.verbose) {
         console.warn(`\x1b[33m       [!] SWC export parity: ${id}; missing: ${missingExports.join(', ')} (keeping SWC output)\x1b[0m`);

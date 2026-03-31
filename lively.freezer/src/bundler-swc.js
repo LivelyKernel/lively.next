@@ -53,7 +53,8 @@ export class LivelySwcTransform {
       resolvedImports = {},
       captureImports = true,
       sourceMap = true,
-      filename = 'unknown.js'
+      filename = 'unknown.js',
+      moduleHash = null
     } = options;
 
     const swcConfig = {
@@ -79,18 +80,7 @@ export class LivelySwcTransform {
       }
     };
 
-    let classToFunctionConfig = null;
-    if (classToFunction === undefined) {
-      classToFunctionConfig = {
-        classHolder: this.options.captureObj,
-        functionNode: 'initializeES6ClassForLively',
-        currentModuleAccessor: 'module.id'
-      };
-    } else if (classToFunction === false || classToFunction === null) {
-      classToFunctionConfig = null;
-    } else {
-      classToFunctionConfig = classToFunction;
-    }
+    const classToFunctionConfig = classToFunction || null;
 
     const livelyConfig = {
       captureObj: this.options.captureObj,
@@ -108,7 +98,8 @@ export class LivelySwcTransform {
       enableDynamicImportTransform: true,
       enableSystemjsTransform: false,
       enableExportSplit: true,
-      resolvedImports
+      resolvedImports,
+      ...(moduleHash != null ? { moduleHash } : {})
     };
 
     const classRuntimeModule = resurrection ? 'livelyClassesRuntime.js' : 'lively.classes/runtime.js';

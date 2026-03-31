@@ -582,15 +582,17 @@ export function runtimeDefinition () {
     exportsOf (moduleId) {
       if (!this.registry[moduleId]) return;
       const { exports, recorder: rec } = this.registry[moduleId];
-      // modify in place
-      if (!rec.__module_exports__) return;
+      if (!rec.__module_exports__) return rec;
       for (let exp in exports) { if (exp === 'default') continue; delete exports[exp]; }
       for (let exp of rec.__module_exports__) {
         if (exp.startsWith('__rename__')) {
           const [local, exported] = exp.replace('__rename__', '').split('->');
           exports[exported] = rec[local];
         } else if (exp.startsWith('__reexport__')) Object.assign(exports, this.exportsOf(exp.replace('__reexport__', '')));
-        else if (exp.startsWith('__default__')) exports.default = rec[exp.replace('__default__', '')] ;
+        else if (exp.startsWith('__default__')) {
+          const localName = exp.replace('__default__', '');
+          if (localName in rec) exports.default = rec[localName];
+        }
         else if (exp in rec) exports[exp] = rec[exp];
       }
       return exports;
@@ -606,12 +608,15 @@ export function runtimeDefinition () {
       let rec = {
         [moduleId + '__define__'] (name, type, value, moduleMeta) {
           if (Object.isFrozen(this)) return this[name];
-          // attach meta info
-          if (value) {
-            value[Symbol.for('lively-module-meta')] = moduleMeta;
+          // attach meta info — but don't overwrite if already set
+          // (initializeES6ClassForLively and ComponentDescriptor.init set it first)
+          const metaKey = Symbol.for('lively-module-meta');
+          if (typeof value === 'function') {
+            if (!value[metaKey]) value[metaKey] = moduleMeta;
+            try { value.name = name; } catch(e) {}
+          } else if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+            if (!value[metaKey]) value[metaKey] = moduleMeta;
           }
-          value.name = name;
-          // we can also assign the value to the recorder here?
           return value;
         }
       };

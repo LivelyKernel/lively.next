@@ -242,7 +242,7 @@ mod tests {
 
     fn analyze_code(code: &str) -> ScopeAnalyzer {
         let cm = Lrc::new(SourceMap::default());
-        let fm = cm.new_source_file(FileName::Anon, code.to_string());
+        let fm = cm.new_source_file(FileName::Anon.into(), code.to_string());
 
         let module = parse_file_as_module(
             &fm,

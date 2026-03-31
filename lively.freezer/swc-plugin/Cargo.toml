@@ -12,6 +12,8 @@ swc_core = { version = "9.0.0", features = [
     "ecma_visit",
     "ecma_utils",
     "ecma_ast",
+    "ecma_codegen",
+    "__parser",
 ] }
 swc_ecma_ast = "=5.0.1"
 swc_plugin_macro = "=1.0.0"

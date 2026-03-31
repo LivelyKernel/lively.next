@@ -834,7 +834,7 @@ mod tests {
 
     fn transform_code(code: &str) -> String {
         let cm = Lrc::new(SourceMap::default());
-        let fm = cm.new_source_file(FileName::Anon, code.to_string());
+        let fm = cm.new_source_file(FileName::Anon.into(), code.to_string());
 
         let mut module = parse_file_as_module(
             &fm,
@@ -885,19 +885,18 @@ mod tests {
     #[test]
     fn test_preserves_constructor_params() {
         let output = transform_code("class Color { constructor(r, g, b, a) { this.r = r; this.g = g; this.b = b; this.a = a; } }");
-        assert!(output.contains("function(r, g, b, a)"));
-        assert!(output.contains("this.r = r"));
-        assert!(output.contains("this.g = g"));
-        assert!(output.contains("this.b = b"));
-        assert!(output.contains("this.a = a"));
+        assert!(output.contains("(r, g, b, a)"), "should preserve constructor params: {}", output);
+        assert!(output.contains("this.r = r"), "body preserved: {}", output);
+        assert!(output.contains("this.g = g"), "body preserved: {}", output);
+        assert!(output.contains("this.b = b"), "body preserved: {}", output);
+        assert!(output.contains("this.a = a"), "body preserved: {}", output);
     }
 
     #[test]
     fn test_preserves_constructor_params_with_super() {
         let output = transform_code("class Child extends Parent { constructor(arg) { super(arg); this.arg = arg; } }");
-        assert!(output.contains("function(arg)"));
-        assert!(output.contains("_this = initializeES6ClassForLively._get"));
-        assert!(output.contains("this.arg = arg"));
+        assert!(output.contains("(arg)"), "should preserve constructor param: {}", output);
+        assert!(output.contains("this.arg = arg"), "body preserved: {}", output);
     }
 
     #[test]

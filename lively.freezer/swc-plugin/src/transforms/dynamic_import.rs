@@ -99,7 +99,7 @@ mod tests {
 
     fn transform_code(code: &str) -> String {
         let cm = Lrc::new(SourceMap::default());
-        let fm = cm.new_source_file(FileName::Anon, code.to_string());
+        let fm = cm.new_source_file(FileName::Anon.into(), code.to_string());
 
         let mut module = parse_file_as_module(
             &fm,
