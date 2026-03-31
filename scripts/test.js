@@ -52,11 +52,15 @@ const req = http.request(options, res => {
       }
       if (data.error) {
         console.log('SUMMARY-INDICATE-FAILURE');
-        if (CI) {
-          console.log(`::error:: Running the tests produced the following error:\n${JSON.stringify(data.error)}`);
-          fs.appendFileSync('summary.txt', `❌ Running the tests produced the following error:\n${JSON.stringify(data.error)}\n`);
+        let errorOutput = JSON.stringify(data.error);
+        if (data.browserErrors) {
+          errorOutput += `\nRecent browser console errors:\n${data.browserErrors}`;
         }
-        else console.log(`❌ Running the tests produced the following error:\n${JSON.stringify(data.error)}`);
+        if (CI) {
+          console.log(`::error:: Running the tests produced the following error:\n${errorOutput}`);
+          fs.appendFileSync('summary.txt', `❌ Running the tests produced the following error:\n${errorOutput}\n`);
+        }
+        else console.log(`❌ Running the tests produced the following error:\n${errorOutput}`);
         return;
       }
       data.forEach((testfile) => {

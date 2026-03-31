@@ -64,7 +64,11 @@ export default class TestRunner {
       JSON.stringify(results);
       `)
     } catch (err) {
-      results = JSON.stringify({ error: err.message });
+      const browserErrors = this.headlessSession?.summarizeRecentConsoleErrors();
+      results = JSON.stringify({
+        error: err.message,
+        browserErrors
+      });
     } finally {
       this.headlessSession.dispose();
       return results;
