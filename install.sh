@@ -12,6 +12,28 @@ step()     { echo "   $1"; }
 info()     { echo "   $1"; }
 success()  { echo "   $1  done"; }
 warn()     { echo "   [!] $1"; }
+error()    { echo "   [ERROR] $1"; }
+
+print_bun_install_instructions() {
+  info "  Bun is required for supported installs."
+  info "  Install Bun with:"
+  info "    curl -fsSL https://bun.sh/install | bash"
+  info "  Then restart your terminal and verify with:"
+  info "    bun --version"
+}
+
+print_rust_install_instructions() {
+  info "  Rust is required for supported installs."
+  if [ "$(uname -s)" = "Darwin" ]; then
+    info "  On macOS, install the Apple command line tools first:"
+    info "    xcode-select --install"
+  fi
+  info "  Install Rust with:"
+  info "    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+  info "  Then restart your terminal and verify with:"
+  info "    rustc --version"
+  info "    cargo --version"
+}
 
 echo ""
 echo "lively.next installer"
@@ -23,33 +45,29 @@ echo "====================="
 section "Checking dependencies"
 step "node:  $(node --version)"
 
-# Check for bun (required for fast package install)
+# Check for bun (required for supported package install)
 if command -v bun >/dev/null 2>&1; then
   export BUN_PATH=$(command -v bun)
   step "bun:   $(bun --version)"
-elif [ -f "$HOME/.bun/bin/bun" ]; then
+elif [ -x "$HOME/.bun/bin/bun" ]; then
   export BUN_PATH="$HOME/.bun/bin/bun"
+  export PATH="$HOME/.bun/bin:$PATH"
   step "bun:   $($BUN_PATH --version)"
 else
-  warn "bun not found — using slow sequential download"
-  info "  Install for ~50x faster installs: curl -fsSL https://bun.sh/install | bash"
+  error "bun not found"
+  print_bun_install_instructions
+  exit 1
 fi
 
 # Check for Rust toolchain (needed to build SWC plugin)
-PREBUILT_WASM=$lv_next_dir/lively.freezer/swc-plugin/lively_swc_plugin.wasm
-if command -v cargo >/dev/null 2>&1 && command -v rustup >/dev/null 2>&1; then
+if command -v cargo >/dev/null 2>&1 && command -v rustc >/dev/null 2>&1 && command -v rustup >/dev/null 2>&1; then
   step "rust:  $(rustc --version 2>/dev/null | sed 's/rustc //')"
   if ! rustup target list --installed 2>/dev/null | grep -q "^wasm32-wasip1$"; then
     info "  wasm32-wasip1 target will be added during build"
   fi
-elif [ -f "$PREBUILT_WASM" ]; then
-  step "rust:  not installed (using pre-built SWC plugin)"
-elif [ -n "${CI}" ]; then
-  step "rust:  not installed (CI will use pre-built plugin if available)"
 else
-  warn "Rust not found — required to build SWC plugin"
-  info "  Install: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
-  info "  Or ensure pre-built plugin exists at: $PREBUILT_WASM"
+  error "Rust toolchain not found"
+  print_rust_install_instructions
   exit 1
 fi
 
@@ -100,19 +118,13 @@ then
 fi
 
 section "Building SWC plugin"
-if [ -n "${CI}" ] && [ -f "$PREBUILT_WASM" ]; then
-  step "Using pre-built WASM plugin (CI)"
-elif command -v cargo >/dev/null 2>&1; then
-  if ! rustup target list --installed | grep -q "^wasm32-wasip1$"; then
-    step "Adding Rust target wasm32-wasip1..."
-    rustup target add wasm32-wasip1 || exit 1
-  fi
-  step "Compiling WASM plugin..."
-  env CI=true npm --silent --prefix $lv_next_dir/lively.freezer/ run build-swc-plugin || exit 1
-  step "SWC plugin built"
-else
-  step "Using pre-built WASM plugin"
+if ! rustup target list --installed | grep -q "^wasm32-wasip1$"; then
+  step "Adding Rust target wasm32-wasip1..."
+  rustup target add wasm32-wasip1 || exit 1
 fi
+step "Compiling WASM plugin..."
+env CI=true npm --silent --prefix $lv_next_dir/lively.freezer/ run build-swc-plugin || exit 1
+step "SWC plugin built"
 
 section "Building freezer bundles"
 if [ -z "${CI}" ]; then

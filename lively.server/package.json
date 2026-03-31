@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
-    "@jspm/generator": "2.6.1",
+    "@jspm/generator": "2.12.0",
     "http-proxy": "^1.16.2",
     "jsDAV": "mnutt/jsDAV",
     "minimist": "^1.2.0",
