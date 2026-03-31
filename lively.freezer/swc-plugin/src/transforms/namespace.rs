@@ -17,19 +17,16 @@ pub struct NamespaceTransform {
     /// Transformed namespace imports to add after the module
     additional_decls: Vec<ModuleItem>,
     resolved_imports: std::collections::HashMap<String, String>,
-    /// The capture object name (e.g., "__varRecorder__")
-    capture_obj: String,
     /// Synthetic identifiers created by this transform that should be
     /// excluded from the subsequent scope capture pass.
     added_excludes: Vec<String>,
 }
 
 impl NamespaceTransform {
-    pub fn new(resolved_imports: std::collections::HashMap<String, String>, capture_obj: String) -> Self {
+    pub fn new(resolved_imports: std::collections::HashMap<String, String>, _capture_obj: String) -> Self {
         Self {
             additional_decls: Vec::new(),
             resolved_imports,
-            capture_obj,
             added_excludes: Vec::new(),
         }
     }

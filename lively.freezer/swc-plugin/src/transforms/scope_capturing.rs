@@ -976,10 +976,6 @@ impl ScopeCapturingTransform {
         self.scope_stack.pop();
     }
 
-    /// Check if we're at module level
-    fn is_module_level(&self) -> bool {
-        self.depth == 0
-    }
 
     /// Transform a module item at module level, allowing expansion into multiple items
     fn transform_module_item(&self, item: ModuleItem) -> Vec<ModuleItem> {
