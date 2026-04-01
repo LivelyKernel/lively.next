@@ -15,6 +15,7 @@ function isUnresolvableOnCDN ([name, version]) {
   if (/^@rollup\/rollup-/.test(name)) return true;
   if (/^@swc\/core(-|$)/.test(name)) return true;
   if (name === '@jspm/generator') return true;
+  if (name === 'puppeteer' || name === 'puppeteer-core') return true;
   return false;
 }
 
