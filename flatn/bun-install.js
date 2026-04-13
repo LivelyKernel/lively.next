@@ -1,4 +1,4 @@
-import { execSync, spawnSync } from 'child_process';
+import { execSync, spawn, spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { gitSpecFromVersion } from './flatn-cjs.js';
@@ -77,16 +77,7 @@ export async function bunInstall (bunPath, livelyDirs, destDir, projectRoot, ver
   );
 
   // 4. Run bun install
-  const result = spawnSync(bunPath, ['install', '--no-progress'], {
-    cwd: bunWorkDir,
-    stdio: verbose ? 'inherit' : 'pipe',
-    env: { ...process.env }
-  });
-
-  if (result.status !== 0) {
-    const stderr = result.stderr ? result.stderr.toString() : '';
-    throw new Error(`bun install failed (exit ${result.status}): ${stderr}`);
-  }
+  await runBunInstall(bunPath, bunWorkDir, verbose);
   // bun install completed
 
   // 5. Build git spec map from original dependency version strings
@@ -135,6 +126,52 @@ export async function bunInstall (bunPath, livelyDirs, destDir, projectRoot, ver
   }
 
   return { newPackages };
+}
+
+async function runBunInstall (bunPath, bunWorkDir, verbose) {
+  console.log('       Running bun install...');
+
+  const child = spawn(bunPath, ['install', '--no-progress'], {
+    cwd: bunWorkDir,
+    stdio: verbose ? 'inherit' : ['ignore', 'pipe', 'pipe'],
+    env: { ...process.env }
+  });
+
+  let stdout = '';
+  let stderr = '';
+  let lastOutputAt = Date.now();
+  const startedAt = Date.now();
+
+  if (!verbose) {
+    child.stdout?.on('data', chunk => {
+      stdout += chunk.toString();
+      lastOutputAt = Date.now();
+    });
+    child.stderr?.on('data', chunk => {
+      stderr += chunk.toString();
+      lastOutputAt = Date.now();
+    });
+  }
+
+  const heartbeat = !verbose && setInterval(() => {
+    const elapsedSec = Math.round((Date.now() - startedAt) / 1000);
+    const quietSec = Math.round((Date.now() - lastOutputAt) / 1000);
+    console.log(`       bun install still running... ${elapsedSec}s elapsed, ${quietSec}s since last output`);
+  }, 10000);
+
+  const result = await new Promise((resolve, reject) => {
+    child.on('error', reject);
+    child.on('close', (code, signal) => resolve({ code, signal }));
+  });
+
+  if (heartbeat) clearInterval(heartbeat);
+
+  if (result.code !== 0) {
+    const output = [stderr.trim(), stdout.trim()].filter(Boolean).join('\n');
+    throw new Error(
+      `bun install failed (${result.signal ? `signal ${result.signal}` : `exit ${result.code}`}): ${output}`
+    );
+  }
 }
 
 function buildGitDepMap (aggregatedDeps, bunWorkDir, bunPath) {

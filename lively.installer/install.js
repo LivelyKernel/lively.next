@@ -21,6 +21,15 @@ const spinner = {
   frames: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
   idx: 0, timer: null, text: '', baseText: '', active: false,
   _origLog: console.log, _origWarn: console.warn, _origError: console.error,
+  _clearLine () {
+    if (!process.stdout.isTTY) return;
+    if (typeof process.stdout.clearLine === 'function' && typeof process.stdout.cursorTo === 'function') {
+      process.stdout.clearLine(0);
+      process.stdout.cursorTo(0);
+      return;
+    }
+    process.stdout.write('\r\x1b[K');
+  },
   start (text) {
     if (this.text === text && this.active) return;
     if (this.active) this._completeLine();
@@ -38,29 +47,31 @@ const spinner = {
   },
   render () {
     const frame = this.frames[this.idx++ % this.frames.length];
-    process.stdout.write(`\r   ${frame} ${this.text}\x1b[K`);
+    this._clearLine();
+    process.stdout.write(`   ${frame} ${this.text}`);
   },
   _completeLine () {
     if (this.timer) { clearInterval(this.timer); this.timer = null; }
     if (process.stdout.isTTY && this.baseText) {
-      process.stdout.write(`\r   \x1b[32m✓\x1b[0m ${this.baseText}\x1b[K\n`);
+      this._clearLine();
+      process.stdout.write(`   \x1b[32m✓\x1b[0m ${this.baseText}\n`);
     }
   },
   _hookConsole () {
     if (console.log === this._wrappedLog) return;
     const self = this;
     this._wrappedLog = function (...args) {
-      if (self.active && process.stdout.isTTY) process.stdout.write('\r\x1b[K');
+      if (self.active && process.stdout.isTTY) self._clearLine();
       self._origLog.apply(console, args);
       if (self.active && process.stdout.isTTY) self.render();
     };
     this._wrappedWarn = function (...args) {
-      if (self.active && process.stdout.isTTY) process.stdout.write('\r\x1b[K');
+      if (self.active && process.stdout.isTTY) self._clearLine();
       self._origWarn.apply(console, args);
       if (self.active && process.stdout.isTTY) self.render();
     };
     this._wrappedError = function (...args) {
-      if (self.active && process.stdout.isTTY) process.stdout.write('\r\x1b[K');
+      if (self.active && process.stdout.isTTY) self._clearLine();
       self._origError.apply(console, args);
       if (self.active && process.stdout.isTTY) self.render();
     };

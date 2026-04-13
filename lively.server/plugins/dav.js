@@ -105,8 +105,13 @@ export default class LivelyDAVPlugin {
       exclude: (res) => {
         return res.url.includes('lively.next-node_modules') ||
                res.url.includes('.module_cache') ||
-               !res.url.startsWith(System.baseURL + 'lively') && !res.url.includes('esm_cache') ||
-               res.isFile() && !res.url.endsWith('.js') && !res.url.endsWith('.cjs');
+               !res.url.startsWith(System.baseURL + 'lively') &&
+               !res.url.startsWith(System.baseURL + 'flatn') &&
+               !res.url.includes('esm_cache') ||
+               res.isFile() &&
+               !res.url.endsWith('.js') &&
+               !res.url.endsWith('.cjs') &&
+               !res.url.endsWith('.mjs');
       }
     });
     for (let file of filesToHash) {
