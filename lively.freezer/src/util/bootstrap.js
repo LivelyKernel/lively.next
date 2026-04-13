@@ -185,8 +185,10 @@ async function shallowReloadModulesIfNeeded (modulesToCheck, moduleHashes, R) {
     let key = modId;
     let currMod;
     if (key === '@empty') continue;
-    if (key.startsWith('esm://')) continue; // do not revive esm modules
-    if (modHash !== moduleHashes['/' + key]) {
+    if (key.startsWith('esm://') || key.startsWith('http://') || key.startsWith('https://')) continue; // do not revive CDN modules
+    const serverHash = moduleHashes['/' + key];
+    if (serverHash == null) continue; // module is not part of the server hash map
+    if (modHash !== serverHash) {
       console.log('reviving', modId);
       currMod = lively.modules.module(modId);
       try {
@@ -364,7 +366,8 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
               const keysAfter = obj.keys(R.registry);
               if (keysBefore.length < keysAfter.length) {
                 // detect modules to be reloaded
-                const modulesToUpdate = arr.withoutAll(keysAfter, keysBefore).filter(id => !id.startsWith('esm://'));
+                const modulesToUpdate = arr.withoutAll(keysAfter, keysBefore)
+                  .filter(id => !id.startsWith('esm://') && !id.startsWith('http://') && !id.startsWith('https://'));
                 for (const mod of modulesToUpdate) {
                   System.set(System.decanonicalize(mod), System.newModule(R.exportsOf(mod)));
                   const m = lively.modules.module(mod);

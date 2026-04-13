@@ -5,6 +5,8 @@ import { resource } from "lively.resources";
 import { parseQuery } from "lively.resources";
 import { arr, obj } from "lively.lang";
 const Generator = System.get('@jspm_generator').default;
+const semver = System._nodeRequire('semver');
+let localDependerIndex;
 
 // Deps that cannot be resolved via jspm.io CDN:
 // - native binary packages (platform-specific compiled addons)
@@ -31,6 +33,89 @@ function extractFailingPackage (errMsg) {
   const pkgMatch = errMsg.match(/Package\s+(@?[^\s@]+)@(\S+)/);
   if (pkgMatch) return { name: pkgMatch[1], version: pkgMatch[2] };
   return null;
+}
+
+function extractImportingPackageScope (errMsg) {
+  const importerMatch = errMsg.match(/imported from (https:\/\/ga\.jspm\.io\/npm:(?:@[^/]+\/)?[^@\s/]+@[^/]+\/)/);
+  return importerMatch ? importerMatch[1] : null;
+}
+
+function buildPackageUrl (name, version) {
+  return `https://ga.jspm.io/npm:${name}@${version}/`;
+}
+
+function toCachedScopeUrl (scopeUrl) {
+  return scopeUrl.replace(/^https:\/\//, 'esm://');
+}
+
+function toGeneratorScopeUrl (scopeUrl) {
+  return scopeUrl.replace(/^esm:\/\//, 'https://');
+}
+
+function indexPackageDependers (packageJson, index) {
+  if (!packageJson?.name || !packageJson?.version) return;
+  const deps = {
+    ...(packageJson.dependencies || {}),
+    ...(packageJson.peerDependencies || {}),
+    ...(packageJson.optionalDependencies || {})
+  };
+  for (const [depName, depRange] of Object.entries(deps)) {
+    if (typeof depRange !== 'string') continue;
+    (index[depName] ||= []).push({
+      scopeUrl: buildPackageUrl(packageJson.name, packageJson.version),
+      range: depRange
+    });
+  }
+}
+
+function getLocalDependerIndex () {
+  if (localDependerIndex) return localDependerIndex;
+
+  const index = {};
+  const packageRoot = join(process.cwd(), 'lively.next-node_modules');
+  if (!fs.existsSync(packageRoot)) {
+    localDependerIndex = index;
+    return index;
+  }
+
+  const stack = [packageRoot];
+  while (stack.length) {
+    const dir = stack.pop();
+    let entries;
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      const fullPath = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        stack.push(fullPath);
+        continue;
+      }
+      if (!entry.isFile() || entry.name !== 'package.json') continue;
+      try {
+        indexPackageDependers(JSON.parse(fs.readFileSync(fullPath, 'utf8')), index);
+      } catch {}
+    }
+  }
+
+  localDependerIndex = index;
+  return index;
+}
+
+function findScopedPinTargets (pkgName, goodVersion, importerScope = null) {
+  const scopedPins = new Set();
+  if (importerScope) scopedPins.add(importerScope);
+  const dependers = getLocalDependerIndex()[pkgName] || [];
+  for (const { scopeUrl, range } of dependers) {
+    try {
+      if (semver.satisfies(goodVersion, range, { includePrerelease: true })) {
+        scopedPins.add(scopeUrl);
+      }
+    } catch {}
+  }
+  return [...scopedPins];
 }
 
 /**
@@ -66,16 +151,26 @@ async function findAvailableCDNVersion (name, failingVersion) {
   return null;
 }
 
-function createGenerator (inputMap, resolutions) {
-  return new Generator({
+function createGenerator (inputMap, resolutions, scopedResolutions = {}) {
+  const generator = new Generator({
     env: ["browser"],
     defaultProvider: 'jspm.io',
     inputMap,
     ...(Object.keys(resolutions).length ? { resolutions } : {})
   });
+  const installs = generator.traceMap.installer.installs;
+  installs.secondary ||= {};
+  installs.flattened ||= {};
+  for (const [scopeUrl, pins] of Object.entries(scopedResolutions)) {
+    const scope = installs.secondary[toGeneratorScopeUrl(scopeUrl)] ||= {};
+    for (const [pkgName, version] of Object.entries(pins || {})) {
+      scope[pkgName] = { installUrl: buildPackageUrl(pkgName, version) };
+    }
+  }
+  return generator;
 }
 
-async function installDeps (generator, deps, failed, resolutions, inputMap) {
+async function installDeps (generator, deps, failed, resolutions, inputMap, scopedResolutions) {
   const depNames = deps.map(([name]) => name);
   let needsRestart = false;
 
@@ -90,12 +185,29 @@ async function installDeps (generator, deps, failed, resolutions, inputMap) {
     } catch (firstErr) {
       const errMsg = firstErr.message || String(firstErr);
       const failingPkg = extractFailingPackage(errMsg);
-      if (failingPkg && !resolutions[failingPkg.name]) {
+      const importingPkgScope = extractImportingPackageScope(errMsg);
+      const hasGlobalPin = !!resolutions[failingPkg?.name];
+      const hasPinnedImporterScope = !!(
+        failingPkg &&
+        importingPkgScope &&
+        scopedResolutions[importingPkgScope]?.[failingPkg.name]
+      );
+      if (failingPkg && !hasGlobalPin && !hasPinnedImporterScope) {
         console.warn(`\x1b[33m       [!] Import map: ${depSpec} failed — transitive dep ${failingPkg.name}@${failingPkg.version} not on CDN, searching for available version...\x1b[0m`);
         const goodVersion = await findAvailableCDNVersion(failingPkg.name, failingPkg.version);
         if (goodVersion) {
-          console.log(`\x1b[32m       [✓] Found ${failingPkg.name}@${goodVersion} on CDN, pinning via resolutions\x1b[0m`);
-          resolutions[failingPkg.name] = goodVersion;
+          const scopedPins = findScopedPinTargets(failingPkg.name, goodVersion, importingPkgScope)
+            .map(toCachedScopeUrl)
+            .filter(scopeUrl => scopedResolutions[scopeUrl]?.[failingPkg.name] !== goodVersion);
+          if (scopedPins.length) {
+            for (const scopeUrl of scopedPins) {
+              (scopedResolutions[scopeUrl] ||= {})[failingPkg.name] = goodVersion;
+            }
+            console.log(`\x1b[32m       [✓] Found ${failingPkg.name}@${goodVersion} on CDN, pinning via scoped locks for ${scopedPins.length} requester(s)\x1b[0m`);
+          } else {
+            console.log(`\x1b[32m       [✓] Found ${failingPkg.name}@${goodVersion} on CDN, pinning via global resolutions\x1b[0m`);
+            resolutions[failingPkg.name] = goodVersion;
+          }
           needsRestart = true;
           continue; // don't mark as failed — will be retried in second pass
         } else {
@@ -119,8 +231,9 @@ async function installDeps (generator, deps, failed, resolutions, inputMap) {
   // If we discovered new resolution pins, recreate the generator and
   // redo the entire install so all deps benefit from the pins.
   if (needsRestart) {
-    console.log(`\x1b[36m       [↻] Restarting import map resolution with ${Object.keys(resolutions).length} pinned resolution(s)...\x1b[0m`);
-    generator = createGenerator(inputMap, resolutions);
+    const scopedPinCount = Object.values(scopedResolutions).reduce((sum, pins) => sum + Object.keys(pins || {}).length, 0);
+    console.log(`\x1b[36m       [↻] Restarting import map resolution with ${Object.keys(resolutions).length} global and ${scopedPinCount} scoped pinned resolution(s)...\x1b[0m`);
+    generator = createGenerator(inputMap, resolutions, scopedResolutions);
     for (const key of Object.keys(failed)) delete failed[key];
     for (let dep of deps) {
       if (dep[0] == 'tar-fs' || isUnresolvableOnCDN(dep) || !!generator.map.imports[dep[0]]) continue;
@@ -154,18 +267,21 @@ export async function generateImportMap (packageName) {
     inputMap = JSON.parse((await cachedImportMap.read()).replace(/esm:\/\//g, 'https://')); // replace esm to make generator install again
   }
   const resolutions = {};
-  let generator = createGenerator(inputMap, resolutions);
+  const scopedResolutions = Object.assign({}, inputMap?._scopedResolutions || {});
+  let generator = createGenerator(inputMap, resolutions, scopedResolutions);
   const failed = inputMap?._failed || {};
   generator = await installDeps(
     generator,
     Object.entries(pkg.config.dependencies || {}).filter(([dep]) => !dep.match(/lively(\.|-)/)),
     failed,
     resolutions,
-    inputMap
+    inputMap,
+    scopedResolutions
   );
   const importMap = JSON.parse(JSON.stringify(generator.getMap()).replace(/https:\/\//g, 'esm://'))
   if (!obj.isEmpty(failed)) importMap._failed = failed;
   if (!obj.isEmpty(resolutions)) importMap._resolutions = resolutions;
+  if (!obj.isEmpty(scopedResolutions)) importMap._scopedResolutions = scopedResolutions;
   if (!obj.isEmpty(importMap)) await cachedImportMap.writeJson(importMap);
   else if (inputMap) { await cachedImportMap.remove() }
   return importMap;
