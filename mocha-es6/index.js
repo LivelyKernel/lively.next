@@ -107,14 +107,19 @@ function prepareMocha (mocha, GLOBAL) {
     GLOBAL.after = context.after || context.suiteTeardown;
     GLOBAL.beforeEach = context.beforeEach || context.setup;
     GLOBAL.before = context.before || context.suiteSetup;
+    GLOBAL.context = context.context || context.describe || context.suite;
     GLOBAL.describe = context.describe || context.suite;
     GLOBAL.it = context.it || context.test;
     GLOBAL.setup = context.setup || context.beforeEach;
+    GLOBAL.specify = context.specify || context.it || context.test;
     GLOBAL.suiteSetup = context.suiteSetup || context.before;
     GLOBAL.suiteTeardown = context.suiteTeardown || context.after;
     GLOBAL.suite = context.suite || context.describe;
     GLOBAL.teardown = context.teardown || context.afterEach;
     GLOBAL.test = context.test || context.it;
+    GLOBAL.xcontext = context.xcontext || context.xdescribe;
+    GLOBAL.xdescribe = context.xdescribe || context.describe?.skip;
+    GLOBAL.xit = context.xit || context.it?.skip || context.specify?.skip;
     GLOBAL.run = context.run;
   });
   mocha.ui('bdd');
@@ -265,16 +270,48 @@ function recordTestsWhile (file, whileFn, options = {}) {
   // put mocha globals in place
   prepareMocha(m, options.global);
   m.suite.emit('pre-require', options.global, file, m);
-  let result = whileFn();
+  const runtimeGlobal = typeof globalThis !== 'undefined' ? globalThis : System.global;
+  const globalNames = [
+    'afterEach', 'after', 'beforeEach', 'before',
+    'context', 'describe', 'it', 'setup', 'specify',
+    'suiteSetup', 'suiteTeardown', 'suite', 'teardown',
+    'test', 'xcontext', 'xdescribe', 'xit', 'run'
+  ];
+  const hadGlobal = new Map();
+  const previousGlobals = new Map();
+  for (const name of globalNames) {
+    const hasOwn = Object.prototype.hasOwnProperty.call(runtimeGlobal, name);
+    hadGlobal.set(name, hasOwn);
+    previousGlobals.set(name, hasOwn ? runtimeGlobal[name] : undefined);
+    runtimeGlobal[name] = options.global[name];
+  }
+  const restoreGlobals = () => {
+    for (const name of globalNames) {
+      if (!hadGlobal.get(name)) {
+        delete runtimeGlobal[name];
+      } else {
+        runtimeGlobal[name] = previousGlobals.get(name);
+      }
+    }
+  };
+  let result;
+  try {
+    result = whileFn();
+  } catch (err) {
+    restoreGlobals();
+    throw err;
+  }
 
   if (result && typeof result.then === 'function') {
-    return Promise.resolve(result).then(() => {
-      let imported = System.get(file);
-      m.suite.emit('require', imported, file, m);
-      m.suite.emit('post-require', options.global, file, m);
-      logger.log('[mocha-es6] loaded test module %s with %s tests',
-        file, gatherTests(m.suite).length);
-    });
+    return Promise.resolve(result)
+      .then(() => {
+        let imported = System.get(file);
+        m.suite.emit('require', imported, file, m);
+        m.suite.emit('post-require', options.global, file, m);
+        logger.log('[mocha-es6] loaded test module %s with %s tests',
+          file, gatherTests(m.suite).length);
+      })
+      .finally(restoreGlobals);
   }
 
   let imported = System.get(file);
@@ -282,6 +319,7 @@ function recordTestsWhile (file, whileFn, options = {}) {
   m.suite.emit('post-require', options.global, file, m);
   logger.log('[mocha-es6] loaded test module %s with %s tests',
     file, gatherTests(m.suite).length);
+  restoreGlobals();
 
   return result;
 }
