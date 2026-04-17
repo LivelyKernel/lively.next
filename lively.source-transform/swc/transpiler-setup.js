@@ -10,7 +10,10 @@ const BROWSER_DONT_TRANSFORM = [
   'global', 'self', 'undefined',
   '_moduleExport', '_moduleImport',
   'localStorage',
-  'prompt', 'alert', 'fetch', 'getComputedStyle'
+  'prompt', 'alert', 'fetch', 'getComputedStyle',
+  // CJS variables — these are local to the module wrapper but appear as
+  // undeclared globals in the raw source that gets transpiled.
+  'exports', 'module', 'require'
 ];
 
 /**

@@ -268,9 +268,10 @@ function recordTestsWhile (file, whileFn, options = {}) {
   module.define('mocha', m);
 
   // put mocha globals in place
+  const runtimeGlobal = typeof globalThis !== 'undefined' ? globalThis : System.global;
+  if (!options.global) options.global = runtimeGlobal;
   prepareMocha(m, options.global);
   m.suite.emit('pre-require', options.global, file, m);
-  const runtimeGlobal = typeof globalThis !== 'undefined' ? globalThis : System.global;
   const globalNames = [
     'afterEach', 'after', 'beforeEach', 'before',
     'context', 'describe', 'it', 'setup', 'specify',
@@ -283,7 +284,7 @@ function recordTestsWhile (file, whileFn, options = {}) {
     const hasOwn = Object.prototype.hasOwnProperty.call(runtimeGlobal, name);
     hadGlobal.set(name, hasOwn);
     previousGlobals.set(name, hasOwn ? runtimeGlobal[name] : undefined);
-    runtimeGlobal[name] = options.global[name];
+    if (options.global !== runtimeGlobal) runtimeGlobal[name] = options.global[name];
   }
   const restoreGlobals = () => {
     for (const name of globalNames) {
