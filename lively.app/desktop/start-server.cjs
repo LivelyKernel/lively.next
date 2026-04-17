@@ -2,6 +2,11 @@
 // Runs in Node context BEFORE any window opens.
 // Boots lively.server, then navigates the window to it.
 //
+// Works in two modes:
+//   - Dev mode: lively.app/ inside the monorepo at <root>/lively.app/
+//   - Bundled mode: standalone distribution where lively source lives at
+//     <bundle>/app/ next to the NW.js binary
+//
 // ESM resolver hooks (module.register, registerHooks, NODE_OPTIONS) all crash
 // NW.js's Blink renderer. So the server runs in a managed child process where
 // --experimental-loader works normally. From the user's perspective it's
@@ -10,22 +15,76 @@
 const path = require('path');
 const fs = require('fs');
 const net = require('net');
+const os = require('os');
 const { spawn, execSync } = require('child_process');
 
-// lively.app/ sits inside the monorepo root
-const rootDir = path.resolve(__dirname, '..', '..');
+// ---------------------------------------------------------------------------
+// 0. Detect mode: dev (monorepo) vs bundled (standalone distribution)
+// ---------------------------------------------------------------------------
+// Marker: lively.installer/packages-config.json always present at the repo
+// (or bundled app) root.
 
-// File-based logging — NW.js node-main console goes to internal devtools
-const logFile = path.join(rootDir, 'lively.app', 'boot.log');
-function log (msg) {
-  const line = `[${new Date().toISOString()}] ${msg}\n`;
-  fs.appendFileSync(logFile, line);
+function findRootDir () {
+  const candidates = [
+    path.resolve(__dirname, '..', '..'),       // dev: lively.app/desktop/ → monorepo
+    path.resolve(__dirname, '..', 'app'),      // bundled: desktop/ → ../app/
+    path.resolve(__dirname, '..')              // fallback: desktop/ → bundle root
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(path.join(c, 'lively.installer/packages-config.json'))) return c;
+  }
+  throw new Error('Could not locate lively.next root directory from ' + __dirname);
 }
-fs.writeFileSync(logFile, '');
-log('node-main starting, rootDir=' + rootDir);
+
+const rootDir = findRootDir();
+// In dev mode this script lives inside the monorepo, so __dirname is under rootDir.
+// In bundled mode this script lives next to the NW.js binary (at <bundle>/desktop/)
+// and rootDir is at <bundle>/app/ — __dirname is NOT under rootDir.
+const bundled = !__dirname.startsWith(rootDir + path.sep);
 
 // ---------------------------------------------------------------------------
-// 1. Find a free port
+// 1. Logging
+// ---------------------------------------------------------------------------
+// Dev mode: log to lively.app/boot.log (alongside source).
+// Bundled mode: log to ~/.local/share/lively.next/boot.log (user-writable).
+
+const logFile = bundled
+  ? path.join(os.homedir(), '.local', 'share', 'lively.next', 'boot.log')
+  : path.join(rootDir, 'lively.app', 'boot.log');
+fs.mkdirSync(path.dirname(logFile), { recursive: true });
+fs.writeFileSync(logFile, '');
+function log (msg) {
+  fs.appendFileSync(logFile, '[' + new Date().toISOString() + '] ' + msg + '\n');
+}
+log('node-main starting, mode=' + (bundled ? 'bundled' : 'dev') + ', rootDir=' + rootDir);
+
+// ---------------------------------------------------------------------------
+// 2. Locate the desktop/ directory (always next to this script)
+// ---------------------------------------------------------------------------
+
+const desktopDir = __dirname;
+
+// ---------------------------------------------------------------------------
+// 3. Locate a node binary
+// ---------------------------------------------------------------------------
+// Bundled mode: look in <bundle>/node/bin/node.
+// Dev mode: first PATH entry that isn't flatn/bin/node.
+
+function findNodeBinary () {
+  const bundleNode = path.resolve(__dirname, '..', 'node', 'bin', process.platform === 'win32' ? 'node.exe' : 'node');
+  if (fs.existsSync(bundleNode)) return bundleNode;
+
+  try {
+    const found = execSync('which -a node', { encoding: 'utf8' })
+      .split('\n').map(p => p.trim())
+      .find(p => p && !p.includes('/flatn/'));
+    if (found) return found;
+  } catch (_) {}
+  throw new Error('No node binary found (checked bundle and PATH)');
+}
+
+// ---------------------------------------------------------------------------
+// 4. Helpers
 // ---------------------------------------------------------------------------
 
 function findFreePort (start) {
@@ -39,10 +98,6 @@ function findFreePort (start) {
   });
 }
 
-// ---------------------------------------------------------------------------
-// 2. Wait for the server to accept connections
-// ---------------------------------------------------------------------------
-
 function waitForServer (port, timeout = 120000) {
   const start = Date.now();
   return new Promise((resolve, reject) => {
@@ -55,10 +110,6 @@ function waitForServer (port, timeout = 120000) {
   });
 }
 
-// ---------------------------------------------------------------------------
-// 3. Status updates to boot.html
-// ---------------------------------------------------------------------------
-
 function emitStatus (msg) {
   log(msg);
   try { nw.Window.get().emit('lively-boot-status', msg); } catch (_) {}
@@ -70,21 +121,55 @@ function emitError (msg) {
 }
 
 // ---------------------------------------------------------------------------
-// 4. Boot
+// 5. Flatn env setup
+// ---------------------------------------------------------------------------
+// In dev mode start.sh sources scripts/lively-next-env.sh before launching.
+// In bundled mode there's no launcher script — we set the env vars here.
+
+function setupFlatnEnv () {
+  if (process.env.FLATN_DEV_PACKAGE_DIRS) return;  // already set by launcher
+  const pkgs = JSON.parse(fs.readFileSync(
+    path.join(rootDir, 'lively.installer/packages-config.json'), 'utf8'));
+  const devDirs = pkgs
+    .map(p => path.join(rootDir, p.name))
+    .filter(d => fs.existsSync(d));
+  const localProjects = path.join(rootDir, 'local_projects');
+  if (fs.existsSync(localProjects)) {
+    for (const d of fs.readdirSync(localProjects, { withFileTypes: true })) {
+      if (d.isDirectory()) devDirs.push(path.join(localProjects, d.name));
+    }
+  }
+  process.env.FLATN_PACKAGE_COLLECTION_DIRS = [
+    path.join(rootDir, 'lively.next-node_modules'),
+    path.join(rootDir, 'custom-npm-modules')
+  ].join(':');
+  process.env.FLATN_DEV_PACKAGE_DIRS = devDirs.join(':');
+  process.env.FLATN_PACKAGE_DIRS = '';
+  process.env.lv_next_dir = rootDir;
+}
+
+// ---------------------------------------------------------------------------
+// 6. Boot
 // ---------------------------------------------------------------------------
 
 (async () => {
+  setupFlatnEnv();
+
+  // Runtime directories the server's library-snapshot step expects. Excluded
+  // from the bundle since they're populated at runtime; create empty ones
+  // on first launch.
+  for (const d of ['esm_cache', 'snapshots', 'local_projects', 'custom-npm-modules']) {
+    fs.mkdirSync(path.join(rootDir, d), { recursive: true });
+  }
+
   emitStatus('Finding free port...');
   const port = await findFreePort(9011);
 
-  let configFile = path.join(rootDir, 'lively.app/desktop/server-config.js');
+  let configFile = path.join(desktopDir, 'server-config.js');
   if (!fs.existsSync(configFile)) configFile = path.join(rootDir, 'config.js');
   if (!fs.existsSync(configFile)) configFile = path.join(rootDir, 'lively.installer/assets/config.js');
 
-  // Find a real node binary on PATH (skip flatn/bin/node which is a wrapper script).
-  const nodeBin = execSync('which -a node', { encoding: 'utf8' })
-    .split('\n').map(p => p.trim())
-    .find(p => p && !p.includes('/flatn/'));
+  const nodeBin = findNodeBinary();
   log('Using node: ' + nodeBin);
 
   emitStatus('Starting lively.server on 127.0.0.1:' + port + '...');
@@ -92,12 +177,11 @@ function emitError (msg) {
   const child = spawn(nodeBin, [
     '--no-warnings',
     '--dns-result-order', 'ipv4first',
-    // Preload the parent-death watchdog FIRST (so even if later preloads fail,
-    // the child still dies when NW.js does).
-    '-r', path.join(rootDir, 'lively.app/desktop/watchdog.cjs'),
-    // Flatn CJS resolver hook.
+    // Parent-death watchdog (first so other preloads failing can't orphan us)
+    '-r', path.join(desktopDir, 'watchdog.cjs'),
+    // Flatn CJS resolver hook
     '-r', path.join(rootDir, 'flatn/resolver.cjs'),
-    // Flatn ESM resolver hook.
+    // Flatn ESM resolver hook
     '--experimental-loader', path.join(rootDir, 'flatn/resolver.mjs'),
     path.join(rootDir, 'lively.server/bin/start-server.js'),
     '--root-directory', rootDir,
@@ -126,7 +210,7 @@ function emitError (msg) {
 
   emitStatus('Server ready, loading lively...');
   const win = nw.Window.get();
-  win.window.location.href = `http://127.0.0.1:${port}`;
+  win.window.location.href = 'http://127.0.0.1:' + port;
 
   win.on('close', function () {
     log('Window closing, killing server...');
