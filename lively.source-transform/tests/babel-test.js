@@ -1,14 +1,14 @@
 /* global describe, it */
 import { expect } from 'mocha-es6';
-// Use @babel/standalone (browser build) instead of @babel/core (Node/CJS).
-// @babel/core uses gensync generators internally which break when loaded
-// as a CJS module through SystemJS in the browser.
-import * as babel from '@babel/standalone';
+import babel from '@babel/core';
+import t from '@babel/types';
 import { string, fun } from 'lively.lang';
 import { parse, query, transform, nodes, stringify } from 'lively.ast';
 import { rewriteToCaptureTopLevelVariables, rewriteToRegisterModuleToCaptureSetters } from '../capturing.js';
 import { classToFunctionTransform } from 'lively.classes';
 import { defaultClassToFunctionConverterName } from 'lively.vm';
+import { objectSpreadTransform } from 'lively.source-transform';
+import lint from 'lively.ide/js/linter.js';
 import { livelyPreTranspile, livelyPostTranspile } from '../babel/plugin.js';
 import { classToFunctionTransformBabel } from 'lively.classes/class-to-function-transform.js';
 
@@ -21,26 +21,26 @@ function _testVarTfm (descr, options, code, expected, only) {
     code = options;
     options = {
       recordGlobals: true,
-      captureObj: nodes.id('_rec'),
+      captureObj: t.Identifier('_rec'),
       varRecorderName: '_rec',
-      topLevelVarRecorder: nodes.id('_rec'),
+      topLevelVarRecorder: t.Identifier('_rec'),
       topLevelVarRecorderName: '_rec',
       plugin: livelyPreTranspile,
       classToFunction: {
-        classHolder: nodes.id('_rec'),
-        functionNode: nodes.id('_createOrExtendClass')
+        classHolder: t.Identifier('_rec'),
+        functionNode: t.Identifier('_createOrExtendClass')
       }
     };
   } else {
     options = {
       recordGlobals: true,
-      captureObj: nodes.id('_rec'),
+      captureObj: t.Identifier('_rec'),
       varRecorderName: '_rec',
-      topLevelVarRecorder: nodes.id('_rec'),
+      topLevelVarRecorder: t.Identifier('_rec'),
       topLevelVarRecorderName: '_rec',
       classToFunction: {
-        classHolder: nodes.id('_rec'),
-        functionNode: nodes.id('_createOrExtendClass')
+        classHolder: t.Identifier('_rec'),
+        functionNode: t.Identifier('_createOrExtendClass')
       },
       plugin: livelyPreTranspile,
       ...options
@@ -60,9 +60,6 @@ function ignoreFormatCompare (result, expected) {
 
 function testVarTfm (descr, options, code, expected) { return _testVarTfm(descr, options, code, expected, false); }
 function only_testVarTfm (descr, options, code, expected) { return _testVarTfm(descr, options, code, expected, true); }
-// Skip helper: class-to-function tests trigger gensync yield* through
-// jspm.io's CDN ESM conversion of @babel/core. See capturing-test.js.
-function xTestVarTfm (descr) { return xit(descr, () => {}); }
 
 function classTemplate (className, superClassName, methodString, classMethodString, classHolder, moduleMeta, useClassHolder = true, start, end, evalId) {
   if (methodString.includes('\n')) methodString = string.indent(methodString, ' ', 2).replace(/^\s+/, '');
@@ -234,11 +231,7 @@ f;`);
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     describe('class', () => {
-      // classToFunctionTransformBabel calls path.traverse() which triggers
-      // gensync yield* through the jspm.io CDN's ESM conversion of @babel/core
-      // — that conversion breaks generator protocol. Same transforms are fully
-      // tested in capturing-test.js.
-      xdescribe('with class-to-func transform', () => {
+      describe('with class-to-func transform', () => {
         testVarTfm('normal def',
           'class Foo {\n  a() {\n  return 23;\n  }\n}',
           classTemplateDecl('Foo', 'undefined', '[{\n' +
@@ -573,8 +566,23 @@ f;`);
         'export default function x() {};',
         'function x() {\n}\n_rec.x = x;\nexport default x;\n;');
 
-      xTestVarTfm('class decl');
-      xTestVarTfm('default class decl');
+      testVarTfm('class decl',
+        'export class Foo {};',
+                 `export ${classTemplateDecl('Foo', 'undefined', 'undefined', '[{\n' +
+                                                       '  key: Symbol.for("__LivelyClassName__"),\n' +
+                                                       '  get: function get() {\n' +
+                                                       '    return "Foo";\n' +
+                                                       '  }\n' +
+                                                       '}]', '_rec', 'undefined', 7, 19)}\n_rec.Foo = Foo;\n;`);
+
+      testVarTfm('default class decl',
+        'export default class Foo {};',
+                 `${classTemplateDecl('Foo', 'undefined', 'undefined', '[{\n' +
+                                                       '  key: Symbol.for("__LivelyClassName__"),\n' +
+                                                       '  get: function get() {\n' +
+                                                       '    return "Foo";\n' +
+                                                       '  }\n' +
+                                                       '}]', '_rec', 'undefined', 15, 27)}\nexport default Foo;\n;`);
 
       testVarTfm('class decl without classToFunction',
         { transformES6Classes: false, captureObj: nodes.id('_rec') },
@@ -667,8 +675,52 @@ export { foo1, bar2 };`);
         'export default async function foo() {};',
         'async function foo() {\n}\n_rec.foo = foo;\n_moduleExport("default", _rec.foo);\n;');
 
-      xTestVarTfm('default class decl');
-      xTestVarTfm('class decl, declarationWrapper');
+      testVarTfm('default class decl',
+        opts,
+        'export default class Foo {a() { return 23; }};',
+        classTemplateDecl('Foo', 'undefined', '[{\n' +
+                                                    '  key: "a",\n' +
+                                                    '  value: function Foo_a_() {\n' +
+                                                    '    return 23;\n' +
+                                                    '  }\n' +
+                                                    '}]', '[{\n' +
+                                                       '  key: Symbol.for("__LivelyClassName__"),\n' +
+                                                       '  get: function get() {\n' +
+                                                       '    return "Foo";\n' +
+                                                       '  }\n' +
+                                                       '}]', '_rec', 'undefined', 15, 45) +
+              '\n_moduleExport("default", _rec.Foo);\n;');
+
+      testVarTfm('class decl, declarationWrapper',
+        {
+          ...opts,
+          classToFunction: {
+            classHolder: nodes.id('_rec'),
+            functionNode: nodes.id('_createOrExtendClass'),
+            declarationWrapper: { name: '_define', type: 'Identifier' },
+            transform: classToFunctionTransform
+          }
+        },
+        'export class Foo {a() { return 23; }};',
+        'var Foo = _define("Foo", "class", ' +
+                classTemplate('Foo', 'undefined', '[{\n' +
+                                                  '  key: "a",\n' +
+                                                  '  value: function Foo_a_() {\n' +
+                                                  '    return 23;\n' +
+                                                  '  }\n' +
+                                                  '}]', '[{\n' +
+                                                       '  key: Symbol.for("__LivelyClassName__"),\n' +
+                                                       '  get: function get() {\n' +
+                                                       '    return "Foo";\n' +
+                                                       '  }\n' +
+                                                       '}]', '_rec', 'undefined', 'undefined', 7, 37) +
+                ', _rec, {\n' +
+                '  start: 7,\n' +
+                '  end: 37\n' +
+                '});\n' +
+                '_moduleExport("Foo", _rec.Foo);\n;'
+
+      );
 
       testVarTfm('named',
         opts,
@@ -719,7 +771,7 @@ describe('declarations', () => {
     // es6ExportFuncId: '_moduleExport',
     // es6ImportFuncId: '_moduleImport',
     keepTopLevelVarDecls: true,
-    declarationWrapper: nodes.id('_define'),
+    declarationWrapper: t.Identifier('_define'),
     captureObj: nodes.id('_rec'),
     addSourceMeta: false,
     classToFunction: {
@@ -753,7 +805,16 @@ describe('declarations', () => {
   testVarTfm('define call works for exports 2', opts, 'export function foo() {}',
     'function foo() {}\n_rec.foo = _define(\"foo\", \"function\", foo, _rec);\nexport { foo };');
 
-  xTestVarTfm('define call works for exports 3');
+  testVarTfm(
+    'define call works for exports 3',
+    opts,
+    'export class Foo {}',
+    `export var Foo = _define(\"Foo\", \"class\", ${classTemplate('Foo', 'undefined', 'undefined', '[{\n' +
+                                                       '  key: Symbol.for("__LivelyClassName__"),\n' +
+                                                       '  get: function get() {\n' +
+                                                       '    return "Foo";\n' +
+                                                       '  }\n' +
+                                                       '}]', '_rec', 'undefined', 'undefined', 7, 19)}, _rec, {\n  start: 7,\n  end: 19\n});\n_rec.Foo = Foo;`);
 
   testVarTfm(
     'define call works for exports 4',
@@ -765,7 +826,15 @@ var y = _rec.y;
 _rec.x = _define("x", "assignment", 23, _rec);
 export { x, y };`);
 
-  xTestVarTfm('wraps class decls');
+  testVarTfm('wraps class decls',
+    opts,
+    'class Foo {}',
+             `var Foo = _define(\"Foo\", \"class\", ${classTemplate('Foo', 'undefined', 'undefined', '[{\n' +
+                                                       '  key: Symbol.for("__LivelyClassName__"),\n' +
+                                                       '  get: function get() {\n' +
+                                                       '    return "Foo";\n' +
+                                                       '  }\n' +
+                                                       '}]', '_rec', 'undefined', 'undefined', 0, 12)}, _rec, {\n  start: 0,\n  end: 12\n});`);
 
   testVarTfm('wraps function decls', opts, 'function bar() {}',
     'function bar() {\n}\n_rec.bar = _define("bar", "function", bar, _rec);\nbar;');
@@ -854,7 +923,7 @@ return {
 
     testVarTfm(
       'captures setters of registered module with declarationWrapper',
-      { plugin: livelyPostTranspile, varRecorderName: '_rec', declarationWrapper: nodes.id('_define') },
+      { plugin: livelyPostTranspile, varRecorderName: '_rec', declarationWrapper: t.Identifier('_define') },
       input,
         `System.register([
   \"foo:a.js\",
