@@ -1,0 +1,87 @@
+name: Nightly desktop app build
+
+on:
+  schedule:
+    # 04:00 UTC daily — offset from the 00:00 UTC daily-ci-checks run so
+    # they don't compete for runners. Produces a fresh downloadable bundle
+    # off latest main each night.
+    - cron: '0 4 * * *'
+  # Lets maintainers kick off a build on demand (handy before tagging a release).
+  workflow_dispatch:
+
+concurrency:
+  group: build-desktop-app-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build linux-x64 bundle
+    runs-on: ubuntu-latest
+    # Adding macOS (osx-arm64) and Windows (win-x64) is a matter of
+    # extending this into a matrix once build.sh is verified on those
+    # platforms — the script already has PLATFORM / ARCH detection.
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '24'
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
+
+      - name: Restore lively.next dep cache
+        id: cache-lively-deps
+        uses: actions/cache/restore@v3
+        env:
+          cache-name: lively-deps
+        with:
+          path: |
+            lively.next-node_modules/
+            .puppeteer-browser-cache/
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json', 'flatn/package.json', 'mocha-es6/package.json') }}
+
+      - name: Install lively.next
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 20
+          max_attempts: 3
+          retry_on: error
+          # --no-desktop skips the NW.js SDK fetch. The build step below
+          # fetches its own (Normal flavor) directly into dist/.
+          command: chmod +x ./install.sh && ./install.sh --no-desktop
+
+      - name: Save lively.next dep cache
+        if: ${{ steps.cache-lively-deps.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v3
+        env:
+          cache-name: lively-deps
+        with:
+          path: |
+            lively.next-node_modules/
+            .puppeteer-browser-cache/
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json', 'flatn/package.json', 'mocha-es6/package.json') }}
+
+      - name: Build desktop bundle
+        env:
+          PACK: '1'
+        run: chmod +x ./lively.app/scripts/build.sh && ./lively.app/scripts/build.sh
+
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lively.next-linux-x64
+          path: dist/lively.next-linux-x64.tar.gz
+          # Free-tier retention; bump or cut per project policy.
+          retention-days: 30
+          if-no-files-found: error
