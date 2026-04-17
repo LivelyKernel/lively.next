@@ -46,7 +46,7 @@
   "systemjs": {
     "main": "index.js",
     "map": {
-      "yoga-layout/load": "esm://ga.jspm.io/npm:yoga-layout@3.2.1/dist/src/load.js"
+      "yoga-layout/load": "https://ga.jspm.io/npm:yoga-layout@3.2.1/dist/src/load.js"
     }
   },
   "scripts": {
