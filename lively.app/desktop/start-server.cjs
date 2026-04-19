@@ -254,15 +254,28 @@ function setupFlatnEnv () {
   // (Chromium: reload — handled natively anyway). Use Cmd+Shift+D for
   // Dashboard.
   function navTo (url) {
+    log('[menu] navTo(' + url + ')');
     try {
       const w = nw.Window.get().window;
-      if (w && w.livelyNav) return w.livelyNav(url);
-      w.location.href = url;
-    } catch (err) { log('navTo failed: ' + err.message); }
+      log('[menu]   window object: ' + (w ? 'present' : 'null'));
+      log('[menu]   inject.js loaded: ' + (w && w.__LIVELY_INJECT_LOADED__ ? 'yes (' + w.__LIVELY_INJECT_LOADED__ + ')' : 'no'));
+      log('[menu]   typeof livelyNav: ' + (w && typeof w.livelyNav));
+      log('[menu]   current url: ' + (w && w.location && w.location.href));
+      if (w && typeof w.livelyNav === 'function') {
+        w.livelyNav(url);
+        log('[menu]   livelyNav called');
+        return;
+      }
+      if (w && w.location) {
+        w.location.href = url;
+        log('[menu]   location.href assigned');
+      }
+    } catch (err) { log('[menu] navTo failed: ' + err.message + '\n' + err.stack); }
   }
   function toggleDevTools () {
-    try { nw.Window.get().showDevTools(); }
-    catch (e) { log('showDevTools unavailable: ' + e.message); }
+    log('[menu] toggleDevTools clicked');
+    try { nw.Window.get().showDevTools(); log('[menu]   showDevTools called'); }
+    catch (e) { log('[menu]   showDevTools unavailable: ' + e.message); }
   }
   try {
     const menu = new nw.Menu({ type: 'menubar' });
@@ -276,14 +289,14 @@ function setupFlatnEnv () {
       label: 'Dashboard',
       key: 'd',
       modifiers: mod + '+shift',
-      click: () => navTo(dashboardUrl)
+      click: function () { log('[menu] Dashboard item clicked'); navTo(dashboardUrl); }
     }));
     livelyMenu.append(new nw.MenuItem({ type: 'separator' }));
     livelyMenu.append(new nw.MenuItem({
       label: 'Toggle DevTools',
       key: 'i',
       modifiers: mod + '+alt',
-      click: toggleDevTools
+      click: function () { log('[menu] DevTools item clicked'); toggleDevTools(); }
     }));
     // macOS app menu is at index 0, our "Go" menu sits at position 1
     menu.insert(new nw.MenuItem({

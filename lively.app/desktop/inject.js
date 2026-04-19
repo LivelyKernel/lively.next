@@ -13,24 +13,26 @@
 (function () {
   'use strict';
 
-  // Navigation target stored by node-main before the window is shown;
-  // inject.js falls back to location.origin if missing.
+  // Marker so node-main can detect whether we actually ran on this page.
+  window.__LIVELY_INJECT_LOADED__ = Date.now();
+
   function dashboardUrl () {
     return (window.__LIVELY_DASHBOARD_URL__ || window.location.origin + '/dashboard/');
   }
 
   window.livelyNav = function (url) {
+    console.log('[lively.app] livelyNav →', url);
     window.location.href = url;
   };
 
   window.addEventListener('keydown', function (e) {
     const mod = e.metaKey || e.ctrlKey;
     if (!mod) return;
-    // Cmd/Ctrl + Shift + D → Dashboard (not conflicting with Chromium
-    // bookmark add on Cmd+D).
     if (e.shiftKey && (e.key === 'D' || e.key === 'd')) {
       e.preventDefault();
       window.livelyNav(dashboardUrl());
     }
   });
+
+  console.log('[lively.app] inject.js loaded');
 })();
