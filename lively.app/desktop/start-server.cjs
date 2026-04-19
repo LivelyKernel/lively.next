@@ -238,21 +238,60 @@ function setupFlatnEnv () {
   await waitForServer(port);
 
   emitStatus('Server ready, loading lively...');
-  // Call window.livelyBoot.navigate() from node so the page itself does
-  // the location assignment in its own DOM context (setting location.href
-  // directly from node is flaky in NW.js). Target /dashboard/ explicitly
-  // to skip the / → /dashboard/ redirect.
-  const navUrl = 'http://127.0.0.1:' + port + '/dashboard/';
+
+  const dashboardUrl = 'http://127.0.0.1:' + port + '/dashboard/';
   const win = nw.Window.get();
+
+  // Application menu: Dashboard navigation + DevTools. On macOS this
+  // attaches to the system menu bar at the top of the screen; on
+  // Linux/Windows it shows up as a normal window menubar.
+  try {
+    const menu = new nw.Menu({ type: 'menubar' });
+    if (process.platform === 'darwin') {
+      // Gives us the standard macOS app menu (Quit/Hide/etc), Edit, Window
+      menu.createMacBuiltin('lively.next', { hideEdit: false });
+    }
+    const livelyMenu = new nw.Menu();
+    const mod = process.platform === 'darwin' ? 'cmd' : 'ctrl';
+    livelyMenu.append(new nw.MenuItem({
+      label: 'Dashboard',
+      key: 'd',
+      modifiers: mod,
+      click: () => { nw.Window.get().window.location.href = dashboardUrl; }
+    }));
+    livelyMenu.append(new nw.MenuItem({
+      label: 'Reload',
+      key: 'r',
+      modifiers: mod,
+      click: () => { nw.Window.get().reload(); }
+    }));
+    livelyMenu.append(new nw.MenuItem({ type: 'separator' }));
+    livelyMenu.append(new nw.MenuItem({
+      label: 'Toggle DevTools',
+      key: 'i',
+      modifiers: mod + '+alt',
+      click: () => { try { nw.Window.get().showDevTools(); } catch (e) { log('showDevTools unavailable: ' + e.message); } }
+    }));
+    // macOS puts the app-menu at index 0; our menu goes after it.
+    // Linux/Windows: first menu is our custom one.
+    menu.insert(new nw.MenuItem({
+      label: 'lively.next',
+      submenu: livelyMenu
+    }), process.platform === 'darwin' ? 1 : 0);
+    win.menu = menu;
+  } catch (err) {
+    log('menu setup failed (non-fatal): ' + err.message);
+  }
+
   const b = livelyBoot();
-  if (b && b.navigate) b.navigate(navUrl);
+  if (b && b.navigate) b.navigate(dashboardUrl);
   else {
     // boot.html's script hasn't run yet — fall back and hope the direct
     // assignment works on this platform. Shouldn't happen in practice
     // since server boot takes many seconds by which point boot.html is
     // long loaded, but be defensive.
     log('livelyBoot helper missing, using direct location.href assignment');
-    win.window.location.href = navUrl;
+    win.window.location.href = dashboardUrl;
   }
 
   win.on('close', function () {
