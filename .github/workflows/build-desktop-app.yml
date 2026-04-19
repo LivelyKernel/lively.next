@@ -119,6 +119,22 @@ jobs:
             .puppeteer-browser-cache/
           key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json', 'flatn/package.json', 'mocha-es6/package.json') }}
 
+      - name: Install icon-generation tools
+        # librsvg2-bin       → rsvg-convert (SVG rasterizer)
+        # libicns-utils      → png2icns (Linux runner, .icns generation)
+        # imagemagick        → `magick`/`convert` for .ico
+        # macOS has iconutil natively; librsvg + imagemagick via brew.
+        run: |
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get install -y librsvg2-bin libicns-utils imagemagick
+          else
+            brew install librsvg imagemagick
+          fi
+
+      - name: Generate app icons
+        run: bash ./lively.app/scripts/generate-icons.sh
+
       - name: Build freezer landing-page
         # install.sh only builds loading-screen under CI=true (the other CI
         # workflows don't need landing-page), but the desktop bundle serves

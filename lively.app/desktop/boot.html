@@ -18,24 +18,16 @@
       display: flex; align-items: center; justify-content: center;
       position: relative;
     }
-    /* Subtle triangular pattern echoing the dashboard backdrop */
-    body::before, body::after {
-      content: "";
+    /* Triangles matching LandingPage's three polygons (lively.freezer/src/
+       landing-page.cp.js lines 147-181). Same absolute coords scaled into
+       the full viewport via preserveAspectRatio=slice. */
+    .triangles {
       position: absolute;
-      border-style: solid;
-      border-color: transparent;
-      opacity: .25;
+      inset: 0;
+      width: 100%;
+      height: 100%;
       pointer-events: none;
-    }
-    body::before {
-      top: -20vh; left: -10vw;
-      border-width: 0 40vw 60vh 40vw;
-      border-bottom-color: rgba(230, 126, 34, 0.8);
-    }
-    body::after {
-      bottom: -15vh; right: -15vw;
-      border-width: 50vh 35vw 0 35vw;
-      border-top-color: rgba(241, 196, 15, 0.9);
+      z-index: 0;
     }
 
     .card {
@@ -83,6 +75,13 @@
   </style>
 </head>
 <body>
+  <!-- Three triangles (absolute coords match the dashboard's LandingPageBG) -->
+  <svg class="triangles" viewBox="0 0 1660 980" preserveAspectRatio="xMidYMid slice">
+    <polygon fill="rgba(230, 126, 34, 0.6)" points="420.53,8.1 839.04,875.46 110.4,877.24"/>
+    <polygon fill="rgba(230, 126, 34, 0.6)" points="651.33,210.3 1443.85,919.42 575.6,919.13"/>
+    <polygon fill="rgba(230, 126, 34, 0.6)" points="908.46,338.2 1661.05,980.61 792.8,980.32"/>
+  </svg>
+
   <div class="card">
     <!-- inlined lively-next-logo.svg, white-recolored so it reads on the gradient -->
     <svg class="logo" viewBox="0 0 315 75" xmlns="http://www.w3.org/2000/svg">

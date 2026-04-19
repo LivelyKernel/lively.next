@@ -296,6 +296,10 @@ Terminal=false
 Categories=Development;IDE;
 StartupWMClass=lively.next
 `, { mode: 0o755 });
+
+  // Bundle-root icon for the .desktop file's Icon= field
+  const pngIcon = path.join(APP_DIR, 'assets', 'icon.png');
+  if (fs.existsSync(pngIcon)) fs.copyFileSync(pngIcon, path.join(BUNDLE, 'icon.png'));
 }
 
 function finalizeMacOS () {
@@ -345,8 +349,20 @@ function finalizeMacOS () {
     rmrf(path.join(BUNDLE, f));
   }
 
+  // App icon: copy lively.app/assets/icon.icns → Contents/Resources/app.icns
+  // (matches the CFBundleIconFile value "app" we set below).
+  const icnsSrc = path.join(APP_DIR, 'assets', 'icon.icns');
+  if (fs.existsSync(icnsSrc)) {
+    fs.copyFileSync(icnsSrc, path.join(nwjsApp, 'Contents', 'Resources', 'app.icns'));
+    // Strip the stock nwjs icon so macOS doesn't fall back to it if
+    // Info.plist resolution hiccups.
+    const stock = path.join(nwjsApp, 'Contents', 'Resources', 'nw.icns');
+    if (fs.existsSync(stock)) rmrf(stock);
+  }
+
   // Patch Info.plist so macOS treats this as our app (not a generic NW.js
-  // instance that would share state / keychain / crash reports).
+  // instance that would share state / keychain / crash reports) and
+  // picks up our icon.
   const plist = path.join(nwjsApp, 'Contents', 'Info.plist');
   if (fs.existsSync(plist)) {
     let xml = fs.readFileSync(plist, 'utf8');
@@ -359,6 +375,9 @@ function finalizeMacOS () {
     xml = xml.replace(
       /<key>CFBundleDisplayName<\/key>\s*<string>[^<]*<\/string>/,
       '<key>CFBundleDisplayName</key><string>lively.next</string>');
+    xml = xml.replace(
+      /<key>CFBundleIconFile<\/key>\s*<string>[^<]*<\/string>/,
+      '<key>CFBundleIconFile</key><string>app</string>');
     fs.writeFileSync(plist, xml);
   }
 

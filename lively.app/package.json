@@ -5,6 +5,7 @@
   "type": "module",
   "main": "desktop/boot.html",
   "node-main": "desktop/start-server.cjs",
+  "inject_js_end": "desktop/inject.js",
   "single-instance": true,
   "window": {
     "title": "lively.next",
