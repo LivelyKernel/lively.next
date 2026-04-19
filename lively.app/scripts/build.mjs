@@ -517,8 +517,15 @@ async function main () {
     if (TARGET_NW_PLATFORM === 'win') {
       const zipPath = path.join(DIST_DIR, `${BUNDLE_NAME}.zip`);
       step(`Packing ${path.basename(zipPath)}...`);
-      // Windows bsdtar makes a zip with -a -c -f
-      execFileSync('tar', ['-a', '-c', '-f', zipPath, '-C', DIST_DIR, BUNDLE_NAME], { stdio: 'inherit' });
+      // Host-dependent: Windows bsdtar and macOS bsdtar both recognize
+      // `-a` for format-from-extension; GNU tar (Linux) does not and
+      // needs us to call `zip` directly instead.
+      if (process.platform === 'linux') {
+        // zip is preinstalled on ubuntu-latest runners.
+        execFileSync('zip', ['-r', '-q', zipPath, BUNDLE_NAME], { cwd: DIST_DIR, stdio: 'inherit' });
+      } else {
+        execFileSync('tar', ['-a', '-c', '-f', zipPath, '-C', DIST_DIR, BUNDLE_NAME], { stdio: 'inherit' });
+      }
       step(`Archive: ${zipPath}`);
     } else {
       const tgzPath = path.join(DIST_DIR, `${BUNDLE_NAME}.tar.gz`);

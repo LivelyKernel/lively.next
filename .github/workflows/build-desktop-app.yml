@@ -34,16 +34,23 @@ jobs:
         include:
           - os: ubuntu-latest
             bundle: lively.next-linux-x64
+            target_platform: linux
+            target_arch: x64
             archive_ext: tar.gz
+          - os: ubuntu-latest
+            # Cross-compile Windows from Linux. build.mjs just downloads
+            # the Windows NW.js + Node.js binaries and stages them; no
+            # native Windows runner involved (install.sh doesn't cleanly
+            # run on Windows due to Git Bash path mangling).
+            bundle: lively.next-win-x64
+            target_platform: win
+            target_arch: x64
+            archive_ext: zip
           - os: macos-latest
             bundle: lively.next-osx-arm64
+            target_platform: osx
+            target_arch: arm64
             archive_ext: tar.gz
-          # Native Windows isn't supported for lively.next development or
-          # distribution — Windows users run lively via WSL, covered by the
-          # Linux bundle. build.mjs keeps its Windows branches for
-          # potential cross-target builds from other hosts, but CI doesn't
-          # try to run install.sh natively on a Windows runner (paths
-          # from Git Bash break the --experimental-loader flag).
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -105,7 +112,7 @@ jobs:
       - name: Build desktop bundle
         env:
           PACK: '1'
-        run: node ./lively.app/scripts/build.mjs
+        run: node ./lively.app/scripts/build.mjs --platform=${{ matrix.target_platform }} --arch=${{ matrix.target_arch }}
 
       - name: Upload bundle artifact
         uses: actions/upload-artifact@v4
