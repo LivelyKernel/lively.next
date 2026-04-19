@@ -62,6 +62,13 @@
         document.getElementById('status').style.color = '#ff6b6b';
         document.querySelector('.spinner').style.display = 'none';
       });
+      // Server-ready handoff: node-main emits the target URL and we navigate
+      // from the DOM context. Setting location.href across the node↔DOM
+      // boundary directly from node-main is flaky in NW.js — doing it here,
+      // inside the page's own script, is the canonical pattern.
+      win.on('lively-boot-navigate', function (url) {
+        window.location.href = url;
+      });
     }
   </script>
 </body>

@@ -229,8 +229,12 @@ function setupFlatnEnv () {
   await waitForServer(port);
 
   emitStatus('Server ready, loading lively...');
+  // Emit the navigation URL to boot.html so the page itself navigates from
+  // its DOM context (setting win.window.location.href directly from node
+  // context is flaky across the node↔DOM boundary). We target /dashboard/
+  // explicitly so the window doesn't have to follow a redirect from /.
   const win = nw.Window.get();
-  win.window.location.href = 'http://127.0.0.1:' + port;
+  win.emit('lively-boot-navigate', 'http://127.0.0.1:' + port + '/dashboard/');
 
   win.on('close', function () {
     log('Window closing, killing server...');
