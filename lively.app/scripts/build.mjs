@@ -364,6 +364,40 @@ function finalizeMacOS () {
 
   // Final rename: nwjs.app → lively.next.app
   fs.renameSync(nwjsApp, path.join(BUNDLE, 'lively.next.app'));
+
+  // First-run help: an unsigned .app downloaded from the internet is
+  // quarantined by Gatekeeper ("is damaged and can't be opened"). Ship a
+  // tiny README next to the .app explaining the workaround until we set
+  // up code-signing + notarization. See the "macOS code-signing" tracking
+  // issue in the repo.
+  fs.writeFileSync(path.join(BUNDLE, 'README-macOS.txt'),
+`lively.next for macOS — first-run notice
+==========================================
+
+On first launch macOS may complain that "lively.next is damaged and
+can't be opened". This is standard macOS Gatekeeper behavior for
+apps downloaded from the internet that aren't code-signed with an
+Apple Developer ID. The app is fine — it just needs the quarantine
+attribute stripped.
+
+One-shot fix (Terminal, from this folder):
+
+    xattr -cr lively.next.app
+    open lively.next.app
+
+Alternative — GUI:
+
+    1. Double-click lively.next.app (fails with the "damaged" dialog).
+    2. Open System Settings → Privacy & Security.
+    3. Scroll to the Security section — an "Open anyway" button
+       appears for lively.next. Click it.
+    4. Confirm in the follow-up dialog.
+
+Once launched successfully once, subsequent double-clicks work normally.
+
+This will go away once the project sets up Apple Developer code-
+signing + notarization for its CI builds.
+`);
 }
 
 function finalizeWindows () {
