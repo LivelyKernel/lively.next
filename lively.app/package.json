@@ -5,7 +5,6 @@
   "type": "module",
   "main": "desktop/boot.html",
   "node-main": "desktop/start-server.cjs",
-  "node-remote": "http://127.0.0.1:*/*",
   "single-instance": true,
   "window": {
     "title": "lively.next",
