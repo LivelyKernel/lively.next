@@ -8,6 +8,16 @@ on:
     - cron: '0 4 * * *'
   # Lets maintainers kick off a build on demand (handy before tagging a release).
   workflow_dispatch:
+  # Run on PRs that touch the bundling plumbing so reviewers get downloadable
+  # test builds without waiting for a nightly. Scoped to avoid wasting CI
+  # on unrelated PRs.
+  pull_request:
+    paths:
+      - 'lively.app/**'
+      - '.github/workflows/build-desktop-app.yml'
+      - 'install.sh'
+      - 'lively.installer/packages-config.json'
+      - 'flatn/**'
 
 concurrency:
   group: build-desktop-app-${{ github.ref_name }}
