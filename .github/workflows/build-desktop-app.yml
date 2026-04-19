@@ -119,6 +119,12 @@ jobs:
             .puppeteer-browser-cache/
           key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json', 'flatn/package.json', 'mocha-es6/package.json') }}
 
+      - name: Build freezer landing-page
+        # install.sh only builds loading-screen under CI=true (the other CI
+        # workflows don't need landing-page), but the desktop bundle serves
+        # it at /, so build it explicitly here.
+        run: env CI=true npm --silent --prefix lively.freezer run build-landing-page
+
       - name: Build desktop bundle
         env:
           PACK: '1'
