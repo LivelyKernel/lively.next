@@ -135,6 +135,11 @@ jobs:
       - name: Build desktop bundle
         env:
           PACK: '1'
+          # SDK flavor ships Chromium DevTools. Costs ~20% more bundle
+          # size but makes every "blank screen, no clue why" bug
+          # inspectable via Cmd+Opt+I / right-click → Inspect. Switch
+          # back to FLAVOR=normal once the app is stable.
+          FLAVOR: sdk
         run: node ./lively.app/scripts/build.mjs --platform=${{ matrix.target_platform }} --arch=${{ matrix.target_arch }}
 
       - name: Upload bundle artifact
