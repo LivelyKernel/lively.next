@@ -299,22 +299,55 @@ StartupWMClass=lively.next
 }
 
 function finalizeMacOS () {
-  // NW.js on macOS extracts as nwjs.app (a directory bundle with Contents/
-  // MacOS/nwjs etc). Rename to lively.next.app so users see a proper app.
-  const fromApp = path.join(BUNDLE, 'nwjs.app');
-  const toApp = path.join(BUNDLE, 'lively.next.app');
-  if (fs.existsSync(fromApp)) fs.renameSync(fromApp, toApp);
+  // Turn the bundle into a single self-contained .app: all our files live
+  // inside nwjs.app/Contents/Resources/app.nw/ (where NW.js expects the app
+  // payload), then rename nwjs.app → lively.next.app so one .app is the
+  // entire distribution.
+  //
+  // Before:
+  //   <bundle>/
+  //     nwjs.app/                    ← just the NW.js runtime
+  //     credits.html, ...            ← junk from the tarball
+  //     package.json                 ← our NW.js manifest (wrong place!)
+  //     boot.html
+  //     desktop/
+  //     app/
+  //     node/
+  //
+  // After:
+  //   <bundle>/
+  //     lively.next.app/
+  //       Contents/
+  //         MacOS/nwjs                        ← runtime
+  //         Resources/
+  //           app.nw/                         ← our app payload
+  //             package.json
+  //             boot.html
+  //             desktop/
+  //             app/
+  //             node/
+  //           ...
+  //         Info.plist                        ← patched metadata
 
-  // launch.sh — optional terminal launcher
-  fs.writeFileSync(path.join(BUNDLE, 'launch.sh'),
-`#!/bin/bash
-BUNDLE_DIR="$(cd "$(dirname "$0")" && pwd)"
-exec "$BUNDLE_DIR/lively.next.app/Contents/MacOS/nwjs" "$BUNDLE_DIR"
-`, { mode: 0o755 });
+  const nwjsApp = path.join(BUNDLE, 'nwjs.app');
+  const appNw = path.join(nwjsApp, 'Contents', 'Resources', 'app.nw');
+  fs.mkdirSync(appNw, { recursive: true });
 
-  // Patch Info.plist bundle identifier so macOS treats this as our app,
-  // not a generic NW.js instance sharing state.
-  const plist = path.join(toApp, 'Contents', 'Info.plist');
+  // Move our payload into Contents/Resources/app.nw/
+  for (const f of ['package.json', 'boot.html', 'desktop', 'app', 'node']) {
+    const src = path.join(BUNDLE, f);
+    if (fs.existsSync(src)) fs.renameSync(src, path.join(appNw, f));
+  }
+
+  // Strip the loose NW.js tarball junk so the bundle root is just the .app
+  for (const f of fs.readdirSync(BUNDLE)) {
+    if (f === 'nwjs.app') continue;
+    rmrf(path.join(BUNDLE, f));
+  }
+
+  // Patch Info.plist so macOS treats this as our app (not a generic NW.js
+  // instance that would share state / keychain / crash reports).
+  const plist = path.join(nwjsApp, 'Contents', 'Info.plist');
   if (fs.existsSync(plist)) {
     let xml = fs.readFileSync(plist, 'utf8');
     xml = xml.replace(
@@ -328,6 +361,9 @@ exec "$BUNDLE_DIR/lively.next.app/Contents/MacOS/nwjs" "$BUNDLE_DIR"
       '<key>CFBundleDisplayName</key><string>lively.next</string>');
     fs.writeFileSync(plist, xml);
   }
+
+  // Final rename: nwjs.app → lively.next.app
+  fs.renameSync(nwjsApp, path.join(BUNDLE, 'lively.next.app'));
 }
 
 function finalizeWindows () {
