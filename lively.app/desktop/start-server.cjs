@@ -56,7 +56,14 @@ fs.writeFileSync(logFile, '');
 function log (msg) {
   fs.appendFileSync(logFile, '[' + new Date().toISOString() + '] ' + msg + '\n');
 }
+// Stamp bundle build info so the log identifies the exact commit
+let buildInfo = '(no build-info.json)';
+try {
+  const p = path.join(__dirname, 'build-info.json');
+  if (fs.existsSync(p)) buildInfo = fs.readFileSync(p, 'utf8').replace(/\s+/g, ' ').trim();
+} catch (_) {}
 log('node-main starting, mode=' + (bundled ? 'bundled' : 'dev') + ', rootDir=' + rootDir);
+log('build: ' + buildInfo);
 
 // ---------------------------------------------------------------------------
 // 2. Locate the desktop/ directory (always next to this script)

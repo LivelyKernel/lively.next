@@ -508,6 +508,11 @@ async function main () {
   for (const f of ['start-server.cjs', 'watchdog.cjs', 'server-config.js', 'inject.js']) {
     fs.copyFileSync(path.join(APP_DIR, 'desktop', f), path.join(BUNDLE, 'desktop', f));
   }
+  // Stamp the build SHA so boot.log identifies the exact commit, no more
+  // "which bundle am I running?" confusion across CI reruns.
+  const buildSha = process.env.LIVELY_APP_BUILD_SHA || '(local)';
+  fs.writeFileSync(path.join(BUNDLE, 'desktop', 'build-info.json'),
+    JSON.stringify({ sha: buildSha, builtAt: new Date().toISOString() }, null, 2));
 
   // -----------------------------------------------------------------------
   // 4. Monorepo content → bundle/app/
