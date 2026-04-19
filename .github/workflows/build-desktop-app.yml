@@ -67,6 +67,16 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Setup Python
+        # node-gyp@9 (pulled in by leveldown etc.) imports
+        # distutils.version, which was removed in Python 3.12. macOS
+        # runners ship Python 3.14 by default, so pin an older version
+        # that still has distutils. Ubuntu's default is currently fine
+        # but the pin keeps it future-proof.
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
 
