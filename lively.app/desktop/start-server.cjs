@@ -110,14 +110,23 @@ function waitForServer (port, timeout = 120000) {
   });
 }
 
+function livelyBoot () {
+  try {
+    const w = nw.Window.get().window;
+    return w && w.livelyBoot;   // undefined until boot.html's script runs
+  } catch (_) { return null; }
+}
+
 function emitStatus (msg) {
   log(msg);
-  try { nw.Window.get().emit('lively-boot-status', msg); } catch (_) {}
+  const b = livelyBoot();
+  if (b && b.status) b.status(msg);
 }
 
 function emitError (msg) {
   log('ERROR: ' + msg);
-  try { nw.Window.get().emit('lively-boot-error', msg); } catch (_) {}
+  const b = livelyBoot();
+  if (b && b.error) b.error(msg);
 }
 
 // ---------------------------------------------------------------------------
@@ -229,12 +238,22 @@ function setupFlatnEnv () {
   await waitForServer(port);
 
   emitStatus('Server ready, loading lively...');
-  // Emit the navigation URL to boot.html so the page itself navigates from
-  // its DOM context (setting win.window.location.href directly from node
-  // context is flaky across the node↔DOM boundary). We target /dashboard/
-  // explicitly so the window doesn't have to follow a redirect from /.
+  // Call window.livelyBoot.navigate() from node so the page itself does
+  // the location assignment in its own DOM context (setting location.href
+  // directly from node is flaky in NW.js). Target /dashboard/ explicitly
+  // to skip the / → /dashboard/ redirect.
+  const navUrl = 'http://127.0.0.1:' + port + '/dashboard/';
   const win = nw.Window.get();
-  win.emit('lively-boot-navigate', 'http://127.0.0.1:' + port + '/dashboard/');
+  const b = livelyBoot();
+  if (b && b.navigate) b.navigate(navUrl);
+  else {
+    // boot.html's script hasn't run yet — fall back and hope the direct
+    // assignment works on this platform. Shouldn't happen in practice
+    // since server boot takes many seconds by which point boot.html is
+    // long loaded, but be defensive.
+    log('livelyBoot helper missing, using direct location.href assignment');
+    win.window.location.href = navUrl;
+  }
 
   win.on('close', function () {
     log('Window closing, killing server...');

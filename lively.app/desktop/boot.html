@@ -51,25 +51,25 @@
     <div class="status" id="status">Starting server...</div>
   </div>
   <script>
-    // node-main communicates boot progress via nw.Window events
-    if (typeof nw !== 'undefined') {
-      const win = nw.Window.get();
-      win.on('lively-boot-status', function (msg) {
+    // node-main talks to us by calling window.livelyBoot.* from node
+    // context (win.window.livelyBoot.navigate(url) etc.). That pattern
+    // works reliably — nw.Window.emit() as a cross-context signaling
+    // channel does NOT (TypeError in node-main, ignored in DOM). Doing
+    // DOM-side navigation from the page's own context also avoids the
+    // flaky node→DOM location.href assignment.
+    window.livelyBoot = {
+      status: function (msg) {
         document.getElementById('status').textContent = msg;
-      });
-      win.on('lively-boot-error', function (msg) {
+      },
+      error: function (msg) {
         document.getElementById('status').textContent = msg;
         document.getElementById('status').style.color = '#ff6b6b';
         document.querySelector('.spinner').style.display = 'none';
-      });
-      // Server-ready handoff: node-main emits the target URL and we navigate
-      // from the DOM context. Setting location.href across the node↔DOM
-      // boundary directly from node-main is flaky in NW.js — doing it here,
-      // inside the page's own script, is the canonical pattern.
-      win.on('lively-boot-navigate', function (url) {
+      },
+      navigate: function (url) {
         window.location.href = url;
-      });
-    }
+      }
+    };
   </script>
 </body>
 </html>
