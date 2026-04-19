@@ -505,7 +505,7 @@ async function main () {
 
   fs.copyFileSync(path.join(APP_DIR, 'desktop', 'boot.html'),        path.join(BUNDLE, 'boot.html'));
   fs.mkdirSync(path.join(BUNDLE, 'desktop'), { recursive: true });
-  for (const f of ['start-server.cjs', 'watchdog.cjs', 'server-config.js']) {
+  for (const f of ['start-server.cjs', 'watchdog.cjs', 'server-config.js', 'inject.js']) {
     fs.copyFileSync(path.join(APP_DIR, 'desktop', f), path.join(BUNDLE, 'desktop', f));
   }
 
