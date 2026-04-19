@@ -38,9 +38,12 @@ jobs:
           - os: macos-latest
             bundle: lively.next-osx-arm64
             archive_ext: tar.gz
-          - os: windows-latest
-            bundle: lively.next-win-x64
-            archive_ext: zip
+          # Native Windows isn't supported for lively.next development or
+          # distribution — Windows users run lively via WSL, covered by the
+          # Linux bundle. build.mjs keeps its Windows branches for
+          # potential cross-target builds from other hosts, but CI doesn't
+          # try to run install.sh natively on a Windows runner (paths
+          # from Git Bash break the --experimental-loader flag).
     runs-on: ${{ matrix.os }}
     defaults:
       run:
