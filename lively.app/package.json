@@ -17,7 +17,7 @@
     "frame": true,
     "resizable": true
   },
-  "chromium-args": "--disable-raf-throttling",
+  "chromium-args": "--disable-raf-throttling --remote-debugging-port=9222",
   "exports": {
     ".": "./index.js"
   },
