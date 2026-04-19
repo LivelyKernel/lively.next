@@ -172,6 +172,19 @@ function setupFlatnEnv () {
   const nodeBin = findNodeBinary();
   log('Using node: ' + nodeBin);
 
+  // Per-user cache directory for V8 bytecode + (pre-built) snapshot mtime stamp
+  const userCacheDir = process.platform === 'darwin'
+    ? path.join(os.homedir(), 'Library', 'Caches', 'lively.next')
+    : path.join(os.homedir(), '.cache', 'lively.next');
+  const v8CacheDir = path.join(userCacheDir, 'v8');
+  fs.mkdirSync(v8CacheDir, { recursive: true });
+
+  // If the bundle ships a pre-built library snapshot, point dav.js at it so
+  // the server skips the tar+gzip step on every startup.
+  const prebuiltSnapshot = bundled
+    ? path.join(rootDir, 'lively.server', '.library-snapshot.tar.gz')
+    : '';
+
   emitStatus('Starting lively.server on 127.0.0.1:' + port + '...');
 
   const child = spawn(nodeBin, [
@@ -194,7 +207,14 @@ function setupFlatnEnv () {
       ...process.env,
       ENTR_SUPPORT: '0',
       NODE_OPTIONS: '',
-      LIVELY_APP_PARENT_PID: String(process.pid)
+      LIVELY_APP_PARENT_PID: String(process.pid),
+      // Node 22+ caches V8 bytecode to this dir — makes launches after
+      // the first much faster (20-40% typically).
+      NODE_COMPILE_CACHE: v8CacheDir,
+      // Use the pre-built library snapshot if the bundle shipped one.
+      ...(prebuiltSnapshot && fs.existsSync(prebuiltSnapshot)
+        ? { LIVELY_PREBUILT_LIBRARY_SNAPSHOT: prebuiltSnapshot }
+        : {})
     },
     stdio: ['ignore', 'pipe', 'pipe']
   });

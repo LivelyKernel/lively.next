@@ -125,6 +125,13 @@ jobs:
         # it at /, so build it explicitly here.
         run: env CI=true npm --silent --prefix lively.freezer run build-landing-page
 
+      - name: Pre-build library snapshot
+        # Ship the tar.gz that dav.js would otherwise regenerate on every
+        # server launch (~3-5s on a fresh machine). Start-server.cjs sets
+        # LIVELY_PREBUILT_LIBRARY_SNAPSHOT and dav.js reads the file into
+        # memStore directly.
+        run: node ./lively.server/scripts/build-library-snapshot.cjs
+
       - name: Build desktop bundle
         env:
           PACK: '1'
