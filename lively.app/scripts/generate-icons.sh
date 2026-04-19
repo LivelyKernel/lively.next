@@ -38,6 +38,8 @@ else
 fi
 
 # ---- PNGs → macOS .icns -------------------------------------------------
+# Prefer native iconutil on macOS for correctness (it handles Retina
+# suffixes etc). Fall back to our pure-Node builder everywhere else.
 if [ "$(uname -s)" = "Darwin" ] && command -v iconutil >/dev/null; then
   IS="$TMP/icon.iconset"
   mkdir -p "$IS"
@@ -53,14 +55,10 @@ if [ "$(uname -s)" = "Darwin" ] && command -v iconutil >/dev/null; then
   cp "$TMP/1024.png" "$IS/icon_512x512@2x.png"
   iconutil -c icns "$IS" -o "$ASSETS/icon.icns"
   echo "Generated icon.icns via iconutil"
-elif command -v png2icns >/dev/null; then
-  # Linux path: png2icns only accepts specific sizes (16, 32, 48, 128, 256, 512, 1024)
-  png2icns "$ASSETS/icon.icns" \
-    "$TMP/16.png" "$TMP/32.png" "$TMP/128.png" \
-    "$TMP/256.png" "$TMP/512.png" "$TMP/1024.png"
-  echo "Generated icon.icns via png2icns"
 else
-  echo "No .icns generator found (iconutil on macOS, png2icns on Linux)"
+  node "$SCRIPT_DIR/build-icns.mjs" "$ASSETS/icon.icns" \
+    "$TMP/16.png" "$TMP/32.png" "$TMP/64.png" \
+    "$TMP/128.png" "$TMP/256.png" "$TMP/512.png" "$TMP/1024.png"
 fi
 
 # ---- PNGs → Windows .ico ------------------------------------------------

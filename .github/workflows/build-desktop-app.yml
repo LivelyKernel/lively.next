@@ -120,14 +120,14 @@ jobs:
           key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json', 'flatn/package.json', 'mocha-es6/package.json') }}
 
       - name: Install icon-generation tools
-        # librsvg2-bin       → rsvg-convert (SVG rasterizer)
-        # libicns-utils      → png2icns (Linux runner, .icns generation)
-        # imagemagick        → `magick`/`convert` for .ico
-        # macOS has iconutil natively; librsvg + imagemagick via brew.
+        # librsvg2-bin  → rsvg-convert (SVG rasterizer)
+        # imagemagick   → `magick`/`convert` for .ico
+        # .icns is built by scripts/build-icns.mjs — pure Node, no system dep
+        # needed (icnsutils / libicns-utils was removed from Ubuntu 24.04).
         run: |
           if [ "${{ runner.os }}" = "Linux" ]; then
             sudo apt-get update
-            sudo apt-get install -y librsvg2-bin libicns-utils imagemagick
+            sudo apt-get install -y librsvg2-bin imagemagick
           else
             brew install librsvg imagemagick
           fi
