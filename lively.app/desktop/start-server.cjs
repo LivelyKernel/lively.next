@@ -249,71 +249,54 @@ function setupFlatnEnv () {
   const dashboardUrl = 'http://127.0.0.1:' + port + '/dashboard/';
   const win = nw.Window.get();
 
-  // Application menu: Dashboard navigation + DevTools.
+  // Menu construction needs to happen AFTER the window is loaded —
+  // wiring it up in node-main before the window fires 'loaded' is
+  // flaky in NW.js on macOS (known issue where click callbacks silently
+  // never fire). Once loaded, the menu behaves as documented.
   //
-  // Navigation cross-context: click handlers run in node context, but
-  // setting location.href from node is flaky. Every page gets
-  // desktop/inject.js injected (via inject_js_end), which exposes
-  // window.livelyNav(url). We call THAT from the click handler — plain
-  // function call across the boundary, reliable.
-  //
-  // Keyboard shortcuts: avoid Cmd+D (Chromium: add bookmark) and Cmd+R
-  // (Chromium: reload — handled natively anyway). Use Cmd+Shift+D for
-  // Dashboard.
-  function navTo (url) {
-    log('[menu] navTo(' + url + ')');
+  // Navigation: click handler posts a 'lively-nav' message to the page.
+  // desktop/inject.js listens and does the location.href assignment
+  // from DOM context. (Assigning location.href FROM node context has
+  // been broken since NW.js 0.12.x — see nwjs/nw.js#4313.)
+  function installAppMenu () {
     try {
-      const w = nw.Window.get().window;
-      log('[menu]   window object: ' + (w ? 'present' : 'null'));
-      log('[menu]   inject.js loaded: ' + (w && w.__LIVELY_INJECT_LOADED__ ? 'yes (' + w.__LIVELY_INJECT_LOADED__ + ')' : 'no'));
-      log('[menu]   typeof livelyNav: ' + (w && typeof w.livelyNav));
-      log('[menu]   current url: ' + (w && w.location && w.location.href));
-      if (w && typeof w.livelyNav === 'function') {
-        w.livelyNav(url);
-        log('[menu]   livelyNav called');
-        return;
+      const menu = new nw.Menu({ type: 'menubar' });
+      if (process.platform === 'darwin') {
+        // Standard Quit / Hide / Minimize / Window etc. — these are
+        // OS-dispatched so they work regardless of click-callback quirks.
+        menu.createMacBuiltin('lively.next', { hideEdit: false });
       }
-      if (w && w.location) {
-        w.location.href = url;
-        log('[menu]   location.href assigned');
-      }
-    } catch (err) { log('[menu] navTo failed: ' + err.message + '\n' + err.stack); }
-  }
-  function toggleDevTools () {
-    log('[menu] toggleDevTools clicked');
-    try { nw.Window.get().showDevTools(); log('[menu]   showDevTools called'); }
-    catch (e) { log('[menu]   showDevTools unavailable: ' + e.message); }
-  }
-  try {
-    const menu = new nw.Menu({ type: 'menubar' });
-    if (process.platform === 'darwin') {
-      // Standard macOS app menu (Quit/Hide/etc), Edit, Window
-      menu.createMacBuiltin('lively.next', { hideEdit: false });
+      const goMenu = new nw.Menu();
+      const mod = process.platform === 'darwin' ? 'cmd' : 'ctrl';
+      goMenu.append(new nw.MenuItem({
+        label: 'Dashboard',
+        key: 'd',
+        modifiers: mod + '+shift',
+        click: function () {
+          try {
+            nw.Window.get().window.postMessage({ type: 'lively-nav', url: dashboardUrl }, '*');
+          } catch (err) { log('dashboard menu click: ' + err.message); }
+        }
+      }));
+      goMenu.append(new nw.MenuItem({ type: 'separator' }));
+      goMenu.append(new nw.MenuItem({
+        label: 'Toggle DevTools',
+        key: 'i',
+        modifiers: mod + '+alt',
+        click: function () {
+          try { nw.Window.get().showDevTools(); }
+          catch (err) { log('devtools menu click: ' + err.message); }
+        }
+      }));
+      menu.append(new nw.MenuItem({ label: 'Go', submenu: goMenu }));
+      win.menu = menu;
+    } catch (err) {
+      log('menu setup failed (non-fatal): ' + err.message);
     }
-    const livelyMenu = new nw.Menu();
-    const mod = process.platform === 'darwin' ? 'cmd' : 'ctrl';
-    livelyMenu.append(new nw.MenuItem({
-      label: 'Dashboard',
-      key: 'd',
-      modifiers: mod + '+shift',
-      click: function () { log('[menu] Dashboard item clicked'); navTo(dashboardUrl); }
-    }));
-    livelyMenu.append(new nw.MenuItem({ type: 'separator' }));
-    livelyMenu.append(new nw.MenuItem({
-      label: 'Toggle DevTools',
-      key: 'i',
-      modifiers: mod + '+alt',
-      click: function () { log('[menu] DevTools item clicked'); toggleDevTools(); }
-    }));
-    // macOS app menu is at index 0, our "Go" menu sits at position 1
-    menu.insert(new nw.MenuItem({
-      label: 'Go',
-      submenu: livelyMenu
-    }), process.platform === 'darwin' ? 1 : 0);
-    win.menu = menu;
-  } catch (err) {
-    log('menu setup failed (non-fatal): ' + err.message);
   }
+  win.on('loaded', installAppMenu);
+  // Also run it once synchronously in case 'loaded' already fired by now
+  installAppMenu();
 
   const b = livelyBoot();
   if (b && b.navigate) b.navigate(dashboardUrl);
