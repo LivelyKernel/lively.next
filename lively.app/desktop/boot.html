@@ -75,10 +75,18 @@
   </style>
 </head>
 <body>
-  <!-- Three triangles (absolute coords match the dashboard's LandingPageBG) -->
-  <svg class="triangles" viewBox="0 0 1660 980" preserveAspectRatio="xMidYMid slice">
-    <polygon fill="rgba(230, 126, 34, 0.6)" points="420.53,8.1 839.04,875.46 110.4,877.24"/>
-    <polygon fill="rgba(230, 126, 34, 0.6)" points="651.33,210.3 1443.85,919.42 575.6,919.13"/>
+  <!-- Three triangles — coords from the dashboard's LandingPageBG, translated
+       so each triangle's widest edge sits on y = viewBox bottom and
+       preserveAspectRatio=xMidYMax pins that bottom edge snug to the window.
+       The original landing-page layout had the triangles float in mid-viewport
+       at fixed pixel positions; here we want the boot screen to look like the
+       triangles are rising out of the window's bottom edge regardless of size. -->
+  <svg class="triangles" viewBox="0 0 1660 980" preserveAspectRatio="xMidYMax slice">
+    <!-- T1: tip originally at y=8, bottom edge at y=877 → shift +103 so bottom hits 980 -->
+    <polygon fill="rgba(230, 126, 34, 0.6)" points="420.53,111.1 839.04,978.46 110.4,980.24"/>
+    <!-- T2: tip originally at y=210, bottom at y=919 → shift +61 -->
+    <polygon fill="rgba(230, 126, 34, 0.6)" points="651.33,271.3 1443.85,980.42 575.6,980.13"/>
+    <!-- T3: already reaches the bottom -->
     <polygon fill="rgba(230, 126, 34, 0.6)" points="908.46,338.2 1661.05,980.61 792.8,980.32"/>
   </svg>
 
@@ -103,6 +111,10 @@
     // calls directly. Events via nw.Window.emit don't cross the node↔DOM
     // boundary reliably.
     window.livelyBoot = {
+      dashboardUrl: '',
+      setDashboardUrl: function (url) {
+        this.dashboardUrl = url;
+      },
       status: function (msg) {
         const el = document.getElementById('status');
         el.className = 'status';

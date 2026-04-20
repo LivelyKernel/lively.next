@@ -249,56 +249,8 @@ function setupFlatnEnv () {
   const dashboardUrl = 'http://127.0.0.1:' + port + '/dashboard/';
   const win = nw.Window.get();
 
-  // Menu construction needs to happen AFTER the window is loaded —
-  // wiring it up in node-main before the window fires 'loaded' is
-  // flaky in NW.js on macOS (known issue where click callbacks silently
-  // never fire). Once loaded, the menu behaves as documented.
-  //
-  // Navigation: click handler posts a 'lively-nav' message to the page.
-  // desktop/inject.js listens and does the location.href assignment
-  // from DOM context. (Assigning location.href FROM node context has
-  // been broken since NW.js 0.12.x — see nwjs/nw.js#4313.)
-  function installAppMenu () {
-    try {
-      const menu = new nw.Menu({ type: 'menubar' });
-      if (process.platform === 'darwin') {
-        // Standard Quit / Hide / Minimize / Window etc. — these are
-        // OS-dispatched so they work regardless of click-callback quirks.
-        menu.createMacBuiltin('lively.next', { hideEdit: false });
-      }
-      const goMenu = new nw.Menu();
-      const mod = process.platform === 'darwin' ? 'cmd' : 'ctrl';
-      goMenu.append(new nw.MenuItem({
-        label: 'Dashboard',
-        key: 'd',
-        modifiers: mod + '+shift',
-        click: function () {
-          try {
-            nw.Window.get().window.postMessage({ type: 'lively-nav', url: dashboardUrl }, '*');
-          } catch (err) { log('dashboard menu click: ' + err.message); }
-        }
-      }));
-      goMenu.append(new nw.MenuItem({ type: 'separator' }));
-      goMenu.append(new nw.MenuItem({
-        label: 'Toggle DevTools',
-        key: 'i',
-        modifiers: mod + '+alt',
-        click: function () {
-          try { nw.Window.get().showDevTools(); }
-          catch (err) { log('devtools menu click: ' + err.message); }
-        }
-      }));
-      menu.append(new nw.MenuItem({ label: 'Go', submenu: goMenu }));
-      win.menu = menu;
-    } catch (err) {
-      log('menu setup failed (non-fatal): ' + err.message);
-    }
-  }
-  win.on('loaded', installAppMenu);
-  // Also run it once synchronously in case 'loaded' already fired by now
-  installAppMenu();
-
   const b = livelyBoot();
+  if (b && b.setDashboardUrl) b.setDashboardUrl(dashboardUrl);
   if (b && b.navigate) b.navigate(dashboardUrl);
   else {
     // boot.html's script hasn't run yet — fall back and hope the direct
