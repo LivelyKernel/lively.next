@@ -6,6 +6,7 @@ const tar = System._nodeRequire('tar-fs');
 import stream from 'stream';
 import util from 'util';
 import zlib from 'zlib';
+import fs from 'node:fs';
 
 const COMPRESSABLE_URLS = [
   'components_cache'
@@ -114,6 +115,22 @@ export default class LivelyDAVPlugin {
       this.fileHashes[file.url.replace(System.baseURL, '/')] = string.hashCode(await file.read());
     }
     console.log('[lively.server] finished file hash map');
+
+    // Skip the tar+gzip step when a pre-built snapshot is available
+    // (bundled distributions set LIVELY_PREBUILT_LIBRARY_SNAPSHOT so the
+    // server doesn't re-generate the blob on every launch).
+    const prebuiltSnapshot = process.env.LIVELY_PREBUILT_LIBRARY_SNAPSHOT;
+    if (prebuiltSnapshot && fs.existsSync(prebuiltSnapshot)) {
+      try {
+        console.log('[lively.server] loading pre-built library snapshot: ' + prebuiltSnapshot);
+        memStore.compressedLibrary = fs.readFileSync(prebuiltSnapshot);
+        console.log('[lively.server] pre-built library snapshot loaded');
+        return;
+      } catch (err) {
+        console.warn('[lively.server] failed to load pre-built snapshot, regenerating:', err.message);
+      }
+    }
+
     console.log('[lively.server] creating library snapshot...');
     await this.compressLibraryCode();
     console.log('[lively.server] finished library snapshot');

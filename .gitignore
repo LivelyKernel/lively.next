@@ -1,5 +1,7 @@
 lively.next-node_modules/
 dev-deps/
+dist/
+lively.server/.library-snapshot.tar.gz
 esm_cache/
 .livelydbs/
 .module_cache/

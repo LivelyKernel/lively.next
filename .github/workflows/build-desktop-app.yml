@@ -1,0 +1,172 @@
+name: Nightly desktop app build
+
+on:
+  schedule:
+    # 04:00 UTC daily — offset from the 00:00 UTC daily-ci-checks run so
+    # they don't compete for runners. Produces fresh downloadable bundles
+    # off latest main each night.
+    - cron: '0 4 * * *'
+  # Lets maintainers kick off a build on demand (handy before tagging a release).
+  workflow_dispatch:
+  # Run on PRs that touch the bundling plumbing so reviewers get downloadable
+  # test builds without waiting for a nightly. Scoped to avoid wasting CI
+  # on unrelated PRs.
+  pull_request:
+    paths:
+      - 'lively.app/**'
+      - '.github/workflows/build-desktop-app.yml'
+      - 'install.sh'
+      - 'lively.installer/packages-config.json'
+      - 'flatn/**'
+
+concurrency:
+  group: build-desktop-app-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build ${{ matrix.bundle }}
+    strategy:
+      # One platform failing shouldn't abort the others — each bundle is
+      # independent, and we want whatever OSes build to still publish.
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            bundle: lively.next-linux-x64
+            target_platform: linux
+            target_arch: x64
+            archive_ext: tar.gz
+          - os: ubuntu-latest
+            # Cross-compile Windows from Linux. build.mjs just downloads
+            # the Windows NW.js + Node.js binaries and stages them; no
+            # native Windows runner involved (install.sh doesn't cleanly
+            # run on Windows due to Git Bash path mangling).
+            bundle: lively.next-win-x64
+            target_platform: win
+            target_arch: x64
+            archive_ext: zip
+          - os: macos-latest
+            bundle: lively.next-osx-arm64
+            target_platform: osx
+            target_arch: arm64
+            archive_ext: tar.gz
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '24'
+
+      - name: Setup Python
+        # node-gyp@9 (pulled in by leveldown etc.) imports
+        # distutils.version, which was removed in Python 3.12. macOS
+        # runners ship Python 3.14 by default, so pin an older version
+        # that still has distutils. Ubuntu's default is currently fine
+        # but the pin keeps it future-proof.
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
+
+      - name: Restore lively.next dep cache
+        id: cache-lively-deps
+        uses: actions/cache/restore@v3
+        env:
+          cache-name: lively-deps
+        with:
+          path: |
+            lively.next-node_modules/
+            .puppeteer-browser-cache/
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json', 'flatn/package.json', 'mocha-es6/package.json') }}
+
+      - name: Install lively.next
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 20
+          max_attempts: 3
+          retry_on: error
+          shell: bash
+          # --no-desktop skips the NW.js SDK fetch inside install.sh.
+          # The build step below fetches its own Normal-flavor NW.js for
+          # the matrix-target platform directly into dist/.
+          command: chmod +x ./install.sh && ./install.sh --no-desktop
+
+      - name: Save lively.next dep cache
+        if: ${{ steps.cache-lively-deps.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v3
+        env:
+          cache-name: lively-deps
+        with:
+          path: |
+            lively.next-node_modules/
+            .puppeteer-browser-cache/
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json', 'flatn/package.json', 'mocha-es6/package.json') }}
+
+      - name: Install icon-generation tools
+        # librsvg2-bin  → rsvg-convert (SVG rasterizer)
+        # imagemagick   → `magick`/`convert` for .ico
+        # .icns is built by scripts/build-icns.mjs — pure Node, no system dep
+        # needed (icnsutils / libicns-utils was removed from Ubuntu 24.04).
+        run: |
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            sudo apt-get update
+            sudo apt-get install -y librsvg2-bin imagemagick
+          else
+            brew install librsvg imagemagick
+          fi
+
+      - name: Generate app icons
+        run: bash ./lively.app/scripts/generate-icons.sh
+
+      - name: Build freezer landing-page
+        # install.sh only builds loading-screen under CI=true (the other CI
+        # workflows don't need landing-page), but the desktop bundle serves
+        # it at /, so build it explicitly here.
+        run: env CI=true npm --silent --prefix lively.freezer run build-landing-page
+
+      - name: Pre-build library snapshot
+        # Ship the tar.gz that dav.js would otherwise regenerate on every
+        # server launch (~3-5s on a fresh machine). Start-server.cjs sets
+        # LIVELY_PREBUILT_LIBRARY_SNAPSHOT and dav.js reads the file into
+        # memStore directly.
+        run: node ./lively.server/scripts/build-library-snapshot.cjs
+
+      - name: Build desktop bundle
+        env:
+          PACK: '1'
+          # SDK flavor ships Chromium DevTools. Costs ~20% more bundle
+          # size but makes every "blank screen, no clue why" bug
+          # inspectable via Cmd+Opt+I / right-click → Inspect. Switch
+          # back to FLAVOR=normal once the app is stable.
+          FLAVOR: sdk
+          # Stamp the bundle with the commit so user bug reports can
+          # tell us which version they tested without guessing. For PR
+          # builds use the head SHA, not GitHub's synthetic merge SHA.
+          LIVELY_APP_BUILD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node ./lively.app/scripts/build.mjs --platform=${{ matrix.target_platform }} --arch=${{ matrix.target_arch }}
+
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.bundle }}
+          path: dist/${{ matrix.bundle }}.${{ matrix.archive_ext }}
+          # Free-tier retention; bump or cut per project policy.
+          retention-days: 30
+          if-no-files-found: error

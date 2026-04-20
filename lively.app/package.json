@@ -1,0 +1,35 @@
+{
+  "name": "lively.app",
+  "version": "0.1.0",
+  "description": "lively.next as a standalone NW.js desktop application",
+  "type": "module",
+  "main": "desktop/boot.html",
+  "bg-script": "desktop/background-menu.js",
+  "node-main": "desktop/start-server.cjs",
+  "inject_js_end": "desktop/inject.js",
+  "single-instance": true,
+  "window": {
+    "title": "lively.next",
+    "width": 1440,
+    "height": 900,
+    "min_width": 800,
+    "min_height": 600,
+    "position": "center",
+    "show": true,
+    "frame": true,
+    "resizable": true
+  },
+  "chromium-args": "--disable-raf-throttling --remote-debugging-port=9222",
+  "exports": {
+    ".": "./index.js"
+  },
+  "dependencies": {
+    "lively.server": "*",
+    "lively.installer": "*",
+    "nw": "0.110.1-sdk"
+  },
+  "scripts": {
+    "start": "bash start.sh",
+    "setup": "bash setup.sh"
+  }
+}
