@@ -6,8 +6,9 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-NW_VERSION="0.110.1"
-FLAVOR="sdk"
+NW_VERSION="${LIVELY_NW_VERSION:-0.110.1}"
+FLAVOR="${LIVELY_NW_FLAVOR:-sdk}"
+NW_DOWNLOAD_BASE="${LIVELY_NW_DOWNLOAD_BASE:-https://dl.nwjs.io/v${NW_VERSION}}"
 PLATFORM="$(uname -s | tr '[:upper:]' '[:lower:]')"
 ARCH="$(uname -m)"
 
@@ -36,7 +37,7 @@ EXT="tar.gz"
 [ "$PLATFORM" = "osx" ] && EXT="zip"
 
 ARCHIVE="${NW_DIR_NAME}.${EXT}"
-URL="https://dl.nwjs.io/v${NW_VERSION}/${ARCHIVE}"
+URL="${NW_DOWNLOAD_BASE}/${ARCHIVE}"
 
 echo "Downloading NW.js SDK v${NW_VERSION} for ${PLATFORM}-${ARCH}..."
 curl -L --progress-bar -o "/tmp/${ARCHIVE}" "$URL"

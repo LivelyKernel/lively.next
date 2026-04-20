@@ -157,8 +157,9 @@ jobs:
           # back to FLAVOR=normal once the app is stable.
           FLAVOR: sdk
           # Stamp the bundle with the commit so user bug reports can
-          # tell us which version they tested without guessing.
-          LIVELY_APP_BUILD_SHA: ${{ github.sha }}
+          # tell us which version they tested without guessing. For PR
+          # builds use the head SHA, not GitHub's synthetic merge SHA.
+          LIVELY_APP_BUILD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: node ./lively.app/scripts/build.mjs --platform=${{ matrix.target_platform }} --arch=${{ matrix.target_arch }}
 
       - name: Upload bundle artifact

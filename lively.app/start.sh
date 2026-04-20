@@ -4,8 +4,8 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-NW_VERSION="0.110.1"
-FLAVOR="sdk"
+NW_VERSION="${LIVELY_NW_VERSION:-0.110.1}"
+FLAVOR="${LIVELY_NW_FLAVOR:-sdk}"
 
 PLATFORM="$(uname -s | tr '[:upper:]' '[:lower:]')"
 ARCH="$(uname -m)"

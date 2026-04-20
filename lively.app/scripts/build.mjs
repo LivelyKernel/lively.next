@@ -24,7 +24,8 @@ const APP_DIR = path.resolve(__dirname, '..');
 const ROOT_DIR = path.resolve(APP_DIR, '..');
 const DIST_DIR = path.join(ROOT_DIR, 'dist');
 
-const NW_VERSION = '0.110.1';
+const NW_VERSION = process.env.LIVELY_NW_VERSION || '0.110.1';
+const NW_DOWNLOAD_BASE = process.env.LIVELY_NW_DOWNLOAD_BASE || `https://dl.nwjs.io/v${NW_VERSION}`;
 const NODE_VERSION = '25.6.1';
 
 // ---------------------------------------------------------------------------
@@ -455,7 +456,7 @@ async function main () {
   section(`Fetching NW.js ${FLAVOR} v${NW_VERSION} for ${TARGET_NW_PLATFORM}-${TARGET_ARCH}`);
   const nwCache = path.join(DIST_DIR, '.cache', 'nw', `${NW_VERSION}-${FLAVOR}-${TARGET_NW_PLATFORM}-${TARGET_ARCH}`);
   await fetchAndExtract(
-    `https://dl.nwjs.io/v${NW_VERSION}/${NW_DIR_NAME}.${NW_EXT}`,
+    `${NW_DOWNLOAD_BASE}/${NW_DIR_NAME}.${NW_EXT}`,
     nwCache,
     path.join(nwCache, '.extracted'));
 
