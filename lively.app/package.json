@@ -4,6 +4,7 @@
   "description": "lively.next as a standalone NW.js desktop application",
   "type": "module",
   "main": "desktop/boot.html",
+  "bg-script": "desktop/background-menu.js",
   "node-main": "desktop/start-server.cjs",
   "inject_js_end": "desktop/inject.js",
   "single-instance": true,

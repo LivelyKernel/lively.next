@@ -1,8 +1,7 @@
 // Injected into every page loaded in the NW.js window via inject_js_end.
 //
-// Installs the native menu from renderer context, where NW.js reliably
-// dispatches callbacks, and binds keyboard shortcuts that the native
-// menu's `key` modifiers don't consistently pick up on macOS.
+// Exposes page-side helpers that the persistent background-page menu can call,
+// and keeps a couple of keyboard shortcuts as a fallback on macOS.
 
 (function () {
   'use strict';
@@ -34,35 +33,10 @@
     window.nw.Window.get().showDevTools();
   }
 
-  function installAppMenu () {
-    if (!window.nw || !window.nw.Menu || !window.nw.MenuItem || !window.nw.Window) return;
-
-    const menu = new window.nw.Menu({ type: 'menubar' });
-    if (navigator.platform.includes('Mac')) {
-      menu.createMacBuiltin('lively.next', { hideEdit: false });
-    }
-
-    const goMenu = new window.nw.Menu();
-    const mod = navigator.platform.includes('Mac') ? 'cmd' : 'ctrl';
-    goMenu.append(new window.nw.MenuItem({
-      label: 'Dashboard',
-      key: 'd',
-      modifiers: mod + '+shift',
-      click: navigateToDashboard
-    }));
-    goMenu.append(new window.nw.MenuItem({ type: 'separator' }));
-    goMenu.append(new window.nw.MenuItem({
-      label: 'Show DevTools',
-      key: 'i',
-      modifiers: mod + '+alt',
-      click: showDevTools
-    }));
-
-    menu.append(new window.nw.MenuItem({ label: 'Go', submenu: goMenu }));
-    window.nw.Window.get().menu = menu;
-  }
-
-  installAppMenu();
+  window.livelyDesktop = {
+    navigateToDashboard: navigateToDashboard,
+    showDevTools: showDevTools
+  };
 
   // Keyboard shortcut: Cmd/Ctrl + Shift + D → Dashboard.
   // Works from any page, regardless of menu/window focus — a reliable
@@ -83,5 +57,5 @@
       e.preventDefault();
       showDevTools();
     }
-  });
+  }, true);
 })();

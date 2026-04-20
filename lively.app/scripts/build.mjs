@@ -384,50 +384,6 @@ function finalizeMacOS () {
   // Final rename: nwjs.app → lively.next.app
   fs.renameSync(nwjsApp, path.join(BUNDLE, 'lively.next.app'));
 
-  // Finder-friendly quarantine fixer. Double-clicking a .command file opens
-  // Terminal and runs it, which is the least-friction way to automate the
-  // required xattr workaround until the app is signed and notarized.
-  fs.writeFileSync(path.join(BUNDLE, 'Fix lively.next.command'),
-`#!/bin/bash
-set -u
-
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-APP_PATH="$SCRIPT_DIR/lively.next.app"
-
-echo "lively.next macOS quarantine fixer"
-echo
-
-if [ ! -d "$APP_PATH" ]; then
-  echo "Could not find:"
-  echo "  $APP_PATH"
-  echo
-  read -r -p "Press Return to close..."
-  exit 1
-fi
-
-echo "Removing quarantine attributes from:"
-echo "  $APP_PATH"
-echo
-
-if xattr -cr "$APP_PATH"; then
-  :
-else
-  echo "Retrying with sudo..."
-  echo
-  sudo xattr -cr "$APP_PATH"
-fi
-
-echo
-echo "Done. You can now open lively.next.app."
-echo
-read -r -p "Open lively.next.app now? [Y/n] " answer
-case "$answer" in
-  ""|[Yy]|[Yy][Ee][Ss])
-    open "$APP_PATH"
-    ;;
-esac
-`, { mode: 0o755 });
-
   // First-run help: an unsigned .app downloaded from the internet is
   // quarantined by Gatekeeper ("is damaged and can't be opened"). Ship a
   // tiny README next to the .app explaining the workaround until we set
@@ -443,11 +399,7 @@ apps downloaded from the internet that aren't code-signed with an
 Apple Developer ID. The app is fine — it just needs the quarantine
 attribute stripped.
 
-Fastest fix:
-
-    Double-click "Fix lively.next.command"
-
-Manual fix (Terminal, from this folder):
+One-shot fix (Terminal, from this folder):
 
     xattr -cr lively.next.app
     open lively.next.app
@@ -461,6 +413,10 @@ Alternative — GUI:
     4. Confirm in the follow-up dialog.
 
 Once launched successfully once, subsequent double-clicks work normally.
+
+We intentionally do not ship an executable "fix" helper next to the app:
+macOS applies the same downloaded-file trust checks to helper scripts/apps
+inside the archive, so they get blocked for the same reason.
 
 This will go away once the project sets up Apple Developer code-
 signing + notarization for its CI builds.
@@ -548,12 +504,13 @@ async function main () {
   delete manifest.exports;
   delete manifest.scripts;
   manifest.main = 'boot.html';
+  manifest['bg-script'] = 'desktop/background-menu.js';
   manifest['node-main'] = 'desktop/start-server.cjs';
   fs.writeFileSync(path.join(BUNDLE, 'package.json'), JSON.stringify(manifest, null, 2));
 
   fs.copyFileSync(path.join(APP_DIR, 'desktop', 'boot.html'),        path.join(BUNDLE, 'boot.html'));
   fs.mkdirSync(path.join(BUNDLE, 'desktop'), { recursive: true });
-  for (const f of ['start-server.cjs', 'watchdog.cjs', 'server-config.js', 'inject.js']) {
+  for (const f of ['background-menu.js', 'start-server.cjs', 'watchdog.cjs', 'server-config.js', 'inject.js']) {
     fs.copyFileSync(path.join(APP_DIR, 'desktop', f), path.join(BUNDLE, 'desktop', f));
   }
   // Stamp the build SHA so boot.log identifies the exact commit, no more
