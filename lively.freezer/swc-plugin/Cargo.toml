@@ -1,25 +1,14 @@
-[package]
-name = "lively-swc-plugin"
-version = "0.1.0"
-edition = "2021"
-
-[lib]
-crate-type = ["cdylib", "rlib"]
-
-[dependencies]
-swc_core = { version = "9.0.0", features = [
-    "ecma_plugin_transform",
-    "ecma_visit",
-    "ecma_utils",
-    "ecma_ast",
-    "ecma_codegen",
-    "__parser",
-] }
-swc_ecma_ast = "=5.0.1"
-swc_plugin_macro = "=1.0.0"
-serde = { version = "=1.0.219", features = ["derive"] }
-serde_json = "1"
+[workspace]
+members = ["lively-swc-transforms", "lively-swc-plugin", "lively-swc-browser"]
+resolver = "2"
 
 [profile.release]
 lto = true
 opt-level = 3
+
+# Size-optimized profile for browser WASM
+[profile.browser-release]
+inherits = "release"
+opt-level = "z"
+strip = "symbols"
+codegen-units = 1

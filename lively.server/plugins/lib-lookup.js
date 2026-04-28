@@ -68,7 +68,7 @@ async function findAvailableCDNVersion (name, failingVersion) {
 
 function createGenerator (inputMap, resolutions) {
   return new Generator({
-    env: ["browser"],
+    env: ["browser", "module", "import"],
     defaultProvider: 'jspm.io',
     inputMap,
     ...(Object.keys(resolutions).length ? { resolutions } : {})
