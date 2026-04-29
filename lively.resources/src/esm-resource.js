@@ -1,6 +1,6 @@
 // global process
-import { Resource } from 'lively.resources';
-import { resource } from 'lively.resources';
+import Resource from './resource.js';
+import { resource } from './helpers.js';
 import { string } from 'lively.lang';
 
 const requestMap = {};

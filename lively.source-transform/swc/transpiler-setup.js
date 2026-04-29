@@ -7,7 +7,15 @@ import { setupBabelTranspiler } from '../babel/plugin.js';
 // Extra identifiers that must never be captured (browser APIs that break
 // when accessed as properties of __lvVarRecorder).
 const BROWSER_DONT_TRANSFORM = [
-  'global', 'self', 'undefined',
+  'console', 'window', 'document', 'global', 'globalThis', 'self', 'undefined',
+  'process', 'Buffer',
+  'Object', 'Array', 'Function', 'String', 'Number', 'Boolean', 'Symbol',
+  'Date', 'Math', 'JSON', 'Promise', 'RegExp', 'Error',
+  'Map', 'Set', 'WeakMap', 'WeakSet', 'Proxy', 'Reflect',
+  'NaN', 'Infinity',
+  'WebAssembly', 'TextDecoder', 'TextEncoder', 'Uint8Array', 'Response',
+  'Request', 'URL', 'performance', 'location',
+  'describe', 'context', 'it', 'before', 'after', 'beforeEach', 'afterEach',
   '_moduleExport', '_moduleImport',
   'localStorage',
   'prompt', 'alert', 'fetch', 'getComputedStyle',
@@ -28,6 +36,19 @@ function buildSwcConfig (module, opts = {}) {
     module.sourceAccessorName,
     ...(module.dontTransform || [])
   ].filter(Boolean);
+
+  if (module.id?.endsWith('/lively.lang/closure.js') || module.id === 'lively.lang/closure.js') {
+    console.log('[lively.swc] closure.js exclude diagnostics', {
+      moduleId: module.id,
+      hasModuleDontTransform: !!module.dontTransform,
+      hasSystem: dontTransform.includes('System'),
+      hasLively: dontTransform.includes('lively'),
+      hasContextModule: dontTransform.includes('__contextModule__'),
+      recorderName,
+      sourceAccessorName: module.sourceAccessorName,
+      dontTransform
+    });
+  }
 
   const config = {
     captureObj: recorderName,
@@ -75,6 +96,14 @@ class SwcBrowserTranspiler {
     this.System = System;
     this.moduleId = moduleId;
     this.env = env;
+  }
+
+  transpileDoit (source) {
+    // Match BabelTranspiler.transpileDoit: evalCodeTransform already applied
+    // Lively capture/wrapping. This step only provides an async function shell
+    // so snippets can use await at top level.
+    return '(async function(__rec) {\n' +
+      source.replace(/(\/\/# sourceURL=.+)$|$/, '\n}).call(this);\n$1');
   }
 
   transpileModule (source, options) {
@@ -140,6 +169,13 @@ export async function setupSwcTranspiler (System) {
   function swcTranslate (load, opts) {
     const shortName = (load.name || '').replace('http://localhost:9011/', '').replace('esm://ga.jspm.io/', 'esm:');
 
+    if (
+      shortName.includes('lively.source-transform/swc/') ||
+      shortName.includes('lively.source-transform/tests/')
+    ) {
+      return babelTranslate.call(this, load, opts);
+    }
+
     if (!load.metadata?.module) {
       const t0 = performance.now();
       const r = babelTranslate.call(this, load, opts);
@@ -154,7 +190,15 @@ export async function setupSwcTranspiler (System) {
     // Only classToFunction is disabled (CDN code doesn't use lively classes).
     const t0 = performance.now();
     const transpiler = new SwcBrowserTranspiler(this, load.name, {});
-    const result = transpiler.transpileModule(load.source, { ...opts, module: load.metadata.module });
+    const disableClassToFunction =
+      load.name?.startsWith('esm://') ||
+      shortName.startsWith('esm:') ||
+      shortName.includes('acorn-');
+    const result = transpiler.transpileModule(load.source, {
+      ...opts,
+      module: load.metadata.module,
+      classToFunction: !disableClassToFunction
+    });
 
     if (!result) {
       // SWC returned null — fall back to Babel
@@ -167,6 +211,9 @@ export async function setupSwcTranspiler (System) {
     // Validate generated code doesn't have syntax errors
     try { new Function(result.code); } catch (e) {
       if (e instanceof SyntaxError) {
+        if (shortName === 'lively.lang/array.js') {
+          console.log('[lively.swc] rejected array.js output', result.code);
+        }
         const t1 = performance.now();
         const r = babelTranslate.call(this, load, opts);
         console.log(`[babel] ${shortName} (SyntaxError: ${e.message}) ${(performance.now() - t1).toFixed(1)}ms`);

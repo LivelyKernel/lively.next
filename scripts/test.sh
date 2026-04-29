@@ -25,11 +25,13 @@ echo "Cleaning up any lingering Chrome processes..."
 pkill -f "chrome.*--headless" 2>/dev/null || true
 pkill -f "chromium.*--headless" 2>/dev/null || true
 
-# Remove Chrome singleton lock file if it exists
-CHROME_LOCK_FILE="lively.headless/chrome-data-dir/SingletonLock"
-if [ -f "$CHROME_LOCK_FILE" ]; then
-  echo "Removing stale Chrome lock file: $CHROME_LOCK_FILE"
-  rm -f "$CHROME_LOCK_FILE"
+# Remove Chrome singleton files if they exist
+CHROME_PROFILE_DIR="lively.headless/chrome-data-dir"
+if [ -d "$CHROME_PROFILE_DIR" ]; then
+  echo "Resetting Chrome profile directory: $CHROME_PROFILE_DIR"
+  rm -rf "$CHROME_PROFILE_DIR"
+  mkdir -p "$CHROME_PROFILE_DIR"
+  touch "$CHROME_PROFILE_DIR/.gitkeep"
 fi
 
 testfiles=(
@@ -162,6 +164,8 @@ fi
 echo "Cleaning up Chrome processes after tests..."
 pkill -f "chrome.*--headless" 2>/dev/null || true
 pkill -f "chromium.*--headless" 2>/dev/null || true
+pkill -f "chrome.*lively.headless/chrome-data-dir" 2>/dev/null || true
+pkill -f "chromium.*lively.headless/chrome-data-dir" 2>/dev/null || true
 
 ((ALL_TESTS=GREEN_TESTS + RED_TESTS + SKIPPED_TESTS))
 if [ ! "$1" ];

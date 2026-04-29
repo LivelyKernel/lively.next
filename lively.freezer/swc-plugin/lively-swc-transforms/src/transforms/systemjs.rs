@@ -1,8 +1,8 @@
+use crate::utils::ast_helpers::*;
 use std::collections::HashSet;
 use swc_common::DUMMY_SP;
 use swc_ecma_ast::*;
 use swc_ecma_visit::{VisitMut, VisitMutWith};
-use crate::utils::ast_helpers::*;
 
 /// Transform that rewrites SystemJS register calls to capture setters
 ///
@@ -14,7 +14,11 @@ pub struct SystemJsTransform {
 }
 
 impl SystemJsTransform {
-    pub fn new(capture_obj: String, declaration_wrapper: Option<String>, excluded: Vec<String>) -> Self {
+    pub fn new(
+        capture_obj: String,
+        declaration_wrapper: Option<String>,
+        excluded: Vec<String>,
+    ) -> Self {
         Self {
             capture_obj,
             declaration_wrapper,
@@ -61,10 +65,7 @@ impl SystemJsTransform {
     fn wrap_setter_assignment(&self, name: &str, assignment_expr: Expr) -> Expr {
         if let Some(wrapper) = &self.declaration_wrapper {
             create_call_expr(
-                create_computed_member_expr(
-                    create_ident_expr(&self.capture_obj),
-                    create_string_expr(wrapper),
-                ),
+                create_declaration_wrapper_callee(&self.capture_obj, wrapper),
                 vec![
                     to_expr_or_spread(create_string_expr(name)),
                     to_expr_or_spread(create_string_expr("var")),
@@ -83,14 +84,17 @@ impl SystemJsTransform {
             let replacement = match stmt {
                 Stmt::Expr(ExprStmt { expr, .. }) => match &**expr {
                     Expr::Assign(assign) if assign.op == AssignOp::Assign => {
-                        let AssignTarget::Simple(SimpleAssignTarget::Ident(binding_ident)) = &assign.left else {
+                        let AssignTarget::Simple(SimpleAssignTarget::Ident(binding_ident)) =
+                            &assign.left
+                        else {
                             continue;
                         };
                         let var_name = binding_ident.id.sym.to_string();
                         if self.excluded.contains(&var_name) {
                             continue;
                         }
-                        let rhs = self.wrap_setter_assignment(&var_name, Expr::Assign(assign.clone()));
+                        let rhs =
+                            self.wrap_setter_assignment(&var_name, Expr::Assign(assign.clone()));
                         Some(Stmt::Expr(ExprStmt {
                             span: DUMMY_SP,
                             expr: Box::new(create_assign_expr(
@@ -145,7 +149,9 @@ impl SystemJsTransform {
         let idx = execute_body.stmts.iter().position(|stmt| match stmt {
             Stmt::Expr(ExprStmt { expr, .. }) => {
                 if let Expr::Assign(assign) = &**expr {
-                    if let AssignTarget::Simple(SimpleAssignTarget::Ident(binding_ident)) = &assign.left {
+                    if let AssignTarget::Simple(SimpleAssignTarget::Ident(binding_ident)) =
+                        &assign.left
+                    {
                         return binding_ident.id.sym.as_ref() == self.capture_obj;
                     }
                 }
@@ -192,7 +198,10 @@ impl SystemJsTransform {
         let Some(return_stmt) = declare_body.stmts.get_mut(return_idx) else {
             return;
         };
-        let Stmt::Return(ReturnStmt { arg: Some(ret_arg), .. }) = return_stmt else {
+        let Stmt::Return(ReturnStmt {
+            arg: Some(ret_arg), ..
+        }) = return_stmt
+        else {
             return;
         };
         let Expr::Object(ret_obj) = &mut **ret_arg else {

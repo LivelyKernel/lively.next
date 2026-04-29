@@ -1,7 +1,7 @@
+use std::collections::{HashMap, HashSet};
 use swc_common::{SyntaxContext, DUMMY_SP};
-use std::collections::{HashSet, HashMap};
 use swc_ecma_ast::*;
-use swc_ecma_visit::{VisitWith, VisitMut, VisitMutWith};
+use swc_ecma_visit::{Visit, VisitMut, VisitMutWith, VisitWith};
 
 use crate::utils::ast_helpers::*;
 use crate::utils::scope_analyzer::ScopeAnalyzer;
@@ -25,6 +25,9 @@ pub struct ScopeCapturingTransform {
     /// Whether to capture imports
     capture_imports: bool,
 
+    /// Whether to rewrite mixed default + named imports through a temp binding.
+    rewrite_mixed_default_imports: bool,
+
     /// Whether this is a resurrection build
     resurrection: bool,
 
@@ -39,6 +42,16 @@ pub struct ScopeCapturingTransform {
 
     /// Top-level variables that should be captured
     capturable_vars: HashSet<Id>,
+
+    /// Identifier names referenced in the original module before this pass
+    /// generates recorder/System wrapper code. This mirrors Babel's
+    /// refsToReplace shape: generated identifiers are not captured just
+    /// because the mutation visitor later sees them.
+    original_ref_names: HashSet<String>,
+
+    /// Bindings introduced by `for` headers. Babel leaves those local, even
+    /// when the declaration is a top-level `var`.
+    loop_header_vars: HashSet<String>,
 
     /// Top-level imported bindings
     imported_vars: HashSet<Id>,
@@ -83,12 +96,192 @@ struct ScopeFrame {
     is_function_scope: bool,
 }
 
+#[derive(Default)]
+struct OriginalRefNameCollector {
+    names: HashSet<String>,
+    scopes: Vec<HashSet<String>>,
+}
+
+impl Visit for OriginalRefNameCollector {
+    fn visit_module(&mut self, module: &Module) {
+        self.scopes.clear();
+        self.scopes.push(HashSet::new());
+        self.predeclare_module_items(&module.body);
+        module.visit_children_with(self);
+    }
+
+    fn visit_expr(&mut self, expr: &Expr) {
+        if let Expr::Ident(ident) = expr {
+            self.add_ref(ident.sym.as_ref());
+            return;
+        }
+
+        expr.visit_children_with(self);
+    }
+
+    fn visit_assign_expr(&mut self, assign: &AssignExpr) {
+        if let AssignTarget::Simple(SimpleAssignTarget::Ident(binding_ident)) = &assign.left {
+            self.add_ref(binding_ident.id.sym.as_ref());
+        } else {
+            assign.left.visit_with(self);
+        }
+
+        assign.right.visit_with(self);
+    }
+
+    fn visit_update_expr(&mut self, update: &UpdateExpr) {
+        update.arg.visit_with(self);
+    }
+
+    fn visit_prop(&mut self, prop: &Prop) {
+        match prop {
+            Prop::Shorthand(ident) => {
+                self.add_ref(ident.sym.as_ref());
+            }
+            _ => prop.visit_children_with(self),
+        }
+    }
+
+    fn visit_function(&mut self, func: &Function) {
+        self.enter_scope();
+        for param in &func.params {
+            self.declare_pat(&param.pat);
+        }
+        if let Some(body) = &func.body {
+            self.predeclare_stmts(&body.stmts);
+            body.visit_with(self);
+        }
+        self.exit_scope();
+    }
+
+    fn visit_arrow_expr(&mut self, arrow: &ArrowExpr) {
+        self.enter_scope();
+        for param in &arrow.params {
+            self.declare_pat(param);
+        }
+        arrow.body.visit_with(self);
+        self.exit_scope();
+    }
+
+    fn visit_block_stmt(&mut self, block: &BlockStmt) {
+        self.enter_scope();
+        self.predeclare_stmts(&block.stmts);
+        block.visit_children_with(self);
+        self.exit_scope();
+    }
+
+    fn visit_catch_clause(&mut self, clause: &CatchClause) {
+        self.enter_scope();
+        if let Some(param) = &clause.param {
+            self.declare_pat(param);
+        }
+        clause.body.visit_with(self);
+        self.exit_scope();
+    }
+}
+
+impl OriginalRefNameCollector {
+    fn enter_scope(&mut self) {
+        self.scopes.push(HashSet::new());
+    }
+
+    fn exit_scope(&mut self) {
+        self.scopes.pop();
+    }
+
+    fn declare(&mut self, name: &str) {
+        if let Some(scope) = self.scopes.last_mut() {
+            scope.insert(name.to_string());
+        }
+    }
+
+    fn is_declared(&self, name: &str) -> bool {
+        self.scopes.iter().rev().any(|scope| scope.contains(name))
+    }
+
+    fn add_ref(&mut self, name: &str) {
+        if !self.is_declared(name) {
+            self.names.insert(name.to_string());
+        }
+    }
+
+    fn declare_pat(&mut self, pat: &Pat) {
+        for (sym, _) in extract_idents_from_pat(pat) {
+            self.declare(sym.as_ref());
+        }
+    }
+
+    fn predeclare_module_items(&mut self, items: &[ModuleItem]) {
+        for item in items {
+            match item {
+                ModuleItem::Stmt(stmt) => self.predeclare_stmt(stmt),
+                ModuleItem::ModuleDecl(ModuleDecl::Import(import)) => {
+                    for spec in &import.specifiers {
+                        match spec {
+                            ImportSpecifier::Named(named) => self.declare(named.local.sym.as_ref()),
+                            ImportSpecifier::Default(default) => {
+                                self.declare(default.local.sym.as_ref())
+                            }
+                            ImportSpecifier::Namespace(ns) => self.declare(ns.local.sym.as_ref()),
+                        }
+                    }
+                }
+                ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(export)) => {
+                    self.predeclare_decl(&export.decl);
+                }
+                ModuleItem::ModuleDecl(ModuleDecl::ExportDefaultDecl(export)) => match &export.decl
+                {
+                    DefaultDecl::Class(class) => {
+                        if let Some(ident) = &class.ident {
+                            self.declare(ident.sym.as_ref());
+                        }
+                    }
+                    DefaultDecl::Fn(func) => {
+                        if let Some(ident) = &func.ident {
+                            self.declare(ident.sym.as_ref());
+                        }
+                    }
+                    _ => {}
+                },
+                _ => {}
+            }
+        }
+    }
+
+    fn predeclare_stmts(&mut self, stmts: &[Stmt]) {
+        for stmt in stmts {
+            self.predeclare_stmt(stmt);
+        }
+    }
+
+    fn predeclare_stmt(&mut self, stmt: &Stmt) {
+        match stmt {
+            Stmt::Decl(decl) => self.predeclare_decl(decl),
+            _ => {}
+        }
+    }
+
+    fn predeclare_decl(&mut self, decl: &Decl) {
+        match decl {
+            Decl::Class(class) => self.declare(class.ident.sym.as_ref()),
+            Decl::Fn(func) => self.declare(func.ident.sym.as_ref()),
+            Decl::Var(var) => {
+                for declarator in &var.decls {
+                    self.declare_pat(&declarator.name);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
 impl ScopeCapturingTransform {
     pub fn new(
         capture_obj: String,
         declaration_wrapper: Option<String>,
         excluded: Vec<String>,
         capture_imports: bool,
+        rewrite_mixed_default_imports: bool,
         resurrection: bool,
         module_id: String,
         current_module_accessor: Option<String>,
@@ -100,11 +293,14 @@ impl ScopeCapturingTransform {
             declaration_wrapper,
             excluded: excluded.into_iter().collect(),
             capture_imports,
+            rewrite_mixed_default_imports,
             resurrection,
             module_hash,
             module_id,
             current_module_accessor,
             capturable_vars: HashSet::new(),
+            original_ref_names: HashSet::new(),
+            loop_header_vars: HashSet::new(),
             imported_vars: HashSet::new(),
             import_sources: HashMap::new(),
             hoisted_function_captures: Vec::new(),
@@ -157,13 +353,37 @@ impl ScopeCapturingTransform {
             return false;
         }
 
-        // Keep imported bindings as plain identifiers unless import capture is enabled.
-        if !self.capture_imports && self.imported_vars.contains(id) {
+        // Never capture the recorder object itself. Generated recorder member
+        // accesses must stay anchored on the real recorder identifier.
+        if id.0.as_ref() == self.capture_obj.as_str() {
             return false;
         }
 
-        // Check if it's a capturable variable
-        self.capturable_vars.contains(id)
+        // `arguments` is a function-local special binding. In particular, the
+        // class-to-function transform generates it in constructor dispatch.
+        if id.0.as_ref() == "arguments" {
+            return false;
+        }
+
+        if self.loop_header_vars.contains(id.0.as_ref()) {
+            return false;
+        }
+
+        // Keep imported bindings as plain identifiers. The import transform
+        // still emits recorder capture assignments (`_rec.x = x`) when
+        // capture_imports is enabled, but ordinary uses must read the live
+        // local import binding to avoid circular recorder initialization.
+        if self.imported_vars.contains(id) {
+            return false;
+        }
+        if self.import_sources.contains_key(id.0.as_ref()) {
+            return false;
+        }
+
+        // Capture top-level declarations and free/global references that were
+        // present in the original module. Do not capture identifiers that only
+        // appear after this pass generates recorder/System wrapper code.
+        self.capturable_vars.contains(id) || self.original_ref_names.contains(id.0.as_ref())
     }
 
     /// Create a member expression to the capture object: __varRecorder__.name
@@ -171,18 +391,27 @@ impl ScopeCapturingTransform {
         create_member_expr(create_ident_expr(&self.capture_obj), name)
     }
 
+    /// Create a computed member expression to the configured declaration
+    /// wrapper: __varRecorder__[wrapperName].
+    fn create_declaration_wrapper_callee(&self) -> Expr {
+        create_declaration_wrapper_callee(
+            &self.capture_obj,
+            self.declaration_wrapper.as_ref().unwrap(),
+        )
+    }
+
     /// Wrap a declaration with the declaration wrapper if configured.
     /// Scope capture wrapper signature: wrapper(name, kind, value, captureObj)
     /// Babel tests confirm the 4th arg is _rec (capture obj), not __moduleMeta__.
     /// __moduleMeta__ is only used in insertCapturesForFunctionDeclarations (the LAST step).
     fn wrap_declaration(&self, name: &str, kind: &str, value: Expr) -> Expr {
-        if let Some(ref wrapper) = self.declaration_wrapper {
+        if self.declaration_wrapper.is_some() {
             // capture_obj[wrapper]("name", "kind", value, capture_obj)
             // Use computed member access because wrapper names like
             // "defVar_http://localhost:9011/module.js" contain characters
             // that are invalid in bare JS identifiers.
             create_call_expr(
-                parse_expr_or_ident(wrapper),
+                self.create_declaration_wrapper_callee(),
                 vec![
                     to_expr_or_spread(create_string_expr(name)),
                     to_expr_or_spread(create_string_expr(kind)),
@@ -225,7 +454,8 @@ impl ScopeCapturingTransform {
             Pat::Ident(BindingIdent { id, .. }) => {
                 if self.should_capture(&id.to_id()) {
                     let member = self.create_captured_member(id.sym.as_ref());
-                    let init_expr = init.unwrap_or_else(|| Box::new(self.create_default_init(id.sym.as_ref())));
+                    let init_expr =
+                        init.unwrap_or_else(|| Box::new(self.create_default_init(id.sym.as_ref())));
                     // Babel's bundler does NOT pass declarationWrapper to the scope capture
                     // step — it's only used in insertCapturesForFunctionDeclarations (a separate
                     // step that ONLY wraps function declarations). So variable declarations
@@ -233,11 +463,19 @@ impl ScopeCapturingTransform {
                     let value = *init_expr;
                     stmts.push(Stmt::Expr(ExprStmt {
                         span: DUMMY_SP,
-                        expr: Box::new(create_assign_expr(
-                            expr_to_assign_target(member),
-                            value,
-                        )),
+                        expr: Box::new(create_assign_expr(expr_to_assign_target(member), value)),
                     }));
+                } else if let Some(init_expr) = init {
+                    let kind = match declaration_kind {
+                        "let" => VarDeclKind::Let,
+                        "const" => VarDeclKind::Const,
+                        _ => VarDeclKind::Var,
+                    };
+                    stmts.push(Stmt::Decl(create_var_decl_with_ident(
+                        kind,
+                        id.clone(),
+                        Some(*init_expr),
+                    )));
                 }
             }
             Pat::Array(ArrayPat { elems, .. }) => {
@@ -282,12 +520,11 @@ impl ScopeCapturingTransform {
                                         raw: None,
                                     })),
                                 );
-                                let elem_stmts = self
-                                    .transform_pattern_to_stmts(
-                                        elem_pat,
-                                        Some(Box::new(indexed)),
-                                        declaration_kind,
-                                    );
+                                let elem_stmts = self.transform_pattern_to_stmts(
+                                    elem_pat,
+                                    Some(Box::new(indexed)),
+                                    declaration_kind,
+                                );
                                 stmts.extend(elem_stmts);
                             }
                         }
@@ -377,7 +614,8 @@ impl ScopeCapturingTransform {
                             ObjectPatProp::Rest(rest) => {
                                 // Handle rest properties: {...rest}
                                 // Legacy transform materializes a new object and copies unknown keys.
-                                if let Pat::Ident(BindingIdent { id: rest_ident, .. }) = &*rest.arg {
+                                if let Pat::Ident(BindingIdent { id: rest_ident, .. }) = &*rest.arg
+                                {
                                     stmts.push(Stmt::Decl(create_var_decl(
                                         VarDeclKind::Var,
                                         rest_ident.sym.as_ref(),
@@ -523,12 +761,18 @@ impl ScopeCapturingTransform {
                         cons: right.clone(),
                         alt: init_expr,
                     });
-                    let assign_stmts =
-                        self.transform_pattern_to_stmts(left, Some(Box::new(value)), declaration_kind);
+                    let assign_stmts = self.transform_pattern_to_stmts(
+                        left,
+                        Some(Box::new(value)),
+                        declaration_kind,
+                    );
                     stmts.extend(assign_stmts);
                 } else {
-                    let assign_stmts =
-                        self.transform_pattern_to_stmts(left, Some(right.clone()), declaration_kind);
+                    let assign_stmts = self.transform_pattern_to_stmts(
+                        left,
+                        Some(right.clone()),
+                        declaration_kind,
+                    );
                     stmts.extend(assign_stmts);
                 }
             }
@@ -569,10 +813,16 @@ impl ScopeCapturingTransform {
                         // artifacts that Babel ignores. But `var Le = function(t){...}`
                         // is a genuinely new binding that should shadow.
                         let has_substantial_init = d.init.as_ref().map_or(false, |init| {
-                            matches!(&**init,
-                                Expr::Fn(_) | Expr::Arrow(_) | Expr::Class(_) |
-                                Expr::Call(_) | Expr::New(_) | Expr::Object(_) |
-                                Expr::Array(_))
+                            matches!(
+                                &**init,
+                                Expr::Fn(_)
+                                    | Expr::Arrow(_)
+                                    | Expr::Class(_)
+                                    | Expr::Call(_)
+                                    | Expr::New(_)
+                                    | Expr::Object(_)
+                                    | Expr::Array(_)
+                            )
                         });
                         if has_substantial_init {
                             for (sym, _) in extract_idents_from_pat(&d.name) {
@@ -589,7 +839,10 @@ impl ScopeCapturingTransform {
             fn visit_function(&mut self, _: &Function) {}
             fn visit_arrow_expr(&mut self, _: &ArrowExpr) {}
         }
-        let mut collector = VarCollector { var_names: vec![], fn_decl_names: vec![] };
+        let mut collector = VarCollector {
+            var_names: vec![],
+            fn_decl_names: vec![],
+        };
         for stmt in stmts {
             stmt.visit_children_with(&mut collector);
         }
@@ -636,6 +889,89 @@ impl ScopeCapturingTransform {
         }
     }
 
+    fn collect_loop_header_vars(&mut self, module: &Module) {
+        struct Collector {
+            names: HashSet<String>,
+            fn_depth: usize,
+        }
+
+        impl Visit for Collector {
+            fn visit_function(&mut self, func: &Function) {
+                self.fn_depth += 1;
+                func.visit_children_with(self);
+                self.fn_depth -= 1;
+            }
+
+            fn visit_arrow_expr(&mut self, arrow: &ArrowExpr) {
+                self.fn_depth += 1;
+                arrow.visit_children_with(self);
+                self.fn_depth -= 1;
+            }
+
+            fn visit_for_stmt(&mut self, stmt: &ForStmt) {
+                if self.fn_depth == 0 {
+                    if let Some(VarDeclOrExpr::VarDecl(var_decl)) = &stmt.init {
+                        for decl in &var_decl.decls {
+                            for (sym, _) in extract_idents_from_pat(&decl.name) {
+                                self.names.insert(sym.to_string());
+                            }
+                        }
+                    }
+                }
+                stmt.visit_children_with(self);
+            }
+
+            fn visit_for_in_stmt(&mut self, stmt: &ForInStmt) {
+                if self.fn_depth == 0 {
+                    match &stmt.left {
+                        ForHead::VarDecl(var_decl) => {
+                            for decl in &var_decl.decls {
+                                for (sym, _) in extract_idents_from_pat(&decl.name) {
+                                    self.names.insert(sym.to_string());
+                                }
+                            }
+                        }
+                        ForHead::Pat(pat) => {
+                            for (sym, _) in extract_idents_from_pat(pat) {
+                                self.names.insert(sym.to_string());
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+                stmt.visit_children_with(self);
+            }
+
+            fn visit_for_of_stmt(&mut self, stmt: &ForOfStmt) {
+                if self.fn_depth == 0 {
+                    match &stmt.left {
+                        ForHead::VarDecl(var_decl) => {
+                            for decl in &var_decl.decls {
+                                for (sym, _) in extract_idents_from_pat(&decl.name) {
+                                    self.names.insert(sym.to_string());
+                                }
+                            }
+                        }
+                        ForHead::Pat(pat) => {
+                            for (sym, _) in extract_idents_from_pat(pat) {
+                                self.names.insert(sym.to_string());
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+                stmt.visit_children_with(self);
+            }
+        }
+
+        let mut collector = Collector {
+            names: HashSet::new(),
+            fn_depth: 0,
+        };
+        module.visit_with(&mut collector);
+        self.loop_header_vars = collector.names;
+    }
+
     /// Replace top-level function declarations with wrapper calls (Babel parity).
     ///
     /// Transforms:
@@ -649,8 +985,8 @@ impl ScopeCapturingTransform {
         let meta_init = if let Some(ref accessor) = self.current_module_accessor {
             // The currentModuleAccessor is a complex JS expression (object literal).
             // Use SWC's parser to parse it properly.
-            use swc_ecma_parser::{parse_file_as_expr, Syntax};
             use swc_common::{sync::Lrc, FileName, SourceMap as SwcSourceMap};
+            use swc_ecma_parser::{parse_file_as_expr, Syntax};
             let cm = Lrc::new(SwcSourceMap::default());
             let fm = cm.new_source_file(FileName::Anon.into(), accessor.clone());
             match parse_file_as_expr(
@@ -692,7 +1028,7 @@ impl ScopeCapturingTransform {
                     // Hoisted: var foo = wrapper("foo", "function", function(){...}, __moduleMeta__)
                     // Babel uses let, but var avoids TDZ issues with rollup circular dep analysis.
                     let wrapped = create_call_expr(
-                        parse_expr_or_ident(self.declaration_wrapper.as_ref().unwrap()),
+                        self.create_declaration_wrapper_callee(),
                         vec![
                             to_expr_or_spread(create_string_expr(&fn_name)),
                             to_expr_or_spread(create_string_expr("function")),
@@ -747,7 +1083,9 @@ impl ScopeCapturingTransform {
         for item in new_body.drain(..) {
             final_body.push(item);
             if !inserted {
-                if let ModuleItem::Stmt(Stmt::Decl(Decl::Var(ref var_decl))) = final_body.last().unwrap() {
+                if let ModuleItem::Stmt(Stmt::Decl(Decl::Var(ref var_decl))) =
+                    final_body.last().unwrap()
+                {
                     if var_decl.decls.iter().any(|d| {
                         matches!(&d.name, Pat::Ident(BindingIdent { id, .. }) if id.sym.as_ref() == self.capture_obj)
                     }) {
@@ -814,7 +1152,10 @@ impl ScopeCapturingTransform {
         } else {
             // FreezerRuntime/bundle context
             create_call_expr(
-                create_member_expr(self.recorder_runtime_expr(has_local_lively_binding), "recorderFor"),
+                create_member_expr(
+                    self.recorder_runtime_expr(has_local_lively_binding),
+                    "recorderFor",
+                ),
                 vec![
                     to_expr_or_spread(create_string_expr(&self.module_id)),
                     to_expr_or_spread(create_ident_expr("__contextModule__")),
@@ -848,11 +1189,7 @@ impl ScopeCapturingTransform {
         let member = self.create_captured_member(&fn_name);
         // Babel's putFunctionDeclsInFront wraps just the identifier, not the function body.
         // The function body replacement happens later in replace_function_declarations_with_wrapper.
-        let value = self.wrap_declaration(
-            &fn_name,
-            "function",
-            Expr::Ident(fn_decl.ident.clone()),
-        );
+        let value = self.wrap_declaration(&fn_name, "function", Expr::Ident(fn_decl.ident.clone()));
 
         ModuleItem::Stmt(Stmt::Expr(ExprStmt {
             span: DUMMY_SP,
@@ -932,12 +1269,15 @@ impl ScopeCapturingTransform {
                 ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(export)) => {
                     if export.src.is_some() {
                         let raw_src = export.src.as_ref().unwrap().value.to_string();
-                        let resolved_src = self.resolved_imports.get(&raw_src)
+                        let resolved_src = self
+                            .resolved_imports
+                            .get(&raw_src)
                             .cloned()
                             .unwrap_or(raw_src);
                         if export.specifiers.is_empty() {
                             // export * from '...' (rare, usually ExportAll)
-                            self.collected_exports.push(format!("__reexport__{}", resolved_src));
+                            self.collected_exports
+                                .push(format!("__reexport__{}", resolved_src));
                         } else {
                             // export { x, y as z } from '...'
                             // Per-specifier entries (Babel does individual entries, not blanket __reexport__)
@@ -953,11 +1293,15 @@ impl ScopeCapturingTransform {
                                         None => local_name.clone(),
                                     };
                                     if exported_name != local_name && exported_name != "default" {
-                                        self.collected_exports.push(format!("__rename__{}->{}",local_name, exported_name));
+                                        self.collected_exports.push(format!(
+                                            "__rename__{}->{}",
+                                            local_name, exported_name
+                                        ));
                                         continue; // Babel: continue after __rename__
                                     }
                                     if exported_name == "default" && !local_name.is_empty() {
-                                        self.collected_exports.push(format!("__default__{}", local_name));
+                                        self.collected_exports
+                                            .push(format!("__default__{}", local_name));
                                     }
                                     self.collected_exports.push(exported_name);
                                 }
@@ -977,11 +1321,15 @@ impl ScopeCapturingTransform {
                                     None => local_name.clone(),
                                 };
                                 if exported_name != local_name && exported_name != "default" {
-                                    self.collected_exports.push(format!("__rename__{}->{}",local_name, exported_name));
+                                    self.collected_exports.push(format!(
+                                        "__rename__{}->{}",
+                                        local_name, exported_name
+                                    ));
                                     continue; // Babel: continue after __rename__
                                 }
                                 if exported_name == "default" && !local_name.is_empty() {
-                                    self.collected_exports.push(format!("__default__{}", local_name));
+                                    self.collected_exports
+                                        .push(format!("__default__{}", local_name));
                                 }
                                 self.collected_exports.push(exported_name);
                             }
@@ -990,10 +1338,13 @@ impl ScopeCapturingTransform {
                 }
                 ModuleItem::ModuleDecl(ModuleDecl::ExportAll(export_all)) => {
                     let raw_src = export_all.src.value.to_string();
-                    let resolved_src = self.resolved_imports.get(&raw_src)
+                    let resolved_src = self
+                        .resolved_imports
+                        .get(&raw_src)
                         .cloned()
                         .unwrap_or(raw_src);
-                    self.collected_exports.push(format!("__reexport__{}", resolved_src));
+                    self.collected_exports
+                        .push(format!("__reexport__{}", resolved_src));
                 }
                 ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(export_decl)) => {
                     match &export_decl.decl {
@@ -1001,7 +1352,8 @@ impl ScopeCapturingTransform {
                             self.collected_exports.push(fn_decl.ident.sym.to_string());
                         }
                         Decl::Class(class_decl) => {
-                            self.collected_exports.push(class_decl.ident.sym.to_string());
+                            self.collected_exports
+                                .push(class_decl.ident.sym.to_string());
                         }
                         Decl::Var(var_decl) => {
                             for decl in &var_decl.decls {
@@ -1026,7 +1378,8 @@ impl ScopeCapturingTransform {
                 }
                 ModuleItem::ModuleDecl(ModuleDecl::ExportDefaultExpr(default_expr)) => {
                     if let Expr::Ident(ident) = &*default_expr.expr {
-                        self.collected_exports.push(format!("__default__{}", ident.sym));
+                        self.collected_exports
+                            .push(format!("__default__{}", ident.sym));
                     }
                     self.collected_exports.push("default".to_string());
                 }
@@ -1042,9 +1395,10 @@ impl ScopeCapturingTransform {
             .iter()
             .take_while(|item| matches!(item, ModuleItem::ModuleDecl(ModuleDecl::Import(_))))
             .count();
-        module
-            .body
-            .insert(insert_idx, self.create_recorder_init_decl(has_local_lively_binding));
+        module.body.insert(
+            insert_idx,
+            self.create_recorder_init_decl(has_local_lively_binding),
+        );
         // For resurrection builds, insert __module_hash__ right after recorder init
         if self.resurrection {
             if let Some(hash) = self.module_hash {
@@ -1056,7 +1410,10 @@ impl ScopeCapturingTransform {
                         left: AssignTarget::Simple(SimpleAssignTarget::Member(MemberExpr {
                             span: DUMMY_SP,
                             obj: Box::new(create_ident_expr(&self.capture_obj)),
-                            prop: MemberProp::Ident(IdentName::new("__module_hash__".into(), DUMMY_SP)),
+                            prop: MemberProp::Ident(IdentName::new(
+                                "__module_hash__".into(),
+                                DUMMY_SP,
+                            )),
                         })),
                         right: Box::new(Expr::Lit(Lit::Num(Number {
                             span: DUMMY_SP,
@@ -1076,7 +1433,6 @@ impl ScopeCapturingTransform {
         self.scope_stack.pop();
     }
 
-
     /// Transform a module item at module level, allowing expansion into multiple items
     fn transform_module_item(&self, item: ModuleItem) -> Vec<ModuleItem> {
         match item {
@@ -1089,7 +1445,8 @@ impl ScopeCapturingTransform {
                         if let Some(init_expr) = &init {
                             if matches!(**init_expr, Expr::Object(_)) {
                                 if let Pat::Ident(BindingIdent { id, .. }) = &decl.name {
-                                    let recorder_member = self.create_captured_member(id.sym.as_ref());
+                                    let recorder_member =
+                                        self.create_captured_member(id.sym.as_ref());
                                     init = Some(Box::new(Expr::Bin(BinExpr {
                                         span: DUMMY_SP,
                                         op: BinaryOp::LogicalOr,
@@ -1109,9 +1466,13 @@ impl ScopeCapturingTransform {
                                 // classToFunction wraps as: (function(superclass) { ... return initializeES6ClassForLively(...) })({...})
                                 if let swc_ecma_ast::Callee::Expr(callee) = &call.callee {
                                     if let Expr::Paren(paren) = &**callee {
-                                        if let Expr::Fn(_) = &*paren.expr { return true; }
+                                        if let Expr::Fn(_) = &*paren.expr {
+                                            return true;
+                                        }
                                     }
-                                    if let Expr::Fn(_) = &**callee { return true; }
+                                    if let Expr::Fn(_) = &**callee {
+                                        return true;
+                                    }
                                 }
                             }
                             false
@@ -1125,8 +1486,11 @@ impl ScopeCapturingTransform {
                                 VarDeclKind::Const => "const",
                             }
                         };
-                        let stmts =
-                            self.transform_pattern_to_stmts(&decl.name, init.clone(), declaration_kind);
+                        let stmts = self.transform_pattern_to_stmts(
+                            &decl.name,
+                            init.clone(),
+                            declaration_kind,
+                        );
                         for stmt in stmts {
                             items.push(ModuleItem::Stmt(stmt));
                         }
@@ -1141,7 +1505,9 @@ impl ScopeCapturingTransform {
                                 ..decl.clone()
                             }],
                         };
-                        items.push(ModuleItem::Stmt(Stmt::Decl(Decl::Var(Box::new(single_var)))));
+                        items.push(ModuleItem::Stmt(Stmt::Decl(Decl::Var(Box::new(
+                            single_var,
+                        )))));
                     }
                 }
 
@@ -1159,9 +1525,15 @@ impl ScopeCapturingTransform {
                 // system_js uses the default import's name as the setter
                 // parameter, shadowing the local variable.  Rename the
                 // default specifier to a unique name and add an alias var.
-                let has_default = import_decl.specifiers.iter().any(|s| matches!(s, ImportSpecifier::Default(_)));
-                let has_named = import_decl.specifiers.iter().any(|s| matches!(s, ImportSpecifier::Named(_)));
-                let mut items = if has_default && has_named {
+                let has_default = import_decl
+                    .specifiers
+                    .iter()
+                    .any(|s| matches!(s, ImportSpecifier::Default(_)));
+                let has_named = import_decl
+                    .specifiers
+                    .iter()
+                    .any(|s| matches!(s, ImportSpecifier::Named(_)));
+                let mut items = if self.rewrite_mixed_default_imports && has_default && has_named {
                     // Rename default import: `import X, {y} from 'mod'`
                     // → `import __default_X__, {y} from 'mod'; var X = __default_X__;`
                     let mut new_specs = Vec::new();
@@ -1173,12 +1545,20 @@ impl ScopeCapturingTransform {
                                 let temp_name = format!("__default_{}__", orig_name);
                                 new_specs.push(ImportSpecifier::Default(ImportDefaultSpecifier {
                                     span: DUMMY_SP,
-                                    local: Ident::new(temp_name.as_str().into(), DUMMY_SP, SyntaxContext::empty()),
+                                    local: Ident::new(
+                                        temp_name.as_str().into(),
+                                        DUMMY_SP,
+                                        SyntaxContext::empty(),
+                                    ),
                                 }));
                                 alias_stmts.push(ModuleItem::Stmt(Stmt::Decl(create_var_decl(
                                     VarDeclKind::Var,
                                     &orig_name,
-                                    Some(Expr::Ident(Ident::new(temp_name.as_str().into(), DUMMY_SP, SyntaxContext::empty()))),
+                                    Some(Expr::Ident(Ident::new(
+                                        temp_name.as_str().into(),
+                                        DUMMY_SP,
+                                        SyntaxContext::empty(),
+                                    ))),
                                 ))));
                             }
                             other => new_specs.push(other.clone()),
@@ -1191,7 +1571,9 @@ impl ScopeCapturingTransform {
                     v.extend(alias_stmts);
                     v
                 } else {
-                    vec![ModuleItem::ModuleDecl(ModuleDecl::Import(import_decl.clone()))]
+                    vec![ModuleItem::ModuleDecl(ModuleDecl::Import(
+                        import_decl.clone(),
+                    ))]
                 };
                 for spec in &import_decl.specifiers {
                     let local = match spec {
@@ -1200,10 +1582,8 @@ impl ScopeCapturingTransform {
                         ImportSpecifier::Namespace(ns) => ns.local.clone(),
                     };
                     let member = self.create_captured_member(local.sym.as_ref());
-                    let assign = create_assign_expr(
-                        expr_to_assign_target(member),
-                        Expr::Ident(local),
-                    );
+                    let assign =
+                        create_assign_expr(expr_to_assign_target(member), Expr::Ident(local));
                     items.push(ModuleItem::Stmt(Stmt::Expr(ExprStmt {
                         span: DUMMY_SP,
                         expr: Box::new(assign),
@@ -1225,6 +1605,7 @@ impl ScopeCapturingTransform {
                     let src = export_decl.src.as_ref().unwrap().value.to_string();
                     let mut import_specs = Vec::new();
                     let mut assigns = Vec::new();
+                    let mut alias_specs = Vec::new();
 
                     for spec in &export_decl.specifiers {
                         if let ExportSpecifier::Named(named) = spec {
@@ -1242,56 +1623,98 @@ impl ScopeCapturingTransform {
                                 ModuleExportName::Str(s) => s.value.to_string(),
                             };
 
-                            let local_name = if exported_name == "default" {
-                                format!("__default_{}__", import_name)
-                            } else {
-                                exported_name.clone()
-                            };
+                            let local_name = format!("__reexport_{}__", exported_name);
 
                             import_specs.push(ImportSpecifier::Named(ImportNamedSpecifier {
                                 span: DUMMY_SP,
-                                local: Ident::new(local_name.as_str().into(), DUMMY_SP, SyntaxContext::empty()),
-                                imported: Some(ModuleExportName::Ident(Ident::new(import_name.as_str().into(), DUMMY_SP, SyntaxContext::empty()))),
+                                local: Ident::new(
+                                    local_name.as_str().into(),
+                                    DUMMY_SP,
+                                    SyntaxContext::empty(),
+                                ),
+                                imported: Some(ModuleExportName::Ident(Ident::new(
+                                    import_name.as_str().into(),
+                                    DUMMY_SP,
+                                    SyntaxContext::empty(),
+                                ))),
                                 is_type_only: false,
                             }));
 
                             let member = self.create_captured_member(&exported_name);
                             let assign = create_assign_expr(
                                 expr_to_assign_target(member),
-                                Expr::Ident(Ident::new(local_name.as_str().into(), DUMMY_SP, SyntaxContext::empty())),
+                                Expr::Ident(Ident::new(
+                                    local_name.as_str().into(),
+                                    DUMMY_SP,
+                                    SyntaxContext::empty(),
+                                )),
                             );
                             assigns.push(ModuleItem::Stmt(Stmt::Expr(ExprStmt {
                                 span: DUMMY_SP,
                                 expr: Box::new(assign),
                             })));
+
+                            let alias_name = format!("__export_{}__", exported_name);
+                            assigns.push(ModuleItem::Stmt(Stmt::Decl(create_var_decl(
+                                VarDeclKind::Var,
+                                &alias_name,
+                                Some(create_ident_expr(&local_name)),
+                            ))));
+                            alias_specs.push(ExportSpecifier::Named(ExportNamedSpecifier {
+                                span: DUMMY_SP,
+                                orig: ModuleExportName::Ident(Ident::new(
+                                    alias_name.as_str().into(),
+                                    DUMMY_SP,
+                                    SyntaxContext::empty(),
+                                )),
+                                exported: Some(ModuleExportName::Ident(Ident::new(
+                                    exported_name.as_str().into(),
+                                    DUMMY_SP,
+                                    SyntaxContext::empty(),
+                                ))),
+                                is_type_only: false,
+                            }));
                         }
                     }
 
                     let import_decl = ModuleItem::ModuleDecl(ModuleDecl::Import(ImportDecl {
                         span: DUMMY_SP,
                         specifiers: import_specs,
-                        src: Box::new(Str { span: DUMMY_SP, value: src.clone().into(), raw: None }),
+                        src: Box::new(Str {
+                            span: DUMMY_SP,
+                            value: src.clone().into(),
+                            raw: None,
+                        }),
                         type_only: false,
                         with: None,
                         phase: Default::default(),
                     }));
 
-                    // Keep original re-export, add import + captures
-                    let mut items = vec![
-                        ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(export_decl)),
-                        import_decl,
-                    ];
+                    let mut items = vec![import_decl];
                     items.extend(assigns);
+                    if !alias_specs.is_empty() {
+                        items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(
+                            NamedExport {
+                                span: DUMMY_SP,
+                                specifiers: alias_specs,
+                                src: None,
+                                type_only: false,
+                                with: None,
+                            },
+                        )));
+                    }
                     return items;
                 }
                 // Workaround for SWC system_js bug #2: system_js drops
                 // `export { importedBinding }` (no _export call generated).
-                // Split specifiers that reference imported bindings into
-                // per-source re-exports (`export { X } from 'mod'`) which
-                // system_js handles correctly via the setter.
+                // Materialize imported exports as local aliases instead:
+                // `var __export_x__ = x; export { __export_x__ as x }`.
+                // This is not a live binding, but it matches the existing
+                // browser/runtime need and forces a concrete `_export`.
                 if export_decl.src.is_none() {
-                    let mut reexport_specs: HashMap<String, Vec<ExportSpecifier>> = HashMap::new();
+                    let mut items: Vec<ModuleItem> = Vec::new();
                     let mut local_specs: Vec<ExportSpecifier> = Vec::new();
+                    let mut alias_specs: Vec<ExportSpecifier> = Vec::new();
 
                     for spec in &export_decl.specifiers {
                         let local_name = match spec {
@@ -1304,7 +1727,9 @@ impl ScopeCapturingTransform {
                         let src_info = local_name.as_ref().and_then(|n| self.import_sources.get(n));
                         // Skip namespace imports ("*") — they can't be
                         // re-exported as named specifiers in this path.
-                        if let (Some(ExportSpecifier::Named(named)), Some((src, orig_name))) = (Some(spec), src_info) {
+                        if let (Some(ExportSpecifier::Named(named)), Some((_src, orig_name))) =
+                            (Some(spec), src_info)
+                        {
                             if orig_name == "*" {
                                 local_specs.push(spec.clone());
                                 continue;
@@ -1315,46 +1740,52 @@ impl ScopeCapturingTransform {
                                 Some(ModuleExportName::Str(s)) => s.value.to_string(),
                                 None => local_name_str.clone(),
                             };
-                            let reexport_spec = ExportSpecifier::Named(ExportNamedSpecifier {
+                            let alias_name = format!("__export_{}__", exported_name);
+                            items.push(ModuleItem::Stmt(Stmt::Decl(create_var_decl(
+                                VarDeclKind::Var,
+                                &alias_name,
+                                Some(create_ident_expr(&local_name_str)),
+                            ))));
+                            alias_specs.push(ExportSpecifier::Named(ExportNamedSpecifier {
                                 span: DUMMY_SP,
                                 orig: ModuleExportName::Ident(Ident::new(
-                                    orig_name.as_str().into(), DUMMY_SP, SyntaxContext::empty(),
+                                    alias_name.as_str().into(),
+                                    DUMMY_SP,
+                                    SyntaxContext::empty(),
                                 )),
-                                exported: if *orig_name == exported_name {
-                                    None
-                                } else {
-                                    Some(ModuleExportName::Ident(Ident::new(
-                                        exported_name.as_str().into(), DUMMY_SP, SyntaxContext::empty(),
-                                    )))
-                                },
+                                exported: Some(ModuleExportName::Ident(Ident::new(
+                                    exported_name.as_str().into(),
+                                    DUMMY_SP,
+                                    SyntaxContext::empty(),
+                                ))),
                                 is_type_only: false,
-                            });
-                            reexport_specs.entry(src.clone()).or_default().push(reexport_spec);
+                            }));
                         } else {
                             local_specs.push(spec.clone());
                         }
                     }
 
-                    if !reexport_specs.is_empty() {
-                        let mut items = Vec::new();
+                    if !alias_specs.is_empty() {
                         if !local_specs.is_empty() {
-                            items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(NamedExport {
+                            items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(
+                                NamedExport {
+                                    span: DUMMY_SP,
+                                    specifiers: local_specs,
+                                    src: None,
+                                    type_only: false,
+                                    with: None,
+                                },
+                            )));
+                        }
+                        items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(
+                            NamedExport {
                                 span: DUMMY_SP,
-                                specifiers: local_specs,
+                                specifiers: alias_specs,
                                 src: None,
                                 type_only: false,
                                 with: None,
-                            })));
-                        }
-                        for (src, specs) in reexport_specs {
-                            items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(NamedExport {
-                                span: DUMMY_SP,
-                                specifiers: specs,
-                                src: Some(Box::new(Str { span: DUMMY_SP, value: src.into(), raw: None })),
-                                type_only: false,
-                                with: None,
-                            })));
-                        }
+                            },
+                        )));
                         return items;
                     }
                 }
@@ -1364,9 +1795,11 @@ impl ScopeCapturingTransform {
                 // collides with locals in minified code.  The long prefix
                 // `__export_` avoids collisions.  Phase 3 (restore_export_aliases)
                 // rewrites _export("__export_Y__", ...) → _export("Y", ...).
-                let has_alias = export_decl.src.is_none() && export_decl.specifiers.iter().any(|s| {
-                    matches!(s, ExportSpecifier::Named(n) if n.exported.is_some())
-                });
+                let has_alias = export_decl.src.is_none()
+                    && export_decl
+                        .specifiers
+                        .iter()
+                        .any(|s| matches!(s, ExportSpecifier::Named(n) if n.exported.is_some()));
                 if has_alias {
                     let mut items = Vec::new();
                     let mut new_specs = Vec::new();
@@ -1389,7 +1822,11 @@ impl ScopeCapturingTransform {
                                 // converters can create exports referencing
                                 // function-scoped vars (e.g. `export { Le as X }`
                                 // where Le is inside dew()). Skip these.
-                                if !self.capturable_vars.iter().any(|id| id.0.as_ref() == local_ident.sym.as_ref()) {
+                                if !self
+                                    .capturable_vars
+                                    .iter()
+                                    .any(|id| id.0.as_ref() == local_ident.sym.as_ref())
+                                {
                                     new_specs.push(spec.clone());
                                     continue;
                                 }
@@ -1403,10 +1840,14 @@ impl ScopeCapturingTransform {
                                 new_specs.push(ExportSpecifier::Named(ExportNamedSpecifier {
                                     span: DUMMY_SP,
                                     orig: ModuleExportName::Ident(Ident::new(
-                                        internal_name.as_str().into(), DUMMY_SP, SyntaxContext::empty(),
+                                        internal_name.as_str().into(),
+                                        DUMMY_SP,
+                                        SyntaxContext::empty(),
                                     )),
                                     exported: Some(ModuleExportName::Ident(Ident::new(
-                                        exported_name.as_str().into(), DUMMY_SP, SyntaxContext::empty(),
+                                        exported_name.as_str().into(),
+                                        DUMMY_SP,
+                                        SyntaxContext::empty(),
                                     ))),
                                     is_type_only: false,
                                 }));
@@ -1417,13 +1858,15 @@ impl ScopeCapturingTransform {
                             new_specs.push(spec.clone());
                         }
                     }
-                    items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(NamedExport {
-                        span: DUMMY_SP,
-                        specifiers: new_specs,
-                        src: None,
-                        type_only: false,
-                        with: None,
-                    })));
+                    items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(
+                        NamedExport {
+                            span: DUMMY_SP,
+                            specifiers: new_specs,
+                            src: None,
+                            type_only: false,
+                            with: None,
+                        },
+                    )));
                     items
                 } else {
                     vec![ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(export_decl))]
@@ -1434,7 +1877,9 @@ impl ScopeCapturingTransform {
                 // Resurrection builds skip this — NamespaceTransform (step 4) handles it.
                 if self.capture_imports && !self.resurrection {
                     let src = export_all.src.value.to_string();
-                    let resolved_id = self.resolved_imports.get(&src)
+                    let resolved_id = self
+                        .resolved_imports
+                        .get(&src)
                         .cloned()
                         .unwrap_or_else(|| src.clone());
                     let tmp_name = format!("__captured_export_all_{}__", rand_id());
@@ -1442,53 +1887,77 @@ impl ScopeCapturingTransform {
                         span: DUMMY_SP,
                         specifiers: vec![ImportSpecifier::Namespace(ImportStarAsSpecifier {
                             span: DUMMY_SP,
-                            local: Ident::new(tmp_name.as_str().into(), DUMMY_SP, SyntaxContext::empty()),
+                            local: Ident::new(
+                                tmp_name.as_str().into(),
+                                DUMMY_SP,
+                                SyntaxContext::empty(),
+                            ),
                         })],
-                        src: Box::new(Str { span: DUMMY_SP, value: src.into(), raw: None }),
+                        src: Box::new(Str {
+                            span: DUMMY_SP,
+                            value: src.into(),
+                            raw: None,
+                        }),
                         type_only: false,
                         with: None,
                         phase: Default::default(),
                     }));
-                    // Object.assign(recorderFor(resolvedDep), tmp)
-                    let recorder_for = create_call_expr(
-                        create_member_expr(
-                            Expr::Paren(ParenExpr {
-                                span: DUMMY_SP,
-                                expr: Box::new(Expr::Bin(BinExpr {
-                                    span: DUMMY_SP,
-                                    op: BinaryOp::LogicalOr,
-                                    left: Box::new(create_member_expr(create_ident_expr("lively"), "FreezerRuntime")),
-                                    right: Box::new(create_member_expr(create_ident_expr("lively"), "frozenModules")),
-                                })),
-                            }),
-                            "recorderFor",
-                        ),
-                        vec![to_expr_or_spread(Expr::Lit(Lit::Str(Str {
-                            span: DUMMY_SP,
-                            value: resolved_id.as_str().into(),
-                            raw: None,
-                        })))],
-                    );
-                    let assign = ModuleItem::Stmt(Stmt::Expr(ExprStmt {
-                        span: DUMMY_SP,
-                        expr: Box::new(create_call_expr(
-                            create_member_expr(create_ident_expr("Object"), "assign"),
-                            vec![
-                                to_expr_or_spread(recorder_for),
-                                to_expr_or_spread(create_ident_expr(&tmp_name)),
-                            ],
-                        )),
-                    }));
-                    return vec![
+                    let mut items = vec![
                         ModuleItem::ModuleDecl(ModuleDecl::ExportAll(export_all)),
                         import_decl,
-                        assign,
                     ];
+
+                    // The normal namespace import capture already copies
+                    // export-star bindings into the current module recorder.
+                    // The extra dependency-recorder write belongs to the
+                    // freezer/runtime path; in browser/lively.modules mode
+                    // `__contextModule__` is not available here.
+                    if self.current_module_accessor.is_none() {
+                        // Object.assign(recorderFor(resolvedDep), tmp)
+                        let recorder_for = create_call_expr(
+                            create_member_expr(
+                                Expr::Paren(ParenExpr {
+                                    span: DUMMY_SP,
+                                    expr: Box::new(Expr::Bin(BinExpr {
+                                        span: DUMMY_SP,
+                                        op: BinaryOp::LogicalOr,
+                                        left: Box::new(create_member_expr(
+                                            create_ident_expr("lively"),
+                                            "FreezerRuntime",
+                                        )),
+                                        right: Box::new(create_member_expr(
+                                            create_ident_expr("lively"),
+                                            "frozenModules",
+                                        )),
+                                    })),
+                                }),
+                                "recorderFor",
+                            ),
+                            vec![to_expr_or_spread(Expr::Lit(Lit::Str(Str {
+                                span: DUMMY_SP,
+                                value: resolved_id.as_str().into(),
+                                raw: None,
+                            })))],
+                        );
+                        items.push(ModuleItem::Stmt(Stmt::Expr(ExprStmt {
+                            span: DUMMY_SP,
+                            expr: Box::new(create_call_expr(
+                                create_member_expr(create_ident_expr("Object"), "assign"),
+                                vec![
+                                    to_expr_or_spread(recorder_for),
+                                    to_expr_or_spread(create_ident_expr(&tmp_name)),
+                                ],
+                            )),
+                        })));
+                    }
+                    return items;
                 }
                 vec![ModuleItem::ModuleDecl(ModuleDecl::ExportAll(export_all))]
             }
             ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(export_decl)) => {
-                let mut items = vec![ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(export_decl.clone()))];
+                let mut items = vec![ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(
+                    export_decl.clone(),
+                ))];
 
                 match &export_decl.decl {
                     Decl::Class(class_decl) => {
@@ -1510,10 +1979,8 @@ impl ScopeCapturingTransform {
                                 // Babel's bundler does NOT wrap exported var captures with
                                 // declarationWrapper — only function declarations get wrapped.
                                 let value = Expr::Ident(ident);
-                                let assign = create_assign_expr(
-                                    expr_to_assign_target(member),
-                                    value,
-                                );
+                                let assign =
+                                    create_assign_expr(expr_to_assign_target(member), value);
                                 items.push(ModuleItem::Stmt(Stmt::Expr(ExprStmt {
                                     span: DUMMY_SP,
                                     expr: Box::new(assign),
@@ -1550,13 +2017,11 @@ impl ScopeCapturingTransform {
                 if let Some(id) = ident {
                     let name = id.sym.to_string();
                     let decl_item = match export_default.decl.clone() {
-                        DefaultDecl::Fn(f) => {
-                            ModuleItem::Stmt(Stmt::Decl(Decl::Fn(FnDecl {
-                                ident: f.ident.clone().unwrap(),
-                                declare: false,
-                                function: f.function,
-                            })))
-                        }
+                        DefaultDecl::Fn(f) => ModuleItem::Stmt(Stmt::Decl(Decl::Fn(FnDecl {
+                            ident: f.ident.clone().unwrap(),
+                            declare: false,
+                            function: f.function,
+                        }))),
                         DefaultDecl::Class(c) => {
                             ModuleItem::Stmt(Stmt::Decl(Decl::Class(ClassDecl {
                                 ident: c.ident.clone().unwrap(),
@@ -1571,7 +2036,11 @@ impl ScopeCapturingTransform {
                         span: DUMMY_SP,
                         expr: Box::new(create_assign_expr(
                             expr_to_assign_target(self.create_captured_member(&name)),
-                            Expr::Ident(Ident::new(name.as_str().into(), DUMMY_SP, SyntaxContext::empty())),
+                            Expr::Ident(Ident::new(
+                                name.as_str().into(),
+                                DUMMY_SP,
+                                SyntaxContext::empty(),
+                            )),
                         )),
                     }));
                     // __rec.default = name (Babel always captures default)
@@ -1579,13 +2048,22 @@ impl ScopeCapturingTransform {
                         span: DUMMY_SP,
                         expr: Box::new(create_assign_expr(
                             expr_to_assign_target(self.create_captured_member("default")),
-                            Expr::Ident(Ident::new(name.as_str().into(), DUMMY_SP, SyntaxContext::empty())),
+                            Expr::Ident(Ident::new(
+                                name.as_str().into(),
+                                DUMMY_SP,
+                                SyntaxContext::empty(),
+                            )),
                         )),
                     }));
-                    let export_stmt = ModuleItem::ModuleDecl(ModuleDecl::ExportDefaultExpr(ExportDefaultExpr {
-                        span: DUMMY_SP,
-                        expr: Box::new(Expr::Ident(Ident::new(name.as_str().into(), DUMMY_SP, SyntaxContext::empty()))),
-                    }));
+                    let export_stmt =
+                        ModuleItem::ModuleDecl(ModuleDecl::ExportDefaultExpr(ExportDefaultExpr {
+                            span: DUMMY_SP,
+                            expr: Box::new(Expr::Ident(Ident::new(
+                                name.as_str().into(),
+                                DUMMY_SP,
+                                SyntaxContext::empty(),
+                            ))),
+                        }));
                     vec![decl_item, capture_name, capture_default, export_stmt]
                 } else {
                     // Anonymous default export: export default function() {} or export default class {}
@@ -1600,7 +2078,9 @@ impl ScopeCapturingTransform {
                             class: c.class,
                         }),
                         _ => {
-                            return vec![ModuleItem::ModuleDecl(ModuleDecl::ExportDefaultDecl(export_default))];
+                            return vec![ModuleItem::ModuleDecl(ModuleDecl::ExportDefaultDecl(
+                                export_default,
+                            ))];
                         }
                     };
                     let capture_default = ModuleItem::Stmt(Stmt::Expr(ExprStmt {
@@ -1610,10 +2090,11 @@ impl ScopeCapturingTransform {
                             anon_expr,
                         )),
                     }));
-                    let export_stmt = ModuleItem::ModuleDecl(ModuleDecl::ExportDefaultExpr(ExportDefaultExpr {
-                        span: DUMMY_SP,
-                        expr: Box::new(self.create_captured_member("default")),
-                    }));
+                    let export_stmt =
+                        ModuleItem::ModuleDecl(ModuleDecl::ExportDefaultExpr(ExportDefaultExpr {
+                            span: DUMMY_SP,
+                            expr: Box::new(self.create_captured_member("default")),
+                        }));
                     vec![capture_default, export_stmt]
                 }
             }
@@ -1656,22 +2137,24 @@ impl ScopeCapturingTransform {
                         }
                     }
                 }
-                ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(export_decl)) => match &export_decl.decl {
-                    Decl::Var(var_decl) => {
-                        for decl in &var_decl.decls {
-                            for (sym, _) in extract_idents_from_pat(&decl.name) {
-                                names.insert(sym.to_string());
+                ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(export_decl)) => {
+                    match &export_decl.decl {
+                        Decl::Var(var_decl) => {
+                            for decl in &var_decl.decls {
+                                for (sym, _) in extract_idents_from_pat(&decl.name) {
+                                    names.insert(sym.to_string());
+                                }
                             }
                         }
+                        Decl::Fn(fn_decl) => {
+                            names.insert(fn_decl.ident.sym.to_string());
+                        }
+                        Decl::Class(class_decl) => {
+                            names.insert(class_decl.ident.sym.to_string());
+                        }
+                        _ => {}
                     }
-                    Decl::Fn(fn_decl) => {
-                        names.insert(fn_decl.ident.sym.to_string());
-                    }
-                    Decl::Class(class_decl) => {
-                        names.insert(class_decl.ident.sym.to_string());
-                    }
-                    _ => {}
-                },
+                }
                 _ => {}
             }
         }
@@ -1760,8 +2243,13 @@ impl VisitMut for ScopeCapturingTransform {
         use swc_ecma_visit::VisitWith;
         module.visit_with(&mut analyzer);
 
+        let mut original_refs = OriginalRefNameCollector::default();
+        module.visit_with(&mut original_refs);
+        self.original_ref_names = original_refs.names;
+
         self.imported_vars.clear();
         self.import_sources.clear();
+        self.loop_header_vars.clear();
         for item in &module.body {
             if let ModuleItem::ModuleDecl(ModuleDecl::Import(import_decl)) = item {
                 let src = import_decl.src.value.to_string();
@@ -1778,11 +2266,13 @@ impl VisitMut for ScopeCapturingTransform {
                         ImportSpecifier::Default(def) => (def.local.to_id(), "default".to_string()),
                         ImportSpecifier::Namespace(ns) => (ns.local.to_id(), "*".to_string()),
                     };
-                    self.import_sources.insert(id.0.to_string(), (src.clone(), orig_name));
+                    self.import_sources
+                        .insert(id.0.to_string(), (src.clone(), orig_name));
                     self.imported_vars.insert(id);
                 }
             }
         }
+        self.collect_loop_header_vars(module);
 
         let has_local_lively_binding = analyzer
             .top_level_vars
@@ -1845,11 +2335,15 @@ impl VisitMut for ScopeCapturingTransform {
         // For resurrection builds, insert __module_exports__ right after the recorder init
         // (matching Babel's placement at the top of the module).
         if self.resurrection {
-            let arr_elems: Vec<Option<ExprOrSpread>> = self.collected_exports.iter()
-                .map(|e| Some(ExprOrSpread {
-                    spread: None,
-                    expr: Box::new(create_string_expr(e)),
-                }))
+            let arr_elems: Vec<Option<ExprOrSpread>> = self
+                .collected_exports
+                .iter()
+                .map(|e| {
+                    Some(ExprOrSpread {
+                        spread: None,
+                        expr: Box::new(create_string_expr(e)),
+                    })
+                })
                 .collect();
             let member_expr = Expr::Member(MemberExpr {
                 span: DUMMY_SP,
@@ -1864,7 +2358,10 @@ impl VisitMut for ScopeCapturingTransform {
                     left: AssignTarget::Simple(SimpleAssignTarget::Member(MemberExpr {
                         span: DUMMY_SP,
                         obj: Box::new(create_ident_expr(&self.capture_obj)),
-                        prop: MemberProp::Ident(IdentName::new("__module_exports__".into(), DUMMY_SP)),
+                        prop: MemberProp::Ident(IdentName::new(
+                            "__module_exports__".into(),
+                            DUMMY_SP,
+                        )),
                     })),
                     right: Box::new(Expr::Bin(BinExpr {
                         span: DUMMY_SP,
@@ -1878,9 +2375,12 @@ impl VisitMut for ScopeCapturingTransform {
                 })),
             }));
             // Insert after the recorder init (first non-import statement)
-            let insert_pos = module.body.iter().position(|item| {
-                !matches!(item, ModuleItem::ModuleDecl(ModuleDecl::Import(_)))
-            }).unwrap_or(0) + 1; // +1 to go after the recorder init
+            let insert_pos = module
+                .body
+                .iter()
+                .position(|item| !matches!(item, ModuleItem::ModuleDecl(ModuleDecl::Import(_))))
+                .unwrap_or(0)
+                + 1; // +1 to go after the recorder init
             let insert_pos = insert_pos.min(module.body.len());
             module.body.insert(insert_pos, module_exports_stmt);
         }
@@ -1902,7 +2402,9 @@ impl VisitMut for ScopeCapturingTransform {
                 ) = (&assign.left, &*assign.right)
                 {
                     if let Expr::Ident(obj_ident) = &**obj {
-                        if obj_ident.sym.as_ref() == self.capture_obj && prop_ident.sym == right_ident.sym {
+                        if obj_ident.sym.as_ref() == self.capture_obj
+                            && prop_ident.sym == right_ident.sym
+                        {
                             return;
                         }
                     }
@@ -1972,12 +2474,14 @@ impl VisitMut for ScopeCapturingTransform {
         for param in &cons.params {
             match param {
                 ParamOrTsParamProp::Param(p) => self.declare_pattern_in_current_scope(&p.pat),
-                ParamOrTsParamProp::TsParamProp(tp) => {
-                    match &tp.param {
-                        TsParamPropParam::Ident(id) => self.declare_in_current_scope(id.id.sym.as_ref()),
-                        TsParamPropParam::Assign(assign) => self.declare_pattern_in_current_scope(&assign.left),
+                ParamOrTsParamProp::TsParamProp(tp) => match &tp.param {
+                    TsParamPropParam::Ident(id) => {
+                        self.declare_in_current_scope(id.id.sym.as_ref())
                     }
-                }
+                    TsParamPropParam::Assign(assign) => {
+                        self.declare_pattern_in_current_scope(&assign.left)
+                    }
+                },
             }
         }
         cons.visit_mut_children_with(self);
@@ -2016,18 +2520,41 @@ impl VisitMut for ScopeCapturingTransform {
 
     fn visit_mut_for_stmt(&mut self, stmt: &mut ForStmt) {
         self.enter_scope(false);
+        if let Some(VarDeclOrExpr::VarDecl(var_decl)) = &stmt.init {
+            for decl in &var_decl.decls {
+                self.declare_pattern_in_current_scope(&decl.name);
+            }
+        }
         stmt.visit_mut_children_with(self);
         self.exit_scope();
     }
 
     fn visit_mut_for_in_stmt(&mut self, stmt: &mut ForInStmt) {
         self.enter_scope(false);
+        match &stmt.left {
+            ForHead::VarDecl(var_decl) => {
+                for decl in &var_decl.decls {
+                    self.declare_pattern_in_current_scope(&decl.name);
+                }
+            }
+            ForHead::Pat(pat) => self.declare_pattern_in_current_scope(pat),
+            _ => {}
+        }
         stmt.visit_mut_children_with(self);
         self.exit_scope();
     }
 
     fn visit_mut_for_of_stmt(&mut self, stmt: &mut ForOfStmt) {
         self.enter_scope(false);
+        match &stmt.left {
+            ForHead::VarDecl(var_decl) => {
+                for decl in &var_decl.decls {
+                    self.declare_pattern_in_current_scope(&decl.name);
+                }
+            }
+            ForHead::Pat(pat) => self.declare_pattern_in_current_scope(pat),
+            _ => {}
+        }
         stmt.visit_mut_children_with(self);
         self.exit_scope();
     }
@@ -2112,7 +2639,7 @@ fn rand_id() -> String {
 mod tests {
     use super::*;
     use swc_common::{sync::Lrc, FileName, SourceMap};
-    use swc_ecma_codegen::{text_writer::JsWriter, Emitter, Config};
+    use swc_ecma_codegen::{text_writer::JsWriter, Config, Emitter};
     use swc_ecma_parser::{parse_file_as_module, Syntax};
 
     fn transform_code(code: &str) -> String {
@@ -2132,6 +2659,7 @@ mod tests {
             "__varRecorder__".to_string(),
             None,
             vec!["console".to_string()],
+            true,
             true,
             false,
             "test.js".to_string(),
@@ -2162,13 +2690,21 @@ mod tests {
     #[test]
     fn test_simple_var() {
         let output = transform_code("var x = 1;");
-        assert!(output.contains("__varRecorder__.x = 1;"), "should capture var with value: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x = 1;"),
+            "should capture var with value: {}",
+            output
+        );
     }
 
     #[test]
     fn test_var_reference() {
         let output = transform_code("var x = 1; x + 2;");
-        assert!(output.contains("__varRecorder__.x + 2"), "should capture var reference: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x + 2"),
+            "should capture var reference: {}",
+            output
+        );
     }
 
     #[test]
@@ -2176,31 +2712,63 @@ mod tests {
         // Babel: 'var z = 3, y = 4; function foo() { var x = 5; }'
         // → function hoisted, vars captured, inner var NOT captured
         let output = transform_code("var z = 3, y = 4; function foo() { var x = 5; }");
-        assert!(output.contains("__varRecorder__.z = 3"), "capture z: {}", output);
-        assert!(output.contains("__varRecorder__.y = 4"), "capture y: {}", output);
-        assert!(output.contains("__varRecorder__.foo = foo"), "capture foo: {}", output);
-        assert!(!output.contains("__varRecorder__.x"), "inner var should NOT be captured: {}", output);
+        assert!(
+            output.contains("__varRecorder__.z = 3"),
+            "capture z: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.y = 4"),
+            "capture y: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.foo = foo"),
+            "capture foo: {}",
+            output
+        );
+        assert!(
+            !output.contains("__varRecorder__.x"),
+            "inner var should NOT be captured: {}",
+            output
+        );
     }
 
     #[test]
     fn test_function_declaration() {
         let output = transform_code("function foo() { return 1; }");
-        assert!(output.contains("__varRecorder__.foo = foo;"), "should capture function with assignment form: {}", output);
-        assert!(output.contains("function foo()"), "should keep function declaration: {}", output);
+        assert!(
+            output.contains("__varRecorder__.foo = foo;"),
+            "should capture function with assignment form: {}",
+            output
+        );
+        assert!(
+            output.contains("function foo()"),
+            "should keep function declaration: {}",
+            output
+        );
     }
 
     #[test]
     fn test_excluded_var() {
         // Babel: excluded vars should not be captured
         let output = transform_code("console.log('hello');");
-        assert!(!output.contains("__varRecorder__.console"), "excluded var should not be captured: {}", output);
+        assert!(
+            !output.contains("__varRecorder__.console"),
+            "excluded var should not be captured: {}",
+            output
+        );
     }
 
     #[test]
     fn test_same_var_decl_initializer_uses_local_binding() {
         let output = transform_code("if (true) var xe = 1, Ue = xe + 1;");
         assert!(output.contains("xe + 1"), "same-decl reference: {}", output);
-        assert!(!output.contains("__varRecorder__.xe + 1"), "should use local binding: {}", output);
+        assert!(
+            !output.contains("__varRecorder__.xe + 1"),
+            "should use local binding: {}",
+            output
+        );
     }
 
     // --- Nested function scoping ---
@@ -2209,12 +2777,32 @@ mod tests {
     fn test_nested_function_uses_captured_ref() {
         // Babel: function params shadow, but outer refs are captured
         let output = transform_code("var z = 3; function foo(y) { var x = 5 + y + z; }");
-        assert!(output.contains("__varRecorder__.z = 3;"), "outer var captured with value: {}", output);
-        assert!(output.contains("__varRecorder__.foo = foo;"), "function captured with assignment: {}", output);
+        assert!(
+            output.contains("__varRecorder__.z = 3;"),
+            "outer var captured with value: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.foo = foo;"),
+            "function captured with assignment: {}",
+            output
+        );
         // Inside foo, z references the captured var
-        assert!(output.contains("__varRecorder__.z;"), "z ref inside foo uses recorder: {}", output);
-        assert!(!output.contains("__varRecorder__.y"), "param should NOT be captured: {}", output);
-        assert!(!output.contains("__varRecorder__.x"), "inner var should NOT be captured: {}", output);
+        assert!(
+            output.contains("__varRecorder__.z;"),
+            "z ref inside foo uses recorder: {}",
+            output
+        );
+        assert!(
+            !output.contains("__varRecorder__.y"),
+            "param should NOT be captured: {}",
+            output
+        );
+        assert!(
+            !output.contains("__varRecorder__.x"),
+            "inner var should NOT be captured: {}",
+            output
+        );
     }
 
     // --- Let + Const ---
@@ -2222,8 +2810,16 @@ mod tests {
     #[test]
     fn test_let_const_captured() {
         let output = transform_code("let x = 1; const y = 2;");
-        assert!(output.contains("__varRecorder__.x = 1;"), "let captured with value: {}", output);
-        assert!(output.contains("__varRecorder__.y = 2;"), "const captured with value: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x = 1;"),
+            "let captured with value: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.y = 2;"),
+            "const captured with value: {}",
+            output
+        );
     }
 
     // --- Export ---
@@ -2232,53 +2828,117 @@ mod tests {
     fn test_export_const() {
         // Babel: 'export const x = 23;' → 'export const x = 23;\n_rec.x = x;'
         let output = transform_code("export const x = 23;");
-        assert!(output.contains("export const x = 23;"), "keeps export: {}", output);
-        assert!(output.contains("__varRecorder__.x = x"), "captures export: {}", output);
+        assert!(
+            output.contains("export const x = 23;"),
+            "keeps export: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.x = x"),
+            "captures export: {}",
+            output
+        );
     }
 
     #[test]
     fn test_export_var() {
         // Babel: 'var x = 23; export { x };' → '_rec.x = 23; var x = _rec.x; export { x };'
         let output = transform_code("var x = 23; export { x };");
-        assert!(output.contains("__varRecorder__.x = 23;"), "captures var with value: {}", output);
-        assert!(output.contains("var x = __varRecorder__.x;"), "re-declares var from recorder: {}", output);
-        assert!(output.contains("export { x }"), "keeps named export: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x = 23;"),
+            "captures var with value: {}",
+            output
+        );
+        assert!(
+            output.contains("var x = __varRecorder__.x;"),
+            "re-declares var from recorder: {}",
+            output
+        );
+        assert!(
+            output.contains("export { x }"),
+            "keeps named export: {}",
+            output
+        );
     }
 
     #[test]
     fn test_export_aliased_var() {
         // 'var x = 23; export { x as y };' → captures x, renames export local to __export_y__
         let output = transform_code("var x = 23; export { x as y };");
-        assert!(output.contains("__varRecorder__.x = 23;"), "captures local var with value: {}", output);
-        assert!(output.contains("var __export_y__ = __varRecorder__.x;"), "re-declares with __export_ prefix: {}", output);
-        assert!(output.contains("export { __export_y__ as y }"), "keeps aliased export with renamed local: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x = 23;"),
+            "captures local var with value: {}",
+            output
+        );
+        assert!(
+            output.contains("var __export_y__ = __varRecorder__.x;"),
+            "re-declares with __export_ prefix: {}",
+            output
+        );
+        assert!(
+            output.contains("export { __export_y__ as y }"),
+            "keeps aliased export with renamed local: {}",
+            output
+        );
     }
 
     #[test]
     fn test_export_function_decl() {
         // Babel: 'export function x() {}' → 'function x() {}\n_rec.x = x;\nexport { x };'
         let output = transform_code("export function x() {}");
-        assert!(output.contains("__varRecorder__.x = x;"), "captures function with assignment: {}", output);
-        assert!(output.contains("export function x()"), "keeps export function declaration: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x = x;"),
+            "captures function with assignment: {}",
+            output
+        );
+        assert!(
+            output.contains("export function x()"),
+            "keeps export function declaration: {}",
+            output
+        );
     }
 
     #[test]
     fn test_export_default_named_function() {
         // Babel: 'export default function x() {}' → 'function x() {}\n_rec.x = x;\nexport default x;'
         let output = transform_code("export default function x() {}");
-        assert!(output.contains("__varRecorder__.x = x;"), "captures default fn with assignment: {}", output);
-        assert!(output.contains("export default x;"), "keeps export default statement: {}", output);
-        assert!(output.contains("function x()"), "keeps function declaration: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x = x;"),
+            "captures default fn with assignment: {}",
+            output
+        );
+        assert!(
+            output.contains("export default x;"),
+            "keeps export default statement: {}",
+            output
+        );
+        assert!(
+            output.contains("function x()"),
+            "keeps function declaration: {}",
+            output
+        );
     }
 
     #[test]
     fn test_re_export_named_from_source() {
         // Babel: 'export { name1, name2 } from "foo";' → keeps as-is (no capture in scope phase)
         let output = transform_code("export { name1, name2 } from \"foo\";");
-        assert!(output.contains("export { name1, name2 }"), "keeps re-export with names: {}", output);
+        assert!(
+            output.contains("export { name1, name2 }"),
+            "keeps re-export with names: {}",
+            output
+        );
         // SWC rewrites re-exports as import+export, capturing the bindings
-        assert!(output.contains("__varRecorder__.name1 = name1"), "captures re-exported name1: {}", output);
-        assert!(output.contains("__varRecorder__.name2 = name2"), "captures re-exported name2: {}", output);
+        assert!(
+            output.contains("__varRecorder__.name1 = name1"),
+            "captures re-exported name1: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.name2 = name2"),
+            "captures re-exported name2: {}",
+            output
+        );
     }
 
     #[test]
@@ -2286,7 +2946,11 @@ mod tests {
         // Babel: 'export { name1 as foo1 } from "foo";' → keeps as-is
         let output = transform_code("export { name1 as foo1, name2 as bar2 } from \"foo\";");
         assert!(output.contains("export {"), "keeps re-export: {}", output);
-        assert!(output.contains("from \"foo\"") || output.contains("from 'foo'"), "keeps source module: {}", output);
+        assert!(
+            output.contains("from \"foo\"") || output.contains("from 'foo'"),
+            "keeps source module: {}",
+            output
+        );
     }
 
     #[test]
@@ -2294,19 +2958,45 @@ mod tests {
         // Babel: 'export default foo(1, 2, 3);' → 'export default _rec.foo(1, 2, 3);'
         // SWC does not capture undeclared globals, so we declare foo first
         let output = transform_code("var foo = function() {}; export default foo(1, 2, 3);");
-        assert!(output.contains("__varRecorder__.foo(1, 2, 3)"), "captures ref in default expr: {}", output);
-        assert!(output.contains("export default __varRecorder__.foo(1, 2, 3)"), "export default uses captured ref: {}", output);
-        assert!(output.contains("__varRecorder__.default = __varRecorder__.foo(1, 2, 3)"), "captures __rec.default: {}", output);
+        assert!(
+            output.contains("__varRecorder__.foo(1, 2, 3)"),
+            "captures ref in default expr: {}",
+            output
+        );
+        assert!(
+            output.contains("export default __varRecorder__.foo(1, 2, 3)"),
+            "export default uses captured ref: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.default = __varRecorder__.foo(1, 2, 3)"),
+            "captures __rec.default: {}",
+            output
+        );
     }
 
     #[test]
     fn test_re_export_namespace_import() {
         // Babel: 'import * as completions from "./lib/completions.js"; export { completions }'
         //     → keeps import, adds _rec.completions = completions, keeps export
-        let output = transform_code("import * as completions from \"./lib/completions.js\";\nexport { completions }");
-        assert!(output.contains("import * as completions from"), "keeps namespace import: {}", output);
-        assert!(output.contains("__varRecorder__.completions = completions;"), "captures namespace with assignment form: {}", output);
-        assert!(output.contains("export { completions }"), "keeps named export: {}", output);
+        let output = transform_code(
+            "import * as completions from \"./lib/completions.js\";\nexport { completions }",
+        );
+        assert!(
+            output.contains("import * as completions from"),
+            "keeps namespace import: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.completions = completions;"),
+            "captures namespace with assignment form: {}",
+            output
+        );
+        assert!(
+            output.contains("export { completions }"),
+            "keeps named export: {}",
+            output
+        );
     }
 
     // --- Import ---
@@ -2315,22 +3005,46 @@ mod tests {
     fn test_import_capture() {
         // With captureImports=true, imports get _rec.x = x
         let output = transform_code("import { x } from 'foo';");
-        assert!(output.contains("import { x } from 'foo'"), "keeps import declaration: {}", output);
-        assert!(output.contains("__varRecorder__.x = x;"), "captures import with assignment form: {}", output);
+        assert!(
+            output.contains("import { x } from 'foo'"),
+            "keeps import declaration: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.x = x;"),
+            "captures import with assignment form: {}",
+            output
+        );
     }
 
     #[test]
     fn test_import_default_capture() {
         let output = transform_code("import x from 'foo';");
-        assert!(output.contains("import x from 'foo'"), "keeps default import declaration: {}", output);
-        assert!(output.contains("__varRecorder__.x = x;"), "captures default import with assignment form: {}", output);
+        assert!(
+            output.contains("import x from 'foo'"),
+            "keeps default import declaration: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.x = x;"),
+            "captures default import with assignment form: {}",
+            output
+        );
     }
 
     #[test]
     fn test_import_namespace_capture() {
         let output = transform_code("import * as ns from 'foo';");
-        assert!(output.contains("import * as ns from 'foo'"), "keeps namespace import declaration: {}", output);
-        assert!(output.contains("__varRecorder__.ns = ns;"), "captures namespace import with assignment form: {}", output);
+        assert!(
+            output.contains("import * as ns from 'foo'"),
+            "keeps namespace import declaration: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.ns = ns;"),
+            "captures namespace import with assignment form: {}",
+            output
+        );
     }
 
     // --- Patterns ---
@@ -2339,19 +3053,47 @@ mod tests {
     fn test_destructuring_var() {
         let output = transform_code("var { a, b: c } = obj;");
         // SWC desugars to temp variable + property access
-        assert!(output.contains("_tmp_"), "uses temp variable for destructuring: {}", output);
-        assert!(output.contains("__varRecorder__.a = _tmp_"), "captures a from temp: {}", output);
-        assert!(output.contains("__varRecorder__.c = _tmp_"), "captures c (alias of b) from temp: {}", output);
-        assert!(!output.contains("__varRecorder__.b"), "b is a key, not captured: {}", output);
+        assert!(
+            output.contains("_tmp_"),
+            "uses temp variable for destructuring: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.a = _tmp_"),
+            "captures a from temp: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.c = _tmp_"),
+            "captures c (alias of b) from temp: {}",
+            output
+        );
+        assert!(
+            !output.contains("__varRecorder__.b"),
+            "b is a key, not captured: {}",
+            output
+        );
     }
 
     #[test]
     fn test_array_destructuring() {
         let output = transform_code("var [a, b] = arr;");
         // SWC desugars to temp variable + index access
-        assert!(output.contains("_tmp_"), "uses temp variable for array destructuring: {}", output);
-        assert!(output.contains("__varRecorder__.a = _tmp_"), "captures a from temp: {}", output);
-        assert!(output.contains("__varRecorder__.b = _tmp_"), "captures b from temp: {}", output);
+        assert!(
+            output.contains("_tmp_"),
+            "uses temp variable for array destructuring: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.a = _tmp_"),
+            "captures a from temp: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.b = _tmp_"),
+            "captures b from temp: {}",
+            output
+        );
         assert!(output.contains("[0]"), "accesses index 0: {}", output);
         assert!(output.contains("[1]"), "accesses index 1: {}", output);
     }
@@ -2361,19 +3103,31 @@ mod tests {
     #[test]
     fn test_for_loop_let_not_captured() {
         let output = transform_code("for (let i = 0; i < 10; i++) {}");
-        assert!(!output.contains("__varRecorder__.i"), "for-let should NOT be captured: {}", output);
+        assert!(
+            !output.contains("__varRecorder__.i"),
+            "for-let should NOT be captured: {}",
+            output
+        );
     }
 
     #[test]
     fn test_for_in_let_not_captured() {
         let output = transform_code("for (let k in obj) {}");
-        assert!(!output.contains("__varRecorder__.k"), "for-in let should NOT be captured: {}", output);
+        assert!(
+            !output.contains("__varRecorder__.k"),
+            "for-in let should NOT be captured: {}",
+            output
+        );
     }
 
     #[test]
     fn test_for_of_let_not_captured() {
         let output = transform_code("for (let v of arr) {}");
-        assert!(!output.contains("__varRecorder__.v"), "for-of let should NOT be captured: {}", output);
+        assert!(
+            !output.contains("__varRecorder__.v"),
+            "for-of let should NOT be captured: {}",
+            output
+        );
     }
 
     // ===================================================================
@@ -2388,19 +3142,47 @@ mod tests {
         // SWC only captures declared top-level vars, not undeclared globals like foo/bar/baz.
         // We declare them to match Babel behavior more closely.
         let output = transform_code("var foo, bar, baz; var y, z = foo + bar; baz.foo(z, 3)");
-        assert!(output.contains("__varRecorder__.y"), "capture y: {}", output);
-        assert!(output.contains("__varRecorder__.z = __varRecorder__.foo + __varRecorder__.bar"), "capture z with captured refs: {}", output);
-        assert!(output.contains("__varRecorder__.baz.foo(__varRecorder__.z, 3)"), "call site uses captured refs: {}", output);
+        assert!(
+            output.contains("__varRecorder__.y"),
+            "capture y: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.z = __varRecorder__.foo + __varRecorder__.bar"),
+            "capture z with captured refs: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.baz.foo(__varRecorder__.z, 3)"),
+            "call site uses captured refs: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_top_level_var_and_func_decls_for_capturing() {
         // Babel: 'var z = 3, y = 4; function foo() { var x = 5; }'
         let output = transform_code("var z = 3, y = 4; function foo() { var x = 5; }");
-        assert!(output.contains("__varRecorder__.z = 3"), "capture z: {}", output);
-        assert!(output.contains("__varRecorder__.y = 4"), "capture y: {}", output);
-        assert!(output.contains("__varRecorder__.foo = foo"), "capture foo: {}", output);
-        assert!(!output.contains("__varRecorder__.x"), "inner x NOT captured: {}", output);
+        assert!(
+            output.contains("__varRecorder__.z = 3"),
+            "capture z: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.y = 4"),
+            "capture y: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.foo = foo"),
+            "capture foo: {}",
+            output
+        );
+        assert!(
+            !output.contains("__varRecorder__.x"),
+            "inner x NOT captured: {}",
+            output
+        );
     }
 
     #[test]
@@ -2410,18 +3192,46 @@ mod tests {
         let output = transform_code(
             "var z = 3, y = 42, obj = {a: '123', b: function b(n) { return 23 + n; }};\nfunction foo(y) { var x = 5 + y.b(z); }"
         );
-        assert!(output.contains("__varRecorder__.z = 3;"), "capture z with value: {}", output);
-        assert!(output.contains("__varRecorder__.y = 42;"), "capture y with value: {}", output);
-        assert!(output.contains("__varRecorder__.obj ="), "capture obj: {}", output);
-        assert!(output.contains("__varRecorder__.foo = foo;"), "capture foo with assignment: {}", output);
+        assert!(
+            output.contains("__varRecorder__.z = 3;"),
+            "capture z with value: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.y = 42;"),
+            "capture y with value: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.obj ="),
+            "capture obj: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.foo = foo;"),
+            "capture foo with assignment: {}",
+            output
+        );
         // Function is hoisted: __varRecorder__.foo = foo appears before other captures
         let foo_pos = output.find("__varRecorder__.foo = foo").unwrap();
         let z_pos = output.find("__varRecorder__.z = 3").unwrap();
-        assert!(foo_pos < z_pos, "function capture hoisted before var captures: {}", output);
+        assert!(
+            foo_pos < z_pos,
+            "function capture hoisted before var captures: {}",
+            output
+        );
         // Inside foo, z should reference __varRecorder__.z
-        assert!(output.contains("y.b(__varRecorder__.z)"), "z ref inside foo uses recorder: {}", output);
+        assert!(
+            output.contains("y.b(__varRecorder__.z)"),
+            "z ref inside foo uses recorder: {}",
+            output
+        );
         // Inner var x and param y should NOT be captured
-        assert!(!output.contains("__varRecorder__.x"), "inner x NOT captured: {}", output);
+        assert!(
+            !output.contains("__varRecorder__.x"),
+            "inner x NOT captured: {}",
+            output
+        );
     }
 
     #[test]
@@ -2430,27 +3240,62 @@ mod tests {
         let output = transform_code(
             "const baz = 42; function bar(y) { const x = baz + 10; if (y > 10) { const baz = 33; return baz + 10 } return x; }"
         );
-        assert!(output.contains("__varRecorder__.baz = 42;"), "capture baz with value: {}", output);
-        assert!(output.contains("__varRecorder__.bar = bar;"), "capture bar with assignment: {}", output);
+        assert!(
+            output.contains("__varRecorder__.baz = 42;"),
+            "capture baz with value: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.bar = bar;"),
+            "capture bar with assignment: {}",
+            output
+        );
         // Inside bar, baz references __varRecorder__.baz in the outer scope
-        assert!(output.contains("__varRecorder__.baz + 10"), "baz ref inside bar uses recorder: {}", output);
+        assert!(
+            output.contains("__varRecorder__.baz + 10"),
+            "baz ref inside bar uses recorder: {}",
+            output
+        );
         // The inner const baz = 33 should NOT use the recorder
-        assert!(output.contains("const baz = 33"), "inner baz is a local const: {}", output);
-        assert!(output.contains("return baz + 10"), "inner return uses local baz: {}", output);
+        assert!(
+            output.contains("const baz = 33"),
+            "inner baz is a local const: {}",
+            output
+        );
+        assert!(
+            output.contains("return baz + 10"),
+            "inner return uses local baz: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_captures_top_level_vars_outside_block_shadow() {
         // const p = x => x + 1; function f() { { const p = 3; } return p(2); }
-        let output = transform_code(
-            "const p = x => x + 1; function f() { { const p = 3; } return p(2); }"
+        let output =
+            transform_code("const p = x => x + 1; function f() { { const p = 3; } return p(2); }");
+        assert!(
+            output.contains("__varRecorder__.f = f;"),
+            "capture f with assignment: {}",
+            output
         );
-        assert!(output.contains("__varRecorder__.f = f;"), "capture f with assignment: {}", output);
-        assert!(output.contains("__varRecorder__.p ="), "capture p: {}", output);
+        assert!(
+            output.contains("__varRecorder__.p ="),
+            "capture p: {}",
+            output
+        );
         // Inside f(), after the block scope, p(2) should reference __varRecorder__.p
-        assert!(output.contains("__varRecorder__.p(2)"), "p(2) outside block shadow uses recorder: {}", output);
+        assert!(
+            output.contains("__varRecorder__.p(2)"),
+            "p(2) outside block shadow uses recorder: {}",
+            output
+        );
         // The block-scoped const p = 3 should NOT use recorder
-        assert!(output.contains("const p = 3"), "inner block const p is local: {}", output);
+        assert!(
+            output.contains("const p = 3"),
+            "inner block const p is local: {}",
+            output
+        );
     }
 
     // --- try-catch ---
@@ -2459,7 +3304,11 @@ mod tests {
     fn babel_try_catch_not_transformed() {
         // Babel: 'try { throw {} } catch (e) { e }' → not transformed
         let output = transform_code("try { throw {} } catch (e) { e }");
-        assert!(!output.contains("__varRecorder__.e"), "catch param not captured: {}", output);
+        assert!(
+            !output.contains("__varRecorder__.e"),
+            "catch param not captured: {}",
+            output
+        );
         assert!(output.contains("catch"), "keeps catch: {}", output);
     }
 
@@ -2469,14 +3318,22 @@ mod tests {
     fn babel_standard_for_var_not_rewritten() {
         // Babel: 'for (var i = 0; i < 5; i ++) { i; }' → var not captured
         let output = transform_code("for (var i = 0; i < 5; i++) { i; }");
-        assert!(!output.contains("__varRecorder__.i"), "for-var i not captured: {}", output);
+        assert!(
+            !output.contains("__varRecorder__.i"),
+            "for-var i not captured: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_for_in_var_not_rewritten() {
         // Babel: 'for (var x in {}) { x; }' → var not captured
         let output = transform_code("for (var x in {}) { x; }");
-        assert!(!output.contains("__varRecorder__.x"), "for-in var not captured: {}", output);
+        assert!(
+            !output.contains("__varRecorder__.x"),
+            "for-in var not captured: {}",
+            output
+        );
     }
 
     #[test]
@@ -2484,10 +3341,18 @@ mod tests {
         // Babel: 'for (let x of foo) { x; }' → 'for (let x of _rec.foo) { x; }'
         // SWC: foo is an undeclared global, not captured. Loop var x also not captured.
         let output = transform_code("for (let x of foo) { x; }");
-        assert!(!output.contains("__varRecorder__.x"), "loop var not captured: {}", output);
+        assert!(
+            !output.contains("__varRecorder__.x"),
+            "loop var not captured: {}",
+            output
+        );
         // With a declared var: for (let x of arr) where arr is declared
         let output2 = transform_code("var arr = [1]; for (let x of arr) { x; }");
-        assert!(output2.contains("__varRecorder__.arr"), "declared iterable captured: {}", output2);
+        assert!(
+            output2.contains("__varRecorder__.arr"),
+            "declared iterable captured: {}",
+            output2
+        );
     }
 
     #[test]
@@ -2495,8 +3360,16 @@ mod tests {
         // Babel: 'for (let [x, y] of foo) { x + y; }' → 'for (let [x, y] of _rec.foo) { x + y; }'
         // SWC: foo is undeclared, not captured. Loop vars not captured.
         let output = transform_code("for (let [x, y] of foo) { x + y; }");
-        assert!(!output.contains("__varRecorder__.x"), "loop var x not captured: {}", output);
-        assert!(!output.contains("__varRecorder__.y"), "loop var y not captured: {}", output);
+        assert!(
+            !output.contains("__varRecorder__.x"),
+            "loop var x not captured: {}",
+            output
+        );
+        assert!(
+            !output.contains("__varRecorder__.y"),
+            "loop var y not captured: {}",
+            output
+        );
     }
 
     // --- labels ---
@@ -2506,7 +3379,11 @@ mod tests {
         // Babel: 'loop1:\nfor (var i = 0; i < 3; i++) continue loop1;'
         let output = transform_code("loop1:\nfor (var i = 0; i < 3; i++) continue loop1;");
         assert!(output.contains("loop1:"), "keeps label: {}", output);
-        assert!(output.contains("continue loop1"), "keeps continue: {}", output);
+        assert!(
+            output.contains("continue loop1"),
+            "keeps continue: {}",
+            output
+        );
     }
 
     #[test]
@@ -2523,16 +3400,32 @@ mod tests {
     fn babel_captures_let_as_var() {
         // Babel: 'let x = 23, y = x + 1;' → '_rec.x = 23; _rec.y = _rec.x + 1;'
         let output = transform_code("let x = 23, y = x + 1;");
-        assert!(output.contains("__varRecorder__.x = 23;"), "capture let x with value: {}", output);
-        assert!(output.contains("__varRecorder__.y = __varRecorder__.x + 1;"), "capture let y with captured x ref: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x = 23;"),
+            "capture let x with value: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.y = __varRecorder__.x + 1;"),
+            "capture let y with captured x ref: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_captures_const_as_var() {
         // Babel: 'const x = 23, y = x + 1;' → '_rec.x = 23; _rec.y = _rec.x + 1;'
         let output = transform_code("const x = 23, y = x + 1;");
-        assert!(output.contains("__varRecorder__.x = 23;"), "capture const x with value: {}", output);
-        assert!(output.contains("__varRecorder__.y = __varRecorder__.x + 1;"), "capture const y with captured x ref: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x = 23;"),
+            "capture const x with value: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.y = __varRecorder__.x + 1;"),
+            "capture const y with captured x ref: {}",
+            output
+        );
     }
 
     // --- enhanced object literals ---
@@ -2541,10 +3434,22 @@ mod tests {
     fn babel_captures_shorthand_properties() {
         // Babel: 'var x = 23, y = {x};' → '_rec.x = 23; _rec.y = { x: _rec.x };'
         let output = transform_code("var x = 23, y = {x};");
-        assert!(output.contains("__varRecorder__.x = 23;"), "capture x with value: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x = 23;"),
+            "capture x with value: {}",
+            output
+        );
         // Shorthand {x} expands to {x: __varRecorder__.x}
-        assert!(output.contains("x: __varRecorder__.x"), "shorthand property uses captured ref: {}", output);
-        assert!(output.contains("__varRecorder__.y ="), "capture y: {}", output);
+        assert!(
+            output.contains("x: __varRecorder__.x"),
+            "shorthand property uses captured ref: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.y ="),
+            "capture y: {}",
+            output
+        );
     }
 
     // --- default args ---
@@ -2554,13 +3459,29 @@ mod tests {
         // Babel: 'function x(arg = foo) {}' → 'function x(arg = _rec.foo) {} _rec.x = x; x;'
         // SWC does not capture undeclared globals, so foo is not captured without declaration
         let output = transform_code("function x(arg = foo) {}");
-        assert!(output.contains("__varRecorder__.x = x;"), "capture func x with assignment: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x = x;"),
+            "capture func x with assignment: {}",
+            output
+        );
         // With declared default arg source:
         let output2 = transform_code("var foo = 1; function x(arg = foo) {}");
-        assert!(output2.contains("__varRecorder__.foo = 1;"), "capture declared foo with value: {}", output2);
-        assert!(output2.contains("__varRecorder__.x = x;"), "capture func x: {}", output2);
+        assert!(
+            output2.contains("__varRecorder__.foo = 1;"),
+            "capture declared foo with value: {}",
+            output2
+        );
+        assert!(
+            output2.contains("__varRecorder__.x = x;"),
+            "capture func x: {}",
+            output2
+        );
         // Default arg should use captured ref
-        assert!(output2.contains("arg = __varRecorder__.foo"), "default arg uses captured ref: {}", output2);
+        assert!(
+            output2.contains("arg = __varRecorder__.foo"),
+            "default arg uses captured ref: {}",
+            output2
+        );
     }
 
     // --- class (without classToFunction transform) ---
@@ -2569,44 +3490,96 @@ mod tests {
     fn babel_class_def_no_class_to_func() {
         // Babel: 'class Foo { a() { return 23; } }' → 'class Foo { a() { return 23; } } _rec.Foo = Foo;'
         let output = transform_code("class Foo {\n  a() {\n  return 23;\n  }\n}");
-        assert!(output.contains("class Foo"), "keeps class declaration: {}", output);
-        assert!(output.contains("return 23"), "keeps method body: {}", output);
-        assert!(output.contains("__varRecorder__.Foo = Foo;"), "captures class Foo with assignment: {}", output);
+        assert!(
+            output.contains("class Foo"),
+            "keeps class declaration: {}",
+            output
+        );
+        assert!(
+            output.contains("return 23"),
+            "keeps method body: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.Foo = Foo;"),
+            "captures class Foo with assignment: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_exported_class_def_no_class_to_func() {
         // Babel: 'export class Foo {}' → 'export class Foo {} _rec.Foo = Foo;'
         let output = transform_code("export class Foo {}");
-        assert!(output.contains("export class Foo"), "keeps export class: {}", output);
-        assert!(output.contains("__varRecorder__.Foo = Foo;"), "captures exported class with assignment: {}", output);
+        assert!(
+            output.contains("export class Foo"),
+            "keeps export class: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.Foo = Foo;"),
+            "captures exported class with assignment: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_exported_default_class_no_class_to_func() {
         // Babel: 'export default class Foo {}' → 'export default class Foo {} _rec.Foo = Foo;'
         let output = transform_code("export default class Foo {}");
-        assert!(output.contains("class Foo"), "keeps class declaration: {}", output);
-        assert!(output.contains("__varRecorder__.Foo = Foo;"), "captures default exported class with assignment: {}", output);
-        assert!(output.contains("__varRecorder__.default = __varRecorder__.Foo"), "captures __rec.default: {}", output);
-        assert!(output.contains("export default __varRecorder__.Foo"), "export default uses captured ref: {}", output);
+        assert!(
+            output.contains("class Foo"),
+            "keeps class declaration: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.Foo = Foo;"),
+            "captures default exported class with assignment: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.default = __varRecorder__.Foo"),
+            "captures __rec.default: {}",
+            output
+        );
+        assert!(
+            output.contains("export default __varRecorder__.Foo"),
+            "export default uses captured ref: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_does_not_capture_class_expr() {
         // Babel: 'var bar = class Foo {}' → '_rec.bar = class Foo {};'
         let output = transform_code("var bar = class Foo {}");
-        assert!(output.contains("__varRecorder__.bar = class Foo"), "captures var bar with class expr: {}", output);
+        assert!(
+            output.contains("__varRecorder__.bar = class Foo"),
+            "captures var bar with class expr: {}",
+            output
+        );
         // Foo as a class expression name should not be separately captured
-        assert!(!output.contains("__varRecorder__.Foo"), "class expr name Foo NOT captured: {}", output);
+        assert!(
+            !output.contains("__varRecorder__.Foo"),
+            "class expr name Foo NOT captured: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_captures_var_same_name_as_class_expr() {
         // Babel: 'var Foo = class Foo {}; new Foo();' → '_rec.Foo = class Foo {}; new _rec.Foo();'
         let output = transform_code("var Foo = class Foo {}; new Foo();");
-        assert!(output.contains("__varRecorder__.Foo = class Foo"), "captures var Foo with class expr: {}", output);
-        assert!(output.contains("new __varRecorder__.Foo()"), "new uses captured Foo: {}", output);
+        assert!(
+            output.contains("__varRecorder__.Foo = class Foo"),
+            "captures var Foo with class expr: {}",
+            output
+        );
+        assert!(
+            output.contains("new __varRecorder__.Foo()"),
+            "new uses captured Foo: {}",
+            output
+        );
     }
 
     // --- template strings ---
@@ -2616,8 +3589,16 @@ mod tests {
         // Babel: '`${foo}`' → '`${ _rec.foo }`;'
         // SWC does not capture undeclared globals; test with declared var
         let output = transform_code("var foo = 1; `${foo}`;");
-        assert!(output.contains("__varRecorder__.foo = 1;"), "captures foo with value: {}", output);
-        assert!(output.contains("${__varRecorder__.foo}"), "template string uses captured ref: {}", output);
+        assert!(
+            output.contains("__varRecorder__.foo = 1;"),
+            "captures foo with value: {}",
+            output
+        );
+        assert!(
+            output.contains("${__varRecorder__.foo}"),
+            "template string uses captured ref: {}",
+            output
+        );
     }
 
     // --- computed prop in object literal ---
@@ -2627,10 +3608,26 @@ mod tests {
         // Babel: 'var x = {[x]: y};' → '_rec.x = { [_rec.x]: _rec.y };'
         // SWC does not capture undeclared globals; test with all vars declared
         let output = transform_code("var x = 1, y = 2; var z = {[x]: y};");
-        assert!(output.contains("__varRecorder__.x = 1;"), "captures x with value: {}", output);
-        assert!(output.contains("__varRecorder__.y = 2;"), "captures y with value: {}", output);
-        assert!(output.contains("[__varRecorder__.x]: __varRecorder__.y"), "computed prop uses captured refs: {}", output);
-        assert!(output.contains("__varRecorder__.z ="), "captures z: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x = 1;"),
+            "captures x with value: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.y = 2;"),
+            "captures y with value: {}",
+            output
+        );
+        assert!(
+            output.contains("[__varRecorder__.x]: __varRecorder__.y"),
+            "computed prop uses captured refs: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.z ="),
+            "captures z: {}",
+            output
+        );
     }
 
     // --- patterns / destructuring ---
@@ -2640,8 +3637,16 @@ mod tests {
         // Babel: 'var {x} = {x: 3};' → 'var destructured_1 = { x: 3 }; _rec.x = destructured_1.x;'
         let output = transform_code("var {x} = {x: 3};");
         assert!(output.contains("_tmp_"), "uses temp variable: {}", output);
-        assert!(output.contains("__varRecorder__.x ="), "captures destructured x: {}", output);
-        assert!(output.contains(".x;") || output.contains(".x\n"), "accesses .x property from temp: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x ="),
+            "captures destructured x: {}",
+            output
+        );
+        assert!(
+            output.contains(".x;") || output.contains(".x\n"),
+            "accesses .x property from temp: {}",
+            output
+        );
     }
 
     #[test]
@@ -2649,8 +3654,16 @@ mod tests {
         // Babel: 'var {x: y} = foo;' → 'var destructured_1 = _rec.foo; _rec.y = destructured_1.x;'
         // SWC does not capture undeclared globals; foo is undeclared
         let output = transform_code("var {x: y} = foo;");
-        assert!(output.contains("__varRecorder__.y ="), "captures alias y: {}", output);
-        assert!(!output.contains("__varRecorder__.x"), "x is a key not a binding, not captured: {}", output);
+        assert!(
+            output.contains("__varRecorder__.y ="),
+            "captures alias y: {}",
+            output
+        );
+        assert!(
+            !output.contains("__varRecorder__.x"),
+            "x is a key not a binding, not captured: {}",
+            output
+        );
         assert!(output.contains(".x"), "accesses .x from temp: {}", output);
     }
 
@@ -2659,9 +3672,21 @@ mod tests {
         // Babel: 'var [a, b, ...rest] = foo;'
         // SWC does not capture undeclared globals; foo is undeclared
         let output = transform_code("var [a, b, ...rest] = foo;");
-        assert!(output.contains("__varRecorder__.a ="), "captures a: {}", output);
-        assert!(output.contains("__varRecorder__.b ="), "captures b: {}", output);
-        assert!(output.contains("__varRecorder__.rest ="), "captures rest: {}", output);
+        assert!(
+            output.contains("__varRecorder__.a ="),
+            "captures a: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.b ="),
+            "captures b: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.rest ="),
+            "captures rest: {}",
+            output
+        );
         assert!(output.contains("[0]"), "accesses index 0: {}", output);
         assert!(output.contains("[1]"), "accesses index 1: {}", output);
     }
@@ -2671,7 +3696,11 @@ mod tests {
         // Babel: 'var [{b}] = foo;' → temp[0].b
         // SWC does not capture undeclared globals; foo is undeclared
         let output = transform_code("var [{b}] = foo;");
-        assert!(output.contains("__varRecorder__.b ="), "captures b: {}", output);
+        assert!(
+            output.contains("__varRecorder__.b ="),
+            "captures b: {}",
+            output
+        );
         assert!(output.contains("[0]"), "accesses index 0: {}", output);
         assert!(output.contains(".b"), "accesses .b property: {}", output);
     }
@@ -2680,7 +3709,11 @@ mod tests {
     fn babel_destructured_list_nested() {
         // Babel: 'var [[b]] = foo;' → temp[0][0]
         let output = transform_code("var [[b]] = foo;");
-        assert!(output.contains("__varRecorder__.b ="), "captures b: {}", output);
+        assert!(
+            output.contains("__varRecorder__.b ="),
+            "captures b: {}",
+            output
+        );
         assert!(output.contains("[0]"), "accesses index: {}", output);
     }
 
@@ -2689,8 +3722,16 @@ mod tests {
         // Babel: 'var {x: [y]} = foo, z = 23;'
         // SWC does not capture undeclared globals; foo is undeclared
         let output = transform_code("var {x: [y]} = foo, z = 23;");
-        assert!(output.contains("__varRecorder__.y ="), "captures y: {}", output);
-        assert!(output.contains("__varRecorder__.z = 23"), "captures z with value: {}", output);
+        assert!(
+            output.contains("__varRecorder__.y ="),
+            "captures y: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.z = 23"),
+            "captures z with value: {}",
+            output
+        );
         assert!(output.contains(".x"), "accesses .x property: {}", output);
     }
 
@@ -2699,37 +3740,61 @@ mod tests {
         // Babel: 'var {x: {x: {x}}, y: {y: x}} = foo;'
         // SWC does not capture undeclared globals; foo is undeclared
         let output = transform_code("var {x: {x: {x}}, y: {y: x}} = foo;");
-        assert!(output.contains("__varRecorder__.x ="), "captures x: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x ="),
+            "captures x: {}",
+            output
+        );
         // Should have multiple temp variables for nested access
-        assert!(output.contains("_tmp_"), "uses temp variables for deep destructuring: {}", output);
+        assert!(
+            output.contains("_tmp_"),
+            "uses temp variables for deep destructuring: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_destructured_obj_with_init() {
         // Babel: 'var {x = 4} = {x: 3};'
         let output = transform_code("var {x = 4} = {x: 3};");
-        assert!(output.contains("__varRecorder__.x ="), "captures x with default: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x ="),
+            "captures x with default: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_destructured_list_with_default() {
         // Babel: 'var [a = 3] = foo;'
         let output = transform_code("var [a = 3] = foo;");
-        assert!(output.contains("__varRecorder__.a ="), "captures a with default: {}", output);
+        assert!(
+            output.contains("__varRecorder__.a ="),
+            "captures a with default: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_destructured_list_nested_default() {
         // Babel: 'var [[a = 3]] = foo;'
         let output = transform_code("var [[a = 3]] = foo;");
-        assert!(output.contains("__varRecorder__.a ="), "captures a with nested default: {}", output);
+        assert!(
+            output.contains("__varRecorder__.a ="),
+            "captures a with nested default: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_destructured_list_obj_deep() {
         // Babel: 'var [{b: {c: [a]}}] = foo;'
         let output = transform_code("var [{b: {c: [a]}}] = foo;");
-        assert!(output.contains("__varRecorder__.a ="), "captures a: {}", output);
+        assert!(
+            output.contains("__varRecorder__.a ="),
+            "captures a: {}",
+            output
+        );
         // Multiple temp variables for deep nesting
         assert!(output.contains("_tmp_"), "uses temp variables: {}", output);
     }
@@ -2738,9 +3803,21 @@ mod tests {
     fn babel_destructured_rest_prop() {
         // Babel: 'var {a, b, ...rest} = foo;'
         let output = transform_code("var {a, b, ...rest} = foo;");
-        assert!(output.contains("__varRecorder__.a ="), "captures a: {}", output);
-        assert!(output.contains("__varRecorder__.b ="), "captures b: {}", output);
-        assert!(output.contains("__varRecorder__.rest ="), "captures rest: {}", output);
+        assert!(
+            output.contains("__varRecorder__.a ="),
+            "captures a: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.b ="),
+            "captures b: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.rest ="),
+            "captures rest: {}",
+            output
+        );
     }
 
     // --- async ---
@@ -2749,13 +3826,29 @@ mod tests {
     fn babel_async_function() {
         // Babel: 'async function foo() { return 23 }' → captures foo, hoists capture
         let output = transform_code("async function foo() { return 23 }");
-        assert!(output.contains("__varRecorder__.foo = foo;"), "captures async fn with assignment: {}", output);
-        assert!(output.contains("async function foo()"), "keeps async function declaration: {}", output);
-        assert!(output.contains("return 23"), "keeps function body: {}", output);
+        assert!(
+            output.contains("__varRecorder__.foo = foo;"),
+            "captures async fn with assignment: {}",
+            output
+        );
+        assert!(
+            output.contains("async function foo()"),
+            "keeps async function declaration: {}",
+            output
+        );
+        assert!(
+            output.contains("return 23"),
+            "keeps function body: {}",
+            output
+        );
         // Function capture is hoisted before the function declaration
         let capture_pos = output.find("__varRecorder__.foo = foo").unwrap();
         let decl_pos = output.find("async function foo()").unwrap();
-        assert!(capture_pos < decl_pos, "function capture hoisted before declaration: {}", output);
+        assert!(
+            capture_pos < decl_pos,
+            "function capture hoisted before declaration: {}",
+            output
+        );
     }
 
     #[test]
@@ -2763,25 +3856,53 @@ mod tests {
         // Babel: 'var x = await foo();' → '_rec.x = await _rec.foo();'
         // SWC does not capture undeclared globals; with declared foo, both are captured
         let output = transform_code("var foo = async () => 1; var x = await foo();");
-        assert!(output.contains("__varRecorder__.x = await __varRecorder__.foo()"), "captures x with await and captured foo ref: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x = await __varRecorder__.foo()"),
+            "captures x with await and captured foo ref: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_exported_async_function() {
         // Babel: 'export async function foo() { return 23; }'
         let output = transform_code("export async function foo() { return 23; }");
-        assert!(output.contains("__varRecorder__.foo = foo;"), "captures exported async fn with assignment: {}", output);
-        assert!(output.contains("export async function foo()"), "keeps export async function: {}", output);
+        assert!(
+            output.contains("__varRecorder__.foo = foo;"),
+            "captures exported async fn with assignment: {}",
+            output
+        );
+        assert!(
+            output.contains("export async function foo()"),
+            "keeps export async function: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_exported_default_async_function() {
         // Babel: 'export default async function foo() { return 23; }'
         let output = transform_code("export default async function foo() { return 23; }");
-        assert!(output.contains("__varRecorder__.foo = foo;"), "captures default async fn with assignment: {}", output);
-        assert!(output.contains("async function foo()"), "keeps async function: {}", output);
-        assert!(output.contains("__varRecorder__.default = foo;"), "captures __rec.default: {}", output);
-        assert!(output.contains("export default foo;"), "export default uses name: {}", output);
+        assert!(
+            output.contains("__varRecorder__.foo = foo;"),
+            "captures default async fn with assignment: {}",
+            output
+        );
+        assert!(
+            output.contains("async function foo()"),
+            "keeps async function: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.default = foo;"),
+            "captures __rec.default: {}",
+            output
+        );
+        assert!(
+            output.contains("export default foo;"),
+            "export default uses name: {}",
+            output
+        );
     }
 
     // --- import ---
@@ -2790,76 +3911,160 @@ mod tests {
     fn babel_import_default() {
         // Babel: 'import x from "./some-es6-module.js";' → keeps import, adds _rec.x = x
         let output = transform_code("import x from \"./some-es6-module.js\";");
-        assert!(output.contains("import x from \"./some-es6-module.js\""), "keeps full import: {}", output);
-        assert!(output.contains("__varRecorder__.x = x;"), "captures default import with assignment: {}", output);
+        assert!(
+            output.contains("import x from \"./some-es6-module.js\""),
+            "keeps full import: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.x = x;"),
+            "captures default import with assignment: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_import_star() {
         // Babel: 'import * as name from "module-name";' → keeps import, adds _rec.name = name
         let output = transform_code("import * as name from \"module-name\";");
-        assert!(output.contains("import * as name from \"module-name\""), "keeps full import: {}", output);
-        assert!(output.contains("__varRecorder__.name = name;"), "captures namespace with assignment: {}", output);
+        assert!(
+            output.contains("import * as name from \"module-name\""),
+            "keeps full import: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.name = name;"),
+            "captures namespace with assignment: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_import_member() {
         // Babel: 'import { member } from "module-name";' → keeps import, adds _rec.member = member
         let output = transform_code("import { member } from \"module-name\";");
-        assert!(output.contains("import {"), "keeps import brace: {}", output);
-        assert!(output.contains("from \"module-name\""), "keeps source: {}", output);
-        assert!(output.contains("__varRecorder__.member = member;"), "captures member with assignment: {}", output);
+        assert!(
+            output.contains("import {"),
+            "keeps import brace: {}",
+            output
+        );
+        assert!(
+            output.contains("from \"module-name\""),
+            "keeps source: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.member = member;"),
+            "captures member with assignment: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_import_member_with_alias() {
         // Babel: 'import { member as alias } from "module-name";' → _rec.alias = alias
         let output = transform_code("import { member as alias } from \"module-name\";");
-        assert!(output.contains("member as alias"), "keeps alias in import: {}", output);
-        assert!(output.contains("__varRecorder__.alias = alias;"), "captures alias with assignment: {}", output);
-        assert!(!output.contains("__varRecorder__.member"), "member not captured separately: {}", output);
+        assert!(
+            output.contains("member as alias"),
+            "keeps alias in import: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.alias = alias;"),
+            "captures alias with assignment: {}",
+            output
+        );
+        assert!(
+            !output.contains("__varRecorder__.member"),
+            "member not captured separately: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_import_multiple_members() {
         // Babel: 'import { member1 , member2 } from "module-name";'
         let output = transform_code("import { member1, member2 } from \"module-name\";");
-        assert!(output.contains("__varRecorder__.member1 = member1;"), "captures member1 with assignment: {}", output);
-        assert!(output.contains("__varRecorder__.member2 = member2;"), "captures member2 with assignment: {}", output);
+        assert!(
+            output.contains("__varRecorder__.member1 = member1;"),
+            "captures member1 with assignment: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.member2 = member2;"),
+            "captures member2 with assignment: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_import_multiple_members_with_alias() {
         // Babel: 'import { member1 , member2 as alias} from "module-name";'
         let output = transform_code("import { member1, member2 as alias } from \"module-name\";");
-        assert!(output.contains("__varRecorder__.member1 = member1;"), "captures member1 with assignment: {}", output);
-        assert!(output.contains("__varRecorder__.alias = alias;"), "captures alias with assignment: {}", output);
-        assert!(!output.contains("__varRecorder__.member2"), "member2 not captured (aliased to alias): {}", output);
+        assert!(
+            output.contains("__varRecorder__.member1 = member1;"),
+            "captures member1 with assignment: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.alias = alias;"),
+            "captures alias with assignment: {}",
+            output
+        );
+        assert!(
+            !output.contains("__varRecorder__.member2"),
+            "member2 not captured (aliased to alias): {}",
+            output
+        );
     }
 
     #[test]
     fn babel_import_default_and_member() {
         // Babel: 'import defaultMember, { member } from "module-name";'
         let output = transform_code("import defaultMember, { member } from \"module-name\";");
-        assert!(output.contains("__varRecorder__.defaultMember = defaultMember;"), "captures default with assignment: {}", output);
-        assert!(output.contains("__varRecorder__.member = member;"), "captures member with assignment: {}", output);
+        assert!(
+            output.contains("__varRecorder__.defaultMember = defaultMember;"),
+            "captures default with assignment: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.member = member;"),
+            "captures member with assignment: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_import_default_and_star() {
         // Babel: 'import defaultMember, * as name from "module-name";'
         let output = transform_code("import defaultMember, * as name from \"module-name\";");
-        assert!(output.contains("__varRecorder__.defaultMember = defaultMember;"), "captures default with assignment: {}", output);
-        assert!(output.contains("__varRecorder__.name = name;"), "captures namespace with assignment: {}", output);
+        assert!(
+            output.contains("__varRecorder__.defaultMember = defaultMember;"),
+            "captures default with assignment: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.name = name;"),
+            "captures namespace with assignment: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_import_without_binding() {
         // Babel: 'import "module-name";' → 'import "module-name";' (no capture)
         let output = transform_code("import \"module-name\";");
-        assert!(output.contains("import \"module-name\""), "keeps bare import: {}", output);
+        assert!(
+            output.contains("import \"module-name\""),
+            "keeps bare import: {}",
+            output
+        );
         // No capture assignments like __varRecorder__.x = x should appear
-        assert!(!output.contains("__varRecorder__."), "no capture assignment for bare import: {}", output);
+        assert!(
+            !output.contains("__varRecorder__."),
+            "no capture assignment for bare import: {}",
+            output
+        );
     }
 
     // --- export ---
@@ -2869,83 +4074,197 @@ mod tests {
         // Babel: 'var x = {x: 23}; export default x;'
         // → '_rec.x = { x: 23 }; var x = _rec.x; export default x;'
         let output = transform_code("var x = {x: 23}; export default x;");
-        assert!(output.contains("__varRecorder__.x ="), "captures x: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x ="),
+            "captures x: {}",
+            output
+        );
         assert!(output.contains("x: 23"), "keeps object literal: {}", output);
-        assert!(output.contains("__varRecorder__.default = __varRecorder__.x"), "captures __rec.default: {}", output);
-        assert!(output.contains("export default __varRecorder__.x"), "export default uses captured ref: {}", output);
+        assert!(
+            output.contains("__varRecorder__.default = __varRecorder__.x"),
+            "captures __rec.default: {}",
+            output
+        );
+        assert!(
+            output.contains("export default __varRecorder__.x"),
+            "export default uses captured ref: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_export_var_with_capturing() {
         // Babel: 'var a = 23; export var x = a + 1, y = x + 2; export default function f() {}'
-        let output = transform_code("var a = 23;\nexport var x = a + 1, y = x + 2;\nexport default function f() {}");
-        assert!(output.contains("__varRecorder__.a = 23;"), "captures a with value: {}", output);
-        assert!(output.contains("__varRecorder__.a + 1"), "export var x uses captured a ref: {}", output);
-        assert!(output.contains("__varRecorder__.x = x;"), "captures export x: {}", output);
-        assert!(output.contains("__varRecorder__.y = y;"), "captures export y: {}", output);
-        assert!(output.contains("__varRecorder__.f = f;"), "captures default f: {}", output);
-        assert!(output.contains("__varRecorder__.default = f;"), "captures __rec.default: {}", output);
-        assert!(output.contains("export default f;"), "keeps export default: {}", output);
+        let output = transform_code(
+            "var a = 23;\nexport var x = a + 1, y = x + 2;\nexport default function f() {}",
+        );
+        assert!(
+            output.contains("__varRecorder__.a = 23;"),
+            "captures a with value: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.a + 1"),
+            "export var x uses captured a ref: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.x = x;"),
+            "captures export x: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.y = y;"),
+            "captures export y: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.f = f;"),
+            "captures default f: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.default = f;"),
+            "captures __rec.default: {}",
+            output
+        );
+        assert!(
+            output.contains("export default f;"),
+            "keeps export default: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_export_var_statement() {
         // Babel: 'var x = 23; export { x };'
         let output = transform_code("var x = 23; export { x };");
-        assert!(output.contains("__varRecorder__.x = 23;"), "captures x with value: {}", output);
-        assert!(output.contains("var x = __varRecorder__.x;"), "re-declares var from recorder: {}", output);
-        assert!(output.contains("export { x }"), "keeps named export: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x = 23;"),
+            "captures x with value: {}",
+            output
+        );
+        assert!(
+            output.contains("var x = __varRecorder__.x;"),
+            "re-declares var from recorder: {}",
+            output
+        );
+        assert!(
+            output.contains("export { x }"),
+            "keeps named export: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_export_aliased_var_statement() {
         // 'var x = 23; export { x as y };' → captures x, renames export local to __export_y__
         let output = transform_code("var x = 23; export { x as y };");
-        assert!(output.contains("__varRecorder__.x = 23;"), "captures x with value: {}", output);
-        assert!(output.contains("var __export_y__ = __varRecorder__.x;"), "re-declares with __export_ prefix: {}", output);
-        assert!(output.contains("export { __export_y__ as y }"), "keeps aliased export with renamed local: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x = 23;"),
+            "captures x with value: {}",
+            output
+        );
+        assert!(
+            output.contains("var __export_y__ = __varRecorder__.x;"),
+            "re-declares with __export_ prefix: {}",
+            output
+        );
+        assert!(
+            output.contains("export { __export_y__ as y }"),
+            "keeps aliased export with renamed local: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_export_const() {
         // Babel: 'export const x = 23;' → 'export const x = 23; _rec.x = x;'
         let output = transform_code("export const x = 23;");
-        assert!(output.contains("export const x = 23;"), "keeps export const declaration: {}", output);
-        assert!(output.contains("__varRecorder__.x = x;"), "captures const x with assignment: {}", output);
+        assert!(
+            output.contains("export const x = 23;"),
+            "keeps export const declaration: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.x = x;"),
+            "captures const x with assignment: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_export_function_decl() {
         // Babel: 'export function x() {};' → 'function x() {} _rec.x = x; export { x };'
         let output = transform_code("export function x() {}");
-        assert!(output.contains("__varRecorder__.x = x;"), "captures function x with assignment: {}", output);
-        assert!(output.contains("export function x()"), "keeps export function: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x = x;"),
+            "captures function x with assignment: {}",
+            output
+        );
+        assert!(
+            output.contains("export function x()"),
+            "keeps export function: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_export_default_function_decl() {
         // Babel: 'export default function x() {};' → 'function x() {} _rec.x = x; export default x;'
         let output = transform_code("export default function x() {}");
-        assert!(output.contains("__varRecorder__.x = x;"), "captures default fn x with assignment: {}", output);
-        assert!(output.contains("__varRecorder__.default = x;"), "captures __rec.default: {}", output);
-        assert!(output.contains("export default x;"), "keeps export default: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x = x;"),
+            "captures default fn x with assignment: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.default = x;"),
+            "captures __rec.default: {}",
+            output
+        );
+        assert!(
+            output.contains("export default x;"),
+            "keeps export default: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_export_class_no_class_to_func() {
         // Babel: 'export class Foo {};' → 'export class Foo {} _rec.Foo = Foo;'
         let output = transform_code("export class Foo {}");
-        assert!(output.contains("export class Foo"), "keeps export class: {}", output);
-        assert!(output.contains("__varRecorder__.Foo = Foo;"), "captures class Foo with assignment: {}", output);
+        assert!(
+            output.contains("export class Foo"),
+            "keeps export class: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.Foo = Foo;"),
+            "captures class Foo with assignment: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_export_default_class_no_class_to_func() {
         // Babel: 'export default class Foo {};' → 'export default class Foo {} _rec.Foo = Foo;'
         let output = transform_code("export default class Foo {}");
-        assert!(output.contains("__varRecorder__.Foo = Foo;"), "captures default class Foo with assignment: {}", output);
-        assert!(output.contains("__varRecorder__.default = __varRecorder__.Foo"), "captures __rec.default: {}", output);
-        assert!(output.contains("export default __varRecorder__.Foo"), "export default uses captured ref: {}", output);
+        assert!(
+            output.contains("__varRecorder__.Foo = Foo;"),
+            "captures default class Foo with assignment: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.default = __varRecorder__.Foo"),
+            "captures __rec.default: {}",
+            output
+        );
+        assert!(
+            output.contains("export default __varRecorder__.Foo"),
+            "export default uses captured ref: {}",
+            output
+        );
     }
 
     #[test]
@@ -2953,24 +4272,50 @@ mod tests {
         // Babel: 'export default foo(1, 2, 3);' → 'export default _rec.foo(1, 2, 3);'
         // SWC does not capture undeclared globals; with declared foo it is captured
         let output = transform_code("var foo = x => x; export default foo(1, 2, 3);");
-        assert!(output.contains("__varRecorder__.foo(1, 2, 3)"), "call uses captured foo ref: {}", output);
-        assert!(output.contains("export default __varRecorder__.foo(1, 2, 3)"), "export default uses captured ref: {}", output);
+        assert!(
+            output.contains("__varRecorder__.foo(1, 2, 3)"),
+            "call uses captured foo ref: {}",
+            output
+        );
+        assert!(
+            output.contains("export default __varRecorder__.foo(1, 2, 3)"),
+            "export default uses captured ref: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_re_export_namespace_import() {
         // Babel: 'import * as completions from "./lib/completions.js"; export { completions }'
-        let output = transform_code("import * as completions from \"./lib/completions.js\";\nexport { completions }");
-        assert!(output.contains("import * as completions from"), "keeps namespace import: {}", output);
-        assert!(output.contains("__varRecorder__.completions = completions;"), "captures completions with assignment: {}", output);
-        assert!(output.contains("export { completions }"), "keeps named export: {}", output);
+        let output = transform_code(
+            "import * as completions from \"./lib/completions.js\";\nexport { completions }",
+        );
+        assert!(
+            output.contains("import * as completions from"),
+            "keeps namespace import: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.completions = completions;"),
+            "captures completions with assignment: {}",
+            output
+        );
+        assert!(
+            output.contains("export { completions }"),
+            "keeps named export: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_re_export_named() {
         // Babel: 'export { name1, name2 } from "foo";' → keeps as-is
         let output = transform_code("export { name1, name2 } from \"foo\";");
-        assert!(output.contains("export { name1, name2 }"), "keeps re-export with both names: {}", output);
+        assert!(
+            output.contains("export { name1, name2 }"),
+            "keeps re-export with both names: {}",
+            output
+        );
     }
 
     #[test]
@@ -2986,23 +4331,55 @@ mod tests {
         // → functions hoisted, captures added before foo() call
         // SWC does not capture undeclared globals; a and b are captured and hoisted
         let output = transform_code("foo();\nexport function a() {}\nexport function b() {}");
-        assert!(output.contains("__varRecorder__.a = a;"), "captures a with assignment: {}", output);
-        assert!(output.contains("__varRecorder__.b = b;"), "captures b with assignment: {}", output);
+        assert!(
+            output.contains("__varRecorder__.a = a;"),
+            "captures a with assignment: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.b = b;"),
+            "captures b with assignment: {}",
+            output
+        );
         // Function captures should be hoisted before foo() call
         let a_pos = output.find("__varRecorder__.a = a").unwrap();
         let foo_pos = output.find("foo()").unwrap();
-        assert!(a_pos < foo_pos, "function capture hoisted before foo() call: {}", output);
+        assert!(
+            a_pos < foo_pos,
+            "function capture hoisted before foo() call: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_export_bug_2() {
         // Babel: 'export { a } from "./package-commands.js"; export function b() {} export function c() {}'
         let output = transform_code("export { a } from \"./package-commands.js\";\nexport function b() {}\nexport function c() {}");
-        assert!(output.contains("__varRecorder__.b = b;"), "captures b with assignment: {}", output);
-        assert!(output.contains("__varRecorder__.c = c;"), "captures c with assignment: {}", output);
-        assert!(output.contains("./package-commands.js"), "keeps re-export source: {}", output);
-        assert!(output.contains("export function b()"), "keeps export function b: {}", output);
-        assert!(output.contains("export function c()"), "keeps export function c: {}", output);
+        assert!(
+            output.contains("__varRecorder__.b = b;"),
+            "captures b with assignment: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.c = c;"),
+            "captures c with assignment: {}",
+            output
+        );
+        assert!(
+            output.contains("./package-commands.js"),
+            "keeps re-export source: {}",
+            output
+        );
+        assert!(
+            output.contains("export function b()"),
+            "keeps export function b: {}",
+            output
+        );
+        assert!(
+            output.contains("export function c()"),
+            "keeps export function c: {}",
+            output
+        );
     }
 
     #[test]
@@ -3012,8 +4389,16 @@ mod tests {
         let output = transform_code("class Foo { eval() { return 1; } }\nexport { Foo };");
         // The class should still be declared (not removed) so rollup can resolve the export
         assert!(output.contains("export {"), "keeps export: {}", output);
-        assert!(output.contains("class Foo"), "keeps class declaration: {}", output);
-        assert!(output.contains("__varRecorder__.Foo = Foo"), "captures Foo: {}", output);
+        assert!(
+            output.contains("class Foo"),
+            "keeps class declaration: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.Foo = Foo"),
+            "captures Foo: {}",
+            output
+        );
     }
 
     // --- Default export capture tests (Divergence O/P) ---
@@ -3024,46 +4409,97 @@ mod tests {
     fn test_export_default_named_function_captures_default() {
         // Babel: export default function foo() {} → function foo(){} _rec.foo = foo; _rec.default = foo; export default foo;
         let output = transform_code("export default function foo() { return 1; }");
-        assert!(output.contains("function foo()"), "keeps function declaration: {}", output);
-        assert!(output.contains("__varRecorder__.foo = foo;"), "captures foo with assignment: {}", output);
-        assert!(output.contains("__varRecorder__.default = foo;"), "captures __rec.default = foo: {}", output);
-        assert!(output.contains("export default foo;"), "export default uses named binding: {}", output);
+        assert!(
+            output.contains("function foo()"),
+            "keeps function declaration: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.foo = foo;"),
+            "captures foo with assignment: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.default = foo;"),
+            "captures __rec.default = foo: {}",
+            output
+        );
+        assert!(
+            output.contains("export default foo;"),
+            "export default uses named binding: {}",
+            output
+        );
     }
 
     #[test]
     fn test_export_default_named_class_captures_default() {
         // Babel: export default class Foo {} → class Foo {} _rec.Foo = Foo; _rec.default = Foo; export default Foo;
         let output = transform_code("export default class Foo { method() {} }");
-        assert!(output.contains("class Foo"), "keeps class declaration: {}", output);
-        assert!(output.contains("__varRecorder__.Foo = Foo;"), "captures Foo with assignment: {}", output);
-        assert!(output.contains("__varRecorder__.default = __varRecorder__.Foo"), "captures __rec.default from captured Foo: {}", output);
-        assert!(output.contains("export default __varRecorder__.Foo"), "export default uses captured ref: {}", output);
+        assert!(
+            output.contains("class Foo"),
+            "keeps class declaration: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.Foo = Foo;"),
+            "captures Foo with assignment: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.default = __varRecorder__.Foo"),
+            "captures __rec.default from captured Foo: {}",
+            output
+        );
+        assert!(
+            output.contains("export default __varRecorder__.Foo"),
+            "export default uses captured ref: {}",
+            output
+        );
     }
 
     #[test]
     fn test_export_default_expression_captures_default() {
         // Babel: export default expr → _rec.default = expr; export default expr;
         let output = transform_code("var x = 42; export default x;");
-        assert!(output.contains("__varRecorder__.x ="), "captures x: {}", output);
-        assert!(output.contains("__varRecorder__.default = __varRecorder__.x"),
-            "captures __rec.default from captured x: {}", output);
-        assert!(output.contains("export default __varRecorder__.x"), "export default uses captured ref: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x ="),
+            "captures x: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.default = __varRecorder__.x"),
+            "captures __rec.default from captured x: {}",
+            output
+        );
+        assert!(
+            output.contains("export default __varRecorder__.x"),
+            "export default uses captured ref: {}",
+            output
+        );
     }
 
     #[test]
     fn test_export_default_anonymous_function_captures_default() {
         // Babel: export default function() {} → _rec.default = function() {}; export default _rec.default;
         let output = transform_code("export default function() { return 1; }");
-        assert!(output.contains("__varRecorder__.default") || output.contains("__varRecorder__[\"default\"]"),
-            "captures __rec.default for anonymous function: {}", output);
+        assert!(
+            output.contains("__varRecorder__.default")
+                || output.contains("__varRecorder__[\"default\"]"),
+            "captures __rec.default for anonymous function: {}",
+            output
+        );
     }
 
     #[test]
     fn test_export_default_literal_captures_default() {
         // Babel: export default 42 → _rec.default = 42
         let output = transform_code("export default 42;");
-        assert!(output.contains("__varRecorder__.default") || output.contains("__varRecorder__[\"default\"]"),
-            "captures __rec.default for literal: {}", output);
+        assert!(
+            output.contains("__varRecorder__.default")
+                || output.contains("__varRecorder__[\"default\"]"),
+            "captures __rec.default for literal: {}",
+            output
+        );
     }
 
     // ===================================================================
@@ -3088,7 +4524,8 @@ mod tests {
             Some(r#"__varRecorder__["test-mod__define__"]"#.to_string()),
             vec!["console".to_string()],
             false, // captureImports = false for resurrection
-            true,  // resurrection = true
+            true,
+            true, // resurrection = true
             "test-mod".to_string(),
             Some("({ pathInPackage: () => \"test-mod\" })".to_string()),
             None,
@@ -3120,15 +4557,43 @@ mod tests {
         // The function declaration should be REPLACED (not kept alongside a capture).
         let output = transform_code_resurrection("function foo() { return 1; }");
         // Should have var foo = wrapper(...)
-        assert!(output.contains("var foo ="), "function decl should be replaced with var: {}", output);
-        assert!(output.contains("__define__"), "uses declaration wrapper: {}", output);
-        assert!(output.contains("\"foo\""), "wrapper includes name string: {}", output);
-        assert!(output.contains("\"function\""), "wrapper includes kind string: {}", output);
+        assert!(
+            output.contains("var foo ="),
+            "function decl should be replaced with var: {}",
+            output
+        );
+        assert!(
+            output.contains("__define__"),
+            "uses declaration wrapper: {}",
+            output
+        );
+        assert!(
+            output.contains("\"foo\""),
+            "wrapper includes name string: {}",
+            output
+        );
+        assert!(
+            output.contains("\"function\""),
+            "wrapper includes kind string: {}",
+            output
+        );
         // The original `function foo` declaration should NOT be present
-        assert!(!output.contains("function foo()"), "original function decl should be removed: {}", output);
+        assert!(
+            !output.contains("function foo()"),
+            "original function decl should be removed: {}",
+            output
+        );
         // Should have __moduleMeta__ and __module_exports__ declarations
-        assert!(output.contains("var __moduleMeta__"), "has __moduleMeta__ declaration: {}", output);
-        assert!(output.contains("__module_exports__"), "has __module_exports__: {}", output);
+        assert!(
+            output.contains("var __moduleMeta__"),
+            "has __moduleMeta__ declaration: {}",
+            output
+        );
+        assert!(
+            output.contains("__module_exports__"),
+            "has __module_exports__: {}",
+            output
+        );
     }
 
     #[test]
@@ -3137,8 +4602,31 @@ mod tests {
         // not __varRecorder__. __moduleMeta__ is set to the currentModuleAccessor.
         let output = transform_code_resurrection("function foo() { return 1; }");
         // Should prepend let __moduleMeta__ = <accessor>
-        assert!(output.contains("var __moduleMeta__ = ("), "prepends __moduleMeta__ with accessor: {}", output);
-        assert!(output.contains("pathInPackage"), "accessor has pathInPackage: {}", output);
+        assert!(
+            output.contains("var __moduleMeta__ = ("),
+            "prepends __moduleMeta__ with accessor: {}",
+            output
+        );
+        assert!(
+            output.contains("pathInPackage"),
+            "accessor has pathInPackage: {}",
+            output
+        );
+    }
+
+    #[test]
+    fn test_resurrection_declaration_wrapper_expression_is_used_as_callee() {
+        let output = transform_code_resurrection("function foo() { return 1; }");
+        assert!(
+            output.contains(r#"__varRecorder__["test-mod__define__"]("foo""#),
+            "wrapper expression should be used directly as callee: {}",
+            output
+        );
+        assert!(
+            !output.contains(r#"__varRecorder__["__varRecorder__["#),
+            "wrapper expression must not be treated as a property key: {}",
+            output
+        );
     }
 
     #[test]
@@ -3147,13 +4635,33 @@ mod tests {
         // Babel's bundler does NOT wrap var declarations with declarationWrapper —
         // only function declarations go through insertCapturesForFunctionDeclarations.
         let output = transform_code_resurrection("var x = 1; function foo() {} var y = 2;");
-        assert!(output.contains("var foo ="), "func replaced with var: {}", output);
-        assert!(output.contains("\"function\""), "func wrapper has function kind: {}", output);
+        assert!(
+            output.contains("var foo ="),
+            "func replaced with var: {}",
+            output
+        );
+        assert!(
+            output.contains("\"function\""),
+            "func wrapper has function kind: {}",
+            output
+        );
         // var x and y are captured as plain __varRecorder__ assignments (no __define__ wrapping)
-        assert!(output.contains("__varRecorder__.x = 1"), "var x captured without define: {}", output);
-        assert!(output.contains("__varRecorder__.y = 2"), "var y captured without define: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x = 1"),
+            "var x captured without define: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.y = 2"),
+            "var y captured without define: {}",
+            output
+        );
         // Function declarations should NOT remain as `function foo`
-        assert!(!output.contains("function foo()"), "original function decl should be removed: {}", output);
+        assert!(
+            !output.contains("function foo()"),
+            "original function decl should be removed: {}",
+            output
+        );
     }
 
     // --- Regression tests for function declaration wrapper edge cases ---
@@ -3163,40 +4671,95 @@ mod tests {
         // export function foo() {} — the function capture is hoisted and wrapped.
         // The export declaration stays (rollup handles it).
         let output = transform_code_resurrection("export function foo() { return 1; }");
-        assert!(output.contains("var __moduleMeta__"), "has module meta declaration: {}", output);
+        assert!(
+            output.contains("var __moduleMeta__"),
+            "has module meta declaration: {}",
+            output
+        );
         assert!(output.contains("export"), "still exports: {}", output);
-        assert!(output.contains("__define__"), "uses declaration wrapper: {}", output);
-        assert!(output.contains("\"foo\""), "wrapper has function name: {}", output);
+        assert!(
+            output.contains("__define__"),
+            "uses declaration wrapper: {}",
+            output
+        );
+        assert!(
+            output.contains("\"foo\""),
+            "wrapper has function name: {}",
+            output
+        );
     }
 
     #[test]
     fn test_resurrection_func_in_nested_scope_not_wrapped() {
         // Only top-level function declarations get wrapped, not nested ones
         let output = transform_code_resurrection("function outer() { function inner() {} }");
-        assert!(output.contains("var outer ="), "top-level replaced with var: {}", output);
-        assert!(output.contains("\"outer\""), "wrapper has outer name: {}", output);
-        assert!(output.contains("function inner"), "nested function NOT wrapped, kept as-is: {}", output);
-        assert!(!output.contains("let inner"), "inner should not be replaced with var: {}", output);
+        assert!(
+            output.contains("var outer ="),
+            "top-level replaced with var: {}",
+            output
+        );
+        assert!(
+            output.contains("\"outer\""),
+            "wrapper has outer name: {}",
+            output
+        );
+        assert!(
+            output.contains("function inner"),
+            "nested function NOT wrapped, kept as-is: {}",
+            output
+        );
+        assert!(
+            !output.contains("let inner"),
+            "inner should not be replaced with var: {}",
+            output
+        );
     }
 
     #[test]
     fn test_resurrection_class_not_affected_by_func_wrapper() {
         // Class declarations should NOT be affected by function wrapping
         let output = transform_code_resurrection("class Foo {} function bar() {}");
-        assert!(output.contains("var bar ="), "func replaced with var: {}", output);
-        assert!(output.contains("\"bar\""), "wrapper has bar name: {}", output);
-        assert!(output.contains("class Foo") || output.contains("__varRecorder__.Foo"),
-            "class handled separately: {}", output);
+        assert!(
+            output.contains("var bar ="),
+            "func replaced with var: {}",
+            output
+        );
+        assert!(
+            output.contains("\"bar\""),
+            "wrapper has bar name: {}",
+            output
+        );
+        assert!(
+            output.contains("class Foo") || output.contains("__varRecorder__.Foo"),
+            "class handled separately: {}",
+            output
+        );
     }
 
     #[test]
     fn test_resurrection_async_function_gets_wrapper() {
         // async functions are also FunctionDeclarations
         let output = transform_code_resurrection("async function fetchData() { return await 1; }");
-        assert!(output.contains("var fetchData ="), "async func replaced with var: {}", output);
-        assert!(output.contains("\"fetchData\""), "wrapper has function name: {}", output);
-        assert!(output.contains("\"function\""), "wrapper has function kind: {}", output);
-        assert!(output.contains("var __moduleMeta__"), "has module meta declaration: {}", output);
+        assert!(
+            output.contains("var fetchData ="),
+            "async func replaced with var: {}",
+            output
+        );
+        assert!(
+            output.contains("\"fetchData\""),
+            "wrapper has function name: {}",
+            output
+        );
+        assert!(
+            output.contains("\"function\""),
+            "wrapper has function kind: {}",
+            output
+        );
+        assert!(
+            output.contains("var __moduleMeta__"),
+            "has module meta declaration: {}",
+            output
+        );
     }
 
     // --- Babel 'declarations' block tests (declarationWrapper behavior) ---
@@ -3209,17 +4772,33 @@ mod tests {
         // Babel's bundler does NOT wrap var declarations with __define__.
         // Only function declarations get wrapper treatment.
         let output = transform_code_resurrection("var x = 23;");
-        assert!(output.contains("__varRecorder__.x = 23"), "var captured directly: {}", output);
-        assert!(!output.contains("__define__"), "var should NOT use __define__: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x = 23"),
+            "var captured directly: {}",
+            output
+        );
+        assert!(
+            !output.contains("__define__"),
+            "var should NOT use __define__: {}",
+            output
+        );
     }
 
     #[test]
     fn babel_declarations_assignment_not_wrapped() {
         // Babel's bundler does NOT wrap assignments with __define__.
         let output = transform_code_resurrection("var x; x = 23;");
-        assert!(output.contains("__varRecorder__.x = 23"), "assignment captured directly: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x = 23"),
+            "assignment captured directly: {}",
+            output
+        );
         // __define__ should only appear if there are function declarations (there are none here)
-        assert!(!output.contains("__define__"), "assignment should NOT use __define__: {}", output);
+        assert!(
+            !output.contains("__define__"),
+            "assignment should NOT use __define__: {}",
+            output
+        );
     }
 
     #[test]
@@ -3228,11 +4807,23 @@ mod tests {
         // declarations with: let bar = wrapper("bar", "function", function(){}, __moduleMeta__)
         // Note: 4th arg is __moduleMeta__ (not __varRecorder__) for function replacement.
         let output = transform_code_resurrection("function bar() {}");
-        assert!(output.contains("var bar ="), "func replaced with var: {}", output);
+        assert!(
+            output.contains("var bar ="),
+            "func replaced with var: {}",
+            output
+        );
         assert!(output.contains("__define__"), "func wrapped: {}", output);
         assert!(output.contains("\"bar\""), "has name: {}", output);
-        assert!(output.contains("\"function\""), "has function kind: {}", output);
-        assert!(output.contains("__moduleMeta__)"), "4th arg is __moduleMeta__: {}", output);
+        assert!(
+            output.contains("\"function\""),
+            "has function kind: {}",
+            output
+        );
+        assert!(
+            output.contains("__moduleMeta__)"),
+            "4th arg is __moduleMeta__: {}",
+            output
+        );
     }
 
     #[test]
@@ -3240,8 +4831,16 @@ mod tests {
         // Babel's bundler does NOT wrap exported var captures with __define__.
         let output = transform_code_resurrection("export var x = 23;");
         assert!(output.contains("export"), "keeps export: {}", output);
-        assert!(output.contains("__varRecorder__.x = x"), "exported var captured as ident: {}", output);
-        assert!(!output.contains("__define__"), "exported var should NOT use __define__: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x = x"),
+            "exported var captured as ident: {}",
+            output
+        );
+        assert!(
+            !output.contains("__define__"),
+            "exported var should NOT use __define__: {}",
+            output
+        );
     }
 
     #[test]
@@ -3250,7 +4849,11 @@ mod tests {
         let output = transform_code_resurrection("export function foo() {}");
         assert!(output.contains("export"), "keeps export: {}", output);
         assert!(output.contains("__define__"), "wrapped: {}", output);
-        assert!(output.contains("\"function\""), "has function kind: {}", output);
+        assert!(
+            output.contains("\"function\""),
+            "has function kind: {}",
+            output
+        );
         assert!(output.contains("\"foo\""), "has name: {}", output);
     }
 
@@ -3260,9 +4863,21 @@ mod tests {
         // vars are captured directly, export preserved
         let output = transform_code_resurrection("var x, y; x = 23; export { x, y };");
         assert!(output.contains("export {"), "keeps export: {}", output);
-        assert!(!output.contains("__define__"), "vars should NOT use __define__: {}", output);
-        assert!(output.contains("__varRecorder__.x"), "has x capture: {}", output);
-        assert!(output.contains("__varRecorder__.y"), "has y capture: {}", output);
+        assert!(
+            !output.contains("__define__"),
+            "vars should NOT use __define__: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.x"),
+            "has x capture: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.y"),
+            "has y capture: {}",
+            output
+        );
     }
 
     // --- Divergence G/H: no duplicate captures for exported fn/class ---
@@ -3274,14 +4889,24 @@ mod tests {
         let output = transform_code("export function foo() { return 1; }");
         let count = output.matches("__varRecorder__.foo").count();
         // One from hoisted capture, the export itself doesn't add another
-        assert!(count <= 2, "should not have excessive duplicate captures (found {}): {}", count, output);
+        assert!(
+            count <= 2,
+            "should not have excessive duplicate captures (found {}): {}",
+            count,
+            output
+        );
     }
 
     #[test]
     fn test_no_duplicate_capture_for_exported_class() {
         let output = transform_code("export class Foo { method() {} }");
         let count = output.matches("__varRecorder__.Foo").count();
-        assert!(count <= 2, "should not have excessive duplicate captures (found {}): {}", count, output);
+        assert!(
+            count <= 2,
+            "should not have excessive duplicate captures (found {}): {}",
+            count,
+            output
+        );
     }
 
     // --- Divergence Q: __module_exports__ placement ---
@@ -3292,12 +4917,20 @@ mod tests {
         // not at the end of the module body
         let output = transform_code_resurrection("export var x = 23; var y = 42;");
         let recorder_pos = output.find("moduleEnv").expect("has recorder init");
-        let module_exports_pos = output.find("__module_exports__").expect("has module_exports");
+        let module_exports_pos = output
+            .find("__module_exports__")
+            .expect("has module_exports");
         let last_assignment_pos = output.rfind("__varRecorder__").expect("has assignments");
-        assert!(module_exports_pos < last_assignment_pos,
-            "__module_exports__ should be near top, not at end: {}", output);
-        assert!(module_exports_pos > recorder_pos,
-            "__module_exports__ should be after recorder init: {}", output);
+        assert!(
+            module_exports_pos < last_assignment_pos,
+            "__module_exports__ should be near top, not at end: {}",
+            output
+        );
+        assert!(
+            module_exports_pos > recorder_pos,
+            "__module_exports__ should be after recorder init: {}",
+            output
+        );
     }
 
     // --- Divergence S: ExportedImportCapturePass runs for all scope capture ---
@@ -3314,8 +4947,16 @@ mod tests {
         // In resurrection mode, the declarationWrapper wraps the literal.
         let output = transform_code_resurrection("export default 32");
         // The literal 32 should be captured into __varRecorder__.default
-        assert!(output.contains("__varRecorder__.default = 32"), "captures default literal: {}", output);
-        assert!(output.contains("export default"), "keeps export default: {}", output);
+        assert!(
+            output.contains("__varRecorder__.default = 32"),
+            "captures default literal: {}",
+            output
+        );
+        assert!(
+            output.contains("export default"),
+            "keeps export default: {}",
+            output
+        );
         // TODO: Babel generates a synthetic $32 variable name for the literal;
         // SWC assigns to __varRecorder__.default directly. Both produce correct
         // runtime behavior but differ in generated variable names.
@@ -3327,12 +4968,28 @@ mod tests {
         // Destructured vars are captured directly, not wrapped with __define__.
         let output = transform_code_resurrection("var [{x}, y] = foo");
         // SWC uses _tmp_ instead of destructured_1
-        assert!(output.contains("_tmp_"), "uses temp variable for destructuring: {}", output);
+        assert!(
+            output.contains("_tmp_"),
+            "uses temp variable for destructuring: {}",
+            output
+        );
         // x and y should be captured without __define__ wrapping
-        assert!(output.contains("__varRecorder__.x ="), "captures destructured x: {}", output);
-        assert!(output.contains("__varRecorder__.y ="), "captures destructured y: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x ="),
+            "captures destructured x: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.y ="),
+            "captures destructured y: {}",
+            output
+        );
         // No __define__ wrapping for destructured vars (only function decls get __define__)
-        assert!(!output.contains("__define__"), "destructured vars should NOT use __define__: {}", output);
+        assert!(
+            !output.contains("__define__"),
+            "destructured vars should NOT use __define__: {}",
+            output
+        );
     }
 
     // --- Divergence S: ExportedImportCapturePass runs for all scope capture ---
@@ -3347,23 +5004,55 @@ mod tests {
         // Babel: __reexport__<resolvedId> (e.g. "lively.lang/array.js")
         // SWC was producing: __reexport__./array.js (raw source string)
         let cm = Lrc::new(SourceMap::default());
-        let fm = cm.new_source_file(FileName::Anon.into(), "export * from './array.js';".to_string());
-        let mut module = parse_file_as_module(&fm, Syntax::Es(Default::default()), Default::default(), None, &mut vec![]).unwrap();
+        let fm = cm.new_source_file(
+            FileName::Anon.into(),
+            "export * from './array.js';".to_string(),
+        );
+        let mut module = parse_file_as_module(
+            &fm,
+            Syntax::Es(Default::default()),
+            Default::default(),
+            None,
+            &mut vec![],
+        )
+        .unwrap();
         let mut resolved = HashMap::new();
         resolved.insert("./array.js".to_string(), "lively.lang/array.js".to_string());
         let mut transform = ScopeCapturingTransform::new(
-            "__varRecorder__".to_string(), None, vec![], false, true,
-            "lively.lang/index.js".to_string(), None, None, resolved,
+            "__varRecorder__".to_string(),
+            None,
+            vec![],
+            false,
+            true,
+            true,
+            "lively.lang/index.js".to_string(),
+            None,
+            None,
+            resolved,
         );
         module.visit_mut_with(&mut transform);
         let mut buf = vec![];
-        { let mut emitter = Emitter { cfg: Config::default(), cm: cm.clone(), comments: None, wr: JsWriter::new(cm, "\n", &mut buf, None) }; emitter.emit_module(&module).unwrap(); }
+        {
+            let mut emitter = Emitter {
+                cfg: Config::default(),
+                cm: cm.clone(),
+                comments: None,
+                wr: JsWriter::new(cm, "\n", &mut buf, None),
+            };
+            emitter.emit_module(&module).unwrap();
+        }
         let output = String::from_utf8(buf).unwrap();
         // Must use resolved ID, not raw "./array.js"
-        assert!(output.contains("__reexport__lively.lang/array.js"),
-            "should use resolved ID in __reexport__, not raw source: {}", output);
-        assert!(!output.contains("__reexport__./array.js"),
-            "should NOT use raw source string: {}", output);
+        assert!(
+            output.contains("__reexport__lively.lang/array.js"),
+            "should use resolved ID in __reexport__, not raw source: {}",
+            output
+        );
+        assert!(
+            !output.contains("__reexport__./array.js"),
+            "should NOT use raw source string: {}",
+            output
+        );
     }
 
     #[test]
@@ -3372,12 +5061,17 @@ mod tests {
         // NOT both "__rename__x->y" AND "y". Babel uses continue after rename.
         let output = transform_code_resurrection("var x = 1; export { x as y };");
         // Count occurrences of "y" in __module_exports__
-        let me_start = output.find("__module_exports__").expect("has __module_exports__");
+        let me_start = output
+            .find("__module_exports__")
+            .expect("has __module_exports__");
         let me_section = &output[me_start..];
         let me_end = me_section.find(';').unwrap_or(me_section.len());
         let me_content = &me_section[..me_end];
-        assert!(me_content.contains("__rename__x->y"),
-            "__module_exports__ should have __rename__x->y: {}", me_content);
+        assert!(
+            me_content.contains("__rename__x->y"),
+            "__module_exports__ should have __rename__x->y: {}",
+            me_content
+        );
         // "y" should NOT appear as a separate entry. Babel does `continue` after
         // __rename__, so ONLY "__rename__x->y" appears, not both that AND "y".
         let y_count = me_content.matches("\"y\"").count();
@@ -3391,46 +5085,113 @@ mod tests {
         // Babel produces: ["x", "__rename__y->z", "z"] (individual entries)
         // SWC was producing: ["__reexport__mod"] (blanket)
         let cm = Lrc::new(SourceMap::default());
-        let fm = cm.new_source_file(FileName::Anon.into(), "export { x, y as z } from 'mod';".to_string());
-        let mut module = parse_file_as_module(&fm, Syntax::Es(Default::default()), Default::default(), None, &mut vec![]).unwrap();
+        let fm = cm.new_source_file(
+            FileName::Anon.into(),
+            "export { x, y as z } from 'mod';".to_string(),
+        );
+        let mut module = parse_file_as_module(
+            &fm,
+            Syntax::Es(Default::default()),
+            Default::default(),
+            None,
+            &mut vec![],
+        )
+        .unwrap();
         let mut resolved = HashMap::new();
         resolved.insert("mod".to_string(), "resolved/mod.js".to_string());
         let mut transform = ScopeCapturingTransform::new(
-            "__varRecorder__".to_string(), None, vec![], false, true,
-            "test.js".to_string(), None, None, resolved,
+            "__varRecorder__".to_string(),
+            None,
+            vec![],
+            false,
+            true,
+            true,
+            "test.js".to_string(),
+            None,
+            None,
+            resolved,
         );
         module.visit_mut_with(&mut transform);
         let mut buf = vec![];
-        { let mut emitter = Emitter { cfg: Config::default(), cm: cm.clone(), comments: None, wr: JsWriter::new(cm, "\n", &mut buf, None) }; emitter.emit_module(&module).unwrap(); }
+        {
+            let mut emitter = Emitter {
+                cfg: Config::default(),
+                cm: cm.clone(),
+                comments: None,
+                wr: JsWriter::new(cm, "\n", &mut buf, None),
+            };
+            emitter.emit_module(&module).unwrap();
+        }
         let output = String::from_utf8(buf).unwrap();
         // Should have per-specifier entries, not blanket __reexport__
-        assert!(output.contains("\"x\""),
-            "should have individual 'x' entry: {}", output);
-        assert!(output.contains("__rename__y->z"),
-            "should have __rename__y->z entry: {}", output);
+        assert!(
+            output.contains("\"x\""),
+            "should have individual 'x' entry: {}",
+            output
+        );
+        assert!(
+            output.contains("__rename__y->z"),
+            "should have __rename__y->z entry: {}",
+            output
+        );
         // Should NOT have blanket __reexport__
-        assert!(!output.contains("__reexport__"),
-            "should NOT use blanket __reexport__ for named re-exports: {}", output);
+        assert!(
+            !output.contains("__reexport__"),
+            "should NOT use blanket __reexport__ for named re-exports: {}",
+            output
+        );
     }
 
     #[test]
     fn test_module_exports_export_all_uses_resolved_id() {
         // Same as divergence 2 but for export * from '...'
         let cm = Lrc::new(SourceMap::default());
-        let fm = cm.new_source_file(FileName::Anon.into(), "export * from './morph.js';".to_string());
-        let mut module = parse_file_as_module(&fm, Syntax::Es(Default::default()), Default::default(), None, &mut vec![]).unwrap();
+        let fm = cm.new_source_file(
+            FileName::Anon.into(),
+            "export * from './morph.js';".to_string(),
+        );
+        let mut module = parse_file_as_module(
+            &fm,
+            Syntax::Es(Default::default()),
+            Default::default(),
+            None,
+            &mut vec![],
+        )
+        .unwrap();
         let mut resolved = HashMap::new();
-        resolved.insert("./morph.js".to_string(), "lively.morphic/morph.js".to_string());
+        resolved.insert(
+            "./morph.js".to_string(),
+            "lively.morphic/morph.js".to_string(),
+        );
         let mut transform = ScopeCapturingTransform::new(
-            "__varRecorder__".to_string(), None, vec![], false, true,
-            "lively.morphic/index.js".to_string(), None, None, resolved,
+            "__varRecorder__".to_string(),
+            None,
+            vec![],
+            false,
+            true,
+            true,
+            "lively.morphic/index.js".to_string(),
+            None,
+            None,
+            resolved,
         );
         module.visit_mut_with(&mut transform);
         let mut buf = vec![];
-        { let mut emitter = Emitter { cfg: Config::default(), cm: cm.clone(), comments: None, wr: JsWriter::new(cm, "\n", &mut buf, None) }; emitter.emit_module(&module).unwrap(); }
+        {
+            let mut emitter = Emitter {
+                cfg: Config::default(),
+                cm: cm.clone(),
+                comments: None,
+                wr: JsWriter::new(cm, "\n", &mut buf, None),
+            };
+            emitter.emit_module(&module).unwrap();
+        }
         let output = String::from_utf8(buf).unwrap();
-        assert!(output.contains("__reexport__lively.morphic/morph.js"),
-            "export * should use resolved ID: {}", output);
+        assert!(
+            output.contains("__reexport__lively.morphic/morph.js"),
+            "export * should use resolved ID: {}",
+            output
+        );
     }
 
     // --- Divergence 1: Function declaration wrapper hoisting ---
@@ -3445,14 +5206,21 @@ mod tests {
         let output = transform_code_resurrection("var x = foo(); function foo() { return 1; }");
         let let_foo_pos = output.find("var foo").expect("has var foo replacement");
         let var_x_pos = output.find("__varRecorder__.x").expect("has var x capture");
-        assert!(let_foo_pos < var_x_pos,
-            "var foo must be BEFORE var x (hoisted to top): let_foo={}, var_x={}\n{}", let_foo_pos, var_x_pos, output);
+        assert!(
+            let_foo_pos < var_x_pos,
+            "var foo must be BEFORE var x (hoisted to top): let_foo={}, var_x={}\n{}",
+            let_foo_pos,
+            var_x_pos,
+            output
+        );
     }
 
     #[test]
     fn test_func_decl_wrapper_multiple_hoisted_to_top() {
         // Multiple functions should all be hoisted to top
-        let output = transform_code_resurrection("var x = 1; function foo() {} var y = 2; function bar() {}");
+        let output = transform_code_resurrection(
+            "var x = 1; function foo() {} var y = 2; function bar() {}",
+        );
         let let_foo_pos = output.find("var foo").expect("has var foo");
         let let_bar_pos = output.find("var bar").expect("has let bar");
         let var_x_pos = output.find("__varRecorder__.x").expect("has var x");
@@ -3479,18 +5247,25 @@ mod tests {
     fn test_func_decl_wrapper_original_position_gets_reference() {
         // Babel replaces the original function declaration position with just a reference (foo;)
         // This ensures the function body code still has a reference at the original position.
-        let output = transform_code_resurrection("var x = 1; function foo() { return 1; } var y = foo();");
+        let output =
+            transform_code_resurrection("var x = 1; function foo() { return 1; } var y = foo();");
         // The var foo should be at the top
-        assert!(output.find("var foo").unwrap() < output.find("__varRecorder__.x").unwrap(),
-            "var foo hoisted: {}", output);
+        assert!(
+            output.find("var foo").unwrap() < output.find("__varRecorder__.x").unwrap(),
+            "var foo hoisted: {}",
+            output
+        );
         // The original position should have foo; (a reference, not the declaration)
         // This is between x and y assignments
         let x_pos = output.find("__varRecorder__.x =").unwrap();
         let y_pos = output.find("__varRecorder__.y =").unwrap();
         let between = &output[x_pos..y_pos];
         // Should NOT contain "function foo" (the declaration was hoisted)
-        assert!(!between.contains("function foo"),
-            "original position should not have function declaration: {}", between);
+        assert!(
+            !between.contains("function foo"),
+            "original position should not have function declaration: {}",
+            between
+        );
     }
 
     #[test]
@@ -3502,15 +5277,21 @@ mod tests {
         //    metadata with __varRecorder__, breaking getPropSettings which destructures
         //    klass[Symbol.for('lively-module-meta')].package.name
         let output = transform_code_resurrection(
-            "export var Foo = function(superclass) { return superclass; }(undefined)"
+            "export var Foo = function(superclass) { return superclass; }(undefined)",
         );
         // Should have simple capture: __varRecorder__.Foo = Foo
-        assert!(output.contains("__varRecorder__.Foo = Foo"),
-            "should capture class var into recorder: {}", output);
+        assert!(
+            output.contains("__varRecorder__.Foo = Foo"),
+            "should capture class var into recorder: {}",
+            output
+        );
         // Should NOT wrap with __define__ for the IIFE export capture
         // (there may be __define__ elsewhere but NOT for "Foo", "assignment")
-        assert!(!output.contains("__define__\"](\"Foo\", \"assignment\""),
-            "should NOT wrap class IIFE with __define__: {}", output);
+        assert!(
+            !output.contains("__define__\"](\"Foo\", \"assignment\""),
+            "should NOT wrap class IIFE with __define__: {}",
+            output
+        );
     }
 
     #[test]
@@ -3523,11 +5304,17 @@ mod tests {
             "export const Foo = component.for(() => component({}), { module: 'test.cp.js', export: 'Foo' }, System, __varRecorder__, 'Foo')"
         );
         // Should have simple capture: __varRecorder__.Foo = Foo
-        assert!(output.contains("__varRecorder__.Foo = Foo"),
-            "should capture component var into recorder: {}", output);
+        assert!(
+            output.contains("__varRecorder__.Foo = Foo"),
+            "should capture component var into recorder: {}",
+            output
+        );
         // Should NOT wrap with __define__
-        assert!(!output.contains("__define__\"](\"Foo\", \"assignment\""),
-            "should NOT wrap component.for() with __define__: {}", output);
+        assert!(
+            !output.contains("__define__\"](\"Foo\", \"assignment\""),
+            "should NOT wrap component.for() with __define__: {}",
+            output
+        );
     }
 
     #[test]
@@ -3536,23 +5323,35 @@ mod tests {
         let output = transform_code_resurrection(
             "const Bar = component.for(() => component({}), { module: 'test.cp.js', export: 'Bar' }, System, __varRecorder__, 'Bar')"
         );
-        assert!(output.contains("__varRecorder__.Bar"),
-            "should capture component var into recorder: {}", output);
-        assert!(!output.contains("__define__\"](\"Bar\", \"const\""),
-            "should NOT wrap component.for() with __define__: {}", output);
+        assert!(
+            output.contains("__varRecorder__.Bar"),
+            "should capture component var into recorder: {}",
+            output
+        );
+        assert!(
+            !output.contains("__define__\"](\"Bar\", \"const\""),
+            "should NOT wrap component.for() with __define__: {}",
+            output
+        );
     }
 
     #[test]
     fn non_exported_class_transform_iife_not_wrapped_with_define() {
         // Same as above but for non-exported var declarations
         let output = transform_code_resurrection(
-            "var Bar = function(superclass) { return superclass; }(undefined)"
+            "var Bar = function(superclass) { return superclass; }(undefined)",
         );
         // Should have capture: __varRecorder__.Bar = <value>
-        assert!(output.contains("__varRecorder__.Bar"),
-            "should capture class var into recorder: {}", output);
+        assert!(
+            output.contains("__varRecorder__.Bar"),
+            "should capture class var into recorder: {}",
+            output
+        );
         // Should NOT wrap with __define__ for the IIFE
-        assert!(!output.contains("__define__\"](\"Bar\", \"var\""),
-            "should NOT wrap class IIFE with __define__: {}", output);
+        assert!(
+            !output.contains("__define__\"](\"Bar\", \"var\""),
+            "should NOT wrap class IIFE with __define__: {}",
+            output
+        );
     }
 }

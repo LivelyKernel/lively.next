@@ -24,6 +24,13 @@ pub struct LivelyTransformConfig {
     #[serde(default = "default_true")]
     pub capture_imports: bool,
 
+    /// Whether scope capture should rewrite mixed default + named imports
+    /// through a temporary default binding. This is needed for SWC's SystemJS
+    /// module transform, but Rollup freezer builds must keep the original
+    /// import binding graph intact.
+    #[serde(default = "default_true")]
+    pub rewrite_mixed_default_imports: bool,
+
     /// Whether this is a resurrection build (enables special transforms)
     #[serde(default)]
     pub resurrection: bool,
@@ -105,6 +112,9 @@ impl Default for LivelyTransformConfig {
                 "window".to_string(),
                 "document".to_string(),
                 "global".to_string(),
+                "globalThis".to_string(),
+                "self".to_string(),
+                "lively".to_string(),
                 "process".to_string(),
                 "Buffer".to_string(),
                 "System".to_string(),
@@ -134,6 +144,7 @@ impl Default for LivelyTransformConfig {
                 "Infinity".to_string(),
             ],
             capture_imports: true,
+            rewrite_mixed_default_imports: true,
             resurrection: false,
             module_id: String::new(),
             current_module_accessor: None,

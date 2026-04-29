@@ -1,5 +1,5 @@
-use swc_ecma_ast::*;
 use swc_common::{SyntaxContext, DUMMY_SP};
+use swc_ecma_ast::*;
 
 /// Create a member expression: obj.prop
 pub fn create_member_expr(obj: Expr, prop: &str) -> Expr {
@@ -25,6 +25,42 @@ pub fn create_computed_member_expr(obj: Expr, prop: Expr) -> Expr {
 /// Create an identifier expression
 pub fn create_ident_expr(name: &str) -> Expr {
     Expr::Ident(Ident::new(name.into(), DUMMY_SP, SyntaxContext::empty()))
+}
+
+fn is_identifier_name(source: &str) -> bool {
+    let mut chars = source.chars();
+    let Some(first) = chars.next() else {
+        return false;
+    };
+    (first.is_ascii_alphabetic() || first == '_' || first == '$')
+        && chars.all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '$')
+}
+
+fn is_identifier_path(source: &str) -> bool {
+    !source.is_empty() && source.split('.').all(is_identifier_name)
+}
+
+fn looks_like_member_expr(source: &str) -> bool {
+    if let Some(bracket_pos) = source.find('[') {
+        return source.ends_with(']') && is_identifier_path(&source[..bracket_pos]);
+    }
+
+    if let Some(dot_pos) = source.rfind('.') {
+        return is_identifier_path(&source[..dot_pos])
+            && is_identifier_name(&source[dot_pos + 1..]);
+    }
+
+    false
+}
+
+/// Build a declaration wrapper callee from either an expression-valued config
+/// (`__rec["module__define__"]`) or a recorder property name (`defVar_...`).
+pub fn create_declaration_wrapper_callee(capture_obj: &str, wrapper: &str) -> Expr {
+    if looks_like_member_expr(wrapper) {
+        parse_expr_or_ident(wrapper)
+    } else {
+        create_computed_member_expr(create_ident_expr(capture_obj), create_string_expr(wrapper))
+    }
 }
 
 /// Compatibility helper for expression-valued config fields.
@@ -53,12 +89,9 @@ pub fn parse_expr_or_ident(source: &str) -> Expr {
     if let Some(dot_pos) = source.rfind('.') {
         let obj_str = &source[..dot_pos];
         let prop_str = &source[dot_pos + 1..];
-        // Only treat as member expr if both parts look like identifiers
-        if !obj_str.is_empty() && !prop_str.is_empty()
-            && obj_str.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '$')
-            && prop_str.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '$')
-        {
-            return create_member_expr(create_ident_expr(obj_str), prop_str);
+        // Only treat as member expr if all parts look like identifiers.
+        if is_identifier_path(obj_str) && is_identifier_name(prop_str) {
+            return create_member_expr(parse_expr_or_ident(obj_str), prop_str);
         }
     }
     create_ident_expr(source)
@@ -261,7 +294,9 @@ pub fn expr_to_assign_target(expr: Expr) -> AssignTarget {
         })),
         Expr::Paren(paren) => AssignTarget::Simple(SimpleAssignTarget::Paren(paren)),
         Expr::OptChain(opt_chain) => AssignTarget::Simple(SimpleAssignTarget::OptChain(opt_chain)),
-        Expr::SuperProp(super_prop) => AssignTarget::Simple(SimpleAssignTarget::SuperProp(super_prop)),
+        Expr::SuperProp(super_prop) => {
+            AssignTarget::Simple(SimpleAssignTarget::SuperProp(super_prop))
+        }
         _ => panic!("Cannot convert {:?} to AssignTarget", expr),
     }
 }
@@ -309,14 +344,53 @@ pub fn create_iife(body: BlockStmt) -> Expr {
 /// Check if a name is a JavaScript reserved keyword that cannot be used as
 /// a variable name.
 pub fn is_reserved_keyword(name: &str) -> bool {
-    matches!(name,
-        "break" | "case" | "catch" | "continue" | "debugger" | "default" |
-        "delete" | "do" | "else" | "export" | "extends" | "finally" |
-        "for" | "function" | "if" | "import" | "in" | "instanceof" |
-        "new" | "return" | "super" | "switch" | "this" | "throw" |
-        "try" | "typeof" | "var" | "void" | "while" | "with" |
-        "yield" | "enum" | "class" | "const" | "let" | "await" |
-        "implements" | "interface" | "package" | "private" |
-        "protected" | "public" | "static" | "null" | "true" | "false"
+    matches!(
+        name,
+        "break"
+            | "case"
+            | "catch"
+            | "continue"
+            | "debugger"
+            | "default"
+            | "delete"
+            | "do"
+            | "else"
+            | "export"
+            | "extends"
+            | "finally"
+            | "for"
+            | "function"
+            | "if"
+            | "import"
+            | "in"
+            | "instanceof"
+            | "new"
+            | "return"
+            | "super"
+            | "switch"
+            | "this"
+            | "throw"
+            | "try"
+            | "typeof"
+            | "var"
+            | "void"
+            | "while"
+            | "with"
+            | "yield"
+            | "enum"
+            | "class"
+            | "const"
+            | "let"
+            | "await"
+            | "implements"
+            | "interface"
+            | "package"
+            | "private"
+            | "protected"
+            | "public"
+            | "static"
+            | "null"
+            | "true"
+            | "false"
     )
 }

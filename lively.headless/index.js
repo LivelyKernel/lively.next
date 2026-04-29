@@ -183,7 +183,7 @@ export class HeadlessSession {
     headlessSessions.delete(this);
     let b = this.constructor.browser;
     if (headlessSessions.size === 0 && b) {
-      b.close();
+      await b.close();
       this.constructor.browser = null;
     }
   }
@@ -193,10 +193,16 @@ export class HeadlessSession {
     return await this.page ? this.page.screenshot({ path: screenshotPath }) : null;
   }
 
-  async runEval (expr) {
+  async runEval (expr, options = {}) {
     if (!this.page) throw new Error('No page loaded');
     let fnExpr = '(async ' + transform.wrapInFunction(expr) + ')';
     let fn = eval(fnExpr);
-    return this.page.evaluate(fn);
+    let evaluation = this.page.evaluate(fn);
+    let timeout = typeof options === 'number' ? options : options.timeout;
+    if (!timeout) return evaluation;
+    let timeoutP = promise.delay(timeout).then(() => {
+      throw new Error(`Headless page evaluation timed out after ${timeout}ms`);
+    });
+    return Promise.race([evaluation, timeoutP]);
   }
 }
