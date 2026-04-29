@@ -104,7 +104,7 @@ class Layout {
 
   copy () { return new this.constructor(this); }
 
-  with (props) {
+  'with' (props) {
     const c = this.copy();
     Object.assign(c, props);
     return c;

@@ -13,7 +13,7 @@ export default class TestRunner {
       while (true) {
         try {
           this.headlessSession = new HeadlessSession();
-          await this.headlessSession.open('http://localhost:9011/worlds/load?name=__newWorld__&askForWorldName=false&fastLoad=false',  (sess) => sess.runEval(`typeof $world !== 'undefined' && $world.name == 'aLivelyWorld' && $world._uiInitialized`));
+          await this.headlessSession.open('http://localhost:9011/worlds/load?name=__newWorld__&askForWorldName=false&fastLoad=false',  (sess) => sess.runEval(`typeof $world !== 'undefined' && $world.isWorld && $world._uiInitialized`, { timeout: 5000 }).catch(() => false));
         } catch (err) {
           if (attempts < 3) {
             attempts++;
@@ -70,7 +70,7 @@ export default class TestRunner {
         browserErrors
       });
     } finally {
-      this.headlessSession.dispose();
+      await this.headlessSession.dispose();
       return results;
     }
   }

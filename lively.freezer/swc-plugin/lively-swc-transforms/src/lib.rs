@@ -54,7 +54,10 @@ impl swc_ecma_visit::VisitMut for LivelyTransformVisitor {
         // Collects synthetic identifiers to exclude from scope capture.
         let mut namespace_excludes = Vec::new();
         if self.config.enable_namespace_transform && self.config.resurrection {
-            let mut namespace_transform = NamespaceTransform::new(self.config.resolved_imports.clone(), self.config.capture_obj.clone());
+            let mut namespace_transform = NamespaceTransform::new(
+                self.config.resolved_imports.clone(),
+                self.config.capture_obj.clone(),
+            );
             program.visit_mut_with(&mut namespace_transform);
             namespace_excludes.extend(namespace_transform.added_excludes().iter().cloned());
         }
@@ -84,6 +87,7 @@ impl swc_ecma_visit::VisitMut for LivelyTransformVisitor {
                 self.config.declaration_wrapper.clone(),
                 exclude,
                 self.config.capture_imports,
+                self.config.rewrite_mixed_default_imports,
                 self.config.resurrection,
                 self.config.module_id.clone(),
                 self.config.current_module_accessor.clone(),
@@ -96,9 +100,8 @@ impl swc_ecma_visit::VisitMut for LivelyTransformVisitor {
         // 8. Capture exported imports (after scope capture).
         // Babel runs insertCapturesForExportedImports for all captureModuleScope builds.
         if self.config.enable_scope_capture {
-            let mut exported_import_capture = ExportedImportCapturePass::new(
-                self.config.capture_obj.clone(),
-            );
+            let mut exported_import_capture =
+                ExportedImportCapturePass::new(self.config.capture_obj.clone());
             program.visit_mut_with(&mut exported_import_capture);
         }
     }
@@ -107,7 +110,7 @@ impl swc_ecma_visit::VisitMut for LivelyTransformVisitor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use swc_common::{sync::Lrc, SourceMap, FileName};
+    use swc_common::{sync::Lrc, FileName, SourceMap};
 
     fn transform_code(code: &str, config: LivelyTransformConfig) -> String {
         let cm = Lrc::new(SourceMap::default());
@@ -132,7 +135,7 @@ mod tests {
             _ => panic!("Expected module"),
         };
 
-        use swc_ecma_codegen::{text_writer::JsWriter, Emitter, Config};
+        use swc_ecma_codegen::{text_writer::JsWriter, Config, Emitter};
         let mut buf = vec![];
         {
             let mut emitter = Emitter {
@@ -151,7 +154,11 @@ mod tests {
     fn test_basic_var_capture() {
         let input = "var x = 1; x + 2;";
         let output = transform_code(input, LivelyTransformConfig::default());
-        assert!(output.contains("__varRecorder__"), "actual output:\n{}", output);
+        assert!(
+            output.contains("__varRecorder__"),
+            "actual output:\n{}",
+            output
+        );
     }
 
     #[test]
@@ -194,6 +201,33 @@ mod tests {
         config
     }
 
+    #[test]
+    fn test_full_pipeline_can_keep_mixed_default_import_binding() {
+        let mut config = LivelyTransformConfig::default();
+        config.capture_imports = true;
+        config.rewrite_mixed_default_imports = false;
+        let input = r#"import KeyHandler, { findKeysForPlatform } from "./events/KeyHandler.js";
+export function useKeyHandler() {
+  return KeyHandler.withBindings(findKeysForPlatform([]));
+}"#;
+        let output = transform_code(input, config);
+        assert!(
+            !output.contains("__default_KeyHandler__"),
+            "does not rewrite the default import through a temp binding: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.KeyHandler = KeyHandler"),
+            "still captures the imported default binding: {}",
+            output
+        );
+        assert!(
+            output.contains("KeyHandler.withBindings"),
+            "ordinary uses keep the local import binding for Rollup: {}",
+            output
+        );
+    }
+
     // --- Tests for class-to-function + scope capture + export interaction ---
     // These reproduce the eval-strategies.js failure where rollup says
     // "Exported variable X is not defined" because the scope capture removes
@@ -206,10 +240,17 @@ mod tests {
         let input = "class Foo { eval() { return 1; } }\nexport { Foo };";
         let output = transform_code(input, config_with_class_to_function());
         // Foo must still be declared (as var) so rollup can resolve export { Foo }
-        assert!(output.contains("export {"), "keeps export statement: {}", output);
         assert!(
-            output.contains("var Foo") || output.contains("let Foo") || output.contains("const Foo"),
-            "Foo must have a local declaration for rollup: {}", output
+            output.contains("export {"),
+            "keeps export statement: {}",
+            output
+        );
+        assert!(
+            output.contains("var Foo")
+                || output.contains("let Foo")
+                || output.contains("const Foo"),
+            "Foo must have a local declaration for rollup: {}",
+            output
         );
     }
 
@@ -226,11 +267,13 @@ export { EvalStrategy, SimpleEvalStrategy };
         // Both names must be locally declared
         assert!(
             output.contains("var EvalStrategy") || output.contains("EvalStrategy ="),
-            "EvalStrategy must be declared: {}", output
+            "EvalStrategy must be declared: {}",
+            output
         );
         assert!(
             output.contains("var SimpleEvalStrategy") || output.contains("SimpleEvalStrategy ="),
-            "SimpleEvalStrategy must be declared: {}", output
+            "SimpleEvalStrategy must be declared: {}",
+            output
         );
     }
 
@@ -251,7 +294,11 @@ export { EvalStrategy, SimpleEvalStrategy };
         let output = transform_code(input, LivelyTransformConfig::default());
         assert!(output.contains("export {"), "keeps export: {}", output);
         // foo must be declared (function declaration survives)
-        assert!(output.contains("function foo"), "foo must be declared: {}", output);
+        assert!(
+            output.contains("function foo"),
+            "foo must be declared: {}",
+            output
+        );
     }
 
     #[test]
@@ -263,7 +310,8 @@ export { EvalStrategy, SimpleEvalStrategy };
         // Must have either export { Foo } or export var Foo
         assert!(
             output.contains("export") && output.contains("Foo"),
-            "Foo must be exported: {}", output
+            "Foo must be exported: {}",
+            output
         );
     }
 
@@ -276,8 +324,12 @@ export { EvalStrategy, SimpleEvalStrategy };
         let output = transform_code(input, config_resurrection_with_class_to_function());
         assert!(output.contains("export {"), "keeps export: {}", output);
         assert!(
-            output.contains("var Foo") || output.contains("let Foo") || output.contains("const Foo") || output.contains("class Foo"),
-            "Foo must have a local declaration for rollup: {}", output
+            output.contains("var Foo")
+                || output.contains("let Foo")
+                || output.contains("const Foo")
+                || output.contains("class Foo"),
+            "Foo must have a local declaration for rollup: {}",
+            output
         );
     }
 
@@ -292,11 +344,13 @@ export { EvalStrategy, SimpleEvalStrategy };
         assert!(output.contains("export {"), "keeps export: {}", output);
         assert!(
             output.contains("var EvalStrategy") || output.contains("EvalStrategy ="),
-            "EvalStrategy declared: {}", output
+            "EvalStrategy declared: {}",
+            output
         );
         assert!(
             output.contains("var SimpleEvalStrategy") || output.contains("SimpleEvalStrategy ="),
-            "SimpleEvalStrategy declared: {}", output
+            "SimpleEvalStrategy declared: {}",
+            output
         );
     }
 
@@ -321,8 +375,10 @@ export { EvalStrategy, SimpleEvalStrategy };
 
     fn config_resurrection_with_wrapper() -> LivelyTransformConfig {
         let mut config = config_resurrection_with_class_to_function();
-        config.declaration_wrapper = Some(r#"__varRecorder__["test-module.js__define__"]"#.to_string());
-        config.current_module_accessor = Some(r#"({ pathInPackage: () => "test-module.js" })"#.to_string());
+        config.declaration_wrapper =
+            Some(r#"__varRecorder__["test-module.js__define__"]"#.to_string());
+        config.current_module_accessor =
+            Some(r#"({ pathInPackage: () => "test-module.js" })"#.to_string());
         config
     }
 
@@ -331,14 +387,44 @@ export { EvalStrategy, SimpleEvalStrategy };
         let input = "function greet() { return 'hello'; }";
         let output = transform_code(input, config_resurrection_with_wrapper());
         // Function declaration should be replaced with var + wrapper
-        assert!(output.contains("var greet"), "func replaced with var: {}", output);
-        assert!(!output.contains("function greet()"), "original func decl removed: {}", output);
+        assert!(
+            output.contains("var greet"),
+            "func replaced with var: {}",
+            output
+        );
+        assert!(
+            !output.contains("function greet()"),
+            "original func decl removed: {}",
+            output
+        );
         // Wrapper should use __moduleMeta__
-        assert!(output.contains("__moduleMeta__"), "wrapper uses __moduleMeta__: {}", output);
+        assert!(
+            output.contains("__moduleMeta__"),
+            "wrapper uses __moduleMeta__: {}",
+            output
+        );
         // __moduleMeta__ should be declared
-        assert!(output.contains("var __moduleMeta__"), "moduleMeta declared: {}", output);
+        assert!(
+            output.contains("var __moduleMeta__"),
+            "moduleMeta declared: {}",
+            output
+        );
         // Wrapper should be a computed member expression
-        assert!(output.contains(r#"__define__"#), "wrapper is recorder define method: {}", output);
+        assert!(
+            output.contains(r#"__define__"#),
+            "wrapper is recorder define method: {}",
+            output
+        );
+        assert!(
+            output.contains(r#"__varRecorder__["test-module.js__define__"]("greet""#),
+            "wrapper expression should be used directly as callee: {}",
+            output
+        );
+        assert!(
+            !output.contains(r#"__varRecorder__["__varRecorder__["#),
+            "wrapper expression must not be treated as a property key: {}",
+            output
+        );
     }
 
     // --- Full pipeline: named namespace re-export (Divergence 2) ---
@@ -348,9 +434,90 @@ export { EvalStrategy, SimpleEvalStrategy };
         let input = r#"export * as utils from './utils.js';"#;
         let output = transform_code(input, config_resurrection_with_class_to_function());
         // Should transform into import + const + export
-        assert!(output.contains("utils_namespace"), "creates namespace import: {}", output);
-        assert!(output.contains("exportsOf"), "creates exportsOf fallback: {}", output);
-        assert!(output.contains("export {"), "creates named export: {}", output);
+        assert!(
+            output.contains("utils_namespace"),
+            "creates namespace import: {}",
+            output
+        );
+        assert!(
+            output.contains("exportsOf"),
+            "creates exportsOf fallback: {}",
+            output
+        );
+        assert!(
+            output.contains("export {"),
+            "creates named export: {}",
+            output
+        );
+    }
+
+    #[test]
+    fn test_full_pipeline_namespace_runtime_keeps_lively_global() {
+        let input = r#"export * as utils from './utils.js';"#;
+        let output = transform_code(input, config_resurrection_with_class_to_function());
+        assert!(
+            output.contains("lively.FreezerRuntime") || output.contains("lively.frozenModules"),
+            "runtime lookup should use global lively: {}",
+            output
+        );
+        assert!(
+            !output.contains("__varRecorder__.lively"),
+            "runtime lookup must not capture lively into the recorder: {}",
+            output
+        );
+    }
+
+    #[test]
+    fn test_full_pipeline_class_holder_runtime_keeps_lively_global() {
+        let mut config = LivelyTransformConfig::default();
+        config.resurrection = true;
+        config.module_id = "test-module.js".to_string();
+        config.capture_imports = false;
+        config.class_to_function = Some(crate::config::ClassToFunctionConfig {
+            class_holder:
+                r#"((lively.FreezerRuntime || lively.frozenModules).recorderFor("test-module.js", __contextModule__))"#
+                    .to_string(),
+            function_node: "initializeES6ClassForLively".to_string(),
+            current_module_accessor: r#"({ pathInPackage: () => "test-module.js" })"#.to_string(),
+        });
+        let output = transform_code("class Foo {}", config);
+        assert!(
+            output.contains("lively.FreezerRuntime") || output.contains("lively.frozenModules"),
+            "class holder runtime lookup should use global lively: {}",
+            output
+        );
+        assert!(
+            !output.contains("__varRecorder__.lively"),
+            "class holder runtime lookup must not capture lively into the recorder: {}",
+            output
+        );
+    }
+
+    #[test]
+    fn test_full_pipeline_class_runtime_import_stays_local_without_import_capture() {
+        let mut config = LivelyTransformConfig::default();
+        config.module_id = "test-module.js".to_string();
+        config.capture_imports = false;
+        config.class_to_function = Some(crate::config::ClassToFunctionConfig {
+            class_holder:
+                r#"((lively.FreezerRuntime || lively.frozenModules).recorderFor("test-module.js", __contextModule__))"#
+                    .to_string(),
+            function_node: "initializeES6ClassForLively".to_string(),
+            current_module_accessor: r#"({ pathInPackage: () => "test-module.js" })"#.to_string(),
+        });
+        let input = r#"import { initializeClass as initializeES6ClassForLively } from "lively.classes/runtime.js";
+export class Foo {}"#;
+        let output = transform_code(input, config);
+        assert!(
+            output.contains("initializeES6ClassForLively("),
+            "class runtime should be called through the local import: {}",
+            output
+        );
+        assert!(
+            !output.contains("__varRecorder__.initializeES6ClassForLively("),
+            "class runtime import must not be rewritten through the recorder: {}",
+            output
+        );
     }
 
     #[test]
@@ -358,8 +525,16 @@ export { EvalStrategy, SimpleEvalStrategy };
         let input = r#"export * from './utils.js';"#;
         let output = transform_code(input, config_resurrection_with_class_to_function());
         // Unnamed export * should still use recorderFor + Object.assign pattern
-        assert!(output.contains("recorderFor"), "uses recorderFor: {}", output);
-        assert!(output.contains("Object.assign"), "uses Object.assign: {}", output);
+        assert!(
+            output.contains("recorderFor"),
+            "uses recorderFor: {}",
+            output
+        );
+        assert!(
+            output.contains("Object.assign"),
+            "uses Object.assign: {}",
+            output
+        );
     }
 
     // --- Divergence S: ExportedImportCapturePass runs for all scope capture ---
@@ -372,8 +547,11 @@ export { EvalStrategy, SimpleEvalStrategy };
         let input = r#"export { name1, name2 } from "foo";"#;
         let output = transform_code(input, LivelyTransformConfig::default());
         // Should have import + captures from ExportedImportCapturePass
-        assert!(output.contains("__varRecorder__.name1") || output.contains("__varRecorder__.name2"),
-            "non-resurrection export-from should get captures: {}", output);
+        assert!(
+            output.contains("__varRecorder__.name1") || output.contains("__varRecorder__.name2"),
+            "non-resurrection export-from should get captures: {}",
+            output
+        );
     }
 
     #[test]
@@ -387,9 +565,9 @@ export { EvalStrategy, SimpleEvalStrategy };
         config.module_id = "http://localhost:9011/test.js".to_string();
         let input = "function createLivelyLangObject() { return 1; }";
         let output = transform_code(input, config);
-        // Function declarations are wrapped: wrapper("name", "function", ident, captureObj)
+        // Function declarations are wrapped: captureObj[wrapper]("name", "function", ident, captureObj)
         assert!(
-            output.contains(r#"defVar_http://localhost:9011/test.js("createLivelyLangObject", "function", createLivelyLangObject, __lvVarRecorder)"#),
+            output.contains(r#"__lvVarRecorder["defVar_http://localhost:9011/test.js"]("createLivelyLangObject", "function", createLivelyLangObject, __lvVarRecorder)"#),
             "Expected declaration wrapper call with __lvVarRecorder as 4th arg but got:\n{}",
             output
         );

@@ -11,6 +11,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createHash } from 'crypto';
 
+function hasInitializeClassRuntimeImport (code) {
+  return /^\s*import\s*\{\s*initializeClass\s+as\s+initializeES6ClassForLively\s*\}\s*from\s*['"](?:livelyClassesRuntime\.js|lively\.classes\/runtime\.js)['"]\s*;?/m.test(code);
+}
+
 /**
  * SWC-based transform pipeline for lively.next
  */
@@ -19,7 +23,8 @@ export class LivelySwcTransform {
     this.options = {
       captureObj: '__varRecorder__',
       exclude: [
-        'console', 'window', 'document', 'global', 'process', 'Buffer',
+        'console', 'window', 'document', 'global', 'globalThis', 'self', 'lively',
+        'process', 'Buffer',
         'System', '__contextModule__',
         'Object', 'Array', 'Function', 'String', 'Number', 'Boolean',
         'Symbol', 'Date', 'Math', 'JSON', 'Promise', 'RegExp', 'Error',
@@ -54,7 +59,8 @@ export class LivelySwcTransform {
       captureImports = true,
       sourceMap = true,
       filename = 'unknown.js',
-      moduleHash = null
+      moduleHash = null,
+      exclude = []
     } = options;
 
     const swcConfig = {
@@ -81,13 +87,18 @@ export class LivelySwcTransform {
     };
 
     const classToFunctionConfig = classToFunction || null;
+    const transformExclude = [...new Set([
+      ...(this.options.exclude || []),
+      ...(exclude || [])
+    ])];
 
     const livelyConfig = {
       captureObj: this.options.captureObj,
       declarationWrapper,
       classToFunction: classToFunctionConfig,
-      exclude: this.options.exclude,
+      exclude: transformExclude,
       captureImports,
+      rewriteMixedDefaultImports: false,
       resurrection,
       moduleId,
       // Scope capture in bundle mode always uses FreezerRuntime.recorderFor().
@@ -108,7 +119,7 @@ export class LivelySwcTransform {
     const classRuntimeModule = resurrection ? 'livelyClassesRuntime.js' : 'lively.classes/runtime.js';
     const classRuntimeImport = `import { initializeClass as initializeES6ClassForLively } from "${classRuntimeModule}";\n`;
     const sourceForTransform = classToFunctionConfig &&
-      !code.includes('initializeClass as initializeES6ClassForLively')
+      !hasInitializeClassRuntimeImport(code)
       ? classRuntimeImport + code
       : code;
 
