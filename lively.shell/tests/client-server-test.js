@@ -16,12 +16,13 @@ import ShellPlugin from 'lively.server/plugins/remote-shell.js';
 import ServerCommand from '../server-command.js';
 import ClientCommand from '../client-command.js';
 
-let hostname = 'localhost'; let port = 9012; let ioNamespace = 'lively.shell-test';
+let hostname = 'localhost'; let port = 0; let ioNamespace = 'lively.shell-test';
 let testServer, l2lTracker, l2lClient;
 
 async function setup () {
   testServer = LivelyServer.ensure({ port, hostname, l2l: { l2lNamespace: ioNamespace } });
   await testServer.whenStarted();
+  port = testServer.server.address().port;
   await testServer.addPlugins([
     new CorsPlugin(),
     new SocketioPlugin(),
