@@ -1,7 +1,7 @@
+use crate::utils::ast_helpers::extract_idents_from_pat;
 use swc_common::DUMMY_SP;
 use swc_ecma_ast::*;
 use swc_ecma_visit::{VisitMut, VisitMutWith};
-use crate::utils::ast_helpers::extract_idents_from_pat;
 
 /// Transform that splits export variable declarations
 ///
@@ -36,7 +36,9 @@ impl VisitMut for ExportSplitTransform {
                             decls: vec![decl.clone()],
                         };
 
-                        split_items.push(ModuleItem::Stmt(Stmt::Decl(Decl::Var(Box::new(single_var)))));
+                        split_items.push(ModuleItem::Stmt(Stmt::Decl(Decl::Var(Box::new(
+                            single_var,
+                        )))));
 
                         let ids = extract_idents_from_pat(&decl.name);
                         for (sym, ctxt) in ids {

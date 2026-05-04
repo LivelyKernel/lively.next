@@ -90,9 +90,9 @@ export default class Renderer {
     if (domNode) {
       const fixedSubmorphs = this.worldMorph.submorphs.filter(s => s.hasFixedPosition);
       for (let m of [this.worldMorph, ...fixedSubmorphs]) {
-        this.renderMap.get(m).remove();
+        this.renderMap.get(m)?.remove();
       }
-      this.fixedMorphNode.remove();
+      this.fixedMorphNode?.remove();
     }
     this.domNode = null;
     this.emptyRenderQueues();

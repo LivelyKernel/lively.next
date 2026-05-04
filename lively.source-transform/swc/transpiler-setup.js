@@ -27,7 +27,7 @@ const BROWSER_DONT_TRANSFORM = [
 /**
  * Build a LivelyTransformConfig JSON object from a lively.modules Module.
  */
-function buildSwcConfig (module, opts = {}) {
+function buildSwcConfig (module, opts = {}, source) {
   const recorderName = module.recorderName;
   const isGlobal = recorderName === 'System.global';
   const dontTransform = [
@@ -75,6 +75,10 @@ function buildSwcConfig (module, opts = {}) {
   if (!isGlobal) {
     config.currentModuleAccessor =
       `${recorderName}.System.get("@lively-env").moduleEnv("${module.id}")`;
+    if (module.sourceAccessorName && module.embedOriginalCode !== false) {
+      config.sourceAccessorName = module.sourceAccessorName;
+      config.originalSource = source;
+    }
   }
 
   // Class-to-function transformation.  Needed for the lively class system
@@ -84,7 +88,8 @@ function buildSwcConfig (module, opts = {}) {
     config.classToFunction = {
       classHolder: recorderName,
       functionNode: 'initializeES6ClassForLively',
-      currentModuleAccessor: config.currentModuleAccessor || 'null'
+      currentModuleAccessor: config.currentModuleAccessor || 'null',
+      sourceAccessorName: config.sourceAccessorName
     };
   }
 
@@ -110,7 +115,7 @@ class SwcBrowserTranspiler {
     const { module } = options;
     if (!module || !isAvailable()) return null;
 
-    const config = buildSwcConfig(module, options);
+    const config = buildSwcConfig(module, options, source);
     const result = swcTransform(source, config);
     if (!result) return null;
 
@@ -168,6 +173,13 @@ export async function setupSwcTranspiler (System) {
 
   function swcTranslate (load, opts) {
     const shortName = (load.name || '').replace('http://localhost:9011/', '').replace('esm://ga.jspm.io/', 'esm:');
+
+    if (opts?.esmLoad || opts?.depNames) {
+      const t0 = performance.now();
+      const r = babelTranslate.call(this, load, opts);
+      console.log(`[babel] ${shortName} (esmLoad) ${(performance.now() - t0).toFixed(1)}ms`);
+      return r;
+    }
 
     if (
       shortName.includes('lively.source-transform/swc/') ||

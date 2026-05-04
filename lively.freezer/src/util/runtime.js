@@ -138,6 +138,19 @@ export function runtimeDefinition () {
     return globalValue;
   }
 
+  function findRecorderExport (rec, ...names) {
+    for (let name of names) {
+      if (!name) continue;
+      if (name in rec) return { found: true, value: rec[name] };
+      // The SWC freezer transform materializes imported exports under an
+      // internal alias so SystemJS emits them; __module_exports__ keeps the
+      // public name.
+      const exportName = `__export_${name}__`;
+      if (exportName in rec) return { found: true, value: rec[exportName] };
+    }
+    return { found: false };
+  }
+
   if (G.lively.FreezerRuntime) {
     let [myMajor, myMinor, myPatch] = version.split('.').map(Number);
     let [otherMajor, otherMinor, otherPatch] = G.lively.FreezerRuntime.version.split('.').map(Number);
@@ -587,13 +600,17 @@ export function runtimeDefinition () {
       for (let exp of rec.__module_exports__) {
         if (exp.startsWith('__rename__')) {
           const [local, exported] = exp.replace('__rename__', '').split('->');
-          exports[exported] = rec[local];
+          const value = findRecorderExport(rec, local, exported);
+          if (value.found) exports[exported] = value.value;
         } else if (exp.startsWith('__reexport__')) Object.assign(exports, this.exportsOf(exp.replace('__reexport__', '')));
         else if (exp.startsWith('__default__')) {
           const localName = exp.replace('__default__', '');
-          if (localName in rec) exports.default = rec[localName];
+          const value = findRecorderExport(rec, localName);
+          if (value.found) exports.default = value.value;
+        } else {
+          const value = findRecorderExport(rec, exp);
+          if (value.found) exports[exp] = value.value;
         }
-        else if (exp in rec) exports[exp] = rec[exp];
       }
       return exports;
     },

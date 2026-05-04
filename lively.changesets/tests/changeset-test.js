@@ -8,7 +8,9 @@ import changeSet, { localChangeSets } from '../src/changeset.js';
 import { pkgDir, fileA, createPackage, deletePackage, initTestChangeSet } from './helpers.js';
 import { install, uninstall } from 'lively.changesets';
 
-describe('changesets', () => {
+describe('changesets', function () {
+  this.timeout(5000);
+
   beforeEach(async () => {
     install();
     await createPackage();

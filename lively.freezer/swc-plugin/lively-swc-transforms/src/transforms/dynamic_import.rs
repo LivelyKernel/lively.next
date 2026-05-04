@@ -91,7 +91,7 @@ impl VisitMut for DynamicImportTransform {
 mod tests {
     use super::*;
     use swc_common::{sync::Lrc, FileName, SourceMap};
-    use swc_ecma_codegen::{text_writer::JsWriter, Emitter, Config};
+    use swc_ecma_codegen::{text_writer::JsWriter, Config, Emitter};
     use swc_ecma_parser::{parse_file_as_module, Syntax};
     use swc_ecma_visit::VisitMutWith;
 
