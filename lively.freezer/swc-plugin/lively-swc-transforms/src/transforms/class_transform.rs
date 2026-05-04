@@ -35,8 +35,9 @@ pub struct ClassTransform {
     _package_name: Option<String>,
     _package_version: Option<String>,
     default_class_counter: usize,
-    /// Depth > 0 means we're inside a function body — skip classToFunction
-    /// for nested classes (Babel only transforms top-level class declarations).
+    /// Depth > 0 means we're inside a function body. Babel still transforms
+    /// nested classes, but uses a local class holder and does not subscribe to
+    /// top-level superclass binding changes there.
     fn_depth: u32,
 }
 
@@ -258,11 +259,18 @@ impl ClassTransform {
         // 2. Add `{ referencedAs, value }` spec for simple identifier superclasses
         let superclass_spec = match &class.super_class {
             Some(super_expr) => {
-                if let Expr::Ident(super_ident) = &**super_expr {
-                    create_object_lit(vec![
-                        create_prop("referencedAs", create_string_expr(super_ident.sym.as_ref())),
-                        create_prop("value", *super_expr.clone()),
-                    ])
+                if self.fn_depth == 0 {
+                    if let Expr::Ident(super_ident) = &**super_expr {
+                        create_object_lit(vec![
+                            create_prop(
+                                "referencedAs",
+                                create_string_expr(super_ident.sym.as_ref()),
+                            ),
+                            create_prop("value", *super_expr.clone()),
+                        ])
+                    } else {
+                        *super_expr.clone()
+                    }
                 } else {
                     *super_expr.clone()
                 }
@@ -276,7 +284,11 @@ impl ClassTransform {
 
         let init_fn = parse_expr_or_ident(&self.config.function_node);
         let class_holder_expr = if use_class_holder {
-            parse_config_expr(&self.config.class_holder)
+            if self.fn_depth == 0 {
+                parse_config_expr(&self.config.class_holder)
+            } else {
+                create_object_lit(vec![])
+            }
         } else {
             create_object_lit(vec![])
         };
@@ -366,12 +378,12 @@ impl ClassTransform {
             )),
         });
 
-        let source_loc = create_object_lit(vec![
+        let mut source_loc_props = vec![
             create_prop(
                 "start",
                 Expr::Lit(Lit::Num(Number {
                     span: DUMMY_SP,
-                    value: class.span.lo.0 as f64,
+                    value: class.span.lo.0.saturating_sub(1) as f64,
                     raw: None,
                 })),
             ),
@@ -379,11 +391,18 @@ impl ClassTransform {
                 "end",
                 Expr::Lit(Lit::Num(Number {
                     span: DUMMY_SP,
-                    value: class.span.hi.0 as f64,
+                    value: class.span.hi.0.saturating_sub(1) as f64,
                     raw: None,
                 })),
             ),
-        ]);
+        ];
+        if let Some(source_accessor_name) = &self.config.source_accessor_name {
+            source_loc_props.push(create_prop(
+                "moduleSource",
+                parse_expr_or_ident(source_accessor_name),
+            ));
+        }
+        let source_loc = create_object_lit(source_loc_props);
 
         let initialize_call = create_call_expr(
             init_fn,
@@ -626,116 +645,7 @@ impl ClassTransform {
                 return Some(Some(to_expr_or_spread(descriptor)));
             }
         }
-        if class.super_class.is_some() {
-            return Some(Some(to_expr_or_spread(
-                self.default_super_constructor_descriptor(class_name),
-            )));
-        }
         None
-    }
-
-    fn default_super_constructor_descriptor(&self, class_name: &str) -> Expr {
-        let superclass_value = Expr::Cond(CondExpr {
-            span: DUMMY_SP,
-            test: Box::new(Expr::Bin(BinExpr {
-                span: DUMMY_SP,
-                op: BinaryOp::EqEqEq,
-                left: Box::new(Expr::Unary(UnaryExpr {
-                    span: DUMMY_SP,
-                    op: UnaryOp::TypeOf,
-                    arg: Box::new(create_ident_expr("superclass")),
-                })),
-                right: Box::new(create_string_expr("function")),
-            })),
-            cons: Box::new(create_ident_expr("superclass")),
-            alt: Box::new(Expr::Bin(BinExpr {
-                span: DUMMY_SP,
-                op: BinaryOp::LogicalOr,
-                left: Box::new(Expr::Bin(BinExpr {
-                    span: DUMMY_SP,
-                    op: BinaryOp::LogicalAnd,
-                    left: Box::new(create_ident_expr("superclass")),
-                    right: Box::new(create_member_expr(create_ident_expr("superclass"), "value")),
-                })),
-                right: Box::new(create_ident_expr("Object")),
-            })),
-        });
-
-        let initialize_symbol = create_call_expr(
-            create_member_expr(create_ident_expr("Symbol"), "for"),
-            vec![to_expr_or_spread(create_string_expr(
-                "lively-instance-initialize",
-            ))],
-        );
-        let super_initialize = create_computed_member_expr(
-            create_member_expr(create_ident_expr("__superclass__"), "prototype"),
-            initialize_symbol,
-        );
-        let init_name = format!("{}_initialize_", class_name);
-        let init_fn = Expr::Fn(FnExpr {
-            ident: Some(Ident::new(
-                init_name.into(),
-                DUMMY_SP,
-                SyntaxContext::empty(),
-            )),
-            function: Box::new(Function {
-                params: vec![],
-                decorators: vec![],
-                span: DUMMY_SP,
-                ctxt: SyntaxContext::empty(),
-                body: Some(BlockStmt {
-                    span: DUMMY_SP,
-                    ctxt: SyntaxContext::empty(),
-                    stmts: vec![
-                        Stmt::Decl(create_var_decl(
-                            VarDeclKind::Var,
-                            "__superclass__",
-                            Some(superclass_value),
-                        )),
-                        Stmt::Decl(create_var_decl(
-                            VarDeclKind::Var,
-                            "__super_initialize__",
-                            Some(super_initialize),
-                        )),
-                        Stmt::If(IfStmt {
-                            span: DUMMY_SP,
-                            test: Box::new(create_ident_expr("__super_initialize__")),
-                            cons: Box::new(Stmt::Return(ReturnStmt {
-                                span: DUMMY_SP,
-                                arg: Some(Box::new(create_call_expr(
-                                    create_member_expr(
-                                        create_ident_expr("__super_initialize__"),
-                                        "apply",
-                                    ),
-                                    vec![
-                                        to_expr_or_spread(create_this_expr()),
-                                        to_expr_or_spread(create_ident_expr("arguments")),
-                                    ],
-                                ))),
-                            })),
-                            alt: None,
-                        }),
-                    ],
-                }),
-                is_generator: false,
-                is_async: false,
-                type_params: None,
-                return_type: None,
-            }),
-        });
-
-        create_object_lit(vec![
-            create_prop(
-                "key",
-                create_call_expr(
-                    create_member_expr(create_ident_expr("Symbol"), "for"),
-                    vec![to_expr_or_spread(create_string_expr(
-                        "lively-instance-initialize",
-                    ))],
-                ),
-            ),
-            create_prop("value", init_fn),
-        ])
     }
 
     /// Extract class field initializers
@@ -929,14 +839,14 @@ impl VisitMut for ClassTransform {
                     let transformed =
                         self.transform_class(Some(&class_ident), &class_expr.class, true);
                     let decl = ModuleItem::Stmt(Stmt::Decl(Decl::Var(Box::new(VarDecl {
-                        span: DUMMY_SP,
+                        span: class_expr.class.span,
                         ctxt: SyntaxContext::empty(),
                         // Legacy class transform always lowers class declarations to `var`.
                         // This avoids TDZ crashes in cyclic module evaluation.
                         kind: VarDeclKind::Var,
                         declare: false,
                         decls: vec![VarDeclarator {
-                            span: DUMMY_SP,
+                            span: class_expr.class.span,
                             name: Pat::Ident(BindingIdent {
                                 id: class_ident.clone(),
                                 type_ann: None,
@@ -978,33 +888,36 @@ impl VisitMut for ClassTransform {
     }
 
     fn visit_mut_decl(&mut self, decl: &mut Decl) {
-        // Only transform top-level class declarations (fn_depth == 0).
-        // Babel's classToFunction only targets module-level classes.
-        if self.fn_depth == 0 {
-            if let Decl::Class(class_decl) = decl {
-                let transformed =
-                    self.transform_class(Some(&class_decl.ident), &class_decl.class, true);
-                *decl = create_var_decl_with_ident(
-                    VarDeclKind::Var,
-                    class_decl.ident.clone(),
-                    Some(transformed),
-                );
-                return;
-            }
+        if let Decl::Class(class_decl) = decl {
+            let transformed =
+                self.transform_class(Some(&class_decl.ident), &class_decl.class, true);
+            *decl = Decl::Var(Box::new(VarDecl {
+                span: class_decl.class.span,
+                ctxt: SyntaxContext::empty(),
+                kind: VarDeclKind::Var,
+                declare: false,
+                decls: vec![VarDeclarator {
+                    span: class_decl.class.span,
+                    name: Pat::Ident(BindingIdent {
+                        id: class_decl.ident.clone(),
+                        type_ann: None,
+                    }),
+                    init: Some(Box::new(transformed)),
+                    definite: false,
+                }],
+            }));
+            return;
         }
 
         decl.visit_mut_children_with(self);
     }
 
     fn visit_mut_expr(&mut self, expr: &mut Expr) {
-        // Only transform top-level class expressions (fn_depth == 0).
-        if self.fn_depth == 0 {
-            if let Expr::Class(class_expr) = expr {
-                let transformed =
-                    self.transform_class(class_expr.ident.as_ref(), &class_expr.class, false);
-                *expr = transformed;
-                return;
-            }
+        if let Expr::Class(class_expr) = expr {
+            let transformed =
+                self.transform_class(class_expr.ident.as_ref(), &class_expr.class, false);
+            *expr = transformed;
+            return;
         }
         expr.visit_mut_children_with(self);
     }
@@ -1035,6 +948,7 @@ mod tests {
             class_holder: "__varRecorder__".to_string(),
             function_node: "initializeES6ClassForLively".to_string(),
             current_module_accessor: "module.id".to_string(),
+            source_accessor_name: None,
         };
 
         let mut transform = ClassTransform::new(
@@ -1100,16 +1014,16 @@ mod tests {
     }
 
     #[test]
-    fn test_default_subclass_constructor_forwards_to_super_initializer() {
+    fn test_default_subclass_constructor_inherits_super_initializer() {
         let output = transform_code("class Child extends Parent { method() {} }");
         assert!(
-            output.contains("Child_initialize_"),
-            "should synthesize a default subclass initializer: {}",
+            !output.contains("Child_initialize_"),
+            "subclasses without an explicit constructor should inherit the superclass initializer: {}",
             output
         );
         assert!(
-            output.contains("__super_initialize__.apply(this, arguments)"),
-            "default subclass initializer should forward constructor args: {}",
+            !output.contains("__super_initialize__.apply(this, arguments)"),
+            "should not install a synthetic forwarding initializer: {}",
             output
         );
     }

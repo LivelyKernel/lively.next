@@ -67,7 +67,10 @@ impl ExportedImportCapturePass {
             }
             ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(export))
                 if !export.specifiers.is_empty()
-                    && export.specifiers.iter().any(|s| matches!(s, ExportSpecifier::Named(_))) =>
+                    && export
+                        .specifiers
+                        .iter()
+                        .any(|s| matches!(s, ExportSpecifier::Named(_))) =>
             {
                 // Case 3: `export { x, y as z }` (no source, no declaration)
                 let original = ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(export.clone()));
@@ -126,11 +129,7 @@ impl ExportedImportCapturePass {
                 // import { x as local } from '...'
                 import_specs.push(ImportSpecifier::Named(ImportNamedSpecifier {
                     span: DUMMY_SP,
-                    local: Ident::new(
-                        local_name.as_str().into(),
-                        DUMMY_SP,
-                        SyntaxContext::empty(),
-                    ),
+                    local: Ident::new(local_name.as_str().into(), DUMMY_SP, SyntaxContext::empty()),
                     imported: if orig_name == local_name {
                         None
                     } else {
@@ -379,40 +378,88 @@ mod tests {
     fn test_export_named_with_source() {
         let output = transform_code(r#"export { x as a } from 'mod';"#);
         // Should produce: import { x as a } from 'mod'; export { a }; __varRecorder__.a = a;
-        assert!(output.contains("import { x as a } from"), "output was: {}", output);
+        assert!(
+            output.contains("import { x as a } from"),
+            "output was: {}",
+            output
+        );
         assert!(output.contains("export { a }"), "output was: {}", output);
-        assert!(output.contains("__varRecorder__.a = a"), "output was: {}", output);
+        assert!(
+            output.contains("__varRecorder__.a = a"),
+            "output was: {}",
+            output
+        );
     }
 
     #[test]
     fn test_export_named_with_source_same_name() {
         let output = transform_code(r#"export { x } from 'mod';"#);
-        assert!(output.contains("import { x } from"), "output was: {}", output);
+        assert!(
+            output.contains("import { x } from"),
+            "output was: {}",
+            output
+        );
         assert!(output.contains("export { x }"), "output was: {}", output);
-        assert!(output.contains("__varRecorder__.x = x"), "output was: {}", output);
+        assert!(
+            output.contains("__varRecorder__.x = x"),
+            "output was: {}",
+            output
+        );
     }
 
     #[test]
     fn test_export_named_no_source() {
         let output = transform_code(r#"const x = 1; const y = 2; export { x, y as z };"#);
-        assert!(output.contains("export { x, y as z }"), "keeps original: {}", output);
-        assert!(output.contains("__varRecorder__.x = x"), "captures x: {}", output);
-        assert!(output.contains("__varRecorder__.y = y"), "captures y: {}", output);
+        assert!(
+            output.contains("export { x, y as z }"),
+            "keeps original: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.x = x"),
+            "captures x: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.y = y"),
+            "captures y: {}",
+            output
+        );
     }
 
     #[test]
     fn test_export_const() {
         let output = transform_code(r#"export const x = 1;"#);
-        assert!(output.contains("export const x = 1"), "keeps export: {}", output);
-        assert!(output.contains("__varRecorder__.x = x"), "captures: {}", output);
+        assert!(
+            output.contains("export const x = 1"),
+            "keeps export: {}",
+            output
+        );
+        assert!(
+            output.contains("__varRecorder__.x = x"),
+            "captures: {}",
+            output
+        );
     }
 
     #[test]
     fn test_export_all() {
         let output = transform_code(r#"export * from 'mod';"#);
-        assert!(output.contains("export * from 'mod'"), "keeps original: {}", output);
-        assert!(output.contains("import * as __captured"), "adds import: {}", output);
-        assert!(output.contains("Object.assign(__varRecorder__"), "captures: {}", output);
+        assert!(
+            output.contains("export * from 'mod'"),
+            "keeps original: {}",
+            output
+        );
+        assert!(
+            output.contains("import * as __captured"),
+            "adds import: {}",
+            output
+        );
+        assert!(
+            output.contains("Object.assign(__varRecorder__"),
+            "captures: {}",
+            output
+        );
     }
 
     #[test]

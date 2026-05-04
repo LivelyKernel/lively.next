@@ -21,7 +21,10 @@ pub struct NamespaceTransform {
 }
 
 impl NamespaceTransform {
-    pub fn new(resolved_imports: std::collections::HashMap<String, String>, _capture_obj: String) -> Self {
+    pub fn new(
+        resolved_imports: std::collections::HashMap<String, String>,
+        _capture_obj: String,
+    ) -> Self {
         Self {
             additional_decls: Vec::new(),
             resolved_imports,
@@ -104,50 +107,55 @@ impl VisitMut for NamespaceTransform {
                             );
 
                             // import * as name_namespace from 'mod'
-                            let import_decl = ModuleItem::ModuleDecl(ModuleDecl::Import(ImportDecl {
-                                span: DUMMY_SP,
-                                specifiers: vec![ImportSpecifier::Namespace(ImportStarAsSpecifier {
+                            let import_decl =
+                                ModuleItem::ModuleDecl(ModuleDecl::Import(ImportDecl {
                                     span: DUMMY_SP,
-                                    local: ns_ident.clone(),
-                                })],
-                                src: Box::new(Str {
-                                    span: DUMMY_SP,
-                                    value: module_src.clone().into(),
-                                    raw: None,
-                                }),
-                                type_only: false,
-                                with: None,
-                                phase: Default::default(),
-                            }));
+                                    specifiers: vec![ImportSpecifier::Namespace(
+                                        ImportStarAsSpecifier {
+                                            span: DUMMY_SP,
+                                            local: ns_ident.clone(),
+                                        },
+                                    )],
+                                    src: Box::new(Str {
+                                        span: DUMMY_SP,
+                                        value: module_src.clone().into(),
+                                        raw: None,
+                                    }),
+                                    type_only: false,
+                                    with: None,
+                                    phase: Default::default(),
+                                }));
                             new_body.push(import_decl);
 
                             // const name = exportsOf("resolved") || name_namespace
-                            let fallback_expr = self.create_namespace_fallback(&module_src, &ns_ident);
-                            let name_ident = Ident::new(
-                                name.as_str().into(),
-                                DUMMY_SP,
-                                SyntaxContext::empty(),
-                            );
-                            let const_decl = ModuleItem::Stmt(Stmt::Decl(create_var_decl_with_ident(
-                                VarDeclKind::Const,
-                                name_ident.clone(),
-                                Some(fallback_expr),
-                            )));
+                            let fallback_expr =
+                                self.create_namespace_fallback(&module_src, &ns_ident);
+                            let name_ident =
+                                Ident::new(name.as_str().into(), DUMMY_SP, SyntaxContext::empty());
+                            let const_decl =
+                                ModuleItem::Stmt(Stmt::Decl(create_var_decl_with_ident(
+                                    VarDeclKind::Const,
+                                    name_ident.clone(),
+                                    Some(fallback_expr),
+                                )));
                             self.additional_decls.push(const_decl);
 
                             // export { name }
-                            let export_named = ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(NamedExport {
-                                span: DUMMY_SP,
-                                specifiers: vec![ExportSpecifier::Named(ExportNamedSpecifier {
+                            let export_named =
+                                ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(NamedExport {
                                     span: DUMMY_SP,
-                                    orig: ModuleExportName::Ident(name_ident),
-                                    exported: None,
-                                    is_type_only: false,
-                                })],
-                                src: None,
-                                type_only: false,
-                                with: None,
-                            }));
+                                    specifiers: vec![ExportSpecifier::Named(
+                                        ExportNamedSpecifier {
+                                            span: DUMMY_SP,
+                                            orig: ModuleExportName::Ident(name_ident),
+                                            exported: None,
+                                            is_type_only: false,
+                                        },
+                                    )],
+                                    src: None,
+                                    type_only: false,
+                                    with: None,
+                                }));
                             self.additional_decls.push(export_named);
 
                             continue; // skip the original export * as name from 'mod'
@@ -310,7 +318,7 @@ impl VisitMut for NamespaceTransform {
 mod tests {
     use super::*;
     use swc_common::{sync::Lrc, FileName, SourceMap};
-    use swc_ecma_codegen::{text_writer::JsWriter, Emitter, Config};
+    use swc_ecma_codegen::{text_writer::JsWriter, Config, Emitter};
     use swc_ecma_parser::{parse_file_as_module, Syntax};
     use swc_ecma_visit::VisitMutWith;
 
@@ -327,7 +335,10 @@ mod tests {
         )
         .unwrap();
 
-        let mut transform = NamespaceTransform::new(std::collections::HashMap::new(), "__varRecorder__".to_string());
+        let mut transform = NamespaceTransform::new(
+            std::collections::HashMap::new(),
+            "__varRecorder__".to_string(),
+        );
         module.visit_mut_with(&mut transform);
 
         let mut buf = vec![];
@@ -352,7 +363,10 @@ mod tests {
         assert!(output.contains("exportsOf"));
     }
 
-    fn transform_code_with_resolved(code: &str, resolved: std::collections::HashMap<String, String>) -> (String, Vec<String>) {
+    fn transform_code_with_resolved(
+        code: &str,
+        resolved: std::collections::HashMap<String, String>,
+    ) -> (String, Vec<String>) {
         let cm = Lrc::new(SourceMap::default());
         let fm = cm.new_source_file(FileName::Anon.into(), code.to_string());
 
@@ -395,27 +409,52 @@ mod tests {
             std::collections::HashMap::new(),
         );
         // Should have import * as utils_namespace
-        assert!(output.contains("utils_namespace"), "should create namespace import: {}", output);
+        assert!(
+            output.contains("utils_namespace"),
+            "should create namespace import: {}",
+            output
+        );
         // Should have const utils = exportsOf(...) || utils_namespace
-        assert!(output.contains("exportsOf"), "should have exportsOf call: {}", output);
-        assert!(output.contains("const utils"), "should have const utils declaration: {}", output);
+        assert!(
+            output.contains("exportsOf"),
+            "should have exportsOf call: {}",
+            output
+        );
+        assert!(
+            output.contains("const utils"),
+            "should have const utils declaration: {}",
+            output
+        );
         // Should have export { utils }
-        assert!(output.contains("export {"), "should have named export: {}", output);
+        assert!(
+            output.contains("export {"),
+            "should have named export: {}",
+            output
+        );
         assert!(output.contains("utils"), "should export utils: {}", output);
         // utils_namespace should be in excludes
-        assert!(excludes.contains(&"utils_namespace".to_string()), "utils_namespace should be excluded: {:?}", excludes);
+        assert!(
+            excludes.contains(&"utils_namespace".to_string()),
+            "utils_namespace should be excluded: {:?}",
+            excludes
+        );
     }
 
     #[test]
     fn test_named_namespace_reexport_with_resolved() {
         // When resolved_imports has a mapping, use the resolved ID in exportsOf
         let mut resolved = std::collections::HashMap::new();
-        resolved.insert("./utils.js".to_string(), "local://package/utils.js".to_string());
-        let (output, _) = transform_code_with_resolved(
-            r#"export * as utils from './utils.js';"#,
-            resolved,
+        resolved.insert(
+            "./utils.js".to_string(),
+            "local://package/utils.js".to_string(),
         );
-        assert!(output.contains("local://package/utils.js"), "should use resolved ID in exportsOf: {}", output);
+        let (output, _) =
+            transform_code_with_resolved(r#"export * as utils from './utils.js';"#, resolved);
+        assert!(
+            output.contains("local://package/utils.js"),
+            "should use resolved ID in exportsOf: {}",
+            output
+        );
     }
 
     #[test]
@@ -425,7 +464,15 @@ mod tests {
             r#"export * from './utils.js';"#,
             std::collections::HashMap::new(),
         );
-        assert!(output.contains("recorderFor"), "unnamed export * should use recorderFor: {}", output);
-        assert!(output.contains("Object.assign"), "unnamed export * should use Object.assign: {}", output);
+        assert!(
+            output.contains("recorderFor"),
+            "unnamed export * should use recorderFor: {}",
+            output
+        );
+        assert!(
+            output.contains("Object.assign"),
+            "unnamed export * should use Object.assign: {}",
+            output
+        );
     }
 }

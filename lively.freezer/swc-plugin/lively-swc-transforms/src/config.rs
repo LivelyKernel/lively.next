@@ -43,6 +43,14 @@ pub struct LivelyTransformConfig {
     #[serde(default)]
     pub current_module_accessor: Option<String>,
 
+    /// Identifier used for the embedded original module source.
+    #[serde(default)]
+    pub source_accessor_name: Option<String>,
+
+    /// Original module source, embedded into source metadata when present.
+    #[serde(default)]
+    pub original_source: Option<String>,
+
     /// Package name for class metadata
     #[serde(default)]
     pub package_name: Option<String>,
@@ -98,6 +106,10 @@ pub struct ClassToFunctionConfig {
 
     /// Expression to access current module metadata
     pub current_module_accessor: String,
+
+    /// Identifier used for the embedded original module source.
+    #[serde(default)]
+    pub source_accessor_name: Option<String>,
 }
 
 impl Default for LivelyTransformConfig {
@@ -148,6 +160,8 @@ impl Default for LivelyTransformConfig {
             resurrection: false,
             module_id: String::new(),
             current_module_accessor: None,
+            source_accessor_name: None,
+            original_source: None,
             package_name: None,
             package_version: None,
             enable_component_transform: true,

@@ -1,7 +1,7 @@
+use crate::utils::ast_helpers::*;
 use swc_common::{Spanned, DUMMY_SP};
 use swc_ecma_ast::*;
 use swc_ecma_visit::{VisitMut, VisitMutWith};
-use crate::utils::ast_helpers::*;
 
 /// Transform that wraps component definitions with metadata
 ///
@@ -38,12 +38,14 @@ impl ComponentTransform {
     }
 
     /// Wrap a component call with component.for(...)
-    fn wrap_component_call(&self, component_call: Expr, export_name: &str, span: swc_common::Span) -> Expr {
+    fn wrap_component_call(
+        &self,
+        component_call: Expr,
+        export_name: &str,
+        span: swc_common::Span,
+    ) -> Expr {
         // Create: () => component(...)
-        let arrow_fn = create_arrow_fn(
-            vec![],
-            BlockStmtOrExpr::Expr(Box::new(component_call)),
-        );
+        let arrow_fn = create_arrow_fn(vec![], BlockStmtOrExpr::Expr(Box::new(component_call)));
 
         // Create metadata object: { module: "...", export: "MyComp", range: { start: X, end: Y } }
         let metadata = create_object_lit(vec![
@@ -125,21 +127,16 @@ impl VisitMut for ComponentTransform {
             return;
         }
         if self.is_component_call(&stmt.expr) {
-            let metadata = create_object_lit(vec![
-                create_prop("module", create_string_expr(&self.module_id)),
-            ]);
-            let arrow_fn = create_arrow_fn(
-                vec![],
-                BlockStmtOrExpr::Expr(stmt.expr.clone()),
-            );
+            let metadata = create_object_lit(vec![create_prop(
+                "module",
+                create_string_expr(&self.module_id),
+            )]);
+            let arrow_fn = create_arrow_fn(vec![], BlockStmtOrExpr::Expr(stmt.expr.clone()));
             *stmt = ExprStmt {
                 span: stmt.span,
                 expr: Box::new(create_call_expr(
                     create_member_expr(create_ident_expr("component"), "for"),
-                    vec![
-                        to_expr_or_spread(arrow_fn),
-                        to_expr_or_spread(metadata),
-                    ],
+                    vec![to_expr_or_spread(arrow_fn), to_expr_or_spread(metadata)],
                 )),
             };
             return;
@@ -173,7 +170,7 @@ impl VisitMut for ComponentTransform {
 mod tests {
     use super::*;
     use swc_common::{sync::Lrc, FileName, SourceMap};
-    use swc_ecma_codegen::{text_writer::JsWriter, Emitter, Config};
+    use swc_ecma_codegen::{text_writer::JsWriter, Config, Emitter};
     use swc_ecma_parser::{parse_file_as_module, Syntax};
     use swc_ecma_visit::VisitMutWith;
 

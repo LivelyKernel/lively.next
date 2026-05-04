@@ -38,6 +38,7 @@ export class HeadlessSession {
       screenshotPath: packagePath + 'screenshots/test.png',
       aliveTimeout: 300 * 1000,
       aliveRepeatTimeout: 300,
+      protocolTimeout: 10 * 60 * 1000,
       maxConsoleEntries: 200,
       ...options
     };
@@ -54,6 +55,7 @@ export class HeadlessSession {
   async ensureBrowser () {
       const newBrowser = (this.constructor.browser = await puppeteer.launch({
          userDataDir: packagePath + 'chrome-data-dir',
+         protocolTimeout: this.options.protocolTimeout,
          ...containerized ? { executablePath: 'chromium' } : {},
          headless: 'new',
          args: [

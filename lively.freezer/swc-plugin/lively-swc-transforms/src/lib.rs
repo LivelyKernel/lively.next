@@ -91,6 +91,8 @@ impl swc_ecma_visit::VisitMut for LivelyTransformVisitor {
                 self.config.resurrection,
                 self.config.module_id.clone(),
                 self.config.current_module_accessor.clone(),
+                self.config.source_accessor_name.clone(),
+                self.config.original_source.clone(),
                 self.config.module_hash,
                 self.config.resolved_imports.clone(),
             );
@@ -168,6 +170,7 @@ mod tests {
             class_holder: "__varRecorder__".to_string(),
             function_node: "initializeES6ClassForLively".to_string(),
             current_module_accessor: "module.id".to_string(),
+            source_accessor_name: None,
         });
         let input = "export class Color {}";
         let output = transform_code(input, config);
@@ -188,6 +191,7 @@ mod tests {
             class_holder: "__varRecorder__".to_string(),
             function_node: "initializeES6ClassForLively".to_string(),
             current_module_accessor: "module.id".to_string(),
+            source_accessor_name: None,
         });
         config
     }
@@ -479,6 +483,7 @@ export { EvalStrategy, SimpleEvalStrategy };
                     .to_string(),
             function_node: "initializeES6ClassForLively".to_string(),
             current_module_accessor: r#"({ pathInPackage: () => "test-module.js" })"#.to_string(),
+            source_accessor_name: None,
         });
         let output = transform_code("class Foo {}", config);
         assert!(
@@ -504,6 +509,7 @@ export { EvalStrategy, SimpleEvalStrategy };
                     .to_string(),
             function_node: "initializeES6ClassForLively".to_string(),
             current_module_accessor: r#"({ pathInPackage: () => "test-module.js" })"#.to_string(),
+            source_accessor_name: None,
         });
         let input = r#"import { initializeClass as initializeES6ClassForLively } from "lively.classes/runtime.js";
 export class Foo {}"#;

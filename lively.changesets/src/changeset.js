@@ -98,7 +98,7 @@ async function adjustChangeSets (doFunc, doneFunc, skipPrev) { // (() -> Promise
     const nextB = await targetBranchRead(pkg.address);
     if (prevB && !nextB) {
       console.log(`deactivating ${prevB}`);
-      prevB.deactivate();
+      await prevB.deactivate();
     } else if (!prevB && nextB || prevB && nextB && prevB.name !== nextB.name) {
       console.log(`activating ${nextB}`);
       await nextB.activate();

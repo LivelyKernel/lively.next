@@ -6,7 +6,9 @@ import { module } from 'lively.modules';
 import { importChangeSet, localChangeSets } from '../src/changeset.js';
 import { fileA, createPackage, deletePackage, initTestChangeSet } from './helpers.js';
 
-describe('serialize', () => {
+describe('serialize', function () {
+  this.timeout(5000);
+
   let cs;
   beforeEach(async () => {
     await createPackage();

@@ -237,8 +237,8 @@ fn extract_ids_recursive(pat: &Pat, ids: &mut Vec<Id>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use swc_common::{sync::Lrc, FileName, SourceMap};
     use swc_ecma_parser::{parse_file_as_module, Syntax};
-    use swc_common::{FileName, SourceMap, sync::Lrc};
 
     fn analyze_code(code: &str) -> ScopeAnalyzer {
         let cm = Lrc::new(SourceMap::default());
