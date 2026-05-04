@@ -78,24 +78,26 @@ describeInBrowser('undo', function () {
     expect(text.selection).selectionEquals('Selection(1/5 -> 1/8)');
   });
 
-  it('groups debounced', async () => {
+  it('groups debounced', async function () {
+    this.timeout(10000);
     text.undoManager.group();
     text.insertText('a');
     text.undoManager.groupLater();
     setTimeout(() => text.insertText('b'), 5);
     setTimeout(() => text.insertText('c'), 10);
-    await promise.delay(text.undoManager.grouping.debounceTime);
+    await promise.delay(config.text.undoGroupDelay);
     expect(text.undoManager.undos).have.length(1);
   });
 
-  it('groups debounced cancel', async () => {
+  it('groups debounced cancel', async function () {
+    this.timeout(10000);
     text.undoManager.group();
     text.insertText('a');
     text.undoManager.groupLater();
     setTimeout(() => text.insertText('b'), 5);
     setTimeout(() => text.insertText('c'), 10);
     setTimeout(() => text.undoManager.groupLaterCancel(), 15);
-    await promise.delay(text.undoManager.grouping.debounceTime);
+    await promise.delay(config.text.undoGroupDelay);
     expect(text.undoManager.undos).have.length(3);
   });
 

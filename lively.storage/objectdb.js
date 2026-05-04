@@ -891,10 +891,19 @@ class Synchronization {
 
     let commitReplicationState = 'not started';
     let versionReplicationState = 'not started';
+    let finalizing = false;
+    let sync = this;
 
     this.versionReplication = versionReplication;
     this.commitReplication = commitReplication;
     this.snapshotReplication = snapshotReplication;
+    this._finalizeStoppedReplication = () => {
+      commitReplicationState = 'complete';
+      versionReplicationState = 'complete';
+      snapshotReplication.stopped = true;
+      updateState(this);
+      tryToResolve(this, [], 'versions');
+    };
 
     commitChangeListener = remoteCommitDB.pouchdb.changes({ include_docs: true, live: true, conflicts: true });
     versionChangeListener = remoteVersionDB.pouchdb.changes({ include_docs: true, live: true, conflicts: true });
@@ -988,7 +997,7 @@ class Synchronization {
       } finally {
         snapshotReplication.copyCalls--;
         updateState(this);
-        tryToResolve(this, error ? [error] : []);
+        tryToResolve(this, error ? [error] : [], 'commits');
       }
     })
       .on('paused', () => {
@@ -1004,12 +1013,12 @@ class Synchronization {
       .on('error', err => {
         commitReplicationState = 'complete'; updateState(this);
         console.error(`${this} commit replication error`, err);
-        tryToResolve(this, [err]);
+        tryToResolve(this, [err], 'commits');
       })
       .on('complete', info => {
         commitReplicationState = 'complete'; updateState(this);
         let errors = method === 'sync' ? info.push.errors.concat(info.pull.errors) : info.errors;
-        tryToResolve(this, errors);
+        tryToResolve(this, errors, 'commits');
       });
 
     versionReplication.on('change', change => {
@@ -1039,12 +1048,12 @@ class Synchronization {
       .on('error', err => {
         versionReplicationState = 'complete'; updateState(this);
         console.error(`${this} version replication error`, err);
-        tryToResolve(this, [err]);
+        tryToResolve(this, [err], 'versions');
       })
       .on('complete', info => {
         versionReplicationState = 'complete'; updateState(this);
         let errors = method === 'sync' ? info.push.errors.concat(info.pull.errors) : info.errors;
-        tryToResolve(this, errors);
+        tryToResolve(this, errors, 'versions');
       });
 
     this.state = 'running';
@@ -1054,16 +1063,272 @@ class Synchronization {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
     function updateState (sync) {
-      if (versionReplicationState === 'paused' && commitReplicationState === 'paused' && snapshotReplication.copyCalls <= 0 && snapshotReplication.copyCallsWaiting <= 0) { return sync.state = 'paused'; }
-      if (versionReplicationState === 'complete' && commitReplicationState === 'complete' && snapshotReplication.isComplete()) { return sync.state = 'complete'; }
+      let versionDone = versionReplicationState === 'complete';
+      let commitDone = commitReplicationState === 'complete';
+      let versionIdle = versionDone || versionReplicationState === 'paused';
+      let commitIdle = commitDone || commitReplicationState === 'paused';
+      if (versionDone && commitDone && snapshotReplication.isComplete()) { return sync.state = 'complete'; }
+      if (versionIdle && commitIdle && snapshotReplication.copyCalls <= 0 && snapshotReplication.copyCallsWaiting <= 0) { return sync.state = 'paused'; }
       return sync.state = 'running';
     }
 
-    function tryToResolve (sync, errors) {
+    function isConflictError (err) {
+      return err && (err.status === 409 || err.name === 'conflict');
+    }
+
+    function recordConflictError (sync, kind, err) {
+      let id = err.id || err.docId;
+      let conflict = { db: kind, kind, error: err };
+      if (id) conflict.id = id;
+      if (err.rev) conflict.rev = err.rev;
+      if (id && sync.conflicts.some(ea => ea.db === kind && ea.id === id && ea.rev === err.rev)) return;
+      sync.conflicts.push(conflict);
+    }
+
+    function recordVersionChange (sync, direction, id) {
+      if (sync.changes.some(ea => ea.direction === direction && ea.kind === 'versions' && ea.id === id)) return;
+      sync.changes.push({ direction, kind: 'versions', id });
+    }
+
+    function hasCommitChangeForVersion (sync, direction, id) {
+      let [type, ...nameParts] = id.split('/');
+      let name = nameParts.join('/');
+      return sync.changes.some(ea =>
+        ea.direction === direction &&
+        ea.kind === 'commits' &&
+        ea.type === type &&
+        ea.name === name);
+    }
+
+    function pruneUnmatchedVersionChanges (sync) {
+      sync.changes = sync.changes.filter(ea =>
+        ea.kind !== 'versions' || hasCommitChangeForVersion(sync, ea.direction, ea.id));
+    }
+
+    function recordCommitChange (sync, direction, commit) {
+      if (sync.changes.some(ea => ea.direction === direction && ea.kind === 'commits' && ea.id === commit._id)) return;
+      sync.changes.push({ direction, kind: 'commits', id: commit._id, type: commit.type, name: commit.name });
+    }
+
+    function shouldReplicateCommitDoc (doc) {
+      if (!doc || doc._id[0] === '_') return false;
+      if (!replicationFilter) return true;
+      if (replicationFilter.onlyIds) return !!replicationFilter.onlyIds[doc._id];
+      if (replicationFilter.onlyTypesAndNames) return !!replicationFilter.onlyTypesAndNames[doc.type + '/' + doc.name];
+      return true;
+    }
+
+    function shouldReplicateVersionDoc (doc) {
+      if (!doc || doc._id[0] === '_') return false;
+      if (!replicationFilter) return true;
+      if (replicationFilter.onlyIds) return !!replicationFilter.onlyIds[doc._id];
+      if (replicationFilter.onlyTypesAndNames) return !!replicationFilter.onlyTypesAndNames[doc._id];
+      return true;
+    }
+
+    function versionDocData (doc) {
+      return {
+        refs: { ...(doc && doc.refs) },
+        history: { ...(doc && doc.history) }
+      };
+    }
+
+    function docDataWithoutStorageMeta (doc) {
+      let data = { ...doc };
+      delete data._rev;
+      delete data._revisions;
+      return data;
+    }
+
+    function isAncestorOf (ancestorId, commitId, history, seen = {}) {
+      if (!ancestorId || !commitId || seen[commitId]) return false;
+      seen[commitId] = true;
+      let parents = history[commitId] || [];
+      if (parents.includes(ancestorId)) return true;
+      return parents.some(parentId => isAncestorOf(ancestorId, parentId, history, seen));
+    }
+
+    function chooseRef (left, right, history) {
+      if (!left) return right;
+      if (!right || left === right) return left;
+      if (isAncestorOf(left, right, history)) return right;
+      if (isAncestorOf(right, left, history)) return left;
+      return [left, right].sort().pop();
+    }
+
+    function mergeVersionDocs (existingDoc, incomingDoc) {
+      let existing = versionDocData(existingDoc);
+      let incoming = versionDocData(incomingDoc);
+      let history = { ...existing.history, ...incoming.history };
+      let refs = {};
+      for (let ref of arr.uniq(Object.keys(existing.refs).concat(Object.keys(incoming.refs)))) {
+        refs[ref] = chooseRef(existing.refs[ref], incoming.refs[ref], history);
+      }
+      return { _id: incomingDoc._id, refs, history };
+    }
+
+    async function mergeVersionDocInto (toDB, doc, existingDoc) {
+      let existing = existingDoc || await toDB.get(doc._id);
+      let merged = mergeVersionDocs(existing, doc);
+      if (existing && obj.equals(versionDocData(existing), versionDocData(merged))) return false;
+      await toDB.set(doc._id, merged);
+      return true;
+    }
+
+    async function getReplicationDocs (db) {
+      return Promise.all((await db.docList())
+        .filter(({ id }) => id[0] !== '_')
+        .map(({ id }) => db.pouchdb.get(id, { revs: true })));
+    }
+
+    async function copySnapshotsForCommits (commits, direction) {
+      let resources = commits
+        .map(commit => ({ commit, path: snapshotPathFor(commit) }))
+        .filter(({ path }) => !!path);
+      await promise.parallel(resources.map(({ path }) => () => {
+        let fromResource = (direction === 'push' ? fromSnapshotLocation : remoteLocation).join(path);
+        let toResource = (direction === 'push' ? remoteLocation : fromSnapshotLocation).join(path);
+        return toResource.exists().then(toExists => {
+          if (toExists) return null;
+          return fromResource.exists().then(fromExists => {
+            if (!fromExists) return null;
+            return tryCopy(0);
+          });
+        });
+
+        function tryCopy (n = 0) {
+          return fromResource.copyTo(toResource).catch(err => {
+            if (n >= 5) throw err;
+            return tryCopy(n + 1);
+          });
+        }
+      }), 5);
+    }
+
+    async function replicateCommitDocsManually (fromDB, toDB, direction) {
+      let errors = [];
+      for (let doc of await getReplicationDocs(fromDB)) {
+        if (!shouldReplicateCommitDoc(doc)) continue;
+        let existing = await toDB.get(doc._id);
+        if (existing && obj.equals(docDataWithoutStorageMeta(existing), docDataWithoutStorageMeta(doc))) continue;
+        let result;
+        try {
+          [result] = await toDB.setDocuments([{ ...doc }], { new_edits: false });
+        } catch (err) {
+          result = err;
+          if (!result.id) result.id = doc._id;
+        }
+
+        if (result && result.ok) {
+          recordCommitChange(sync, direction, doc);
+          try {
+            await copySnapshotsForCommits([doc], direction);
+          } catch (err) {
+            errors.push(err);
+          }
+        } else if (isConflictError(result)) {
+          if (!result.id) result.id = doc._id;
+          recordConflictError(sync, 'commits', result);
+        } else if (result) errors.push(result);
+      }
+      return errors;
+    }
+
+    async function replicateVersionDocsManually (fromDB, toDB, direction) {
+      let errors = [];
+      for (let doc of await getReplicationDocs(fromDB)) {
+        if (!shouldReplicateVersionDoc(doc)) continue;
+        let existing = await toDB.get(doc._id);
+        if (existing && obj.equals(versionDocData(existing), versionDocData(doc))) continue;
+        let result;
+        try {
+          [result] = await toDB.setDocuments([{ ...doc }], { new_edits: false });
+        } catch (err) {
+          result = err;
+          if (!result.id) result.id = doc._id;
+        }
+
+        if (result && result.ok) {
+          if (!existing || await mergeVersionDocInto(toDB, doc, existing)) {
+            recordVersionChange(sync, direction, doc._id);
+          }
+        } else if (isConflictError(result)) {
+          if (!result.id) result.id = doc._id;
+          try {
+            if (await mergeVersionDocInto(toDB, doc, existing)) {
+              recordVersionChange(sync, direction, doc._id);
+              recordConflictError(sync, 'versions', result);
+            }
+          } catch (err) {
+            errors.push(err);
+          }
+        } else if (result) errors.push(result);
+      }
+      return errors;
+    }
+
+    async function reconcileCommitDocs () {
+      let errors = [];
+      if (method === 'sync') {
+        errors = errors.concat(await replicateCommitDocsManually(commitDB, remoteCommitDB, 'push'));
+        await promise.delay(200);
+        return errors.concat(await replicateCommitDocsManually(remoteCommitDB, commitDB, 'pull'));
+      }
+      if (method === 'replicateTo' || method === 'sync') {
+        errors = errors.concat(await replicateCommitDocsManually(commitDB, remoteCommitDB, 'push'));
+      }
+      if (method === 'replicateFrom' || method === 'sync') {
+        errors = errors.concat(await replicateCommitDocsManually(remoteCommitDB, commitDB, 'pull'));
+      }
+      return errors;
+    }
+
+    async function reconcileVersionDocs () {
+      let errors = [];
+      if (method === 'sync') {
+        errors = errors.concat(await replicateVersionDocsManually(versionDB, remoteVersionDB, 'push'));
+        await promise.delay(200);
+        errors = errors.concat(await replicateVersionDocsManually(remoteVersionDB, versionDB, 'pull'));
+        return errors.concat(await replicateVersionDocsManually(versionDB, remoteVersionDB, 'push'));
+      }
+      if (method === 'replicateTo' || method === 'sync') {
+        errors = errors.concat(await replicateVersionDocsManually(versionDB, remoteVersionDB, 'push'));
+      }
+      if (method === 'replicateFrom' || method === 'sync') {
+        errors = errors.concat(await replicateVersionDocsManually(remoteVersionDB, versionDB, 'pull'));
+      }
+      return errors;
+    }
+
+    function tryToResolve (sync, errors, kind) {
+      errors = errors || [];
+      errors = errors.filter(err => {
+        if (!isConflictError(err)) return true;
+        recordConflictError(sync, kind, err);
+        return false;
+      });
       if (!errors.length && (commitReplicationState !== 'complete' ||
                      versionReplicationState !== 'complete' ||
                      !snapshotReplication.isComplete())) return;
+      if (finalizing) return;
+      finalizing = true;
+      finalize(errors).catch(err => sync.deferred.reject(err));
+    }
+
+    async function finalize (errors) {
       versionChangeListener.cancel();
+      commitChangeListener.cancel();
+
+      if (!errors.length) {
+        errors = (await reconcileCommitDocs()).concat(await reconcileVersionDocs());
+        pruneUnmatchedVersionChanges(sync);
+        errors = errors.filter(err => {
+          if (!isConflictError(err)) return true;
+          recordConflictError(sync, 'versions', err);
+          return false;
+        });
+      }
+
       let err;
       if (errors.length) {
         sync.state = 'complete';
@@ -1091,8 +1356,16 @@ class Synchronization {
 
   async safeStop () {
     if (this.state === 'not started' || !this.isSynchonizing) return this;
-    await this.whenPaused();
-    return this.stop();
+    if (this.options.live) {
+      await promise.delay(200);
+      await promise.waitFor(5 * 1000, () =>
+        (this.isPaused || this.isComplete) &&
+        this.snapshotReplication.copyCalls <= 0 &&
+        this.snapshotReplication.copyCallsWaiting <= 0,
+      true);
+    } else await this.whenPaused();
+    this.stop();
+    return this.waitForIt();
   }
 
   stop () {
@@ -1100,6 +1373,7 @@ class Synchronization {
     this.commitReplication.cancel();
     this.versionReplication.cancel();
     this.snapshotReplication.stopped = true;
+    this._finalizeStoppedReplication && this._finalizeStoppedReplication();
     return this;
   }
 

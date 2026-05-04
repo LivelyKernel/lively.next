@@ -16,9 +16,15 @@ let replicationLocation = resource('local://lively-morphic-objectdb-test/replica
 let snapshotLocation2 = resource('local://lively-morphic-objectdb-test/more-snapshots/');
 let pouchDBForCommits, pouchDBForHist;
 
+function withoutStorageRev (doc) {
+  let copy = { ...doc };
+  delete copy._rev;
+  return copy;
+}
+
 async function expectDBsHaveSameDocs (db1, db2) {
-  let docs1 = (await db1.getAll()).filter(ea => !ea._id.startsWith('_'));
-  let docs2 = (await db2.getAll()).filter(ea => !ea._id.startsWith('_'));
+  let docs1 = (await db1.getAll()).filter(ea => !ea._id.startsWith('_')).map(withoutStorageRev);
+  let docs2 = (await db2.getAll()).filter(ea => !ea._id.startsWith('_')).map(withoutStorageRev);
   expect(docs1).deep.members(docs2);
 }
 
@@ -135,8 +141,8 @@ describe('replication', function () {
       ]);
       await Promise.all([sync1.safeStop(), sync2.safeStop()]);
 
-      expect(await objectDB.__versionDB.get('world/foo'))
-        .deep.equals(await objectDB2.__versionDB.get('world/foo'));
+      expect(withoutStorageRev(await objectDB.__versionDB.get('world/foo')))
+        .deep.equals(withoutStorageRev(await objectDB2.__versionDB.get('world/foo')));
     });
 
     it('conflict', async () => {
