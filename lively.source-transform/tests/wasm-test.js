@@ -61,9 +61,9 @@ describe('wasm transform', function () {
     expectIncludes(code, `_rec.x = 23;`);
   });
 
-  it('captures top-level var declarations and references like the Babel transform', function () {
+  it('captures top-level var declarations and references', function () {
     const code = transformWithWasm('var y, z = foo + bar; baz.foo(z, 3);');
-    expectIncludes(code, '_rec.y = _rec.y || undefined;');
+    expectIncludes(code, '_rec.y = Object.prototype.hasOwnProperty.call(_rec, "y") ? _rec.y : undefined;');
     expectIncludes(code, '_rec.z = _rec.foo + _rec.bar;');
     expectIncludes(code, '_rec.baz.foo(_rec.z, 3);');
   });
