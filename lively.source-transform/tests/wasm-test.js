@@ -2,6 +2,7 @@
 import { expect } from 'mocha-es6';
 import { parse } from 'lively.ast';
 import { initWasm, isAvailable, swcTransform } from '../swc/browser-transform.js';
+import { setupSwcTranspiler } from '../swc/transpiler-setup.js';
 
 const moduleId = 'lively.source-transform/tests/wasm-test-input.js';
 
@@ -59,6 +60,22 @@ describe('wasm transform', function () {
     expectIncludes(code, 'System.register([], function');
     expectIncludes(code, `_rec = lively.FreezerRuntime || lively.frozenModules.recorderFor("${moduleId}", __contextModule__);`);
     expectIncludes(code, `_rec.x = 23;`);
+  });
+
+  it('registers SWC under its own transpiler id', async function () {
+    const modules = new Map();
+    const testSystem = {
+      baseURL: System.baseURL,
+      _loader: {},
+      newModule: module => module,
+      set: (id, module) => modules.set(id, module),
+      get: id => modules.get(id),
+      config (config) { Object.assign(this, config); }
+    };
+
+    await setupSwcTranspiler(testSystem);
+    expect(testSystem.transpiler).equals('lively.transpiler.swc');
+    expect(modules.get('lively.transpiler.swc').default.name).equals('SwcBrowserTranspiler');
   });
 
   it('captures top-level var declarations and references', function () {

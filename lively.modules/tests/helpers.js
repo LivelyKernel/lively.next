@@ -130,8 +130,10 @@ function runInIframe (id, func) {
 
 function prepareSystem (name, testProjectDir) {
   const S = getSystem(name, { baseURL: testProjectDir });
-  S.set('lively.transpiler.babel', System.get('lively.transpiler.babel'));
-  S.config({ transpiler: 'lively.transpiler.babel' });
+  const transpiler = System.transpiler;
+  S.set(transpiler, System.get(transpiler));
+  S.config({ transpiler });
+  S._loader.transpilerPromise = System._loader.transpilerPromise;
   S.translate = async (load, opts) => await System.translate.bind(S)(load, opts);
   S.useModuleTranslationCache = false;
   S.babelOptions = System.babelOptions;
