@@ -64,9 +64,20 @@ jobs:
       - name: Start the lively server
         run: |
           chmod a+x ./start-server.sh
-          ./start-server.sh > /dev/null 2>&1 &
-          # wait until server is guaranteed to be running
-          sleep 30
+          for attempt in 1 2 3; do
+            ./start-server.sh > /tmp/lively-next-boot-server.log 2>&1 &
+            server_pid=$!
+            if node ./scripts/wait-for-server.js http://127.0.0.1:9011/ 120000 1000 "$server_pid"; then
+              exit 0
+            fi
+            echo "Lively server boot-check start attempt $attempt/3 failed. Recent server output:"
+            tail -80 /tmp/lively-next-boot-server.log 2>/dev/null || true
+            kill "$server_pid" 2>/dev/null || true
+            wait "$server_pid" 2>/dev/null || true
+            pkill -f "bin/start-server.js.*9011" 2>/dev/null || true
+            pkill -f "start-server.sh" 2>/dev/null || true
+          done
+          exit 1
       - name: Run boot check script
         run: |
           chmod a+x ./scripts/check-boot.sh

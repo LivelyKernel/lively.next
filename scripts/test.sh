@@ -18,6 +18,72 @@ RED_TESTS=0
 SKIPPED_TESTS=0
 STARTED_SERVER=0
 FAILURE=0
+SERVER_READY_URL="${LIVELY_TEST_SERVER_READY_URL:-http://127.0.0.1:9011/}"
+SERVER_READY_TIMEOUT="${LIVELY_TEST_SERVER_READY_TIMEOUT:-120000}"
+SERVER_START_MAX_ATTEMPTS="${LIVELY_TEST_SERVER_START_MAX_ATTEMPTS:-3}"
+TEST_RESULT_MAX_ATTEMPTS="${LIVELY_TEST_RESULT_MAX_ATTEMPTS:-3}"
+
+start_test_server() {
+  local attempt=1
+
+  while (( attempt <= SERVER_START_MAX_ATTEMPTS )); do
+    # start a new lively.next server
+    ./start-server.sh > /tmp/lively-next-test-server.log 2>&1 &
+    SERVER_PID=$!
+    if node ./scripts/wait-for-server.js "$SERVER_READY_URL" "$SERVER_READY_TIMEOUT" 1000 "$SERVER_PID"; then
+      return 0
+    fi
+
+    echo "Lively server start attempt $attempt/$SERVER_START_MAX_ATTEMPTS failed. Recent server output:"
+    tail -80 /tmp/lively-next-test-server.log 2>/dev/null || true
+    stop_test_server
+    ((attempt++))
+  done
+
+  echo "Failed to start lively server for tests after $SERVER_START_MAX_ATTEMPTS attempts."
+  return 1
+}
+
+stop_test_server() {
+  if [ -n "$SERVER_PID" ]; then
+    kill "$SERVER_PID" 2>/dev/null || true
+    wait "$SERVER_PID" 2>/dev/null || true
+    SERVER_PID=
+  fi
+  pkill -f "bin/start-server.js.*9011" 2>/dev/null || true
+  pkill -f "start-server.sh" 2>/dev/null || true
+}
+
+run_package_tests() {
+  local package="$1"
+  local attempt=1
+  local output
+
+  while true; do
+    output=$(node --dns-result-order ipv4first ./scripts/test.js "$package")
+    if ! echo "$output" | grep -Eq "ECONNREFUSED|ECONNRESET|socket hang up"; then
+      echo "$output"
+      return 0
+    fi
+
+    if (( attempt >= TEST_RESULT_MAX_ATTEMPTS )); then
+      echo "$output"
+      return 0
+    fi
+
+    echo "Test result request for $package failed due to a transient server connection issue; retrying ($attempt/$TEST_RESULT_MAX_ATTEMPTS)..." >&2
+    if [ "$CI" ]; then
+      stop_test_server >&2
+      start_test_server >&2 || {
+        echo "$output"
+        return 0
+      }
+    else
+      node ./scripts/wait-for-server.js "$SERVER_READY_URL" "$SERVER_READY_TIMEOUT" > /dev/null || true
+    fi
+    ((attempt++))
+  done
+}
 
 # Clean up any lingering headless Chrome processes and lock files
 # These can remain from previous test runs and block new browser instances
@@ -106,10 +172,7 @@ then
   else
     STARTED_SERVER=1
     echo "No local lively server was found on port 9011. Starting a server on port 9011 to run tests on."
-    # start a new lively.next server
-    ./start-server.sh > /dev/null 2>&1 &
-    # wait until server is guaranteed to be running
-    sleep 30 
+    start_test_server || exit 1
   fi
 fi
 
@@ -118,13 +181,13 @@ for package in "${testfiles[@]}"; do
   ((TESTED_PACKAGES++))
   if [ "$CI" ]; 
   then
-    # start a new lively.next server
-    ./start-server.sh > /dev/null 2>&1 &
-    # wait until server is guaranteed to be running
-    sleep 30 
+    start_test_server || {
+      ((FAILURE+=1))
+      continue
+    }
   fi
   # echo output without the summary stats
-  output=$(node --dns-result-order ipv4first ./scripts/test.js "$package")
+  output=$(run_package_tests "$package")
   
   if uname | grep 'Linux' > /dev/null; then
     echo "$output" | sed -s -e 's/SUMMARY.*$//g'
@@ -151,13 +214,13 @@ for package in "${testfiles[@]}"; do
 
   if [ "$CI" ]; 
   then
-    pkill -f lively.*start
+    stop_test_server
   fi
 done
 
 if [ "$STARTED_SERVER" = "1" ];
 then
-    pkill -f -n lively.*start
+    stop_test_server
 fi
 
 # Clean up any headless Chrome processes that may have been started during tests
