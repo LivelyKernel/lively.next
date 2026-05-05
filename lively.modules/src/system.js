@@ -23,6 +23,15 @@ const defaultOptions = {
   notificationLimit: null
 };
 
+const livelyTranspilerIds = [
+  'lively.transpiler.babel',
+  'lively.transpiler.swc'
+];
+
+function isLivelyTranspiler (transpiler) {
+  return livelyTranspilerIds.includes(transpiler);
+}
+
 function safeAssign (proceed, ...args) {
   if (Object.isFrozen(args[0])) return args;
   return proceed(...args);
@@ -259,7 +268,7 @@ function prepareSystem (System, config) {
     fetch: function (load, proceed) {
       const s = this.moduleSources?.[load.name];
       if (s) return s;
-      if (this.transpiler !== 'lively.transpiler.babel') return proceed(load);
+      if (!isLivelyTranspiler(this.transpiler)) return proceed(load);
       return fetchResource.call(this, proceed, load);
     },
     translate: function (load, opts) {
@@ -321,11 +330,12 @@ function prepareSystem (System, config) {
 
   if (!config.transpiler && System.transpiler === 'traceur') {
     const initialSystem = GLOBAL.System;
-    if (initialSystem.transpiler === 'lively.transpiler.babel') {
-      System.set('lively.transpiler.babel', initialSystem.get('lively.transpiler.babel'));
+    if (isLivelyTranspiler(initialSystem.transpiler)) {
+      const transpiler = initialSystem.transpiler;
+      System.set(transpiler, initialSystem.get(transpiler));
       System._loader.transpilerPromise = initialSystem._loader.transpilerPromise;
       System.config({
-        transpiler: 'lively.transpiler.babel',
+        transpiler,
         babelOptions: Object.assign(initialSystem.babelOptions || {}, config.babelOptions)
       });
     } else {
@@ -549,7 +559,7 @@ async function finalizeNormalization (System, name, normalized) {
 
 async function normalizeHook (proceed, name, parent, parentAddress) {
   const System = this;
-  if (System.transpiler !== 'lively.transpiler.babel') return await proceed(name, parent, true);
+  if (!isLivelyTranspiler(System.transpiler)) return await proceed(name, parent, true);
   if (parent && name === 'cjs') {
     return 'cjs';
   }

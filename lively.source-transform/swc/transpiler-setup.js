@@ -4,6 +4,8 @@
 import { initWasm, swcTransform, isAvailable } from './browser-transform.js';
 import { setupBabelTranspiler } from '../babel/plugin.js';
 
+const swcTranspilerId = 'lively.transpiler.swc';
+
 // Extra identifiers that must never be captured (browser APIs that break
 // when accessed as properties of __lvVarRecorder).
 const BROWSER_DONT_TRANSFORM = [
@@ -247,18 +249,19 @@ export async function setupSwcTranspiler (System) {
 
   // Override the translate hook.
   // SystemJS 0.21 with the lively.fetch loader plugin routes transpilation
-  // through the registered transpiler module ('lively.transpiler.babel'),
-  // NOT through System.translate directly. We need to override both.
+  // through the registered transpiler module, NOT through System.translate
+  // directly. We need to override both.
   System.translate = async (load, opts) => swcTranslate.call(System, load, opts);
   System._loader.transpilerPromise = Promise.resolve({ translate: swcTranslate });
 
-  // Re-register the transpiler module with SWC's translate.
+  // Register the SWC transpiler module with SWC's translate.
   // System.newModule() returns a frozen namespace, so we can't mutate it —
   // we must replace the whole module registration.
-  System.set('lively.transpiler.babel', System.newModule({
+  System.set(swcTranspilerId, System.newModule({
     default: SwcBrowserTranspiler,
     translate: swcTranslate
   }));
+  System.config({ transpiler: swcTranspilerId });
 
   console.log('[lively.swc] WASM transpiler active');
 }

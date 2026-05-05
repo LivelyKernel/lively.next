@@ -27,8 +27,10 @@ let S, opts, packagesToRemove;
 describe('object package', function () {
   beforeEach(async () => {
     S = getSystem('test', { baseURL: testBaseURL });
-    S.set('lively.transpiler.babel', System.get('lively.transpiler.babel'));
-    S.config({ transpiler: 'lively.transpiler.babel' });
+    const transpiler = System.transpiler;
+    S.set(transpiler, System.get(transpiler));
+    S.config({ transpiler });
+    S._loader.transpilerPromise = System._loader.transpilerPromise;
     S.translate = async (load, opts) => await System.translate.bind(S)(load, opts);
     S._scripting = scripting;
     opts = { baseURL: testBaseURL, System: S };

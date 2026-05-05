@@ -6,6 +6,11 @@ const { funcCall, member, id, literal } = nodes;
 import { arr } from 'lively.lang';
 import { runEval as vmRunEval } from './eval.js';
 
+const livelyTranspilerIds = [
+  'lively.transpiler.babel',
+  'lively.transpiler.swc'
+];
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // load support
 
@@ -113,13 +118,13 @@ function getEs6Transpiler (System, options, env) {
         babelPluginTranspilerForAsyncAwaitCode(System, babelPlugin, options.targetModule, env));
   }
 
-  if (System.transpiler === 'lively.transpiler.babel') {
-    let Transpiler = System.get('lively.transpiler.babel').default;
+  if (livelyTranspilerIds.includes(System.transpiler)) {
+    let Transpiler = System.get(System.transpiler).default;
     let transpiler = new Transpiler(System, options.targetModule, env);
     return (source, options) => transpiler.transpileDoit(source, options);
   }
 
-  throw new Error('Sorry, currently only babel is supported as es6 transpiler for runEval!');
+  throw new Error('Sorry, currently only babel and swc are supported as es6 transpilers for runEval!');
 }
 
 function evalEnd (System, code, options, result) {
