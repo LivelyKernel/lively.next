@@ -13582,6 +13582,20 @@ const makeEmitter = isNode$1
     return obj;
   };
 
+/* global require, Worker, URL, webkitURL, Blob, BlobBuilder, process, require,self,global,remoteWorker,postMessage,XMLHttpRequest,__FUNCTIONDECLARATIONS__,initBrowserGlobals,loadDependenciesBrowser,initOnMessageHandler,initWorkerInterface,initWorkerMessenger,loadDependenciesNodejs,importScripts */
+
+
+/*
+ * Browser/freezer contexts can expose partial CommonJS-looking globals through
+ * bundler shims. Treat the environment as Node.js only when the real Node
+ * process object is present and no browser global is active.
+ */
+typeof globalThis !== 'undefined' &&
+  typeof globalThis.window === 'undefined' &&
+  typeof globalThis.self === 'undefined' &&
+  typeof globalThis.require === 'function' &&
+  !!(globalThis.process && globalThis.process.versions && globalThis.process.versions.node);
+
 /* global global,self,process */
 
 typeof process !== 'undefined' && process.env && typeof process.exit === 'function';
