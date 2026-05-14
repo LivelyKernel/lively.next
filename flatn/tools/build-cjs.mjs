@@ -5,6 +5,15 @@ import { builtinModules } from 'node:module';
 import { flatnResolve } from '../module-resolver.js';
 
 try {
+  /*
+   * The generated CJS file is used directly by Node and is also translated by
+   * SystemJS during browser boot. Keep core modules external so the Node path
+   * keeps using Node's own implementations, while flatn/package.json maps the
+   * browser-safe Buffer polyfill back to the "buffer" package for SystemJS.
+   * Without that package-level map a restored dependency cache can resolve
+   * buffer to the empty Node placeholder and fail at Buffer.isBuffer during the
+   * world-load proof.
+   */
   const nodeBuiltins = new Set(
     builtinModules
       .flatMap(m => [m, m.startsWith('node:') ? m.slice(5) : `node:${m}`])
@@ -16,8 +25,6 @@ try {
     plugins: [
       {
         resolveId: async (id, parentURL) => {
-          // Keep Node builtins external for the cjs bundle to avoid
-          // environment-dependent polyfill resolution via flatn package lookup.
           if (nodeBuiltins.has(id)) {
             return { id: id.startsWith('node:') ? id.slice(5) : id, external: true };
           }
