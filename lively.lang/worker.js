@@ -11,7 +11,16 @@ import { waitFor } from './function.js';
 import { create as messengerCreate } from './messenger.js';
 import Closure from './closure.js';
 
-let isNodejs = typeof require !== 'undefined' && typeof process !== 'undefined';
+/*
+ * Browser/freezer contexts can expose partial CommonJS-looking globals through
+ * bundler shims. Treat the environment as Node.js only when the real Node
+ * process object is present and no browser global is active.
+ */
+let isNodejs = typeof globalThis !== 'undefined' &&
+  typeof globalThis.window === 'undefined' &&
+  typeof globalThis.self === 'undefined' &&
+  typeof globalThis.require === 'function' &&
+  !!(globalThis.process && globalThis.process.versions && globalThis.process.versions.node);
 
 // ignore-in-doc
 // Code in worker setup is evaluated in the context of workers, it will get to

@@ -1,9 +1,26 @@
 /*global process,System,global*/
 import { buildPackageMap, installDependenciesOfPackage, buildPackage, resetPackageMap } from "flatn";
+import { createRequire } from 'module';
+import { pathToFileURL } from 'url';
 import { exec } from "./shell-exec.js";
 import { Package } from "./package.js";
 import { resource } from 'lively.resources';
 import { promise, string } from 'lively.lang';
+
+const require = createRequire(import.meta.url);
+const resetResolverPackageMap = require('../flatn/flatn-cjs.js').resetPackageMap;
+const { flatnResolve } = require('../flatn/module-resolver.js');
+
+/**
+ * Imports a dependency through flatn after the package map has been rebuilt.
+ * @param {string} id - Package id to resolve from the freshly installed tree.
+ * @returns {Promise<object>} Module namespace returned by dynamic import().
+ */
+function importFlatnDependency (id) {
+  const resolved = flatnResolve(id, new URL(import.meta.url).pathname, 'node-import');
+  if (!resolved) throw new Error(`Unable to resolve installed dependency: ${id}`);
+  return import(pathToFileURL(resolved).href);
+}
 
 var modules, join, getPackageSpec, readPackageSpec;
 
@@ -268,7 +285,15 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // by this time, all of the dependencies have been installed, and we can import them now
     const tInit = Date.now();
     spinner.start('Initializing module system...');
-    ({ default: global.System } = await import('systemjs'));
+    /*
+     * Fresh installs rebuild the dependency tree before SystemJS and the import
+     * map generator are imported. Reset both flatn package maps and resolve the
+     * follow-up imports through flatn explicitly so stale package-name cache
+     * entries cannot point at modules that did not exist at process start.
+     */
+    resetPackageMap();
+    resetResolverPackageMap();
+    ({ default: global.System } = await importFlatnDependency('systemjs'));
 
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     // System + ObjectDB init
@@ -335,7 +360,7 @@ export async function install(baseDir, dependenciesDir, verbose) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
     if (step9_createImportMap) {
       const tMaps = Date.now();
-      const { Generator } = await import('@jspm/generator');
+      const { Generator } = await importFlatnDependency('@jspm/generator');
       System.set('@jspm_generator', System.newModule({ default: Generator }));
       const { generateImportMap } = await System.import('lively.server/plugins/lib-lookup.js');
       for (let p of packages) {
@@ -384,7 +409,7 @@ async function safelyRemove(baseDir, file) {
 }
 
 export async function setupSystem(baseURL) {
-  ({ default: global.babel } = await import("@babel/core"));
+  ({ default: global.babel } = await importFlatnDependency("@babel/core"));
   modules = await import("lively.modules");
   let livelySystem = modules.getSystem("lively", {baseURL, _nodeRequire: System._nodeRequire });
   modules.changeSystem(livelySystem, true);

@@ -36,6 +36,10 @@ if (isNode) {
 }
 
 const custom = {};
+// Acorn can arrive as either a namespace object or a default-wrapped CommonJS
+// module depending on whether the caller came through native Node import,
+// SystemJS, or the freezer browser transform.
+const acornBase = acornDefault.Parser ? acornDefault : acornDefault.default;
 
 custom.forEachNode = forEachNode;
 custom.matchNodes = matchNodes;
@@ -47,10 +51,10 @@ custom.findNodeByAstIndex = findNodeByAstIndex;
 custom.findStatementOfNode = findStatementOfNode;
 custom.addAstIndex = addAstIndex;
 
-const Parser = acornDefault.Parser.extend(ClassFields, StaticClassFeatures, PrivateMethods, Decorators);
+const Parser = acornBase.Parser.extend(ClassFields, StaticClassFeatures, PrivateMethods, Decorators);
 
 const acorn = {};
-Object.assign(acorn, acornDefault);
+Object.assign(acorn, acornBase);
 acorn.Parser = Parser;
 acorn.parse = (source, opts) => Parser.parse(source, opts);
 

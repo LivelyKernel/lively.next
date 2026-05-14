@@ -9,7 +9,6 @@ import { install as installHook } from 'lively.modules/src/hooks.js';
 import { updateBundledModules } from 'lively.modules/src/module.js';
 import { Project } from 'lively.project/project.js';
 import { pathForBrowserHistory } from 'lively.morphic/helpers.js';
-import { installLinter } from 'lively.ide/js/linter.js';
 import { setupSwcTranspiler } from 'lively.source-transform/swc/transpiler-setup.js';
 import untar from 'js-untar';
 import bowser from 'bowser';
@@ -178,6 +177,34 @@ function logInfo (...info) {
   console.log('%c' + info[0], `color: white; background: ${Color.darkGray}; border-radius: 10px; padding: 1px 4px;`, ...info.slice(1));
 }
 
+/**
+ * Checks whether the boot URL explicitly opts into installing the JS linter.
+ * @returns {boolean} True when the query string requests linter installation.
+ */
+function shouldInstallLinter () {
+  return query.installLinter === true || query.installLinter === 'true';
+}
+
+/**
+ * Installs the JS linter only after the bootstrapped SystemJS instance exists.
+ * @param {object} System - The active bootstrapped module system.
+ * @returns {Promise<void>} Resolves after the optional linter install attempt.
+ */
+async function installLinterSafely (System) {
+  /*
+   * The linter is useful in an interactive editor session, but it is not a
+   * hard requirement for resurrection boot. Keeping it behind a dynamic import
+   * prevents its parser/tooling dependencies from making project/world startup
+   * fail before the editable world is available.
+   */
+  try {
+    const { installLinter } = await import('lively.ide/js/linter.js');
+    if (typeof installLinter === 'function') installLinter(System);
+  } catch (err) {
+    console.warn('[freezer bootstrap] Skipping linter install:', err?.message || err);
+  }
+}
+
 async function shallowReloadModulesIfNeeded (modulesToCheck, moduleHashes, R) {
   const modsToReload = [];
   for (let modId of modulesToCheck) {
@@ -234,7 +261,7 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
       lively.modules.changeSystem(System, true);
       $world.env.installSystemChangeHandlers();
 
-      installLinter(System);
+      if (shouldInstallLinter()) await installLinterSafely(System);
       await setupSwcTranspiler(System);
       logInfo('Setup SystemJS:', Date.now() - ts + 'ms');
 
@@ -525,6 +552,8 @@ export async function bootstrap ({
         }
       }
     } catch (err) {
+      // Keep transition errors inspectable for the fail-fast browser boot proof
+      // instead of losing them inside the loading screen.
       window.__loadError__ = err;
     }
 

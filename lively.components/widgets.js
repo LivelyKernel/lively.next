@@ -16,7 +16,9 @@ import kld from 'kld-intersections';
 import { Menu } from 'lively.components';
 import { SystemTooltip } from 'lively.morphic/tooltips.cp.js';
 
-const { Shapes, Intersection } = kld;
+// The freezer boot bundle can externalize this geometry package before the live
+// package system has filled it in, so destructure defensively during startup.
+const { Shapes, Intersection } = kld || {};
 
 class LeashEndpoint extends Ellipse {
   get dragTriggerDistance () { return this.connectedMorph ? 20 : 0; }

@@ -108,6 +108,15 @@ function detectFormat (moduleId) {
   // return module(moduleId).format();
 }
 
+/**
+ * Checks whether an id names a Node.js built-in module.
+ * @param {string} id - Raw import id passed to the resolver.
+ * @returns {boolean} True for "node:" imports and bare built-in module names.
+ */
+function isBuiltinModuleId (id) {
+  return id?.startsWith('node:') || builtinModules.includes(id);
+}
+
 const spinner = {
   frames: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
   idx: 0,
@@ -280,7 +289,15 @@ function supportingPlugins(context = 'node', self) {
     },
     {
        name: 'lively-resolve',
-       resolveId: (id, importer) => self.resolveId(id, importer)
+       resolveId: (id, importer) => {
+         /*
+          * Browser bundles still need Rollup's node polyfill plugin to see
+          * built-ins such as "path" or "node:buffer". Resolving them through
+          * flatn first turns them into host paths and bypasses the polyfills.
+          */
+         if (context === 'browser' && isBuiltinModuleId(id)) return null;
+         return self.resolveId(id, importer);
+       }
     }, // but only do resolutions so that polyfills does not screw us up
     context == 'browser' && nodePolyfills(), // only if we bundle for the browser
     commonjs({
@@ -288,7 +305,9 @@ function supportingPlugins(context = 'node', self) {
       defaultIsModuleExports: true,
       transformMixedEsModules: true,
       dynamicRequireRoot: process.env.lv_next_dir,
-      exclude: ['../**/base/0.11.1/utils.js', '../**/use/2.0.0/utils.js', /lively./],
+      // Transform dependencies under lively.next-node_modules, but do not run
+      // the CommonJS transform across the repo's own lively.* package sources.
+      exclude: ['../**/base/0.11.1/utils.js', '../**/use/2.0.0/utils.js', /[\\/]lively\.(?!next-node_modules)[^\\/]+[\\/]/],
       dynamicRequireTargets: [
          resolveModuleId('babel-plugin-transform-es2015-modules-systemjs')
       ]

@@ -86,7 +86,13 @@ export function bulletProofNamespaces (code, chunkFileName, isResurrectionBuild,
             const [useStrictDirective] = functionBody.get('directives');
             if (useStrictDirective) {
               useStrictDirective.remove();
-              functionBody.unshiftContainer('body', babel.parse("var __contextModule__ = typeof module !== 'undefined' ? module : arguments[1];").program.body[0]);
+              /*
+               * Browser-targeted resurrection chunks can execute third-party
+               * packages that probe process.env. Provide a minimal page-global
+               * process shim next to the existing module context shim so those
+               * probes do not abort boot before the live module system takes over.
+               */
+              functionBody.unshiftContainer('body', babel.parse("var __contextModule__ = typeof module !== 'undefined' ? module : arguments[1]; var process = globalThis.process || (globalThis.process = { env: {} }); process.env = process.env || {};").program.body);
             }
             if (isResurrectionBuild) {
               path.get('body.0.expression.callee.object').replaceWith(t.Identifier('BootstrapSystem'));
@@ -122,6 +128,12 @@ export function bulletProofNamespaces (code, chunkFileName, isResurrectionBuild,
         }
       })]
     });
+    /*
+     * Rollup's shimMissingExports can emit an uninitialized helper for exports
+     * that are deliberately absent from externalized boot-only modules. Make it
+     * callable so namespace destructuring does not crash the browser bundle.
+     */
+    transformedCode = transformedCode.replace('var _missingExportShim = void 0;', 'var _missingExportShim = () => {};');
     return { code: transformedCode, map }
   }
 
@@ -151,7 +163,13 @@ export function bulletProofNamespaces (code, chunkFileName, isResurrectionBuild,
     // this messes up the source map
     code = code.replace('System.register', `BootstrapSystem._currentFile = "${chunkFileName}";\nBootstrapSystem.register`);
   }
-  code = code.replace("'use strict';", "var __contextModule__ = typeof module !== 'undefined' ? module : arguments[1];\n");
+  /*
+   * Keep the non-source-map path behaviorally aligned with the Babel path above:
+   * resurrection chunks need a browser-safe process.env and a callable missing
+   * export shim before the first module body executes.
+   */
+  code = code.replace("'use strict';", "var __contextModule__ = typeof module !== 'undefined' ? module : arguments[1];\nvar process = globalThis.process || (globalThis.process = { env: {} });\nprocess.env = process.env || {};\n");
+  code = code.replace('var _missingExportShim = void 0;', 'var _missingExportShim = () => {};');
   return { code };
 }
 
@@ -893,6 +911,23 @@ export default class LivelyRollup {
     if (importMap) {
       let remapped = resolveViaImportMap(id, importMap, importer)
       if (remapped) id = remapped;
+    }
+
+    /*
+     * Browser bundles should honor package-level browser remaps before falling
+     * back to Node-oriented entry points. engine.io-client also ships Node-only
+     * websocket files behind relative imports, so map those to browser-safe
+     * files or to the empty module when the dependency is not needed in boot.
+     */
+    if (this.asBrowserModule && importingPackage?.browser && obj.isObject(importingPackage.browser)) {
+      const remapped = importingPackage.browser[id];
+      if (remapped === false) return '@empty.js';
+      if (typeof remapped === 'string') id = remapped;
+    }
+
+    if (this.asBrowserModule && importingPackage?.name === 'engine.io-client') {
+      if (id === 'ws') return '@empty.js';
+      if (id.startsWith('.') && id.endsWith('.node.js')) id = id.replace(/\.node\.js$/, '.js');
     }
     
     this.moduleToPkg.set(id, importingPackage);

@@ -1,6 +1,8 @@
 /* global process */
 import { rollup } from '@rollup/wasm-node';
 import jsonPlugin from '@rollup/plugin-json';
+import { babel } from '@rollup/plugin-babel';
+import PresetEnv from '@babel/preset-env';
 import util from 'node:util';
 import { lively } from 'lively.freezer/src/plugins/rollup';
 import resolver from 'lively.freezer/src/resolvers/node.cjs';
@@ -9,16 +11,42 @@ const verbose = process.argv[2] === '--verbose';
 const minify = !process.env.CI;
 const sourceMap = !!process.env.DEBUG;
 
-// Combine excluded modules from both builds to ensure compatibility
+/*
+ * The unified resurrection bundle must load enough code to replace the loading
+ * screen with an editable world, but it does not need heavy editor tooling,
+ * storage adapters, parser packages, or build-time plugins in the boot bundle.
+ * Externalizing those packages keeps Rollup away from known Node-only edges and
+ * leaves them to the live package system after the world is running.
+ */
 const commonExcludedModules = [
   'chai', 'mocha', // references old lgtg that breaks the build
   'rollup', // has a dist file that cant be parsed by rollup
+  'eslint', 'pouchdb', 'pouchdb-adapter-mem',
+  'lively.git', 'lively.storage', 'libsodium', 'libsodium-wrappers',
+  'parse5', 'entities',
+  'markdown-it', 'markdown-it-checkbox', 'markdown-it-implicit-figures',
+  'markdown-it-html5-media', 'markdown-it-attrs', 'js-beautify',
   'picomatch', 'path-is-absolute', 'fs.realpath', // from loading-screen build
   // other stuff that is only needed by rollup
+  '@babel/core',
+  '@babel/code-frame',
+  '@babel/generator',
+  '@babel/helpers',
+  '@babel/highlight',
+  '@babel/parser',
+  '@babel/preset-env',
+  '@babel/plugin-syntax-import-meta',
+  '@babel/plugin-transform-modules-systemjs',
+  '@babel/helper-module-imports',
+  '@babel/template',
+  '@babel/traverse',
   '@swc/core',
   '@rollup/plugin-json',
   '@rollup/plugin-commonjs',
   'rollup-plugin-polyfill-node',
+  'esm://ga.jspm.io/npm:@rollup/plugin-commonjs',
+  'esm://ga.jspm.io/npm:@rollup/plugin-inject',
+  'esm://ga.jspm.io/npm:rollup-plugin-polyfill-node',
   'babel-plugin-transform-es2015-modules-systemjs'
 ];
 
@@ -38,9 +66,13 @@ const commonPlugins = [
 try {
   console.log('   Bundling landing-page + loading-screen...');
 
-  // Single rollup build with multiple entry points
-  // Rollup will automatically share module parsing, transformation, and resolution
+  /*
+   * Build both entry points in one Rollup graph so shared modules are parsed and
+   * emitted once. The global context matches the browser runtime, where top-level
+   * `this` must resolve to the page global instead of being undefined.
+   */
   const build = await rollup({
+    context: 'globalThis',
     input: {
       'landing-page': './src/landing-page.cp.js',
       'loading-screen': './src/loading-screen.cp.js'
@@ -55,13 +87,25 @@ try {
         minify,
         verbose,
         sourceMap,
-        useSwc: true,
         isResurrectionBuild: true,
         asBrowserModule: true,
         excludedModules: commonExcludedModules,
         resolver
       }),
-      ...commonPlugins
+      ...commonPlugins,
+      /*
+       * Keep Babel as the final browser compatibility pass for this boot bundle.
+       * The SWC path can be revisited separately, but Babel has the known-good
+       * behavior for the resurrection build and avoids boot-only regressions.
+       */
+      babel({
+        babelHelpers: 'bundled',
+        presets: [
+          [PresetEnv, {
+            targets: '> 3%, not dead'
+          }]
+        ]
+      })
     ]
   });
 
