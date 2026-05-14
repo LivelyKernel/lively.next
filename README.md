@@ -55,7 +55,21 @@ For some more advanced development operations (such as bulk testing from the com
 >
 > If you want to change files outside of `lively` (i.e., in a normal editor), while still having the changes be available in lively when opening the file, you'll need to install `entr` from its [repository](https://github.com/eradman/entr). Usually, when working inside of `lively.next`, this will not be an issue, but it can be handy when working heavily on the core of `lively`. *This feature works semi-reliable at the moment. If you are interested in this and would like to help debug this, please reach out!*
 
-### Installation Instructions
+### Docker Compose Setup
+
+If Docker with Compose support is installed, you can run `lively.next` without installing Node.js, Bun, Rust, Python packages, or the other development tools on the host.
+
+From the repository root, run:
+
+```bash
+docker compose up --build
+```
+
+The first run installs project dependencies and builds generated artifacts inside the container, so it can take several minutes. When the server is ready, open [http://localhost:9011](http://localhost:9011).
+
+The Compose setup bind-mounts this checkout into the container at `/workspace`. Files changed from inside the container are the files in your host checkout. Generated ignored directories such as `lively.next-node_modules`, `.puppeteer-browser-cache`, `local_projects`, `snapshots`, and `esm_cache` are also written into the host checkout so later container starts can reuse them.
+
+### Manual Installation Instructions
 
 If you are on macOS, install the required tooling first:
 
