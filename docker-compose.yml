@@ -1,0 +1,17 @@
+services:
+  lively:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # Use an init process and larger shared memory so browser boot checks behave
+    # like they do in a normal desktop browser environment.
+    init: true
+    shm_size: 2gb
+    working_dir: /workspace
+    ports:
+      # Keep the development server local to the host machine.
+      - "127.0.0.1:9011:9011"
+    volumes:
+      # Bind mount the checkout so edits and generated install artifacts remain
+      # visible on the host and survive container rebuilds.
+      - .:/workspace

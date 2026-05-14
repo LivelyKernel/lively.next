@@ -1,0 +1,35 @@
+.git
+
+# Host-visible generated dependency/cache directories are created through the
+# bind mount at runtime, not copied into the image build context.
+.puppeteer-browser-cache
+.livelydbs
+.module_cache
+components_cache
+custom-npm-modules
+dev-deps
+esm_cache
+lively.next-node_modules
+local_projects
+resources
+snapshots
+subservers
+tmp
+uploads
+users
+*.idb
+
+# Local runtime files are seeded by the entrypoint when absent.
+favicon.ico
+localconfig.js
+package-lock.json
+robots.txt
+user-server.sh
+/flatn/.cachedImportMap.json
+/lively.*/.cachedImportMap.json
+/lively.classes/build
+/lively.freezer/landing-page
+/lively.freezer/loading-screen
+/lively.installer.log
+/lively.server/usage_log.json
+/mocha-es6/.cachedImportMap.json

@@ -105,7 +105,9 @@ fi
 export NODE_OPTIONS="--no-warnings --experimental-modules --loader $lv_next_dir/flatn/resolver.mjs";
 
 section "Installing packages"
-node lively.installer/install-with-node.js $PWD \
+# Fail fast here so the Docker entrypoint never continues into generated build
+# steps after a dependency install failure.
+node lively.installer/install-with-node.js "$PWD" || exit 1
 
 section "Building class runtime"
 step "Compiling lively.classes runtime..."
