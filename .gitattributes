@@ -1,1 +1,21 @@
-* text=auto
+# This repo is built and validated primarily on Linux runners. Keep text files
+# checked out with LF so shell scripts, generated browser bundles, and source
+# patches behave the same on Windows, macOS, and Linux.
+* text=auto eol=lf
+
+# Keep common binary assets out of line-ending normalization.
+*.br binary
+*.gif binary
+*.gz binary
+*.ico binary
+*.jpg binary
+*.jpeg binary
+*.otf binary
+*.pdf binary
+*.png binary
+*.ttf binary
+*.wasm binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.zip binary
