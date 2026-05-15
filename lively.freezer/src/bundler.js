@@ -51,6 +51,17 @@ const SYSTEMJS_STUB = `
 ${GLOBAL_FETCH}
 if (!G.System) G.System = G.lively.FreezerRuntime;`;
 
+/*
+ * Rollup uses `_missingExportShim` when an import asks for an export that was
+ * intentionally externalized or mapped to the blank module. Browser boot can
+ * still execute compatibility packages that read `buffer.Buffer.isBuffer`
+ * through that placeholder. Keep the shim callable for existing namespace
+ * destructuring behavior, and give it the smallest Buffer surface needed by
+ * those feature tests so an absent Node polyfill degrades to "not a Buffer"
+ * instead of aborting the world load.
+ */
+const MISSING_EXPORT_SHIM_SOURCE = 'var _missingExportShim = function () {}; _missingExportShim.Buffer = { isBuffer: function () { return false; } }; _missingExportShim.default = _missingExportShim;';
+
 const CLASS_INSTRUMENTATION_MODULES = [
   'lively.morphic',
   'lively.components',
@@ -130,10 +141,10 @@ export function bulletProofNamespaces (code, chunkFileName, isResurrectionBuild,
     });
     /*
      * Rollup's shimMissingExports can emit an uninitialized helper for exports
-     * that are deliberately absent from externalized boot-only modules. Make it
-     * callable so namespace destructuring does not crash the browser bundle.
+     * that are deliberately absent from externalized boot-only modules. Replace
+     * it with the shared browser-safe placeholder before the bundle is served.
      */
-    transformedCode = transformedCode.replace('var _missingExportShim = void 0;', 'var _missingExportShim = () => {};');
+    transformedCode = transformedCode.replace('var _missingExportShim = void 0;', MISSING_EXPORT_SHIM_SOURCE);
     return { code: transformedCode, map }
   }
 
@@ -165,11 +176,11 @@ export function bulletProofNamespaces (code, chunkFileName, isResurrectionBuild,
   }
   /*
    * Keep the non-source-map path behaviorally aligned with the Babel path above:
-   * resurrection chunks need a browser-safe process.env and a callable missing
-   * export shim before the first module body executes.
+   * resurrection chunks need a browser-safe process.env and the same
+   * Buffer-aware missing export shim before the first module body executes.
    */
   code = code.replace("'use strict';", "var __contextModule__ = typeof module !== 'undefined' ? module : arguments[1];\nvar process = globalThis.process || (globalThis.process = { env: {} });\nprocess.env = process.env || {};\n");
-  code = code.replace('var _missingExportShim = void 0;', 'var _missingExportShim = () => {};');
+  code = code.replace('var _missingExportShim = void 0;', MISSING_EXPORT_SHIM_SOURCE);
   return { code };
 }
 
@@ -1363,7 +1374,7 @@ export default class LivelyRollup {
     const globals = {};
 
     if (!systemJsEnabled) {
-      code += `${this.asBrowserModule ? 'var fs = {};' : 'var fs = require("fs");'} var _missingExportShim = () => {}, show, System, require, timing, lively, Namespace, localStorage;`;
+      code += `${this.asBrowserModule ? 'var fs = {};' : 'var fs = require("fs");'} ${MISSING_EXPORT_SHIM_SOURCE} var show, System, require, timing, lively, Namespace, localStorage;`;
     }
 
     // this is no longer an issue due to removal of all non ESM modules from our system. Can be removed? Not entirely....
