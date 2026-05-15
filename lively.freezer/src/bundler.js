@@ -51,16 +51,21 @@ const SYSTEMJS_STUB = `
 ${GLOBAL_FETCH}
 if (!G.System) G.System = G.lively.FreezerRuntime;`;
 
-/*
- * Rollup uses `_missingExportShim` when an import asks for an export that was
- * intentionally externalized or mapped to the blank module. Browser boot can
- * still execute compatibility packages that read `buffer.Buffer.isBuffer`
- * through that placeholder. Keep the shim callable for existing namespace
- * destructuring behavior, and give it the smallest Buffer surface needed by
- * those feature tests so an absent Node polyfill degrades to "not a Buffer"
- * instead of aborting the world load.
+/**
+ * Fails a freezer build if the generated code tries to route Buffer checks
+ * through Rollup's missing-export helper.
+ * @param {string} code - Generated chunk source after namespace hardening.
+ * @param {string} chunkFileName - Rollup chunk name used for diagnostics.
+ * @returns {void}
  */
-const MISSING_EXPORT_SHIM_SOURCE = 'var _missingExportShim = function () {}; _missingExportShim.Buffer = { isBuffer: function () { return false; } }; _missingExportShim.default = _missingExportShim;';
+function assertNoSyntheticBufferShim (code, chunkFileName) {
+  const hasMissingExportBuffer = code.includes('_missingExportShim' + '.Buffer');
+  if (!hasMissingExportBuffer) return;
+  throw new Error(
+    `Freezer chunk ${chunkFileName} routes Buffer through _missingExportShim. ` +
+    'Resolve the real browser Buffer package instead of emitting a fake Buffer API.'
+  );
+}
 
 const CLASS_INSTRUMENTATION_MODULES = [
   'lively.morphic',
@@ -141,10 +146,12 @@ export function bulletProofNamespaces (code, chunkFileName, isResurrectionBuild,
     });
     /*
      * Rollup's shimMissingExports can emit an uninitialized helper for exports
-     * that are deliberately absent from externalized boot-only modules. Replace
-     * it with the shared browser-safe placeholder before the bundle is served.
+     * that are deliberately absent from externalized boot-only modules. Do not
+     * replace that helper with a fake implementation here. If Buffer was routed
+     * through it, the resolver missed a real dependency and the build should
+     * stop before the browser sees a misleading API.
      */
-    transformedCode = transformedCode.replace('var _missingExportShim = void 0;', MISSING_EXPORT_SHIM_SOURCE);
+    assertNoSyntheticBufferShim(transformedCode, chunkFileName);
     return { code: transformedCode, map }
   }
 
@@ -176,11 +183,12 @@ export function bulletProofNamespaces (code, chunkFileName, isResurrectionBuild,
   }
   /*
    * Keep the non-source-map path behaviorally aligned with the Babel path above:
-   * resurrection chunks need a browser-safe process.env and the same
-   * Buffer-aware missing export shim before the first module body executes.
+   * resurrection chunks need a browser-safe process.env before the first module
+   * body executes. Missing exports remain Rollup's own uninitialized helper so
+   * unsupported imports fail honestly instead of running through invented code.
    */
   code = code.replace("'use strict';", "var __contextModule__ = typeof module !== 'undefined' ? module : arguments[1];\nvar process = globalThis.process || (globalThis.process = { env: {} });\nprocess.env = process.env || {};\n");
-  code = code.replace('var _missingExportShim = void 0;', MISSING_EXPORT_SHIM_SOURCE);
+  assertNoSyntheticBufferShim(code, chunkFileName);
   return { code };
 }
 
@@ -925,19 +933,18 @@ export default class LivelyRollup {
     }
 
     /*
-     * Browser bundles should honor package-level browser remaps before falling
-     * back to Node-oriented entry points. engine.io-client also ships Node-only
-     * websocket files behind relative imports, so map those to browser-safe
-     * files or to the empty module when the dependency is not needed in boot.
+     * Browser bundles should honor package-level browser file remaps before
+     * falling back to Node-oriented entry points. Only concrete string remaps
+     * are handled here; a package-authored `false` remap means "no browser
+     * implementation", and this freezer path should fail that import honestly
+     * instead of introducing a new empty module for it.
      */
     if (this.asBrowserModule && importingPackage?.browser && obj.isObject(importingPackage.browser)) {
       const remapped = importingPackage.browser[id];
-      if (remapped === false) return '@empty.js';
       if (typeof remapped === 'string') id = remapped;
     }
 
     if (this.asBrowserModule && importingPackage?.name === 'engine.io-client') {
-      if (id === 'ws') return '@empty.js';
       if (id.startsWith('.') && id.endsWith('.node.js')) id = id.replace(/\.node\.js$/, '.js');
     }
     
@@ -1374,7 +1381,7 @@ export default class LivelyRollup {
     const globals = {};
 
     if (!systemJsEnabled) {
-      code += `${this.asBrowserModule ? 'var fs = {};' : 'var fs = require("fs");'} ${MISSING_EXPORT_SHIM_SOURCE} var show, System, require, timing, lively, Namespace, localStorage;`;
+      code += `${this.asBrowserModule ? 'var fs = {};' : 'var fs = require("fs");'} var _missingExportShim = () => {}, show, System, require, timing, lively, Namespace, localStorage;`;
     }
 
     // this is no longer an issue due to removal of all non ESM modules from our system. Can be removed? Not entirely....

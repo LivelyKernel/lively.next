@@ -117,6 +117,56 @@ function isBuiltinModuleId (id) {
   return id?.startsWith('node:') || builtinModules.includes(id);
 }
 
+/**
+ * Checks whether an id names the Buffer built-in that browser bundles must
+ * satisfy with the real `buffer` package.
+ * @param {string} id - Raw import id passed to the resolver.
+ * @returns {boolean} True for the Buffer built-in spellings handled here.
+ */
+function isBufferBuiltinModuleId (id) {
+  return id === 'buffer' || id === 'node:buffer';
+}
+
+/**
+ * Reads the Buffer package version declared by flatn.
+ * @returns {string|null} The exact Buffer dependency version when available.
+ */
+function declaredFlatnBufferVersion () {
+  try {
+    const rootDir = process.env.lv_next_dir || process.cwd();
+    const flatnPackage = JSON.parse(fs.readFileSync(path.join(rootDir, 'flatn', 'package.json'), 'utf8'));
+    const version = flatnPackage.dependencies?.buffer;
+    return typeof version === 'string' && /^\d+\.\d+\.\d+$/.test(version) ? version : null;
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
+ * Resolves the real browser Buffer package without falling back to a blank
+ * Node built-in placeholder.
+ * @param {string} importer - Module id that requested Buffer.
+ * @returns {string|null} Absolute path to the browser Buffer package entry.
+ */
+function resolveBrowserBufferModule (importer) {
+  /*
+   * Buffer is special among built-ins here. Most browser built-ins can be
+   * delegated to rollup-plugin-polyfill-node, but flatn's generated CJS bundle
+   * calls `buffer.Buffer.isBuffer` during world boot. That check is semantic:
+   * resolving it to @empty or a fake missing-export object hides a bundling bug
+   * and can change stream/body handling later in the boot path.
+   */
+  const resolvedByFlatn = resolveModuleId('buffer', importer, 'systemjs-browser');
+  if (resolvedByFlatn && resolvedByFlatn !== '@empty') return resolvedByFlatn;
+
+  const rootDir = process.env.lv_next_dir || process.cwd();
+  const version = declaredFlatnBufferVersion();
+  const candidate = version && path.join(rootDir, 'lively.next-node_modules', 'buffer', version, 'index.js');
+  if (candidate && fs.existsSync(candidate)) return candidate;
+
+  return null;
+}
+
 const spinner = {
   frames: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
   idx: 0,
@@ -292,9 +342,15 @@ function supportingPlugins(context = 'node', self) {
        resolveId: (id, importer) => {
          /*
           * Browser bundles still need Rollup's node polyfill plugin to see
-          * built-ins such as "path" or "node:buffer". Resolving them through
-          * flatn first turns them into host paths and bypasses the polyfills.
+          * built-ins such as "path". Buffer is intentionally excluded from that
+          * blanket delegation because boot code needs the real Buffer package,
+          * not an empty Node placeholder or a missing-export fallback.
           */
+         if (context === 'browser' && isBufferBuiltinModuleId(id)) {
+           const resolvedBuffer = resolveBrowserBufferModule(importer);
+           if (resolvedBuffer) return resolvedBuffer;
+           throw new Error(`Cannot resolve browser Buffer polyfill for ${id} imported by ${importer || '<entry>'}`);
+         }
          if (context === 'browser' && isBuiltinModuleId(id)) return null;
          return self.resolveId(id, importer);
        }
@@ -305,9 +361,15 @@ function supportingPlugins(context = 'node', self) {
       defaultIsModuleExports: true,
       transformMixedEsModules: true,
       dynamicRequireRoot: process.env.lv_next_dir,
-      // Transform dependencies under lively.next-node_modules, but do not run
-      // the CommonJS transform across the repo's own lively.* package sources.
-      exclude: ['../**/base/0.11.1/utils.js', '../**/use/2.0.0/utils.js', /[\\/]lively\.(?!next-node_modules)[^\\/]+[\\/]/],
+      /*
+       * Transform dependencies under lively.next-node_modules, but do not run
+       * the CommonJS transform across the repo's own lively.* package sources.
+       * The regex explicitly skips both the repo root folder (`lively.next`)
+       * and the dependency folder (`lively.next-node_modules`); otherwise
+       * browser chunks can keep raw `require(...)` calls from packages such as
+       * buffer and then fail during world boot.
+       */
+      exclude: ['../**/base/0.11.1/utils.js', '../**/use/2.0.0/utils.js', /[\\/]lively\.(?!next(?:[\\/]|-node_modules[\\/]))[^\\/]+[\\/]/],
       dynamicRequireTargets: [
          resolveModuleId('babel-plugin-transform-es2015-modules-systemjs')
       ]

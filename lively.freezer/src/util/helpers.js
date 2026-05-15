@@ -201,16 +201,7 @@ export function instrumentStaticSystemJS (system) {
   const _origDecanonicalize = system.decanonicalize ? system.decanonicalize.bind(system) : (id) => id;
   system.decanonicalize = (id) =>
     lively.FreezerRuntime ? lively.FreezerRuntime.decanonicalize(id) : _origDecanonicalize(id);
-  /*
-   * Static SystemJS can ask for exports from modules that were intentionally
-   * externalized to the blank module. Some browser compatibility packages then
-   * probe `buffer.Buffer.isBuffer` through that placeholder. Give the global
-   * fallback the same tiny Buffer surface as generated resurrection chunks so
-   * missing Node-only exports remain harmless during world boot.
-   */
-  window._missingExportShim = function () {};
-  window._missingExportShim.Buffer = { isBuffer: function () { return false; } };
-  window._missingExportShim.default = window._missingExportShim;
+  window._missingExportShim = () => {};
   system.moduleRegisters = {};
   system.moduleSources = {};
   const _originalRegister = system.register.bind(system);
