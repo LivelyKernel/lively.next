@@ -3,9 +3,10 @@ set -euo pipefail
 
 cd /workspace
 
-# Keep generated dependency and cache directories in the bind-mounted checkout.
-# This makes first-run work visible and reusable from the host while still
-# allowing the image to provide all runtime tools.
+# Ensure the generated dependency/cache paths exist inside the container. Under
+# Compose, these paths are Docker-owned named volumes layered over the source
+# bind mount, so their platform-specific contents stay separate from any native
+# install that uses the same checkout.
 mkdir -p \
   .puppeteer-browser-cache \
   custom-npm-modules \
@@ -48,9 +49,9 @@ has_entries() {
 # Args: None.
 # Returns: 0 when install artifacts are missing, 1 when startup can skip install.
 needs_install() {
-  # The install writes into host-visible ignored directories. Checking for the
+  # The install writes into Docker-owned ignored directories. Checking for the
   # dependency tree, class runtime, and freezer bundle keeps later container
-  # starts fast without hiding broken or incomplete first-run state.
+  # starts fast without mixing Docker artifacts with native install artifacts.
   if ! has_entries lively.next-node_modules; then
     return 0
   fi

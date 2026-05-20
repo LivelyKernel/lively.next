@@ -12,6 +12,155 @@ services:
       # Keep the development server local to the host machine.
       - "127.0.0.1:9011:9011"
     volumes:
-      # Bind mount the checkout so edits and generated install artifacts remain
-      # visible on the host and survive container rebuilds.
-      - .:/workspace
+      # Bind mount the checkout so source edits inside the container are edits
+      # to the host checkout.
+      - type: bind
+        source: .
+        target: /workspace
+
+      # Keep Docker-generated dependency, database, cache, and build directory
+      # state out of the host checkout. These named volumes intentionally sit on
+      # top of ignored paths that native installs also use, so Docker and native
+      # runs can keep separate platform-specific artifacts while sharing source
+      # code. nocopy avoids seeding a new Docker volume from stale host
+      # artifacts.
+      - type: volume
+        source: lively-next-node-modules
+        target: /workspace/lively.next-node_modules
+        volume:
+          nocopy: true
+      - type: volume
+        source: lively-custom-npm-modules
+        target: /workspace/custom-npm-modules
+        volume:
+          nocopy: true
+      - type: volume
+        source: lively-dbs
+        target: /workspace/.livelydbs
+        volume:
+          nocopy: true
+      - type: volume
+        source: lively-puppeteer-browser-cache
+        target: /workspace/.puppeteer-browser-cache
+        volume:
+          nocopy: true
+      - type: volume
+        source: lively-esm-cache
+        target: /workspace/esm_cache
+        volume:
+          nocopy: true
+      - type: volume
+        source: lively-local-projects
+        target: /workspace/local_projects
+        volume:
+          nocopy: true
+      - type: volume
+        source: lively-snapshots
+        target: /workspace/snapshots
+        volume:
+          nocopy: true
+      - type: volume
+        source: lively-tmp
+        target: /workspace/tmp
+        volume:
+          nocopy: true
+      - type: volume
+        source: lively-dev-deps
+        target: /workspace/dev-deps
+        volume:
+          nocopy: true
+      - type: volume
+        source: lively-module-cache
+        target: /workspace/.module_cache
+        volume:
+          nocopy: true
+      - type: volume
+        source: lively-components-cache
+        target: /workspace/components_cache
+        volume:
+          nocopy: true
+      - type: volume
+        source: lively-resources
+        target: /workspace/resources
+        volume:
+          nocopy: true
+      - type: volume
+        source: lively-uploads
+        target: /workspace/uploads
+        volume:
+          nocopy: true
+      - type: volume
+        source: lively-users
+        target: /workspace/users
+        volume:
+          nocopy: true
+      - type: volume
+        source: lively-subservers
+        target: /workspace/subservers
+        volume:
+          nocopy: true
+      - type: volume
+        source: lively-classes-build
+        target: /workspace/lively.classes/build
+        volume:
+          nocopy: true
+      - type: volume
+        source: lively-freezer-loading-screen
+        target: /workspace/lively.freezer/loading-screen
+        volume:
+          nocopy: true
+      - type: volume
+        source: lively-freezer-landing-page
+        target: /workspace/lively.freezer/landing-page
+        volume:
+          nocopy: true
+      - type: volume
+        source: lively-freezer-swc-plugin-target
+        target: /workspace/lively.freezer/swc-plugin/target
+        volume:
+          nocopy: true
+      - type: volume
+        source: lively-server-module-cache
+        target: /workspace/lively.server/.module_cache
+        volume:
+          nocopy: true
+      - type: volume
+        source: lively-morphic-objectdb
+        target: /workspace/lively.morphic/objectdb/morphicdb
+        volume:
+          nocopy: true
+      - type: volume
+        source: lively-morphic-objectdb-commits
+        target: /workspace/lively.morphic/objectdb/morphicdb-commits
+        volume:
+          nocopy: true
+      - type: volume
+        source: lively-morphic-objectdb-version-graph
+        target: /workspace/lively.morphic/objectdb/morphicdb-version-graph
+        volume:
+          nocopy: true
+
+volumes:
+  lively-next-node-modules:
+  lively-custom-npm-modules:
+  lively-dbs:
+  lively-puppeteer-browser-cache:
+  lively-esm-cache:
+  lively-local-projects:
+  lively-snapshots:
+  lively-tmp:
+  lively-dev-deps:
+  lively-module-cache:
+  lively-components-cache:
+  lively-resources:
+  lively-uploads:
+  lively-users:
+  lively-subservers:
+  lively-classes-build:
+  lively-freezer-loading-screen:
+  lively-freezer-landing-page:
+  lively-freezer-swc-plugin-target:
+  lively-server-module-cache:
+  lively-morphic-objectdb:
+  lively-morphic-objectdb-commits:
+  lively-morphic-objectdb-version-graph:

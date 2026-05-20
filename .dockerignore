@@ -1,7 +1,7 @@
 .git
 
-# Host-visible generated dependency/cache directories are created through the
-# bind mount at runtime, not copied into the image build context.
+# Docker-owned generated dependency/cache directories are mounted or created at
+# runtime, not copied into the image build context.
 .puppeteer-browser-cache
 .livelydbs
 .module_cache
@@ -30,6 +30,8 @@ user-server.sh
 /lively.classes/build
 /lively.freezer/landing-page
 /lively.freezer/loading-screen
+/lively.freezer/swc-plugin/target
 /lively.installer.log
 /lively.server/usage_log.json
+/lively.server/.module_cache
 /mocha-es6/.cachedImportMap.json

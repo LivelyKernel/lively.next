@@ -57,7 +57,7 @@ For some more advanced development operations (such as bulk testing from the com
 
 ### Docker Compose Setup
 
-If Docker with Compose support is installed, you can run `lively.next` without installing Node.js, Bun, Rust, Python packages, or the other development tools on the host.
+Docker Compose is an optional development launcher, not a replacement for the native install and run-server workflow below. Use the native setup when you want `lively.next` to run directly on your host. Use Compose when you want Docker to provide Node.js, Bun, Rust, Python packages, browser dependencies, and the other development tools.
 
 From the repository root, run:
 
@@ -65,9 +65,21 @@ From the repository root, run:
 docker compose up --build
 ```
 
-The first run installs project dependencies and builds generated artifacts inside the container, so it can take several minutes. When the server is ready, open [http://localhost:9011](http://localhost:9011).
+The first run installs project dependencies and builds generated artifacts inside Docker, so it can take several minutes. When the server is ready, open [http://localhost:9011](http://localhost:9011).
 
-The Compose setup bind-mounts this checkout into the container at `/workspace`. Files changed from inside the container are the files in your host checkout. Generated ignored directories such as `lively.next-node_modules`, `.puppeteer-browser-cache`, `local_projects`, `snapshots`, and `esm_cache` are also written into the host checkout so later container starts can reuse them.
+The Compose setup bind-mounts this checkout into the container at `/workspace`. Files changed from inside the container are the files in your host checkout, so source edits are shared with native tools. Generated dependency, database, cache, and build directory contents are isolated in Docker named volumes instead of being shared with native runs. Docker may create empty mount-point directories in the checkout, but the Linux container artifacts inside those paths stay separate from macOS/Linux/WSL artifacts created by the manual setup.
+
+Stop the stack without deleting Docker's generated state:
+
+```bash
+docker compose down
+```
+
+Remove the Docker-generated state and force the next Compose start to behave like a fresh install:
+
+```bash
+docker compose down -v
+```
 
 ### Manual Installation Instructions
 
