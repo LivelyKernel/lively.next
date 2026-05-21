@@ -25,6 +25,59 @@ const getDefaultServerUrl = () => resource(typeof document !== 'undefined'
   ? window.SERVER_URL || System.baseURL // the place that serves the modules is not nessecarily where the server sits at
   : 'http://localhost:9001').join('objectdb/').url;
 
+// Keep MorphicDB's browser boot path on the HTTP API without importing
+// lively.storage and its PouchDB dependency graph into freezer bundles.
+class MorphicDBHTTPInterface {
+  constructor (serverURL = document.location.origin + '/objectdb/') {
+    this.serverURL = serverURL;
+  }
+
+  async _processResponse (res) {
+    const contentType = res.headers.get('content-type');
+    const answer = await res.text(); let json;
+    if (contentType && contentType.includes('application/json')) {
+      try { json = JSON.parse(answer); } catch (err) {}
+    }
+    if (!res.ok || (json && json.error)) {
+      throw new Error((json && json.error) || answer || res.statusText);
+    }
+    return json || answer;
+  }
+
+  async _GET (action, opts = {}) {
+    const query = Object.keys(opts).map(key => {
+      let val = opts[key];
+      if (typeof val === 'object') val = JSON.stringify(val);
+      return `${key}=${encodeURIComponent(val)}`;
+    }).join('&');
+    return this._processResponse(await fetch(this.serverURL + action + '?' + query));
+  }
+
+  async _POST (action, opts = {}) {
+    return this._processResponse(await fetch(this.serverURL + action, {
+      method: 'POST',
+      body: JSON.stringify(opts),
+      headers: { 'content-type': 'application/json' }
+    }));
+  }
+
+  ensureDB (args) { return this._POST('ensureDB', args); }
+  destroyDB (args) { return this._POST('destroyDB', args); }
+  fetchCommits (args) { return this._GET('fetchCommits', args); }
+  fetchVersionGraph (args) { return this._GET('fetchVersionGraph', args); }
+  exists (args) { return this._GET('exists', args); }
+  fetchLog (args) { return this._GET('fetchLog', args); }
+  fetchSnapshot (args) { return this._GET('fetchSnapshot', args); }
+  revert (args) { return this._POST('revert', args); }
+  commit (args) { return this._POST('commit', args); }
+  fetchConflicts (args) { return this._GET('fetchConflicts', args); }
+  resolveConflict (args) { return this._POST('resolveConflict', args); }
+  fetchDiff (args) { return this._GET('fetchDiff', args); }
+  synchronize (args) { return this._POST('synchronize', args); }
+  delete (args) { return this._POST('delete', args); }
+  deleteCommit (args) { return this._POST('deleteCommit', args); }
+}
+
 export function convertToSerializableCommit (commit) {
   if (commit) {
     commit.__serialize__ = () => {
@@ -104,8 +157,7 @@ export default class MorphicDB {
   }
 
   async ensureDB () {
-    const { ObjectDBHTTPInterface } = await System.import('lively.storage');
-    this.httpDB = new ObjectDBHTTPInterface(this.serverURL);
+    this.httpDB = new MorphicDBHTTPInterface(this.serverURL);
     const { name: db, snapshotLocation } = this;
     return this.httpDB.ensureDB({ db, snapshotLocation });
   }
