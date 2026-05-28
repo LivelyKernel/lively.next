@@ -1,5 +1,5 @@
 /* global global,self,process,System,require */
-import _PouchDB from 'pouchdb'; // 7.2.2 breaks stuff
+import _PouchDB from './pouchdb-browser.cjs'; // 7.2.2 breaks stuff
 import pouchdbAdapterMem from 'pouchdb-adapter-memory';
 import { Path } from 'lively.lang';
 
@@ -12,7 +12,18 @@ const GLOB = typeof window !== 'undefined'
     ? global
     : typeof self !== 'undefined' ? self : this;
 
-const isNode = typeof global !== 'undefined' && typeof process !== 'undefined';
+function isNodeRuntime () {
+  try {
+    const env = typeof System !== 'undefined' && System.get('@system-env');
+    if (env) return !!env.node && !env.browser && !env.nw;
+  } catch (_) {}
+  return typeof window === 'undefined' &&
+    typeof global !== 'undefined' &&
+    typeof process !== 'undefined' &&
+    !!process.versions?.node;
+}
+
+const isNode = isNodeRuntime();
 let PouchDB = _PouchDB;
 if (PouchDB && PouchDB.plugin && pouchdbAdapterMem) PouchDB.plugin(pouchdbAdapterMem);
 
