@@ -1,6 +1,6 @@
 /*global process,System,global*/
 import { createRequire } from 'node:module';
-import { delimiter } from 'node:path';
+import { delimiter, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { exec } from "./shell-exec.js";
 import { Package } from "./package.js";
@@ -387,6 +387,88 @@ async function safelyRemove(baseDir, file) {
   await file.rename(backupFile);
 }
 
+function serverStartupLog (msg) {
+  if (process.env.LIVELY_DESKTOP_APP) console.log(`[lively.server startup] ${msg}`);
+}
+
+function readRegistryPayload (file) {
+  try {
+    const cached = JSON.parse(require('fs').readFileSync(file, 'utf8'));
+    return cached.registry || cached;
+  } catch (_) {}
+  return null;
+}
+
+function hasMutableRuntimePackages () {
+  const fs = require('fs');
+  const hasLocalProjects = (process.env.FLATN_DEV_PACKAGE_DIRS || '')
+    .split(delimiter)
+    .filter(Boolean)
+    .some(ea => ea.replace(/\\/g, '/').includes('/local_projects/'));
+  if (hasLocalProjects) return true;
+
+  return (process.env.FLATN_PACKAGE_COLLECTION_DIRS || '')
+    .split(delimiter)
+    .filter(Boolean)
+    .some(ea => {
+      const normalized = ea.replace(/\\/g, '/');
+      if (!normalized.endsWith('/custom-npm-modules')) return false;
+      try {
+        return fs.readdirSync(ea, { withFileTypes: true }).some(entry => entry.isDirectory() || entry.isFile());
+      } catch (_) {
+        return false;
+      }
+    });
+}
+
+function readPackageRegistrySeed () {
+  const seedFile = process.env.LIVELY_PACKAGE_REGISTRY_SEED_FILE;
+  if (!seedFile) return null;
+  if (hasMutableRuntimePackages()) {
+    serverStartupLog('skipped package registry seed because mutable package dirs exist');
+    return null;
+  }
+  const registry = readRegistryPayload(seedFile);
+  if (registry) return { registry, source: 'seed' };
+  return null;
+}
+
+function readPackageRegistryCache () {
+  if (process.env.LIVELY_DISABLE_PACKAGE_REGISTRY_CACHE === '1') return null;
+  const cacheFile = process.env.LIVELY_PACKAGE_REGISTRY_CACHE_FILE;
+  const cacheKey = process.env.LIVELY_PACKAGE_REGISTRY_CACHE_KEY;
+  if (cacheFile && cacheKey) {
+    try {
+      const cached = JSON.parse(require('fs').readFileSync(cacheFile, 'utf8'));
+      if (cached.key === cacheKey && cached.registry) {
+        return { registry: cached.registry, source: 'runtime cache' };
+      }
+    } catch (_) {}
+  }
+  return readPackageRegistrySeed();
+}
+
+function writePackageRegistryCache (registry) {
+  if (process.env.LIVELY_DISABLE_PACKAGE_REGISTRY_CACHE === '1') return;
+  const cacheFile = process.env.LIVELY_PACKAGE_REGISTRY_CACHE_FILE;
+  const cacheKey = process.env.LIVELY_PACKAGE_REGISTRY_CACHE_KEY;
+  if (!cacheFile || !cacheKey) return;
+  try {
+    const fs = require('fs');
+    fs.mkdirSync(dirname(cacheFile), { recursive: true });
+    const tmpFile = `${cacheFile}.${process.pid}.tmp`;
+    fs.writeFileSync(tmpFile, JSON.stringify({
+      key: cacheKey,
+      writtenAt: new Date().toISOString(),
+      registry: registry.toJSON()
+    }));
+    fs.renameSync(tmpFile, cacheFile);
+    serverStartupLog('wrote package registry cache');
+  } catch (err) {
+    serverStartupLog(`failed writing package registry cache: ${err.message || err}`);
+  }
+}
+
 export async function setupSystem(baseURL) {
   ({ default: global.babel } = await import("@babel/core"));
   modules = await import("lively.modules");
@@ -397,7 +479,17 @@ export async function setupSystem(baseURL) {
   registry.packageBaseDirs = flatnEnvPaths("FLATN_PACKAGE_COLLECTION_DIRS");
   registry.devPackageDirs = flatnEnvPaths("FLATN_DEV_PACKAGE_DIRS");
   registry.individualPackageDirs = flatnEnvPaths("FLATN_PACKAGE_DIRS");
-  await registry.update();
+  const registryCache = readPackageRegistryCache();
+  if (registryCache) {
+    registry.fromJSON(registryCache.registry);
+    serverStartupLog(`loaded package registry ${registryCache.source}`);
+    if (registryCache.source === 'seed') writePackageRegistryCache(registry);
+  } else {
+    const t0 = Date.now();
+    await registry.update();
+    serverStartupLog(`package registry scan: ${elapsed(t0)}`);
+    writePackageRegistryCache(registry);
+  }
   resetPackageMap();
 
   const { setupBabelTranspiler } = await import('lively.source-transform/babel/plugin.js');

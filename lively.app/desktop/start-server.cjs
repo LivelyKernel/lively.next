@@ -17,6 +17,7 @@ const path = require('path');
 const fs = require('fs');
 const net = require('net');
 const os = require('os');
+const { createHash } = require('crypto');
 const { spawn, execSync } = require('child_process');
 const { pathToFileURL } = require('url');
 const { runVelopackStartup } = require('./updates.cjs');
@@ -352,6 +353,65 @@ function serverRestartDelay (attempt) {
   return Number.isFinite(delay) && delay > 0 ? delay : 1000;
 }
 
+function localProjectSignature (localProjectsDir) {
+  if (!fs.existsSync(localProjectsDir)) return [];
+  return fs.readdirSync(localProjectsDir, { withFileTypes: true })
+    .filter(ea => ea.isDirectory())
+    .map(ea => {
+      const dir = path.join(localProjectsDir, ea.name);
+      const files = ['package.json', '.livelyForkInformation']
+        .map(file => {
+          const full = path.join(dir, file);
+          try {
+            return [file, fs.statSync(full).mtimeMs];
+          } catch (_) {
+            return [file, 0];
+          }
+        });
+      return [ea.name, files];
+    })
+    .sort((a, b) => a[0].localeCompare(b[0]));
+}
+
+function packageCollectionSignature (collectionDir) {
+  if (!fs.existsSync(collectionDir)) return [];
+  return fs.readdirSync(collectionDir, { withFileTypes: true })
+    .filter(ea => ea.isDirectory())
+    .map(ea => {
+      const dir = path.join(collectionDir, ea.name);
+      try {
+        return [ea.name, fs.statSync(dir).mtimeMs];
+      } catch (_) {
+        return [ea.name, 0];
+      }
+    })
+    .sort((a, b) => a[0].localeCompare(b[0]));
+}
+
+function packageRegistryCacheKey () {
+  return JSON.stringify({
+    buildInfo,
+    rootDir,
+    packageCollectionDirs: process.env.FLATN_PACKAGE_COLLECTION_DIRS || '',
+    packageDirs: process.env.FLATN_PACKAGE_DIRS || '',
+    devPackageDirs: process.env.FLATN_DEV_PACKAGE_DIRS || '',
+    customNpmModules: packageCollectionSignature(path.join(rootDir, 'custom-npm-modules')),
+    localProjects: localProjectSignature(path.join(rootDir, 'local_projects'))
+  });
+}
+
+function packageRegistryCacheFile (cacheDir) {
+  if (!bundled || process.env.LIVELY_DISABLE_PACKAGE_REGISTRY_CACHE === '1') return null;
+  const key = packageRegistryCacheKey();
+  const hash = createHash('sha256').update(key).digest('hex').slice(0, 24);
+  const dir = path.join(cacheDir, 'package-registry');
+  fs.mkdirSync(dir, { recursive: true });
+  return {
+    file: path.join(dir, `${hash}.json`),
+    key
+  };
+}
+
 function waitForServer (port, timeout = serverStartTimeout()) {
   const start = Date.now();
   return new Promise((resolve, reject) => {
@@ -498,6 +558,7 @@ function setupFlatnEnv () {
   const userCacheDir = desktopCacheDir();
   const v8CacheDir = path.join(userCacheDir, 'v8');
   const moduleTranslationCacheDir = path.join(userCacheDir, 'module-translation-cache');
+  const registryCache = packageRegistryCacheFile(userCacheDir);
   fs.mkdirSync(v8CacheDir, { recursive: true });
   fs.mkdirSync(moduleTranslationCacheDir, { recursive: true });
 
@@ -505,6 +566,9 @@ function setupFlatnEnv () {
   // the server skips the tar+gzip step on every startup.
   const prebuiltSnapshot = bundled
     ? path.join(sourceRootDir, 'lively.server', '.library-snapshot.tar.gz')
+    : '';
+  const prebuiltRegistryCache = bundled
+    ? path.join(sourceRootDir, 'lively.server', '.package-registry-cache.json')
     : '';
 
   const childEnv = withPathEnv({
@@ -524,6 +588,15 @@ function setupFlatnEnv () {
       LIVELY_WINDOWS_BASH: bundledWindowsBash || ''
     } : {}),
     LIVELY_MODULE_TRANSLATION_CACHE_DIR: moduleTranslationCacheDir,
+    ...(registryCache
+      ? {
+          LIVELY_PACKAGE_REGISTRY_CACHE_FILE: registryCache.file,
+          LIVELY_PACKAGE_REGISTRY_CACHE_KEY: registryCache.key
+        }
+      : {}),
+    ...(prebuiltRegistryCache && fs.existsSync(prebuiltRegistryCache)
+      ? { LIVELY_PACKAGE_REGISTRY_SEED_FILE: prebuiltRegistryCache }
+      : {}),
     // Node 22+ caches V8 bytecode to this dir — makes launches after
     // the first much faster (20-40% typically).
     NODE_COMPILE_CACHE: v8CacheDir,
