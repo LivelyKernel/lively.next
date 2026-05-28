@@ -135,7 +135,18 @@ else
   env CI=true npm --silent --prefix $lv_next_dir/lively.freezer/ run build-loading-screen
 fi
 
+if [ -d "$lv_next_dir/lively.app" ] && [ "$1" != "--no-desktop" ]; then
+  section "Setting up lively.app desktop binary"
+  # The `nw` npm package's postinstall can't decompress through flatn's flat
+  # layout, so we download the NW.js SDK directly.
+  if bash "$lv_next_dir/lively.app/setup.sh"; then
+    step "NW.js SDK ready (launch the desktop app with: bash lively.app/start.sh)"
+  else
+    warn "lively.app setup failed — the web server still works, but the desktop app won't launch"
+  fi
+fi
+
 echo ""
 echo "Done! Start the server with ./start-server.sh"
-echo "Then visit http://localhost:9011"
+echo "Or launch the desktop app with ./lively.app/start.sh"
 echo ""
