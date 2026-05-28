@@ -34,6 +34,8 @@ export default class Lively2LivelyPlugin {
       .then(
         async () => {
           livelyServer.debug && console.log(`[lively.server] started ${this.l2lTracker}`);
+          if (process.env.LIVELY_DESKTOP_APP === '1') return;
+
           const client = new L2LClient.ensure({
             url: `http://${hostname}:${port}/lively-socket.io`,
             namespace: "l2l",

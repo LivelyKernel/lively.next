@@ -11,13 +11,18 @@ lv_next_dir=$PWD
 . $lv_next_dir/scripts/lively-next-env.sh
 lively_next_env $lv_next_dir
 
+config_file="$lv_next_dir/config.js"
+if [ ! -f "$config_file" ]; then
+  config_file="$lv_next_dir/lively.installer/assets/config.js"
+fi
+
 cd lively.server;
 
 options="--no-warnings --dns-result-order ipv4first \
          --experimental-loader $lv_next_dir/flatn/resolver.mjs \
          bin/start-server.js \
          --root-directory $lv_next_dir \
-         --config $lv_next_dir/config.js"
+         --config $config_file"
 
 if [ "$1" = "--debug" ]; then
   options="--inspect $options"

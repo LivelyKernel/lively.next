@@ -1,6 +1,10 @@
 /*global System, require*/
 import { arr } from "lively.lang";
-import { Server as SocketIOServer } from "socket.io";
+import * as SocketIO from "socket.io";
+
+const SocketIOServer = SocketIO.Server ||
+  SocketIO.default?.Server ||
+  SocketIO.default;
 
 export default class SocketioPlugin {
 
@@ -23,6 +27,9 @@ export default class SocketioPlugin {
   setup({server}) {
     if (this.io)
       console.trace(`Called setup multiple times for SocketioPlugin?`);
+
+    if (typeof SocketIOServer !== "function")
+      throw new TypeError("socket.io Server export is not a constructor");
       
     // we dance this little dance to ensure that our handlers are added before
     // the socket.io handler so we can inject cors headers. In newer nodes

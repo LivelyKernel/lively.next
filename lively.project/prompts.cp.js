@@ -264,6 +264,7 @@ class ProjectCreationPromptModel extends AbstractPromptModel {
           li.remove();
           super.resolve(createdProject);
         } catch (err) {
+          console.error('Error initializing project or remote', err);
           this.enableButtons();
           li?.remove();
           this.view.setStatusMessage('There was an error initializing the project or its remote.', StatusMessageError);
@@ -425,6 +426,7 @@ class RepoCreationPromptModel extends AbstractPromptModel {
         $world.setStatusMessage('Project uploaded!', StatusMessageConfirm);
         super.resolve(true);
       } catch (err) {
+        console.error('Error creating repository', err);
         this.enableButtons();
         li?.remove();
         this.view.setStatusMessage('There was an error creating the repository.', StatusMessageError);

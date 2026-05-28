@@ -6,6 +6,9 @@ const tar = System._nodeRequire('tar-fs');
 import stream from 'stream';
 import util from 'util';
 import zlib from 'zlib';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const COMPRESSABLE_URLS = [
   'components_cache'
@@ -13,9 +16,77 @@ const COMPRESSABLE_URLS = [
 
 const compression = 'gzip'; // can be either 'gzip' or 'brotli' where 'brotli' takes drastically longer to compress but yields slightly smaller bundles;
 
+const STATIC_CONTENT_TYPES = {
+  '.br': 'application/octet-stream',
+  '.css': 'text/css; charset=utf-8',
+  '.gif': 'image/gif',
+  '.html': 'text/html; charset=utf-8',
+  '.ico': 'image/x-icon',
+  '.jpeg': 'image/jpeg',
+  '.jpg': 'image/jpeg',
+  '.js': 'application/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.map': 'application/json; charset=utf-8',
+  '.otf': 'font/otf',
+  '.png': 'image/png',
+  '.svg': 'image/svg+xml; charset=utf-8',
+  '.ttf': 'font/ttf',
+  '.txt': 'text/plain; charset=utf-8',
+  '.wasm': 'application/wasm',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2'
+};
+
+function staticContentType (filePath) {
+  if (filePath.endsWith('.js.br') || filePath.endsWith('.js.gz')) return STATIC_CONTENT_TYPES['.js'];
+  if (filePath.endsWith('.css.br') || filePath.endsWith('.css.gz')) return STATIC_CONTENT_TYPES['.css'];
+  return STATIC_CONTENT_TYPES[path.extname(filePath).toLowerCase()] || 'application/octet-stream';
+}
+
 // FIXME...
 let DavHandler; let FsTree;
 const jsDavPlugins = {};
+
+function patchJsDAVUtilForWindowsPaths (Util) {
+  if (!Util || Util.__livelyWindowsPathPatch) return;
+
+  const originalSplitPath = Util.splitPath;
+  Util.ltrim = function (str, charlist) {
+    const string = str + '';
+    if (!charlist) return string.replace(/^\s+/, '');
+    const chars = new Set((charlist + '').split(''));
+    let start = 0;
+    while (start < string.length && chars.has(string[start])) start++;
+    return string.slice(start);
+  };
+  Util.rtrim = function (str, charlist) {
+    const string = str + '';
+    if (!charlist) return string.replace(/\s+$/, '');
+    const chars = new Set((charlist + '').split(''));
+    let end = string.length;
+    while (end > 0 && chars.has(string[end - 1])) end--;
+    return string.slice(0, end);
+  };
+  Util.trim = function (str, charlist) {
+    return Util.rtrim(Util.ltrim(str, charlist), charlist);
+  };
+
+  if (process.platform === 'win32') {
+    Util.splitPath = function (inputPath) {
+      return originalSplitPath.call(this, String(inputPath).replace(/\\/g, '/'));
+    };
+  }
+
+  Util.__livelyWindowsPathPatch = true;
+}
+
+function patchLoadedJsDAVUtilsForWindowsPaths () {
+  const cache = System._nodeRequire.cache || {};
+  Object.keys(cache)
+    .filter(id => /[\\/]jsDAV[\\/].*[\\/]lib[\\/]shared[\\/]util\.js$/i.test(id))
+    .forEach(id => patchJsDAVUtilForWindowsPaths(cache[id].exports));
+}
+
 (function loadJsDAV () {
   // jsDAV shows unimportant console logs while loading, hide those...
   const log = console.log;
@@ -31,9 +102,11 @@ const jsDavPlugins = {};
   };
   console.log = () => {};
   try {
+    patchJsDAVUtilForWindowsPaths(System._nodeRequire('jsDAV/lib/shared/util'));
     DavHandler = System._nodeRequire('jsDAV/lib/DAV/handler');
     FsTree = System._nodeRequire('jsDAV/lib/DAV/backends/fs/tree');
     jsDavPlugins.browser = System._nodeRequire('jsDAV/lib/DAV/plugins/browser.js');
+    patchLoadedJsDAVUtilsForWindowsPaths();
   } catch (err) { console.error('cannot load jsdav:', err); } finally { console.log = log; }
 })();
 
@@ -119,6 +192,22 @@ export default class LivelyDAVPlugin {
       this.fileHashes[file.url.replace(System.baseURL, '/')] = string.hashCode(await file.read());
     }
     console.log('[lively.server] finished file hash map');
+
+    // Skip the tar+gzip step when a pre-built snapshot is available
+    // (bundled distributions set LIVELY_PREBUILT_LIBRARY_SNAPSHOT so the
+    // server doesn't re-generate the blob on every launch).
+    const prebuiltSnapshot = process.env.LIVELY_PREBUILT_LIBRARY_SNAPSHOT;
+    if (prebuiltSnapshot && fs.existsSync(prebuiltSnapshot)) {
+      try {
+        console.log('[lively.server] loading pre-built library snapshot: ' + prebuiltSnapshot);
+        memStore.compressedLibrary = fs.readFileSync(prebuiltSnapshot);
+        console.log('[lively.server] pre-built library snapshot loaded');
+        return;
+      } catch (err) {
+        console.warn('[lively.server] failed to load pre-built snapshot, regenerating:', err.message);
+      }
+    }
+
     console.log('[lively.server] creating library snapshot...');
     await this.compressLibraryCode();
     console.log('[lively.server] finished library snapshot');
@@ -147,7 +236,7 @@ export default class LivelyDAVPlugin {
       'lively.freezer/swc-plugin/target',
       'lively.modules/dist'
     ];
-    tar.pack(System.baseURL.replace('file://', ''), {
+    tar.pack(fileURLToPath(System.baseURL), {
       ignore (name) {
         if (excludedDirs.find(path => name.includes(path))) return true;
         else return false;
@@ -215,6 +304,8 @@ export default class LivelyDAVPlugin {
       return;
     }
 
+    if (process.env.LIVELY_DESKTOP_APP === '1' && await this.tryServeStaticFile(req, res)) return;
+
     if (req.url.endsWith('.js') || req.url.endsWith('.cjs')) {
       if (req.method == 'PUT' || !this.fileHashes[req.url]) {
         this._skipHashUpdate = true;
@@ -237,6 +328,57 @@ export default class LivelyDAVPlugin {
     }
 
     this.callDAV(req, res);
+  }
+
+  async tryServeStaticFile (req, res) {
+    if (!['GET', 'HEAD'].includes(req.method.toUpperCase())) return false;
+
+    let pathname;
+    try {
+      pathname = decodeURIComponent(String(req.url || '').split('?')[0]);
+    } catch (_) {
+      return false;
+    }
+    if (!pathname || pathname.includes('\0')) return false;
+
+    const root = path.resolve(this.options.rootDirectory);
+    const target = path.resolve(root, pathname.replace(/^[/\\]+/, ''));
+    const relative = path.relative(root, target);
+    if (relative.startsWith('..') || path.isAbsolute(relative)) {
+      res.writeHead(403, { 'content-type': 'text/plain; charset=utf-8' });
+      res.end('Forbidden');
+      return true;
+    }
+
+    let stat;
+    try {
+      stat = await fs.promises.stat(target);
+    } catch (_) {
+      return false;
+    }
+    if (!stat.isFile()) return false;
+
+    res.writeHead(200, {
+      'content-type': staticContentType(target),
+      'content-length': stat.size,
+      'last-modified': stat.mtime.toUTCString()
+    });
+    if (req.method.toUpperCase() === 'HEAD') {
+      res.end();
+      return true;
+    }
+
+    const readStream = fs.createReadStream(target);
+    readStream.on('error', err => {
+      if (!res.headersSent) {
+        res.writeHead(500, { 'content-type': 'text/plain; charset=utf-8' });
+        res.end(err.stack || String(err));
+      } else {
+        res.destroy(err);
+      }
+    });
+    readStream.pipe(res);
+    return true;
   }
 
   callDAV (req, res) {

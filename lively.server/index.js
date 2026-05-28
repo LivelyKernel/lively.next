@@ -5,10 +5,14 @@ import { resource } from 'lively.resources';
 import { obj } from 'lively.lang';
 import "socket.io";
 import util from 'node:util';
-import winston from "winston";
+import path from 'node:path';
+import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
 import { setupSystem } from "lively.installer";
 import { Generator } from "@jspm/generator";
 
+const require = createRequire(import.meta.url);
+const winston = require('winston');
 const defaultServerDir = process.cwd();
 var livelySystem;
 var config = {
@@ -21,7 +25,7 @@ var config = {
 
 export default async function start(hostname, port, configFile, rootDirectory, serverDir) {
   config.rootDirectory = rootDirectory || process.cwd();
-  config.serverDir = serverDir || defaultServerDir;
+  config.serverDir = directoryURL(serverDir || defaultServerDir);
   setupLogger();
   var step = 1;
   console.log(`[lively.server] system base directory: ${rootDirectory}`);
@@ -68,7 +72,7 @@ export default async function start(hostname, port, configFile, rootDirectory, s
     // 2. this loads and starts the server
     .then(() => livelySystem.set('@jspm_generator', livelySystem.newModule({ default: Generator })))
     .then(() => console.log(`[lively.server] ${step++}. starting server`))
-    .then(() => livelySystem.import(config.serverDir + "/server.js"))
+    .then(() => livelySystem.import(serverModuleURL(config.serverDir)))
     .then(serverMod => startServer(serverMod, config))
     .then(server => {
       console.log(`[lively.server] ${step++}. server sucessfully started`);
@@ -80,6 +84,20 @@ export default async function start(hostname, port, configFile, rootDirectory, s
       process.exit(1);
     });
 };
+
+function directoryURL(dir) {
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(dir)) {
+    return resource(dir.endsWith('/') ? dir : `${dir}/`).url.replace(/\/$/, '');
+  }
+  return pathToFileURL(path.resolve(dir)).href;
+}
+
+function serverModuleURL(serverDir) {
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(serverDir)) {
+    return resource(serverDir.endsWith('/') ? serverDir : `${serverDir}/`).join('server.js').url;
+  }
+  return pathToFileURL(path.join(serverDir, 'server.js')).href;
+}
 
 async function silenceDuring(filter, promise) {
   let {stdout, stderr} = process,
@@ -98,7 +116,7 @@ function formatArgs(args){
 }
 
 function setupLogger() {
-  let logger = new winston.createLogger();
+  let logger = winston.createLogger();
 const myFormat = winston.format.printf(({ level, message, label, timestamp }) => {
   return `${timestamp} ${level}: ${message}`;
 });

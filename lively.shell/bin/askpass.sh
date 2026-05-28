@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 
 PASSWORD_QUERY=$1
-DIR=${WORKSPACE_LK-"$0/../.."}
-RESOLVER=$(node -e "console.log(require.resolve('flatn/resolver.mjs'))") 
-node --no-warnings --experimental-loader $RESOLVER --dns-result-order ipv4first $DIR/bin/askpass.js $PASSWORD_QUERY
+DIR="$(cd "$(dirname "$0")" && pwd)"
+if [ -z "$WORKSPACE_LK" ]; then
+  export WORKSPACE_LK="$(cd "$DIR/.." && pwd)"
+fi
+ROOT_DIR="$(cd "$WORKSPACE_LK/.." && pwd)"
+RESOLVER="$ROOT_DIR/flatn/resolver.mjs"
+
+node --no-warnings --experimental-loader "$RESOLVER" --dns-result-order ipv4first "$WORKSPACE_LK/bin/askpass.js" "$PASSWORD_QUERY"

@@ -17,6 +17,20 @@ import { Spinner } from 'lively.components/loading-indicator.cp.js';
 
 const livelyAuthGithubAppId = 'd523a69022b9ef6be515';
 
+function parseGithubAuthResponse (response) {
+  const trimmed = String(response || '').trim();
+  if (!trimmed) return {};
+  try {
+    return JSON.parse(trimmed);
+  } catch (err) {
+    return Object.fromEntries(new URLSearchParams(trimmed));
+  }
+}
+
+function githubAuthErrorMessage (response) {
+  return response.error_description || response.error || null;
+}
+
 const CompactConfirmPrompt = component(ConfirmPrompt, {
   master: DarkPrompt,
   layout: new TilingLayout({
@@ -154,26 +168,29 @@ export class UserFlapModel extends ViewModel {
         $world.setStatusMessage('Login is not possible while in offline mode');
         return;
       }
-      let cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'scope=user,repo,delete_repo,workflow' https://github.com/login/device/code`;
-      const { stdout: resOne } = await runCommand(cmdString).whenDone();
-      if (resOne === '') {
+      let cmdString = `curl -sS -X POST -H 'Accept: application/json' -F 'client_id=${livelyAuthGithubAppId}' -F 'scope=user,repo,delete_repo,workflow' https://github.com/login/device/code`;
+      const codeCmd = await runCommand(cmdString).whenDone();
+      const resOne = parseGithubAuthResponse(codeCmd.stdout);
+      if (codeCmd.exitCode !== 0 || !codeCmd.stdout) {
+        console.error('[github-login] device code request failed:', codeCmd.stderr || codeCmd.stdout); // eslint-disable-line no-console
         $world.setStatusMessage('You seem to be offline.', StatusMessageError);
         return;
       }
-      if (resOne === 'NOT FOUND') {
-        $world.setStatusMessage('An unexpected error occured. Please contact the lively.next team.', StatusMessageError);
+      const initialError = githubAuthErrorMessage(resOne);
+      if (initialError) {
+        console.error('[github-login] device code request rejected:', resOne); // eslint-disable-line no-console
+        $world.setStatusMessage(`GitHub login failed: ${initialError}`, StatusMessageError);
         return;
       }
-      const deviceCodeMatch = resOne.match(new RegExp('device_code=(.*)&e'));
-      const userCodeMatch = resOne.match(new RegExp('user_code=(.*)&'));
-      if (!deviceCodeMatch || !userCodeMatch) {
-        $world.setStatusMessage('An unexpected error occured. Please contact the lively.next team.', StatusMessageError);
+      const deviceCode = resOne.device_code;
+      const userCode = resOne.user_code;
+      if (!deviceCode || !userCode) {
+        console.error('[github-login] unexpected device code response:', codeCmd.stdout); // eslint-disable-line no-console
+        $world.setStatusMessage('GitHub login failed: unexpected device code response.', StatusMessageError);
         return;
       }
-      const deviceCode = deviceCodeMatch[1];
-      const userCode = userCodeMatch[1];
       // GitHub sends us an Interval (in s) that we need to wait between polling for login status, otherwise we get timeouted
-      const interval = resOne.match(/interval=(\d*)&/)[1];
+      const interval = Number(resOne.interval || 5);
       this.toggleLoadingAnimation();
       let confirm;
       window.open('https://github.com/login/device', 'Github Authentification', 'width=500,height=600,top=100,left=100');
@@ -187,8 +204,10 @@ export class UserFlapModel extends ViewModel {
       }).then(conf => {
         confirm = conf;
       });
-      cmdString = `curl -X POST -F 'client_id=${livelyAuthGithubAppId}' -F 'device_code=${deviceCode}' -F 'grant_type=urn:ietf:params:oauth:grant-type:device_code' https://github.com/login/oauth/access_token`;
+      cmdString = `curl -sS -X POST -H 'Accept: application/json' -F 'client_id=${livelyAuthGithubAppId}' -F 'device_code=${deviceCode}' -F 'grant_type=urn:ietf:params:oauth:grant-type:device_code' https://github.com/login/oauth/access_token`;
       let curlCmd;
+      let tokenResponse;
+      let lastLoginError;
       let loginSuccessful = false;
       for (let i = 0; i < 20; i++) {
         let elapsedTimeWaitingForGitHub = await timeToRun(waitFor(interval * 1000, () => confirm !== undefined, false));
@@ -204,24 +223,33 @@ export class UserFlapModel extends ViewModel {
           return;
         }
         curlCmd = await runCommand(cmdString).whenDone();
-        if (curlCmd.exitCode === 0 && !curlCmd.stdout.includes('error')) {
+        tokenResponse = parseGithubAuthResponse(curlCmd.stdout);
+        if (curlCmd.exitCode === 0 && tokenResponse.access_token) {
           loginSuccessful = true;
           $world.get('github login prompt')?.remove();
           break;
         }
+        lastLoginError = githubAuthErrorMessage(tokenResponse) || curlCmd.stderr;
+        if (tokenResponse.error === 'authorization_pending') continue;
+        if (tokenResponse.error === 'slow_down') {
+          await delay(interval * 1000);
+          continue;
+        }
+        if (lastLoginError) break;
       }
 
       if (!loginSuccessful) {
         this.toggleLoadingAnimation();
-        $world.setStatusMessage('Login failed.', StatusMessageError);
+        if (lastLoginError) console.error('[github-login] access token request failed:', lastLoginError); // eslint-disable-line no-console
+        $world.setStatusMessage(`Login failed${lastLoginError ? `: ${lastLoginError}` : '.'}`, StatusMessageError);
         return;
       }
 
-      const { stdout: resTwo } = curlCmd;
-      const userToken = resTwo.match(new RegExp('access_token=(.*)&s'))[1];
+      const userToken = tokenResponse.access_token;
       if (!userToken) {
         this.toggleLoadingAnimation();
-        $world.setStatusMessage('An unexpected error occured. Please contact the lively.next team.', StatusMessageError);
+        console.error('[github-login] access token missing in response.'); // eslint-disable-line no-console
+        $world.setStatusMessage('GitHub login failed: access token missing in response.', StatusMessageError);
         return;
       }
       this.blockLogoutAttempt = true;
@@ -317,6 +345,7 @@ export class UserFlapModel extends ViewModel {
       leftUserLabel.textString = userData.login;
       rightUserLabel.textAndAttributes = Icon.textAttribute('right-from-bracket');
     } catch (err) {
+      console.error('[github-login] failed to show user data:', err); // eslint-disable-line no-console
       $world.setStatusMessage('An unexpected error occured. Please contact the lively.next team.', StatusMessageError);
     }
   }
