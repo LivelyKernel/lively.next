@@ -8,7 +8,11 @@
    * Environment
    */
   var isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
-  var isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
+  var isNode = !isBrowser && typeof process !== 'undefined' && process.versions && process.versions.node;
+  var isNw = isBrowser && (
+    typeof nw !== 'undefined' && nw && typeof nw.require === 'function' ||
+    typeof globalThis !== 'undefined' && globalThis.nw && typeof globalThis.nw.require === 'function'
+  );
   var isWindows = typeof process !== 'undefined' && typeof process.platform === 'string' && process.platform.match(/^win/);
 
   var envGlobal = typeof self !== 'undefined' ? self : global;
@@ -1616,7 +1620,7 @@
    fetchFunction = fetchFetch;
   else if (hasXhr)
     fetchFunction = xhrFetch;
-  else if (typeof require !== 'undefined' && typeof process !== 'undefined')
+  else if (isNode && typeof require !== 'undefined' && typeof process !== 'undefined')
     fetchFunction = nodeFetch;
   else
     fetchFunction = noFetch;
@@ -3280,7 +3284,7 @@
 
   // include the node require since we're overriding it
   var nodeRequire;
-  if (typeof require !== 'undefined' && typeof process !== 'undefined' && !process.browser)
+  if (!isBrowser && typeof require !== 'undefined' && typeof process !== 'undefined' && !process.browser)
     nodeRequire = require;
 
   function setMetaEsModule (metadata, moduleValue) {
@@ -3932,7 +3936,10 @@
     this[CONFIG].production = isProduction;
     this.registry.set('@system-env', envModule = this.newModule({
       browser: isBrowser,
-      node: !!this._nodeRequire,
+      node: !!this._nodeRequire && !isBrowser,
+      nw: !!isNw,
+      nodeRequire: !!this._nodeRequire && !isBrowser,
+      nodeBuiltins: !!this._nodeRequire && !isBrowser,
       production: !isBuilder && isProduction,
       dev: isBuilder || !isProduction,
       build: isBuilder,

@@ -2,6 +2,7 @@
 import { rollup } from '@rollup/wasm-node';
 import jsonPlugin from '@rollup/plugin-json';
 import util from 'node:util';
+import fs from 'node:fs/promises';
 import { lively } from 'lively.freezer/src/plugins/rollup';
 import resolver from 'lively.freezer/src/resolvers/node.cjs';
 
@@ -67,6 +68,9 @@ try {
 
   console.log('   Writing outputs...');
 
+  await fs.rm('landing-page', { recursive: true, force: true });
+  await fs.rm('loading-screen', { recursive: true, force: true });
+
   // Write landing-page output
   await build.write({
     format: 'system',
@@ -96,8 +100,6 @@ try {
   console.log('   Loading screen written to loading-screen/');
 
   // Post-process: Copy the correct index.html for each directory
-  const fs = await import('fs/promises');
-
   try {
     await fs.copyFile('landing-page/index-landing-page.html', 'landing-page/index.html');
   } catch (err) {

@@ -1,5 +1,40 @@
-import t from '@babel/types';
+import _t from '@babel/types';
 import { helpers } from 'lively.ast/lib/query.js';
+
+function cjsDefault (module, expectedProperty) {
+  let value = module;
+  const hasExpected = candidate => {
+    if (!expectedProperty) return true;
+    if (typeof candidate?.[expectedProperty] === 'function') return true;
+    const canonicalName = expectedProperty[0].toLowerCase() + expectedProperty.slice(1);
+    return typeof candidate?.[canonicalName] === 'function';
+  };
+  while (value && typeof value === 'object' && !hasExpected(value) && 'default' in value) {
+    value = value.default;
+  }
+  return value;
+}
+
+function babelTypes (types) {
+  const target = types && (typeof types === 'object' || typeof types === 'function') ? types : {};
+  return new Proxy(target, {
+    get (target, property, receiver) {
+      const value = Reflect.get(target, property, receiver);
+      const fallback = globalThis.babel?.types || globalThis.babel?.default?.types;
+      if (typeof property === 'string' && /^[A-Z]/.test(property) && typeof value !== 'function') {
+        const canonicalName = property[0].toLowerCase() + property.slice(1);
+        const canonical = Reflect.get(target, canonicalName, receiver);
+        if (typeof canonical === 'function') return canonical;
+        if (typeof fallback?.[property] === 'function') return fallback[property];
+        if (typeof fallback?.[canonicalName] === 'function') return fallback[canonicalName];
+      }
+      if (typeof value !== 'function' && typeof fallback?.[property] === 'function') return fallback[property];
+      return value;
+    }
+  });
+}
+
+const t = babelTypes(cjsDefault(_t, 'Identifier'));
 
 export function getAncestryPath (path) {
   return path.getAncestry().map(m => m.inList ? [m.key, m.listKey] : m.key).flat().slice(0, -1).reverse();

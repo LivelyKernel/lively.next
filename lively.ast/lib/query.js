@@ -9,7 +9,17 @@ import stringify from './stringify.js';
 // Importing ASTQ in SystemJS 0.21 on node.js fails is it was not loaded natively before.
 // This causes issues with setups where we can not possible load astq, such as the install bundle.
 // To make these scripts work, we backtrack to import via native require instead.
-let ASTQ = _ASTQ || System._nodeRequire('astq');
+function nativeConstructor (imported, moduleName) {
+  let constructor = imported;
+  while (constructor && typeof constructor === 'object' && 'default' in constructor) {
+    constructor = constructor.default;
+  }
+  return typeof constructor === 'function'
+    ? constructor
+    : System._nodeRequire(moduleName);
+}
+
+let ASTQ = nativeConstructor(_ASTQ, 'astq');
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 

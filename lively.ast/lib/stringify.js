@@ -1,7 +1,52 @@
 /* global require,global */
 import { obj } from 'lively.lang';
-import estraverse from '@javascript-obfuscator/estraverse';
-import esutils from 'esutils';
+import {
+  Syntax as _estraverseSyntax,
+  attachComments as _estraverseAttachComments
+} from '@javascript-obfuscator/estraverse';
+import { code as _esutilsCode } from 'esutils';
+
+const isNode = typeof System !== 'undefined'
+  ? System.get('@system-env').node
+  : false;
+
+function loadedSystemModule (requireName, expectedProperty) {
+  const System = globalThis.System;
+  if (!System) return null;
+  const encodedName = requireName.replace('/', '__SLASH__');
+  const candidates = Object.keys(System.loads || {}).filter(key =>
+    key.includes(requireName) || key.includes(encodedName));
+  for (const key of candidates) {
+    const value = System.loads[key]?.exports || System.get?.(key, false);
+    if (value?.[expectedProperty] != null) return value;
+  }
+  return null;
+}
+
+function cjsDefault (module, expectedProperty, requireName) {
+  let value = module;
+  while (value && typeof value === 'object' && value[expectedProperty] == null && 'default' in value) {
+    value = value.default;
+  }
+  if (value?.[expectedProperty] == null && requireName) {
+    value = loadedSystemModule(requireName, expectedProperty) || value;
+  }
+  if (isNode && value?.[expectedProperty] == null && requireName && globalThis.System?._nodeRequire) {
+    value = globalThis.System._nodeRequire(requireName);
+    while (value && typeof value === 'object' && value[expectedProperty] == null && 'default' in value) {
+      value = value.default;
+    }
+  }
+  return value;
+}
+
+const _estraverse = {
+  Syntax: _estraverseSyntax,
+  attachComments: _estraverseAttachComments
+};
+const _esutils = { code: _esutilsCode };
+const estraverse = cjsDefault(_estraverse, 'Syntax', '@javascript-obfuscator/estraverse');
+const esutils = cjsDefault(_esutils, 'code', 'esutils');
 
 // FORKED ESCODEGEN
 function ESCODEGEN () {
