@@ -6,7 +6,8 @@ import L2LClient from 'lively.2lively/client.js';
 
 export default class GitShellResource extends ShellClientResource {
   constructor (url) {
-    url = url.replace('git\/', '');
+    url = url.replace(/^git\//, '');
+    if (url.match(/^\/[a-z]:\//i)) url = url.slice(1);
     super(url);
     this.options.cwd = this.url;
     if (!this.options.l2lClient) {
@@ -133,28 +134,40 @@ export default class GitShellResource extends ShellClientResource {
   }
 
   async createAndAddRemoteToGitRepository (token, repoName, repoUser, repoDescription, orgScope, priv) {
-    const repoCreationCommand = orgScope
-      ? `curl -L \
-              -X POST \
-              -H "Accept: application/vnd.github+json" \
-              -H "Authorization: Bearer ${token}"\
-              -H "X-GitHub-Api-Version: 2022-11-28" \
-              https://api.github.com/orgs/${repoUser}/repos \
-              -d '{"name":"${repoName}","description":"${repoDescription}", "private":${!!priv}}'`
-      : `curl -L \
-              -X POST \
-              -H "Accept: application/vnd.github+json" \
-              -H "Authorization: Bearer ${token}" \
-              https://api.github.com/user/repos \
-              -d '{"name":"${repoName}", "description": "${repoDescription}", "private":${!!priv}}'`;
-    let cmd = this.runCommand(repoCreationCommand);
-    await cmd.whenDone();
-    if (cmd.exitCode !== 0) throw Error('Error executing curl call to create GitHub repository');
-    this.addRemoteURLWithToken(token, repoUser, repoName);
+    const url = orgScope
+      ? `https://api.github.com/orgs/${repoUser}/repos`
+      : 'https://api.github.com/user/repos';
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        accept: 'application/vnd.github+json',
+        authorization: `Bearer ${token}`,
+        'X-GitHub-Api-Version': '2022-11-28'
+      },
+      body: JSON.stringify({
+        name: repoName,
+        description: repoDescription || '',
+        private: !!priv
+      })
+    });
+
+    if (!response.ok) {
+      let details = '';
+      try {
+        const body = await response.json();
+        details = body.message || JSON.stringify(body);
+      } catch (err) {
+        details = await response.text().catch(() => '');
+      }
+      throw Error(`Error creating GitHub repository (${response.status} ${response.statusText})${details ? `: ${details}` : ''}`);
+    }
+
+    await this.addRemoteURLWithToken(token, repoUser, repoName);
   }
 
   async addRemoteURLWithToken (token, repoUser, repoName) {
-    const addingRemoteCommand = `git remote add origin https://${token}@github.com/${repoUser}/${repoName}`;
+    const remoteURL = `https://${token}@github.com/${repoUser}/${repoName}`;
+    const addingRemoteCommand = `git remote get-url origin >/dev/null 2>&1 && git remote set-url origin ${remoteURL} || git remote add origin ${remoteURL}`;
     const cmd = this.runCommand(addingRemoteCommand);
     await cmd.whenDone();
     if (cmd.exitCode !== 0) throw Error('Error adding the remote to local repository');

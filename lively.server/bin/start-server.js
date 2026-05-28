@@ -1,11 +1,13 @@
 #!/bin/sh
 ':' //; exec "$(command -v nodejs || command -v node)" "$0" "$@"
-import System from 'systemjs';
-import parseArgs from 'minimist';
+import { createRequire } from 'module';
 import url from 'url'
 
-global.System = System;
+const require = createRequire(import.meta.url);
+const System = require('systemjs');
+const parseArgs = require('minimist');
 
+global.System = System;
 const isMain = import.meta.url === url.pathToFileURL(process.argv[1]).href;
 const defaultRootDirectory = process.cwd();
 
@@ -21,4 +23,3 @@ if (isMain) {
     args["root-directory"] || defaultRootDirectory);
   });
 }
-

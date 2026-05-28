@@ -33,13 +33,45 @@ import * as semver from 'semver';
 export const repositoryOwnerAndNameRegex = /\.com\/(.+)\/(.*)/;
 const fontCSSWarningString = `/*\nDO NOT CHANGE THE CONTENTS OF THIS FILE!
 Its content is managed automatically by lively.next. It will automatically be loaded/bundled together with this project!\n*/\n\n`;
+
+function resolveShellDirectory (basePath, ...parts) {
+  const normalizedPath = [String(basePath).replace(/\\/g, '/'), ...parts].join('/');
+  const root = normalizedPath.match(/^[a-z]:/i)?.[0] || (normalizedPath.startsWith('/') ? '/' : '');
+  const rest = root ? normalizedPath.slice(root.length) : normalizedPath;
+  const resolvedParts = [];
+
+  for (const part of rest.split('/')) {
+    if (!part || part === '.') continue;
+    if (part === '..') resolvedParts.pop();
+    else resolvedParts.push(part);
+  }
+
+  return (root === '/' ? '/' : root ? `${root}/` : '') + resolvedParts.join('/') + '/';
+}
+
+async function addPackageAtIfMissing (registry, packageDir, preferredLocation) {
+  const existing = registry.findPackageWithURL(packageDir);
+  if (existing) return existing;
+  return registry.addPackageAt(packageDir, preferredLocation);
+}
+
+async function addProjectPackageOnServerIfMissing (fullName) {
+  await evalOnServer(`(async () => {
+    const registry = System.get("@lively-env").packageRegistry;
+    const projectURL = System.baseURL + "local_projects/" + ${JSON.stringify(fullName)};
+    if (!registry.findPackageWithURL(projectURL)) await registry.addPackageAt(projectURL);
+    return true;
+  })()`);
+}
+
 export class Project {
   static get systemInterface () {
     return localInterface.coreInterface;
   }
 
   static async ensureGitResource (fullName) {
-    return resource('git/' + await defaultDirectory()).join('..').join('local_projects').join(fullName).withRelativePartsResolved().asDirectory();
+    const projectDirectory = resolveShellDirectory(await defaultDirectory(), '..', 'local_projects', fullName);
+    return resource('git/' + projectDirectory).asDirectory();
   }
 
   static fetchInfoPreflight (fullName) {
@@ -233,8 +265,8 @@ export class Project {
     }
 
     const projectDir = await Project.projectDirectory(`${projectRepoOwner}--${projectName}`);
-    await evalOnServer(`System.get("@lively-env").packageRegistry.addPackageAt(System.baseURL + 'local_projects/${projectRepoOwner}--${projectName}')`);
-    await System.get('@lively-env').packageRegistry.addPackageAt(projectDir);
+    await addProjectPackageOnServerIfMissing(`${projectRepoOwner}--${projectName}`);
+    await addPackageAtIfMissing(System.get('@lively-env').packageRegistry, projectDir);
 
     li.remove();
     return `${projectRepoOwner}--${projectName}`;
@@ -251,7 +283,7 @@ export class Project {
   static async deleteProject (name, repoOwner, token, deleteRemote) {
     const baseURL = (await Project.systemInterface.getConfig()).baseURL;
     const projectsDir = lively.FreezerRuntime ? resource(baseURL).join(`../local_projects/${repoOwner}--${name}`).withRelativePartsResolved().asDirectory() : (await Project.projectDirectory(`${repoOwner}--${name}`));
-    const gitResource = await resource('git/' + projectsDir.url);
+    const gitResource = await Project.ensureGitResource(`${repoOwner}--${name}`);
 
     try {
       await evalOnServer(`
@@ -621,8 +653,8 @@ export class Project {
       }
       await this.saveConfigData();
 
-      await evalOnServer(`System.get("@lively-env").packageRegistry.addPackageAt(System.baseURL + 'local_projects/${this.fullName}')`);
-      await System.get('@lively-env').packageRegistry.addPackageAt(projectDir);
+      await addProjectPackageOnServerIfMissing(this.fullName);
+      await addPackageAtIfMissing(System.get('@lively-env').packageRegistry, projectDir);
 
       const pkg = await loadPackage(system, {
         name: this.fullName,
@@ -635,6 +667,7 @@ export class Project {
       });
       this.package = pkg;
     } catch (error) {
+      console.error('Error creating project files', error);
       throw Error('Error creating project files', { cause: error });
     }
     await Project.installCSSForProject(this.url, true, this.fullName, this);
@@ -643,6 +676,7 @@ export class Project {
         await this.gitResource.createAndAddRemoteToGitRepository(currentUserToken(), this.name, gitHubUser, this.config.description, gitHubUser !== currentUsername(), priv);
         await this.regeneratePipelines();
       } catch (e) {
+        console.error('Error setting up project remote', e);
         throw Error('Error setting up remote', { cause: e });
       }
     }
@@ -789,8 +823,8 @@ export class Project {
         if (cmd.exitCode !== 0) throw Error('Error cloning uninstalled dependency project.');
         // Refresh the cache of available projects and their version.
         const projectDir = await Project.projectDirectory(`${depRepoOwner}--${depName}`);
-        await evalOnServer(`System.get("@lively-env").packageRegistry.addPackageAt(System.baseURL + 'local_projects/${depRepoOwner}--${depName}')`);
-        await PackageRegistry.ofSystem(System).addPackageAt(projectDir);
+        await addProjectPackageOnServerIfMissing(`${depRepoOwner}--${depName}`);
+        await addPackageAtIfMissing(PackageRegistry.ofSystem(System), projectDir);
         availableProjects = await Project.listAvailableProjects();
       }
       // Add all transitive dependencies from the current dependency to the list.

@@ -1,6 +1,7 @@
 /*global System*/
 import fs from "fs";
-import { join } from "path";
+import path, { join } from "path";
+import { fileURLToPath } from "url";
 import { resource } from "lively.resources";
 import { parseQuery } from "lively.resources";
 import { arr, obj } from "lively.lang";
@@ -73,6 +74,39 @@ function createGenerator (inputMap, resolutions) {
     inputMap,
     ...(Object.keys(resolutions).length ? { resolutions } : {})
   });
+}
+
+function fileURLPath (url) {
+  try { return path.resolve(fileURLToPath(url)); } catch (err) { return null; }
+}
+
+function clientRelativeFileURL (url) {
+  if (typeof url !== 'string' || !url.startsWith('file:')) return url;
+
+  const baseURL = System.baseURL.endsWith('/') ? System.baseURL : System.baseURL + '/';
+  const basePath = fileURLPath(baseURL);
+  const urlPath = fileURLPath(url);
+  if (!basePath || !urlPath) return url;
+
+  let relative = path.relative(basePath, urlPath);
+  if (relative.startsWith('..') || path.isAbsolute(relative)) return url;
+
+  relative = relative.replace(/\\/g, '/');
+  if (!relative) return '';
+  if (url.endsWith('/') && !relative.endsWith('/')) relative += '/';
+  return relative;
+}
+
+function clientRelativePackageRegistryJSON (value) {
+  if (typeof value === 'string') return clientRelativeFileURL(value);
+  if (Array.isArray(value)) return value.map(clientRelativePackageRegistryJSON);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, entry]) => [
+      clientRelativeFileURL(key),
+      clientRelativePackageRegistryJSON(entry)
+    ]));
+  }
+  return value;
 }
 
 async function installDeps (generator, deps, failed, resolutions, inputMap) {
@@ -204,7 +238,7 @@ export default class LibLookupPlugin {
   sendPackageRegistry(req, res) {
     let r = this.packageRegistry;
     res.writeHead(200,  {"Content-Type": "application/json"});
-    res.end(JSON.stringify(r.toJSON()));
+    res.end(JSON.stringify(clientRelativePackageRegistryJSON(r.toJSON())));
   }
 
   async sendImportmap (req, res) {

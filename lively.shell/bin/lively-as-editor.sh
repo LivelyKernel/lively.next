@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
 FILE=$1
-DIR=`dirname $0`
+DIR="$(cd "$(dirname "$0")" && pwd)"
 UNAME=$(uname | tr '[:upper:]' '[:lower:]')
 [ $UNAME = "darwin" ] && IS_DARWIN=1
 [ $UNAME = "linux" ] && IS_LINUX=1
 
 if [ -z "$WORKSPACE_LK" ]; then
-  export WORKSPACE_LK=$(dirname $DIR)
+  export WORKSPACE_LK="$(cd "$DIR/.." && pwd)"
 fi
 
 
@@ -19,5 +19,7 @@ if [ "${FILE:0:1}" != "/" ]; then
   fi
 fi
 
-RESOLVER=$(node -e "console.log(require.resolve('flatn/resolver.mjs'))") 
-node --no-warnings --experimental-loader $RESOLVER --dns-result-order ipv4first $DIR/lively-as-editor.js "$FILE"
+ROOT_DIR="$(cd "$WORKSPACE_LK/.." && pwd)"
+RESOLVER="$ROOT_DIR/flatn/resolver.mjs"
+
+node --no-warnings --experimental-loader "$RESOLVER" --dns-result-order ipv4first "$DIR/lively-as-editor.js" "$FILE"

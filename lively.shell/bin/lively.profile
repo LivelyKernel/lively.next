@@ -2,17 +2,13 @@
 
 eval $( node -e 'let pathParts = process.env.PATH.split(":"); let found = pathParts.findIndex(ea => ea.endsWith("flatn/bin")); if (found > 0) { console.log("export PATH=" + [...pathParts.splice(found, 1), ...pathParts].join(":").replace(/([ ])/g, "\\$1"));}' )
 
-function normalize_path {
-  echo $(builtin cd "$1"; pwd);
-}
-
 function cd {
-  DIR=$(normalize_path "$1")
+  builtin cd "${1:-$HOME}" || return $?
+  DIR=$(pwd)
   send-to-lively.sh \
     changeWorkingDirectory \
-    $DIR \
-    $LIVELY_COMMAND_OWNER > /dev/null;
-  builtin cd "${DIR}"
+    "$DIR" \
+    "$LIVELY_COMMAND_OWNER" > /dev/null 2>&1 || true;
 }
 
 function em {
@@ -42,4 +38,3 @@ function grep_in_lively {
   builtin cd "$LIVELY";
   find_in_lively "$FILE_MATCH" -print0 | xargs -0 grep -nH $1
 }
-

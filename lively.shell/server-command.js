@@ -6,22 +6,76 @@ import { signal } from 'lively.bindings';
 import { format } from 'util';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import proc from 'child_process';
+import { fileURLToPath } from 'url';
 
-let spawn, exec, isWindows, defaultEnv;
+let spawn, exec, isWindows, defaultEnv, windowsBash;
 let askPassScript = '';
 let editorScript = '';
 let doKill;
 let debug = false;
-let LIVELY = typeof System !== 'undefined' ? System.baseURL.replace(/^file:\/\//, '') : process.cwd();
+
+function fileURLToPathIfNeeded (urlOrPath) {
+  return typeof urlOrPath === 'string' && urlOrPath.startsWith('file:')
+    ? fileURLToPath(urlOrPath)
+    : urlOrPath;
+}
+
+let LIVELY = typeof System !== 'undefined' ? fileURLToPathIfNeeded(System.baseURL) : process.cwd();
 
 let binDir = typeof System !== 'undefined'
-  ? System.decanonicalize('lively.shell/bin/').replace(/^file:\/\//, '')
-  : import.meta.resolve('lively.shell/bin/').then((res) => {
-    binDir = res.replace(/^file:\/\//, ''); // fixme: this may still cause issues
+  ? fileURLToPathIfNeeded(System.decanonicalize('lively.shell/bin/'))
+  : '';
+if (typeof System === 'undefined') {
+  const resolvedBinDir = import.meta.resolve('lively.shell/bin/');
+  if (typeof resolvedBinDir === 'string') binDir = fileURLToPathIfNeeded(resolvedBinDir);
+  else Promise.resolve(resolvedBinDir).then((res) => {
+    binDir = fileURLToPathIfNeeded(res);
   });
+}
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+function pathEnvValue (env) {
+  const key = Object.keys(env || {}).find(key =>
+    isWindows ? key.toLowerCase() === 'path' : key === 'PATH');
+  return key ? env[key] : '';
+}
+
+function setPathEnvValue (env, value) {
+  if (isWindows) {
+    for (const key of Object.keys(env)) {
+      if (key.toLowerCase() === 'path') delete env[key];
+    }
+    env.Path = value;
+  } else {
+    env.PATH = value;
+  }
+  return env;
+}
+
+function normalizedEnv (env) {
+  const result = {};
+  for (const key of Object.keys(env || {})) {
+    if (isWindows && key.toLowerCase() === 'path') continue;
+    if (env[key] !== undefined) result[key] = env[key];
+  }
+  setPathEnvValue(result, pathEnvValue(env));
+  return result;
+}
+
+function normalizeCwd (cwd) {
+  let normalized = String(cwd || process.cwd());
+  if (!isWindows) return normalized;
+
+  if (normalized.startsWith('file:')) {
+    try { normalized = fileURLToPath(normalized); } catch (_) {}
+  }
+  normalized = normalized.replace(/^git\//, '');
+  if (normalized.match(/^\/[a-z]:[\\/]/i)) normalized = normalized.slice(1);
+  return normalized;
+}
 
 /*
  * determine the kill command at startup. if pkill is available then use that
@@ -101,8 +155,10 @@ export default class ServerCommand extends CommandInterface {
     }
 
     ({ command, cwd, stdin } = options);
-    let env = Object.assign(Object.create(defaultEnv), this.envForCommand(options));
-    cwd = cwd || process.cwd();
+    const commandEnv = this.envForCommand(options);
+    let env = { ...defaultEnv, ...commandEnv };
+    if (isWindows) setPathEnvValue(env, pathEnvValue(commandEnv) || pathEnvValue(defaultEnv));
+    cwd = normalizeCwd(cwd);
 
     command = Array.isArray(command) ? command.join(' ') : String(command);
 
@@ -112,22 +168,26 @@ export default class ServerCommand extends CommandInterface {
       /\$[a-zA-Z0-9_]+/g,
       match => env[match.slice(1, match.length)] || match);
 
-    if (!isWindows) command = `source ${binDir}/lively.profile; ${command}`;
+    if (isWindows) {
+      ([command, args] = windowsBash
+        ? [windowsBash, ['-lc', command]]
+        : ['cmd', ['/C', command]]);
+    } else {
+      command = `source ${binDir}/lively.profile; ${command}`;
+      ([command, args] = ['/bin/bash', ['-c', command]]);
+    }
 
-    ([command, args] = (isWindows
-      ? ['cmd', ['/C', command]]
-      : ['/bin/bash', ['-c', command]]));
-
+    const commandLine = [command].concat(args).join(' ');
     let proc = spawn(command, args, { env, cwd, stdio: 'pipe', detached: true });
 
-    if (this.debug) console.log('Running command: "%s" (%s)', [command].concat(args).join(' '), proc.pid);
+    if (this.debug) console.log('Running command: "%s" (%s)', commandLine, proc.pid);
 
     if (stdin) {
       this.debug && console.log('setting stdin to: %s', stdin);
       proc.stdin.end(stdin);
     }
 
-    this.attachTo(proc, options);
+    this.attachTo(proc, { ...options, commandLine, cwd, envPath: pathEnvValue(env) });
 
     return this;
   }
@@ -170,11 +230,17 @@ export default class ServerCommand extends CommandInterface {
     });
 
     proc.on('error', (err) => {
-      this.debug && console.log('shell command errored ' + err);
+      const message = [
+        err.stack || String(err),
+        options.commandLine ? `Command: ${options.commandLine}` : null,
+        options.cwd ? `Cwd: ${options.cwd}` : null,
+        options.envPath ? `Path: ${options.envPath}` : null
+      ].filter(Boolean).join('\n');
+      this.debug && console.log('shell command errored ' + message);
       arr.remove(this.constructor.commands, this);
-      this._stderr += err.stack;
-      this.emit('error', err.stack);
-      signal(this, 'error', err.stack);
+      this._stderr += message;
+      this.emit('error', message);
+      signal(this, 'error', message);
       this.exitCode = 1;
     });
   }
@@ -272,19 +338,21 @@ try {
   spawn = proc.spawn;
   exec = proc.exec;
 
-  isWindows = process.platform !== 'linux' &&
-             process.platform !== 'darwin' &&
-             process.platform.include('win');
+  isWindows = process.platform === 'win32';
+  windowsBash = isWindows && process.env.LIVELY_WINDOWS_BASH && fs.existsSync(process.env.LIVELY_WINDOWS_BASH)
+    ? process.env.LIVELY_WINDOWS_BASH
+    : '';
 
-  defaultEnv = Object.assign(
-    Object.create(process.env), {
-      SHELL: '/bin/bash',
-      PAGER: 'ul | cat -s',
-      MANPAGER: 'ul | cat -s',
-      TERM: 'xterm',
-      PATH: binDir + path.delimiter + process.env.PATH,
-      LIVELY: LIVELY
-    });
+  defaultEnv = {
+    ...normalizedEnv(process.env),
+    SHELL: windowsBash || '/bin/bash',
+    PAGER: 'ul | cat -s',
+    MANPAGER: 'ul | cat -s',
+    TERM: 'xterm',
+    LIVELY: LIVELY,
+    ...(isWindows ? { HOME: process.env.HOME || process.env.USERPROFILE || os.homedir() } : {})
+  };
+  setPathEnvValue(defaultEnv, [binDir, pathEnvValue(defaultEnv)].filter(Boolean).join(path.delimiter));
 
   /*
    * ASKPASS support for tunneling sudo / ssh / git password requests back to the
@@ -292,7 +360,7 @@ try {
    */
   (function setupAskpass () {
     askPassScript = path.join(binDir, 'askpass' + (isWindows ? '.win.sh' : '.sh'));
-    if (!isWindows) { try { fs.chmodSync(askPassScript, parseInt('0755', 8)); } catch (e) { console.error(e.stack); } }
+    if (!isWindows && fs.existsSync(askPassScript)) { try { fs.chmodSync(askPassScript, parseInt('0755', 8)); } catch (e) { console.error(e.stack); } }
   })();
 
   /*
@@ -300,7 +368,7 @@ try {
    */
   (function setupEditor () {
     editorScript = path.join(binDir, 'lively-as-editor.sh');
-    if (!isWindows) { try { fs.chmodSync(editorScript, parseInt('0755', 8)); } catch (e) { console.error(e.stack); } }
+    if (!isWindows && fs.existsSync(editorScript)) { try { fs.chmodSync(editorScript, parseInt('0755', 8)); } catch (e) { console.error(e.stack); } }
   })();
 
   (function determineKillCommand () {
@@ -308,5 +376,5 @@ try {
     exec('which pkill', function (code) { if (!code) doKill = pkillKill; });
   })();
 } catch (err) {
-
+  console.error('[lively.shell] failed to initialize server command support:', err && (err.stack || err));
 }
