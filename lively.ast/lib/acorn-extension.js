@@ -4,9 +4,9 @@ import Decorators from './acorn-decorators.mjs';
 import _ClassFields from 'acorn-class-fields';
 import _StaticClassFeatures from 'acorn-static-class-features';
 import _PrivateMethods from 'acorn-private-methods';
-import * as acornDefault from 'acorn';
-import * as walk from 'acorn-walk';
-import * as loose from 'acorn-loose';
+import * as _acornDefault from 'acorn';
+import * as _walk from 'acorn-walk';
+import * as _loose from 'acorn-loose';
 
 // If we are running in node, load the modules natively.
 // The reason is, that in node.js we can not load the esm
@@ -22,19 +22,46 @@ const isNode = typeof System !== 'undefined'
   : false;
 
 let ClassFields, StaticClassFeatures, PrivateMethods;
+function acornPlugin (imported, moduleName) {
+  let plugin = imported;
+  while (plugin && typeof plugin === 'object' && 'default' in plugin) {
+    plugin = plugin.default;
+  }
+  return typeof plugin === 'function'
+    ? plugin
+    : System._nodeRequire(moduleName);
+}
+
+function acornNamespace (imported, expectedProperty, requireName) {
+  let namespace = imported;
+  while (namespace && typeof namespace === 'object' && typeof namespace[expectedProperty] !== 'function' && 'default' in namespace) {
+    namespace = namespace.default;
+  }
+  if (typeof namespace?.[expectedProperty] !== 'function' && requireName && globalThis.System?._nodeRequire) {
+    namespace = globalThis.System._nodeRequire(requireName);
+    while (namespace && typeof namespace === 'object' && typeof namespace[expectedProperty] !== 'function' && 'default' in namespace) {
+      namespace = namespace.default;
+    }
+  }
+  return namespace;
+}
+
 if (isNode) {
   // we need to utilize the native require here to bypass the source transform of the class
   // we can not use the native import, since that is asynchronous.
   // top level import is causing class instrumentation
-  ClassFields = _ClassFields || System._nodeRequire('acorn-class-fields');
-  StaticClassFeatures = _StaticClassFeatures || System._nodeRequire('acorn-static-class-features');
-  PrivateMethods = _PrivateMethods || System._nodeRequire('acorn-private-methods');
+  ClassFields = acornPlugin(_ClassFields, 'acorn-class-fields');
+  StaticClassFeatures = acornPlugin(_StaticClassFeatures, 'acorn-static-class-features');
+  PrivateMethods = acornPlugin(_PrivateMethods, 'acorn-private-methods');
 } else {
   ClassFields = _ClassFields;
   StaticClassFeatures = _StaticClassFeatures;
   PrivateMethods = _PrivateMethods;
 }
 
+const acornDefault = acornNamespace(_acornDefault, 'Parser', 'acorn');
+const walk = acornNamespace(_walk, 'make', 'acorn-walk');
+const loose = acornNamespace(_loose, 'parse', 'acorn-loose');
 const custom = {};
 
 custom.forEachNode = forEachNode;

@@ -12,6 +12,15 @@ export function runtimeDefinition () {
     : typeof global !== 'undefined'
       ? global
       : typeof self !== 'undefined' ? self : this;
+
+  let isBrowserRuntime = typeof window !== 'undefined' && typeof document !== 'undefined';
+  if (isBrowserRuntime && typeof process !== 'undefined' && process) {
+    try { process.browser = true; } catch (_) {}
+    try {
+      if (typeof process.type === 'undefined') process.type = 'renderer';
+    } catch (_) {}
+  }
+
   if (typeof G.lively !== 'object') G.lively = {};
 
   function getPackageName (m) {

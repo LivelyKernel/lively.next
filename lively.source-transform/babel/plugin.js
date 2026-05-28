@@ -1,14 +1,59 @@
 /* global require,global */
-import t from '@babel/types';
-import babel from '@babel/core';
-import systemjsTransform from '@babel/plugin-transform-modules-systemjs';
-import dynamicImport from '@babel/plugin-proposal-dynamic-import';
+import _t from '@babel/types';
+import _babel from '@babel/core';
+import _systemjsTransform from '@babel/plugin-transform-modules-systemjs';
+import _dynamicImport from '@babel/plugin-proposal-dynamic-import';
 import { arr, Path } from 'lively.lang';
 import { query } from 'lively.ast';
 import { topLevelFuncDecls } from 'lively.ast/lib/visitors.js';
 import { classToFunctionTransformBabel } from 'lively.classes';
 import { getGlobal } from 'lively.vm/lib/util.js';
 import { declarationWrapperCall, annotationSym, assignExpr, varDeclOrAssignment, transformPattern, generateUniqueName, varDeclAndImportCall, importCallStmt, shouldDeclBeCaptured, importCall, exportCallStmt, exportFromImport, additionalIgnoredDecls, additionalIgnoredRefs } from './helpers.js';
+
+function cjsDefault (module, expectedProperty, requireName) {
+  let value = module;
+  const hasExpected = candidate => {
+    if (typeof candidate === 'function') return true;
+    if (!expectedProperty) return true;
+    if (candidate?.[expectedProperty] != null) return true;
+    const canonicalName = expectedProperty[0].toLowerCase() + expectedProperty.slice(1);
+    return candidate?.[canonicalName] != null;
+  };
+  while (value && typeof value === 'object' && !hasExpected(value) && 'default' in value) {
+    value = value.default;
+  }
+  if (!hasExpected(value) && requireName && isNodeSystem(globalThis.System) && globalThis.System?._nodeRequire) {
+    value = globalThis.System._nodeRequire(requireName);
+    while (value && typeof value === 'object' && !hasExpected(value) && 'default' in value) {
+      value = value.default;
+    }
+  }
+  return value;
+}
+
+function babelTypes (types, fallbackTypes) {
+  const target = types && (typeof types === 'object' || typeof types === 'function') ? types : {};
+  return new Proxy(target, {
+    get (target, property, receiver) {
+      const value = Reflect.get(target, property, receiver);
+      const fallback = globalThis.babel?.types || globalThis.babel?.default?.types || fallbackTypes;
+      if (typeof property === 'string' && /^[A-Z]/.test(property) && typeof value !== 'function') {
+        const canonicalName = property[0].toLowerCase() + property.slice(1);
+        const canonical = Reflect.get(target, canonicalName, receiver);
+        if (typeof canonical === 'function') return canonical;
+        if (typeof fallback?.[property] === 'function') return fallback[property];
+        if (typeof fallback?.[canonicalName] === 'function') return fallback[canonicalName];
+      }
+      if (typeof value !== 'function' && typeof fallback?.[property] === 'function') return fallback[property];
+      return value;
+    }
+  });
+}
+
+const babel = cjsDefault(_babel, 'parse');
+const t = babelTypes(cjsDefault(_t, 'Identifier'), babel?.types);
+const systemjsTransform = cjsDefault(_systemjsTransform, 'visitor', '@babel/plugin-transform-modules-systemjs');
+const dynamicImport = cjsDefault(_dynamicImport, 'visitor', '@babel/plugin-proposal-dynamic-import');
 
 export function babel_parse (source) {
   return babel.parse(source).program.body;
@@ -1236,15 +1281,16 @@ function rewriteToRegisterModuleToCaptureSetters (path, state, options) {
 
   const { _renamedExports: renamedExports = {} } = state.opts.module || {};
 
-  const registerCall = path.get('body.0.expression');
-
   const printAst = () => babel.transformFromAstSync(path.node).code.slice(0, 300);
-  if (registerCall.node.callee.object.name !== 'System') {
+  const registerStmt = path.get('body').find(stmt => {
+    const expr = stmt.get('expression').node;
+    return (expr?.callee?.object?.name === 'System' || expr?.callee?.object?.name === 'SystemJS') &&
+      expr?.callee?.property?.name === 'register';
+  });
+  if (!registerStmt) {
     throw new Error(`rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call: ${printAst()}...`);
   }
-  if (registerCall.node.callee.property.name !== 'register') {
-    throw new Error(`rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call: ${printAst()}...`);
-  }
+  const registerCall = registerStmt.get('expression');
   const registerBody = registerCall.get('arguments.1.body');
   const registerReturn = arr.last(registerBody.get('body'));
 
@@ -1395,7 +1441,7 @@ class BabelTranspiler {
     let opts = System.babelOptions;
     let needsBabel = (opts.plugins && opts.plugins.length) || (opts.presets && opts.presets.length);
     return needsBabel
-      ? System.global.babel.transform(source, opts).code
+      ? babel.transform(source, opts).code
       : source;
   }
 
@@ -1403,6 +1449,7 @@ class BabelTranspiler {
     let System = this.System;
     let opts = Object.assign({}, System.babelOptions);
     opts.sourceFileName = options.module?.id;
+    opts.sourceType = 'module';
     opts.plugins = opts.plugins
       ? opts.plugins.slice()
       : [
@@ -1415,12 +1462,38 @@ class BabelTranspiler {
     return babel.transform(source, opts);
   }
 }
+
+function isBrowserSystem (System) {
+  try {
+    if (System?.get?.('@system-env')?.browser) return true;
+  } catch (_) {}
+  return typeof window !== 'undefined' && typeof document !== 'undefined';
+}
+
+function isNodeSystem (System) {
+  try {
+    const env = System?.get?.('@system-env');
+    if (env) return !!env.node && !env.browser && !env.nw;
+  } catch (_) {}
+  return !isBrowserSystem(System) &&
+    typeof process !== 'undefined' &&
+    !!process.versions?.node;
+}
 // setupBabelTranspiler(System)
 export function setupBabelTranspiler (System) {
-  if (typeof require !== 'undefined') { System._nodeRequire = eval('require'); } // hack to enable dynamic requires in bundles
-  if (typeof global !== 'undefined') { global.__webpack_require__ = global.__non_webpack_require__ = System._nodeRequire; }
+  const useNodeRequire = isNodeSystem(System) && typeof require !== 'undefined';
+  if (useNodeRequire) {
+    System._nodeRequire = eval('require'); // hack to enable dynamic requires in bundles
+  } else if (isBrowserSystem(System)) {
+    delete System._nodeRequire;
+  }
+  if (useNodeRequire && typeof global !== 'undefined') {
+    global.__webpack_require__ = global.__non_webpack_require__ = System._nodeRequire;
+  }
 
-  System.global = typeof global === 'undefined' ? window : global;
+  System.global = isBrowserSystem(System)
+    ? (typeof window !== 'undefined' ? window : typeof self !== 'undefined' ? self : globalThis)
+    : (typeof global === 'undefined' ? globalThis : global);
   System.trace = true; // in order to harvest more metadata for lively.modules
   if (System._nodeRequire) {
     const Module = System._nodeRequire('module');

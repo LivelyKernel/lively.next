@@ -35,6 +35,15 @@ const loc = document.location;
 const query = resource(loc.href).query();
 const extractedModules = {};
 
+function extractModule (id, systemId = id) {
+  const record = lively.FreezerRuntime.registry[id];
+  if (!record) return;
+  extractedModules[systemId] = {
+    exports: lively.FreezerRuntime.exportsOf(id),
+    recorder: record.recorder
+  };
+}
+
 function polyfills () {
   const loads = [];
   if (!('PointerEvent' in window)) { loads.push(loadViaScript(resource(System.baseURL).join('/lively.next-node_modules/pepjs/dist/pep.js').url)); }
@@ -53,7 +62,7 @@ function extractEsmModules () {
   Object.keys(lively.FreezerRuntime.registry)
     .filter(k => k.startsWith('esm://'))
     .forEach(id => {
-      extractedModules[id] = lively.FreezerRuntime.exportsOf(id);
+      extractModule(id);
     });
 }
 
@@ -61,7 +70,7 @@ function extractModules (packageName) {
   Object.keys(lively.FreezerRuntime.registry)
     .filter(k => k.startsWith(packageName))
     .forEach(id => {
-      extractedModules[resource(System.baseURL).join(id).url] = lively.FreezerRuntime.exportsOf(id);
+      extractModule(id, resource(System.baseURL).join(id).url);
     });
 }
 
@@ -227,7 +236,6 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
         initBaseURL = initBaseURL.slice(0, -1);
       }
       const packageCached = await resource(baseURL).join('package-registry.json').readJson();
-      await loadViaScript(resource(baseURL).join('/lively.next-node_modules/@babel/standalone/babel.js').url);
       const migratedMeta = { ...oldSystem.meta };
       const System = lively.modules.getSystem('bootstrapped', { baseURL, meta: migratedMeta }); // the meta of the not yet loaded modules needs to be transformed into register
       $world.env.uninstallSystemChangeHandlers();
@@ -243,9 +251,11 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
       System['__lively.modules__packageRegistry'] = lively.modules.PackageRegistry.fromJSON(System, packageCached);
       for (const mod in extractedModules) {
         const realignedId = mod.replace(initBaseURL, baseURL);
-        System.set(realignedId, System.newModule(extractedModules[mod]));
+        const { exports, recorder } = extractedModules[mod];
+        System.set(realignedId, System.newModule(exports));
         const m = lively.modules.module(realignedId);
-        m._recorder = extractedModules[mod];
+        // Keep the full recorder; serializers resolve non-exported bindings through it.
+        m._recorder = recorder;
         // denote the exports
         m._frozenModule = true;
       }

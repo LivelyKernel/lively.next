@@ -63,7 +63,7 @@ const CLASS_INSTRUMENTATION_MODULES = [
   'https://jspm.dev/npm:rollup@2.28.2' // this contains a bunch of class definitions which right now screws up the closure compiler
 ];
 
-const ESM_CDNS = [/esm:\/\/([^\/]*)\//];
+const ESM_CDNS = [/esm:\/\/([^\/]*)\//, /https:\/\/ga\.jspm\.io\//];
 
 // fixme: Why is a blacklist nessecary if there is a whitelist?
 const CLASS_INSTRUMENTATION_MODULES_EXCLUSION = ['lively.lang'];
@@ -200,6 +200,17 @@ function resolutionId (id, importer) {
   else return importer + ' -> ' + id;
 }
 
+function equivalentCdnModuleIds (id) {
+  if (!id || typeof id !== 'string') return [];
+  const ids = [id];
+  if (id.startsWith('https://ga.jspm.io/')) {
+    ids.push(id.replace('https://ga.jspm.io/', 'esm://ga.jspm.io/'));
+  } else if (id.startsWith('esm://ga.jspm.io/')) {
+    ids.push(id.replace('esm://ga.jspm.io/', 'https://ga.jspm.io/'));
+  }
+  return ids;
+}
+
 /**
  * For a given id, returns wether or not it is imported
  * from one of the supported ESM CDNs.
@@ -307,6 +318,44 @@ export default class LivelyRollup {
     // fixme: how to configure "system-node"
   }
 
+  modulePackageFor (moduleId) {
+    return this.resolver.resolvePackage(moduleId, this.getResolutionContext()) ||
+      equivalentCdnModuleIds(moduleId).map(id => this.moduleToPkg.get(id)).find(Boolean);
+  }
+
+  rememberModulePackage (moduleId, pkg) {
+    if (!pkg) return;
+    equivalentCdnModuleIds(moduleId).forEach(id => this.moduleToPkg.set(id, pkg));
+  }
+
+  defaultImportMapForCdnImports () {
+    if (this._defaultCdnImportMap !== undefined) return this._defaultCdnImportMap;
+    const knownPackage = [...new Set(this.moduleToPkg.values())].find(pkg => pkg?.systemjs?.importMap);
+    if (knownPackage) return this._defaultCdnImportMap = knownPackage.systemjs.importMap;
+    try {
+      const freezerPackage = this.resolver.resolvePackage(
+        this.resolver.normalizeFileName('lively.freezer/index.js'),
+        this.getResolutionContext());
+      return this._defaultCdnImportMap = freezerPackage?.systemjs?.importMap || null;
+    } catch (err) {
+      return this._defaultCdnImportMap = null;
+    }
+  }
+
+  resolveBareLoadId (id) {
+    if (!id || id === ROOT_ID || id.startsWith('__rootModule__:') ||
+        id.startsWith('.') || id.startsWith('/') || id.startsWith('\0') || id.includes(':')) return null;
+    const importMap = this.defaultImportMapForCdnImports();
+    const remapped = importMap && resolveViaImportMap(id, importMap, 'esm://ga.jspm.io/');
+    if (remapped && remapped !== id) return remapped;
+    try {
+      const fallbackImporter = this.resolver.normalizeFileName('lively.freezer/index.js');
+      return this.resolver.resolveModuleId(id, fallbackImporter, this.getResolutionContext());
+    } catch (err) {
+      return null;
+    }
+  }
+
   /**
    * Dispatches the responsibility of resolving relative imports to the loaded SystemJS.
    * @param { string } moduleId - The module from where the import happens.
@@ -339,7 +388,7 @@ export default class LivelyRollup {
     if (modId === '@empty.js') return {};
     const parsedGlobals = parsedSource.scope?.globals && Object.keys(parsedSource.scope?.globals) || GlobalInjector.getGlobals(null, parsedSource);
     let version, name;
-    const pkg = this.resolver.resolvePackage(modId, this.getResolutionContext()) || this.moduleToPkg.get(modId);
+    const pkg = this.modulePackageFor(modId);
     if (pkg) {
       name = pkg.name;
       version = pkg.version;
@@ -429,7 +478,7 @@ export default class LivelyRollup {
       resolvedImports = {};
     }
     let version, name;
-    const pkg = this.resolver.resolvePackage(modId, this.getResolutionContext()) || this.moduleToPkg.get(modId);
+    const pkg = this.modulePackageFor(modId);
     if (pkg) {
       name = pkg.name;
       version = pkg.version;
@@ -877,9 +926,12 @@ export default class LivelyRollup {
       }
     }
 
-    const importingPackage = this.resolver.resolvePackage(importer, this.getResolutionContext()) || this.moduleToPkg.get(importer);
+    const importingPackage = this.modulePackageFor(importer);
     // honor the systemjs options within the package config
-    const { map: mapping, importMap } = importingPackage?.systemjs || {};
+    let { map: mapping, importMap } = importingPackage?.systemjs || {};
+    if (!importMap && this.wasFetchedFromEsmCdn(importer)) {
+      importMap = this.defaultImportMapForCdnImports();
+    }
     if (mapping) {
       let remapped = mapping[id];
       if (remapped) {
@@ -891,11 +943,12 @@ export default class LivelyRollup {
     }
 
     if (importMap) {
+      this._defaultCdnImportMap = importMap;
       let remapped = resolveViaImportMap(id, importMap, importer)
       if (remapped) id = remapped;
     }
     
-    this.moduleToPkg.set(id, importingPackage);
+    this.rememberModulePackage(id, importingPackage);
 
     let absolutePath;
 
@@ -970,6 +1023,9 @@ export default class LivelyRollup {
       }
       return '';
     }
+
+    const resolvedBareId = this.resolveBareLoadId(id);
+    if (resolvedBareId && resolvedBareId !== id) return this.perform_load(resolvedBareId);
 
     if (id === ROOT_ID) {
       const res = await this.getRootModule();

@@ -42,7 +42,6 @@ function initWorker () {
   const w = worker.create({
     workerId: '@lively-worker',
     scriptsToLoad: [
-      'lively.next-node_modules/babel-standalone/babel.js',
       'lively.next-node_modules/systemjs/dist/system.src.js',
       'lively.modules/dist/lively.modules.js',
       'lively.ide/jsdom.worker.js'
