@@ -676,6 +676,15 @@ async function main () {
   step('Copying monorepo (this may take a minute)...');
   copyMonorepo(ROOT_DIR, path.join(BUNDLE, 'app'), makeFilter(excludes));
 
+  step('Pre-building package registry cache...');
+  execFileSync(process.execPath, [
+    path.join(BUNDLE, 'app', 'lively.server', 'scripts', 'build-package-registry-cache.cjs')
+  ], {
+    cwd: path.join(BUNDLE, 'app'),
+    env: { ...process.env, FLATN_DISABLE_WATCH: '1' },
+    stdio: 'inherit'
+  });
+
   // -----------------------------------------------------------------------
   // 5. Platform-specific launchers / layout
   // -----------------------------------------------------------------------
