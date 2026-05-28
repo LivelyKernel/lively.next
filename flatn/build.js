@@ -1,5 +1,6 @@
 /* global System,process,__dirname */
 import { join as j } from 'path';
+import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { tmpdir } from './util.js';
 import { execSync } from 'child_process';
@@ -8,7 +9,7 @@ import { x, npmFallbackEnv } from './util.js';
 
 const dir = typeof __dirname !== 'undefined'
   ? __dirname
-  : System.decanonicalize('flatn/').replace('file://', '');
+  : fileURLToPath(System.decanonicalize('flatn/'));
 const helperBinDir = j(dir, 'bin');
 
 let _npmEnv;
@@ -69,7 +70,7 @@ function linkBins (packageSpecs, linkState = {}, verbose = false) {
   let linkLocation = j(tmpdir(), 'npm-helper-bin-dir');
   if (!fs.existsSync(linkLocation)) fs.mkdirSync(linkLocation);
   packageSpecs.forEach(({ bin, location }) => {
-    if (location.startsWith('file://')) { location = location.replace(/^file:\/\//, ''); }
+    if (location.startsWith('file://')) { location = fileURLToPath(location); }
     if (!bin) return;
     if (linkState[location]) return;
     for (let linkName in bin) {

@@ -130,9 +130,18 @@ const binaryExtensions = ['3ds', '3g2', '3gp', '7z', 'a', 'aac', 'adp', 'ai', 'a
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-const isNode = typeof System !== 'undefined'
-  ? System.get('@system-env').node
-  : (typeof global !== 'undefined' && typeof process !== 'undefined');
+function isNodeRuntime () {
+  try {
+    const env = typeof System !== 'undefined' && System.get('@system-env');
+    if (env) return !!env.node && !env.browser && !env.nw;
+  } catch (_) {}
+  return typeof window === 'undefined' &&
+    typeof global !== 'undefined' &&
+    typeof process !== 'undefined' &&
+    !!process.versions?.node;
+}
+
+const isNode = isNodeRuntime();
 
 function defaultOrigin () {
   return System.baseURL || document.location.origin;

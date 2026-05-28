@@ -78,7 +78,8 @@ export default class PackageConfiguration {
     if (sysConfig.babelOptions) { System.config({ babelOptions: sysConfig.babelOptions }); }
     if (sysConfig.meta) { System.config({ meta: sysConfig.meta }); }
     // Only apply nodeRequirePackages in Node.js environment
-    if (sysConfig.nodeRequirePackages && System._nodeRequire) {
+    const envModule = System.get('@system-env');
+    if (sysConfig.nodeRequirePackages && envModule?.node && !envModule?.browser && !envModule?.nw && System._nodeRequire) {
       // Store packages that should be loaded via System._nodeRequire()
       const env = System.get('@lively-env');
       if (!env.nodeRequirePackages) env.nodeRequirePackages = new Set();

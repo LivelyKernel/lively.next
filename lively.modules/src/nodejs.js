@@ -1,10 +1,20 @@
 import { resource } from 'lively.resources';
 
+function fileURLToPathname (url) {
+  const parsed = new URL(url);
+  const pathname = parsed.pathname
+    .replace(/%2f/ig, match => `%25${match.slice(1)}`)
+    .replace(/%5c/ig, match => `%25${match.slice(1)}`);
+  let decodedPath = decodeURIComponent(pathname);
+  if (parsed.host) decodedPath = `//${parsed.host}${decodedPath}`;
+  return decodedPath.replace(/^\/([a-z]:\/)/i, '$1').replace(/\\/g, '/');
+}
+
 function ensureParent (currentModule, name, parent) {
   if (parent) return parent;
 
   let { id, System } = currentModule;
-  let idForNode = id.startsWith('file://') ? id.replace('file://', '') : id;
+  let idForNode = id.startsWith('file://') ? fileURLToPathname(id) : id;
   let module = System._nodeRequire('module');
 
   parent = module.Module._cache[id];
@@ -16,7 +26,7 @@ function ensureParent (currentModule, name, parent) {
 }
 
 function relative (module, name) {
-  return resource(module.id).parent().join(name).url.replace('file://', '');
+  return fileURLToPathname(resource(module.id).parent().join(name).url);
 }
 
 export function _require (currentModule, name, parent) {

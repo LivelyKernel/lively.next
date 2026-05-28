@@ -13764,9 +13764,18 @@ const binaryExtensions = ['3ds', '3g2', '3gp', '7z', 'a', 'aac', 'adp', 'ai', 'a
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-const isNode = typeof System !== 'undefined'
-  ? System.get('@system-env').node
-  : (typeof global !== 'undefined' && typeof process !== 'undefined');
+function isNodeRuntime () {
+  try {
+    const env = typeof System !== 'undefined' && System.get('@system-env');
+    if (env) return !!env.node && !env.browser && !env.nw;
+  } catch (_) {}
+  return typeof window === 'undefined' &&
+    typeof global !== 'undefined' &&
+    typeof process !== 'undefined' &&
+    !!process.versions?.node;
+}
+
+const isNode = isNodeRuntime();
 
 function defaultOrigin () {
   return System.baseURL || document.location.origin;
@@ -14009,8 +14018,18 @@ var resourceExtension$3 = {
 
 /* global process */
 
+function fileURLToPathname (url) {
+  const parsed = new URL(url);
+  const pathname = parsed.pathname
+    .replace(/%2f/ig, match => `%25${match.slice(1)}`)
+    .replace(/%5c/ig, match => `%25${match.slice(1)}`);
+  let decodedPath = decodeURIComponent(pathname);
+  if (parsed.host) decodedPath = `//${parsed.host}${decodedPath}`;
+  return decodedPath.replace(/^\/([a-z]:\/)/i, '$1').replace(/\\/g, '/');
+}
+
 function exists (path, cb) {
-  return fs.access(path, fs.constants.F_OK, (err) => {
+  return fs.access(path, (err) => {
     if (err) {
       cb(false);
     } else {
@@ -14040,7 +14059,7 @@ class NodeJSFileResource extends Resource {
   get isNodeJSFileResource () { return true; }
 
   path () {
-    return this.url.replace('file://', '');
+    return fileURLToPathname(this.url);
   }
 
   async stat () {
@@ -14181,7 +14200,7 @@ class NodeJSWindowsFileResource extends NodeJSFileResource {
   }
 
   path () {
-    return this.url.replace('file:///', '');
+    return fileURLToPathname(this.url);
   }
 
   isRoot () {
@@ -14431,7 +14450,10 @@ class ESMResource extends Resource {
   }
 
   getBaseURL () {
-    return typeof System !== 'undefined' && System?.baseURL || typeof process !== 'undefined' && 'file://' + process?.env.lv_next_dir;
+    if (typeof System !== 'undefined' && System?.baseURL) return System.baseURL;
+    if (typeof window === 'undefined' && typeof process !== 'undefined' && process?.env.lv_next_dir) {
+      return 'file://' + process.env.lv_next_dir;
+    }
   }
 
   async findOrCreatePathStructure (pathElements) {
@@ -15498,7 +15520,7 @@ function buildStages (packageSpec, packageMap, dependencyFields) {
 
 const dir = typeof __dirname !== 'undefined'
   ? __dirname
-  : System.decanonicalize('flatn/').replace('file://', '');
+  : url.fileURLToPath(System.decanonicalize('flatn/'));
 const helperBinDir = path.join(dir, 'bin');
 
 let _npmEnv;
@@ -15559,7 +15581,7 @@ function linkBins (packageSpecs, linkState = {}, verbose = false) {
   let linkLocation = path.join(tmpdir(), 'npm-helper-bin-dir');
   if (!fs.existsSync(linkLocation)) fs.mkdirSync(linkLocation);
   packageSpecs.forEach(({ bin, location }) => {
-    if (location.startsWith('file://')) { location = location.replace(/^file:\/\//, ''); }
+    if (location.startsWith('file://')) { location = url.fileURLToPath(location); }
     if (!bin) return;
     if (linkState[location]) return;
     for (let linkName in bin) {
@@ -15748,10 +15770,22 @@ function resolveImportMapping(name, mapping, context) {
   return mapping;
 }
 
+function equivalentImportMapScopesFor (url) {
+  if (!url || typeof url !== 'string') return [];
+  const urls = [url];
+  if (url.startsWith('https://ga.jspm.io/')) {
+    urls.push(url.replace('https://ga.jspm.io/', 'esm://ga.jspm.io/'));
+  } else if (url.startsWith('esm://ga.jspm.io/')) {
+    urls.push(url.replace('esm://ga.jspm.io/', 'https://ga.jspm.io/'));
+  }
+  return urls;
+}
+
 function resolveViaImportMap (id, importMap, importer) {
   let scope, remapped = importMap.imports?.[id] || null;
+  const importers = equivalentImportMapScopesFor(importer);
   if (scope = Object.entries(importMap.scopes || {})
-    .filter(([k]) => importer.startsWith(k))
+    .filter(([k]) => importers.some(ea => ea.startsWith(k)))
     .sort((a, b) => a[0].length - b[0].length)
     .map(([_, scope]) => scope)
     .reduce((a, b) => ({ ...a, ...b }), false)) {
@@ -15785,7 +15819,7 @@ function ensurePathFormat (dirOrArray) {
   // This ensures that...
   if (Array.isArray(dirOrArray)) return dirOrArray.map(ensurePathFormat);
   if (dirOrArray.isResource) return dirOrArray.path();
-  if (dirOrArray.startsWith('file://')) dirOrArray = dirOrArray.replace('file://', '');
+  if (dirOrArray.startsWith('file://')) dirOrArray = url.fileURLToPath(dirOrArray);
   return dirOrArray;
 }
 
@@ -15806,9 +15840,9 @@ function ensurePackageMap (packageCollectionDirs, individualPackageDirs, devPack
 function packageDirsFromEnv () {
   let env = process.env;
   return {
-    packageCollectionDirs: [...new Set((env.FLATN_PACKAGE_COLLECTION_DIRS || '').split(':').filter(Boolean))],
-    individualPackageDirs: [...new Set((env.FLATN_PACKAGE_DIRS || '').split(':').filter(Boolean))],
-    devPackageDirs: [...new Set((env.FLATN_DEV_PACKAGE_DIRS || '').split(':').filter(Boolean))]
+    packageCollectionDirs: [...new Set((env.FLATN_PACKAGE_COLLECTION_DIRS || '').split(path.delimiter).filter(Boolean))],
+    individualPackageDirs: [...new Set((env.FLATN_PACKAGE_DIRS || '').split(path.delimiter).filter(Boolean))],
+    devPackageDirs: [...new Set((env.FLATN_DEV_PACKAGE_DIRS || '').split(path.delimiter).filter(Boolean))]
   };
 }
 
@@ -15816,9 +15850,9 @@ function setPackageDirsOfEnv (packageCollectionDirs, individualPackageDirs, devP
   packageCollectionDirs = ensurePathFormat(packageCollectionDirs);
   individualPackageDirs = ensurePathFormat(individualPackageDirs);
   devPackageDirs = ensurePathFormat(devPackageDirs);
-  process.env.FLATN_PACKAGE_COLLECTION_DIRS = packageCollectionDirs.join(':');
-  process.env.FLATN_PACKAGE_DIRS = individualPackageDirs.join(':');
-  process.env.FLATN_DEV_PACKAGE_DIRS = devPackageDirs.join(':');
+  process.env.FLATN_PACKAGE_COLLECTION_DIRS = packageCollectionDirs.join(path.delimiter);
+  process.env.FLATN_PACKAGE_DIRS = individualPackageDirs.join(path.delimiter);
+  process.env.FLATN_DEV_PACKAGE_DIRS = devPackageDirs.join(path.delimiter);
 }
 
 async function buildPackage (

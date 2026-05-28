@@ -1,11 +1,86 @@
-import semver from 'semver';
+import {
+  sort as _semverSort,
+  gt as _semverGt,
+  compare as _semverCompare,
+  valid as _semverValid,
+  validRange as _semverValidRange,
+  satisfies as _semverSatisfies
+} from 'semver';
 import { arr, obj, promise } from 'lively.lang';
 import { Package } from './package.js';
 import { resource } from 'lively.resources';
 import { isURL } from '../url-helpers.js';
 import { classHolder } from '../cycle-breaker.js';
 
+function loadedSystemModule (requireName, expectedProperty) {
+  const System = globalThis.System;
+  if (!System) return null;
+  const encodedName = requireName.replace('/', '__SLASH__');
+  const candidates = Object.keys(System.loads || {}).filter(key =>
+    key.includes(requireName) || key.includes(encodedName));
+  for (const key of candidates) {
+    const value = System.loads[key]?.exports || System.get?.(key, false);
+    if (typeof value?.[expectedProperty] === 'function') return value;
+  }
+  return null;
+}
+
+function isNodeSystem (System = globalThis.System) {
+  try {
+    const env = System?.get?.('@system-env');
+    if (env) return !!env.node && !env.browser && !env.nw;
+  } catch (_) {}
+  return typeof window === 'undefined' &&
+    typeof process !== 'undefined' &&
+    !!process.versions?.node;
+}
+
+function cjsDefault (module, expectedProperty, requireName) {
+  let value = module;
+  while (value && typeof value === 'object' && typeof value[expectedProperty] !== 'function' && 'default' in value) {
+    value = value.default;
+  }
+  if (typeof value?.[expectedProperty] !== 'function' && requireName) {
+    value = loadedSystemModule(requireName, expectedProperty) || value;
+  }
+  if (typeof value?.[expectedProperty] !== 'function' && requireName && isNodeSystem() && globalThis.System?._nodeRequire) {
+    value = globalThis.System._nodeRequire(requireName);
+    while (value && typeof value === 'object' && typeof value[expectedProperty] !== 'function' && 'default' in value) {
+      value = value.default;
+    }
+  }
+  return value;
+}
+
+const _semver = {
+  sort: _semverSort,
+  gt: _semverGt,
+  compare: _semverCompare,
+  valid: _semverValid,
+  validRange: _semverValidRange,
+  satisfies: _semverSatisfies
+};
+const semver = cjsDefault(_semver, 'validRange', 'semver');
 const urlStartRe = /^[a-z\.-_\+]+:/i;
+
+function normalizedVersion (version) {
+  if (version == null) return null;
+  return semver.valid(String(version), true);
+}
+
+function compareVersions (a, b) {
+  const validA = normalizedVersion(a);
+  const validB = normalizedVersion(b);
+  if (validA && validB) return semver.compare(validA, validB, true);
+  if (validA) return 1;
+  if (validB) return -1;
+  return String(a || '').localeCompare(String(b || ''));
+}
+
+function sortVersions (versions) {
+  return versions.slice().sort(compareVersions);
+}
+
 function isAbsolute (path) {
   return (
     path.startsWith('/') ||
@@ -17,6 +92,18 @@ function isAbsolute (path) {
 
 function ensureResource (path) {
   return path.isResource ? path : resource(path);
+}
+
+function packageLookupURL (url) {
+  if (url.isResource) url = url.url;
+  url = String(url).replace(/\\/g, '/');
+  try { url = decodeURI(url); } catch (_) {}
+  url = url
+    .replace(/^file:\/\/localhost\//i, '/')
+    .replace(/^file:\/\/\/([a-z]:\/)/i, (_, drivePath) => drivePath)
+    .replace(/^file:\/\/\/?/i, '/')
+    .replace(/^([a-z]):\//i, (_, drive) => `${drive.toLowerCase()}:/`);
+  return url.endsWith('/') ? url.slice(0, -1) : url;
 }
 
 export class PackageRegistry {
@@ -52,6 +139,7 @@ export class PackageRegistry {
     this.packageMap = {};
     this.moduleUrlToPkg = new Map();
     this._byURL = null;
+    this._byLookupURL = null;
   }
 
   get byURL () {
@@ -62,7 +150,18 @@ export class PackageRegistry {
     return this._byURL;
   }
 
-  resetByURL () { this._byURL = null; }
+  get byLookupURL () {
+    if (!this._byLookupURL) {
+      this._byLookupURL = {};
+      for (let p of this.allPackages()) { this._byLookupURL[packageLookupURL(p.url)] = p; }
+    }
+    return this._byLookupURL;
+  }
+
+  resetByURL () {
+    this._byURL = null;
+    this._byLookupURL = null;
+  }
 
   allPackageURLs () { return Object.keys(this.byURL); }
 
@@ -140,8 +239,8 @@ export class PackageRegistry {
       if (!packageMap[pName]) packageMap[pName] = {};
 
       if (packageMap[pName].latest) {
-        if (semver.gt(spec.latest, packageMap[pName].latest)) { packageMap[pName].latest = spec.latest; }
-      } else packageMap[pName].latest;
+        if (compareVersions(spec.latest, packageMap[pName].latest) > 0) { packageMap[pName].latest = spec.latest; }
+      } else packageMap[pName].latest = spec.latest;
 
       if (!packageMap[pName].versions) packageMap[pName].versions = {};
 
@@ -199,7 +298,7 @@ export class PackageRegistry {
   }
 
   sortPackagesByVersion (pkgs) {
-    return pkgs.sort((a, b) => semver.compare(b.version, a.version, true));
+    return pkgs.sort((a, b) => compareVersions(a.version, b.version));
   }
 
   matches (pkg, pName, versionRange) {
@@ -265,26 +364,29 @@ export class PackageRegistry {
   }
 
   findPackageWithURL (url) {
-    if (url.isResource) url = url.url;
-    if (url.endsWith('/')) url = url.slice(0, -1);
-    return this.byURL[url];
+    let lookupURL = packageLookupURL(url);
+    return this.byURL[lookupURL] || this.byLookupURL[lookupURL];
   }
 
   findPackageHavingURL (url) {
     // does url identify a resource inside pkg, maybe pkg.url === url?
-    if (url.isResource) url = url.url;
-    if (url.endsWith('/')) url = url.slice(0, -1);
-    let penaltySoFar = Infinity; let found = null; let { byURL } = this;
-    for (let pkgURL in byURL) {
-      if (url.indexOf(pkgURL) !== 0) continue;
-      let penalty = url.slice(pkgURL.length).length;
+    let originalURL = url.isResource ? url.url : url;
+    let lookupURL = packageLookupURL(url);
+    let penaltySoFar = Infinity; let found = null; let { byLookupURL } = this;
+    for (let pkgURL in byLookupURL) {
+      if (lookupURL.indexOf(pkgURL) !== 0) continue;
+      let penalty = lookupURL.slice(pkgURL.length).length;
       if (penalty >= penaltySoFar) continue;
       penaltySoFar = penalty;
-      found = byURL[pkgURL];
+      found = byLookupURL[pkgURL];
     }
-    if (!found && this.moduleUrlToPkg.has(url)) return this.moduleUrlToPkg.get(url);
+    if (!found) {
+      if (this.moduleUrlToPkg.has(originalURL)) return this.moduleUrlToPkg.get(originalURL);
+      if (this.moduleUrlToPkg.has(lookupURL)) return this.moduleUrlToPkg.get(lookupURL);
+    }
     if (found) {
-      this.moduleUrlToPkg.set(url, found);
+      this.moduleUrlToPkg.set(originalURL, found);
+      this.moduleUrlToPkg.set(lookupURL, found);
     }
     return found;
   }
@@ -434,13 +536,13 @@ export class PackageRegistry {
   _updateLatestPackages (name) {
     let { packageMap } = this;
     if (name && packageMap[name]) {
-      packageMap[name].latest = arr.last(semver.sort(
-        Object.keys(packageMap[name].versions), true));
+      packageMap[name].latest = arr.last(sortVersions(
+        Object.keys(packageMap[name].versions)));
       return;
     }
     for (let eaName in packageMap) {
-      packageMap[eaName].latest = arr.last(semver.sort(
-        Object.keys(packageMap[eaName].versions), true));
+      packageMap[eaName].latest = arr.last(sortVersions(
+        Object.keys(packageMap[eaName].versions)));
     }
   }
 

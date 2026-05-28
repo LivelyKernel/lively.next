@@ -88,8 +88,10 @@ function updateModuleExports (System, moduleId, keysAndValues) {
             //   importerModule.execute();
             // but this has too many unwanted side effects, so just run the
             // setters:
+            const setter = importerModule.setters && importerModule.setters[importerIndex];
+            if (typeof setter !== 'function') continue;
             module(System, importerModule.name).evaluationStart();
-            importerModule.setters[importerIndex](record.exports);
+            setter(record.exports);
             module(System, importerModule.name).evaluationEnd();
           }
         }

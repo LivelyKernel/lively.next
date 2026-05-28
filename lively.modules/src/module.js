@@ -547,7 +547,8 @@ class ModuleInterface {
     }
 
     const nodejsDescriptors = {};
-    if (S.get('@system-env').node) {
+    const env = S.get('@system-env');
+    if (env.node && !env.browser && !env.nw) {
       // support for require
       const require = _require.bind(null, this);
       require.resolve = _resolve.bind(null, this);

@@ -8,7 +8,17 @@ import { classToFunctionTransform } from 'lively.classes';
 import module, { detectModuleFormat } from './module.js';
 import { BrowserModuleTranslationCache, NodeModuleTranslationCache } from './cache.js';
 
-const isNode = System.get('@system-env').node;
+function isNodeRuntime (System) {
+  try {
+    const env = System.get('@system-env');
+    return !!env?.node && !env?.browser && !env?.nw;
+  } catch (_) {}
+  return typeof window === 'undefined' &&
+    typeof process !== 'undefined' &&
+    !!process.versions?.node;
+}
+
+const isNode = isNodeRuntime(System);
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // Functions below are for re-loading modules from change.js. We typically
@@ -189,7 +199,7 @@ function addNodejsWrapperSource (System, load, markedPackageName) {
   const m = getCachedNodejsModule(System, load, markedPackageName);
   if (m) {
     load.metadata.format = 'esm';
-    load.source = `var exports = System._nodeRequire('${m.id}'); export default exports;\n` +
+    load.source = `var exports = System._nodeRequire(${JSON.stringify(m.id)}); export default exports;\n` +
                 `export var __useDefault = exports;\n` +
                 properties.allOwnPropertiesOrFunctions(m.exports).map(k =>
                   isValidIdentifier(k)
