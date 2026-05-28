@@ -7,6 +7,30 @@ process.execPath = process.argv[0] = path.join(__dirname, 'bin/node');
 
 const moduleUrlToConfig = new Map();
 
+function equivalentModuleUrls (url) {
+  if (!url || typeof url !== 'string') return [];
+  const urls = [url];
+  if (url.startsWith('https://ga.jspm.io/')) {
+    urls.push(url.replace('https://ga.jspm.io/', 'esm://ga.jspm.io/'));
+  } else if (url.startsWith('esm://ga.jspm.io/')) {
+    urls.push(url.replace('esm://ga.jspm.io/', 'https://ga.jspm.io/'));
+  }
+  return urls;
+}
+
+function configForModuleUrl (modulePath) {
+  for (const url of equivalentModuleUrls(modulePath)) {
+    if (moduleUrlToConfig.has(url)) return moduleUrlToConfig.get(url);
+  }
+}
+
+function rememberConfigForModuleUrl (modulePath, config) {
+  if (!config) return;
+  for (const url of equivalentModuleUrls(modulePath)) {
+    if (!moduleUrlToConfig.has(url)) moduleUrlToConfig.set(url, config);
+  }
+}
+
 /**
  * Handles the proper base name resolution of @ prefixed package names or
  * SystemJS specific import mappings.
@@ -64,9 +88,8 @@ function traverseUntilPkgDir (modulePath, cb) {
  */
 function findPackageConfig (modulePath) {
   let configs = [];
-  if (moduleUrlToConfig.has(modulePath)) {
-    return moduleUrlToConfig.get(modulePath);
-  }
+  const cachedConfig = configForModuleUrl(modulePath);
+  if (cachedConfig) return cachedConfig;
   traverseUntilPkgDir(modulePath, (dir) => {
     let config;
     if (fs.existsSync(path.join(dir, 'package.json'))) {
@@ -186,7 +209,7 @@ function flatnResolve (request, parentId = '', context = 'node') {
 
   if (basename === '@empty') return '@empty';
   if (basename && basename.match(/^(https|esm)?\:\/\//)) {
-    if (config && !moduleUrlToConfig.has(basename)) moduleUrlToConfig.set(basename, config);
+    rememberConfigForModuleUrl(basename, config);
     return basename;
   }
   if (resolved) {

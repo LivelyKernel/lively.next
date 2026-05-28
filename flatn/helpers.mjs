@@ -43,10 +43,22 @@ export function resolveImportMapping(name, mapping, context) {
   return mapping;
 }
 
+function equivalentImportMapScopesFor (url) {
+  if (!url || typeof url !== 'string') return [];
+  const urls = [url];
+  if (url.startsWith('https://ga.jspm.io/')) {
+    urls.push(url.replace('https://ga.jspm.io/', 'esm://ga.jspm.io/'));
+  } else if (url.startsWith('esm://ga.jspm.io/')) {
+    urls.push(url.replace('esm://ga.jspm.io/', 'https://ga.jspm.io/'));
+  }
+  return urls;
+}
+
 export function resolveViaImportMap (id, importMap, importer) {
   let scope, remapped = importMap.imports?.[id] || null;
+  const importers = equivalentImportMapScopesFor(importer);
   if (scope = Object.entries(importMap.scopes || {})
-    .filter(([k]) => importer.startsWith(k))
+    .filter(([k]) => importers.some(ea => ea.startsWith(k)))
     .sort((a, b) => a[0].length - b[0].length)
     .map(([_, scope]) => scope)
     .reduce((a, b) => ({ ...a, ...b }), false)) {

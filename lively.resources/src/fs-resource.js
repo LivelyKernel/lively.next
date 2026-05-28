@@ -2,10 +2,20 @@
 import Resource from './resource.js';
 import { applyExclude, windowsURLPrefixRe, windowsRootPathRe, ensurePlatformIndependentCharacters } from './helpers.js';
 
-import { createWriteStream, createReadStream, readFile, writeFile, stat, mkdir, rmdir, unlink, readdir, lstat, rename, constants, access } from 'fs';
+import { createWriteStream, createReadStream, readFile, writeFile, stat, mkdir, rmdir, unlink, readdir, lstat, rename, access } from 'fs';
+
+function fileURLToPathname (url) {
+  const parsed = new URL(url);
+  const pathname = parsed.pathname
+    .replace(/%2f/ig, match => `%25${match.slice(1)}`)
+    .replace(/%5c/ig, match => `%25${match.slice(1)}`);
+  let decodedPath = decodeURIComponent(pathname);
+  if (parsed.host) decodedPath = `//${parsed.host}${decodedPath}`;
+  return decodedPath.replace(/^\/([a-z]:\/)/i, '$1').replace(/\\/g, '/');
+}
 
 function exists (path, cb) {
-  return access(path, constants.F_OK, (err) => {
+  return access(path, (err) => {
     if (err) {
       cb(false)
     } else {
@@ -35,7 +45,7 @@ export class NodeJSFileResource extends Resource {
   get isNodeJSFileResource () { return true; }
 
   path () {
-    return this.url.replace('file://', '');
+    return fileURLToPathname(this.url);
   }
 
   async stat () {
@@ -178,7 +188,7 @@ export class NodeJSWindowsFileResource extends NodeJSFileResource {
   }
 
   path () {
-    return this.url.replace('file:///', '');
+    return fileURLToPathname(this.url);
   }
 
   isRoot () {

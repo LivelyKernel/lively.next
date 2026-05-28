@@ -1,5 +1,6 @@
 /*global process, URL */
 import path from 'path';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { flatnResolve } from './module-resolver.js';
 
 process.execPath = process.argv[0] = path.join(import.meta.url, 'bin/node');
@@ -12,8 +13,8 @@ export async function resolve(request, parent, originalResolve) {
     result = await originalResolve(request, parent, originalResolve);
     return result;
   } catch (err) {
-    if (result = flatnResolve(request, new URL(parent.parentURL).pathname, 'node-import')) {
-      return { url: 'file://' + result };
+    if (result = flatnResolve(request, fileURLToPath(parent.parentURL), 'node-import')) {
+      return { url: pathToFileURL(result).href };
     }
     throw err;
   }

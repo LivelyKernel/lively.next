@@ -11,7 +11,32 @@ import { resource } from 'lively.resources';
 import { resolveExportMapping, resolveImportMapping, resolveViaImportMap } from 'flatn/helpers.mjs';
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-const isNode = System.get('@system-env').node;
+function isBrowserRuntime (System) {
+  try {
+    const env = System.get('@system-env');
+    if (env?.browser || env?.nw) return true;
+  } catch (_) {}
+  return typeof window !== 'undefined' && typeof document !== 'undefined';
+}
+
+function isNwBrowserRuntime () {
+  return typeof window !== 'undefined' && typeof document !== 'undefined' && (
+    typeof nw !== 'undefined' && nw && typeof nw.require === 'function' ||
+    typeof globalThis !== 'undefined' && globalThis.nw && typeof globalThis.nw.require === 'function'
+  );
+}
+
+function isNodeRuntime (System) {
+  try {
+    const env = System.get('@system-env');
+    return !!env?.node && !env?.browser && !env?.nw;
+  } catch (_) {}
+  return !isBrowserRuntime(System) &&
+    typeof process !== 'undefined' &&
+    !!process.versions?.node;
+}
+
+const isNode = isNodeRuntime(System);
 
 const GLOBAL = typeof window !== 'undefined'
   ? window
@@ -32,9 +57,24 @@ function isLivelyTranspiler (transpiler) {
   return livelyTranspilerIds.includes(transpiler);
 }
 
+function shouldUseLivelyFetch (System, load) {
+  if (isLivelyTranspiler(System.transpiler)) return true;
+  if (!isNodeRuntime(System)) return false;
+
+  try {
+    return !!System.resource(load.name).isNodeJSFileResource;
+  } catch (err) {
+    return false;
+  }
+}
+
 function safeAssign (proceed, ...args) {
   if (Object.isFrozen(args[0])) return args;
   return proceed(...args);
+}
+
+function packageResolutionContext (System) {
+  return isNodeRuntime(System) ? 'node-require' : 'module';
 }
 
 export function wrapModuleResolution (System) {
@@ -231,11 +271,26 @@ function prepareSystem (System, config) {
   
   System.importMapCache = new Map();
 
-  if (config._nodeRequire) System._nodeRequire = config._nodeRequire;
+  if (config._nodeRequire && !isBrowserRuntime(System)) System._nodeRequire = config._nodeRequire;
 
   System.set('@lively-env', System.newModule(livelySystemEnv(System)));
 
   const isWorker = typeof WorkerGlobalScope !== 'undefined';
+  const browserRuntime = isBrowserRuntime(System);
+  const systemEnv = System.get('@system-env');
+
+  if (browserRuntime) {
+    delete System._nodeRequire;
+    System.set('@system-env',
+      System.newModule({
+        ...systemEnv,
+        browser: true,
+        nw: systemEnv.nw || isNwBrowserRuntime(),
+        node: false,
+        nodeRequire: false,
+        nodeBuiltins: false
+      }));
+  }
 
   if (isWorker) {
     System.set('@system-env',
@@ -268,7 +323,7 @@ function prepareSystem (System, config) {
     fetch: function (load, proceed) {
       const s = this.moduleSources?.[load.name];
       if (s) return s;
-      if (!isLivelyTranspiler(this.transpiler)) return proceed(load);
+      if (!shouldUseLivelyFetch(this, load)) return proceed(load);
       return fetchResource.call(this, proceed, load);
     },
     translate: function (load, opts) {
@@ -405,13 +460,15 @@ function preNormalize (System, name, parent) {
     if (pkg) {
       let map, systemjs, config;
       ({ map, url: packageURL, systemjs, config } = pkg);
+      const resolutionContext = packageResolutionContext(System);
       if (config.imports) {
         try {
-          name = resolveImportMapping(name, config.imports, 'module');
+          name = resolveImportMapping(name, config.imports, resolutionContext);
           if (name.startsWith('.')) name = urlResolve(join(packageURL, name));
         } catch (err) {}
       }
-      if (config.optionalDependencies?.[name]) return '@empty';
+      if (config.optionalDependencies?.[name] ||
+          config.peerDependenciesMeta?.[name]?.optional) return '@empty';
       importMap = !isNode && systemjs?.importMap; // only works in the browser
       mappedObject = map?.[name] || isNode && System.map[name]; // only consider the global map if no local importMap
     }
@@ -454,7 +511,7 @@ function preNormalize (System, name, parent) {
       let { exports: exportMappings } = pkg.config
 
       if (exportMappings?.['.']) { // only in case the request was root
-          let adjustedPath = resolveExportMapping(exportMappings['.'], 'module');
+          let adjustedPath = resolveExportMapping(exportMappings['.'], packageResolutionContext(System));
           name = join(pkg.url, adjustedPath);
       }
     } else if (pkg = packageRegistry.findPackageHavingURL(name)) {
@@ -463,7 +520,7 @@ function preNormalize (System, name, parent) {
       let { exports: exportMappings } = pkg.config
       const subPath = name.replace(pkg.url, '.');
       if (exportMappings?.[subPath]) {
-         let adjustedPath = resolveExportMapping(exportMappings[subPath], 'module');
+         let adjustedPath = resolveExportMapping(exportMappings[subPath], packageResolutionContext(System));
         name = join(pkg.url, adjustedPath);
       }
     }
@@ -519,6 +576,7 @@ async function checkExistence (url, System) {
 }
 
 async function finalizeNormalization (System, name, normalized) {
+  if (/^[^:]+:\/\//.test(normalized)) normalized = urlResolve(normalized);
   const isNodePath = normalized.startsWith('file:');
   // SystemJS may append ".js" to non-JS extensions during normalization.
   // Normalize those cases before trying JS index fallbacks.
@@ -601,6 +659,7 @@ function decanonicalizeHook (proceed, name, parent, isPlugin) {
     else if (!stage2.endsWith('/')) stage2 += '/';
   }
   let stage3 = postNormalize(System, stage2, true);
+  if (/^[^:]+:\/\//.test(stage3)) stage3 = urlResolve(stage3);
   if (plugin) stage3 += plugin;
   System.debug && console.log(`[normalizeSync] ${name} => ${stage3}`);
   return stage3;

@@ -12,7 +12,10 @@ const {
   rename,
   createWriteStream,
   createReadStream,
-} = System.get('@system-env').node ? require('fs') : {};
+} = (function () {
+  const env = System.get('@system-env');
+  return env.node && !env.browser && !env.nw;
+})() ? require('fs') : {};
 
 export {
   readFile,

@@ -57,10 +57,19 @@ export function resolvePackageDependencies (pkg, packageMap) {
   return Object.keys(deps).reduce((depMap, depName) => {
     let depVersion = deps[depName];
     let { name, version } = obj.values(packageMap).find(({ name, version }) =>
-      name === depName && lively.modules.semver.satisfies(version, depVersion)) || {};
+      name === depName && versionSatisfies(version, depVersion)) || {};
     depMap[depName] = name ? `${name}@${version}` : undefined;
     return depMap;
   }, {});
+}
+
+function versionSatisfies (version, versionRange) {
+  const semver = lively.modules.semver;
+  const normalizedVersion = version == null ? '' : String(version);
+  const normalizedRange = versionRange == null ? '' : String(versionRange);
+  return !!(semver.valid(normalizedVersion, true) &&
+    semver.validRange(normalizedRange, true) &&
+    semver.satisfies(normalizedVersion, normalizedRange, true));
 }
 
 export function dependencyGraph (packageMap) {
@@ -84,7 +93,7 @@ export function dependencyGraph (packageMap) {
     let cacheKey = `${depName}@${depVersionRange}`;
     if (cacheKey in cachedVersionQueries) return cachedVersionQueries[cacheKey];
     let { name, version } = packages.find(({ name, version }) =>
-      name === depName && lively.modules.semver.satisfies(version, depVersionRange)) || {};
+      name === depName && versionSatisfies(version, depVersionRange)) || {};
     return cachedVersionQueries[cacheKey] = name ? `${name}@${version}` : undefined;
   }
 }

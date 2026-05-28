@@ -1,9 +1,10 @@
 /* global process, global */
-import { dirname, join as j } from 'path';
+import { delimiter, dirname, join as j } from 'path';
 import fs from 'fs';
 import { inspect } from 'util';
 import semver from 'semver';
 import node_fetch from 'node-fetch';
+import { fileURLToPath } from 'url';
 export { default as parseArgs } from 'minimist';
 
 import { packageDownload } from './download.js';
@@ -29,7 +30,7 @@ function ensurePathFormat (dirOrArray) {
   // This ensures that...
   if (Array.isArray(dirOrArray)) return dirOrArray.map(ensurePathFormat);
   if (dirOrArray.isResource) return dirOrArray.path();
-  if (dirOrArray.startsWith('file://')) dirOrArray = dirOrArray.replace('file://', '');
+  if (dirOrArray.startsWith('file://')) dirOrArray = fileURLToPath(dirOrArray);
   return dirOrArray;
 }
 
@@ -50,9 +51,9 @@ function ensurePackageMap (packageCollectionDirs, individualPackageDirs, devPack
 function packageDirsFromEnv () {
   let env = process.env;
   return {
-    packageCollectionDirs: [...new Set((env.FLATN_PACKAGE_COLLECTION_DIRS || '').split(':').filter(Boolean))],
-    individualPackageDirs: [...new Set((env.FLATN_PACKAGE_DIRS || '').split(':').filter(Boolean))],
-    devPackageDirs: [...new Set((env.FLATN_DEV_PACKAGE_DIRS || '').split(':').filter(Boolean))]
+    packageCollectionDirs: [...new Set((env.FLATN_PACKAGE_COLLECTION_DIRS || '').split(delimiter).filter(Boolean))],
+    individualPackageDirs: [...new Set((env.FLATN_PACKAGE_DIRS || '').split(delimiter).filter(Boolean))],
+    devPackageDirs: [...new Set((env.FLATN_DEV_PACKAGE_DIRS || '').split(delimiter).filter(Boolean))]
   };
 }
 
@@ -60,9 +61,9 @@ function setPackageDirsOfEnv (packageCollectionDirs, individualPackageDirs, devP
   packageCollectionDirs = ensurePathFormat(packageCollectionDirs);
   individualPackageDirs = ensurePathFormat(individualPackageDirs);
   devPackageDirs = ensurePathFormat(devPackageDirs);
-  process.env.FLATN_PACKAGE_COLLECTION_DIRS = packageCollectionDirs.join(':');
-  process.env.FLATN_PACKAGE_DIRS = individualPackageDirs.join(':');
-  process.env.FLATN_DEV_PACKAGE_DIRS = devPackageDirs.join(':');
+  process.env.FLATN_PACKAGE_COLLECTION_DIRS = packageCollectionDirs.join(delimiter);
+  process.env.FLATN_PACKAGE_DIRS = individualPackageDirs.join(delimiter);
+  process.env.FLATN_DEV_PACKAGE_DIRS = devPackageDirs.join(delimiter);
 }
 
 async function buildPackage (

@@ -98,8 +98,10 @@ export async function ensureFetch () {
 
   if ('fetch' in System.global && 'Headers' in System.global) return Promise.resolve();
   let thisModuleId = System.decanonicalize('lively.resources');
+  const env = System.get('@system-env');
+  const isNode = !!env.node && !env.browser && !env.nw;
   let fetchInterface;
-  if (System.get('@system-env').node) {
+  if (isNode) {
     try {
       fetchInterface = System._nodeRequire('fetch-ponyfill');
     } catch (err) {

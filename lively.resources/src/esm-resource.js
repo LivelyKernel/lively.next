@@ -66,7 +66,10 @@ export class ESMResource extends Resource {
   }
 
   getBaseURL () {
-    return typeof System !== 'undefined' && System?.baseURL || typeof process !== 'undefined' && 'file://' + process?.env.lv_next_dir;
+    if (typeof System !== 'undefined' && System?.baseURL) return System.baseURL;
+    if (typeof window === 'undefined' && typeof process !== 'undefined' && process?.env.lv_next_dir) {
+      return 'file://' + process.env.lv_next_dir;
+    }
   }
 
   async findOrCreatePathStructure (pathElements) {

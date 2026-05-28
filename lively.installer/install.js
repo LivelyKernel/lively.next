@@ -1,10 +1,14 @@
 /*global process,System,global*/
-import { buildPackageMap, installDependenciesOfPackage, buildPackage, resetPackageMap } from "flatn";
+import { createRequire } from 'node:module';
+import { delimiter } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { exec } from "./shell-exec.js";
 import { Package } from "./package.js";
 import { resource } from 'lively.resources';
 import { promise, string } from 'lively.lang';
 
+const require = createRequire(import.meta.url);
+const { buildPackageMap, installDependenciesOfPackage, buildPackage, resetPackageMap } = require('flatn');
 var modules, join, getPackageSpec, readPackageSpec;
 
 // ── Logging helpers ──
@@ -159,11 +163,11 @@ export async function install(baseDir, dependenciesDir, verbose) {
       if (!env.PATH.includes(flatnBinDir)) {
         env.PATH = flatnBinDir + ":" + env.PATH;
       }
-      if (env.FLATN_DEV_PACKAGE_DIRS !== packageMap.devPackageDirs.join(":")) {
-        env.FLATN_DEV_PACKAGE_DIRS = packageMap.devPackageDirs.join(":");
+      if (env.FLATN_DEV_PACKAGE_DIRS !== packageMap.devPackageDirs.join(delimiter)) {
+        env.FLATN_DEV_PACKAGE_DIRS = packageMap.devPackageDirs.join(delimiter);
       }
-      if (env.FLATN_PACKAGE_COLLECTION_DIRS !== packageMap.packageCollectionDirs.join(":")) {
-        env.FLATN_PACKAGE_COLLECTION_DIRS = packageMap.packageCollectionDirs.join(":");
+      if (env.FLATN_PACKAGE_COLLECTION_DIRS !== packageMap.packageCollectionDirs.join(delimiter)) {
+        env.FLATN_PACKAGE_COLLECTION_DIRS = packageMap.packageCollectionDirs.join(delimiter);
       }
     }
 
@@ -389,14 +393,15 @@ export async function setupSystem(baseURL) {
   let livelySystem = modules.getSystem("lively", {baseURL, _nodeRequire: System._nodeRequire });
   modules.changeSystem(livelySystem, true);
   var registry = livelySystem["__lively.modules__packageRegistry"] = new modules.PackageRegistry(livelySystem);
-  registry.packageBaseDirs = process.env.FLATN_PACKAGE_COLLECTION_DIRS.split(":").map(ea => resource(`file://${ea}`));
-  registry.devPackageDirs = process.env.FLATN_DEV_PACKAGE_DIRS.split(":").map(ea => resource(`file://${ea}`));
-  registry.individualPackageDirs = process.env.FLATN_PACKAGE_DIRS.split(":").map(ea => ea.length > 0 ? resource(`file://${ea}`) : false).filter(Boolean);
+  const flatnEnvPaths = name => (process.env[name] || "").split(delimiter).filter(Boolean).map(ea => resource(pathToFileURL(ea).href));
+  registry.packageBaseDirs = flatnEnvPaths("FLATN_PACKAGE_COLLECTION_DIRS");
+  registry.devPackageDirs = flatnEnvPaths("FLATN_DEV_PACKAGE_DIRS");
+  registry.individualPackageDirs = flatnEnvPaths("FLATN_PACKAGE_DIRS");
   await registry.update();
   resetPackageMap();
 
   const { setupBabelTranspiler } = await import('lively.source-transform/babel/plugin.js');
-  await setupBabelTranspiler(livelySystem);
+  setupBabelTranspiler(livelySystem);
 
   return livelySystem;
 }

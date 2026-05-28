@@ -8,7 +8,17 @@ import {
 import _fetch from 'node-fetch';
 
 let fetch;
-if (typeof System !== 'undefined' && System.get('@system-env').node) {
+function isNodeRuntime (System) {
+  try {
+    const env = System?.get?.('@system-env');
+    if (env) return !!env.node && !env.browser && !env.nw;
+  } catch (_) {}
+  return typeof window === 'undefined' &&
+    typeof process !== 'undefined' &&
+    !!process.versions?.node;
+}
+
+if (typeof System !== 'undefined' && isNodeRuntime(System)) {
   // we can not directly use require since this is an ESM module
   // and the native node.js runtime will complain.
   // In total there are 4 types of evaluation for each import:
@@ -27,7 +37,7 @@ export async function fetchResource (proceed, load) {
   const largeModuleSize = 250 * 1000;
   const url = load.name + (isCjs ? '!cjs' : '');
   let res = System.resource(url);
-  const useNodeFetch = System.get('@system-env').node && !res.isNodeJSFileResource && !res.isESMResource;
+  const useNodeFetch = isNodeRuntime(System) && !res.isNodeJSFileResource && !res.isESMResource;
 
   if (useNodeFetch) res = await fetch(url);
   if (!res) return proceed(load);
@@ -37,7 +47,7 @@ export async function fetchResource (proceed, load) {
   // first check if this file is present inside the js file hash map
   // an wether our locally stored and translated one already matches that
   // criteria
-  if (!jsFileHashMap && !System.get('@system-env').node) {
+  if (!jsFileHashMap && !isNodeRuntime(System)) {
     const hashUrl = System.resource(System.baseURL).join('__JS_FILE_HASHES__');
     if (await hashUrl.exists()) jsFileHashMap = await hashUrl.readJson();
     else jsFileHashMap = {};
@@ -46,7 +56,7 @@ export async function fetchResource (proceed, load) {
   const useCache = System.useModuleTranslationCache;
   const indexdb = System.global.indexedDB;
   const cache = System._livelyModulesTranslationCache;
-  if (!System.get('@system-env').node && useCache && indexdb && cache) {
+  if (!isNodeRuntime(System) && useCache && indexdb && cache) {
     const stored = await cache.fetchStoredModuleSource(load.name);
     let normalizedName = load.name.replace(System.baseURL, '/');
     if (normalizedName.startsWith('esm://')) { normalizedName = '/esm_cache/' + ESMResource.normalize(normalizedName).join('/'); }

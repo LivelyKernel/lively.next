@@ -141,6 +141,17 @@ describe('code changes of esm format module', function () {
     expect(m1.someOtherFn(1)).equals(25);
   });
 
+  it('ignores dependencies without live-binding setters', async () => {
+    await S.import(module2.id);
+    await module4.changeSource("import './file2.js'; export var marker = 1;", { evaluate: true });
+    const importerRecord = module4.record();
+    const depIndex = importerRecord.dependencies.findIndex(ea => ea.name === module2.id);
+    expect(depIndex).to.be.above(-1);
+    importerRecord.setters[depIndex] = undefined;
+    await changeModule2Source();
+    expect(module2.env().recorder.internal).to.equal(2);
+  });
+
   it('affects file resource', async () => {
     await changeModule2Source();
     const newContent = await resource(file2m).read();

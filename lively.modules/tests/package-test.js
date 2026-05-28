@@ -6,7 +6,7 @@ import { modifyJSON, prepareSystem, noTrailingSlash } from './helpers.js';
 import { arr } from 'lively.lang';
 import { resource, createFiles } from 'lively.resources';
 import module from '../src/module.js';
-import { removeSystem } from '../src/system.js';
+import { getSystem, removeSystem } from '../src/system.js';
 import { getPackage, ensurePackage, applyConfig, getPackageSpecs } from '../src/packages/package.js';
 import { PackageRegistry } from '../src/packages/package-registry.js';
 
@@ -53,6 +53,116 @@ describe('package loading', function () {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   describe('basics', () => {
+    it('loads package configs from encoded file URLs before the transpiler is configured', async () => {
+      if (!System.get('@system-env').node) return;
+
+      const rawBase = testDir + 'space root/';
+      const encodedBase = rawBase.replace(/ /g, '%20');
+      const packageDir = encodedBase + 'dep1/';
+      const T = getSystem('test-no-transpiler', { baseURL: encodedBase });
+
+      try {
+        await createFiles(rawBase, { dep1: project1a });
+        const registry = PackageRegistry.ofSystem(T);
+        await registry.addPackageAt(packageDir);
+        const pkg = registry.lookup('some-project');
+        expect(pkg).to.have.property('version', '1.0.0');
+      } finally {
+        removeSystem('test-no-transpiler');
+        await resource(rawBase).remove();
+      }
+    });
+
+    it('matches encoded file URLs when finding a package for a module', async () => {
+      const rawBase = testDir + 'RUNNER~1/';
+      const packageDir = rawBase + 'ws/';
+      const encodedParent = packageDir.replace('RUNNER~1', 'RUNNER%7E1') + 'lib/validation.js';
+      await createFiles(rawBase, {
+        ws: {
+          lib: { 'validation.js': '' },
+          'package.json': JSON.stringify({
+            name: 'ws',
+            version: '8.20.1',
+            optionalDependencies: { 'utf-8-validate': '>=5.0.2' }
+          })
+        }
+      });
+
+      const registry = PackageRegistry.ofSystem(S);
+      const pkg = await registry.addPackageAt(packageDir);
+
+      expect(registry.findPackageHavingURL(encodedParent)).equals(pkg);
+      expect(await S.normalize('utf-8-validate', encodedParent)).equals('@empty');
+    });
+
+    it('matches encoded Windows drive paths against file package URLs', async () => {
+      const registry = PackageRegistry.ofSystem(S);
+      const pkg = {
+        url: 'file:///C:/Users/RUNNER~1/AppData/Local/Temp/lively-app-smoke/data/runtime-root/lively.next-node_modules/ws/8.20.1',
+        name: 'ws',
+        version: '8.20.1',
+        config: { optionalDependencies: { 'utf-8-validate': '>=5.0.2' } }
+      };
+      const encodedParent = 'C:/Users/RUNNER%7E1/AppData/Local/Temp/lively-app-smoke/data/runtime-root/lively.next-node_modules/ws/8.20.1/lib/validation.js';
+      registry.packageMap = { ws: { latest: '8.20.1', versions: { '8.20.1': pkg } } };
+      registry.resetByURL();
+
+      expect(registry.findPackageHavingURL(encodedParent)).equals(pkg);
+      expect(await S.normalize('utf-8-validate', encodedParent)).equals('@empty');
+    });
+
+    it('maps optional peer dependencies to empty modules', async () => {
+      const registry = PackageRegistry.ofSystem(S);
+      const pkg = {
+        url: 'file:///C:/Users/RUNNER~1/AppData/Local/Temp/lively-app-smoke/data/runtime-root/lively.next-node_modules/ws/8.20.1',
+        name: 'ws',
+        version: '8.20.1',
+        config: {
+          peerDependencies: { 'utf-8-validate': '>=5.0.2' },
+          peerDependenciesMeta: { 'utf-8-validate': { optional: true } }
+        }
+      };
+      const encodedParent = 'C:/Users/RUNNER%7E1/AppData/Local/Temp/lively-app-smoke/data/runtime-root/lively.next-node_modules/ws/8.20.1/lib/validation.js';
+      registry.packageMap = { ws: { latest: '8.20.1', versions: { '8.20.1': pkg } } };
+      registry.resetByURL();
+
+      expect(registry.findPackageHavingURL(encodedParent)).equals(pkg);
+      expect(await S.normalize('utf-8-validate', encodedParent)).equals('@empty');
+    });
+
+    it('uses require exports when resolving packages in node runtimes', async () => {
+      if (!System.get('@system-env').node) return;
+      const registry = PackageRegistry.ofSystem(S);
+      const engine = {
+        url: 'file:///C:/Users/RUNNER~1/AppData/Local/Temp/lively-app-smoke/data/runtime-root/lively.next-node_modules/engine.io/6.6.8',
+        name: 'engine.io',
+        version: '6.6.8',
+        config: { dependencies: { ws: '~8.20.1' } }
+      };
+      const ws = {
+        url: 'file:///C:/Users/RUNNER~1/AppData/Local/Temp/lively-app-smoke/data/runtime-root/lively.next-node_modules/ws/8.20.1',
+        name: 'ws',
+        version: '8.20.1',
+        config: {
+          exports: {
+            '.': {
+              browser: './browser.js',
+              import: './wrapper.mjs',
+              require: './index.js'
+            }
+          }
+        }
+      };
+      const encodedParent = 'C:/Users/RUNNER%7E1/AppData/Local/Temp/lively-app-smoke/data/runtime-root/lively.next-node_modules/engine.io/6.6.8/build/server.js';
+      registry.packageMap = {
+        'engine.io': { latest: '6.6.8', versions: { '6.6.8': engine } },
+        ws: { latest: '8.20.1', versions: { '8.20.1': ws } }
+      };
+      registry.resetByURL();
+
+      expect(await S.normalize('ws', encodedParent)).equals(ws.url + '/index.js');
+    });
+
     it('registers and loads a package', async () => {
       await ensurePackage(S, project1aDir);
       let mod = await S.import('some-project');
@@ -494,6 +604,27 @@ describe('package registry', () => {
         .property('nameAndVersion', 'p2@2.0.0');
       expect(registry.findPackageDependency(registry.lookup('p1', '0.2.2'), 'p2'))
         .property('nameAndVersion', 'p2@1.0.0');
+    });
+
+    it('ignores invalid package versions when choosing latest', async () => {
+      await createFiles(testDir, {
+        packages: {
+          p1: {
+            aM: {
+              'index.js': 'export var x = 42;',
+              'package.json': '{"name": "p1", "version": "aM"}'
+            }
+          }
+        }
+      });
+      await registry.update();
+
+      expect(registry.packageMap.p1.latest).equals('0.2.2');
+      expect(registry.lookup('p1', '*')).containSubset({
+        url: testDir + 'packages/p1/0.2.2',
+        name: 'p1',
+        version: '0.2.2'
+      });
     });
 
     it('resolve path', async () => {
