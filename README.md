@@ -4,6 +4,10 @@
 [![Join our Chat room on Matrix](https://img.shields.io/badge/🗨️_on_matrix-JOIN-ff7700)](https://matrix.to/#/#lively.next:matrix.org)
 [![Say Hi via E-Mail!](https://img.shields.io/badge/📧%20E--Mail-Say_Hi!-ff7700)](mailto:hi@lively-next.org)
 
+[![Download nightly for Linux](https://img.shields.io/badge/nightly-Linux_AppImage-2ea44f?logo=linux&logoColor=white)](https://github.com/LivelyKernel/lively.next/releases/download/lively-next-nightly/next.lively.app-nightly-linux-x64.AppImage)
+[![Download nightly for macOS](https://img.shields.io/badge/nightly-macOS_pkg-000000?logo=apple&logoColor=white)](https://github.com/LivelyKernel/lively.next/releases/download/lively-next-nightly/next.lively.app-nightly-osx-arm64-Setup.pkg)
+[![Download nightly for Windows](https://img.shields.io/badge/nightly-Windows_Setup.exe-0078d4?logo=windows&logoColor=white)](https://github.com/LivelyKernel/lively.next/releases/download/lively-next-nightly/next.lively.app-nightly-win-x64-Setup.exe)
+
 `lively.next` is a personal programming kit. It emphasizes **liveness**, **directness**, and **interactivity**. 
 
 It combines rich **live programming** capabilities, in the spirit of Smalltalk, with a graphical **direct manipulation workflow** from current design tools. It seamlessly bridges these two, allowing for rapid prototyping and efficient collaboration. 
