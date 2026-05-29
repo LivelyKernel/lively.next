@@ -1,5 +1,5 @@
 [toolchain]
-# Updated to use stable for newer swc versions
-channel = "stable"
+# Pinned until the SWC plugin handles Rust 1.96+ Wasm linker changes.
+channel = "1.95.0"
 targets = [ "wasm32-wasip1", "wasm32-unknown-unknown" ]
 profile = "minimal"
