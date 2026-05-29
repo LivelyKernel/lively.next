@@ -19,7 +19,7 @@ jobs:
       - name: Setup bun
         uses: oven-sh/setup-bun@v2
       - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.95.0
         with:
           targets: wasm32-wasip1
       - name: Install `sultan`
