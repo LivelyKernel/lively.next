@@ -10,6 +10,7 @@ const https = require('https');
 const DEFAULT_CDP_PORT = 9222;
 const DEFAULT_TARGET_TIMEOUT = 30000;
 const DEFAULT_TARGET_INTERVAL = 250;
+const HALT_UNWIND_TAG = 'lively.context.inspector.halt';
 
 function noop () {}
 
@@ -177,6 +178,10 @@ const CONSUME_ARMED_HALT_EXPRESSION = `(() => {
   return debuggerBridge.consumeArmedHalt();
 })()`;
 
+const IS_HALT_UNWIND_FUNCTION = `function livelyInspectorIsHaltUnwind() {
+  return !!this && (this.isLivelyInspectorHaltUnwind || this.tag === '${HALT_UNWIND_TAG}');
+}`;
+
 class CDPClient {
   constructor (url, { WebSocketImpl = globalThis.WebSocket } = {}) {
     if (!WebSocketImpl) throw new Error('No WebSocket implementation available for CDP');
@@ -328,6 +333,11 @@ class InspectorService {
     const callFrames = params.callFrames || [];
     if (!callFrames.length) return null;
 
+    if (params.reason === 'exception' && params.data && params.data.objectId &&
+        await this.isHaltUnwindException(params.data.objectId)) {
+      return null;
+    }
+
     const armed = await this.consumeArmedHalt(callFrames[0]);
     if (!armed && params.reason !== 'exception') return null;
 
@@ -423,6 +433,21 @@ class InspectorService {
     } catch (err) {
       this.log('inspector halt arm lookup failed: ' + (err.stack || err));
       return null;
+    }
+  }
+
+  async isHaltUnwindException (objectId) {
+    try {
+      const result = await this.client.send('Runtime.callFunctionOn', {
+        objectId,
+        functionDeclaration: IS_HALT_UNWIND_FUNCTION,
+        returnByValue: true,
+        silent: true
+      });
+      return !!(result && result.result && result.result.value);
+    } catch (err) {
+      this.log('inspector halt unwind check failed: ' + (err.stack || err));
+      return false;
     }
   }
 
