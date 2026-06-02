@@ -21,6 +21,7 @@ const { createHash } = require('crypto');
 const { spawn, execSync } = require('child_process');
 const { pathToFileURL } = require('url');
 const { runVelopackStartup } = require('./updates.cjs');
+const { createInspectorService } = require('./inspector-service.cjs');
 
 // ---------------------------------------------------------------------------
 // 0. Detect mode: dev (monorepo) vs bundled (standalone distribution)
@@ -700,6 +701,7 @@ function setupFlatnEnv () {
   }
 
   const win = nw.Window.get();
+  let inspectorService = null;
 
   const b = livelyBoot();
   if (b && b.setDashboardUrl) b.setDashboardUrl(dashboardUrl);
@@ -713,10 +715,22 @@ function setupFlatnEnv () {
     win.window.location.href = dashboardUrl;
   }
 
+  if (process.env.LIVELY_APP_INSPECTOR_SERVICE !== '0') {
+    const cdpPort = Number(process.env.LIVELY_APP_CDP_PORT || 9222);
+    inspectorService = createInspectorService({
+      cdpPort: Number.isFinite(cdpPort) && cdpPort > 0 ? cdpPort : 9222,
+      log: msg => log('inspector: ' + msg)
+    });
+    inspectorService.start().catch(err => {
+      log('inspector: service unavailable: ' + (err.stack || err));
+    });
+  }
+
   win.on('close', function () {
     log('Window closing, killing server...');
     closing = true;
     clearTimeout(restartTimer);
+    if (inspectorService) inspectorService.stop();
     if (currentChild) currentChild.kill('SIGTERM');
     setTimeout(() => this.close(true), 2000);
   });
