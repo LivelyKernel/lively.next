@@ -312,6 +312,15 @@ function humanSize (bytes) {
   return `${bytes.toFixed(1)} ${u[i]}`;
 }
 
+function adHocSignMacApp (appBundle) {
+  if (process.platform !== 'darwin' || !fs.existsSync(appBundle)) return;
+  try {
+    execFileSync('codesign', ['--force', '--deep', '--sign', '-', appBundle], { stdio: 'inherit' });
+  } catch (err) {
+    die(`Failed to ad-hoc sign macOS app bundle ${appBundle}: ${err.message || err}`);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Platform-specific launcher/layout
 // ---------------------------------------------------------------------------
@@ -423,9 +432,11 @@ function finalizeMacOS () {
   }
 
   // Final rename: nwjs.app → lively.next.app
-  fs.renameSync(nwjsApp, path.join(BUNDLE, 'lively.next.app'));
+  const livelyApp = path.join(BUNDLE, 'lively.next.app');
+  fs.renameSync(nwjsApp, livelyApp);
+  adHocSignMacApp(livelyApp);
 
-  // First-run help: an unsigned .app downloaded from the internet is
+  // First-run help: a downloaded .app that is not signed with a Developer ID
   // quarantined by Gatekeeper ("is damaged and can't be opened"). Ship a
   // tiny README next to the .app explaining the workaround until we set
   // up code-signing + notarization. See the "macOS code-signing" tracking
@@ -436,9 +447,9 @@ function finalizeMacOS () {
 
 On first launch macOS may complain that "lively.next is damaged and
 can't be opened". This is standard macOS Gatekeeper behavior for
-apps downloaded from the internet that aren't code-signed with an
-Apple Developer ID. The app is fine — it just needs the quarantine
-attribute stripped.
+apps downloaded from the internet that aren't signed with an Apple
+Developer ID and notarized. The app is fine — it just needs the
+quarantine attribute stripped.
 
 One-shot fix (Terminal, from this folder):
 
@@ -459,8 +470,8 @@ We intentionally do not ship an executable "fix" helper next to the app:
 macOS applies the same downloaded-file trust checks to helper scripts/apps
 inside the archive, so they get blocked for the same reason.
 
-This will go away once the project sets up Apple Developer code-
-signing + notarization for its CI builds.
+This will go away once the project sets up Apple Developer ID signing
+and notarization for its CI builds.
 `);
 }
 
