@@ -142,7 +142,12 @@ class Package {
     this.version = config.version;
     this.dependencies = config.dependencies || {};
     this.devDependencies = config.devDependencies || {};
+    this.optionalDependencies = config.optionalDependencies;
+    this.peerDependencies = config.peerDependencies;
+    this.peerDependenciesMeta = config.peerDependenciesMeta;
     this.main = config.main;
+    this.exports = config.exports;
+    this.imports = config.imports;
     this.systemjs = config.systemjs;
     this.lively = config.lively;
     this.author = config.author;
@@ -159,7 +164,12 @@ class Package {
       'map',
       'dependencies',
       'devDependencies',
+      'optionalDependencies',
+      'peerDependencies',
+      'peerDependenciesMeta',
       'main',
+      'exports',
+      'imports',
       'systemjs',
       'lively',
       'author',
@@ -179,6 +189,11 @@ class Package {
     this.main = jso.main;
     this.dependencies = jso.dependencies || {};
     this.devDependencies = jso.devDependencies || {};
+    this.optionalDependencies = jso.optionalDependencies;
+    this.peerDependencies = jso.peerDependencies;
+    this.peerDependenciesMeta = jso.peerDependenciesMeta;
+    this.exports = jso.exports;
+    this.imports = jso.imports;
     this.systemjs = jso.systemjs;
     this.description = jso.description;
     this.author = jso.author;
@@ -230,7 +245,10 @@ class Package {
       version,
       dependencies,
       devDependencies,
-      main, systemjs, lively
+      optionalDependencies,
+      peerDependencies,
+      peerDependenciesMeta,
+      main, exports, imports, systemjs, lively
     } = this;
     let config = {
       name: name,
@@ -239,6 +257,11 @@ class Package {
       devDependencies: devDependencies || {}
     };
     if (main) config.main = main;
+    if (optionalDependencies) config.optionalDependencies = optionalDependencies;
+    if (peerDependencies) config.peerDependencies = peerDependencies;
+    if (peerDependenciesMeta) config.peerDependenciesMeta = peerDependenciesMeta;
+    if (exports) config.exports = exports;
+    if (imports) config.imports = imports;
     if (systemjs) config.systemjs = systemjs;
     if (lively) config.lively = lively;
     return config;

@@ -7,7 +7,7 @@ import { arr } from 'lively.lang';
 import { resource, createFiles } from 'lively.resources';
 import module from '../src/module.js';
 import { getSystem, removeSystem } from '../src/system.js';
-import { getPackage, ensurePackage, applyConfig, getPackageSpecs } from '../src/packages/package.js';
+import { getPackage, ensurePackage, applyConfig, getPackageSpecs, Package } from '../src/packages/package.js';
 import { PackageRegistry } from '../src/packages/package-registry.js';
 
 let testDir = System.decanonicalize('lively.modules/tests/package-tests-temp/');
@@ -161,6 +161,47 @@ describe('package loading', function () {
       registry.resetByURL();
 
       expect(await S.normalize('ws', encodedParent)).equals(ws.url + '/index.js');
+    });
+
+
+    it('preserves package metadata needed for cached resolver lookups', async () => {
+      if (!System.get('@system-env').node) return;
+      const registry = PackageRegistry.ofSystem(S);
+      const engineURL = 'file:///Users/robin.schreiber/Library/Application Support/lively.next/runtime-root/lively.next-node_modules/engine.io/6.6.8';
+      const wsURL = 'file:///Users/robin.schreiber/Library/Application Support/lively.next/runtime-root/lively.next-node_modules/ws/8.20.1';
+      const engine = new Package(S, engineURL, null, null, {
+        name: 'engine.io',
+        version: '6.6.8',
+        dependencies: { ws: '~8.20.1' }
+      });
+      const ws = new Package(S, wsURL, null, null, {
+        name: 'ws',
+        version: '8.20.1',
+        optionalDependencies: { bufferutil: '^4.0.1' },
+        peerDependenciesMeta: { 'utf-8-validate': { optional: true } },
+        exports: {
+          '.': {
+            browser: './browser.js',
+            import: './wrapper.mjs',
+            require: './index.js'
+          }
+        }
+      });
+      registry.packageMap = {
+        'engine.io': { latest: '6.6.8', versions: { '6.6.8': engine } },
+        ws: { latest: '8.20.1', versions: { '8.20.1': ws } }
+      };
+      registry.resetByURL();
+
+      const cached = registry.toJSON();
+      registry.packageMap = {};
+      registry.fromJSON(cached);
+
+      const encodedEngineParent = '/Users/robin.schreiber/Library/Application%20Support/lively.next/runtime-root/lively.next-node_modules/engine.io/6.6.8/build/server.js';
+      const encodedWsParent = '/Users/robin.schreiber/Library/Application%20Support/lively.next/runtime-root/lively.next-node_modules/ws/8.20.1/lib/buffer-util.js';
+      expect(await S.normalize('ws', encodedEngineParent)).equals(wsURL + '/index.js');
+      expect(await S.normalize('bufferutil', encodedWsParent)).equals('@empty');
+      expect(await S.normalize('utf-8-validate', encodedWsParent)).equals('@empty');
     });
 
     it('registers and loads a package', async () => {
