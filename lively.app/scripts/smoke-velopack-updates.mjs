@@ -109,16 +109,6 @@ function assertPath (label, file) {
   if (!fs.existsSync(file)) die(`${label} does not exist: ${file}`);
 }
 
-function assertCodeSignature (label, file) {
-  try {
-    execFileSync('codesign', ['--verify', '--deep', file], {
-      stdio: ['ignore', 'ignore', 'pipe']
-    });
-  } catch (err) {
-    die(`${label} does not have a valid code signature: ${file}`, err.stderr && err.stderr.toString());
-  }
-}
-
 function configureEnvironment (args, artifactDir) {
   const updateUrl = args.updateUrl || artifactDir;
   if (!updateUrl) die('No update feed configured. Pass --updateUrl or --artifactDir.');
@@ -175,7 +165,6 @@ async function main () {
 
   assertPath('Velopack UpdateMac helper', locator.UpdateExePath);
   assertPath('Velopack manifest', locator.ManifestPath);
-  assertCodeSignature('App bundle', appBundle);
   fs.mkdirSync(locator.PackagesDir, { recursive: true });
 
   const log = [];

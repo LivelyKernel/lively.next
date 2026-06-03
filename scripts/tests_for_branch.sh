@@ -5,7 +5,7 @@ then
     GITHUB_BASE_REF='main'
 fi
 # https://stackoverflow.com/a/39296583/4418325
-CHANGED_FILES=$(git diff --name-only origin/$GITHUB_BASE_REF... | grep -vE '^lively\.app/scripts/' || true)
+CHANGED_FILES=$(git diff --name-only origin/$GITHUB_BASE_REF...)
 
 # Use -E for MacOS-compatible lazy evaluation
 # to ensure that we only match lively core **directories** and not files that include lively in their name.

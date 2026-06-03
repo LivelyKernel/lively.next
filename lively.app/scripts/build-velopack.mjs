@@ -41,7 +41,6 @@ const packTitle = args.packTitle || process.env.VPK_PACK_TITLE || 'lively.next';
 const packAuthors = args.packAuthors || process.env.VPK_PACK_AUTHORS || 'Lively Kernel';
 const delta = args.delta || process.env.VPK_DELTA || 'BestSpeed';
 const vpk = process.env.VPK || 'vpk';
-const signAppIdentity = args.signAppIdentity || process.env.VPK_SIGN_APP_IDENTITY || (targetPlatform === 'osx' ? '-' : '');
 
 function die (msg) {
   console.error('ERROR: ' + msg);
@@ -240,15 +239,11 @@ const cmd = [
 
 if (icon) cmd.push('--icon', icon);
 if (targetPlatform === 'osx') cmd.push('--bundleId', packId);
-if (targetPlatform === 'osx' && signAppIdentity && signAppIdentity !== 'none') {
-  cmd.push('--signAppIdentity', signAppIdentity);
-}
 
 console.log(`Packing ${bundleName} with Velopack`);
 console.log(`  version: ${version}`);
 console.log(`  channel: ${channel}`);
 console.log(`  runtime: ${runtime}`);
-if (targetPlatform === 'osx') console.log(`  signing: ${signAppIdentity && signAppIdentity !== 'none' ? signAppIdentity : '(disabled)'}`);
 console.log(`  packDir: ${packDir}`);
 console.log(`  output:  ${outputDir}`);
 
