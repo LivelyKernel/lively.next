@@ -1017,6 +1017,7 @@ export class Function {
 
     var self = this,
         forwardFn = function FNAME(/*args*/) {
+          'use strict';
           return self.apply(this, arr.from(arguments));
         },
         forwardSrc = forwardFn.toStringRewritten ? forwardFn.toStringRewritten() : forwardFn.toString();
@@ -1026,13 +1027,13 @@ export class Function {
       eval('(' + forwardSrc.replace('FNAME', this.name() || '') + ')'), {
       isInterpretableFunction: true,
       forInterpretation: function(interpreter) {
-        return function(/*args*/) { return self.apply(this, arr.from(arguments), interpreter); }
+        return function(/*args*/) { 'use strict'; return self.apply(this, arr.from(arguments), interpreter); }
       },
       ast: function() { return self.node; },
       setParentFrame: function(frame) { self.parentFrame = frame; },
       startHalted: function(interpreter) {
         interpreter.haltAtNextStatement();
-        return function(/*args*/) { return self.apply(this, arr.from(arguments), interpreter); }
+        return function(/*args*/) { 'use strict'; return self.apply(this, arr.from(arguments), interpreter); }
       },
       // TODO: reactivate when necessary
       // evaluatedSource: function() { return ...; }
@@ -1256,7 +1257,7 @@ export class Frame {
 
   setThis(thisObj) { return this.thisObj = thisObj; }
 
-  getThis() { return this.thisObj ? this.thisObj : Global; }
+  getThis() { return this.thisObj !== undefined ? this.thisObj : Global; }
 
  // control flow
 
