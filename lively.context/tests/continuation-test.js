@@ -7,8 +7,8 @@ import { parseFunction, stringify } from "lively.ast";
 import { Continuation, stackCaptureMode } from "../lib/stackReification.js";
 import * as StackReification from "../lib/stackReification.js";
 import { Interpreter } from "../lib/interpreter.js";
-import shallow from 'chai-shallow-deep-equal';
-shallow(chai);
+import { installShallowDeepEqual } from './helpers.js';
+installShallowDeepEqual(chai);
 
 describe('continuation', function() {
   var config,
