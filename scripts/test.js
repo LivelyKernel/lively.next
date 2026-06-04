@@ -27,6 +27,34 @@ function githubCommandValue (value) {
     .replace(/\n/g, '%0A');
 }
 
+function truncate (value, maxLength = 8000) {
+  const str = String(value);
+  return str.length > maxLength ? `${str.slice(0, maxLength)}...` : str;
+}
+
+function shortJSON (value) {
+  try {
+    return JSON.stringify(value).slice(0, 1000);
+  } catch (_) {
+    return String(value).slice(0, 1000);
+  }
+}
+
+function testFailureDetails (test) {
+  const details = [test.fullTitle];
+  const err = test.error;
+  if (!err) return details.join('\n');
+
+  const message = err.message || err;
+  if (message) details.push(message);
+  if (err.expected !== undefined && err.actual !== undefined) {
+    details.push(`EXPECTED: ${shortJSON(err.expected)}`);
+    details.push(`ACTUAL: ${shortJSON(err.actual)}`);
+  }
+  if (err.stack && err.stack !== message) details.push(err.stack);
+  return details.join('\n');
+}
+
 if (CI) {
   console.log(`Running Tests for ${targetPackage} 📦`);
 } else {
@@ -112,6 +140,7 @@ const req = http.request(options, res => {
             failed += 1;
             if (CI) {
               console.log(`${test.fullTitle} failed ❌`);
+              console.log(`::error title=${githubCommandValue(`Test failed in ${targetPackage}`)}::${githubCommandValue(truncate(testFailureDetails(test)))}`);
               markdownListOfFailingTests = markdownListOfFailingTests + `- ${test.fullTitle} failed ❌\n`;
             } else {
               console.log(`${test.fullTitle} failed ❌`);
