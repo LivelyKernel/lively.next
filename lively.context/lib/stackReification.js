@@ -15,6 +15,12 @@ function removeToplevelRecorderRefs(ast, recorderName = '__lvVarRecorder') {
     });
 }
 
+function ensureLivelyLangPath() {
+    if (!Global.lively) Global.lively = {};
+    if (!Global.lively.lang) Global.lively.lang = {};
+    if (!Global.lively.lang.Path) Global.lively.lang.Path = Path;
+}
+
 let NativeArrayFunctions = {
 
   sort: function(sortFunc) {
@@ -150,6 +156,7 @@ let debugOption = Path('lively.Config.enableDebuggerStatements');
 export function enableDebugSupport(astRegistry) {
   // FIXME currently only takes care of Array
   try {
+      ensureLivelyLangPath();
       if (!this.hasOwnProperty('configOption')) {
           this.configOption = this.debugOption.get(Global);
           this.debugOption.set(Global, true, true);
