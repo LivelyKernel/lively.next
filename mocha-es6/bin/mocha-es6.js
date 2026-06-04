@@ -98,9 +98,16 @@ function cacheMocha(System, mochaDirURL) {
 
 function setupLivelyModulesTestSystem() {
   var baseURL = "file://" + dir,
-      System = lively.modules.getSystem("system-for-test", {baseURL}),
-      registry = System["__lively.modules__packageRegistry"] = new modules.PackageRegistry(System),
+      systemConfig = {baseURL},
+      nodeRequire = modules.System && modules.System._nodeRequire ||
+        global.System && global.System._nodeRequire ||
+        require,
+      System,
+      registry,
       env = process.env;
+  if (nodeRequire) systemConfig._nodeRequire = nodeRequire;
+  System = lively.modules.getSystem("system-for-test", systemConfig);
+  registry = System["__lively.modules__packageRegistry"] = new modules.PackageRegistry(System);
   registry.packageBaseDirs = env.FLATN_PACKAGE_COLLECTION_DIRS.split(":").filter(Boolean).map(resourcify);
   registry.individualPackageDirs = (env.FLATN_PACKAGE_DIRS || "").split(":").filter(Boolean).map(resourcify);
   registry.devPackageDirs = env.FLATN_DEV_PACKAGE_DIRS.split(":").filter(Boolean).map(resourcify);
