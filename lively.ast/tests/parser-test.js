@@ -7,8 +7,7 @@ import { parse, parseFunction } from '../lib/parser.js';
 
 describe('parse', function () {
   it('JavaScript code', () =>
-    expect(parse('1 + 2'))
-      .nested.property('body[0].type')
+    expect(parse('1 + 2').body[0].type)
       .equals('ExpressionStatement'));
 
   describe('async / await', () => {

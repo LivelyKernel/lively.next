@@ -8,7 +8,6 @@ describe('es6', function () {
   it('arrow function', function () {
     let code = '() => 23;';
     let parsed = parse(code);
-    expect(parsed).has.nested.property('body[0].expression.type')
-      .equals('ArrowFunctionExpression');
+    expect(parsed.body[0].expression.type).equals('ArrowFunctionExpression');
   });
 });
