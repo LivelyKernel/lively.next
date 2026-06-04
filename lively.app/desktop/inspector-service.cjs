@@ -182,6 +182,44 @@ const IS_HALT_UNWIND_FUNCTION = `function livelyInspectorIsHaltUnwind() {
   return !!this && (this.isLivelyInspectorHaltUnwind || this.tag === '${HALT_UNWIND_TAG}');
 }`;
 
+const ENSURE_INSPECTOR_RUNTIME_EXPRESSION = `(() => {
+  const Global = typeof globalThis !== 'undefined' ? globalThis : window;
+  if (Global.__LIVELY_INSPECTOR_CAPTURE_RUNTIME__) return true;
+
+  const install = mod => {
+    if (mod && typeof mod.installInspectorRuntime === 'function') {
+      mod.installInspectorRuntime();
+      return true;
+    }
+    return false;
+  };
+
+  if (Global.System && typeof Global.System.import === 'function') {
+    return Global.System.import('lively.context').then(install);
+  }
+
+  const modules = Global.lively && Global.lively.modules;
+  if (modules && typeof modules.importPackage === 'function') {
+    return modules.importPackage('lively.context').then(install);
+  }
+
+  return false;
+})()`;
+
+const STORE_ARGUMENTS_FUNCTION = `(payload => {
+  ${RENDERER_HELPERS}
+  const registry = livelyInspectorRegistryForCapture(payload);
+  let args = [];
+  try {
+    if (typeof arguments !== 'undefined') args = Array.prototype.slice.call(arguments);
+  } catch (err) {}
+  registry.storeFrame(payload.captureId, {
+    frameId: payload.frameId,
+    arguments: args
+  });
+  return { contextId: payload.captureId, frameId: payload.frameId, arguments: true };
+})`;
+
 class CDPClient {
   constructor (url, { WebSocketImpl = globalThis.WebSocket } = {}) {
     if (!WebSocketImpl) throw new Error('No WebSocket implementation available for CDP');
@@ -356,6 +394,7 @@ class InspectorService {
     };
 
     const exceptionObjectId = params.reason === 'exception' && params.data && params.data.objectId;
+    await this.ensureInspectorRuntime();
 
     for (let i = 0; i < callFrames.length; i++) {
       const frame = callFrames[i];
@@ -370,6 +409,7 @@ class InspectorService {
         location: locationForFrame(frame)
       };
       await this.storeFrame(frame, framePayload);
+      await this.storeArguments(frame, framePayload);
       if (i === 0 && exceptionObjectId) {
         await this.storeException(captureId, exceptionObjectId, reason, descriptor.metadata);
       }
@@ -451,6 +491,21 @@ class InspectorService {
     }
   }
 
+  async ensureInspectorRuntime () {
+    try {
+      const result = await this.client.send('Runtime.evaluate', {
+        expression: ENSURE_INSPECTOR_RUNTIME_EXPRESSION,
+        awaitPromise: true,
+        returnByValue: true,
+        silent: true
+      });
+      return !!(result && result.result && result.result.value);
+    } catch (err) {
+      this.log('inspector runtime install failed: ' + (err.stack || err));
+      return false;
+    }
+  }
+
   async storeFrame (frame, payload) {
     const thisObject = frame && frame.this;
     if (thisObject && thisObject.objectId) {
@@ -472,6 +527,16 @@ class InspectorService {
         hasThisByValue,
         thisValue: hasThisByValue ? thisObject.value : undefined
       })})`,
+      returnByValue: true,
+      silent: true
+    });
+  }
+
+  async storeArguments (frame, payload) {
+    if (!frame || !frame.callFrameId) return;
+    await this.client.send('Debugger.evaluateOnCallFrame', {
+      callFrameId: frame.callFrameId,
+      expression: `(${STORE_ARGUMENTS_FUNCTION})(${jsonForExpression(payload)})`,
       returnByValue: true,
       silent: true
     });

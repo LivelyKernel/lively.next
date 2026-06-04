@@ -37,6 +37,30 @@ function valueTreeObjectForScope (scope) {
   return bindings || {};
 }
 
+function syntheticScope (name, value, type = name) {
+  return {
+    name,
+    type,
+    bindingNames () { return [name]; },
+    hasBinding (candidate) { return candidate === name; },
+    lookup (candidate) { return candidate === name ? value : undefined; },
+    get bindings () { return { [name]: value }; }
+  };
+}
+
+function visibleScopesForFrame (frame) {
+  if (!frame) return [];
+  const scopes = [];
+  const thisValue = frame.getThis && frame.getThis();
+  const args = frame.getArguments && frame.getArguments();
+  const exception = frame.getException && frame.getException();
+
+  if (thisValue !== undefined) scopes.push(syntheticScope('this', thisValue, 'receiver'));
+  if (args !== undefined) scopes.push(syntheticScope('arguments', args, 'arguments'));
+  if (exception !== undefined) scopes.push(syntheticScope('exception', exception, 'exception'));
+  return scopes.concat(frame.scopes());
+}
+
 export class LivelyDebuggerModel extends ViewModel {
   static get properties () {
     return {
@@ -117,7 +141,7 @@ export class LivelyDebuggerModel extends ViewModel {
   selectFrame (frame) {
     this.selectedFrame = frame;
     this.ui.sourcePane.textString = sourceSummary(frame);
-    const scopes = frame ? frame.scopes() : [];
+    const scopes = visibleScopesForFrame(frame);
     this.ui.scopeList.items = scopes.map(scope => ({
       isListItem: true,
       string: scopeLabel(scope),
