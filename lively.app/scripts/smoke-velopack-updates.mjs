@@ -109,6 +109,14 @@ function assertPath (label, file) {
   if (!fs.existsSync(file)) die(`${label} does not exist: ${file}`);
 }
 
+function assertCodeSignature (label, file) {
+  try {
+    execFileSync('codesign', ['--verify', '--deep', file], { stdio: 'pipe' });
+  } catch (err) {
+    die(`${label} is not code signed correctly: ${file}`, err.stderr?.toString() || err.message || String(err));
+  }
+}
+
 function configureEnvironment (args, artifactDir) {
   const updateUrl = args.updateUrl || artifactDir;
   if (!updateUrl) die('No update feed configured. Pass --updateUrl or --artifactDir.');
@@ -156,6 +164,7 @@ async function main () {
   const layout = appLayout(appBundle);
   assertPath('App bundle', layout.appBundle);
   assertPath('Desktop update service', layout.updatesPath);
+  assertCodeSignature('App bundle', layout.appBundle);
   configureEnvironment(args, artifactDir);
 
   const updates = loadUpdatesModule(layout.updatesPath);
