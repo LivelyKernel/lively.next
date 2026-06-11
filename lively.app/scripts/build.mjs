@@ -587,7 +587,7 @@ async function main () {
 
   fs.copyFileSync(path.join(APP_DIR, 'desktop', 'boot.html'),        path.join(BUNDLE, 'boot.html'));
   fs.mkdirSync(path.join(BUNDLE, 'desktop'), { recursive: true });
-  for (const f of ['background-menu.js', 'start-server.cjs', 'watchdog.cjs', 'server-config.js', 'inject.js', 'updates.cjs', 'velopack-helper.cjs']) {
+  for (const f of ['background-menu.js', 'start-server.cjs', 'watchdog.cjs', 'server-config.js', 'inject.js', 'inspector-service.cjs', 'updates.cjs', 'velopack-helper.cjs']) {
     fs.copyFileSync(path.join(APP_DIR, 'desktop', f), path.join(BUNDLE, 'desktop', f));
   }
   // Stamp the build SHA so boot.log identifies the exact commit, no more
