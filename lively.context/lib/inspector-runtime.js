@@ -63,7 +63,7 @@ function importDebuggerUI () {
   if (system && typeof system.import === 'function') {
     return system.import('lively.ide/js/debugger/ui.cp.js');
   }
-  return import('lively.ide/js/debugger/ui.cp.js');
+  return Function('moduleId', 'return import(moduleId)')('lively.ide/js/debugger/ui.cp.js');
 }
 
 function openContinuationForRuntime (runtime, continuation) {
