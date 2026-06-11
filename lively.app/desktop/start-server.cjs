@@ -21,7 +21,6 @@ const { createHash } = require('crypto');
 const { spawn, execSync } = require('child_process');
 const { pathToFileURL } = require('url');
 const { runVelopackStartup } = require('./updates.cjs');
-const { createInspectorService } = require('./inspector-service.cjs');
 
 // ---------------------------------------------------------------------------
 // 0. Detect mode: dev (monorepo) vs bundled (standalone distribution)
@@ -701,7 +700,7 @@ function setupFlatnEnv () {
   }
 
   const win = nw.Window.get();
-  let inspectorService = null;
+  let inspectorChild = null;
 
   const b = livelyBoot();
   if (b && b.setDashboardUrl) b.setDashboardUrl(dashboardUrl);
@@ -717,12 +716,32 @@ function setupFlatnEnv () {
 
   if (process.env.LIVELY_APP_INSPECTOR_SERVICE !== '0') {
     const cdpPort = Number(process.env.LIVELY_APP_CDP_PORT || 9222);
-    inspectorService = createInspectorService({
-      cdpPort: Number.isFinite(cdpPort) && cdpPort > 0 ? cdpPort : 9222,
-      log: msg => log('inspector: ' + msg)
+    const inspectorPort = Number.isFinite(cdpPort) && cdpPort > 0 ? cdpPort : 9222;
+    inspectorChild = spawn(nodeBin, [
+      '--no-warnings',
+      '-r', path.join(desktopDir, 'watchdog.cjs'),
+      path.join(desktopDir, 'inspector-service-runner.cjs'),
+      '--cdpPort=' + inspectorPort
+    ], {
+      cwd: rootDir,
+      env: childEnv,
+      stdio: ['ignore', 'pipe', 'pipe']
     });
-    inspectorService.start().catch(err => {
-      log('inspector: service unavailable: ' + (err.stack || err));
+    inspectorChild.stdout.on('data', d => log('inspector: ' + d.toString().trimEnd()));
+    inspectorChild.stderr.on('data', d => log('inspector err: ' + d.toString().trimEnd()));
+    inspectorChild.on('error', err => {
+      log('inspector: service failed to start: ' + (err.stack || err));
+    });
+    inspectorChild.on('exit', (code, signal) => {
+      log('inspector: service exited (code=' + code + ', signal=' + signal + ')');
+      try {
+        const debuggerBridge = win.window.livelyDesktop && win.window.livelyDesktop.debugger;
+        if (debuggerBridge && typeof debuggerBridge.setServiceAttached === 'function') {
+          debuggerBridge.setServiceAttached(false);
+        } else if (debuggerBridge) {
+          debuggerBridge.inspectorServiceAttached = false;
+        }
+      } catch (_) {}
     });
   }
 
@@ -730,7 +749,7 @@ function setupFlatnEnv () {
     log('Window closing, killing server...');
     closing = true;
     clearTimeout(restartTimer);
-    if (inspectorService) inspectorService.stop();
+    if (inspectorChild) inspectorChild.kill('SIGTERM');
     if (currentChild) currentChild.kill('SIGTERM');
     setTimeout(() => this.close(true), 2000);
   });
