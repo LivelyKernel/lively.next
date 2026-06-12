@@ -708,22 +708,15 @@ function setupFlatnEnv () {
 
   const win = nw.Window.get();
   let inspectorChild = null;
+  let inspectorStartScheduled = false;
+  let inspectorStarted = false;
 
-  const b = livelyBoot();
-  if (b && b.setDashboardUrl) b.setDashboardUrl(dashboardUrl);
-  if (b && b.navigate) b.navigate(dashboardUrl);
-  else {
-    // boot.html's script hasn't run yet — fall back and hope the direct
-    // assignment works on this platform. Shouldn't happen in practice
-    // since server boot takes many seconds by which point boot.html is
-    // long loaded, but be defensive.
-    log('livelyBoot helper missing, using direct location.href assignment');
-    win.window.location.href = dashboardUrl;
-  }
-
-  if (process.env.LIVELY_APP_INSPECTOR_SERVICE !== '0') {
+  function startInspectorService (trigger) {
+    if (closing || inspectorStarted || process.env.LIVELY_APP_INSPECTOR_SERVICE === '0') return;
+    inspectorStarted = true;
     const cdpPort = Number(process.env.LIVELY_APP_CDP_PORT || 9222);
     const inspectorPort = Number.isFinite(cdpPort) && cdpPort > 0 ? cdpPort : 9222;
+    log('starting inspector service after ' + trigger + ' on CDP port ' + inspectorPort);
     inspectorChild = spawn(nodeBin, [
       '--no-warnings',
       '-r', path.join(desktopDir, 'watchdog.cjs'),
@@ -750,6 +743,48 @@ function setupFlatnEnv () {
         }
       } catch (_) {}
     });
+  }
+
+  function scheduleInspectorStart (trigger) {
+    if (inspectorStartScheduled || inspectorStarted || process.env.LIVELY_APP_INSPECTOR_SERVICE === '0') return;
+    inspectorStartScheduled = true;
+    const timer = setTimeout(() => {
+      inspectorStartScheduled = false;
+      startInspectorService(trigger);
+    }, Number(process.env.LIVELY_APP_INSPECTOR_START_DELAY || 500));
+    if (timer && typeof timer.unref === 'function') timer.unref();
+  }
+
+  const b = livelyBoot();
+  if (b && b.setDashboardUrl) b.setDashboardUrl(dashboardUrl);
+
+  if (process.env.LIVELY_APP_INSPECTOR_SERVICE !== '0') {
+    win.once('loaded', function () {
+      let href = '';
+      try { href = String(win.window.location && win.window.location.href || ''); } catch (_) {}
+      log('window loaded after server boot: ' + (href || '(unknown location)'));
+      if (/^https?:\/\//.test(href)) scheduleInspectorStart('initial page load');
+      else log('inspector service waiting for HTTP page before attaching');
+    });
+    const fallbackTimer = setTimeout(() => {
+      let href = '';
+      try { href = String(win.window.location && win.window.location.href || ''); } catch (_) {}
+      if (/^https?:\/\//.test(href)) {
+        log('inspector service load-event fallback at ' + href);
+        scheduleInspectorStart('load-event fallback');
+      }
+    }, Number(process.env.LIVELY_APP_INSPECTOR_FALLBACK_DELAY || 15000));
+    if (fallbackTimer && typeof fallbackTimer.unref === 'function') fallbackTimer.unref();
+  }
+
+  if (b && b.navigate) b.navigate(dashboardUrl);
+  else {
+    // boot.html's script hasn't run yet — fall back and hope the direct
+    // assignment works on this platform. Shouldn't happen in practice
+    // since server boot takes many seconds by which point boot.html is
+    // long loaded, but be defensive.
+    log('livelyBoot helper missing, using direct location.href assignment');
+    win.window.location.href = dashboardUrl;
   }
 
   win.on('close', function () {
