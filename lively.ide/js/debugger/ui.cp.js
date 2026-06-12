@@ -1,9 +1,22 @@
 import { GridLayout, TilingLayout, ViewModel, component, part, Label, Text, Icon, config } from 'lively.morphic';
 import { Color, pt, rect } from 'lively.graphics';
-import { DarkButton } from 'lively.components/buttons.cp.js';
-import { DarkList } from 'lively.components/list.cp.js';
+import { SystemButton } from 'lively.components/buttons.cp.js';
+import { SystemList } from '../../styling/shared.cp.js';
 import { signal } from 'lively.bindings';
 import { InspectionTree, PropertyTree, printValue } from '../inspector/context.js';
+import {
+  restartInspectorFrame,
+  resumeInspectorContinuation,
+  stepOutInspectorContinuation,
+  stepInspectorContinuation
+} from 'lively.context/lib/inspector-interpreter.js';
+import {
+  CURRENT_LINE_MARKER_ID,
+  initialFrameForContinuation,
+  lineRangeForFrame,
+  locationStringForFrame,
+  readFrameSource
+} from './source.js';
 
 function frameLabel (frame, index) {
   const name = frame.functionName || '<anonymous>';
@@ -12,19 +25,6 @@ function frameLabel (frame, index) {
   return '#' + index + '  ' + name + line;
 }
 
-function sourceSummary (frame) {
-  if (!frame) return '';
-  const source = frame.source || {};
-  const location = frame.location || {};
-  const lines = [
-    frame.functionName ? 'function ' + frame.functionName : '<anonymous frame>',
-    source.url || source.scriptId || '(no source url)',
-    Number.isFinite(location.lineNumber)
-      ? 'line ' + (location.lineNumber + 1) + ', column ' + ((location.columnNumber || 0) + 1)
-      : ''
-  ].filter(Boolean);
-  return lines.join('\n');
-}
 
 function scopeLabel (scope) {
   const names = scope.bindingNames();
@@ -35,6 +35,24 @@ function scopeLabel (scope) {
 function valueTreeObjectForScope (scope) {
   const bindings = scope && scope.bindings;
   return bindings || {};
+}
+
+function interpreterScopesForFrame (frame) {
+  const scopes = [];
+  let scope = frame && frame.getScope && frame.getScope();
+  while (scope) {
+    const mapping = scope.getMapping ? scope.getMapping() : {};
+    scopes.push({
+      name: mapping === globalThis ? 'global' : 'scope',
+      type: mapping === globalThis ? 'global' : 'local',
+      bindingNames () { return Object.keys(mapping); },
+      hasBinding (candidate) { return Object.prototype.hasOwnProperty.call(mapping, candidate); },
+      lookup (candidate) { return mapping[candidate]; },
+      get bindings () { return mapping; }
+    });
+    scope = scope.getParentScope && scope.getParentScope();
+  }
+  return scopes;
 }
 
 function syntheticScope (name, value, type = name) {
@@ -48,28 +66,41 @@ function syntheticScope (name, value, type = name) {
   };
 }
 
+function frameValue (frame, getterName) {
+  if (!frame || typeof frame[getterName] !== 'function') return undefined;
+  try {
+    return frame[getterName]();
+  } catch (err) {
+    return undefined;
+  }
+}
+
 function visibleScopesForFrame (frame) {
   if (!frame) return [];
   const scopes = [];
-  const thisValue = frame.getThis && frame.getThis();
-  const args = frame.getArguments && frame.getArguments();
-  const exception = frame.getException && frame.getException();
+  const thisValue = frameValue(frame, 'getThis');
+  const args = frameValue(frame, 'getArguments');
+  const exception = frameValue(frame, 'getException');
 
   if (thisValue !== undefined) scopes.push(syntheticScope('this', thisValue, 'receiver'));
   if (args !== undefined) scopes.push(syntheticScope('arguments', args, 'arguments'));
   if (exception !== undefined) scopes.push(syntheticScope('exception', exception, 'exception'));
-  return scopes.concat(frame.scopes());
+  const frameScopes = frame.scopes
+    ? frame.scopes()
+    : interpreterScopesForFrame(frame);
+  return scopes.concat(frameScopes);
 }
 
 export class LivelyDebuggerModel extends ViewModel {
   static get properties () {
     return {
       continuation: {},
+      inspectorContinuation: {},
       selectedFrame: {},
       selectedScope: {},
 
       expose: {
-        get () { return ['continuation', 'onWindowClose', 'closeDebugger']; }
+        get () { return ['continuation', 'onWindowClose', 'closeDebugger', 'proceed']; }
       },
 
       bindings: {
@@ -78,12 +109,12 @@ export class LivelyDebuggerModel extends ViewModel {
             { target: 'stack list', signal: 'selection', handler: 'selectFrame' },
             { target: 'scope list', signal: 'selection', handler: 'selectScope' },
             { target: 'close button', signal: 'fire', handler: 'closeDebugger' },
-            { target: 'proceed button', signal: 'fire', handler: 'disabledAction' },
-            { target: 'retry button', signal: 'fire', handler: 'disabledAction' },
-            { target: 'step into button', signal: 'fire', handler: 'disabledAction' },
-            { target: 'step over button', signal: 'fire', handler: 'disabledAction' },
-            { target: 'step out button', signal: 'fire', handler: 'disabledAction' },
-            { target: 'restart frame button', signal: 'fire', handler: 'disabledAction' }
+            { target: 'proceed button', signal: 'fire', handler: 'proceed' },
+            { target: 'retry button', signal: 'fire', handler: 'retry' },
+            { target: 'step into button', signal: 'fire', handler: 'stepInto' },
+            { target: 'step over button', signal: 'fire', handler: 'stepOver' },
+            { target: 'step out button', signal: 'fire', handler: 'stepOut' },
+            { target: 'restart frame button', signal: 'fire', handler: 'restartFrame' }
           ];
         }
       }
@@ -91,6 +122,7 @@ export class LivelyDebuggerModel extends ViewModel {
   }
 
   viewDidLoad () {
+    this.rememberReleasableContinuation(this.continuation);
     this.refreshFromContinuation();
   }
 
@@ -102,7 +134,41 @@ export class LivelyDebuggerModel extends ViewModel {
     return keyString + ': ' + valueString;
   }
 
-  refreshSelectedLine () {}
+  refreshSelectedLine (sourceText = this.currentSourceText || '') {
+    const sourcePane = this.ui.sourcePane;
+    if (!sourcePane) return null;
+    if (!sourcePane.document && sourcePane.backWithDocument) sourcePane.backWithDocument();
+    if (sourcePane.removeMarker) sourcePane.removeMarker(CURRENT_LINE_MARKER_ID);
+
+    const range = lineRangeForFrame(this.selectedFrame, sourceText);
+    this.ui.locationLabel.textString = locationStringForFrame(this.selectedFrame);
+    if (!range) return null;
+
+    const row = range.start.row;
+    if (sourcePane.selectLine) sourcePane.selectLine(row, false);
+    else sourcePane.selection = range;
+
+    if (sourcePane.addMarker) {
+      sourcePane.addMarker({
+        id: CURRENT_LINE_MARKER_ID,
+        range,
+        style: {
+          'background-color': 'rgba(66, 165, 245, 0.18)',
+          'box-shadow': 'inset 3px 0 0 rgba(41, 121, 255, 0.85)',
+          'pointer-events': 'none'
+        }
+      });
+    }
+
+    try {
+      if (sourcePane.centerRow) sourcePane.centerRow(row);
+      else if (sourcePane.centerRange) sourcePane.centerRange(range);
+      else if (sourcePane.scrollCursorIntoView) sourcePane.scrollCursorIntoView();
+    } catch (err) {
+      if (sourcePane.scrollCursorIntoView) sourcePane.scrollCursorIntoView();
+    }
+    return range;
+  }
 
   refreshFromContinuation () {
     const frames = this.continuation ? this.continuation.frames() : [];
@@ -111,10 +177,10 @@ export class LivelyDebuggerModel extends ViewModel {
       string: frameLabel(frame, index),
       value: frame
     }));
-    this.ui.stackList.selection = frames[0] || null;
-    this.selectFrame(frames[0] || null);
+    const initialFrame = initialFrameForContinuation(this.continuation, frames);
+    this.ui.stackList.selection = initialFrame;
+    this.selectFrame(initialFrame);
     this.updateStatus();
-    this.disableFutureButtons();
   }
 
   updateStatus () {
@@ -124,23 +190,13 @@ export class LivelyDebuggerModel extends ViewModel {
     this.ui.status.textString = reason + exceptionText;
   }
 
-  disableFutureButtons () {
-    for (const name of [
-      'proceed button',
-      'retry button',
-      'step into button',
-      'step over button',
-      'step out button',
-      'restart frame button'
-    ]) {
-      const button = this.ui[name];
-      if (button && button.viewModel) button.viewModel.disable();
-    }
-  }
-
-  selectFrame (frame) {
+  async selectFrame (frame) {
     this.selectedFrame = frame;
-    this.ui.sourcePane.textString = sourceSummary(frame);
+    const source = await readFrameSource(frame);
+    if (this.selectedFrame !== frame) return;
+    this.currentSourceText = source;
+    this.ui.sourcePane.textString = source;
+    this.refreshSelectedLine(source);
     const scopes = visibleScopesForFrame(frame);
     this.ui.scopeList.items = scopes.map(scope => ({
       isListItem: true,
@@ -166,12 +222,97 @@ export class LivelyDebuggerModel extends ViewModel {
     }
   }
 
-  disabledAction () {
-    signal(this.view, 'debuggerActionUnavailable', this.selectedFrame);
+  async proceed () {
+    try {
+      this.rememberReleasableContinuation(this.continuation);
+      const result = resumeInspectorContinuation(this.continuation, { startFrame: this.selectedFrame });
+      signal(this.view, 'debuggerProceed', this.continuation);
+      if (result && result.isContinuation) {
+        this.continuation = result;
+        this.refreshFromContinuation();
+        this.ui.status.textString = 'proceed stopped';
+      } else {
+        this.closeDebugger();
+      }
+      return result;
+    } catch (err) {
+      return this.interpreterActionFailed('Proceed', err);
+    }
+  }
+
+  retry () {
+    return this.restartFrame();
+  }
+
+  stepInto () {
+    return this.stepWithInterpreter('Step Into', 'stepInto');
+  }
+
+  stepOver () {
+    return this.stepWithInterpreter('Step Over', 'stepOver');
+  }
+
+  stepOut () {
+    try {
+      const result = stepOutInspectorContinuation(this.continuation, {
+        startFrame: this.selectedFrame
+      });
+      return this.updateAfterInterpreterResult('Step Out', result);
+    } catch (err) {
+      return this.interpreterActionFailed('Step Out', err);
+    }
+  }
+
+  restartFrame () {
+    try {
+      const result = restartInspectorFrame(this.continuation, { startFrame: this.selectedFrame });
+      return this.updateAfterInterpreterResult('Restart Frame', result);
+    } catch (err) {
+      return this.interpreterActionFailed('Restart Frame', err);
+    }
+  }
+
+  stepWithInterpreter (label, action) {
+    try {
+      const result = stepInspectorContinuation(this.continuation, {
+        action,
+        startFrame: this.selectedFrame
+      });
+      return this.updateAfterInterpreterResult(label, result);
+    } catch (err) {
+      return this.interpreterActionFailed(label, err);
+    }
+  }
+
+  updateAfterInterpreterResult (label, result) {
+    if (result && result.isContinuation) {
+      this.rememberReleasableContinuation(this.continuation);
+      this.continuation = result;
+      this.refreshFromContinuation();
+      this.ui.status.textString = label + ' stopped';
+      return result;
+    }
+    this.ui.status.textString = label + ' completed: ' + printValue(result);
+    return result;
+  }
+
+  interpreterActionFailed (actionName, err) {
+    const message = actionName + ' failed: ' + (err && err.message || err);
+    this.ui.status.textString = message;
+    signal(this.view, 'debuggerActionFailed', { actionName, frame: this.selectedFrame, error: err });
+    return false;
+  }
+
+  rememberReleasableContinuation (continuation) {
+    if (continuation && typeof continuation.release === 'function') {
+      this.inspectorContinuation = continuation;
+    }
   }
 
   onWindowClose () {
-    if (this.continuation && this.continuation.release) this.continuation.release();
+    const continuation = this.inspectorContinuation || this.continuation;
+    if (continuation && continuation.release) continuation.release();
+    this.inspectorContinuation = null;
     this.continuation = null;
   }
 
@@ -183,12 +324,14 @@ export class LivelyDebuggerModel extends ViewModel {
   }
 }
 
-const ToolbarButton = component(DarkButton, {
-  extent: pt(30, 24),
-  padding: rect(4, 4, 0, 0),
+const ToolbarButton = component(SystemButton, {
+  extent: pt(35, 26),
+  borderRadius: 5,
+  padding: rect(0, 0, 0, 0),
   submorphs: [{
     name: 'label',
-    fontSize: 13
+    fontColor: Color.rgb(52, 73, 94),
+    fontSize: 15
   }]
 });
 
@@ -196,8 +339,10 @@ export const LivelyDebugger = component({
   name: 'lively debugger',
   defaultViewModel: LivelyDebuggerModel,
   extent: pt(900, 560),
-  fill: Color.rgb(247, 248, 248),
-  borderRadius: 4,
+  fill: Color.rgb(245, 247, 248),
+  borderColor: Color.rgb(149, 165, 166),
+  borderRadius: 3,
+  borderWidth: 1,
   layout: new GridLayout({
     autoAssign: false,
     grid: [
@@ -223,7 +368,9 @@ export const LivelyDebugger = component({
   }),
   submorphs: [{
     name: 'toolbar',
-    fill: Color.rgb(52, 73, 94),
+    fill: Color.rgb(236, 240, 241),
+    borderColor: Color.rgb(215, 219, 221),
+    borderWidth: { bottom: 1 },
     layout: new TilingLayout({
       axisAlign: 'center',
       orderByIndex: true,
@@ -271,21 +418,22 @@ export const LivelyDebugger = component({
         type: Label,
         name: 'title',
         value: 'Lively Debugger',
-        fontColor: Color.white,
+        fontColor: Color.rgb(52, 73, 94),
+        fontFamily: 'IBM Plex Sans',
         fontSize: 14,
         fontWeight: 'bold',
         reactsToPointer: false
       }
     ]
   },
-  part(DarkList, {
+  part(SystemList, {
     name: 'stack list',
-    fill: Color.rgb(43, 50, 55),
     fontFamily: 'IBM Plex Mono',
     fontSize: 12,
     itemHeight: 24,
     manualItemHeight: true,
-    padding: rect(4, 4, 4, 4)
+    padding: rect(4, 4, 4, 4),
+    borderRadius: 0
   }),
   {
     name: 'main pane',
@@ -293,25 +441,48 @@ export const LivelyDebugger = component({
     layout: new GridLayout({
       autoAssign: false,
       grid: [
+        ['source header'],
         ['source pane'],
         ['scope/value pane']
       ],
       groups: {
+        'source header': { align: 'topLeft', resize: true },
         'source pane': { align: 'topLeft', resize: true },
         'scope/value pane': { align: 'topLeft', resize: true }
       },
       rows: [
-        0, { fixed: 160, paddingBottom: 6 },
-        1, { height: 1 }
+        0, { fixed: 26 },
+        1, { fixed: 210, paddingBottom: 6 },
+        2, { height: 1 }
       ]
     }),
     submorphs: [{
+      name: 'source header',
+      fill: Color.rgb(245, 247, 248),
+      borderColor: Color.rgb(215, 219, 221),
+      borderWidth: { bottom: 1 },
+      layout: new TilingLayout({
+        axisAlign: 'center',
+        orderByIndex: true,
+        padding: rect(8, 0, 8, 0)
+      }),
+      submorphs: [{
+        type: Label,
+        name: 'location label',
+        value: '',
+        fontColor: Color.rgb(52, 73, 94),
+        fontFamily: 'IBM Plex Sans',
+        fontSize: 12,
+        padding: rect(0, 3, 0, 0),
+        reactsToPointer: false
+      }]
+    }, {
       type: Text,
       name: 'source pane',
       readOnly: true,
       fixedWidth: true,
       fixedHeight: true,
-      lineWrapping: 'by-words',
+      lineWrapping: 'by-chars',
       padding: rect(8, 8, 0, 0),
       borderColor: Color.rgb(189, 195, 199),
       borderWidth: 1,
@@ -335,14 +506,14 @@ export const LivelyDebugger = component({
         ]
       }),
       submorphs: [
-        part(DarkList, {
+        part(SystemList, {
           name: 'scope list',
-          fill: Color.rgb(56, 64, 71),
           fontFamily: 'IBM Plex Mono',
           fontSize: 12,
           itemHeight: 22,
           manualItemHeight: true,
-          padding: rect(4, 4, 4, 4)
+          padding: rect(4, 4, 4, 4),
+          borderRadius: 0
         }),
         {
           type: PropertyTree,

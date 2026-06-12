@@ -76,11 +76,12 @@ function bindingNamesFromProperties (properties) {
     .map(prop => prop.name);
 }
 
-function sourceForFrame (frame) {
+function sourceForFrame (frame, sourceText = '') {
   const location = frame.location || {};
   return {
     url: frame.url || '',
-    scriptId: location.scriptId || ''
+    scriptId: location.scriptId || '',
+    sourceText
   };
 }
 
@@ -426,13 +427,14 @@ class InspectorService {
     for (let i = 0; i < callFrames.length; i++) {
       const frame = callFrames[i];
       const frameId = 'frame-' + i;
+      const sourceText = await this.scriptSourceForFrame(frame);
       const framePayload = {
         captureId,
         reason,
         metadata: descriptor.metadata,
         frameId,
         functionName: frame.functionName || '',
-        source: sourceForFrame(frame),
+        source: sourceForFrame(frame, sourceText),
         location: locationForFrame(frame)
       };
       await this.storeFrame(frame, framePayload);
@@ -485,6 +487,18 @@ class InspectorService {
     }
 
     return descriptor;
+  }
+
+  async scriptSourceForFrame (frame) {
+    const scriptId = frame && frame.location && frame.location.scriptId;
+    if (!scriptId) return '';
+    try {
+      const result = await this.client.send('Debugger.getScriptSource', { scriptId });
+      return result && result.scriptSource || '';
+    } catch (err) {
+      this.log('inspector source lookup failed: ' + (err.stack || err));
+      return '';
+    }
   }
 
   async consumeArmedHalt (topFrame) {

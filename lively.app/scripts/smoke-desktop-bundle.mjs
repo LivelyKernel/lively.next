@@ -8,6 +8,7 @@ import { spawn, spawnSync } from 'node:child_process';
 const CDP_PORT = Number(process.env.LIVELY_APP_SMOKE_CDP_PORT || 9222);
 const DEFAULT_TIMEOUT = 300000;
 const DEBUGGER_SMOKE_REASON = 'desktop debugger smoke';
+const DEBUGGER_CURRENT_LINE_MARKER_ID = 'lively-debugger-current-line';
 const WORLD_PATH = '/worlds/load?name=__newWorld__&askForWorldName=false&fastLoad=true';
 const PROJECT_PATH = '/projects/load?name=__newProject__&askForWorldName=false&fastLoad=true';
 const CORE_PACKAGES = [
@@ -530,6 +531,7 @@ function debuggerSmokeExpression () {
 
 function debuggerSmokeStateExpression () {
   return `(() => {
+    const currentLineMarkerId = ${JSON.stringify(DEBUGGER_CURRENT_LINE_MARKER_ID)};
     const system = globalThis.System;
     const env = system && system.get && system.get('@lively-env');
     const registry = env && env.debuggerContexts;
@@ -537,14 +539,22 @@ function debuggerSmokeStateExpression () {
     const context = Object.values(contexts).find(ctx => ctx && ctx.reason === ${JSON.stringify(DEBUGGER_SMOKE_REASON)}) || null;
     const marker = globalThis.__LIVELY_DEBUGGER_SMOKE_MARKER__;
     const windows = globalThis.$world && typeof $world.getWindows === 'function' ? $world.getWindows() : [];
+    function windowTarget(win) {
+      return win && (win.targetMorph || win.owner || win.contentMorph) || null;
+    }
     const debuggerWindow = windows.find(win => {
-      const target = win && (win.targetMorph || win.owner || win.contentMorph);
+      const target = windowTarget(win);
       return win && (
         win.title === 'Lively Debugger' ||
         win.name === 'Lively Debugger' ||
         target && target.name === 'lively debugger'
       );
     });
+    const debuggerMorph = windowTarget(debuggerWindow);
+    const sourcePane = debuggerMorph && debuggerMorph.getSubmorphNamed && debuggerMorph.getSubmorphNamed('source pane');
+    const locationLabel = debuggerMorph && debuggerMorph.getSubmorphNamed && debuggerMorph.getSubmorphNamed('location label');
+    const statusMorph = debuggerMorph && debuggerMorph.getSubmorphNamed && debuggerMorph.getSubmorphNamed('status');
+    const stepIntoButton = debuggerMorph && debuggerMorph.getSubmorphNamed && debuggerMorph.getSubmorphNamed('step into button');
 
     function summarizeBinding (value) {
       if (value === marker) return { actualMarker: true, value: value.value, label: value.label };
@@ -558,6 +568,13 @@ function debuggerSmokeStateExpression () {
         };
       }
       return { primitive: value };
+    }
+
+    function selectionRowOf (textMorph) {
+      const selection = textMorph && textMorph.selection;
+      if (!selection) return null;
+      const start = selection.start || selection.range && selection.range.start;
+      return start && Number.isFinite(start.row) ? start.row : null;
     }
 
     const inspectedBindings = [];
@@ -583,6 +600,20 @@ function debuggerSmokeStateExpression () {
       }
     }
 
+    let stepActionStatus = null;
+    let stepActionError = null;
+    if (stepIntoButton && stepIntoButton.viewModel && typeof stepIntoButton.viewModel.trigger === 'function') {
+      try {
+        stepIntoButton.viewModel.trigger();
+        stepActionStatus = statusMorph && statusMorph.textString || '';
+      } catch (err) {
+        stepActionError = err && (err.stack || err.message) || String(err);
+      }
+    }
+
+    const sourceText = sourcePane && sourcePane.textString || '';
+    const markers = sourcePane && sourcePane.markers || [];
+
     return {
       hasRegistry: Boolean(registry),
       hasContext: Boolean(context),
@@ -594,7 +625,67 @@ function debuggerSmokeStateExpression () {
       hasActualMarkerCarrier,
       inspectedBindings,
       hasDebuggerWindow: Boolean(debuggerWindow),
+      hasSourcePane: Boolean(sourcePane),
+      sourceTextLength: sourceText.length,
+      sourceHasSmokeInner: sourceText.includes('smokeInner'),
+      sourceHasHaltCall: sourceText.includes('halt('),
+      sourceSelectedRow: selectionRowOf(sourcePane),
+      hasCurrentLineMarker: markers.some(marker => marker && marker.id === currentLineMarkerId),
+      locationLabelText: locationLabel && locationLabel.textString || '',
+      stepActionStatus,
+      stepActionError,
       debuggerWindowTitle: debuggerWindow && (debuggerWindow.title || debuggerWindow.name),
+      windowTitles: windows.map(win => win && (win.title || win.name || '')).filter(Boolean)
+    };
+  })()`;
+}
+
+function debuggerProceedTriggerExpression () {
+  return `(() => {
+    const windows = globalThis.$world && typeof $world.getWindows === 'function' ? $world.getWindows() : [];
+    function windowTarget(win) {
+      return win && (win.targetMorph || win.owner || win.contentMorph) || null;
+    }
+    const debuggerWindow = windows.find(win => {
+      const target = windowTarget(win);
+      return win && (
+        win.title === 'Lively Debugger' ||
+        win.name === 'Lively Debugger' ||
+        target && target.name === 'lively debugger'
+      );
+    });
+    const debuggerMorph = windowTarget(debuggerWindow);
+    const proceedButton = debuggerMorph && debuggerMorph.getSubmorphNamed && debuggerMorph.getSubmorphNamed('proceed button');
+    if (!proceedButton || !proceedButton.viewModel || typeof proceedButton.viewModel.trigger !== 'function') {
+      return { triggered: false };
+    }
+    proceedButton.viewModel.trigger();
+    return { triggered: true };
+  })()`;
+}
+
+function debuggerProceedStateExpression () {
+  return `(() => {
+    const system = globalThis.System;
+    const env = system && system.get && system.get('@lively-env');
+    const registry = env && env.debuggerContexts;
+    const contexts = registry && registry.contexts || {};
+    const context = Object.values(contexts).find(ctx => ctx && ctx.reason === ${JSON.stringify(DEBUGGER_SMOKE_REASON)}) || null;
+    const windows = globalThis.$world && typeof $world.getWindows === 'function' ? $world.getWindows() : [];
+    function windowTarget(win) {
+      return win && (win.targetMorph || win.owner || win.contentMorph) || null;
+    }
+    const debuggerWindow = windows.find(win => {
+      const target = windowTarget(win);
+      return win && (
+        win.title === 'Lively Debugger' ||
+        win.name === 'Lively Debugger' ||
+        target && target.name === 'lively debugger'
+      );
+    });
+    return {
+      hasContext: Boolean(context),
+      hasDebuggerWindow: Boolean(debuggerWindow),
       windowTitles: windows.map(win => win && (win.title || win.name || '')).filter(Boolean)
     };
   })()`;
@@ -628,21 +719,41 @@ async function assertDesktopDebuggerSmoke (client, timeoutMs) {
     ].join('\n'));
   }
 
+  let lastDebuggerSmokeState = null;
   const state = await waitFor('desktop debugger capture and UI', async () => {
     const result = await client.send('Runtime.evaluate', {
       expression: debuggerSmokeStateExpression(),
       returnByValue: true
     }, { timeoutMs: 10000 });
     const value = result.result && result.result.value;
+    lastDebuggerSmokeState = value || null;
     if (!value || !value.hasContext || !value.hasDebuggerWindow) return null;
+    if (!value.hasSourcePane || !value.sourceTextLength || value.sourceSelectedRow === null || !value.hasCurrentLineMarker) return null;
     return value;
-  }, timeoutMs);
+  }, timeoutMs).catch(err => {
+    throw new Error([
+      err.message || String(err),
+      `Last observed debugger smoke state: ${JSON.stringify(lastDebuggerSmokeState, null, 2)}`
+    ].join('\n'));
+  });
 
   const errors = [];
   if (!state.frameCount) errors.push('capture did not record any stack frames');
   if (!state.scopeCount) errors.push('capture did not record any scopes');
   if (!state.hasActualMarker && !state.hasActualMarkerCarrier) {
     errors.push('capture did not expose the in-process marker object through a scope binding');
+  }
+  if (!state.sourceHasSmokeInner || !state.sourceHasHaltCall) {
+    errors.push('debugger source pane did not show the paused source code');
+  }
+  if (!state.locationLabelText || !state.locationLabelText.includes(':')) {
+    errors.push('debugger did not show the paused source location');
+  }
+  if (state.stepActionError) {
+    errors.push('step into button threw while stepping through the interpreter');
+  }
+  if (!state.stepActionStatus || !state.stepActionStatus.includes('stopped')) {
+    errors.push('step into button did not produce a stopped interpreter continuation');
   }
   if (errors.length) {
     throw new Error([
@@ -651,6 +762,36 @@ async function assertDesktopDebuggerSmoke (client, timeoutMs) {
       `Observed state: ${JSON.stringify(state, null, 2)}`
     ].join('\n'));
   }
+
+  const proceedTrigger = await client.send('Runtime.evaluate', {
+    expression: debuggerProceedTriggerExpression(),
+    returnByValue: true
+  }, { timeoutMs: 10000 });
+  const proceedTriggerValue = proceedTrigger.result && proceedTrigger.result.value;
+  if (!proceedTriggerValue || !proceedTriggerValue.triggered) {
+    throw new Error([
+      'Desktop debugger smoke failed.',
+      'proceed button could not be triggered',
+      `Observed proceed trigger: ${JSON.stringify(proceedTriggerValue, null, 2)}`
+    ].join('\n'));
+  }
+
+  let lastProceedState = null;
+  await waitFor('desktop debugger proceed release', async () => {
+    const result = await client.send('Runtime.evaluate', {
+      expression: debuggerProceedStateExpression(),
+      returnByValue: true
+    }, { timeoutMs: 10000 });
+    const value = result.result && result.result.value;
+    lastProceedState = value || null;
+    if (!value || value.hasContext || value.hasDebuggerWindow) return null;
+    return value;
+  }, timeoutMs).catch(err => {
+    throw new Error([
+      err.message || String(err),
+      `Last observed debugger proceed state: ${JSON.stringify(lastProceedState, null, 2)}`
+    ].join('\n'));
+  });
 
   console.log('Desktop app smoke passed: lively.context debugger captures stack values and opens UI');
 }
