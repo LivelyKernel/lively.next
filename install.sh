@@ -117,6 +117,19 @@ then
   exit
 fi
 
+section "Installing Puppeteer browser"
+step "Preparing Chrome for headless tests..."
+node "$(node -p "require.resolve('puppeteer/install.mjs')")" || exit 1
+node <<'NODE' || exit 1
+const fs = require('fs');
+const puppeteer = require('puppeteer');
+const executable = puppeteer.executablePath();
+if (!fs.existsSync(executable)) {
+  throw new Error(`Puppeteer browser executable does not exist: ${executable}`);
+}
+console.log(`   Puppeteer Chrome ready at ${executable}`);
+NODE
+
 section "Building SWC plugin"
 if ! rustup target list --installed | grep -q "^wasm32-wasip1$"; then
   step "Adding Rust target wasm32-wasip1..."
