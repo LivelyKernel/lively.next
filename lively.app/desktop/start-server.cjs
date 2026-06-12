@@ -488,6 +488,13 @@ function emitError (msg) {
   if (b && b.error) b.error(msg);
 }
 
+function bootUrlForPort (port) {
+  const bootUrl = process.env.LIVELY_APP_BOOT_URL || '/dashboard/';
+  if (/^https?:\/\//.test(bootUrl)) return bootUrl;
+  const path = String(bootUrl || '/dashboard/');
+  return 'http://127.0.0.1:' + port + (path.startsWith('/') ? path : '/' + path);
+}
+
 // ---------------------------------------------------------------------------
 // 5. Flatn env setup
 // ---------------------------------------------------------------------------
@@ -693,7 +700,7 @@ function setupFlatnEnv () {
 
   emitStatus('Server ready, loading lively...');
 
-  const dashboardUrl = 'http://127.0.0.1:' + port + '/dashboard/';
+  const dashboardUrl = bootUrlForPort(port);
   if (typeof nw === 'undefined') {
     log('NW.js global not available; server is ready for direct smoke mode.');
     return;

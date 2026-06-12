@@ -39,4 +39,9 @@ if [ "$ENV_STATUS" -ne 0 ]; then
 fi
 unset NODE_OPTIONS
 
-exec "$NW_BIN" "$SCRIPT_DIR" "$@"
+NW_ARGS=()
+if [ "${LIVELY_APP_HEADLESS:-}" = "1" ]; then
+  NW_ARGS+=(--headless=new --disable-gpu)
+fi
+
+exec "$NW_BIN" "${NW_ARGS[@]}" "$SCRIPT_DIR" "$@"

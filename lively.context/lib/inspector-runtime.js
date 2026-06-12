@@ -60,10 +60,15 @@ function frameIdsFromContext (context) {
 
 function importDebuggerUI () {
   const system = systemObject();
+  const Global = globalObject();
+  const uiUrl = Global.location
+    ? new URL('/lively.ide/js/debugger/ui.cp.js', Global.location.origin).href
+    : 'lively.ide/js/debugger/ui.cp.js';
   if (system && typeof system.import === 'function') {
-    return system.import('lively.ide/js/debugger/ui.cp.js');
+    return system.import('lively.ide/js/debugger/ui.cp.js')
+      .catch(() => system.import(uiUrl));
   }
-  return Function('moduleId', 'return import(moduleId)')('lively.ide/js/debugger/ui.cp.js');
+  return Function('moduleId', 'return import(moduleId)')(uiUrl);
 }
 
 function openContinuationForRuntime (runtime, continuation) {
@@ -517,11 +522,7 @@ export function halt (reason = 'halt') {
   if (bridge.armHalt({ reason, captureId }) === false) {
     throw new Error('lively.context inspector service rejected the halt request');
   }
-  if (typeof bridge.breakpointTrap !== 'function') {
-    throw new Error('lively.context inspector breakpoint trap is not installed');
-  }
 
-  bridge.breakpointTrap(captureId);
   throw new InspectorHaltUnwind(reason, captureId);
 }
 
