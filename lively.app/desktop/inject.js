@@ -81,6 +81,10 @@
     return debuggerState.serviceAttached;
   }
 
+  function breakpointTrap () {
+    return true;
+  }
+
   function deliverCapture (descriptor) {
     debuggerState.captures.push(descriptor);
     debuggerState.lastCapture = descriptor;
@@ -102,6 +106,7 @@
       consumeArmedHalt: desktopDebugger.consumeArmedHalt || consumeArmedHalt,
       isAvailable: desktopDebugger.isAvailable || isAvailable,
       setServiceAttached: desktopDebugger.setServiceAttached || setServiceAttached,
+      breakpointTrap: desktopDebugger.breakpointTrap || breakpointTrap,
       deliverCapture: desktopDebugger.deliverCapture || deliverCapture
     }
   };

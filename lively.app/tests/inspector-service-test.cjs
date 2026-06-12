@@ -37,7 +37,13 @@ class FakeCDPClient {
       return { result: { value: true } };
     }
     if (method === 'Runtime.evaluate') {
+      if (String(params.expression).includes('breakpointTrap')) {
+        return { result: { type: 'function', objectId: 'breakpoint-trap' } };
+      }
       return { result: { value: true } };
+    }
+    if (method === 'Debugger.setBreakpointOnFunctionCall') {
+      return { breakpointId: 'breakpoint-on-trap' };
     }
     return {};
   }
@@ -89,6 +95,12 @@ async function testStartMarksRendererServiceAttached () {
 
   assert(client.calls.some(call => call.method === 'Runtime.enable'));
   assert(client.calls.some(call => call.method === 'Debugger.enable'));
+  assert(client.calls.some(call =>
+    call.method === 'Runtime.evaluate' &&
+    call.params.expression.includes('breakpointTrap')));
+  assert(client.calls.some(call =>
+    call.method === 'Debugger.setBreakpointOnFunctionCall' &&
+    call.params.objectId === 'breakpoint-trap'));
   assert(client.calls.some(call =>
     call.method === 'Runtime.evaluate' &&
     call.params.expression.includes('inspectorServiceAttached = true')));
