@@ -4,13 +4,15 @@ const path = require('path');
 const {
   InspectorService,
   bindingNamesFromProperties,
+  originalSourceForGenerated,
   pageTarget
 } = require('../desktop/inspector-service.cjs');
 
 class FakeCDPClient {
-  constructor ({ armed = { captureId: 'capture-test', reason: 'halt' }, properties = {} } = {}) {
+  constructor ({ armed = { captureId: 'capture-test', reason: 'halt' }, properties = {}, scriptSources = {} } = {}) {
     this.armed = armed;
     this.properties = properties;
+    this.scriptSources = scriptSources;
     this.calls = [];
     this.eventHandler = null;
   }
@@ -44,6 +46,9 @@ class FakeCDPClient {
     }
     if (method === 'Runtime.evaluate') {
       return { result: { value: true } };
+    }
+    if (method === 'Debugger.getScriptSource') {
+      return { scriptSource: this.scriptSources[params.scriptId] || '' };
     }
     return {};
   }
@@ -148,6 +153,70 @@ async function testCaptureStoresValuesInRenderer () {
   assert(!JSON.stringify(descriptor).includes('SHOULD_NOT_LEAVE_CDP'));
 }
 
+function inlineSourceMapFor ({ generatedLine, generatedColumn, originalLine, originalColumn, source, sourceText }) {
+  assert.strictEqual(generatedLine, 2);
+  assert.strictEqual(generatedColumn, 0);
+  assert.strictEqual(originalLine, 3);
+  assert.strictEqual(originalColumn, 2);
+  const sourceMap = {
+    version: 3,
+    file: 'generated.js',
+    sources: [source],
+    sourcesContent: [sourceText],
+    names: [],
+    mappings: ';AAEE'
+  };
+  return '//# sourceMappingURL=data:application/json;base64,' +
+    Buffer.from(JSON.stringify(sourceMap)).toString('base64');
+}
+
+async function testInlineSourceMapResolvesOriginalSource () {
+  const originalText = [
+    'function original() {',
+    '  const value = 23;',
+    '  halt("mapped");',
+    '}'
+  ].join('\n');
+  const generatedText = [
+    'function original(){',
+    'halt("mapped");',
+    '}',
+    inlineSourceMapFor({
+      generatedLine: 2,
+      generatedColumn: 0,
+      originalLine: 3,
+      originalColumn: 2,
+      source: 'original.js',
+      sourceText: originalText
+    })
+  ].join('\n');
+
+  const source = originalSourceForGenerated(
+    generatedText,
+    { scriptId: 'script-1', lineNumber: 1, columnNumber: 0 },
+    'http://127.0.0.1:9011/generated.js'
+  );
+
+  assert.strictEqual(source.url, 'http://127.0.0.1:9011/original.js');
+  assert.strictEqual(source.sourceText, originalText);
+  assert.deepStrictEqual(source.location, {
+    scriptId: 'script-1',
+    lineNumber: 2,
+    columnNumber: 2
+  });
+}
+
+async function testInlineSourceMapIgnoresStringLiterals () {
+  const source = [
+    'const text = "sourceMappingURL=data:application/json;base64,not-json";',
+    'const comment = "//# sourceMappingURL=data:application/json;base64,not-json";'
+  ].join('\n');
+
+  assert.strictEqual(
+    originalSourceForGenerated(source, { scriptId: 'script-1', lineNumber: 0, columnNumber: 0 }, ''),
+    null);
+}
+
 async function testExceptionCaptureStoresExceptionObject () {
   const client = new FakeCDPClient({
     armed: null,
@@ -228,6 +297,8 @@ async function run () {
   await testTargetSelection();
   await testStartMarksRendererServiceAttached();
   await testCaptureStoresValuesInRenderer();
+  await testInlineSourceMapResolvesOriginalSource();
+  await testInlineSourceMapIgnoresStringLiterals();
   await testExceptionCaptureStoresExceptionObject();
   await testTaggedHaltUnwindIsCaptured();
   await testHandlePausedResumesAndDeliversDescriptor();

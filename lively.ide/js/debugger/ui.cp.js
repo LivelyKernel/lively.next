@@ -17,6 +17,7 @@ import {
   locationStringForFrame,
   readFrameSource
 } from './source.js';
+import { evaluateInDebuggerScopes } from './evaluation.js';
 
 function frameLabel (frame, index) {
   const name = frame.functionName || '<anonymous>';
@@ -91,6 +92,17 @@ function visibleScopesForFrame (frame) {
   return scopes.concat(frameScopes);
 }
 
+function workspaceScope (bindings) {
+  return {
+    name: 'workspace',
+    type: 'workspace',
+    bindingNames () { return Object.keys(bindings); },
+    hasBinding (candidate) { return Object.prototype.hasOwnProperty.call(bindings, candidate); },
+    lookup (candidate) { return bindings[candidate]; },
+    get bindings () { return bindings; }
+  };
+}
+
 export class LivelyDebuggerModel extends ViewModel {
   static get properties () {
     return {
@@ -98,6 +110,9 @@ export class LivelyDebuggerModel extends ViewModel {
       inspectorContinuation: {},
       selectedFrame: {},
       selectedScope: {},
+      workspaceBindings: {
+        initialize () { this.workspaceBindings = {}; }
+      },
 
       expose: {
         get () { return ['continuation', 'onWindowClose', 'closeDebugger', 'proceed']; }
@@ -114,7 +129,8 @@ export class LivelyDebuggerModel extends ViewModel {
             { target: 'step into button', signal: 'fire', handler: 'stepInto' },
             { target: 'step over button', signal: 'fire', handler: 'stepOver' },
             { target: 'step out button', signal: 'fire', handler: 'stepOut' },
-            { target: 'restart frame button', signal: 'fire', handler: 'restartFrame' }
+            { target: 'restart frame button', signal: 'fire', handler: 'restartFrame' },
+            { target: 'workspace do button', signal: 'fire', handler: 'evaluateWorkspace' }
           ];
         }
       }
@@ -219,6 +235,34 @@ export class LivelyDebuggerModel extends ViewModel {
     if (tree.treeData.root.isCollapsed) {
       await tree.onNodeCollapseChanged({ node: treeData.root, isCollapsed: false });
       tree.selectedIndex = 1;
+    }
+  }
+
+  evaluationScopes () {
+    const frameScopes = visibleScopesForFrame(this.selectedFrame);
+    const selectedScope = this.selectedScope;
+    const orderedScopes = selectedScope
+      ? [selectedScope].concat(frameScopes.filter(scope => scope !== selectedScope))
+      : frameScopes;
+    return [workspaceScope(this.workspaceBindings || {})].concat(orderedScopes);
+  }
+
+  async evaluateWorkspace () {
+    const editor = this.ui.workspaceInput;
+    const source = editor && editor.textString || '';
+    this.workspaceBindings = this.workspaceBindings || {};
+    try {
+      const result = await Promise.resolve(evaluateInDebuggerScopes(source, this.evaluationScopes()));
+      this.workspaceBindings.it = result;
+      this.ui.workspaceResult.textString = printValue(result);
+      this.ui.status.textString = 'workspace: ' + printValue(result);
+      return result;
+    } catch (err) {
+      const message = err && (err.stack || err.message) || String(err);
+      this.ui.workspaceResult.textString = message;
+      this.ui.status.textString = 'workspace failed: ' + (err && err.message || err);
+      signal(this.view, 'debuggerActionFailed', { actionName: 'Workspace', frame: this.selectedFrame, error: err });
+      return false;
     }
   }
 
@@ -443,17 +487,23 @@ export const LivelyDebugger = component({
       grid: [
         ['source header'],
         ['source pane'],
-        ['scope/value pane']
+        ['scope/value pane'],
+        ['workspace header'],
+        ['workspace pane']
       ],
       groups: {
         'source header': { align: 'topLeft', resize: true },
         'source pane': { align: 'topLeft', resize: true },
-        'scope/value pane': { align: 'topLeft', resize: true }
+        'scope/value pane': { align: 'topLeft', resize: true },
+        'workspace header': { align: 'topLeft', resize: true },
+        'workspace pane': { align: 'topLeft', resize: true }
       },
       rows: [
         0, { fixed: 26 },
         1, { fixed: 210, paddingBottom: 6 },
-        2, { height: 1 }
+        2, { height: 1, paddingBottom: 6 },
+        3, { fixed: 26 },
+        4, { fixed: 110 }
       ]
     }),
     submorphs: [{
@@ -526,6 +576,49 @@ export const LivelyDebugger = component({
           fontSize: 13,
           treeData: {}
         }]
+    }, {
+      name: 'workspace header',
+      fill: Color.rgb(245, 247, 248),
+      borderColor: Color.rgb(215, 219, 221),
+      borderWidth: { bottom: 1 },
+      layout: new TilingLayout({
+        axisAlign: 'center',
+        orderByIndex: true,
+        padding: rect(8, 2, 8, 2),
+        spacing: 6,
+        resizePolicies: [['workspace result', { width: 'fill', height: 'fixed' }]]
+      }),
+      submorphs: [
+        part(ToolbarButton, {
+          name: 'workspace do button',
+          tooltip: 'Do It',
+          viewModel: { label: { value: Icon.textAttribute('play') } }
+        }),
+        {
+          type: Label,
+          name: 'workspace result',
+          value: '',
+          fontColor: Color.rgb(52, 73, 94),
+          fontFamily: 'IBM Plex Mono',
+          fontSize: 12,
+          clipMode: 'hidden',
+          reactsToPointer: false
+        }
+      ]
+    }, {
+      type: Text,
+      name: 'workspace input',
+      readOnly: false,
+      fixedWidth: true,
+      fixedHeight: true,
+      lineWrapping: 'by-chars',
+      padding: rect(8, 8, 0, 0),
+      borderColor: Color.rgb(189, 195, 199),
+      borderWidth: 1,
+      fill: Color.rgb(253, 253, 253),
+      ...config.codeEditor.defaultStyle,
+      fontSize: 13,
+      textString: ''
     }]
   }, {
     type: Label,
