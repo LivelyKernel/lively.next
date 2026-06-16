@@ -5,6 +5,7 @@ import { babel } from '@rollup/plugin-babel';
 import { lively } from 'lively.freezer/src/plugins/rollup';
 import resolver from 'lively.freezer/src/resolvers/node.cjs';
 import PresetEnv from '@babel/preset-env';
+import { assertNoNodeBuiltins } from './assert-no-node-builtins.mjs';
 
 const verbose = process.argv[2] === '--verbose';
 const minify = !process.env.CI;
@@ -65,6 +66,9 @@ try {
       mocha: 'mocha',
     },
   });
+
+  await assertNoNodeBuiltins('landing-page');
+  console.log('   Verified: no Node built-ins reachable in browser bundle');
 
   console.log('   Landing page build complete');
 

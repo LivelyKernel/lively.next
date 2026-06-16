@@ -5,6 +5,7 @@ import util from 'node:util';
 import fs from 'node:fs/promises';
 import { lively } from 'lively.freezer/src/plugins/rollup';
 import resolver from 'lively.freezer/src/resolvers/node.cjs';
+import { assertNoNodeBuiltins } from './assert-no-node-builtins.mjs';
 
 const verbose = process.argv[2] === '--verbose';
 const minify = !process.env.CI;
@@ -111,6 +112,13 @@ try {
   } catch (err) {
     console.warn('\x1b[33m   [!] Could not copy loading-screen index.html: ' + err.message + '\x1b[0m');
   }
+
+  // Guard: a server-only module reachable from the entry graph would leak Node
+  // built-ins into these browser bundles and 404 at runtime (e.g. /dashboard/path).
+  // Fail the build loudly here instead of shipping a bundle that breaks on boot.
+  await assertNoNodeBuiltins('landing-page');
+  await assertNoNodeBuiltins('loading-screen');
+  console.log('   Verified: no Node built-ins reachable in browser bundles');
 
   console.log('   Unified build complete');
 

@@ -4,6 +4,7 @@ import jsonPlugin from '@rollup/plugin-json';
 import { rm, writeFile } from 'node:fs/promises';
 import { lively } from 'lively.freezer/src/plugins/rollup';
 import resolver from 'lively.freezer/src/resolvers/node.cjs';
+import { assertNoNodeBuiltins } from './assert-no-node-builtins.mjs';
 
 const verbose = true; // process.argv[2] === '--verbose';
 const minify = !process.env.CI;
@@ -60,6 +61,9 @@ try {
   });
 
   await writeLoadingScreenCompatibilityEntry(output);
+
+  await assertNoNodeBuiltins('loading-screen');
+  console.log('   Verified: no Node built-ins reachable in browser bundle');
 
   console.log('   Loading screen build complete');
 
