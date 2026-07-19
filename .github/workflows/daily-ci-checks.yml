@@ -78,7 +78,7 @@ jobs:
       - name: Install `jsdoc` plugin for `eslint`
         run: npm install eslint-plugin-jsdoc
       - name: Install `eslint` parser for `babel`
-        run: npm install @babel/eslint-parser
+        run: npm install @babel/eslint-parser@7.29.7 # pin to Babel 7; Babel 8 requires eslint@9 or newer
       - name: Setup GitHub Action Summary
         run: |
           echo '' >> docs_output.md
