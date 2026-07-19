@@ -4,6 +4,16 @@ import path from 'path';
 import { gitSpecFromVersion } from './flatn-cjs.js';
 
 const lvInfoFileName = '.lv-npm-helper-info.json';
+const bunInstallMaxAttempts = 2;
+const defaultBunInstallStallTimeoutMs = 120_000;
+const bunInstallTerminationGraceMs = 5_000;
+
+class BunInstallStallError extends Error {
+  constructor (stallTimeoutMs) {
+    super(`bun install produced no output for ${Math.round(stallTimeoutMs / 1000)}s`);
+    this.name = 'BunInstallStallError';
+  }
+}
 
 export function detectBun () {
   if (process.env.BUN_PATH) {
@@ -131,9 +141,27 @@ export async function bunInstall (bunPath, livelyDirs, destDir, projectRoot, ver
 async function runBunInstall (bunPath, bunWorkDir, verbose) {
   console.log('       Running bun install...');
 
+  const configuredStallTimeoutMs = Number(process.env.LIVELY_BUN_INSTALL_STALL_TIMEOUT_MS);
+  const stallTimeoutMs = Number.isFinite(configuredStallTimeoutMs) && configuredStallTimeoutMs > 0
+    ? configuredStallTimeoutMs
+    : defaultBunInstallStallTimeoutMs;
+
+  for (let attempt = 1; attempt <= bunInstallMaxAttempts; attempt++) {
+    try {
+      await runBunInstallAttempt(bunPath, bunWorkDir, verbose, stallTimeoutMs);
+      return;
+    } catch (err) {
+      const canRetry = err instanceof BunInstallStallError && attempt < bunInstallMaxAttempts;
+      if (!canRetry) throw err;
+      console.warn(`   [!] ${err.message}; retrying bun install (attempt ${attempt + 1}/${bunInstallMaxAttempts})...`);
+    }
+  }
+}
+
+async function runBunInstallAttempt (bunPath, bunWorkDir, verbose, stallTimeoutMs) {
   const child = spawn(bunPath, ['install', '--no-progress'], {
     cwd: bunWorkDir,
-    stdio: verbose ? 'inherit' : ['ignore', 'pipe', 'pipe'],
+    stdio: ['ignore', 'pipe', 'pipe'],
     env: { ...process.env }
   });
 
@@ -141,17 +169,33 @@ async function runBunInstall (bunPath, bunWorkDir, verbose) {
   let stderr = '';
   let lastOutputAt = Date.now();
   const startedAt = Date.now();
+  let stalled = false;
+  let stallTimer;
+  let forceKillTimer;
 
-  if (!verbose) {
-    child.stdout?.on('data', chunk => {
-      stdout += chunk.toString();
-      lastOutputAt = Date.now();
-    });
-    child.stderr?.on('data', chunk => {
-      stderr += chunk.toString();
-      lastOutputAt = Date.now();
-    });
-  }
+  const armStallTimer = () => {
+    clearTimeout(stallTimer);
+    stallTimer = setTimeout(() => {
+      stalled = true;
+      child.kill('SIGTERM');
+      forceKillTimer = setTimeout(() => child.kill('SIGKILL'), bunInstallTerminationGraceMs);
+    }, stallTimeoutMs);
+  };
+
+  child.stdout?.on('data', chunk => {
+    if (verbose) process.stdout.write(chunk);
+    else stdout += chunk.toString();
+    lastOutputAt = Date.now();
+    armStallTimer();
+  });
+  child.stderr?.on('data', chunk => {
+    if (verbose) process.stderr.write(chunk);
+    else stderr += chunk.toString();
+    lastOutputAt = Date.now();
+    armStallTimer();
+  });
+
+  armStallTimer();
 
   const heartbeat = !verbose && setInterval(() => {
     const elapsedSec = Math.round((Date.now() - startedAt) / 1000);
@@ -159,12 +203,19 @@ async function runBunInstall (bunPath, bunWorkDir, verbose) {
     console.log(`       bun install still running... ${elapsedSec}s elapsed, ${quietSec}s since last output`);
   }, 10000);
 
-  const result = await new Promise((resolve, reject) => {
-    child.on('error', reject);
-    child.on('close', (code, signal) => resolve({ code, signal }));
-  });
+  let result;
+  try {
+    result = await new Promise((resolve, reject) => {
+      child.on('error', reject);
+      child.on('close', (code, signal) => resolve({ code, signal }));
+    });
+  } finally {
+    if (heartbeat) clearInterval(heartbeat);
+    clearTimeout(stallTimer);
+    clearTimeout(forceKillTimer);
+  }
 
-  if (heartbeat) clearInterval(heartbeat);
+  if (stalled) throw new BunInstallStallError(stallTimeoutMs);
 
   if (result.code !== 0) {
     const output = [stderr.trim(), stdout.trim()].filter(Boolean).join('\n');
