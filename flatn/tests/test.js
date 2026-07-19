@@ -3,6 +3,7 @@ import { expect } from "mocha-es6";
 import { tmpdir } from "./util.js";
 import { join as j } from "path";
 import { execSync, exec } from "child_process";
+import fs from "fs";
 const { resource, createFiles } = lively.resources;
 
 import {
@@ -14,6 +15,7 @@ import {
 } from "flatn/index.js"
 
 import { PackageSpec } from "flatn/package-map.js"
+import { bunInstall } from "flatn/bun-install.js"
 
 
 /*
@@ -114,6 +116,45 @@ describe("flat packages", function() {
   });
 
   describe("installation", () => {
+
+    it("retries a stalled bun install once", async () => {
+      let projectRoot = baseDir.join("bun-retry-project/").path(),
+        packageDir = j(projectRoot, "local-package"),
+        dependenciesDir = j(projectRoot, "dependencies"),
+        fakeBun = j(projectRoot, "fake-bun"),
+        previousStallTimeout = process.env.LIVELY_BUN_INSTALL_STALL_TIMEOUT_MS;
+
+      fs.mkdirSync(j(projectRoot, "lively.installer"), { recursive: true });
+      fs.mkdirSync(packageDir, { recursive: true });
+      fs.writeFileSync(j(projectRoot, "lively.installer", "packages-config.json"), "[]");
+      fs.writeFileSync(j(packageDir, "package.json"), JSON.stringify({
+        name: "local-package",
+        version: "1.0.0",
+        dependencies: {}
+      }));
+      fs.writeFileSync(fakeBun, `#!/bin/sh
+attempt_file="$PWD/.bun-install-attempted"
+if [ ! -f "$attempt_file" ]; then
+  touch "$attempt_file"
+  exec sleep 10
+fi
+exit 0
+`);
+      fs.chmodSync(fakeBun, 0o755);
+
+      process.env.LIVELY_BUN_INSTALL_STALL_TIMEOUT_MS = "500";
+      try {
+        let result = await bunInstall(fakeBun, [packageDir], dependenciesDir, projectRoot);
+        expect(result.newPackages).equals([]);
+        expect(fs.existsSync(j(projectRoot, "tmp", "bun-install-workdir", ".bun-install-attempted"))).equals(true);
+      } finally {
+        if (previousStallTimeout === undefined) {
+          delete process.env.LIVELY_BUN_INSTALL_STALL_TIMEOUT_MS;
+        } else {
+          process.env.LIVELY_BUN_INSTALL_STALL_TIMEOUT_MS = previousStallTimeout;
+        }
+      }
+    });
 
     it("installs a package via npm", async () => {
       let basePath = baseDir.join("package-install-dir").path(),
