@@ -935,6 +935,32 @@ describe('components', () => {
     expect(m.textString).to.eql('hello world');
   });
 
+  it('normalizes text overrides whose nested spec inherits its type', () => {
+    const Base = ComponentDescriptor.for(() => component({
+      name: 'base with nested text',
+      submorphs: [{
+        type: Text,
+        name: 'message',
+        textString: 'inherited text'
+      }]
+    }), {
+      exportedName: 'BaseWithNestedText',
+      moduleId
+    });
+    const Derived = ComponentDescriptor.for(() => component(Base, {
+      name: 'derived with nested text override',
+      submorphs: [{
+        name: 'message',
+        textAndAttributes: ['reconciled text', null]
+      }]
+    }), {
+      exportedName: 'DerivedWithNestedText',
+      moduleId
+    });
+
+    expect(part(Derived).get('message').textString).to.eql('reconciled text');
+  });
+
   it('properly assigns custom generated names in case of a conflict', () => {
     const C = ComponentDescriptor.for(() => component(c6, {
       submorphs: [
@@ -954,6 +980,32 @@ describe('components', () => {
     expect(m.submorphs[1].name).not.to.eql('c1');
     expect(m.submorphs[0].submorphs[0].name).to.eql('c2');
     expect(m.submorphs[0].submorphs[1].name).not.to.eql('c2');
+  });
+
+  it('resolves before references to morphs introduced by later add commands', () => {
+    const Base = ComponentDescriptor.for(() => component({
+      name: 'base with existing morph',
+      submorphs: [{ name: 'existing' }]
+    }), {
+      exportedName: 'Base',
+      moduleId
+    });
+    const Derived = ComponentDescriptor.for(() => component(Base, {
+      name: 'derived with chained additions',
+      submorphs: [
+        add({ name: 'first' }, 'second'),
+        add({ name: 'second' }, 'existing')
+      ]
+    }), {
+      exportedName: 'Derived',
+      moduleId
+    });
+
+    expect(part(Derived).submorphs.map(m => m.name)).to.eql([
+      'first',
+      'second',
+      'existing'
+    ]);
   });
 });
 

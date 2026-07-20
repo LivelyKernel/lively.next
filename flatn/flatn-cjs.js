@@ -9216,7 +9216,8 @@ function print (object, quote = '\"') {
   if (object && Array.isArray(object)) { return '[' + object.map(print) + ']'; }
   if (typeof object !== 'string') { return String(object); }
   let result = String(object);
-  result = result.replace(/\n/g, '\\n\\\n');
+  result = result.replace(/\\/g, '\\\\');
+  result = result.replace(/\n/g, '\\n');
   result = result.replace(/(")/g, '\\$1');
   result = result.replace(/(')/g, '\\$1');
   result = quote + result + quote;

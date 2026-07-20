@@ -165,6 +165,68 @@ describe('changes', function () {
     });
   });
 
+  describe('committed change sets', () => {
+    it('publishes an applied property operation with origin and target context', () => {
+      const target = morph({ fill: Color.red });
+      const commits = [];
+      const listener = (changeSet, context) => commits.push({ changeSet, context });
+      env.changeManager.addCommittedChangeListener(listener);
+
+      target.withMetaDo({ origin: 'direct-manipulation' }, () => target.fill = Color.green);
+      env.changeManager.removeCommittedChangeListener(listener);
+
+      expect(commits).to.have.length(1);
+      expect(commits[0].changeSet.origin).equals('direct-manipulation');
+      expect(commits[0].changeSet.operations).to.have.length(1);
+      expect(commits[0].changeSet.operations[0].property).equals('fill');
+      expect(commits[0].context.resolveMorph(target.id)).equals(target);
+    });
+
+    it('publishes one committed set for a grouped operation-bearing change', () => {
+      const target = morph({ fill: Color.red, opacity: 1 });
+      const commits = [];
+      env.changeManager.addCommittedChangeListener(changeSet => commits.push(changeSet));
+
+      target.groupChangesWhile(new GroupChange(target), () => {
+        target.fill = Color.green;
+        target.opacity = 0.5;
+      });
+
+      expect(commits).to.have.length(1);
+      expect(commits[0].operations).to.have.length(2);
+    });
+
+    it('does not manufacture semantic commits for unsupported method records', () => {
+      const target = morph();
+      const commits = [];
+      env.changeManager.addCommittedChangeListener(changeSet => commits.push(changeSet));
+
+      target.addMethodCallChangeDoing({
+        target,
+        selector: 'unsupportedMutation',
+        args: [],
+        undo: () => {}
+      }, () => {});
+
+      expect(commits).deep.equals([]);
+    });
+
+    it('publishes explicit origins while replaying legacy undo and redo', () => {
+      const target = morph({ fill: Color.red });
+      const origins = [];
+      env.changeManager.addCommittedChangeListener(changeSet => origins.push(changeSet.origin));
+      target.undoStart('recolor');
+      target.withMetaDo({ origin: 'direct-manipulation' }, () => target.fill = Color.green);
+      target.undoStop();
+      origins.length = 0;
+
+      env.undoManager.undo();
+      env.undoManager.redo();
+
+      expect(origins).deep.equals(['undo', 'redo']);
+    });
+  });
+
   describe('animations', () => {
     it('enques a new animation when setting prop animated', () => {
       let m = morph({ extent: pt(10, 20), fill: Color.red });

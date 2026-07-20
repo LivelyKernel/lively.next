@@ -133,17 +133,14 @@ export const interactiveCommands = [
     name: 'change font',
     scrollCursorIntoView: false,
     exec: async function (morph) {
-      morph.withMetaDo({ reconcileChanges: true }, async () => {
-        const fonts = availableFonts().map(font => font.name);
-
-        const res = await $world.listPrompt('choose font', fonts, {
-          requester: morph,
-          preselect: fonts.indexOf(morph.fontFamily),
-          historyId: 'lively.morpic/text-change-font-hist'
-        });
-
-        if (res.status !== 'accepted') return false;
-
+      const fonts = availableFonts().map(font => font.name);
+      const res = await $world.listPrompt('choose font', fonts, {
+        requester: morph,
+        preselect: fonts.indexOf(morph.fontFamily),
+        historyId: 'lively.morpic/text-change-font-hist'
+      });
+      if (res.status !== 'accepted') return false;
+      return morph.withMetaDo({ reconcileChanges: true }, () => {
         morph.fontFamily = res.selected[0];
         return true;
       });
@@ -154,17 +151,17 @@ export const interactiveCommands = [
     name: 'set link of selection',
     scrollCursorIntoView: false,
     exec: async function (morph, args = {}) {
-      let link;
-      morph.withMetaDo({ reconcileChanges: true }, async () => {
-        if (!args.hasOwnProperty('link')) {
-          const sel = morph.selection;
-          const { link: oldLink } = morph.getStyleInRange(sel);
-          link = await morph.world().prompt('Set link', {
-            input: oldLink || 'https://',
-            historyId: 'lively.morphic-rich-text-link-hist'
-          });
-          if (!link) return;
-        }
+      const sel = morph.selection;
+      let link = args.link;
+      if (!args.hasOwnProperty('link')) {
+        const { link: oldLink } = morph.getStyleInRange(sel);
+        link = await morph.world().prompt('Set link', {
+          input: oldLink || 'https://',
+          historyId: 'lively.morphic-rich-text-link-hist'
+        });
+        if (!link) return;
+      }
+      return morph.withMetaDo({ reconcileChanges: true }, () => {
         morph.undoManager.group();
         morph.setStyleInRange({ link: link || undefined }, sel);
         morph.undoManager.group();
@@ -211,7 +208,7 @@ export const interactiveCommands = [
     name: 'reset text style',
     scrollCursorIntoView: false,
     exec: function (morph, args = {}) {
-      morph.withMetaDo({ reconcileChanges: true }, async () => {
+      return morph.withMetaDo({ reconcileChanges: true }, () => {
         morph.undoManager.group();
         const range = !args.onlySelection && morph.selection.isEmpty()
           ? morph.documentRange

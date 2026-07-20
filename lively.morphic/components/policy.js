@@ -12,6 +12,14 @@ const TRANSFORM_PROPS = ['extent', 'position', 'rotation', 'scale', 'lineHeight'
 const TEXT_TYPES = ['text', 'label', Text, Label];
 const expressionSerializer = new ExpressionSerializer();
 
+function isTextType (type) {
+  return withSuperclasses(type).some(candidate => {
+    if (TEXT_TYPES.includes(candidate)) return true;
+    const typeName = candidate?.[Symbol.for('__LivelyClassName__')] || candidate?.name;
+    return typeName === 'Text' || typeName === 'Label';
+  });
+}
+
 export function sanitizeSpec (spec) {
   for (let prop in spec) {
     if (spec[prop]?.isDefaultValue) spec[prop] = spec[prop].value;
@@ -108,6 +116,63 @@ function ensureOrder (originalSubmorphs, adjustedSubmorphs = []) {
   return arr.sortBy(adjustedSubmorphs, (spec) => originalSubmorphs?.indexOf(originalSubmorphs?.find(elem => elem.name === spec.name)));
 }
 
+function orderCommandsForForwardAddReferences (commands) {
+  const additionsByName = new Map();
+  const duplicateNames = new Set();
+  for (const command of commands) {
+    const name = command.COMMAND === 'add' && command.props?.name;
+    if (!name) continue;
+    if (additionsByName.has(name)) {
+      additionsByName.delete(name);
+      duplicateNames.add(name);
+    } else if (!duplicateNames.has(name)) {
+      additionsByName.set(name, command);
+    }
+  }
+
+  const commandIndexes = new Map(commands.map((command, index) => [command, index]));
+  const visitState = new Map();
+  const hasDependencyCycle = (command) => {
+    const state = visitState.get(command);
+    if (state === 'visiting') return true;
+    if (state === 'visited') return false;
+    visitState.set(command, 'visiting');
+    const dependency = additionsByName.get(command.before);
+    if (dependency && hasDependencyCycle(dependency)) return true;
+    visitState.set(command, 'visited');
+    return false;
+  };
+  if ([...additionsByName.values()].some(hasDependencyCycle)) return commands;
+
+  const orderedCommands = [];
+  const waitingForAddition = new Map();
+  const deferredCommands = new Set();
+  const releaseWaitingCommands = (name) => {
+    const waitingCommands = waitingForAddition.get(name) || [];
+    waitingForAddition.delete(name);
+    for (const command of waitingCommands) {
+      deferredCommands.delete(command);
+      orderedCommands.push(command);
+      releaseWaitingCommands(command.props?.name);
+    }
+  };
+
+  for (const command of commands) {
+    const dependency = command.COMMAND === 'add' && additionsByName.get(command.before);
+    if (dependency && commandIndexes.get(dependency) > commandIndexes.get(command)) {
+      const waitingCommands = waitingForAddition.get(command.before) || [];
+      waitingCommands.push(command);
+      waitingForAddition.set(command.before, waitingCommands);
+      deferredCommands.add(command);
+      continue;
+    }
+    orderedCommands.push(command);
+    if (command.COMMAND === 'add') releaseWaitingCommands(command.props?.name);
+  }
+
+  return deferredCommands.size ? commands : orderedCommands;
+}
+
 /**
  * Merges two different specs.
  */
@@ -137,6 +202,7 @@ function mergeInHierarchy (
   }
   // finally we apply the commands
   if (!executeCommands) return;
+  commands = orderCommandsForForwardAddReferences(commands);
   for (let cmd of commands) {
     if (cmd.COMMAND === 'remove' && root.submorphs) {
       const morphToRemove = root.submorphs.find(m => m.name === cmd.target);
@@ -161,7 +227,8 @@ function mergeInHierarchy (
 
     if (cmd.COMMAND === 'add') {
       if (!root.submorphs) root.submorphs = [];
-      const beforeMorph = cmd.before && root.submorphs.find(m => m.name === cmd.before);
+      const beforeMorph = cmd.before && root.submorphs.find(m =>
+        m.name === cmd.before || (m.COMMAND === 'add' && m.props?.name === cmd.before));
       addFn(root, cmd.props, beforeMorph);
     }
   }
@@ -849,7 +916,7 @@ export class StylePolicy {
           parentSpec.viewModel = obj.deepMerge(parentViewModel, localSpec.viewModel);
         }
 
-        const isTextSpec = arr.intersect(TEXT_TYPES, withSuperclasses(parentSpec.type)).length > 0;
+        const isTextSpec = isTextType(parentSpec.type);
 
         // handle text and attribute merging
         if (localSpec.textAndAttributes && parentSpec.textAndAttributes &&
@@ -1244,7 +1311,8 @@ export class StylePolicy {
       parentSpec,
       nextLevelSpec);
 
-    const isTextSpec = arr.intersect(TEXT_TYPES, withSuperclasses(subSpec.type)).length > 0;
+    const specType = subSpec.type || nextLevelSpec.type || parentSpec.type;
+    const isTextSpec = isTextType(specType);
 
     if (isTextSpec) {
       subSpec = handleTextProps({ ...subSpec });
@@ -1770,6 +1838,11 @@ export class PolicyApplicator extends StylePolicy {
     const removedMorphSpec = ownerSpec.submorphs?.find(spec => (spec.props?.name || spec.name) === removedMorph.name);
     if (removedMorphSpec) {
       arr.remove(ownerSpec.submorphs, removedMorphSpec);
+    }
+    for (const subSpec of ownerSpec.submorphs || []) {
+      if (subSpec.COMMAND === 'add' && subSpec.before === removedMorph.name) {
+        subSpec.before = null;
+      }
     }
     if (insertRemoveIfNeeded && !removedMorph.__wasAddedToDerived__) {
       // insert the without call, but only for non propagation changes
