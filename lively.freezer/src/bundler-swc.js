@@ -36,9 +36,10 @@ export class LivelySwcTransform {
 
     // Cache plugin path lookup
     const moduleDir = path.dirname(fileURLToPath(import.meta.url));
-    const prebuiltPath = path.join(moduleDir, '../swc-plugin/lively_swc_plugin.wasm');
-    const cargoPath = path.join(moduleDir, '../swc-plugin/target/wasm32-wasip1/release/lively_swc_plugin.wasm');
-    this._pluginPath = existsSync(cargoPath) ? cargoPath : prebuiltPath;
+    this._pluginPath = path.join(
+      moduleDir,
+      '../swc-plugin/target/wasm32-wasip1/release/lively_swc_plugin.wasm'
+    );
     this._hasPlugin = existsSync(this._pluginPath);
   }
 
