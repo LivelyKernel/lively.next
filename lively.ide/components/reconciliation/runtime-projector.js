@@ -121,7 +121,8 @@ export function projectComponentRuntime ({
           fromRevision: beforeDocument.revision,
           toRevision: reduction.document.revision,
           semanticDeltaKind: semanticDelta.kind,
-          applyWhenAdopting: true
+          applyWhenAdopting: true,
+          acceptAlreadyApplied: true
         }
       }), ...operations]
     : operations;

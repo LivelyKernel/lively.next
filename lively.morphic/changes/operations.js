@@ -178,7 +178,9 @@ export class SetMorphProperty extends MorphicOperation {
           )
         : Object.is
     );
-    if (!valuesEqual(currentValue, this.before, this)) {
+    if (!valuesEqual(currentValue, this.before, this) &&
+        !(this.metadata.acceptAlreadyApplied === true &&
+          valuesEqual(currentValue, this.after, this))) {
       throw new Error(`Precondition failed for ${this.targetId}.${this.property}`);
     }
   }

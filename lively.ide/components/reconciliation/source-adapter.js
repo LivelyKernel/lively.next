@@ -29,6 +29,7 @@ export const ComponentSourceDiagnosticKind = Object.freeze({
   INVALID_ORDERING_REFERENCE: 'invalid-ordering-reference',
   UNRESOLVED_PART_COMPONENT: 'unresolved-part-component',
   UNSUPPORTED_SUBMORPH_STRUCTURE: 'unsupported-submorph-structure',
+  OPAQUE_SUBMORPH_STRUCTURE: 'opaque-submorph-structure',
   DERIVED_STRUCTURE_REQUIRES_PARENT: 'derived-structure-requires-parent',
   UNMODELED_LAYOUT_REFERENCE: 'unmodeled-layout-reference'
 });
@@ -292,6 +293,7 @@ export function parseComponentSource ({
   const orderingLocations = {};
   const layoutModels = [];
   const layoutReferenceLocations = {};
+  const opaqueSubmorphExpressions = {};
 
   const inheritedNode = (node, idFor = candidate => candidate.id, path = []) =>
     new ComponentNode({
@@ -693,10 +695,12 @@ export function parseComponentSource ({
     } else if (submorphsProperty) {
       const submorphsNode = submorphsProperty.value;
       if (submorphsNode.type !== 'ArrayExpression' || submorphsNode.elements.some(node => !node)) {
+        opaqueSubmorphExpressions[nodeId] = rangeOf(submorphsNode);
         diagnostics.push(diagnostic(
-          ComponentSourceDiagnosticKind.UNSUPPORTED_SUBMORPH_STRUCTURE,
-          'submorphs must be a dense array expression',
-          submorphsNode
+          ComponentSourceDiagnosticKind.OPAQUE_SUBMORPH_STRUCTURE,
+          'Dynamic submorphs are opaque; the owning node remains editable but generated descendants are not projectional targets',
+          submorphsNode,
+          { severity: ComponentSourceDiagnosticSeverity.WARNING, ownerId: nodeId }
         ));
       } else if (derived && isRoot && submorphsNode.elements.length) {
         diagnostics.push(diagnostic(
@@ -822,6 +826,7 @@ export function parseComponentSource ({
       suppressionLocations,
       orderingLocations,
       layoutReferenceLocations,
+      opaqueSubmorphExpressions,
       parentDocument,
       resolveComponentDocument,
       importBindings: importBindingsOf(moduleAst),

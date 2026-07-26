@@ -1,4 +1,4 @@
-import { obj } from 'lively.lang';
+import { obj, string } from 'lively.lang';
 import module from 'lively.modules/src/module.js';
 import { ExpressionSerializer } from 'lively.serializer2';
 import { connect } from 'lively.bindings';
@@ -784,18 +784,25 @@ export class ComponentChangeTracker {
         bridgeCommand,
         partComponent,
         materializePartSubtree
-      }) =>
-        serializeRuntimeComponentNode({
+      }) => {
+        const target = context.resolveMorph?.(bridgeCommand.nodeId);
+        return serializeRuntimeComponentNode({
           document,
           parentId,
           index,
-          morph: context.resolveMorph?.(bridgeCommand.nodeId),
+          morph: target,
           partComponent,
           materializePartSubtree,
-          allocateName: candidate =>
-            this.componentDescriptor.ensureNoNameCollisionInDerived?.(candidate, true) ||
-            candidate
-        }),
+          allocateName: candidate => {
+            while (this.trackedComponent.withAllSubmorphsDetect?.(morph =>
+              morph !== target && morph.name === candidate)) {
+              candidate = string.incName(candidate);
+            }
+            return this.componentDescriptor.ensureNoNameCollisionInDerived?.(candidate, true) ||
+              candidate;
+          }
+        });
+      },
       runtimeLayoutFor: spec => this.projectionalRuntimeLayoutFor(spec, context)
     });
   }

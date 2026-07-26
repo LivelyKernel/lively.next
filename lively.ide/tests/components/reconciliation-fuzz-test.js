@@ -46,7 +46,14 @@ function componentStructureSnapshot (component, styleProperties = []) {
       style: Object.fromEntries([...comparedStyleProperties]
         .map(property => [property, snapshotStyleValue(morph[property])])),
       layout: morph.layout
-        ? { type: morph.layout.constructor.name, spacing: morph.layout.spacing }
+        ? {
+            type: morph.layout.constructor.name,
+            spacing: morph.layout.spacing,
+            orderByIndex: morph.layout.orderByIndex,
+            wrapSubmorphs: morph.layout.wrapSubmorphs,
+            resizePolicies: morph.layout.resizePolicies
+              ?.map(([name, policy]) => [name, snapshotStyleValue(policy)])
+          }
         : null,
       viewModel: morph.viewModel ? { label: morph.viewModel.label } : null,
       submorphs

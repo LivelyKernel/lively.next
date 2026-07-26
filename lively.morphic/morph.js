@@ -1336,7 +1336,12 @@ export class Morph {
         return [target, animConfig, meta];
       });
     await Promise.all(animationConfigs.map(([target, animConfig, meta]) => {
-      return target?.withMetaDo(meta, () => target.animate(animConfig));
+      if (!target) return undefined;
+      let animation;
+      target.withMetaDo(meta, () => {
+        animation = target.animate(animConfig);
+      });
+      return animation;
     }));
   }
 

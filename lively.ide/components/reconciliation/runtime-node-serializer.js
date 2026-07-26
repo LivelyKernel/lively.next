@@ -342,6 +342,16 @@ function nodeFromSpec ({
     if (!child) return null;
     children.push(child);
   }
+  if (partProjection || insidePartOverride) {
+    for (let index = 0; index < children.length - 1; index++) {
+      const child = children[index];
+      if (child.provenance.kind !== ComponentNodeProvenanceKind.ADDED ||
+          child.provenance.beforeId || child.provenance.beforeName) continue;
+      children[index] = child.with({
+        provenance: addedNodeProvenance({ beforeId: children[index + 1].id })
+      });
+    }
+  }
   return new ComponentNode({
     id: nodeId,
     name: spec.name,

@@ -164,6 +164,23 @@ describe('morphic change engine characterization', function () {
     expect(actualError.message).equals('withMetaDo callbacks must be synchronous');
   });
 
+  it('starts animations synchronously and awaits them outside their metadata scope', async () => {
+    const target = morph({ fill: Color.red });
+    let animationMeta;
+    target.animate = () => {
+      animationMeta = { ...env.changeManager.defaultMeta };
+      return Promise.resolve(target);
+    };
+
+    await target.withAnimationDo(() => {
+      target.withMetaDo({ origin: 'component-editor' }, () => target.fill = Color.green);
+    }, { duration: 0 });
+
+    expect(animationMeta.origin).equals('component-editor');
+    expect(env.changeManager.defaultMeta).deep.equals({});
+    expect(env.changeManager.metaStack).deep.equals([]);
+  });
+
   it('gives sibling reordering an exact inverse', () => {
     const owner = morph({
       submorphs: [{ name: 'a' }, { name: 'b' }, { name: 'c' }]

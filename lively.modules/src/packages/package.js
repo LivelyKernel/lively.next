@@ -471,6 +471,12 @@ class Package {
     let covered = registry.coversDirectory(url);
 
     this.remove(opts);
+    // Re-registration reads the full package.json again. Do not merge it with
+    // fields from the previous config, since removed mappings and import maps
+    // must actually disappear on reload.
+    this.setConfig({});
+    this.config = {};
+    this.map = {};
     registry.addPackageAt(url, covered || 'devPackageDirs', { [url]: this });
     return this.import();
   }

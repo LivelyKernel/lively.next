@@ -69,6 +69,36 @@ export const Example = component({
     expect(source.slice(fillRange.start, fillRange.end)).equals('Color.red');
   });
 
+  it('keeps owners with generated submorphs projectionally editable', () => {
+    const source = `const Example = component({
+  name: 'example',
+  submorphs: [{
+    name: 'date array',
+    layout: new TilingLayout({ spacing: 2 }),
+    submorphs: arr.range(1, 41).map(i => part(DateDefault, {
+      name: 'day ' + i
+    }))
+  }]
+});`;
+    const parsed = parseSource(source);
+    const dateArray = parsed.document.root.children[0];
+    const opaqueRange = parsed.document.sourceMetadata
+      .opaqueSubmorphExpressions[dateArray.id];
+
+    expect(parsed.supported).to.be.true;
+    expect(dateArray.name).equals('date array');
+    expect(dateArray.children).deep.equals([]);
+    expect(parsed.diagnostics[0]).include({
+      kind: ComponentSourceDiagnosticKind.OPAQUE_SUBMORPH_STRUCTURE,
+      severity: 'warning',
+      ownerId: dateArray.id
+    });
+    expect(source.slice(opaqueRange.start, opaqueRange.end))
+      .equals(`arr.range(1, 41).map(i => part(DateDefault, {
+      name: 'day ' + i
+    }))`);
+  });
+
   it('models static tiling-layout resize policies as stable node references', () => {
     const source = `const Example = component({
   name: 'example',

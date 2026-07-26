@@ -143,6 +143,23 @@ describe('morphic transaction kernel', () => {
     expect(operation.invert().before).equals(after);
   });
 
+  it('accepts an explicitly idempotent property operation at its postcondition', () => {
+    const target = { fill: 'green' };
+    const operation = new SetMorphProperty({
+      targetId: 'target',
+      property: 'fill',
+      before: 'red',
+      after: 'green',
+      metadata: { acceptAlreadyApplied: true }
+    });
+    const context = createContext({ target });
+
+    expect(() => operation.apply(context)).not.to.throw();
+    expect(target.fill).equals('green');
+    target.fill = 'blue';
+    expect(() => operation.apply(context)).to.throw(/Precondition failed/);
+  });
+
   it('supports property-domain snapshot and materialization hooks', () => {
     const before = new Date(1000);
     const after = new Date(2000);

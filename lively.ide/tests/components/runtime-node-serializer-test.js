@@ -215,6 +215,56 @@ describe('projectional runtime node serializer', () => {
     }]);
   });
 
+  it('anchors an unqualified nested add before its following inherited sibling', () => {
+    const componentMeta = {
+      exportedName: 'Button',
+      moduleId: 'local://widgets/button.cp.js',
+      path: []
+    };
+    const addedChild = {
+      name: 'badge',
+      spec: () => ({ name: 'badge', fill: 'red', submorphs: [] })
+    };
+    const inheritedChild = {
+      name: 'label',
+      spec: () => ({ name: 'label', submorphs: [] })
+    };
+    const componentDocument = document();
+    const serialized = serializeRuntimeComponentNode({
+      document: componentDocument,
+      parentId: componentDocument.root.id,
+      index: 0,
+      morph: {
+        master: {
+          _isOverridden: true,
+          parent: { [Symbol.for('lively-module-meta')]: componentMeta },
+          _originalSpec: {
+            name: 'button',
+            submorphs: [{
+              COMMAND: 'add',
+              props: { name: 'badge', fill: 'red', __wasAddedToDerived__: true },
+              before: null
+            }, { name: 'label' }]
+          }
+        },
+        submorphs: [addedChild, inheritedChild],
+        spec: () => ({
+          name: 'button',
+          submorphs: [
+            { name: 'badge', fill: 'red' },
+            { name: 'label' }
+          ]
+        })
+      }
+    });
+
+    expect(serialized.supported).to.be.true;
+    expect(serialized.node.children.map(({ name }) => name))
+      .deep.equals(['badge', 'label']);
+    expect(serialized.node.children[0].provenance.beforeId)
+      .equals(serialized.node.children[1].id);
+  });
+
   it('marks nested policy specs as inherited overrides when the part resolves', () => {
     const partMeta = {
       exportedName: 'Base',

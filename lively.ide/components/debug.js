@@ -33,9 +33,13 @@ export const RECONCILIATION_FUZZ_OPERATIONS = [
   'renameMorph',
   'reorderMorph',
   'setProperties',
+  'batchPropertyAndStructure',
   'resetProperty',
   'changeText',
+  'changeRichText',
+  'updateEmbeddedMorph',
   'changeLayout',
+  'changeLayoutPolicies',
   'changeMaster',
   'addNameCollision',
   'addScopedNameCollision'
@@ -180,6 +184,20 @@ export class ReconciliationFuzzer {
     return this.component.withAllSubmorphsDo(morph => morph);
   }
 
+  isEmbeddedTextMorph (morph) {
+    let current = morph;
+    while (current && current !== this.component) {
+      const owner = current.owner;
+      if (owner?.isText && owner.textAndAttributes?.includes(current)) return true;
+      current = owner;
+    }
+    return false;
+  }
+
+  componentMorphs () {
+    return this.allMorphs().filter(morph => !this.isEmbeddedTextMorph(morph));
+  }
+
   isAttached (aMorph) {
     return aMorph === this.component || this.allMorphs().includes(aMorph);
   }
@@ -201,7 +219,7 @@ export class ReconciliationFuzzer {
   }
 
   randomOwner () {
-    return this.random.pick(this.allMorphs().filter(morph => !morph.isText));
+    return this.random.pick(this.componentMorphs().filter(morph => !morph.isText));
   }
 
   insertionPointFor (owner) {
@@ -312,7 +330,8 @@ export class ReconciliationFuzzer {
   }
 
   removeMorph () {
-    const candidates = this.allMorphs().filter(morph => morph !== this.component && !morph.owner?.isText);
+    const candidates = this.componentMorphs()
+      .filter(morph => morph !== this.component && !morph.owner?.isText);
     const target = this.random.pick(candidates);
     if (!target) return null;
     const path = this.pathOf(target);
@@ -341,7 +360,7 @@ export class ReconciliationFuzzer {
   }
 
   reparentMorphMatching (kind, matchesTarget) {
-    const morphs = this.allMorphs();
+    const morphs = this.componentMorphs();
     const targets = morphs.filter(target =>
       target !== this.component &&
       matchesTarget(target) &&
@@ -388,7 +407,7 @@ export class ReconciliationFuzzer {
   }
 
   renameMorph () {
-    const candidates = this.allMorphs().filter(morph =>
+    const candidates = this.componentMorphs().filter(morph =>
       morph !== this.component && morph.__wasAddedToDerived__
     );
     const target = this.random.pick(candidates);
@@ -401,7 +420,7 @@ export class ReconciliationFuzzer {
   }
 
   reorderMorph () {
-    const owners = this.allMorphs().filter(morph =>
+    const owners = this.componentMorphs().filter(morph =>
       !morph.isText &&
       morph.submorphs.length > 1 &&
       morph.submorphs.some(submorph => submorph.__wasAddedToDerived__ && !submorph.master)
@@ -425,6 +444,11 @@ export class ReconciliationFuzzer {
       case 'fill': return this.random.pick([Color.red, Color.green, Color.blue, Color.orange, Color.transparent]);
       case 'borderWidth': return this.random.integer(0, 20);
       case 'extent': return pt(this.random.integer(20, 200), this.random.integer(20, 200));
+      case 'position': return pt(this.random.integer(-100, 300), this.random.integer(-100, 300));
+      case 'scale': return pt(
+        this.random.integer(2, 21) / 10,
+        this.random.integer(2, 21) / 10
+      );
       case 'opacity': return this.random.integer(1, 11) / 10;
       case 'visible': return this.random.boolean();
       case 'rotation': return this.random.integer(-6, 7) / 4;
@@ -433,14 +457,30 @@ export class ReconciliationFuzzer {
   }
 
   setProperties () {
-    const propertyNames = ['fill', 'borderWidth', 'extent', 'opacity', 'visible', 'rotation', 'tooltip'];
-    const target = this.random.pick(this.allMorphs().filter(morph =>
-      propertyNames.some(property => morph.styleProperties.includes(property))
+    const propertyNames = [
+      'fill',
+      'borderWidth',
+      'extent',
+      'position',
+      'scale',
+      'opacity',
+      'visible',
+      'rotation',
+      'tooltip'
+    ];
+    const propertiesFor = morph => propertyNames.filter(property =>
+      morph.styleProperties.includes(property) &&
+      !(property === 'position' && (
+        morph === this.component ||
+        this.component._changeTracker?.isPositionedByLayout(morph)
+      ))
+    );
+    const target = this.random.pick(this.componentMorphs().filter(morph =>
+      propertiesFor(morph).length > 0
     ));
     if (!target) return null;
-    const selectedProperties = this.random.shuffle(propertyNames.filter(property =>
-      target.styleProperties.includes(property)
-    )).slice(0, this.random.boolean() ? 1 : 2);
+    const selectedProperties = this.random.shuffle(propertiesFor(target))
+      .slice(0, this.random.boolean() ? 1 : 2);
     const changes = selectedProperties.map(property => ({
       property,
       previous: target[property],
@@ -455,6 +495,36 @@ export class ReconciliationFuzzer {
       kind: 'setProperties',
       path,
       changes: changes.map(({ property, value }) => ({ property, value: printableValue(value) }))
+    };
+  }
+
+  batchPropertyAndStructure () {
+    const owner = this.randomOwner();
+    if (!owner) return null;
+    const name = this.nextName('batched child');
+    const addedMorph = morph({
+      name,
+      fill: this.random.pick([Color.cyan, Color.orange, Color.purple]),
+      position: this.valueForProperty('position'),
+      extent: this.valueForProperty('extent')
+    });
+    const property = this.random.pick(['fill', 'opacity', 'rotation']);
+    const previous = owner[property];
+    const value = this.valueForProperty(property);
+    const before = this.insertionPointFor(owner);
+    const ownerPath = this.pathOf(owner);
+    this.reconcile(() => {
+      owner[property] = value;
+      owner.addMorph(addedMorph, before);
+    });
+    this.propertyHistory.push({ target: owner, property, previous, value });
+    return {
+      kind: 'batchPropertyAndStructure',
+      ownerPath,
+      name,
+      before: before?.name || null,
+      property,
+      value: printableValue(value)
     };
   }
 
@@ -476,7 +546,7 @@ export class ReconciliationFuzzer {
   }
 
   changeText () {
-    const target = this.random.pick(this.allMorphs().filter(morph => morph.isText));
+    const target = this.random.pick(this.componentMorphs().filter(morph => morph.isText));
     if (!target) return null;
     const path = this.pathOf(target);
     const text = this.nextName('text');
@@ -484,8 +554,61 @@ export class ReconciliationFuzzer {
     return { kind: 'changeText', path, text };
   }
 
+  changeRichText () {
+    const target = this.random.pick(this.componentMorphs().filter(morph => morph.isText));
+    if (!target) return null;
+    const path = this.pathOf(target);
+    const text = this.nextName('rich text');
+    const embeddedName = this.nextName('embedded');
+    const embeddedMorph = morph({
+      name: embeddedName,
+      fill: this.random.pick([Color.cyan, Color.orange, Color.purple]),
+      extent: pt(this.random.integer(8, 40), this.random.integer(8, 40))
+    });
+    const attributes = {
+      fontWeight: this.random.pick(['bold', 'normal']),
+      textColor: this.random.pick([Color.red, Color.green, Color.blue])
+    };
+    this.reconcile(() => {
+      target.textAndAttributes = [
+        `${text} before `, attributes,
+        embeddedMorph, null,
+        ' after', null
+      ];
+    });
+    return { kind: 'changeRichText', path, text, embeddedName };
+  }
+
+  updateEmbeddedMorph () {
+    const candidates = this.componentMorphs()
+      .filter(morph => morph.isText)
+      .flatMap(textMorph => textMorph.textAndAttributes
+        .filter(value => value?.isMorph)
+        .map(embeddedMorph => ({ textMorph, embeddedMorph })));
+    const candidate = this.random.pick(candidates);
+    if (!candidate) return null;
+    const { textMorph, embeddedMorph } = candidate;
+    const path = this.pathOf(textMorph);
+    const fill = this.random.pick([Color.red, Color.green, Color.blue, Color.orange]);
+    const replacement = morph({
+      ...embeddedMorph.spec(),
+      name: embeddedMorph.name,
+      fill
+    });
+    this.reconcile(() => {
+      textMorph.textAndAttributes = textMorph.textAndAttributes
+        .map(value => value === embeddedMorph ? replacement : value);
+    });
+    return {
+      kind: 'updateEmbeddedMorph',
+      path,
+      name: embeddedMorph.name,
+      fill: printableValue(fill)
+    };
+  }
+
   changeLayout () {
-    const target = this.random.pick(this.allMorphs().filter(morph =>
+    const target = this.random.pick(this.componentMorphs().filter(morph =>
       !morph.isText && morph.styleProperties.includes('layout')
     ));
     if (!target) return null;
@@ -498,8 +621,42 @@ export class ReconciliationFuzzer {
     return { kind: 'changeLayout', path, spacing };
   }
 
+  changeLayoutPolicies () {
+    const target = this.random.pick(this.componentMorphs().filter(morph =>
+      !morph.isText &&
+      morph.styleProperties.includes('layout') &&
+      morph.submorphs.length > 0
+    ));
+    if (!target) return null;
+    const path = this.pathOf(target);
+    const spacing = this.random.integer(0, 20);
+    const resizePolicies = target.submorphs.map(submorph => [
+      submorph.name,
+      {
+        width: this.random.pick(['fixed', 'fill']),
+        height: this.random.pick(['fixed', 'fill'])
+      }
+    ]);
+    const previous = target.layout;
+    const layout = new TilingLayout({
+      spacing,
+      resizePolicies,
+      orderByIndex: this.random.boolean(),
+      wrapSubmorphs: this.random.boolean(),
+      renderViaCSS: false
+    });
+    this.reconcile(() => { target.layout = layout; });
+    this.propertyHistory.push({ target, property: 'layout', previous, value: layout });
+    return {
+      kind: 'changeLayoutPolicies',
+      path,
+      spacing,
+      resizePolicies
+    };
+  }
+
   changeMaster () {
-    const target = this.random.pick(this.allMorphs().filter(morph => morph.master));
+    const target = this.random.pick(this.componentMorphs().filter(morph => morph.master));
     const descriptor = this.random.pick(this.components);
     if (!target || !descriptor) return null;
     const path = this.pathOf(target);

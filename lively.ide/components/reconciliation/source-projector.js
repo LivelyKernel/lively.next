@@ -229,6 +229,7 @@ function removeNodeChange (source, document, nodeId, parentId) {
 function introduceNodeChange (source, document, parentId, nodeSource) {
   const parent = findComponentNode(document, parentId);
   if (!parent) return null;
+  if (document.sourceMetadata.opaqueSubmorphExpressions?.[parentId]) return null;
   const submorphsLocation = document.sourceMetadata
     .propertyLocations?.[parentId]?.submorphs?.value;
   if (!submorphsLocation) {
@@ -366,6 +367,7 @@ function reparentNodeChanges (source, beforeDocument, afterDocument, semanticDel
 function suppressInheritedNodeChange (source, document, semanticDelta) {
   const node = findComponentNode(document, semanticDelta.nodeId);
   const parentId = semanticDelta.parentId;
+  if (document.sourceMetadata.opaqueSubmorphExpressions?.[parentId]) return null;
   const arrayLocation = document.sourceMetadata
     .propertyLocations?.[parentId]?.submorphs?.value;
   const callSource = `without(${JSON.stringify(node?.name)})`;
@@ -438,8 +440,7 @@ function renameLayoutReferenceChanges (document, nodeId, name) {
   const model = findComponentLayoutModel(document, owner.id);
   if (!model) {
     const layoutEntry = owner.properties.layout;
-    return layoutEntry?.kind === ComponentPropertyKind.EXPLICIT_VALUE &&
-      layoutEntry.value === null
+    return layoutEntryCannotReferenceChildren(layoutEntry)
       ? Object.freeze([])
       : null;
   }
@@ -464,8 +465,7 @@ function removeLayoutReferenceChanges (document, nodeId) {
   const model = findComponentLayoutModel(document, owner.id);
   if (!model) {
     const layoutEntry = owner.properties.layout;
-    return layoutEntry?.kind === ComponentPropertyKind.EXPLICIT_VALUE &&
-      layoutEntry.value === null
+    return layoutEntryCannotReferenceChildren(layoutEntry)
       ? Object.freeze([])
       : null;
   }
@@ -484,6 +484,16 @@ function removeLayoutReferenceChanges (document, nodeId) {
     end: next ? next.start : location.end,
     text: ''
   })]);
+}
+
+function layoutEntryCannotReferenceChildren (layoutEntry) {
+  return (
+    layoutEntry?.kind === ComponentPropertyKind.EXPLICIT_VALUE &&
+    layoutEntry.value === null
+  ) || (
+    layoutEntry?.kind === ComponentPropertyKind.OPAQUE_EXPRESSION &&
+    layoutEntry.expression.trim() === 'undefined'
+  );
 }
 
 function applyChange (source, change) {
@@ -585,11 +595,36 @@ function importChangesFor (source, document, requiredBindings, diagnostics) {
 function canonicalSemanticValue (value) {
   if (Array.isArray(value)) return value.map(canonicalSemanticValue);
   if (value && Object.getPrototypeOf(value) === Object.prototype) {
+    if (value.kind === ComponentPropertyKind.OPAQUE_EXPRESSION) {
+      return {
+        kind: value.kind,
+        expression: canonicalOpaqueExpression(value.expression)
+      };
+    }
     return Object.fromEntries(Object.keys(value).sort().map(key =>
       [key, canonicalSemanticValue(value[key])]
     ));
   }
   return value;
+}
+
+function canonicalOpaqueExpression (expression) {
+  try {
+    const expressionNode = parse(`(${expression})`).body[0].expression;
+    const canonicalNode = value => {
+      if (Array.isArray(value)) return value.map(canonicalNode);
+      if (!value || typeof value !== 'object') return value;
+      return Object.fromEntries(Object.keys(value)
+        .filter(key =>
+          !['start', 'end', 'loc'].includes(key) &&
+          !(key === 'raw' && value.type === 'Literal'))
+        .sort()
+        .map(key => [key, canonicalNode(value[key])]));
+    };
+    return canonicalNode(expressionNode);
+  } catch {
+    return expression.trim();
+  }
 }
 
 function semanticNodeSnapshot (node, modeledLayoutOwners) {
@@ -1106,6 +1141,11 @@ export function projectComponentSource ({ source, beforeDocument, reduction }) {
           moduleId: 'lively.morphic/components/core.js',
           imported: 'without',
           local: 'without'
+        }), componentImportBinding({
+          kind: ComponentImportKind.NAMED,
+          moduleId: 'lively.morphic',
+          imported: 'add',
+          local: 'add'
         })];
       }
     } else if (semanticDelta.inheritanceTransition ===

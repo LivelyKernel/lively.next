@@ -2,7 +2,7 @@
 import { expect } from 'mocha-es6';
 import { createFiles, resource } from 'lively.resources';
 import module from 'lively.modules/src/module.js';
-import { Color, pt } from 'lively.graphics';
+import { Color, pt, rect } from 'lively.graphics';
 import { morph } from 'lively.morphic';
 import { parseComponentSource } from '../../components/reconciliation/source-adapter.js';
 
@@ -12,8 +12,8 @@ const initialSource = `
 "format esm";
 import { component, ComponentDescriptor } from 'lively.morphic/components/core.js';
 import { InteractiveComponentDescriptor } from 'lively.ide/components/editor.js';
-import { Color, pt } from 'lively.graphics';
-import { morph, Text } from 'lively.morphic';
+import { Color, pt, rect } from 'lively.graphics';
+import { morph, Text, TilingLayout } from 'lively.morphic';
 
 component.DescriptorClass = InteractiveComponentDescriptor;
 
@@ -35,6 +35,14 @@ const Example = component({
       name: 'nested',
       fill: Color.green
     }]
+  }, {
+    name: 'date array',
+    layout: new TilingLayout({
+      orderByIndex: true,
+      padding: rect(3, 0, 0, 0),
+      spacing: 2
+    }),
+    submorphs: [1, 2].map(i => ({ name: 'day ' + i }))
   }]
 });
 
@@ -164,7 +172,7 @@ describe('projectional component direct manipulation', function () {
 
     expect(nested.owner).equals(editable);
     expect(currentDocument().root.children.map(({ name }) => name))
-      .deep.equals(['label', 'container', 'nested']);
+      .deep.equals(['label', 'container', 'date array', 'nested']);
     expect(currentDocument().root.children[1].children).deep.equals([]);
 
     await undo();
@@ -177,7 +185,7 @@ describe('projectional component direct manipulation', function () {
     expect(editable.submorphs).includes(nested);
     expect(container.submorphs).not.includes(nested);
     expect(currentDocument().root.children.map(({ name }) => name))
-      .deep.equals(['label', 'container', 'nested']);
+      .deep.equals(['label', 'container', 'date array', 'nested']);
   });
 
   it('reconciles rich text with an embedded morph through undo and redo', async () => {
@@ -214,5 +222,76 @@ describe('projectional component direct manipulation', function () {
     expect(label.textAndAttributes.find(value => value?.isMorph)?.name)
       .equals('replacement badge');
     expect(componentModule._source).matches(/name:\s*["']replacement badge["']/);
+  });
+
+  it('renames a nested introduction that collides across component scopes', async () => {
+    const container = editable.get('container');
+    const introduced = morph({
+      name: 'label',
+      fill: Color.orange
+    });
+
+    editable.undoStart('introduce nested component morph');
+    container.withMetaDo({ reconcileChanges: true }, () => {
+      container.addMorph(introduced);
+    });
+    await finishDirectManipulation();
+    editable.undoStop();
+
+    expect(introduced.name).equals('label_1');
+    expect(componentModule._source).matches(/name:\s*["']label_1["']/);
+
+    await undo();
+    expect(componentModule._source).equals(initialSource);
+    expect(introduced.owner).equals(null);
+
+    await redo();
+    expect(introduced.owner).equals(container);
+    expect(introduced.name).equals('label_1');
+    expect(componentModule._source).matches(/name:\s*["']label_1["']/);
+
+    const validationModuleId = `${testDir}project/validation.cp.js`;
+    const validationResource = resource(validationModuleId);
+    const validationModule = module(System, validationModuleId);
+    await validationResource.write(componentModule._source);
+    const { Example: validationDescriptor } = await validationModule.load();
+    const cold = validationDescriptor.derive();
+    expect(cold.get('label').fill).equals(Color.yellow);
+    expect(cold.get('container').get('label_1').fill).equals(Color.orange);
+    await validationModule.unload();
+    await validationResource.remove();
+  });
+
+  it('reconciles changes to a nested tiling layout through undo and redo', async () => {
+    const container = editable.get('date array');
+
+    editable.undoStart('change component tiling layout');
+    container.withMetaDo({ reconcileChanges: true }, () => {
+      container.layout = container.layout.with({
+        spacing: 7,
+        padding: rect(8, 4, 6, 2),
+        wrapSubmorphs: true
+      });
+    });
+    await finishDirectManipulation();
+    editable.undoStop();
+
+    expect(container.layout.spacing).equals(7);
+    expect(container.layout.padding).equals(rect(8, 4, 6, 2));
+    expect(container.layout.wrapSubmorphs).to.be.true;
+    expect(componentModule._source).matches(/spacing:\s*7/);
+    expect(componentModule._source).matches(/padding:\s*rect\(8,\s*4,\s*6,\s*2\)/);
+    expect(componentModule._source).matches(/wrapSubmorphs:\s*true/);
+
+    await undo();
+    expect(componentModule._source).equals(initialSource);
+    expect(container.layout.spacing).equals(2);
+    expect(container.layout.padding).equals(rect(3, 0, 0, 0));
+    expect(container.layout.wrapSubmorphs).to.be.false;
+
+    await redo();
+    expect(container.layout.spacing).equals(7);
+    expect(container.layout.padding).equals(rect(8, 4, 6, 2));
+    expect(container.layout.wrapSubmorphs).to.be.true;
   });
 });

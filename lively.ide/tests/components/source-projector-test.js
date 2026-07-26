@@ -601,6 +601,61 @@ const Example = component({ fill: 'red' });`;
       .equals(document.root.children[0].id);
   });
 
+  it('replaces an owner layout without rewriting its generated submorphs', () => {
+    const source = `const Example = component({
+  name: 'example',
+  submorphs: [{
+    name: 'date array',
+    layout: new TilingLayout({ spacing: 2 }),
+    submorphs: arr.range(1, 41).map(i => part(DateDefault, { name: 'day ' + i }))
+  }]
+});`;
+    const parsedSource = parseComponentSource({
+      source, moduleId, exportName: 'Example', componentId
+    });
+    const document = parsedSource.document;
+    const dateArray = document.root.children[0];
+    const reduction = reduce(document, SetOpaqueProperty, {
+      nodeId: dateArray.id,
+      property: 'layout',
+      expression: 'new TilingLayout({ spacing: 7, wrapSubmorphs: true })'
+    });
+    const projection = projectComponentSource({ source, beforeDocument: document, reduction });
+
+    expect(parsedSource.supported).to.be.true;
+    expect(projection.supported, JSON.stringify(projection.diagnostics)).to.be.true;
+    expect(projection.sourceAfter)
+      .includes('layout: new TilingLayout({ spacing: 7, wrapSubmorphs: true })');
+    expect(projection.sourceAfter)
+      .includes("submorphs: arr.range(1, 41).map(i => part(DateDefault, { name: 'day ' + i }))");
+  });
+
+  it('rejects structural insertion into generated submorphs without changing source', () => {
+    const source = `const Example = component({
+  name: 'example',
+  submorphs: [{
+    name: 'date array',
+    submorphs: makeDates()
+  }]
+});`;
+    const document = parsed(source);
+    const dateArray = document.root.children[0];
+    const introduced = new ComponentNode({
+      id: `${componentId}:generated-introduction`,
+      name: 'introduced',
+      provenance: localNodeProvenance()
+    });
+    const reduction = reduce(document, IntroduceNode, {
+      parentId: dateArray.id,
+      node: introduced,
+      beforeId: null
+    });
+    const projection = projectComponentSource({ source, beforeDocument: document, reduction });
+
+    expect(projection.supported).to.be.false;
+    expect(projection.sourceAfter).equals(source);
+  });
+
   it('rejects rename projection through an unmodeled owner layout', () => {
     const source = `const Example = component({
   name: 'example',
@@ -651,6 +706,41 @@ const Example = component({ fill: 'red' });`;
     });
     expect(removalProjection.supported).to.be.true;
     expect(removalProjection.sourceAfter).includes('layout: null');
+    expect(removalProjection.sourceAfter).not.includes('renamed child');
+  });
+
+  it('treats a literal undefined owner layout as non-reference-bearing', () => {
+    const source = `const Example = component({
+  name: 'example',
+  layout: undefined,
+  submorphs: [{ name: 'child' }]
+});`;
+    const document = parsed(source);
+    const child = document.root.children[0];
+    const renamed = reduce(document, RenameNode, {
+      nodeId: child.id,
+      name: 'renamed child'
+    });
+    const renameProjection = projectComponentSource({
+      source,
+      beforeDocument: document,
+      reduction: renamed
+    });
+
+    expect(renameProjection.supported).to.be.true;
+    expect(renameProjection.sourceAfter).includes('layout: undefined');
+    expect(renameProjection.sourceAfter).includes('name: "renamed child"');
+
+    const removed = reduce(renameProjection.projectedDocument, RemoveNode, {
+      nodeId: child.id
+    });
+    const removalProjection = projectComponentSource({
+      source: renameProjection.sourceAfter,
+      beforeDocument: renameProjection.projectedDocument,
+      reduction: removed
+    });
+    expect(removalProjection.supported).to.be.true;
+    expect(removalProjection.sourceAfter).includes('layout: undefined');
     expect(removalProjection.sourceAfter).not.includes('renamed child');
   });
 
@@ -852,6 +942,7 @@ const Example = component({ fill: 'red' });`;
     expect(reduction.semanticDelta.inheritanceTransition)
       .equals(ComponentMoveInheritanceTransitionKind.MATERIALIZE);
     expect(projection.supported, JSON.stringify(projection.diagnostics)).to.be.true;
+    expect(projection.sourceAfter).includes('import { add } from "lively.morphic";');
     expect(projection.sourceAfter).includes('without("inherited")');
     expect(projection.sourceAfter)
       .includes('add(part(Leaf, { name: "inherited", layout: new TilingLayout({ spacing: 7 }) }))');
@@ -971,6 +1062,39 @@ const Example = component({ fill: 'red' });`;
       projection.projectedDocument,
       reduction.document
     )).to.be.true;
+  });
+
+  it('preserves quoted opaque rich text across an unrelated introduction', () => {
+    const source = `const Example = component({
+  name: 'example',
+  textAndAttributes: [
+    'rich \\'quoted\\' text',
+    { fontWeight: 'normal' },
+    morph({ name: 'embedded "double"', fill: Color.blue }),
+    null
+  ]
+});`;
+    const document = parsed(source);
+    const introduced = new ComponentNode({
+      id: `${componentId}:node:0`,
+      name: 'introduced',
+      provenance: localNodeProvenance()
+    });
+    const reduction = reduce(document, IntroduceNode, {
+      parentId: document.root.id,
+      node: introduced,
+      beforeId: null
+    });
+    const projection = projectComponentSource({
+      source,
+      beforeDocument: document,
+      reduction
+    });
+
+    expect(projection.supported, JSON.stringify(projection.diagnostics)).to.be.true;
+    expect(projection.sourceAfter).includes("'rich \\'quoted\\' text'");
+    expect(projection.sourceAfter).includes("'embedded \"double\"'");
+    expect(projection.sourceAfter).includes('name: "introduced"');
   });
 
   it('projects a typed node introduction with its constructor import', () => {
