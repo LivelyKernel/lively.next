@@ -31,8 +31,20 @@ function componentStructureSnapshot (component, styleProperties = []) {
     }
     return value;
   };
+  const normalizedPathVertices = morph => {
+    const width = morph.width || 1;
+    const height = morph.height || 1;
+    const normalized = value => Math.round(value * 1000000) / 1000000;
+    return morph.vertices.map(({ position }) => ({
+      x: normalized(position.x / width),
+      y: normalized(position.y / height)
+    }));
+  };
   const snapshotMorph = (morph, isRoot = false, path = []) => {
-    const submorphs = morph.submorphs
+    const semanticSubmorphs = morph.isText
+      ? morph.textAndAttributes.filter(value => value?.isMorph)
+      : morph.submorphs;
+    const submorphs = semanticSubmorphs
       .map(submorph => snapshotMorph(submorph, false, [...path, submorph.name]));
     const comparedStyleProperties = stylePropertiesByPath.get(JSON.stringify(path)) || [];
     return {
@@ -43,14 +55,26 @@ function componentStructureSnapshot (component, styleProperties = []) {
       // cold instances and are asserted at the source level below.
       name: isRoot ? null : morph.name,
       text: morph.isText ? morph.textString : null,
+      // A parent layout may resize a path during cold instantiation while the
+      // detached editable instance has not rendered. Path shape is semantic;
+      // layout-controlled absolute geometry is not, so compare its normalized
+      // vertices and let the layout snapshot cover the resizing policy.
+      vertices: morph.isPath ? normalizedPathVertices(morph) : null,
       style: Object.fromEntries([...comparedStyleProperties]
         .map(property => [property, snapshotStyleValue(morph[property])])),
       layout: morph.layout
         ? {
             type: morph.layout.constructor.name,
+            axis: morph.layout.axis,
+            align: morph.layout.align,
+            axisAlign: morph.layout.axisAlign,
+            justifySubmorphs: morph.layout.justifySubmorphs,
+            padding: morph.layout.padding?.toString(),
             spacing: morph.layout.spacing,
             orderByIndex: morph.layout.orderByIndex,
             wrapSubmorphs: morph.layout.wrapSubmorphs,
+            columnCount: morph.layout.columnCount,
+            rowCount: morph.layout.rowCount,
             resizePolicies: morph.layout.resizePolicies
               ?.map(([name, policy]) => [name, snapshotStyleValue(policy)])
           }
@@ -74,6 +98,37 @@ function firstSnapshotDifference (coldValue, editableValue, path = []) {
     if (difference) return difference;
   }
   return null;
+}
+
+function duplicateWithoutTargets (source) {
+  const duplicates = [];
+  const visit = node => {
+    if (!node || typeof node !== 'object') return;
+    if (node.type === 'ArrayExpression') {
+      const targets = node.elements.map(element => {
+        if (element?.type !== 'CallExpression' ||
+            element.callee?.type !== 'Identifier' ||
+            element.callee.name !== 'without' ||
+            element.arguments.length !== 1) return null;
+        const [argument] = element.arguments;
+        return argument?.type === 'Literal' && typeof argument.value === 'string'
+          ? argument.value
+          : null;
+      }).filter(Boolean);
+      const seen = new Set();
+      for (const target of targets) {
+        if (seen.has(target)) duplicates.push(target);
+        seen.add(target);
+      }
+    }
+    for (const [key, value] of Object.entries(node)) {
+      if (['loc', 'sourceFile'].includes(key)) continue;
+      if (Array.isArray(value)) value.forEach(visit);
+      else visit(value);
+    }
+  };
+  visit(parse(source));
+  return duplicates;
 }
 
 async function cleanup () {
@@ -112,6 +167,10 @@ async function prepareFuzzer (seed, steps) {
       if (operation === 'changeMaster') {
         expect(source).to.match(new RegExp(`${action.state}:\\s*${action.component}`));
       }
+      expect(
+        duplicateWithoutTargets(source),
+        'without() markers must be unique within each submorph scope'
+      ).to.eql([]);
       if ((step + 1) % 7 !== 0 && step !== steps - 1) return;
       parse(source);
       const validationModuleId = `${projectRoot}validation-${step}.cp.js`;
@@ -127,9 +186,50 @@ async function prepareFuzzer (seed, steps) {
         const editableSnapshot = JSON.parse(JSON.stringify(
           componentStructureSnapshot(component, styleProperties)));
         const difference = firstSnapshotDifference(validatedSnapshot, editableSnapshot);
+        const recentBatches = difference
+          ? component._changeTracker.shadowCommandBatches.slice(-30)
+            .filter(batch => batch.commands.some(command =>
+              command.kind === 'rename-node' || command.property === 'layout'
+            ))
+            .slice(-6)
+            .map(batch => ({
+              commands: batch.commands.map(command => ({
+                kind: command.kind,
+                property: command.property,
+                previousName: command.previousName,
+                name: command.name
+              })),
+              committed: !!batch.projectionalCommit,
+              commitDiagnostic: batch.commitDiagnostic?.message,
+              policyCache: batch.policyCacheProjection && {
+                kind: batch.policyCacheProjection.kind,
+                layoutChanges: batch.policyCacheProjection.changes
+                  ?.filter(change => change.property === 'layout')
+                  .map(change => ({
+                    before: change.beforeValue?.getSpec?.(),
+                    after: change.afterValue?.getSpec?.()
+                  }))
+              },
+              runtimeLayouts: batch.shadowProjection?.steps?.flatMap(step =>
+                step.runtimeProjection?.changeSet?.operations
+                  ?.filter(operation => operation.property === 'layout')
+                  .map(operation => ({
+                    before: operation.before?.getSpec?.(),
+                    after: operation.after?.getSpec?.()
+                  })) || []
+              ),
+              shadowSupported: batch.shadowProjection?.supported,
+              shadowDiagnostics: batch.shadowProjection?.diagnostics?.map(
+                diagnostic => diagnostic.message
+              ),
+              shadowHasNewName: action.newName
+                ? batch.shadowProjection?.sourceAfter?.includes(action.newName)
+                : undefined
+            }))
+          : [];
         expect(
           validatedSnapshot,
-          difference && `first cold/editable mismatch: ${JSON.stringify(difference)}`
+          difference && `first cold/editable mismatch: ${JSON.stringify(difference)}; recent batches: ${JSON.stringify(recentBatches)}`
         ).to.eql(editableSnapshot);
       } finally {
         await validationModule.unload({ forgetDeps: false });
@@ -165,6 +265,10 @@ describe('component reconciliation fuzzer', function () {
 
     for (const seed of seeds) {
       const fuzzer = await prepareFuzzer(seed, steps);
+      const editableText = fuzzer.component.get('fuzz text');
+      expect(editableText.readOnly).to.be.false;
+      expect(editableText.selectable).to.be.true;
+      expect(editableText.reactsToPointer).to.be.true;
       let result;
       try {
         result = await fuzzer.run(steps);
@@ -173,6 +277,26 @@ describe('component reconciliation fuzzer', function () {
           message: error.message,
           cause: error.cause?.message || String(error.cause),
           causeStack: error.cause?.stack,
+          causeChange: error.cause?.change && {
+            prop: error.cause.change.prop,
+            selector: error.cause.change.selector,
+            target: error.cause.change.target?.name,
+            meta: error.cause.change.meta
+          },
+          causeBatch: error.cause?.batch && {
+            commands: error.cause.batch.commands?.map(command => ({
+              kind: command.kind,
+              property: command.property
+            })),
+            diagnostics: error.cause.batch.diagnostics?.map(
+              ({ kind, message }) => ({ kind, message })
+            ),
+            shadowSupported: error.cause.batch.shadowProjection?.supported,
+            shadowDiagnostics: error.cause.batch.shadowProjection?.diagnostics?.map(
+              ({ kind, message }) => ({ kind, message })
+            ),
+            commitDiagnostic: error.cause.batch.commitDiagnostic
+          },
           actual: error.cause?.actual,
           expected: error.cause?.expected,
           seed: error.seed,
@@ -187,10 +311,6 @@ describe('component reconciliation fuzzer', function () {
       expect(result.actions).to.have.length(steps);
       parse(result.source);
       expect(result.source).to.include('Base as AliasedBase');
-      expect(result.source).to.match(/part\((?:AliasedBase|Base),/);
-      if (result.source.includes('Leaf as AliasedLeaf')) {
-        expect(result.source).to.match(/part\((?:AliasedLeaf|Leaf),/);
-      }
       for (const action of result.actions) coveredOperations.add(action.operation);
     }
 

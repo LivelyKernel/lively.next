@@ -1,5 +1,5 @@
 /* global it, describe, beforeEach, afterEach */
-import { morph, MorphicEnv } from '../index.js';
+import { morph, MorphicEnv, Text } from '../index.js';
 import { GroupChange } from '../changes.js';
 import { expect } from 'mocha-es6';
 import { pt, Color } from 'lively.graphics';
@@ -168,6 +168,7 @@ describe('changes', function () {
   describe('committed change sets', () => {
     it('publishes an applied property operation with origin and target context', () => {
       const target = morph({ fill: Color.red });
+      const owner = morph({ submorphs: [target] });
       const commits = [];
       const listener = (changeSet, context) => commits.push({ changeSet, context });
       env.changeManager.addCommittedChangeListener(listener);
@@ -180,20 +181,25 @@ describe('changes', function () {
       expect(commits[0].changeSet.operations).to.have.length(1);
       expect(commits[0].changeSet.operations[0].property).equals('fill');
       expect(commits[0].context.resolveMorph(target.id)).equals(target);
+      expect(commits[0].context.resolveMorph(owner.id)).equals(owner);
     });
 
     it('publishes one committed set for a grouped operation-bearing change', () => {
       const target = morph({ fill: Color.red, opacity: 1 });
       const commits = [];
-      env.changeManager.addCommittedChangeListener(changeSet => commits.push(changeSet));
+      env.changeManager.addCommittedChangeListener((changeSet, context) =>
+        commits.push({ changeSet, context }));
 
-      target.groupChangesWhile(new GroupChange(target), () => {
+      const group = new GroupChange(target);
+      target.groupChangesWhile(group, () => {
         target.fill = Color.green;
         target.opacity = 0.5;
       });
 
       expect(commits).to.have.length(1);
-      expect(commits[0].operations).to.have.length(2);
+      expect(commits[0].changeSet.operations).to.have.length(2);
+      expect(commits[0].context.legacyChanges).to.have.length(2);
+      expect(commits[0].context.committedChange).equals(group);
     });
 
     it('does not manufacture semantic commits for unsupported method records', () => {
@@ -209,6 +215,44 @@ describe('changes', function () {
       }, () => {});
 
       expect(commits).deep.equals([]);
+    });
+
+    it('normalizes an interactive text range replacement into one property operation', () => {
+      const target = new Text({ readOnly: false, textString: 'initial text' });
+      const commits = [];
+      env.changeManager.addCommittedChangeListener((changeSet, context) =>
+        commits.push({ changeSet, context }));
+
+      target.withMetaDo({ origin: 'interactive-input' }, () => {
+        target.replace({
+          start: { row: 0, column: 8 },
+          end: { row: 0, column: 12 }
+        }, 'value', false, true, true);
+      });
+
+      expect(target.textString).equals('initial value');
+      expect(commits).to.have.length(1);
+      const [operation] = commits[0].changeSet.operations;
+      expect(operation.property).equals('textAndAttributes');
+      expect(operation.before).deep.equals(['initial text', null]);
+      expect(operation.after).deep.equals(['initial value', null]);
+      expect(operation.metadata.textReplacement).equals(true);
+      expect(commits[0].context.resolveMorph(target.id)).equals(target);
+    });
+
+    it('does not double-commit a full textAndAttributes assignment', () => {
+      const target = new Text({ readOnly: false, textString: 'initial text' });
+      const commits = [];
+      env.changeManager.addCommittedChangeListener(changeSet => commits.push(changeSet));
+
+      target.withMetaDo({ origin: 'programmatic-rich-text' }, () => {
+        target.textAndAttributes = ['replacement', { fontWeight: 'bold' }];
+      });
+
+      expect(commits).to.have.length(1);
+      expect(commits[0].operations).to.have.length(1);
+      expect(commits[0].operations[0].property).equals('textAndAttributes');
+      expect(commits[0].operations[0].metadata.textReplacement).not.equals(true);
     });
 
     it('publishes explicit origins while replaying legacy undo and redo', () => {

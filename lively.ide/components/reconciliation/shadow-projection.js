@@ -251,7 +251,12 @@ function componentCommandFor ({
       document,
       parentId: parent.id,
       index: bridgeCommand.index,
-      bridgeCommand
+      bridgeCommand,
+      // A live part can be attached to a component policy whose source update
+      // replaces child identities. Materialize its resolved subtree so the
+      // reduced document describes the same inherited children that reparsing
+      // part(...) will resolve.
+      materializePartSubtree: true
     });
     if (!serialized?.supported) {
       return { serializationFailure: serialized };
@@ -357,6 +362,32 @@ function componentCommandFor ({
           [previousParent.id]: bridgeCommand.previousParentId,
           [destinationParent.id]: bridgeCommand.parentId,
           [materializedNode.id]: bridgeCommand.nodeId
+        })
+      };
+    }
+    const suppressedInheritedNode = destinationParent.children.find(child =>
+      child.provenance.kind === ComponentNodeProvenanceKind.INHERITED &&
+      child.provenance.suppressed &&
+      child.name === node.name
+    );
+    if (suppressedInheritedNode && previousParent.id !== destinationParent.id) {
+      return {
+        command: MoveNode({
+          ...commandSpec,
+          parentId: destinationParent.id,
+          beforeId,
+          runtimeFromIndex: bridgeCommand.previousIndex,
+          runtimeToIndex: bridgeCommand.index,
+          inheritanceTransition: {
+            kind: ComponentMoveInheritanceTransitionKind.RESTORE,
+            inheritedNodeId: suppressedInheritedNode.id
+          }
+        }),
+        bindings: {},
+        runtimeTargetIds: Object.freeze({
+          [previousParent.id]: bridgeCommand.previousParentId,
+          [destinationParent.id]: bridgeCommand.parentId,
+          [suppressedInheritedNode.id]: bridgeCommand.nodeId
         })
       };
     }

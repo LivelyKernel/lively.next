@@ -1,6 +1,7 @@
 import {
   MoveMorph,
   MorphicChangeSet,
+  MorphicValueSemantics,
   SetMorphProperty,
   attachedMorph,
   detachedMorph
@@ -45,6 +46,20 @@ function unsupportedResult (diagnostics) {
     inverseChangeSet: null,
     diagnostics: Object.freeze(diagnostics)
   });
+}
+
+function effectiveLayoutSnapshot (layout) {
+  if (typeof layout?.getSpec !== 'function') return layout;
+  const spec = layout.getSpec();
+  if (!layout.container || !Array.isArray(layout.resizePolicies)) return spec;
+  const resizePolicies = layout.resizePolicies
+    .filter(([, policy]) =>
+      policy.width !== 'fixed' || policy.height !== 'fixed')
+    .map(([name, policy]) => [name, { ...policy }]);
+  const effectiveSpec = { ...spec };
+  if (resizePolicies.length) effectiveSpec.resizePolicies = resizePolicies;
+  else delete effectiveSpec.resizePolicies;
+  return effectiveSpec;
 }
 
 export function projectComponentRuntime ({
@@ -92,11 +107,22 @@ export function projectComponentRuntime ({
   }
   const withLayoutOperation = operation => {
     if (!layoutProjection) return [operation];
+    const snapshotsLayout = typeof layoutProjection.before?.getSpec === 'function' &&
+      typeof layoutProjection.after?.getSpec === 'function' &&
+      typeof layoutProjection.after?.constructor === 'function';
     return [operation, new SetMorphProperty({
       targetId: layoutProjection.ownerId,
       property: 'layout',
       before: layoutProjection.before,
       after: layoutProjection.after,
+      ...(snapshotsLayout
+        ? {
+            valueSemantics: MorphicValueSemantics.SNAPSHOT,
+            snapshotValue: effectiveLayoutSnapshot,
+            materializeValue: spec =>
+              new layoutProjection.after.constructor(spec)
+          }
+        : {}),
       metadata: {
         origin: 'runtime-projection',
         reconcileChanges: false,

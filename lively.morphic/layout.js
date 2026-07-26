@@ -3174,7 +3174,7 @@ export class GridLayout extends Layout {
    * @return { GridLayoutSpec }
    */
   getSpec () {
-    if (!this.container) return this.config;
+    if (!this.container || !this.grid) return this.config;
     const grid = [];
     const rows = [];
     const columns = [];

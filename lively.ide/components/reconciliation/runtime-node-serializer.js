@@ -108,6 +108,7 @@ function runtimePartProjection (morph) {
       !Array.isArray(meta.path) || meta.path.length !== 0) return null;
   return Object.freeze({
     reference: sourceComponentReference(meta.exportedName),
+    policy: partPolicy,
     bindings: Object.freeze({
       [meta.moduleId]: Object.freeze([meta.exportedName]),
       'lively.morphic': Object.freeze(['part'])
@@ -136,7 +137,12 @@ function runtimeMasterDescription (master) {
   };
 }
 
-function runtimePartOverrideSpec (morph, runtimeSpec, materializeInheritedChildren) {
+function runtimePartOverrideSpec (
+  morph,
+  runtimeSpec,
+  materializeInheritedChildren,
+  partPolicy = null
+) {
   const overrideSpec = morph?.master?._originalSpec || morph?.master?.spec;
   if (!overrideSpec || typeof overrideSpec !== 'object' || Array.isArray(overrideSpec)) {
     const partSpec = { ...runtimeSpec };
@@ -152,12 +158,24 @@ function runtimePartOverrideSpec (morph, runtimeSpec, materializeInheritedChildr
       ? localSpec
       : { ...normalized.spec, __projectionalInheritedOverride__: true };
   });
+  const materializedChildren = morph?.submorphs?.length
+    ? morph.submorphs
+    : partPolicy?.spec?.submorphs || [];
   const submorphs = materializeInheritedChildren
-    ? (morph?.submorphs || []).map(child => {
+    ? materializedChildren.map((child, index) => {
+        const childName = child?.name ||
+          normalizedRuntimeSpec(child).spec?.name;
         const localSpec = localSubmorphs.find(spec =>
-          normalizedRuntimeSpec(spec).spec?.name === child?.name);
+          normalizedRuntimeSpec(spec).spec?.name === childName);
         if (!localSpec) {
-          return { name: child?.name, __projectionalInheritedOverride__: true };
+          const policySpec = typeof child?.spec === 'function'
+            ? child.spec()
+            : child && !child.owner && !child.id
+              ? normalizedRuntimeSpec(child).spec
+              : null;
+          return policySpec && childName
+            ? { ...policySpec, name: childName, __projectionalInheritedOverride__: true }
+            : { name: childName || `submorph ${index + 1}`, __projectionalInheritedOverride__: true };
         }
         const normalized = normalizedRuntimeSpec(localSpec);
         return normalized.added
@@ -231,6 +249,71 @@ function availableSiblingName (document, parentId, requestedName, allocateName) 
   return candidate;
 }
 
+function inheritedRuntimeNode (node, ownerId, path = []) {
+  const id = `${ownerId}:inherited:${path.join('.')}`;
+  return new ComponentNode({
+    id,
+    name: node.name,
+    provenance: inheritedNodeProvenance({
+      suppressed: node.provenance.kind === ComponentNodeProvenanceKind.INHERITED &&
+        node.provenance.suppressed,
+      baseName: node.provenance.baseName || node.name
+    }),
+    partComponent: node.partComponent,
+    typeExpression: node.typeExpression,
+    properties: node.properties,
+    children: node.children.map((child, index) =>
+      inheritedRuntimeNode(child, ownerId, [...path, index]))
+  });
+}
+
+function mergeResolvedPartChildren (
+  baseChildren,
+  localChildren,
+  ownerId,
+  cloneBase = true
+) {
+  const children = cloneBase
+    ? baseChildren.map((child, index) =>
+        inheritedRuntimeNode(child, ownerId, [index]))
+    : baseChildren.slice();
+  for (const local of localChildren) {
+    if (local.provenance.kind === ComponentNodeProvenanceKind.ADDED) {
+      const beforeName = local.provenance.beforeName;
+      const index = beforeName
+        ? children.findIndex(child => child.name === beforeName)
+        : children.length;
+      children.splice(index < 0 ? children.length : index, 0, local);
+      continue;
+    }
+    const baseName = local.provenance.baseName || local.name;
+    const index = children.findIndex(child =>
+      child.name === baseName || child.provenance.baseName === baseName);
+    if (index < 0) {
+      children.push(local);
+      continue;
+    }
+    const inherited = children[index];
+    children[index] = inherited.with({
+      name: local.name,
+      provenance: inheritedNodeProvenance({
+        hasLocalOverrides: true,
+        baseName: inherited.provenance.baseName || inherited.name
+      }),
+      partComponent: local.partComponent || inherited.partComponent,
+      typeExpression: local.typeExpression || inherited.typeExpression,
+      properties: { ...inherited.properties, ...local.properties },
+      children: mergeResolvedPartChildren(
+        inherited.children,
+        local.children,
+        inherited.id,
+        false
+      )
+    });
+  }
+  return children;
+}
+
 function nodeFromSpec ({
   spec,
   morph,
@@ -272,7 +355,12 @@ function nodeFromSpec ({
     expression: partProjection.reference.expression
   });
   spec = partProjection
-    ? runtimePartOverrideSpec(morph, spec, materializePartSubtree || !resolvedPart)
+    ? runtimePartOverrideSpec(
+        morph,
+        spec,
+        materializePartSubtree || !resolvedPart,
+        partProjection.policy
+      )
     : spec;
   const submorphs = spec.submorphs === undefined ? [] : spec.submorphs;
   if (!Array.isArray(submorphs)) {
@@ -341,6 +429,13 @@ function nodeFromSpec ({
     });
     if (!child) return null;
     children.push(child);
+  }
+  if (projectsPartReference && resolvedPart && !materializePartSubtree) {
+    children.splice(0, children.length, ...mergeResolvedPartChildren(
+      resolvedPart.root.children,
+      children,
+      nodeId
+    ));
   }
   if (partProjection || insidePartOverride) {
     for (let index = 0; index < children.length - 1; index++) {

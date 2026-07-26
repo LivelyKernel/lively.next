@@ -23,7 +23,7 @@ function leafChangesOf (change) {
     : [change];
 }
 
-function committedChangeContext (changes) {
+function committedChangeContext (changes, committedChange = null) {
   const targets = new Map();
   changes.forEach(change => {
     const candidates = [
@@ -32,10 +32,16 @@ function committedChangeContext (changes) {
       ...(change.owners || []),
       ...(change.args || []).filter(arg => arg?.isMorph)
     ];
-    candidates.forEach(target => target?.id && targets.set(target.id, target));
+    candidates.forEach(target => {
+      while (target) {
+        if (target.id) targets.set(target.id, target);
+        target = target.owner;
+      }
+    });
   });
   return Object.freeze({
     legacyChanges: Object.freeze(changes.slice()),
+    committedChange,
     resolveMorph: id => targets.get(id)
   });
 }
@@ -471,9 +477,26 @@ export class ChangeManager {
 
   informCommittedChangeListeners (change) {
     const legacyChanges = leafChangesOf(change);
-    const operations = legacyChanges
+    const normalizedTextReplacement = change.selector === 'replace' &&
+      change.target?.isText &&
+      change.meta?.partOfTextAndAttributesAssignment !== true &&
+      Array.isArray(change.meta?.prevTextAndAttributes);
+    let operations = legacyChanges
       .map(legacyChange => legacyChange.operation)
       .filter(Boolean);
+    if (normalizedTextReplacement) {
+      operations = [new SetMorphProperty({
+        targetId: change.target.id,
+        property: 'textAndAttributes',
+        before: change.meta.prevTextAndAttributes,
+        after: change.target.textAndAttributes,
+        metadata: {
+          ...change.meta,
+          acceptAlreadyApplied: true,
+          textReplacement: true
+        }
+      })];
+    }
     if (!operations.length) return null;
     const meta = { ...(change.meta || operations[0].metadata) };
     const changeSet = new MorphicChangeSet({
@@ -484,7 +507,12 @@ export class ChangeManager {
       operations,
       metadata: meta
     });
-    const context = committedChangeContext(legacyChanges);
+    const context = committedChangeContext(
+      normalizedTextReplacement
+        ? [change]
+        : legacyChanges,
+      change
+    );
     this.committedChangeListeners.slice().forEach(listener => listener(changeSet, context));
     return changeSet;
   }

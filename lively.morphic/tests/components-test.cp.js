@@ -5,7 +5,7 @@ import { Color, pt } from 'lively.graphics';
 import { tree, grid } from 'lively.lang';
 import { serialize } from 'lively.serializer2';
 import { ComponentDescriptor, TilingLayout, Text, Morph, morph } from 'lively.morphic';
-import { component, ViewModel, without, part, add } from '../components/core.js';
+import { component, ViewModel, without, part, add, replace } from '../components/core.js';
 import { StylePolicy, sanitizeSpec, BreakpointStore, PolicyApplicator } from '../components/policy.js';
 import { getDefaultValuesFor } from '../helpers.js';
 
@@ -1006,6 +1006,38 @@ describe('components', () => {
       'second',
       'existing'
     ]);
+  });
+
+  it('allows replacement commands to rename their target', () => {
+    const Base = ComponentDescriptor.for(() => component({
+      name: 'base with replaceable morph',
+      submorphs: [
+        { type: Text, name: 'before', textString: 'text' },
+        { name: 'existing' }
+      ]
+    }), {
+      exportedName: 'ReplaceBase',
+      moduleId
+    });
+    const Derived = ComponentDescriptor.for(() => component(Base, {
+      name: 'derived with renamed replacement',
+      submorphs: [
+        replace('before', { name: 'after' }),
+        add({ name: 'inserted' }, 'after')
+      ]
+    }), {
+      exportedName: 'ReplaceDerived',
+      moduleId
+    });
+    const instance = part(Derived);
+
+    expect(instance.submorphs.map(m => m.name)).to.eql([
+      'inserted',
+      'after',
+      'existing'
+    ]);
+    expect(instance.get('after')).to.be.instanceof(Text);
+    expect(instance.get('after').textString).equals('text');
   });
 });
 

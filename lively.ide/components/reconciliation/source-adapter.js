@@ -3,6 +3,7 @@ import {
   ComponentDocument,
   ComponentNode,
   ComponentNodeProvenanceKind,
+  ComponentPropertyKind,
   addedNodeProvenance,
   explicitProperty,
   inheritedNodeProvenance,
@@ -123,6 +124,36 @@ function staticValue (node) {
     return { known: true, value: Object.fromEntries(entries) };
   }
   return { known: false };
+}
+
+export function layoutPropertyCannotReferenceChildren (layoutEntry) {
+  if (layoutEntry?.kind === ComponentPropertyKind.EXPLICIT_VALUE) {
+    return layoutEntry.value === null;
+  }
+  if (layoutEntry?.kind !== ComponentPropertyKind.OPAQUE_EXPRESSION) return false;
+  const expression = layoutEntry.expression.trim();
+  if (expression === 'undefined') return true;
+  let node;
+  try {
+    node = parse(`(${expression})`).body[0].expression;
+  } catch {
+    return false;
+  }
+  if (node?.type !== 'NewExpression' ||
+      node.callee?.type !== 'Identifier' ||
+      node.callee.name !== 'ConstraintLayout') return false;
+  if (node.arguments.length === 0) return true;
+  if (node.arguments.length !== 1 ||
+      node.arguments[0]?.type !== 'ObjectExpression') return false;
+  const settings = node.arguments[0].properties.filter(property =>
+    property.type === 'Property' &&
+    property.kind === 'init' &&
+    !property.method &&
+    propertyName(property) === 'submorphSettings');
+  if (settings.length === 0) return true;
+  return settings.length === 1 &&
+    settings[0].value?.type === 'ArrayExpression' &&
+    settings[0].value.elements.length === 0;
 }
 
 function importBindingsOf (moduleAst) {
@@ -289,6 +320,7 @@ export function parseComponentSource ({
   const propertyLocations = {};
   const originalExpressions = {};
   const suppressionLocations = {};
+  const suppressionLocationLists = {};
   const orderingNames = {};
   const orderingLocations = {};
   const layoutModels = [];
@@ -444,7 +476,9 @@ export function parseComponentSource ({
             suppressed: true
           })
         });
-        suppressionLocations[target.id] = rangeOf(element);
+        const suppressionLocation = rangeOf(element);
+        suppressionLocations[target.id] = suppressionLocation;
+        (suppressionLocationLists[target.id] ||= []).push(suppressionLocation);
         continue;
       }
 
@@ -824,6 +858,7 @@ export function parseComponentSource ({
       propertyLocations,
       originalExpressions,
       suppressionLocations,
+      suppressionLocationLists,
       orderingLocations,
       layoutReferenceLocations,
       opaqueSubmorphExpressions,

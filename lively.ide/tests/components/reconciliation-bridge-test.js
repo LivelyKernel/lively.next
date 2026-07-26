@@ -30,9 +30,13 @@ import {
   addedNodeProvenance,
   inheritedNodeProvenance,
   localNodeProvenance,
+  opaqueProperty,
   sourceComponentReference,
   tilingLayoutModel
 } from '../../components/reconciliation/component-document.js';
+import {
+  ComponentMoveInheritanceTransitionKind
+} from '../../components/reconciliation/commands.js';
 import { prepareShadowScalarProjection } from '../../components/reconciliation/shadow-projection.js';
 
 function changeSet (operationOrOperations, origin = 'direct-manipulation') {
@@ -272,6 +276,71 @@ const Example = component(Parent, {
       .provenance.baseName).equals('base child');
   });
 
+  it('consolidates a materialized node when it returns to its suppressed inherited slot', () => {
+    const moduleId = 'local://materialized-restoration/component.cp.js';
+    const componentId = `${moduleId}#Example`;
+    const parentDocument = new ComponentDocument({
+      componentId: 'parent',
+      moduleId: 'local://materialized-restoration/parent.cp.js',
+      exportName: 'Parent',
+      root: new ComponentNode({
+        id: 'parent-root',
+        name: 'parent',
+        provenance: localNodeProvenance(),
+        children: [new ComponentNode({
+          id: 'parent-container',
+          name: 'container',
+          provenance: localNodeProvenance(),
+          children: [new ComponentNode({
+            id: 'parent-child',
+            name: 'child',
+            provenance: localNodeProvenance()
+          })]
+        })]
+      })
+    });
+    const source = `import { add, without } from 'lively.morphic';
+const Example = component(Parent, {
+  name: 'example',
+  submorphs: [{
+    name: 'container',
+    submorphs: [{ name: 'child', borderWidth: 2 }, without('child')]
+  }, add({ name: 'child', borderWidth: 2, opacity: 0.4 })]
+});`;
+    const projection = prepareShadowScalarProjection({
+      source,
+      moduleId,
+      exportName: 'Example',
+      componentId,
+      parentDocument,
+      bridgeCommands: [{
+        kind: ComponentBridgeCommandKind.MOVE_NODE,
+        componentId,
+        nodeId: 'runtime-child',
+        previousParentId: 'runtime-root',
+        previousIndex: 1,
+        parentId: 'runtime-container',
+        index: 0
+      }],
+      resolveNodeId: document => document.root.children.find(
+        child => child.name === 'child'
+      ).id,
+      resolveDestinationParentId: document => document.root.children.find(
+        child => child.name === 'container'
+      ).id,
+      runtimeOrderingNameFor: () => null
+    });
+
+    expect(projection.supported, JSON.stringify(projection.diagnostics)).to.be.true;
+    expect(projection.steps[0].componentCommand.inheritanceTransition.kind)
+      .equals(ComponentMoveInheritanceTransitionKind.RESTORE);
+    expect(projection.sourceAfter).not.includes('without(');
+    expect(projection.sourceAfter).not.includes('add(');
+    expect(projection.sourceAfter).includes('opacity: 0.4');
+    expect(projection.document.root.children).to.have.length(1);
+    expect(projection.document.root.children[0].children).to.have.length(1);
+  });
+
   it('maps property and rename operations into shadow component commands', () => {
     const { adapter, context } = adapterFor('target');
     const property = adapter.adapt(changeSet(new SetMorphProperty({
@@ -443,6 +512,79 @@ const Example = component(Parent, {
       value: { x: 40, y: 40 },
       meta: { reconcileChanges: true }
     })).to.be.false;
+  });
+
+  it('suppresses geometry derived inside a grouped layout gesture', () => {
+    const tracker = Object.create(ComponentChangeTracker.prototype);
+    const layoutOperation = new SetMorphProperty({
+      targetId: 'owner',
+      property: 'layout',
+      before: null,
+      after: {}
+    });
+    const extentOperation = new SetMorphProperty({
+      targetId: 'child',
+      property: 'extent',
+      before: { x: 10, y: 10 },
+      after: { x: 20, y: 20 }
+    });
+    const layoutChange = { prop: 'layout', operation: layoutOperation };
+    const extentChange = { prop: 'extent', operation: extentOperation };
+    const context = {
+      committedChange: { changes: [layoutChange, extentChange] },
+      legacyChanges: [layoutChange, extentChange],
+      resolveMorph: () => ({ id: 'child' })
+    };
+
+    expect(tracker.ignoreCommittedTextOperation(extentOperation, context)).to.be.true;
+    expect(tracker.ignoreCommittedTextOperation(layoutOperation, context)).to.be.false;
+    expect(tracker.projectionalLegacyChangeCount(context)).equals(1);
+  });
+
+  it('does not turn runtime projection writes into local policy overrides', () => {
+    const tracker = Object.create(ComponentChangeTracker.prototype);
+    let writeMeta;
+    const target = {
+      id: 'target',
+      fill: 'red',
+      withMetaDo (meta, callback) {
+        writeMeta = meta;
+        return callback();
+      }
+    };
+    const runtime = tracker.runtimeProjectionContext({
+      resolveMorph: id => id === target.id ? target : null
+    });
+
+    runtime.setMorphProperty(target, 'fill', 'green');
+
+    expect(target.fill).equals('green');
+    expect(writeMeta).containSubset({
+      origin: 'runtime-projection',
+      reconcileChanges: false,
+      doNotOverride: true
+    });
+  });
+
+  it('accepts value-equivalent runtime state after a source refresh', () => {
+    class Value {
+      constructor (number) { this.number = number; }
+      equals (other) { return other?.number === this.number; }
+    }
+    const target = { id: 'target', origin: new Value(3) };
+    const tracker = Object.create(ComponentChangeTracker.prototype);
+    const runtime = tracker.runtimeProjectionContext({
+      resolveMorph: id => id === target.id ? target : null
+    });
+
+    new SetMorphProperty({
+      targetId: target.id,
+      property: 'origin',
+      before: new Value(3),
+      after: new Value(4)
+    }).apply(runtime);
+
+    expect(target.origin.number).equals(4);
   });
 
   it('lets the component tracker retain bounded shadow batches without reconciling them', () => {
@@ -1025,6 +1167,7 @@ const Example = component(Parent, {
     };
     const child = { id: 'runtime-child', name: 'after', owner: root };
     root.submorphs = [child];
+    let refreshCount = 0;
     const tracker = Object.create(ComponentChangeTracker.prototype);
     tracker.trackedComponent = root;
     tracker.componentModuleId = 'local://layout-rename-cutover/component.cp.js';
@@ -1034,9 +1177,18 @@ const Example = component(Parent, {
     };
     tracker.componentDescriptor = {
       componentName: 'Example',
-      stylePolicy: { _dependants: new Set() },
+      stylePolicy: {
+        spec: {
+          name: 'root',
+          layout: new LayoutState([
+            ['before', { height: 'fixed', width: 'fill' }]
+          ]),
+          submorphs: []
+        },
+        _dependants: new Set()
+      },
       makeDirty: () => {},
-      refreshDependants: () => {}
+      refreshDependants: () => { refreshCount++; }
     };
     tracker.committedChangeAdapter = new MorphicChangeSetAdapter({
       componentId: 'local://layout-rename-cutover/component.cp.js::Example',
@@ -1056,16 +1208,30 @@ const Example = component(Parent, {
     expect(tracker.lastShadowCommandBatch).not.haveOwnProperty('renameDiagnostic');
     expect(tracker.componentModule._source).includes('["after",');
     expect(root.layout.config.resizePolicies[0][0]).equals('after');
+    expect(tracker.componentDescriptor.stylePolicy.spec.layout
+      .config.resizePolicies[0][0]).equals('after');
+    expect(tracker.componentDescriptor.stylePolicy.spec.submorphs)
+      .deep.equals([{ name: 'after' }]);
+    expect(refreshCount).equals(0);
 
     root.env.undoManager.undo();
     expect(tracker.componentModule._source).equals(source);
     expect(child.name).equals('before');
     expect(root.layout.config.resizePolicies[0][0]).equals('before');
+    expect(tracker.componentDescriptor.stylePolicy.spec.layout
+      .config.resizePolicies[0][0]).equals('before');
+    expect(tracker.componentDescriptor.stylePolicy.spec.submorphs).deep.equals([]);
+    expect(refreshCount).equals(0);
 
     root.env.undoManager.redo();
     expect(tracker.componentModule._source).includes('["after",');
     expect(child.name).equals('after');
     expect(root.layout.config.resizePolicies[0][0]).equals('after');
+    expect(tracker.componentDescriptor.stylePolicy.spec.layout
+      .config.resizePolicies[0][0]).equals('after');
+    expect(tracker.componentDescriptor.stylePolicy.spec.submorphs)
+      .deep.equals([{ name: 'after' }]);
+    expect(refreshCount).equals(0);
   });
 
   it('repairs an unresolved materialized policy path transactionally during rename', () => {
@@ -1379,6 +1545,46 @@ const Example = component(Parent, {
         expressionTemplate: 'new TilingLayout({ spacing: 2 })',
         references: []
       })]
+    });
+    const tracker = Object.create(ComponentChangeTracker.prototype);
+    const batch = {
+      commands: [{ kind: ComponentBridgeCommandKind.RENAME_NODE, nodeId: target.id }],
+      shadowProjection: {
+        supported: true,
+        beforeDocument,
+        steps: [{
+          componentCommand: { nodeId: 'child' },
+          runtimeProjection: { changeSet: { operations: [] } }
+        }]
+      }
+    };
+
+    expect(tracker.projectionalRenameDiagnostic(batch, {
+      resolveMorph: () => target
+    })).equals(null);
+  });
+
+  it('allows a rename under a non-referencing constraint layout', () => {
+    const target = { id: 'runtime-child', owner: { layout: {} } };
+    const beforeDocument = new ComponentDocument({
+      componentId: 'component',
+      moduleId: 'local://constraint-layout-rename/component.cp.js',
+      exportName: 'Example',
+      root: new ComponentNode({
+        id: 'root',
+        name: 'root',
+        provenance: localNodeProvenance(),
+        properties: {
+          layout: opaqueProperty(
+            'new ConstraintLayout({ submorphSettings: [] })'
+          )
+        },
+        children: [new ComponentNode({
+          id: 'child',
+          name: 'before',
+          provenance: localNodeProvenance()
+        })]
+      })
     });
     const tracker = Object.create(ComponentChangeTracker.prototype);
     const batch = {

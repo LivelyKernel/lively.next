@@ -381,6 +381,54 @@ describe('projectional component semantic core', () => {
     expect(restored.document.root).deep.equals(original.root);
   });
 
+  it('consolidates edits made while an inherited node was materialized', () => {
+    const inherited = node('inherited', [], {
+      provenance: inheritedNodeProvenance({ hasLocalOverrides: true }),
+      properties: { borderWidth: explicitProperty(2) }
+    });
+    const original = documentWith([
+      node('part', [inherited], {
+        partComponent: sourceComponentReference('Card')
+      }),
+      node('destination')
+    ]);
+    const materialized = node('materialized', [], {
+      name: 'inherited',
+      provenance: addedNodeProvenance(),
+      properties: {
+        borderWidth: explicitProperty(2),
+        opacity: explicitProperty(0.4)
+      }
+    });
+    const moved = reduceComponent(original, MoveNode({
+      ...commandSpec(original, inherited.id),
+      parentId: 'destination',
+      beforeId: null,
+      inheritanceTransition: {
+        kind: ComponentMoveInheritanceTransitionKind.MATERIALIZE,
+        node: materialized
+      }
+    }));
+    const restored = reduceComponent(moved.document, MoveNode({
+      ...commandSpec(moved.document, materialized.id),
+      parentId: 'part',
+      beforeId: null,
+      inheritanceTransition: {
+        kind: ComponentMoveInheritanceTransitionKind.RESTORE,
+        inheritedNodeId: inherited.id
+      }
+    }));
+
+    expect(findComponentNode(restored.document, materialized.id)).equals(null);
+    expect(findComponentNode(restored.document, inherited.id).properties)
+      .deep.equals(materialized.properties);
+    expect(restored.semanticDelta).containSubset({
+      inheritanceTransition: ComponentMoveInheritanceTransitionKind.RESTORE,
+      consolidated: true,
+      consolidatedNodeId: inherited.id
+    });
+  });
+
   it('tracks runtime structural indices separately from suppressed semantic children', () => {
     const original = documentWith([
       node('hidden', [], {

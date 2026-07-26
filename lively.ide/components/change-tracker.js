@@ -5,7 +5,8 @@ import { connect } from 'lively.bindings';
 import { morph } from 'lively.morphic';
 import {
   MorphicAttachmentKind,
-  MorphicOperationKind
+  MorphicOperationKind,
+  MorphicValueSemantics
 } from 'lively.morphic/changes/index.js';
 import { CompositeEditTransaction } from 'lively.morphic/undo.js';
 import { getTextAttributesExpr, getValueExpr } from './helpers.js';
@@ -15,7 +16,10 @@ import {
   SetProperty
 } from './reconciliation/commands.js';
 import { componentImportBindingsFromExpression } from './reconciliation/import-bindings.js';
-import { parseComponentSource } from './reconciliation/source-adapter.js';
+import {
+  layoutPropertyCannotReferenceChildren,
+  parseComponentSource
+} from './reconciliation/source-adapter.js';
 import { serializeRuntimeComponentNode } from './reconciliation/runtime-node-serializer.js';
 import {
   ComponentDocument,
@@ -170,7 +174,8 @@ export class ProjectionalReconciliationUnsupportedError extends Error {
     const diagnostics = [
       ...(batch?.diagnostics || []),
       ...(batch?.shadowProjection?.diagnostics || []),
-      batch?.renameDiagnostic
+      batch?.renameDiagnostic,
+      batch?.commitDiagnostic
     ].filter(Boolean);
     const reason = diagnostics.map(({ message, kind }) => message || kind).join('; ') ||
       'No projectional command committed the change';
@@ -265,6 +270,17 @@ export class ComponentChangeTracker {
   ignoreCommittedTextOperation (operation, context) {
     const target = context.resolveMorph?.(operation.targetId);
     if (operation.kind === MorphicOperationKind.SET_MORPH_PROPERTY) {
+      const isGroupedLayoutGeometry =
+        ['extent', 'position'].includes(operation.property) &&
+        context.committedChange?.changes?.length &&
+        context.legacyChanges?.some(change => change.prop === 'layout');
+      // Layout application records the geometry it derives as ordinary
+      // property changes. The layout assignment itself is the semantic source
+      // edit; projecting these side effects as well makes grouped gestures
+      // order-dependent and creates stale preconditions.
+      if (operation.property !== 'layout' &&
+          (operation.metadata?.isLayoutAction ||
+           isGroupedLayoutGeometry)) return true;
       // TextMorph derives these implementation properties while installing
       // rich content. The semantic textAndAttributes operation owns the source
       // projection; explicit command callers can still set needsDocument.
@@ -316,6 +332,9 @@ export class ComponentChangeTracker {
     if (projectionalCommit) {
       batch = Object.freeze({ ...batch, projectionalCommit });
     } else {
+      const commitDiagnostic = renameDiagnostic ||
+        this.projectionalCommitRejectionDiagnostic(batch, context);
+      if (commitDiagnostic) batch = Object.freeze({ ...batch, commitDiagnostic });
       // No unsupported projection becomes authoritative. Reparse on the next
       // attempt instead of retaining a document this batch did not commit.
       this._projectionalDocument = null;
@@ -323,6 +342,14 @@ export class ComponentChangeTracker {
     }
     this.shadowCommandBatches = (this.shadowCommandBatches || []).concat(batch).slice(-100);
     this.lastShadowCommandBatch = batch;
+    this._projectionalBatchesByLegacyChange ||= new WeakMap();
+    const batchChanges = [
+      ...(context.legacyChanges || []),
+      context.committedChange
+    ].filter(Boolean);
+    for (const legacyChange of batchChanges) {
+      this._projectionalBatchesByLegacyChange.set(legacyChange, batch);
+    }
     this.scheduleShadowProjectionComparison(batch);
     this.onShadowComponentCommands?.(batch);
     return Object.freeze({
@@ -332,18 +359,73 @@ export class ComponentChangeTracker {
     });
   }
 
+  projectionalCommitRejectionDiagnostic (batch, context) {
+    if (batch.diagnostics.length) return null;
+    const allowedKinds = [
+      ComponentBridgeCommandKind.SET_PROPERTY,
+      ComponentBridgeCommandKind.SET_MASTER,
+      ComponentBridgeCommandKind.EDIT_TEXT,
+      ComponentBridgeCommandKind.RENAME_NODE,
+      ComponentBridgeCommandKind.INTRODUCE_NODE,
+      ComponentBridgeCommandKind.REMOVE_NODE,
+      ComponentBridgeCommandKind.MOVE_NODE
+    ];
+    const isMultiScalarBatch = batch.commands.length > 1 &&
+      batch.commands.every(command => [
+        ComponentBridgeCommandKind.SET_PROPERTY,
+        ComponentBridgeCommandKind.SET_MASTER,
+        ComponentBridgeCommandKind.EDIT_TEXT,
+        ComponentBridgeCommandKind.RENAME_NODE
+      ].includes(command.kind)) &&
+      !(this.componentDescriptor?.stylePolicy?._dependants?.size > 0) &&
+      !batch.derivedPropagation &&
+      !batch.policyCacheProjection;
+    if (!isMultiScalarBatch &&
+        (batch.commands.length !== 1 ||
+         !allowedKinds.includes(batch.commands[0]?.kind))) {
+      return Object.freeze({
+        kind: ProjectionalCommandDiagnosticKind.PLANNING_FAILED,
+        message: `The committed change produced ${batch.commands.length} projectional commands`
+      });
+    }
+    const projectionalLegacyChangeCount =
+      this.projectionalLegacyChangeCount(context);
+    if (projectionalLegacyChangeCount !== batch.commands.length) {
+      return Object.freeze({
+        kind: ProjectionalCommandDiagnosticKind.PLANNING_FAILED,
+        message: `The committed change contains ${projectionalLegacyChangeCount} projectional legacy changes for ${batch.commands.length} projectional commands`
+      });
+    }
+    const ownedLegacyChanges = this.projectionallyOwnedLegacyChanges(batch, context);
+    if (!this.canRecordProjectionalEdit(ownedLegacyChanges)) {
+      return Object.freeze({
+        kind: ProjectionalCommandDiagnosticKind.UNDO_UNAVAILABLE,
+        message: 'The projectional edit cannot safely replace the active Morphic undo records'
+      });
+    }
+    if (!batch.shadowProjection?.supported) return null;
+    return Object.freeze({
+      kind: ProjectionalCommandDiagnosticKind.PLANNING_FAILED,
+      message: 'The projectional batch passed preflight but did not commit'
+    });
+  }
+
   projectionallyOwnedLegacyChanges (batch, context) {
     const legacyChanges = context.legacyChanges || [];
+    const committedChanges = context.committedChange &&
+      !legacyChanges.includes(context.committedChange)
+      ? [...legacyChanges, context.committedChange]
+      : legacyChanges;
     const command = batch.commands[0];
     if (batch.commands.length !== 1 ||
         command?.kind !== ComponentBridgeCommandKind.EDIT_TEXT) {
-      return legacyChanges;
+      return committedChanges;
     }
 
     const undoManager = this.trackedComponent?.env?.undoManager;
     const recorded = undoManager?.undoInProgress?.recorder?.changes;
     const target = context.resolveMorph?.(command.sourceOperation.targetId);
-    if (!Array.isArray(recorded) || !target) return legacyChanges;
+    if (!Array.isArray(recorded) || !target) return committedChanges;
 
     // Document-backed TextMorphs implement a textAndAttributes assignment via
     // replace(). The change engine records both the semantic property change
@@ -354,15 +436,22 @@ export class ComponentChangeTracker {
       change.target === target &&
       change.selector === 'replace' &&
       obj.equals(change.meta?.prevTextAndAttributes, command.previousValue));
-    if (!replacementWrappers.length) return legacyChanges;
+    if (!replacementWrappers.length) return committedChanges;
 
-    const owned = new Set(legacyChanges);
+    const owned = new Set(committedChanges);
     const includeChangeTree = change => {
       owned.add(change);
       change.changes?.forEach(includeChangeTree);
     };
     replacementWrappers.forEach(includeChangeTree);
     return recorded.filter(change => owned.has(change));
+  }
+
+  projectionalLegacyChangeCount (context) {
+    return (context.legacyChanges || []).filter(change =>
+      !change.operation ||
+      !this.ignoreCommittedTextOperation(change.operation, context)
+    ).length;
   }
 
   componentNodeIdForMorph (document, morph, bridgeCommand, context = {}) {
@@ -875,6 +964,18 @@ export class ComponentChangeTracker {
         : typeof morph.getProperty === 'function'
           ? morph.getProperty(property)
           : morph._morphicState?.[property],
+      valuesEqual: (current, expected, operation) => {
+        if (Object.is(current, expected)) return true;
+        if (typeof current?.equals === 'function' && current.equals(expected)) {
+          return true;
+        }
+        return operation?.valueSemantics === MorphicValueSemantics.SNAPSHOT
+          ? operation.snapshotValuesEqual(
+              operation.snapshotValue(current),
+              expected
+            )
+          : false;
+      },
       setMorphProperty: (morph, property, value) => {
         const apply = () => {
           if (property in morph) morph[property] = value;
@@ -885,7 +986,8 @@ export class ComponentChangeTracker {
           ? morph.withMetaDo({
               reconcileChanges: false,
               origin: 'runtime-projection',
-              undoable: false
+              undoable: false,
+              doNotOverride: true
             }, apply)
           : apply();
       },
@@ -1137,10 +1239,12 @@ export class ComponentChangeTracker {
   commitProjectionalBatch (batch, context) {
     const ownedLegacyChanges = this.projectionallyOwnedLegacyChanges(batch, context);
     const isMultiScalarBatch = batch.commands.length > 1 &&
-      batch.commands.every(command =>
-        command.kind === ComponentBridgeCommandKind.SET_PROPERTY &&
-        command.property !== 'layout') &&
-      !batch.shadowProjection?.beforeDocument?.parentComponent &&
+      batch.commands.every(command => [
+        ComponentBridgeCommandKind.SET_PROPERTY,
+        ComponentBridgeCommandKind.SET_MASTER,
+        ComponentBridgeCommandKind.EDIT_TEXT,
+        ComponentBridgeCommandKind.RENAME_NODE
+      ].includes(command.kind)) &&
       !(this.componentDescriptor?.stylePolicy?._dependants?.size > 0) &&
       !batch.derivedPropagation &&
       !batch.policyCacheProjection;
@@ -1154,7 +1258,7 @@ export class ComponentChangeTracker {
           ComponentBridgeCommandKind.REMOVE_NODE,
           ComponentBridgeCommandKind.MOVE_NODE
         ].includes(batch.commands[0].kind))) ||
-        context.legacyChanges?.length !== batch.commands.length ||
+        this.projectionalLegacyChangeCount(context) !== batch.commands.length ||
         !this.canRecordProjectionalEdit(ownedLegacyChanges) ||
         !batch.shadowProjection?.supported) return null;
 
@@ -1174,12 +1278,17 @@ export class ComponentChangeTracker {
       : null;
     const policyCachePlanCount = batch.policyCacheProjection?.renames?.length ||
       batch.policyCacheProjection?.changes?.length || 0;
+    const refreshesDependants =
+      batch.commands[0].kind !== ComponentBridgeCommandKind.RENAME_NODE;
+    const refreshOptions = refreshesDependants
+      ? { afterReplay: () => this.refreshAndTrackProjectionalDependants(textRefresh) }
+      : {};
     const componentEdit = new ProjectionalComponentEditTransaction(
       transaction,
       adapters,
       policyCachePlanCount
         ? {}
-        : { afterReplay: () => this.refreshAndTrackProjectionalDependants() }
+        : refreshOptions
     );
     let policyCacheTransaction = null;
     let policyCacheStores = null;
@@ -1392,12 +1501,12 @@ export class ComponentChangeTracker {
         ? new ProjectionalPolicyCacheEditTransaction(
             policyCacheTransaction,
             policyCacheStores,
-            { afterReplay: () => this.refreshAndTrackProjectionalDependants(textRefresh) }
+            refreshOptions
           )
         : new ProjectionalPolicyCachePropertyEditTransaction(
             policyCacheTransaction,
             policyCacheStores,
-            { afterReplay: () => this.refreshAndTrackProjectionalDependants(textRefresh) }
+            refreshOptions
           )
       : null;
     const derivedEdits = [
@@ -1415,7 +1524,9 @@ export class ComponentChangeTracker {
     this.recordProjectionalEditTransaction(editTransaction, ownedLegacyChanges);
     this._projectionallyConsumedChanges ||= new WeakSet();
     ownedLegacyChanges.forEach(change => this._projectionallyConsumedChanges.add(change));
-    this.refreshAndTrackProjectionalDependants(textRefresh);
+    if (refreshesDependants) {
+      this.refreshAndTrackProjectionalDependants(textRefresh);
+    }
     return Object.freeze({
       ...committed,
       derivedPropagation: batch.derivedPropagation || null,
@@ -1565,7 +1676,30 @@ export class ComponentChangeTracker {
 
     const renames = [];
     const recoveries = [];
+    const layoutChanges = [];
     const stores = new Map();
+    const planLayoutReferenceRename = (id, path, ownerProperties) => {
+      const cachedLayout = ownerProperties?.layout;
+      const cachedPolicies = cachedLayout?.getSpec?.().resizePolicies ||
+        cachedLayout?.config?.resizePolicies;
+      if (!Array.isArray(cachedPolicies) ||
+          !cachedPolicies.some(([name]) => name === command.previousName) ||
+          typeof cachedLayout.copy !== 'function') return;
+      const afterLayout = cachedLayout.copy();
+      if (typeof afterLayout.handleRenamingOf !== 'function') return;
+      afterLayout.handleRenamingOf(command.previousName, command.name);
+      const layoutId = `${id}:layout:${path.slice(0, -1).join('/')}`;
+      layoutChanges.push(Object.freeze({
+        id: layoutId,
+        property: 'layout',
+        beforeValue: cachedLayout,
+        afterValue: afterLayout
+      }));
+      stores.set(layoutId, {
+        read: () => ownerProperties.layout,
+        write: layout => { ownerProperties.layout = layout; }
+      });
+    };
     const semanticNodeId = batch.shadowProjection.steps[0].componentCommand.nodeId;
     for (const { id, descriptor, document, required } of entries) {
       const policy = descriptor?.stylePolicy;
@@ -1576,6 +1710,7 @@ export class ComponentChangeTracker {
       const path = componentNodeNamePath(document, semanticNodeId);
       if (!path) continue;
       let current = policy.spec;
+      let parentProperties = null;
       let missingIndex = -1;
       for (let index = 0; index < path.length; index++) {
         const properties = policySpecProperties(current);
@@ -1586,6 +1721,7 @@ export class ComponentChangeTracker {
           missingIndex = index;
           break;
         }
+        parentProperties = properties;
         current = next;
       }
       if (missingIndex >= 0) {
@@ -1594,6 +1730,7 @@ export class ComponentChangeTracker {
         if (!required) continue;
         const ownerProperties = policySpecProperties(current);
         if (!ownerProperties) continue;
+        planLayoutReferenceRename(id, path, ownerProperties);
         let addition = { name: command.name };
         for (let index = path.length - 2; index >= missingIndex; index--) {
           addition = { name: path[index], submorphs: [addition] };
@@ -1618,6 +1755,7 @@ export class ComponentChangeTracker {
       }
       const subSpec = policySpecProperties(current);
       if (!subSpec) continue;
+      planLayoutReferenceRename(id, path, parentProperties);
       if (subSpec.name !== command.previousName) {
         const recoveryId = `${id}:recover:name`;
         recoveries.push(Object.freeze({
@@ -1642,7 +1780,7 @@ export class ComponentChangeTracker {
         write: name => { subSpec.name = name; }
       });
     }
-    if (recoveries.length) {
+    if (recoveries.length || layoutChanges.length) {
       for (const rename of renames) {
         const renameStore = stores.get(rename.id);
         recoveries.push(Object.freeze({
@@ -1656,7 +1794,7 @@ export class ComponentChangeTracker {
       return Object.freeze({
         kind: ProjectionalPolicyCacheProjectionKind.PROPERTY,
         supported: true,
-        changes: Object.freeze(recoveries),
+        changes: Object.freeze([...recoveries, ...layoutChanges]),
         stores,
         diagnostics: Object.freeze([])
       });
@@ -1686,8 +1824,10 @@ export class ComponentChangeTracker {
     if (beforeDocument instanceof ComponentDocument && semanticNodeId) {
       const owner = findComponentParent(beforeDocument, semanticNodeId);
       const layoutModel = owner && findComponentLayoutModel(beforeDocument, owner.id);
-      ownerLayoutRequiresProjection = !layoutModel || layoutModel.references.some(reference =>
-        reference.targetId === semanticNodeId);
+      ownerLayoutRequiresProjection = layoutModel
+        ? layoutModel.references.some(reference =>
+            reference.targetId === semanticNodeId)
+        : !layoutPropertyCannotReferenceChildren(owner?.properties.layout);
     }
     let kind = null;
     if (target?.owner?.layout && ownerLayoutRequiresProjection &&
@@ -1933,6 +2073,11 @@ export class ComponentChangeTracker {
     if (this._projectionallyConsumedChanges?.has(change)) {
       return true;
     }
+    // A grouped leaf is published to morph listeners before the enclosing
+    // GroupChange is committed. Reconcile the group's combined operation set
+    // once it is complete instead of treating each premature leaf as an
+    // unsupported standalone edit.
+    if (change.group) return true;
     if (!change.meta?.reconcileChanges) return true;
     if (change.prop === 'name') return false;
     if (change.prop?.startsWith('_')) return true;
@@ -1983,7 +2128,8 @@ export class ComponentChangeTracker {
     const moduleState = moduleReconciliationStateFor(this);
     const unsupported = new ProjectionalReconciliationUnsupportedError(
       change,
-      this.lastShadowCommandBatch
+      this._projectionalBatchesByLegacyChange?.get(change) ||
+        this.lastShadowCommandBatch
     );
     this._finishPromise = Promise.reject(unsupported);
     this._finishPromise.catch(() => {});

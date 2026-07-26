@@ -224,6 +224,30 @@ describe('projectional component direct manipulation', function () {
     expect(componentModule._source).matches(/name:\s*["']replacement badge["']/);
   });
 
+  it('reconciles an interactive text replacement through its native undo group', async () => {
+    const label = editable.get('label');
+
+    label.withMetaDo({ reconcileChanges: true }, () => {
+      label.replace({
+        start: { row: 0, column: 1 },
+        end: { row: 0, column: 5 }
+      }, ['interactive', { fontWeight: 'bold' }]);
+    });
+    await finishDirectManipulation();
+
+    expect(label.textString.startsWith('binteractive')).to.be.true;
+    expect(componentModule._source).matches(/["']interactive["']/);
+    expect(componentModule._source).includes('fontWeight');
+
+    await undo();
+    expect(componentModule._source).equals(initialSource);
+    expect(label.textString.startsWith('before')).to.be.true;
+
+    await redo();
+    expect(label.textString.startsWith('binteractive')).to.be.true;
+    expect(componentModule._source).matches(/["']interactive["']/);
+  });
+
   it('renames a nested introduction that collides across component scopes', async () => {
     const container = editable.get('container');
     const introduced = morph({

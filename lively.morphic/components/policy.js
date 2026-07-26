@@ -215,11 +215,28 @@ function mergeInHierarchy (
       if (specOrPolicyToAdd.isPolicy) specOrPolicyToAdd = specOrPolicyToAdd.spec;
 
       if (morphToReplace) {
+        const renamesInheritedMorph =
+          specOrPolicyToAdd.hasOwnProperty('name') &&
+          specOrPolicyToAdd.name !== cmd.target &&
+          !specOrPolicyToAdd.hasOwnProperty('type');
+        if (renamesInheritedMorph) {
+          mergeInHierarchy(
+            morphToReplace,
+            specOrPolicyToAdd,
+            iterator,
+            executeCommands,
+            removeFn,
+            addFn
+          );
+          continue;
+        }
         if (!specOrPolicyToAdd.hasOwnProperty('position')) { specOrPolicyToAdd.position = morphToReplace.spec?.position || morphToReplace.position; }
         if (!specOrPolicyToAdd.hasOwnProperty('rotation')) { specOrPolicyToAdd.rotation = morphToReplace.spec?.rotation || morphToReplace.rotation; }
         if (typeof specOrPolicyToAdd.position === 'undefined') delete specOrPolicyToAdd.position;
         if (typeof specOrPolicyToAdd.rotation === 'undefined') delete specOrPolicyToAdd.rotation;
-        specOrPolicyToAdd.name = morphToReplace.name;
+        if (!specOrPolicyToAdd.hasOwnProperty('name')) {
+          specOrPolicyToAdd.name = morphToReplace.name;
+        }
         addFn(root, cmd.props, morphToReplace);
         removeFn(root, morphToReplace);
       }

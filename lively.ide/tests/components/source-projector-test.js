@@ -529,6 +529,51 @@ const Example = component({ fill: 'red' });`;
     expect(secondProjection.sourceAfter).includes('name: "after again"');
   });
 
+  it('retargets added ordering anchors when renaming an inherited node', () => {
+    const parentDocument = new ComponentDocument({
+      componentId: 'parent',
+      moduleId: 'local://parent.cp.js',
+      exportName: 'Parent',
+      root: new ComponentNode({
+        id: 'parent-root', name: 'parent', provenance: localNodeProvenance(),
+        children: [new ComponentNode({
+          id: 'inherited-child', name: 'before', provenance: localNodeProvenance()
+        })]
+      })
+    });
+    const source = `const Example = component(Base, {
+  name: 'derived',
+  submorphs: [
+    add({ name: 'inserted' }, 'before'),
+    { name: 'before', fill: 'red' }
+  ]
+});`;
+    const document = parseComponentSource({
+      source, moduleId, exportName: 'Example', componentId, parentDocument
+    }).document;
+    const inherited = document.root.children.find(node => node.name === 'before');
+    const reduction = reduce(document, RenameNode, {
+      nodeId: inherited.id,
+      name: 'after'
+    });
+    const projection = projectComponentSource({
+      source,
+      beforeDocument: document,
+      reduction
+    });
+
+    expect(projection.supported, JSON.stringify(projection.diagnostics)).to.be.true;
+    expect(projection.sourceAfter).includes(`add({ name: 'inserted' }, "after")`);
+    expect(projection.sourceAfter)
+      .includes(`replace("before", { name: "after", fill: 'red' })`);
+    expect(projection.sourceAfter.indexOf('replace("before"'))
+      .to.be.below(projection.sourceAfter.indexOf('add({ name: \'inserted\''));
+    expect(componentDocumentsSemanticallyEqual(
+      projection.projectedDocument,
+      reduction.document
+    )).to.be.true;
+  });
+
   it('clears a sole trailing-comma property without leaving invalid syntax', () => {
     const source = 'const Example = component({ fill: Color.red, });';
     const document = parsed(source);
@@ -563,6 +608,32 @@ const Example = component({ fill: 'red' });`;
     expect(projection.sourceAfter).includes("name: \"renamed child\"");
     expect(projection.sourceAfter)
       .includes("resizePolicies: [[\"renamed child\", { height: 'fixed', width: 'fill' }]]");
+    expect(componentDocumentsSemanticallyEqual(
+      projection.projectedDocument,
+      reduction.document
+    )).to.be.true;
+  });
+
+  it('renames a child under a non-referencing constraint layout', () => {
+    const source = `const Example = component({
+  name: 'example',
+  layout: new ConstraintLayout({
+    reactToSubmorphAnimations: false,
+    submorphSettings: []
+  }),
+  submorphs: [add({ name: 'child' })]
+});`;
+    const document = parsed(source);
+    const child = document.root.children[0];
+    const reduction = reduce(document, RenameNode, {
+      nodeId: child.id,
+      name: 'renamed child'
+    });
+    const projection = projectComponentSource({ source, beforeDocument: document, reduction });
+
+    expect(projection.supported, JSON.stringify(projection.diagnostics)).to.be.true;
+    expect(projection.changes).length(1);
+    expect(projection.sourceAfter).includes("name: \"renamed child\"");
     expect(componentDocumentsSemanticallyEqual(
       projection.projectedDocument,
       reduction.document
@@ -1275,6 +1346,63 @@ const Example = component({ fill: 'red' });`;
     )).to.be.true;
   });
 
+  it('preserves the order of additions sharing an inherited ordering anchor', () => {
+    const parentDocument = new ComponentDocument({
+      componentId: 'parent',
+      moduleId: 'local://parent.cp.js',
+      exportName: 'Parent',
+      root: new ComponentNode({
+        id: 'parent-root',
+        name: 'parent',
+        provenance: localNodeProvenance(),
+        children: [new ComponentNode({
+          id: 'inherited-anchor',
+          name: 'anchor',
+          provenance: localNodeProvenance()
+        })]
+      })
+    });
+    const source = `const Example = component(Base, {
+  name: 'derived',
+  submorphs: [
+    add({ name: 'first' }, 'anchor'),
+    { name: 'anchor', fill: 'red' },
+    add({ name: 'second' }, 'anchor')
+  ]
+});`;
+    const document = parseComponentSource({
+      source,
+      moduleId,
+      exportName: 'Example',
+      componentId,
+      parentDocument
+    }).document;
+    const anchor = document.root.children.find(node => node.name === 'anchor');
+    const introduced = new ComponentNode({
+      id: `${componentId}:introduced`,
+      name: 'introduced',
+      provenance: addedNodeProvenance({ beforeId: anchor.id })
+    });
+    const reduction = reduce(document, IntroduceNode, {
+      parentId: document.root.id,
+      node: introduced,
+      beforeId: anchor.id
+    });
+    const projection = projectComponentSource({
+      source,
+      beforeDocument: document,
+      reduction
+    });
+
+    expect(projection.supported, JSON.stringify(projection.diagnostics)).to.be.true;
+    expect(projection.projectedDocument.root.children.map(node => node.name))
+      .deep.equals(['first', 'second', 'introduced', 'anchor']);
+    expect(componentDocumentsSemanticallyEqual(
+      projection.projectedDocument,
+      reduction.document
+    )).to.be.true;
+  });
+
   it('reorders local siblings while preserving identities and refreshed metadata', () => {
     const source = `const Example = component({
   name: 'example',
@@ -1523,6 +1651,56 @@ const Example = component({ fill: 'red' });`;
     expect(restorationProjection.supported).to.be.true;
     expect(restorationProjection.sourceAfter).not.includes('without("inherited child")');
     expect(restorationProjection.projectedDocument.root.children[0].provenance.suppressed)
+      .to.be.false;
+  });
+
+  it('consolidates duplicate without markers when restoring an inherited node', () => {
+    const parentDocument = new ComponentDocument({
+      componentId: 'parent',
+      moduleId: 'local://parent.cp.js',
+      exportName: 'Parent',
+      root: new ComponentNode({
+        id: 'parent-root',
+        name: 'parent',
+        provenance: localNodeProvenance(),
+        children: [new ComponentNode({
+          id: 'inherited-child',
+          name: 'inherited child',
+          provenance: localNodeProvenance()
+        })]
+      })
+    });
+    const source = `const Example = component(Base, {
+  name: 'derived',
+  submorphs: [
+    without('inherited child'),
+    without("inherited child")
+  ]
+});`;
+    const document = parseComponentSource({
+      source,
+      moduleId,
+      exportName: 'Example',
+      componentId,
+      parentDocument
+    }).document;
+    const inherited = document.root.children[0];
+    expect(document.sourceMetadata.suppressionLocationLists[inherited.id])
+      .to.have.length(2);
+    const restored = reduce(document, RestoreInheritedNode, {
+      nodeId: inherited.id,
+      parentId: document.root.id,
+      beforeId: null
+    });
+    const projection = projectComponentSource({
+      source,
+      beforeDocument: document,
+      reduction: restored
+    });
+
+    expect(projection.supported, JSON.stringify(projection.diagnostics)).to.be.true;
+    expect(projection.sourceAfter).not.match(/without\s*\(/);
+    expect(projection.projectedDocument.root.children[0].provenance.suppressed)
       .to.be.false;
   });
 

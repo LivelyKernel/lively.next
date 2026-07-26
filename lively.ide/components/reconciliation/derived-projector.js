@@ -5,7 +5,10 @@ import {
   findComponentNode,
   findComponentParent
 } from './component-document.js';
-import { parseComponentSource } from './source-adapter.js';
+import {
+  layoutPropertyCannotReferenceChildren,
+  parseComponentSource
+} from './source-adapter.js';
 
 export const DerivedProjectionDiagnosticKind = Object.freeze({
   INVALID_PARENT_TRANSITION: 'invalid-parent-transition',
@@ -108,7 +111,8 @@ export function projectDerivedComponentRename ({
     parsedBefore.document.sourceMetadata.propertyLocations?.[parentNode.id]?.layout;
   const parentLayoutModel = parentNode &&
     findComponentLayoutModel(parsedBefore.document, parentNode.id);
-  if (localParentLayout && !parentLayoutModel) {
+  if (localParentLayout && !parentLayoutModel &&
+      !layoutPropertyCannotReferenceChildren(parentNode.properties.layout)) {
     return unsupportedResult(source, [diagnostic(
       DerivedProjectionDiagnosticKind.SOURCE_UNSUPPORTED,
       'Derived rename propagation cannot safely model owner layout references',
@@ -147,9 +151,10 @@ export function projectDerivedComponentRename ({
       text: JSON.stringify(afterParentNode.name)
     }));
   }
-  const suppressionLocation = parsedBefore.document.sourceMetadata
-    .suppressionLocations?.[nodeId];
-  if (suppressionLocation) {
+  const suppressionLocations = parsedBefore.document.sourceMetadata
+    .suppressionLocationLists?.[nodeId] ||
+    [parsedBefore.document.sourceMetadata.suppressionLocations?.[nodeId]].filter(Boolean);
+  for (const suppressionLocation of suppressionLocations) {
     changes.push(Object.freeze({
       action: 'replace',
       start: suppressionLocation.start,

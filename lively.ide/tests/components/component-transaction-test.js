@@ -298,7 +298,12 @@ describe('projectional component transaction coordinator', () => {
     const result = commitPreparedComponentTransaction(preparation.transaction, {
       sourceStore: {
         read: () => state.source,
-        write: value => { state.source = value; }
+        write: value => {
+          state.source = value;
+          // System module updates may synchronously refresh a cached component
+          // from its previous policy while the source is being installed.
+          runtimeRoot.layout = beforeLayout;
+        }
       },
       documentStore: {
         read: () => state.document,
@@ -318,7 +323,7 @@ describe('projectional component transaction coordinator', () => {
 
     expect(result.runtimeCommitMode)
       .equals(ComponentRuntimeCommitMode.ADOPT_ALREADY_APPLIED);
-    expect(layoutWrites).equals(1);
+    expect(layoutWrites).equals(2);
     expect(runtimeRoot.layout).equals(afterLayout);
     expect(runtimeChild.name).equals('renamed');
   });

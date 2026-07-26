@@ -1,4 +1,7 @@
-import { MorphicChangeSet } from 'lively.morphic/changes/index.js';
+import {
+  MorphicChangeSet,
+  MorphicValueSemantics
+} from 'lively.morphic/changes/index.js';
 import { EditTransaction, EditTransactionKind } from 'lively.morphic/undo.js';
 import { ComponentDocument } from './component-document.js';
 import { reduceComponent } from './reducer.js';
@@ -324,6 +327,21 @@ function supplementalAdoptionChangeSet (changeSet, transactionId) {
     : null;
 }
 
+function supplementalRuntimeStateIsCurrent (changeSet, runtimeContext) {
+  return changeSet.operations.every(operation => {
+    const target = runtimeContext.resolveMorph?.(operation.targetId);
+    if (!target || !Object.prototype.hasOwnProperty.call(operation, 'property')) {
+      return false;
+    }
+    const current = runtimeContext.readMorphProperty
+      ? runtimeContext.readMorphProperty(target, operation.property)
+      : target[operation.property];
+    return operation.valueSemantics === MorphicValueSemantics.SNAPSHOT
+      ? operation.snapshotValuesEqual(operation.snapshotValue(current), operation.after)
+      : Object.is(current, operation.after);
+  });
+}
+
 export function applyPreparedComponentTransaction (transaction, {
   sourceStore,
   documentStore,
@@ -397,6 +415,15 @@ export function applyPreparedComponentTransaction (transaction, {
     writeStore(documentStore, replay.documentAfter, transaction, 'document');
     if (runtimeCommitMode === ComponentRuntimeCommitMode.APPLY) {
       replay.runtimeChangeSet.apply(runtimeContext);
+    } else if (supplementalChangeSet &&
+               !supplementalRuntimeStateIsCurrent(supplementalChangeSet, runtimeContext)) {
+      // Installing new source can synchronously refresh a live component from
+      // its policy cache. Reassert supplemental layout/name projections after
+      // that refresh so adoption ends in the state that was preflighted.
+      supplementalChangeSet.apply({
+        ...runtimeContext,
+        checkPreconditions: false
+      });
     }
   } catch (error) {
     const rollbackErrors = error.rollbackErrors?.slice() || [];

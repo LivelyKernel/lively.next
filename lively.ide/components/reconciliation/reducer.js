@@ -104,6 +104,84 @@ function descendantIds (node, ids = new Set()) {
   return ids;
 }
 
+function materializedContentEqualsInherited (materializedNode, inheritedNode) {
+  return materializedNode.name === inheritedNode.name &&
+    materializedNode.typeExpression === inheritedNode.typeExpression &&
+    materializedNode.partComponent?.expression === inheritedNode.partComponent?.expression &&
+    semanticValuesEqual(materializedNode.properties, inheritedNode.properties) &&
+    materializedNode.children.length === inheritedNode.children.length &&
+    materializedNode.children.every(materializedChild => {
+      const inheritedChild = inheritedNode.children.find(
+        child => child.name === materializedChild.name
+      );
+      return inheritedChild &&
+        materializedContentEqualsInherited(materializedChild, inheritedChild);
+    });
+}
+
+function consolidateMaterializedSubtree (materializedNode, inheritedNode, idMap = new Map()) {
+  idMap.set(materializedNode.id, inheritedNode.id);
+  const inheritedChildren = new Map(
+    inheritedNode.children.map(child => [child.name, child])
+  );
+  const children = materializedNode.children.map(child => {
+    const inheritedChild = inheritedChildren.get(child.name);
+    return inheritedChild
+      ? consolidateMaterializedSubtree(child, inheritedChild, idMap).node
+      : child;
+  });
+  const provenance = inheritedNode.provenance.kind ===
+      ComponentNodeProvenanceKind.INHERITED
+    ? inheritedNodeProvenance({
+        ...inheritedNode.provenance,
+        suppressed: materializedNode.provenance.kind ===
+          ComponentNodeProvenanceKind.INHERITED
+          ? materializedNode.provenance.suppressed
+          : false,
+        hasLocalOverrides: inheritedNode.provenance.hasLocalOverrides ||
+          !materializedContentEqualsInherited(materializedNode, inheritedNode)
+      })
+    : materializedNode.provenance;
+  return {
+    idMap,
+    node: materializedNode.with({
+      id: inheritedNode.id,
+      provenance,
+      children
+    })
+  };
+}
+
+function remapSubtreeReferences (node, idMap) {
+  let provenance = node.provenance;
+  if (provenance.kind === ComponentNodeProvenanceKind.ADDED) {
+    provenance = addedNodeProvenance({
+      beforeId: idMap.get(provenance.beforeId) || provenance.beforeId,
+      beforeName: provenance.beforeName
+    });
+  } else if (provenance.kind === ComponentNodeProvenanceKind.INHERITED) {
+    provenance = inheritedNodeProvenance({
+      ...provenance,
+      beforeId: idMap.get(provenance.beforeId) || provenance.beforeId
+    });
+  }
+  return node.with({
+    provenance,
+    children: node.children.map(child => remapSubtreeReferences(child, idMap))
+  });
+}
+
+function remapLayoutModels (layoutModels, idMap) {
+  return layoutModels.map(model => tilingLayoutModel({
+    ...model,
+    ownerId: idMap.get(model.ownerId) || model.ownerId,
+    references: model.references.map(reference => ({
+      ...reference,
+      targetId: idMap.get(reference.targetId) || reference.targetId
+    }))
+  }));
+}
+
 function nextRevision (document) { return document.revision + 1; }
 
 function semanticValuesEqual (left, right) {
@@ -493,9 +571,23 @@ function reduceMove (document, command) {
     }
     const materializedBeforeId = oldParent.children[oldIndex + 1]?.id ?? null;
     const removed = removeNodeFromTree(document.root, node.id);
-    const root = replaceNode(removed.root, inheritedNode.id, current => current.with({
-      provenance: inheritedNodeProvenance({ ...current.provenance, suppressed: false })
-    }));
+    const consolidated = consolidateMaterializedSubtree(node, inheritedNode);
+    const restoredNode = remapSubtreeReferences(
+      consolidated.node.with({
+        provenance: inheritedNodeProvenance({
+          ...inheritedNode.provenance,
+          suppressed: false,
+          hasLocalOverrides: inheritedNode.provenance.hasLocalOverrides ||
+            !materializedContentEqualsInherited(node, inheritedNode)
+        })
+      }),
+      consolidated.idMap
+    );
+    const root = replaceNode(
+      removed.root,
+      inheritedNode.id,
+      () => restoredNode
+    );
     const restoredParent = findComponentParent(
       new ComponentDocument({ ...document, root }),
       inheritedNode.id
@@ -520,6 +612,8 @@ function reduceMove (document, command) {
       inheritanceTransition: ComponentMoveInheritanceTransitionKind.RESTORE,
       inheritedNodeId: inheritedNode.id,
       nodeId: node.id,
+      consolidatedNodeId: inheritedNode.id,
+      consolidated: !materializedContentEqualsInherited(node, inheritedNode),
       fromParentId: oldParent.id,
       fromIndex: oldIndex,
       runtimeFromIndex,
@@ -527,7 +621,7 @@ function reduceMove (document, command) {
       toIndex,
       runtimeToIndex,
       beforeId: command.beforeId ?? null
-    });
+    }, remapLayoutModels(document.layoutModels, consolidated.idMap));
   }
   const rootWithOrderingAnchors = crossesSourceOwnershipBoundary
     ? retargetAddedOrderingAnchors(

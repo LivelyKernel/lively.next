@@ -9,7 +9,10 @@ import {
 } from './component-document.js';
 import { ComponentSemanticDeltaKind } from './reducer.js';
 import { ComponentMoveInheritanceTransitionKind } from './commands.js';
-import { parseComponentSource } from './source-adapter.js';
+import {
+  layoutPropertyCannotReferenceChildren,
+  parseComponentSource
+} from './source-adapter.js';
 import {
   ComponentImportKind,
   componentImportBinding
@@ -190,38 +193,29 @@ function removeNodeChange (source, document, nodeId, parentId) {
   const parent = findComponentNode(document, parentId);
   const location = document.sourceMetadata.nodeIdToAstLocation?.[nodeId];
   if (!parent || !location) return null;
-  const sourceOrderedLocations = parent.children
-    .map(child => document.sourceMetadata.nodeIdToAstLocation?.[child.id])
-    .filter(Boolean)
-    .sort((left, right) => left.start - right.start);
-  const index = sourceOrderedLocations.findIndex(candidate =>
-    candidate.start === location.start && candidate.end === location.end);
-  if (index < 0) return null;
-  const previousLocation = sourceOrderedLocations[index - 1];
-  const nextLocation = sourceOrderedLocations[index + 1];
-  if (nextLocation) {
+  let end = location.end;
+  while (source[end] === ' ' || source[end] === '\t' || source[end] === '\n') end++;
+  if (source[end] === ',') {
+    end++;
+    while (source[end] === ' ' || source[end] === '\t') end++;
     return Object.freeze({
       action: 'remove',
       start: location.start,
-      end: nextLocation.start,
+      end,
       text: ''
     });
   }
-  if (previousLocation) {
-    return Object.freeze({
-      action: 'remove',
-      start: previousLocation.end,
-      end: location.end,
-      text: ''
-    });
-  }
-  let end = location.end;
-  while (source[end] === ' ' || source[end] === '\t' || source[end] === '\n') end++;
-  if (source[end] === ',') end++;
+  let start = location.start;
+  while (start > 0 && (
+    source[start - 1] === ' ' ||
+    source[start - 1] === '\t' ||
+    source[start - 1] === '\n'
+  )) start--;
+  if (source[start - 1] === ',') start--;
   return Object.freeze({
     action: 'remove',
-    start: location.start,
-    end,
+    start,
+    end: location.end,
     text: ''
   });
 }
@@ -248,18 +242,29 @@ function insertMovedNodeChange (source, document, parentId, index, nodeSource) {
   if (!parent || !Number.isInteger(index) || index < 0 || index > parent.children.length) {
     return null;
   }
-  if (index === parent.children.length) {
-    return introduceNodeChange(source, document, parentId, nodeSource);
+  for (let previousIndex = index - 1; previousIndex >= 0; previousIndex--) {
+    const previousLocation = document.sourceMetadata
+      .nodeIdToAstLocation?.[parent.children[previousIndex].id];
+    if (!previousLocation) continue;
+    return Object.freeze({
+      action: 'insert',
+      start: previousLocation.end,
+      end: previousLocation.end,
+      text: `, ${nodeSource}`
+    });
   }
-  const targetLocation = document.sourceMetadata
-    .nodeIdToAstLocation?.[parent.children[index].id];
-  if (!targetLocation) return null;
-  return Object.freeze({
-    action: 'insert',
-    start: targetLocation.start,
-    end: targetLocation.start,
-    text: `${nodeSource}, `
-  });
+  for (let nextIndex = index; nextIndex < parent.children.length; nextIndex++) {
+    const nextLocation = document.sourceMetadata
+      .nodeIdToAstLocation?.[parent.children[nextIndex].id];
+    if (!nextLocation) continue;
+    return Object.freeze({
+      action: 'insert',
+      start: nextLocation.start,
+      end: nextLocation.start,
+      text: `${nodeSource}, `
+    });
+  }
+  return introduceNodeChange(source, document, parentId, nodeSource);
 }
 
 function movedNodeSource (source, beforeDocument, afterDocument, nodeId) {
@@ -384,9 +389,7 @@ function suppressInheritedNodeChange (source, document, semanticDelta) {
   });
 }
 
-function restoreInheritedNodeChange (source, document, semanticDelta) {
-  const location = document.sourceMetadata.suppressionLocations?.[semanticDelta.nodeId];
-  if (!location) return null;
+function suppressionRemovalChange (source, location) {
   let end = location.end;
   while (/\s/.test(source[end] || '')) end++;
   if (source[end] === ',') {
@@ -397,6 +400,48 @@ function restoreInheritedNodeChange (source, document, semanticDelta) {
   while (start > 0 && /\s/.test(source[start - 1])) start--;
   if (source[start - 1] === ',') start--;
   return Object.freeze({ action: 'remove', start, end: location.end, text: '' });
+}
+
+function restoreInheritedNodeChanges (source, document, semanticDelta) {
+  const locations = document.sourceMetadata
+    .suppressionLocationLists?.[semanticDelta.nodeId] ||
+    [document.sourceMetadata.suppressionLocations?.[semanticDelta.nodeId]].filter(Boolean);
+  return locations.length
+    ? locations.map(location => suppressionRemovalChange(source, location))
+    : null;
+}
+
+function consolidateRestoredNodeChange (
+  source,
+  beforeDocument,
+  afterDocument,
+  semanticDelta
+) {
+  if (!semanticDelta.consolidated) return Object.freeze([]);
+  const restoredNode = findComponentNode(
+    afterDocument,
+    semanticDelta.consolidatedNodeId
+  );
+  const nodeSource = restoredNode &&
+    componentNodeSource(restoredNode, afterDocument, true);
+  if (typeof nodeSource !== 'string') return null;
+  const location = beforeDocument.sourceMetadata
+    .nodeIdToAstLocation?.[semanticDelta.consolidatedNodeId];
+  if (location) {
+    return Object.freeze([Object.freeze({
+      action: 'replace',
+      start: location.start,
+      end: location.end,
+      text: nodeSource
+    })]);
+  }
+  const parent = findComponentParent(
+    beforeDocument,
+    semanticDelta.consolidatedNodeId
+  );
+  const introduction = parent &&
+    introduceNodeChange(source, beforeDocument, parent.id, nodeSource);
+  return introduction ? Object.freeze([introduction]) : null;
 }
 
 function reorderNodeChange (source, beforeDocument, afterDocument, parentId, movedNodeId) {
@@ -440,7 +485,7 @@ function renameLayoutReferenceChanges (document, nodeId, name) {
   const model = findComponentLayoutModel(document, owner.id);
   if (!model) {
     const layoutEntry = owner.properties.layout;
-    return layoutEntryCannotReferenceChildren(layoutEntry)
+    return layoutPropertyCannotReferenceChildren(layoutEntry)
       ? Object.freeze([])
       : null;
   }
@@ -457,6 +502,62 @@ function renameLayoutReferenceChanges (document, nodeId, name) {
   })]);
 }
 
+function renameOrderingReferenceChanges (
+  source,
+  beforeDocument,
+  afterDocument,
+  nodeId
+) {
+  const owner = findComponentParent(beforeDocument, nodeId);
+  if (!owner) return Object.freeze([]);
+  const targetLocation = beforeDocument.sourceMetadata
+    .nodeIdToAstLocation?.[nodeId];
+  if (!targetLocation) return null;
+  const dependants = owner.children.filter(child =>
+    child.provenance.kind === ComponentNodeProvenanceKind.ADDED &&
+    child.provenance.beforeId === nodeId);
+  const changes = [];
+  const movedSources = [];
+  for (const dependant of dependants) {
+    const location = beforeDocument.sourceMetadata
+      .nodeIdToAstLocation?.[dependant.id];
+    const rewrittenSource = movedNodeSource(
+      source,
+      beforeDocument,
+      afterDocument,
+      dependant.id
+    );
+    if (!location || rewrittenSource === null) return null;
+    if (location.start < targetLocation.start) {
+      const removal = removeNodeChange(
+        source,
+        beforeDocument,
+        dependant.id,
+        owner.id
+      );
+      if (!removal) return null;
+      changes.push(removal);
+      movedSources.push(rewrittenSource);
+    } else {
+      changes.push(Object.freeze({
+        action: 'replace',
+        start: location.start,
+        end: location.end,
+        text: rewrittenSource
+      }));
+    }
+  }
+  if (movedSources.length) {
+    changes.push(Object.freeze({
+      action: 'insert',
+      start: targetLocation.end,
+      end: targetLocation.end,
+      text: `, ${movedSources.join(', ')}`
+    }));
+  }
+  return Object.freeze(changes);
+}
+
 function removeLayoutReferenceChanges (document, nodeId) {
   const owner = findComponentParent(document, nodeId);
   const layoutLocation = owner && document.sourceMetadata
@@ -465,7 +566,7 @@ function removeLayoutReferenceChanges (document, nodeId) {
   const model = findComponentLayoutModel(document, owner.id);
   if (!model) {
     const layoutEntry = owner.properties.layout;
-    return layoutEntryCannotReferenceChildren(layoutEntry)
+    return layoutPropertyCannotReferenceChildren(layoutEntry)
       ? Object.freeze([])
       : null;
   }
@@ -484,16 +585,6 @@ function removeLayoutReferenceChanges (document, nodeId) {
     end: next ? next.start : location.end,
     text: ''
   })]);
-}
-
-function layoutEntryCannotReferenceChildren (layoutEntry) {
-  return (
-    layoutEntry?.kind === ComponentPropertyKind.EXPLICIT_VALUE &&
-    layoutEntry.value === null
-  ) || (
-    layoutEntry?.kind === ComponentPropertyKind.OPAQUE_EXPRESSION &&
-    layoutEntry.expression.trim() === 'undefined'
-  );
 }
 
 function applyChange (source, change) {
@@ -720,7 +811,8 @@ function semanticDifferenceMessage (actual, expected) {
     return printed.length > 160 ? `${printed.slice(0, 157)}...` : printed;
   };
   let context = '';
-  if (difference.path[difference.path.length - 1] === 'id') {
+  const finalSegment = difference.path[difference.path.length - 1];
+  if (finalSegment === 'id' || finalSegment === 'children') {
     const nodePath = difference.path.slice(0, -1);
     const valueAt = (root, path) => path.reduce((value, key) => value?.[key], root);
     const actualNode = valueAt(actualSnapshot, nodePath);
@@ -731,7 +823,8 @@ function semanticDifferenceMessage (actual, expected) {
     })}, expected ${printable({
       name: expectedNode?.name,
       children: expectedNode?.children?.map(child => child.name)
-    })})`;
+    })}; root children ${printable(actualSnapshot.root.children.map(child => child.name))}, expected ${
+      printable(expectedSnapshot.root.children.map(child => child.name))})`;
   }
   return `${difference.path.join('.')} is ${printable(difference.left)}, expected ${printable(difference.right)}${context}`;
 }
@@ -808,6 +901,13 @@ export function alignParsedDocumentIdentities (parsedDocument, expectedDocument)
       suppressionLocations: remapNodeRecords(
         parsedDocument.sourceMetadata.suppressionLocations
       ),
+      suppressionLocationLists: Object.freeze(Object.fromEntries(
+        Object.entries(parsedDocument.sourceMetadata.suppressionLocationLists || {})
+          .map(([nodeId, locations]) => [
+            idMap.get(nodeId) || nodeId,
+            Object.freeze(locations.map(location => ({ ...location })))
+          ])
+      )),
       orderingLocations: remapNodeRecords(
         parsedDocument.sourceMetadata.orderingLocations
       ),
@@ -877,6 +977,16 @@ function relocatedRangeRecord (record, replacedRange, delta) {
   return relocated;
 }
 
+function relocatedRangeListRecord (record, replacedRange, delta) {
+  const relocated = {};
+  for (const [key, ranges] of Object.entries(record || {})) {
+    const nextRanges = ranges.map(range => relocatedRange(range, replacedRange, delta));
+    if (nextRanges.some(range => !range)) return null;
+    relocated[key] = nextRanges;
+  }
+  return relocated;
+}
+
 function incrementallyProjectedTextDocument ({
   beforeDocument,
   reduction,
@@ -909,6 +1019,11 @@ function incrementallyProjectedTextDocument ({
     replacedRange,
     delta
   );
+  const suppressionLocationLists = relocatedRangeListRecord(
+    metadata.suppressionLocationLists,
+    replacedRange,
+    delta
+  );
   const orderingLocations = relocatedRangeRecord(
     metadata.orderingLocations,
     replacedRange,
@@ -916,7 +1031,7 @@ function incrementallyProjectedTextDocument ({
   );
   if (!componentRange || !declarationRange || !specRange ||
       !nodeIdToAstLocation || !nodeSpecLocations ||
-      !suppressionLocations || !orderingLocations) return null;
+      !suppressionLocations || !suppressionLocationLists || !orderingLocations) return null;
 
   const propertyLocations = {};
   for (const [nodeId, properties] of Object.entries(metadata.propertyLocations || {})) {
@@ -970,6 +1085,7 @@ function incrementallyProjectedTextDocument ({
       propertyLocations,
       originalExpressions,
       suppressionLocations,
+      suppressionLocationLists,
       orderingLocations,
       layoutReferenceLocations,
       importInsertionIndex
@@ -1060,18 +1176,24 @@ export function projectComponentSource ({ source, beforeDocument, reduction }) {
       semanticDelta.nodeId,
       semanticDelta.after
     );
+    const orderingChanges = renameOrderingReferenceChanges(
+      source,
+      beforeDocument,
+      reduction.document,
+      semanticDelta.nodeId
+    );
     if (!nameChange) {
       diagnostics.push(diagnostic(
         ComponentSourceProjectionDiagnosticKind.MISSING_SOURCE_METADATA,
         `The renamed node ${semanticDelta.nodeId} has no writable source location`
       ));
-    } else if (layoutChanges === null) {
+    } else if (layoutChanges === null || orderingChanges === null) {
       diagnostics.push(diagnostic(
         ComponentSourceProjectionDiagnosticKind.MISSING_SOURCE_METADATA,
-        `The owner layout for ${semanticDelta.nodeId} cannot be projected safely`
+        `The owner layout or ordering dependants for ${semanticDelta.nodeId} cannot be projected safely`
       ));
     } else {
-      structuralChanges = [nameChange, ...layoutChanges];
+      structuralChanges = [nameChange, ...layoutChanges, ...orderingChanges];
     }
   } else if (semanticDelta.kind === ComponentSemanticDeltaKind.TEXT_EDITED) {
     const entry = findNodeEntry(
@@ -1156,16 +1278,22 @@ export function projectComponentSource ({ source, beforeDocument, reduction }) {
         semanticDelta.nodeId,
         semanticDelta.fromParentId
       );
-      const restoration = restoreInheritedNodeChange(source, beforeDocument, {
+      const restorations = restoreInheritedNodeChanges(source, beforeDocument, {
         nodeId: semanticDelta.inheritedNodeId
       });
-      if (!removal || !restoration) {
+      const consolidation = consolidateRestoredNodeChange(
+        source,
+        beforeDocument,
+        reduction.document,
+        semanticDelta
+      );
+      if (!removal || !restorations || !consolidation) {
         diagnostics.push(diagnostic(
           ComponentSourceProjectionDiagnosticKind.MISSING_SOURCE_METADATA,
           `The inherited move ${semanticDelta.inheritedNodeId} cannot be restored in source`
         ));
       } else {
-        structuralChanges = [removal, restoration];
+        structuralChanges = [removal, ...restorations, ...consolidation];
       }
     } else if (semanticDelta.fromParentId !== semanticDelta.toParentId) {
       const reparentChanges = reparentNodeChanges(
@@ -1259,7 +1387,7 @@ export function projectComponentSource ({ source, beforeDocument, reduction }) {
   } else if (semanticDelta.kind === ComponentSemanticDeltaKind.NODE_SUPPRESSED) {
     change = suppressInheritedNodeChange(source, beforeDocument, semanticDelta);
   } else if (semanticDelta.kind === ComponentSemanticDeltaKind.NODE_RESTORED) {
-    change = restoreInheritedNodeChange(source, beforeDocument, semanticDelta);
+    structuralChanges = restoreInheritedNodeChanges(source, beforeDocument, semanticDelta);
   } else {
     diagnostics.push(diagnostic(
       ComponentSourceProjectionDiagnosticKind.UNSUPPORTED_DELTA,

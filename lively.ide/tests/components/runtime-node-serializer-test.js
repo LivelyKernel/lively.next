@@ -167,6 +167,82 @@ describe('projectional runtime node serializer', () => {
     ]);
   });
 
+  it('includes resolved inherited children in an introduced part document', () => {
+    const componentMeta = {
+      exportedName: 'Button',
+      moduleId: 'local://widgets/button.cp.js',
+      path: []
+    };
+    const resolvedPart = parseComponentSource({
+      source: `const Button = component({
+  name: 'button',
+  submorphs: [{ name: 'label' }]
+});`,
+      moduleId: componentMeta.moduleId,
+      exportName: componentMeta.exportedName,
+      componentId: `${componentMeta.moduleId}#${componentMeta.exportedName}`
+    }).document;
+    const componentDocument = parseComponentSource({
+      source: `const Example = component({ name: 'root' });`,
+      moduleId,
+      exportName: 'Example',
+      componentId,
+      resolveComponentDocument: ({ expression }) =>
+        expression === 'Button' ? resolvedPart : null
+    }).document;
+    const serialized = serializeRuntimeComponentNode({
+      document: componentDocument,
+      parentId: componentDocument.root.id,
+      index: 0,
+      morph: {
+        master: {
+          parent: { [Symbol.for('lively-module-meta')]: componentMeta },
+          _originalSpec: { name: 'button' }
+        },
+        submorphs: [{ name: 'label' }],
+        spec: () => ({
+          name: 'button',
+          submorphs: [{ name: 'label', submorphs: [] }]
+        })
+      }
+    });
+
+    expect(serialized.supported).to.be.true;
+    expect(serialized.node.children.map(({ name }) => name))
+      .deep.equals(['label']);
+    expect(serialized.node.children[0].provenance.kind)
+      .equals(ComponentNodeProvenanceKind.INHERITED);
+  });
+
+  it('materializes policy children before a newly introduced part is attached', () => {
+    const componentMeta = {
+      exportedName: 'Button',
+      moduleId: 'local://widgets/button.cp.js',
+      path: []
+    };
+    const serialized = serializeRuntimeComponentNode({
+      document: document(),
+      parentId: document().root.id,
+      index: 0,
+      materializePartSubtree: true,
+      morph: {
+        master: {
+          parent: {
+            [Symbol.for('lively-module-meta')]: componentMeta,
+            spec: { submorphs: [{ name: 'label', opacity: 0.5 }] }
+          },
+          _originalSpec: { name: 'button' }
+        },
+        submorphs: [],
+        spec: () => ({ name: 'button', submorphs: [] })
+      }
+    });
+
+    expect(serialized.supported).to.be.true;
+    expect(serialized.node.children.map(({ name }) => name))
+      .deep.equals(['label']);
+  });
+
   it('preserves nested add commands in overridden part specs', () => {
     const componentMeta = {
       exportedName: 'Button',
