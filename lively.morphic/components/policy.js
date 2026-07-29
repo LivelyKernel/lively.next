@@ -1353,10 +1353,7 @@ export class StylePolicy {
    */
   getSubSpecFor (submorphName, includeWithoutCalls = false, unwrapAddCalls = true) {
     if (!submorphName) return this.spec; // assume we ask for root
-    let embeddedRes;
-
-    let matchingNode = this.lookForMatchingSpec(submorphName, this.spec, includeWithoutCalls);
-    if (embeddedRes) matchingNode = embeddedRes;
+    const matchingNode = this.lookForMatchingSpec(submorphName, this.spec, includeWithoutCalls);
     return matchingNode ? (unwrapAddCalls && matchingNode.props) || matchingNode : null;
   }
 
@@ -1520,19 +1517,23 @@ export class StylePolicy {
    */
   lookForMatchingSpec (specName, spec = this.spec, includeWithoutCall = false) {
     let embeddedRes;
-    return tree.find(spec, node => {
+    const matchingNode = tree.find(spec, node => {
       // handle added morphs
       if (includeWithoutCall && node.COMMAND === 'remove') return node.target === specName;
       if (node.COMMAND === 'add') return node.props.name === specName;
       // handle text and attributes (embedded morphs)
-      if (node.textAndAttributes?.find(textOrAttr => {
-        if (embeddedRes) return;
-        if (textOrAttr?.__isSpec__) embeddedRes = this.lookForMatchingSpec(specName, textOrAttr);
-        if (textOrAttr?.isPolicy && textOrAttr?.name === specName) embeddedRes = textOrAttr;
-      })) return !!embeddedRes;
+      for (const textOrAttr of node.textAndAttributes || []) {
+        if (textOrAttr?.__isSpec__) {
+          embeddedRes = this.lookForMatchingSpec(specName, textOrAttr);
+        } else if (textOrAttr?.isPolicy && textOrAttr.name === specName) {
+          embeddedRes = textOrAttr;
+        }
+        if (embeddedRes) return true;
+      }
       // handle "normal" case
       return node.name === specName;
-    }, node => node.submorphs || node.props?.submorphs) || null;
+    }, node => node.submorphs || node.props?.submorphs);
+    return embeddedRes || matchingNode || null;
   }
 }
 

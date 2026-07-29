@@ -8,6 +8,8 @@ import { parseComponentSource } from '../../components/reconciliation/source-ada
 
 const testDir = 'local://projectional-direct-manipulation-test/';
 const moduleId = `${testDir}project/component.cp.js`;
+const inheritedMoveBaseModuleId = `${testDir}project/inherited-move-base.cp.js`;
+const inheritedMoveModuleId = `${testDir}project/inherited-move.cp.js`;
 const initialSource = `
 "format esm";
 import { component, ComponentDescriptor } from 'lively.morphic/components/core.js';
@@ -55,6 +57,9 @@ describe('projectional component direct manipulation', function () {
   let descriptor;
   let editable;
   let componentModule;
+  let inheritedMoveBaseModule;
+  let inheritedMoveModule;
+  let inheritedMoveEditable;
 
   beforeEach(async () => {
     await createFiles(testDir, {
@@ -70,6 +75,9 @@ describe('projectional component direct manipulation', function () {
 
   afterEach(async () => {
     editable?._changeTracker?.dispose();
+    inheritedMoveEditable?._changeTracker?.dispose();
+    await inheritedMoveModule?.unload();
+    await inheritedMoveBaseModule?.unload();
     await componentModule?.unload();
     await resource(testDir).remove();
     await System._livelyModulesTranslationCache.deleteCachedData(moduleId);
@@ -188,6 +196,114 @@ describe('projectional component direct manipulation', function () {
       .deep.equals(['label', 'container', 'date array', 'nested']);
   });
 
+  it('restyles a materialized inherited part after move undo and redo', async () => {
+    await resource(inheritedMoveBaseModuleId).write(`
+      "format esm";
+      import { component, ComponentDescriptor, part } from 'lively.morphic/components/core.js';
+      import { Color } from 'lively.graphics';
+
+      component.DescriptorClass = ComponentDescriptor;
+
+      const Leaf = component({
+        name: 'Leaf',
+        fill: Color.purple,
+        submorphs: [{ name: 'leaf child', fill: Color.orange }]
+      });
+      const Base = component({
+        name: 'Base',
+        submorphs: [part(Leaf, { name: 'movable leaf' })]
+      });
+
+      export { Base, Leaf };
+    `);
+    await resource(inheritedMoveModuleId).write(`
+      "format esm";
+      import {
+        add, component, ComponentDescriptor
+      } from 'lively.morphic/components/core.js';
+      import {
+        InteractiveComponentDescriptor
+      } from 'lively.ide/components/editor.js';
+      import { Base, Leaf } from '${inheritedMoveBaseModuleId}';
+
+      component.DescriptorClass = InteractiveComponentDescriptor;
+
+      const Subject = component(Base, {
+        name: 'Subject',
+        submorphs: [{
+          name: 'movable leaf',
+          submorphs: [{
+            name: 'leaf child',
+            borderWidth: 2
+          }]
+        }, add({ name: 'destination' })]
+      });
+
+      component.DescriptorClass = ComponentDescriptor;
+
+      export { Subject };
+    `);
+    inheritedMoveBaseModule = module(System, inheritedMoveBaseModuleId);
+    await inheritedMoveBaseModule.load();
+    inheritedMoveModule = module(System, inheritedMoveModuleId);
+    const { Subject } = await inheritedMoveModule.load();
+    inheritedMoveEditable = await Subject.edit();
+    const destination = inheritedMoveEditable.get('destination');
+    const movableLeaf = inheritedMoveEditable.get('movable leaf');
+    const tracker = inheritedMoveEditable._changeTracker;
+
+    inheritedMoveEditable.undoStart('reparent inherited component part');
+    try {
+      inheritedMoveEditable.withMetaDo({ reconcileChanges: true }, () => {
+        destination.addMorph(movableLeaf);
+      });
+      await tracker.onceChangesProcessed();
+    } finally {
+      inheritedMoveEditable.undoStop();
+    }
+
+    expect(movableLeaf.owner).equals(destination);
+    expect(movableLeaf.fill).equals(Color.purple);
+    expect(inheritedMoveModule._source).matches(/without\(["']movable leaf["']\)/);
+    expect(inheritedMoveModule._source).includes('destination');
+
+    inheritedMoveEditable.env.undoManager.undo();
+    await tracker.onceChangesProcessed();
+    expect(movableLeaf.owner).equals(inheritedMoveEditable);
+    expect(movableLeaf.fill).equals(Color.purple);
+
+    inheritedMoveEditable.env.undoManager.redo();
+    await tracker.onceChangesProcessed();
+    expect(movableLeaf.owner).equals(destination);
+    expect(movableLeaf.fill).equals(Color.purple);
+    expect(Subject.derive().get('movable leaf').fill).equals(Color.purple);
+
+    const leafChild = movableLeaf.get('leaf child');
+    inheritedMoveEditable.undoStart('materialize nested inherited override');
+    try {
+      inheritedMoveEditable.withMetaDo({ reconcileChanges: true }, () => {
+        inheritedMoveEditable.addMorph(leafChild);
+      });
+      await tracker.onceChangesProcessed();
+    } finally {
+      inheritedMoveEditable.undoStop();
+    }
+
+    expect(leafChild.owner).equals(inheritedMoveEditable);
+    expect(leafChild.borderWidth.top).equals(2);
+
+    inheritedMoveEditable.env.undoManager.undo();
+    await tracker.onceChangesProcessed();
+    expect(leafChild.owner).equals(movableLeaf);
+    expect(leafChild.borderWidth.top).equals(2);
+
+    inheritedMoveEditable.env.undoManager.redo();
+    await tracker.onceChangesProcessed();
+    expect(leafChild.owner).equals(inheritedMoveEditable);
+    expect(leafChild.borderWidth.top).equals(2);
+    expect(Subject.derive().get('leaf child').borderWidth.top).equals(2);
+  });
+
   it('reconciles rich text with an embedded morph through undo and redo', async () => {
     const label = editable.get('label');
     const replacement = morph({
@@ -210,6 +326,7 @@ describe('projectional component direct manipulation', function () {
     expect(componentModule._source).matches(/["']after["']/);
     expect(componentModule._source).matches(/name:\s*["']replacement badge["']/);
     expect(componentModule._source).includes('fill: Color.orange');
+    expect(descriptor.derive().get('replacement badge').fill).equals(Color.orange);
 
     await undo();
     expect(componentModule._source).equals(initialSource);

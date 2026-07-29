@@ -141,7 +141,7 @@ describe('projectional reconciliation bridge', () => {
         ]
       })
     });
-    const source = `import { add, without } from 'lively.morphic';
+    const source = `import { without } from 'lively.morphic';
 const Example = component(Base, {
   name: 'example',
   submorphs: [without('hidden'), { name: 'visible' }]
@@ -176,6 +176,7 @@ const Example = component(Base, {
 
     expect(projection.supported, JSON.stringify(projection.diagnostics)).to.be.true;
     expect(projection.steps[0].componentCommand.beforeId).equals('visible-child');
+    expect(projection.sourceAfter).matches(/import\s*\{[^}]*\badd\b[^}]*\}\s*from ['"]lively\.morphic['"]/);
     expect(projection.sourceAfter).includes('add({ name: "introduced" }, "visible")');
   });
 
@@ -2255,7 +2256,7 @@ const Example = component(Parent, {
       componentName: 'Example',
       stylePolicy: {
         _dependants: new Set(),
-        getSubSpecFor: target => target === null ? { layout: beforeLayout } : null
+        spec: { layout: beforeLayout }
       },
       makeDirty: () => {},
       refreshDependants: () => {}
@@ -2740,7 +2741,9 @@ const Example = component(Base, {
       componentName: 'Example',
       stylePolicy: {
         _dependants: new Set(),
-        getSubSpecFor: target => target === sourceParent ? { layout: beforeLayout } : null
+        getSubSpecAt: path => path.join('/') === 'source'
+          ? { layout: beforeLayout }
+          : null
       },
       makeDirty: () => {},
       refreshDependants: () => {}

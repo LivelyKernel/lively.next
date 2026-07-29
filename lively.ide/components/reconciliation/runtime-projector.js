@@ -55,7 +55,8 @@ function effectiveLayoutSnapshot (layout) {
   const resizePolicies = layout.resizePolicies
     .filter(([, policy]) =>
       policy.width !== 'fixed' || policy.height !== 'fixed')
-    .map(([name, policy]) => [name, { ...policy }]);
+    .map(([name, policy]) => [name, { ...policy }])
+    .sort(([left], [right]) => left.localeCompare(right));
   const effectiveSpec = { ...spec };
   if (resizePolicies.length) effectiveSpec.resizePolicies = resizePolicies;
   else delete effectiveSpec.resizePolicies;
@@ -110,7 +111,7 @@ export function projectComponentRuntime ({
     const snapshotsLayout = typeof layoutProjection.before?.getSpec === 'function' &&
       typeof layoutProjection.after?.getSpec === 'function' &&
       typeof layoutProjection.after?.constructor === 'function';
-    return [operation, new SetMorphProperty({
+    return [new SetMorphProperty({
       targetId: layoutProjection.ownerId,
       property: 'layout',
       before: layoutProjection.before,
@@ -132,7 +133,7 @@ export function projectComponentRuntime ({
         semanticDeltaKind: semanticDelta.kind,
         applyWhenAdopting: layoutProjection.applyWhenAdopting === true
       }
-    })];
+    }), operation];
   };
   const withRuntimeRename = operations => runtimeRename
     ? [new SetMorphProperty({

@@ -15,7 +15,10 @@ import {
   SetOpaqueProperty,
   SetProperty
 } from './reconciliation/commands.js';
-import { componentImportBindingsFromExpression } from './reconciliation/import-bindings.js';
+import {
+  ComponentImportKind,
+  componentImportBindingsFromExpression
+} from './reconciliation/import-bindings.js';
 import {
   layoutPropertyCannotReferenceChildren,
   parseComponentSource
@@ -24,6 +27,7 @@ import { serializeRuntimeComponentNode } from './reconciliation/runtime-node-ser
 import {
   ComponentDocument,
   ComponentNode,
+  ComponentPropertyKind,
   findComponentLayoutModel,
   findComponentNode,
   findComponentParent,
@@ -116,10 +120,93 @@ function policySpecProperties (spec) {
   return spec?.props || spec;
 }
 
+function policySpecAtPath (policy, path) {
+  let current = policy;
+  for (const name of path) {
+    const properties = policySpecProperties(current);
+    current = (properties?.submorphs || []).find(spec =>
+      policySpecProperties(spec)?.name === name
+    );
+    if (!current) {
+      try {
+        return policy.getSubSpecAt?.(path.slice()) || null;
+      } catch (error) {
+        return null;
+      }
+    }
+  }
+  return current;
+}
+
+function effectivePolicyLayoutAtPath (policy, path) {
+  const visited = new Set();
+  const layoutInPolicyChain = candidate => {
+    for (let current = candidate;
+         current && !visited.has(current);
+         current = current.isPolicy ? current.parent : null) {
+      visited.add(current);
+      const properties = policySpecProperties(current);
+      if (Object.prototype.hasOwnProperty.call(properties || {}, 'layout')) {
+        return Object.freeze({ found: true, layout: properties.layout });
+      }
+    }
+    return Object.freeze({ found: false, layout: null });
+  };
+
+  for (let current = policy;
+       current && !visited.has(current);
+       current = current.parent) {
+    const candidate = path.length
+      ? policySpecAtPath(current, path)
+      : current.spec || current;
+    const result = layoutInPolicyChain(candidate);
+    if (result.found) return result.layout;
+  }
+  return null;
+}
+
 function projectionalPolicyTextAndAttributes (textAndAttributes) {
   return textAndAttributes.map(value => value?.isMorph
     ? { ...value.spec(), __isSpec__: true }
     : value);
+}
+
+function projectionalExpressionBindings (bindings) {
+  const result = {};
+  for (const binding of bindings || []) {
+    const references = result[binding.moduleId] ||= [];
+    if (binding.kind === ComponentImportKind.NAMED &&
+        binding.imported === binding.local) {
+      references.push(binding.imported);
+    } else {
+      references.push({
+        exported: binding.kind === ComponentImportKind.NAMED
+          ? binding.imported
+          : binding.kind === ComponentImportKind.DEFAULT ? 'default' : '*',
+        local: binding.local
+      });
+    }
+  }
+  return result;
+}
+
+function projectionalMaterializedProperties (node, bindings) {
+  const expressionBindings = projectionalExpressionBindings(bindings);
+  return Object.fromEntries(Object.entries(node?.properties || {}).flatMap(
+    ([property, entry]) => {
+      if (entry.kind === ComponentPropertyKind.EXPLICIT_VALUE) {
+        return [[property, entry.value]];
+      }
+      try {
+        return [[property, derivedExpressionSerializer.deserializeExprObj({
+          __expr__: entry.expression,
+          bindings: expressionBindings
+        })]];
+      } catch (error) {
+        return [];
+      }
+    }
+  ));
 }
 
 function materializeProjectionalTextAndAttributes (textAndAttributes) {
@@ -935,10 +1022,10 @@ export class ComponentChangeTracker {
     if (!layoutModel) return null;
 
     const policy = this.componentDescriptor?.stylePolicy;
-    if (typeof policy?.getSubSpecFor !== 'function') return null;
-    const sourceLayout = policy.getSubSpecFor(
-      runtimeOwner === this.trackedComponent ? null : runtimeOwner
-    )?.layout;
+    if (!policy) return null;
+    const ownerPath = componentNodeNamePath(beforeDocument, ownerId);
+    if (!ownerPath) return null;
+    const sourceLayout = effectivePolicyLayoutAtPath(policy, ownerPath);
     if (!sourceLayout || typeof sourceLayout.copy !== 'function') return null;
     return Object.freeze({
       ownerId: runtimeOwner.id,
@@ -969,12 +1056,9 @@ export class ComponentChangeTracker {
         if (typeof current?.equals === 'function' && current.equals(expected)) {
           return true;
         }
-        return operation?.valueSemantics === MorphicValueSemantics.SNAPSHOT
-          ? operation.snapshotValuesEqual(
-              operation.snapshotValue(current),
-              expected
-            )
-          : false;
+        if (operation?.valueSemantics !== MorphicValueSemantics.SNAPSHOT) return false;
+        const currentSnapshot = operation.snapshotValue(current);
+        return operation.snapshotValuesEqual(currentSnapshot, expected);
       },
       setMorphProperty: (morph, property, value) => {
         const apply = () => {
@@ -1280,8 +1364,29 @@ export class ComponentChangeTracker {
       batch.policyCacheProjection?.changes?.length || 0;
     const refreshesDependants =
       batch.commands[0].kind !== ComponentBridgeCommandKind.RENAME_NODE;
+    const moveStep = batch.commands[0].kind === ComponentBridgeCommandKind.MOVE_NODE
+      ? batch.shadowProjection.steps[0]
+      : null;
+    const refreshMovedTarget = moveStep
+      ? ({ direction = ComponentTransactionDirection.FORWARD } = {}) =>
+          this.refreshProjectionalMovedTarget(
+            context.resolveMorph?.(batch.commands[0].nodeId),
+            {
+              direction,
+              materializedNode:
+                moveStep.componentCommand.inheritanceTransition?.node || null,
+              materializedBindings:
+                moveStep.componentCommand.inheritanceTransition?.requiredBindings || []
+            }
+          )
+      : null;
     const refreshOptions = refreshesDependants
-      ? { afterReplay: () => this.refreshAndTrackProjectionalDependants(textRefresh) }
+      ? {
+          afterReplay: replay => {
+            refreshMovedTarget?.(replay);
+            return this.refreshAndTrackProjectionalDependants(textRefresh);
+          }
+        }
       : {};
     const componentEdit = new ProjectionalComponentEditTransaction(
       transaction,
@@ -1525,6 +1630,9 @@ export class ComponentChangeTracker {
     this._projectionallyConsumedChanges ||= new WeakSet();
     ownedLegacyChanges.forEach(change => this._projectionallyConsumedChanges.add(change));
     if (refreshesDependants) {
+      refreshMovedTarget?.({
+        direction: ComponentTransactionDirection.FORWARD
+      });
       this.refreshAndTrackProjectionalDependants(textRefresh);
     }
     return Object.freeze({
@@ -1540,7 +1648,73 @@ export class ComponentChangeTracker {
 
   prepareProjectionalPolicyCacheProjection (batch, context) {
     return this.prepareProjectionalPolicyCacheRename(batch) ||
-      this.prepareProjectionalPolicyCacheProperty(batch, context);
+      this.prepareProjectionalPolicyCacheProperty(batch, context) ||
+      this.prepareProjectionalPolicyCacheStructure(batch, context);
+  }
+
+  prepareProjectionalPolicyCacheStructure (batch, context) {
+    const command = batch.commands[0];
+    if (batch.commands.length !== 1 ||
+        ![
+          ComponentBridgeCommandKind.INTRODUCE_NODE,
+          ComponentBridgeCommandKind.REMOVE_NODE,
+          ComponentBridgeCommandKind.MOVE_NODE
+        ].includes(command?.kind) ||
+        !batch.shadowProjection?.supported) return null;
+    const policy = this.componentDescriptor?.stylePolicy;
+    if (!policy?.spec) return null;
+
+    const step = batch.shadowProjection.steps[0];
+    const beforeDocument = batch.shadowProjection.beforeDocument;
+    const { semanticDelta } = step.reduction;
+    const ownerRuntimeIds = new Map();
+    if (command.kind === ComponentBridgeCommandKind.INTRODUCE_NODE) {
+      ownerRuntimeIds.set(semanticDelta.parentId, command.parentId);
+    } else if (command.kind === ComponentBridgeCommandKind.REMOVE_NODE) {
+      ownerRuntimeIds.set(semanticDelta.parentId, command.parentId);
+    } else {
+      ownerRuntimeIds.set(semanticDelta.fromParentId, command.previousParentId);
+      ownerRuntimeIds.set(semanticDelta.toParentId, command.parentId);
+    }
+
+    const changes = [];
+    const stores = new Map();
+    for (const [ownerId, runtimeOwnerId] of ownerRuntimeIds) {
+      if (!findComponentLayoutModel(beforeDocument, ownerId)) continue;
+      const path = componentNodeNamePath(beforeDocument, ownerId);
+      if (!path) continue;
+      let current = policy.spec;
+      for (const name of path) {
+        const properties = policySpecProperties(current);
+        current = (properties?.submorphs || []).find(spec =>
+          policySpecProperties(spec)?.name === name
+        );
+        if (!current) break;
+      }
+      const ownerProperties = current && policySpecProperties(current);
+      const beforeValue = ownerProperties?.layout;
+      const runtimeLayout = context.resolveMorph?.(runtimeOwnerId)?.layout;
+      if (!beforeValue || typeof runtimeLayout?.copy !== 'function') continue;
+      const afterValue = runtimeLayout.copy();
+      const id = `${this.componentModuleId}#${this.componentDescriptor.componentName}:${ownerId}:layout:structure`;
+      changes.push(Object.freeze({
+        id,
+        property: 'layout',
+        beforeValue,
+        afterValue
+      }));
+      stores.set(id, {
+        read: () => ownerProperties.layout,
+        write: layout => { ownerProperties.layout = layout; }
+      });
+    }
+    return Object.freeze({
+      kind: ProjectionalPolicyCacheProjectionKind.PROPERTY,
+      supported: true,
+      changes: Object.freeze(changes),
+      stores,
+      diagnostics: Object.freeze([])
+    });
   }
 
   prepareProjectionalPolicyCacheProperty (batch, context) {
@@ -1888,6 +2062,60 @@ export class ComponentChangeTracker {
       moduleState.completion = pending;
     }
     return pending;
+  }
+
+  refreshProjectionalMovedTarget (target, {
+    direction = ComponentTransactionDirection.FORWARD,
+    materializedNode = null,
+    materializedBindings = []
+  } = {}) {
+    const root = this.trackedComponent;
+    if (!target || !root) return false;
+    const apply = () => {
+      if (direction === ComponentTransactionDirection.REVERSE) {
+        const inheritedApplicator = target.master ||
+          target.ownerChain().find(morph => morph.master)?.master;
+        inheritedApplicator?.applyIfNeeded?.(true);
+        return true;
+      }
+
+      // Component parts retain an applicator across the runtime move. Reapply
+      // that narrowly scoped policy, then restore explicit values captured by
+      // materialization. The descriptor's policy cache intentionally does not
+      // mirror structural source edits, so looking the node up there can select
+      // its suppressed inherited occurrence instead of the new local one.
+      target.master?.applyIfNeeded?.(true);
+      if (!materializedNode ||
+          typeof root.master?.applySpecToMorph !== 'function') return true;
+      const applyMaterializedNode = (morph, node) => {
+        const properties = projectionalMaterializedProperties(
+          node,
+          materializedBindings
+        );
+        if (!obj.isEmpty(properties)) {
+          root.master.applySpecToMorph(morph, properties);
+        }
+        for (const childNode of node.children) {
+          const child = morph.submorphs.find(candidate =>
+            candidate.name === childNode.name
+          );
+          if (child) applyMaterializedNode(child, childNode);
+        }
+      };
+      applyMaterializedNode(target, materializedNode);
+      return true;
+    };
+    const withoutRecording = () => typeof target.dontRecordChangesWhile === 'function'
+      ? target.dontRecordChangesWhile(apply)
+      : apply();
+    if (typeof target.withMetaDo === 'function') {
+      target.withMetaDo({
+        reconcileChanges: false,
+        origin: 'runtime-projection',
+        undoable: false
+      }, withoutRecording);
+    } else withoutRecording();
+    return true;
   }
 
   projectProjectionalTextIntoRuntime (root, textRefresh) {

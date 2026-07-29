@@ -1108,6 +1108,7 @@ const Example = component({ fill: 'red' });`;
       provenance: localNodeProvenance(),
       properties: {
         fill: opaqueProperty('Color.green'),
+        borderWidth: opaqueProperty('2'),
         opacity: explicitProperty(0.5)
       }
     });
@@ -1128,7 +1129,7 @@ const Example = component({ fill: 'red' });`;
     expect(projection.sourceAfter).includes('import { Color } from "lively.graphics";');
     expect(projection.sourceAfter).includes("{ name: 'first' }");
     expect(projection.sourceAfter)
-      .includes('{ name: "introduced", fill: Color.green, opacity: 0.5 }');
+      .includes('{ name: "introduced", fill: Color.green, borderWidth: 2, opacity: 0.5 }');
     expect(componentDocumentsSemanticallyEqual(
       projection.projectedDocument,
       reduction.document

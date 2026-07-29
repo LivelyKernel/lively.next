@@ -650,8 +650,11 @@ function importChangesFor (source, document, requiredBindings, diagnostics) {
   const existingBindings = document.sourceMetadata.importBindings || [];
   const missing = [];
   for (const required of requiredBindings) {
-    if (existingBindings.some(existing => sameImportBinding(existing, required))) continue;
-    const conflict = existingBindings.find(existing => existing.local === required.local);
+    if ([...existingBindings, ...missing].some(existing =>
+      sameImportBinding(existing, required))) continue;
+    const conflict = [...existingBindings, ...missing].find(
+      existing => existing.local === required.local
+    );
     if (conflict) {
       diagnostics.push(diagnostic(
         ComponentSourceProjectionDiagnosticKind.IMPORT_BINDING_CONFLICT,
@@ -687,9 +690,17 @@ function canonicalSemanticValue (value) {
   if (Array.isArray(value)) return value.map(canonicalSemanticValue);
   if (value && Object.getPrototypeOf(value) === Object.prototype) {
     if (value.kind === ComponentPropertyKind.OPAQUE_EXPRESSION) {
+      const expression = canonicalOpaqueExpression(value.expression);
+      const literal = canonicalLiteralExpressionValue(expression);
+      if (literal.supported) {
+        return {
+          kind: ComponentPropertyKind.EXPLICIT_VALUE,
+          value: canonicalSemanticValue(literal.value)
+        };
+      }
       return {
         kind: value.kind,
-        expression: canonicalOpaqueExpression(value.expression)
+        expression
       };
     }
     return Object.fromEntries(Object.keys(value).sort().map(key =>
@@ -697,6 +708,45 @@ function canonicalSemanticValue (value) {
     ));
   }
   return value;
+}
+
+function canonicalLiteralExpressionValue (expression) {
+  if (!expression || typeof expression !== 'object') {
+    return { supported: false };
+  }
+  if (expression.type === 'Literal') {
+    return { supported: true, value: expression.value };
+  }
+  if (expression.type === 'UnaryExpression' &&
+      ['+', '-'].includes(expression.operator)) {
+    const argument = canonicalLiteralExpressionValue(expression.argument);
+    if (!argument.supported || typeof argument.value !== 'number') {
+      return { supported: false };
+    }
+    return {
+      supported: true,
+      value: expression.operator === '-' ? -argument.value : argument.value
+    };
+  }
+  if (expression.type === 'ArrayExpression') {
+    const elements = expression.elements.map(canonicalLiteralExpressionValue);
+    return elements.every(element => element.supported)
+      ? { supported: true, value: elements.map(element => element.value) }
+      : { supported: false };
+  }
+  if (expression.type !== 'ObjectExpression') return { supported: false };
+  const entries = [];
+  for (const property of expression.properties) {
+    if (property.type !== 'Property' || property.computed ||
+        property.kind !== 'init') return { supported: false };
+    const key = property.key.type === 'Identifier'
+      ? property.key.name
+      : property.key.type === 'Literal' ? property.key.value : null;
+    const nested = canonicalLiteralExpressionValue(property.value);
+    if (key === null || !nested.supported) return { supported: false };
+    entries.push([key, nested.value]);
+  }
+  return { supported: true, value: Object.fromEntries(entries) };
 }
 
 function canonicalOpaqueExpression (expression) {

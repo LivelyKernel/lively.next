@@ -34,6 +34,21 @@ export {
 
 export const DEFAULT_RECONCILIATION_FUZZ_SEED = 0xC0FFEE;
 
+export const RECONCILIATION_FUZZ_STABLE_STYLE_PROPERTIES = Object.freeze([
+  'fill',
+  'borderColor',
+  'borderWidth',
+  'borderStyle',
+  'borderRadius',
+  'opacity',
+  'visible',
+  'scale',
+  'rotation',
+  'tooltip',
+  'origin',
+  'clipMode'
+]);
+
 export const RECONCILIATION_FUZZ_OPERATIONS = [
   'addPlainMorph',
   'addPart',
@@ -1117,12 +1132,21 @@ export class ReconciliationFuzzer {
         throw new Error(`Generated source grew to ${sourceAfter.length} characters (limit: ${sourceLimit})`);
       }
       if (this.validateSource) {
-        const styleProperties = this.propertyHistory
+        const changedStyleProperties = this.propertyHistory
           .filter(change =>
             !['layout', 'vertices'].includes(change.property) &&
             this.isAttached(change.target)
           )
           .map(change => ({ path: this.pathOf(change.target), property: change.property }));
+        const introducedStyleProperties = this.allMorphs()
+          .filter(morph =>
+            this.isProjectionallyAdded(morph) ||
+            this.isEmbeddedTextMorph(morph)
+          )
+          .flatMap(morph => RECONCILIATION_FUZZ_STABLE_STYLE_PROPERTIES
+            .filter(property => morph.styleProperties.includes(property))
+            .map(property => ({ path: this.pathOf(morph), property })));
+        const styleProperties = [...changedStyleProperties, ...introducedStyleProperties];
         await this.validateSource(sourceAfter, {
           seed: this.seed,
           step,

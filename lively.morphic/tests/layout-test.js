@@ -926,6 +926,11 @@ describe('layout', () => {
 
     afterEach(() => container.remove());
 
+    it('preserves the rendering mode in its attached spec', () => {
+      expect(container.layout.getSpec().renderViaCSS).equals(false);
+      expect(container.layout.copy().renderViaCSS).equals(false);
+    });
+
     it('does not resize by default', () => {
       checkJSAndCSS(container, () => {
         container.extent = pt(120, 120);

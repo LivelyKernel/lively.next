@@ -127,6 +127,26 @@ function isSemanticValue (value) {
     Object.values(value).every(isSemanticValue);
 }
 
+function serializedBindingsForNode (serialized, node) {
+  if (node.provenance.kind !== ComponentNodeProvenanceKind.ADDED) {
+    return Object.freeze({
+      bindings: serialized.bindings,
+      requiredBindings: serialized.requiredBindings
+    });
+  }
+  const bindings = {
+    ...serialized.bindings,
+    'lively.morphic': Array.from(new Set([
+      ...(serialized.bindings['lively.morphic'] || []),
+      'add'
+    ]))
+  };
+  return Object.freeze({
+    bindings: Object.freeze(bindings),
+    requiredBindings: componentImportBindingsFromExpression(bindings)
+  });
+}
+
 function componentCommandFor ({
   document,
   bridgeCommand,
@@ -280,6 +300,7 @@ function componentCommandFor ({
             : { beforeId })
         })
       : serialized.node;
+    const introducedBindings = serializedBindingsForNode(serialized, introducedNode);
     return {
       command: IntroduceNode({
         componentId: document.componentId,
@@ -288,9 +309,9 @@ function componentCommandFor ({
         beforeId,
         node: introducedNode,
         runtimeIndex: bridgeCommand.index,
-        requiredBindings: serialized.requiredBindings
+        requiredBindings: introducedBindings.requiredBindings
       }),
-      bindings: serialized.bindings,
+      bindings: introducedBindings.bindings,
       runtimeRename: serialized.runtimeRename,
       runtimeTargetIds: Object.freeze({
         [parent.id]: bridgeCommand.parentId,

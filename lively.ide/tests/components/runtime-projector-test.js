@@ -267,14 +267,14 @@ describe('projectional component runtime projector', () => {
 
     expect(projection.supported).to.be.true;
     expect(projection.changeSet.operations).length(2);
-    expect(projection.changeSet.operations[1]).containSubset({
+    expect(projection.changeSet.operations[0]).containSubset({
       targetId: 'runtime-owner',
       property: 'layout',
       before: beforeLayout,
       after: afterLayout,
       metadata: { applyWhenAdopting: true }
     });
-    expect(projection.inverseChangeSet.operations[0]).containSubset({
+    expect(projection.inverseChangeSet.operations[1]).containSubset({
       property: 'layout',
       before: afterLayout,
       after: beforeLayout

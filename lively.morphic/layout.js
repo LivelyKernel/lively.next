@@ -1861,7 +1861,8 @@ export class ConstraintLayout extends Layout {
     return {
       submorphSettings,
       reactToSubmorphAnimations: this.reactToSubmorphAnimations,
-      lastExtent: this.lastExtent
+      lastExtent: this.lastExtent,
+      renderViaCSS: this.renderViaCSS
     };
   }
 
