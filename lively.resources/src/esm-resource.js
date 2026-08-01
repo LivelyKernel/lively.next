@@ -7,11 +7,13 @@ const requestMap = {};
 
 export class ESMResource extends Resource {
   static normalize (esmUrl) {
-    const id = esmUrl.replaceAll(/esm:\/\/([^\/]*)\//g, '');
+    const match = esmUrl.match(/^esm:\/\/([^\/]*)\/(.*)$/);
+    const domain = match?.[1];
+    const id = match?.[2] || esmUrl;
 
     let pathStructure = id.split('/').filter(Boolean);
 
-    // jspm servers both the entry point into a package as well as subcontent from package@version/
+    // ESM CDNs serve both the entry point into a package and package subcontent.
     // differentiate these cases by introducing an index.js which will automatically be served by systemJS
     if (pathStructure.length === 1 ||
         !pathStructure[pathStructure.length - 1].endsWith('+esm') &&
@@ -37,6 +39,9 @@ export class ESMResource extends Resource {
       pathStructure[pathStructure.length - 1] = pathStructure[pathStructure.length - 1].replace('!cjs', '.cjs');
     }
 
+    // The provider is part of the cache identity. Different CDNs can use the
+    // same path for different transformed source.
+    if (domain) pathStructure.unshift(domain);
     return pathStructure;
   }
 
@@ -50,7 +55,7 @@ export class ESMResource extends Resource {
     const id = this.url.replace(/esm:\/\/([^\/]*)\//g, '');
     const esmURL = this.getEsmURL();
 
-    let pathStructure = ESMResource.normalize(id);
+    let pathStructure = ESMResource.normalize(this.url);
 
     const [res, created] = await this.findOrCreatePathStructure(pathStructure);
 
@@ -60,7 +65,7 @@ export class ESMResource extends Resource {
       module = await res.read();
     } else {
       module = await resource((esmURL + id)).read();
-      res.write(module);
+      await res.write(module);
     }
     return module;
   }

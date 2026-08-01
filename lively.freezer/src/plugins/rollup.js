@@ -148,9 +148,6 @@ export function lively (args) {
     },
     async generateBundle (options, bundle, isWrite) {
       await bundler.generateBundle(this, bundle, depsCode, importMap, options);
-    },
-    renderError() {
-      process.exit(1);
     }
   };
 }

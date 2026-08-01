@@ -63,7 +63,7 @@ const CLASS_INSTRUMENTATION_MODULES = [
   'https://jspm.dev/npm:rollup@2.28.2' // this contains a bunch of class definitions which right now screws up the closure compiler
 ];
 
-const ESM_CDNS = [/esm:\/\/([^\/]*)\//, /https:\/\/ga\.jspm\.io\//];
+const ESM_CDNS = [/^esm:\/\/([^\/]*)\//, /^https:\/\/(?:ga\.jspm\.io|esm\.sh)\//];
 
 // fixme: Why is a blacklist nessecary if there is a whitelist?
 const CLASS_INSTRUMENTATION_MODULES_EXCLUSION = ['lively.lang'];
@@ -133,10 +133,11 @@ export function bulletProofNamespaces (code, chunkFileName, isResurrectionBuild,
       if (node.type === 'VariableDeclaration') {
         const matchingComment = pureComments.find(c => node.start < c.start && c.end > node.end);
         if (!matchingComment) return node;
-        const matchingGetter = node.declarations[0]?.init?.arguments?.[0]?.properties?.find(prop => prop.key.name === 'default' && prop.kind === 'get');
+        const matchingGetter = node.declarations[0]?.init?.arguments?.[0]?.properties?.find(prop => prop?.key?.name === 'default' && prop.kind === 'get');
         if (!matchingGetter) return node;
         const getterBody = matchingGetter.value.body;
         const [returnStmt] = getterBody.body;
+        if (returnStmt?.type !== 'ReturnStatement' || returnStmt.argument?.type !== 'Identifier') return node;
         rewrites.push([getterBody, `\nif (typeof ${returnStmt.argument.name} === 'undefined') throw new Error('Module not yet initialized!');\n`]);
       }
       return node;
@@ -203,11 +204,8 @@ function resolutionId (id, importer) {
 function equivalentCdnModuleIds (id) {
   if (!id || typeof id !== 'string') return [];
   const ids = [id];
-  if (id.startsWith('https://ga.jspm.io/')) {
-    ids.push(id.replace('https://ga.jspm.io/', 'esm://ga.jspm.io/'));
-  } else if (id.startsWith('esm://ga.jspm.io/')) {
-    ids.push(id.replace('esm://ga.jspm.io/', 'https://ga.jspm.io/'));
-  }
+  if (id.startsWith('https://')) ids.push(id.replace(/^https:/, 'esm:'));
+  else if (id.startsWith('esm://')) ids.push(id.replace(/^esm:/, 'https:'));
   return ids;
 }
 
@@ -220,11 +218,38 @@ function equivalentCdnModuleIds (id) {
  * @returns { boolean } Wether or not the module was served from an ESM CDN.
  */
 function isCdnImport (id, importer, resolver) {
-  if (ESM_CDNS.find(cdn => id.match(cdn) || importer.match(cdn)) && importer && importer !== ROOT_ID) {
+  if (importer && importer !== ROOT_ID && ESM_CDNS.find(cdn => id.match(cdn) || importer.match(cdn))) {
     const { url } = resource(resolver.ensureFileFormat(importer)).root(); // get the cdn host root
     return ESM_CDNS.find(cdn => url.match(cdn));
   }
   return false;
+}
+
+/**
+ * esm.sh rewrites Node built-ins to private `/node/*.mjs` URLs. Translate
+ * those URLs back to standard `node:*` specifiers so the project's browser
+ * import map can choose one consistent polyfill implementation.
+ */
+export function resolveEsmShNodeBuiltin (id, importer, importMap) {
+  if (!id || !importer || !importMap ||
+      !/^(?:esm|https):\/\/esm\.sh\//.test(importer)) return null;
+
+  const match = id.match(/^\/node\/(.+)\.mjs$/) ||
+    id.match(/^(?:esm|https):\/\/esm\.sh\/node\/(.+)\.mjs$/);
+  if (!match) return null;
+
+  const builtinName = match[1];
+  const importers = [
+    importer,
+    ...Object.keys(importMap.scopes || {}).filter(scope => scope.includes('ga.jspm.io/'))
+  ];
+  for (const resolutionImporter of importers) {
+    for (const builtinId of [`node:${builtinName}`, builtinName]) {
+      const remapped = resolveViaImportMap(builtinId, importMap, resolutionImporter);
+      if (remapped && remapped !== builtinId) return remapped;
+    }
+  }
+  return null;
 }
 
 export default class LivelyRollup {
@@ -346,7 +371,7 @@ export default class LivelyRollup {
     if (!id || id === ROOT_ID || id.startsWith('__rootModule__:') ||
         id.startsWith('.') || id.startsWith('/') || id.startsWith('\0') || id.includes(':')) return null;
     const importMap = this.defaultImportMapForCdnImports();
-    const remapped = importMap && resolveViaImportMap(id, importMap, 'esm://ga.jspm.io/');
+    const remapped = importMap && resolveViaImportMap(id, importMap, '');
     if (remapped && remapped !== id) return remapped;
     try {
       const fallbackImporter = this.resolver.normalizeFileName('lively.freezer/index.js');
@@ -917,8 +942,17 @@ export default class LivelyRollup {
     // handle standalone
     if (!importer) return this.resolver.resolveModuleId(id, importer, this.getResolutionContext());
 
-    // handle ESM CDN imports
-    if (isCdnImport(id, importer, this.resolver)) {
+    const importingPackage = this.modulePackageFor(importer);
+    // honor the systemjs options within the package config
+    let { map: mapping, importMap } = importingPackage?.systemjs || {};
+    if (!importMap && this.wasFetchedFromEsmCdn(importer)) {
+      importMap = this.defaultImportMapForCdnImports();
+    }
+
+    const builtinRemapping = resolveEsmShNodeBuiltin(id, importer, importMap);
+    if (builtinRemapping) {
+      id = builtinRemapping;
+    } else if (isCdnImport(id, importer, this.resolver)) {
       if (id.startsWith('.')) {
         id = resource(importer).parent().join(id).withRelativePartsResolved().url;
       } else if (id.startsWith('/')) {
@@ -926,12 +960,6 @@ export default class LivelyRollup {
       }
     }
 
-    const importingPackage = this.modulePackageFor(importer);
-    // honor the systemjs options within the package config
-    let { map: mapping, importMap } = importingPackage?.systemjs || {};
-    if (!importMap && this.wasFetchedFromEsmCdn(importer)) {
-      importMap = this.defaultImportMapForCdnImports();
-    }
     if (mapping) {
       let remapped = mapping[id];
       if (remapped) {

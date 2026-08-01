@@ -109,6 +109,42 @@ describe('l2l', function () {
       await promise.waitFor(4000, () => connectedAgain);
     });
 
+    it('coalesces concurrent registration requests', async () => {
+      client2 = L2LClient.create({ url, namespace, autoOpen: false });
+      let connections = 0;
+      const countConnection = () => connections++;
+      tracker.ioNamespace.on('connection', countConnection);
+
+      try {
+        await Promise.all(Array.from({ length: 20 }, () => client2.register()));
+        await client2.whenRegistered(1000);
+        await promise.delay(50);
+      } finally {
+        tracker.ioNamespace.removeListener('connection', countConnection);
+      }
+
+      expect(connections).equals(1, 'concurrent registration opened multiple sockets');
+    });
+
+    it('re-registers once after a server disconnect', async () => {
+      const oldSocketId = client1.socketId;
+      let connections = 0;
+      const countConnection = () => connections++;
+      tracker.ioNamespace.on('connection', countConnection);
+
+      try {
+        tracker.getSocketForClientId(client1.id).disconnect(true);
+        await promise.waitFor(2000, () =>
+          client1.isRegistered() && client1.socketId !== oldSocketId);
+        await promise.delay(50);
+      } finally {
+        tracker.ioNamespace.removeListener('connection', countConnection);
+      }
+
+      expect(connections).equals(1, 'server disconnect opened multiple replacement sockets');
+      expect(tracker.clients.get(client1.id).socketId).equals(client1.socketId);
+    });
+
     it('client unregisters', async () => {
       expect(client1.isRegistered()).equals(true, 1);
       await client1.unregister();

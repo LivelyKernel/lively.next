@@ -102,8 +102,29 @@ function x (cmd, opts = {}) {
         ? reject(new Error(`Command ${cmd} failed: ${code}\n${stdout}${stderr}`))
         : resolve(stdout));
     if (opts.verbose) {
-      p.stdout.pipe(process.stdout);
-      p.stderr.pipe(process.stderr);
+      const useProgress = process.stdout.isTTY &&
+        typeof globalThis.__flatnProgress === 'function';
+      if (!useProgress) {
+        p.stdout.pipe(process.stdout);
+        p.stderr.pipe(process.stderr);
+        return;
+      }
+
+      const report = (stream, reportLine) => {
+        let pending = '';
+        stream.setEncoding('utf8');
+        stream.on('data', chunk => {
+          const lines = `${pending}${chunk}`.split(/\r\n|\n|\r/);
+          pending = lines.pop() || '';
+          lines.filter(line => line.trim()).forEach(reportLine);
+        });
+        stream.on('end', () => {
+          if (pending.trim()) reportLine(pending);
+        });
+      };
+
+      report(p.stdout, line => globalThis.__flatnProgress(line));
+      report(p.stderr, line => console.error(line));
     }
   });
 }

@@ -14391,11 +14391,13 @@ const requestMap = {};
 
 class ESMResource extends Resource {
   static normalize (esmUrl) {
-    const id = esmUrl.replaceAll(/esm:\/\/([^\/]*)\//g, '');
+    const match = esmUrl.match(/^esm:\/\/([^\/]*)\/(.*)$/);
+    const domain = match?.[1];
+    const id = match?.[2] || esmUrl;
 
     let pathStructure = id.split('/').filter(Boolean);
 
-    // jspm servers both the entry point into a package as well as subcontent from package@version/
+    // ESM CDNs serve both the entry point into a package and package subcontent.
     // differentiate these cases by introducing an index.js which will automatically be served by systemJS
     if (pathStructure.length === 1 ||
         !pathStructure[pathStructure.length - 1].endsWith('+esm') &&
@@ -14421,6 +14423,9 @@ class ESMResource extends Resource {
       pathStructure[pathStructure.length - 1] = pathStructure[pathStructure.length - 1].replace('!cjs', '.cjs');
     }
 
+    // The provider is part of the cache identity. Different CDNs can use the
+    // same path for different transformed source.
+    if (domain) pathStructure.unshift(domain);
     return pathStructure;
   }
 
@@ -14434,7 +14439,7 @@ class ESMResource extends Resource {
     const id = this.url.replace(/esm:\/\/([^\/]*)\//g, '');
     const esmURL = this.getEsmURL();
 
-    let pathStructure = ESMResource.normalize(id);
+    let pathStructure = ESMResource.normalize(this.url);
 
     const [res, created] = await this.findOrCreatePathStructure(pathStructure);
 
@@ -14444,7 +14449,7 @@ class ESMResource extends Resource {
       module = await res.read();
     } else {
       module = await resource((esmURL + id)).read();
-      res.write(module);
+      await res.write(module);
     }
     return module;
   }
@@ -14650,8 +14655,29 @@ function x (cmd, opts = {}) {
         ? reject(new Error(`Command ${cmd} failed: ${code}\n${stdout}${stderr}`))
         : resolve(stdout));
     if (opts.verbose) {
-      p.stdout.pipe(process.stdout);
-      p.stderr.pipe(process.stderr);
+      const useProgress = process.stdout.isTTY &&
+        typeof globalThis.__flatnProgress === 'function';
+      if (!useProgress) {
+        p.stdout.pipe(process.stdout);
+        p.stderr.pipe(process.stderr);
+        return;
+      }
+
+      const report = (stream, reportLine) => {
+        let pending = '';
+        stream.setEncoding('utf8');
+        stream.on('data', chunk => {
+          const lines = `${pending}${chunk}`.split(/\r\n|\n|\r/);
+          pending = lines.pop() || '';
+          lines.filter(line => line.trim()).forEach(reportLine);
+        });
+        stream.on('end', () => {
+          if (pending.trim()) reportLine(pending);
+        });
+      };
+
+      report(p.stdout, line => globalThis.__flatnProgress(line));
+      report(p.stderr, line => console.error(line));
     }
   });
 }
@@ -15773,11 +15799,8 @@ function resolveImportMapping(name, mapping, context) {
 function equivalentImportMapScopesFor (url) {
   if (!url || typeof url !== 'string') return [];
   const urls = [url];
-  if (url.startsWith('https://ga.jspm.io/')) {
-    urls.push(url.replace('https://ga.jspm.io/', 'esm://ga.jspm.io/'));
-  } else if (url.startsWith('esm://ga.jspm.io/')) {
-    urls.push(url.replace('esm://ga.jspm.io/', 'https://ga.jspm.io/'));
-  }
+  if (url.startsWith('https://')) urls.push(url.replace(/^https:/, 'esm:'));
+  else if (url.startsWith('esm://')) urls.push(url.replace(/^esm:/, 'https:'));
   return urls;
 }
 

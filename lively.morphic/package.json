@@ -44,10 +44,7 @@
     "uglify-es": "^3.3.9"
   },
   "systemjs": {
-    "main": "index.js",
-    "map": {
-      "yoga-layout/load": "https://ga.jspm.io/npm:yoga-layout@3.2.1/dist/src/load.js"
-    }
+    "main": "index.js"
   },
   "scripts": {
     "build": "node tools/build.js",
