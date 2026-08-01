@@ -137,7 +137,7 @@ export default class L2LTracker extends L2LConnection {
 
     socket.on('error', (err) => this.onError(err));
     socket.on('connect', () => this.onConnect(socket));
-    socket.on('disconnect', () => this.onDisconnect(socket));
+    socket.on('disconnect', reason => this.onDisconnect(socket, reason));
 
     this.installEventToMessageTranslator(socket);
   }
@@ -146,8 +146,12 @@ export default class L2LTracker extends L2LConnection {
     if (this.debug) console.log(`[l2l] ${this} connected to ${socket.id}`);
   }
 
-  onDisconnect (socket) {
-    if (this.debug) console.log(`[l2l] ${this} disconnected from ${socket.id}`);
+  onDisconnect (socket, reason) {
+    if (this.debug) {
+      const clientId = this.getClientIdForSocketId(socket.id);
+      const info = clientId && this.clients.get(clientId)?.info;
+      console.log(`[l2l] ${this} disconnected from ${socket.id}: ${reason}`, info || 'unregistered');
+    }
   }
 
   registerClient ({ sender, data }, answerFn, socket) {

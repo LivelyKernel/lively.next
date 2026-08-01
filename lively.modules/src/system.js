@@ -472,6 +472,9 @@ function preNormalize (System, name, parent) {
       importMap = !isNode && systemjs?.importMap; // only works in the browser
       mappedObject = map?.[name] || isNode && System.map[name]; // only consider the global map if no local importMap
     }
+    if (!importMap && !isNode && parent) {
+      importMap = System.importMapCache.get(parent);
+    }
 
     if (mappedObject) {
       if (typeof mappedObject === 'object') {
@@ -615,6 +618,14 @@ async function finalizeNormalization (System, name, normalized) {
   return normalized;
 }
 
+export function propagateImportMapCache (System, sourceId, ...normalizedIds) {
+  const importMap = System.importMapCache.get(sourceId);
+  if (!importMap) return;
+  for (const id of normalizedIds) {
+    if (id) System.importMapCache.set(id, importMap);
+  }
+}
+
 async function normalizeHook (proceed, name, parent, parentAddress) {
   const System = this;
   if (!isLivelyTranspiler(System.transpiler)) return await proceed(name, parent, true);
@@ -632,6 +643,7 @@ async function normalizeHook (proceed, name, parent, parentAddress) {
   const stage2 = await proceed(stage1, parent, true);
   let stage3 = postNormalize(System, stage2 || stage1, false);
   stage3 = await finalizeNormalization(System, name, stage3);
+  propagateImportMapCache(System, stage1, stage2, stage3);
   System.debug && console.log(`[normalize] ${name} => ${stage3}`);
 
   if (System.METADATA[stage2] && !System.METADATA[stage3]) {
