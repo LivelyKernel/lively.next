@@ -16,6 +16,7 @@ import {
 
 import { PackageSpec } from "flatn/package-map.js"
 import { bunInstall } from "flatn/bun-install.js"
+import { resolveViaImportMap } from "flatn/helpers.mjs"
 
 
 /*
@@ -26,6 +27,24 @@ import { bunInstall } from "flatn/bun-install.js"
 
 
 let baseDir = resource(`file://${tmpdir()}/lively.node-packages-test/`);
+
+describe("import maps", () => {
+  it("matches HTTPS importers against equivalent ESM CDN scopes", () => {
+    const importMap = {
+      scopes: {
+        "esm://esm.sh/example@1.0.0/": {
+          dependency: "esm://esm.sh/dependency@2.0.0"
+        }
+      }
+    };
+
+    expect(resolveViaImportMap(
+      "dependency",
+      importMap,
+      "https://esm.sh/example@1.0.0/index.js"
+    )).equals("esm://esm.sh/dependency@2.0.0");
+  });
+});
 
 
 describe("flat packages", function() {

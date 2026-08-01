@@ -6,6 +6,8 @@ import { resource } from "lively.resources";
 import { parseQuery } from "lively.resources";
 import { arr, obj } from "lively.lang";
 const Generator = System.get('@jspm_generator').default;
+const jspmAvailabilityCache = new Map();
+const JSPM_AVAILABILITY_TTL = 60 * 1000;
 
 // Deps that cannot be resolved via jspm.io CDN:
 // - native binary packages (platform-specific compiled addons)
@@ -16,6 +18,7 @@ function isUnresolvableOnCDN ([name, version]) {
   if (/^@rollup\/rollup-/.test(name)) return true;
   if (/^@swc\/core(-|$)/.test(name)) return true;
   if (name === '@jspm/generator') return true;
+  if (name === 'nw') return true;
   if (name === 'puppeteer' || name === 'puppeteer-core') return true;
   return false;
 }
@@ -34,46 +37,77 @@ function extractFailingPackage (errMsg) {
   return null;
 }
 
-/**
- * Given a package name and failing version, find a nearby version that
- * actually exists on the jspm.io CDN by walking backwards from the failing
- * version through the npm registry's version list.
- */
-async function findAvailableCDNVersion (name, failingVersion) {
-  let versions;
-  try {
-    const res = await fetch(`https://registry.npmjs.org/${name}`, {
-      headers: { Accept: 'application/vnd.npm.install-v1+json' }
-    });
-    if (!res.ok) return null;
-    const meta = await res.json();
-    versions = Object.keys(meta.versions || {});
-  } catch { return null; }
-
-  const failIdx = versions.indexOf(failingVersion);
-  if (failIdx < 0) return null;
-  // Try up to 20 versions before the failing one (most recent first)
-  const candidates = versions.slice(Math.max(0, failIdx - 20), failIdx).reverse();
-
-  for (const ver of candidates) {
-    try {
-      const probe = await fetch(
-        `https://ga.jspm.io/npm:${name}@${ver}/package.json`,
-        { method: 'HEAD' }
-      );
-      if (probe.ok) return ver;
-    } catch { continue; }
-  }
-  return null;
-}
-
-function createGenerator (inputMap, resolutions) {
+function createGenerator (inputMap, providers) {
   return new Generator({
     env: ["browser", "module", "import"],
     defaultProvider: 'jspm.io',
     inputMap,
-    ...(Object.keys(resolutions).length ? { resolutions } : {})
+    ...(Object.keys(providers).length ? { providers } : {})
   });
+}
+
+function moduleUrlsIn (value, urls = new Set()) {
+  if (typeof value === 'string') {
+    if (value.startsWith('https://ga.jspm.io/npm:') && !value.endsWith('/')) urls.add(value);
+  } else if (value && typeof value === 'object') {
+    for (const nested of Object.values(value)) moduleUrlsIn(nested, urls);
+  }
+  return urls;
+}
+
+async function isUnavailableOnJspm (url, fetchModule, availabilityCache) {
+  let cached = availabilityCache.get(url);
+  if (!cached || Date.now() - cached.checkedAt > JSPM_AVAILABILITY_TTL) {
+    cached = {
+      checkedAt: Date.now(),
+      result: (async () => {
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            const response = await fetchModule(url, { method: 'HEAD' });
+            if (response.status < 500) return response.status === 404 || response.status === 410;
+          } catch {}
+        }
+        return false;
+      })()
+    };
+    availabilityCache.set(url, cached);
+  }
+  return await cached.result;
+}
+
+export async function findUnavailableJspmPackages (
+  importMap,
+  fetchModule = fetch,
+  availabilityCache = jspmAvailabilityCache
+) {
+  const urls = [...moduleUrlsIn(importMap)];
+  const unavailable = new Set();
+  let next = 0;
+
+  async function checkNext () {
+    while (next < urls.length) {
+      const url = urls[next++];
+      if (!await isUnavailableOnJspm(url, fetchModule, availabilityCache)) continue;
+      const failingPackage = extractFailingPackage(url);
+      if (failingPackage) unavailable.add(failingPackage.name);
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(20, urls.length) }, checkNext));
+  return [...unavailable].sort();
+}
+
+function esmShPackagesIn (value, packageNames = new Set()) {
+  if (typeof value === 'string') {
+    const match = value.match(/^https:\/\/esm\.sh\/(?:v\d+\/)?\*?((?:@[^/@]+\/)?[^/@]+)@/);
+    if (match) packageNames.add(match[1]);
+  } else if (value && typeof value === 'object') {
+    for (const [key, nested] of Object.entries(value)) {
+      esmShPackagesIn(key, packageNames);
+      esmShPackagesIn(nested, packageNames);
+    }
+  }
+  return packageNames;
 }
 
 function fileURLPath (url) {
@@ -109,34 +143,36 @@ function clientRelativePackageRegistryJSON (value) {
   return value;
 }
 
-async function installDeps (generator, deps, failed, resolutions, inputMap) {
+export async function installDeps (
+  generator,
+  deps,
+  failed,
+  providers,
+  newGenerator = createGenerator,
+  findUnavailablePackages = findUnavailableJspmPackages
+) {
   const depNames = deps.map(([name]) => name);
-  let needsRestart = false;
+  while (true) {
+    let needsRestart = false;
 
-  for (let dep of deps) {
-    if (dep[0] == 'tar-fs' || isUnresolvableOnCDN(dep) || !!generator.map.imports[dep[0]]) continue;
-    const depName = dep[0];
-    const depSpec = dep.join('@');
-    try {
-      await generator.install(depSpec);
-      delete failed[depName];
-      continue;
-    } catch (firstErr) {
-      const errMsg = firstErr.message || String(firstErr);
-      const failingPkg = extractFailingPackage(errMsg);
-      if (failingPkg && !resolutions[failingPkg.name]) {
-        console.warn(`\x1b[33m       [!] Import map: ${depSpec} failed — transitive dep ${failingPkg.name}@${failingPkg.version} not on CDN, searching for available version...\x1b[0m`);
-        const goodVersion = await findAvailableCDNVersion(failingPkg.name, failingPkg.version);
-        if (goodVersion) {
-          console.log(`\x1b[32m       [✓] Found ${failingPkg.name}@${goodVersion} on CDN, pinning via resolutions\x1b[0m`);
-          resolutions[failingPkg.name] = goodVersion;
+    for (let dep of deps) {
+      if (dep[0] == 'tar-fs' || isUnresolvableOnCDN(dep) || !!generator.map.imports[dep[0]]) continue;
+      const depName = dep[0];
+      const depSpec = dep.join('@');
+      try {
+        await generator.install(depSpec);
+        delete failed[depName];
+      } catch (firstErr) {
+        const errMsg = firstErr.message || String(firstErr);
+        const failingPkg = extractFailingPackage(errMsg);
+        if (failingPkg && !providers[failingPkg.name]) {
+          console.warn(`\x1b[33m       [!] Import map: ${depSpec} failed — ${failingPkg.name}@${failingPkg.version} is unavailable from jspm.io; retrying the same version via esm.sh\x1b[0m`);
+          providers[failingPkg.name] = 'esm.sh';
           needsRestart = true;
-          continue; // don't mark as failed — will be retried in second pass
-        } else {
-          console.warn(`\x1b[33m       [!] Import map: no available CDN version found for ${failingPkg.name}\x1b[0m`);
+          break;
         }
-      } else if (!failingPkg) {
-        // Non-CDN-404 error — retry once
+
+        // Retry transient failures once before leaving the direct dependency unresolved.
         console.warn('\x1b[33m       [!] Import map: first attempt failed for ' + depSpec + ': ' + errMsg + ', retrying...\x1b[0m');
         try {
           await generator.install(depSpec);
@@ -145,29 +181,25 @@ async function installDeps (generator, deps, failed, resolutions, inputMap) {
         } catch (retryErr) {
           console.warn('\x1b[33m       [!] Import map: failed to resolve ' + depSpec + ': ' + (retryErr.message || retryErr) + '\x1b[0m');
         }
-      }
-      failed[depName] = true;
-    }
-  }
-
-  // If we discovered new resolution pins, recreate the generator and
-  // redo the entire install so all deps benefit from the pins.
-  if (needsRestart) {
-    console.log(`\x1b[36m       [↻] Restarting import map resolution with ${Object.keys(resolutions).length} pinned resolution(s)...\x1b[0m`);
-    generator = createGenerator(inputMap, resolutions);
-    for (const key of Object.keys(failed)) delete failed[key];
-    for (let dep of deps) {
-      if (dep[0] == 'tar-fs' || isUnresolvableOnCDN(dep) || !!generator.map.imports[dep[0]]) continue;
-      const depName = dep[0];
-      const depSpec = dep.join('@');
-      try {
-        await generator.install(depSpec);
-        delete failed[depName];
-      } catch (err) {
-        console.warn('\x1b[33m       [!] Import map: failed to resolve ' + depSpec + ': ' + (err.message || err) + '\x1b[0m');
         failed[depName] = true;
       }
     }
+
+    if (!needsRestart) {
+      const unavailablePackages = await findUnavailablePackages(generator.getMap());
+      const newFallbacks = unavailablePackages.filter(name => !providers[name]);
+      for (const name of newFallbacks) providers[name] = 'esm.sh';
+      if (newFallbacks.length) {
+        console.warn(`\x1b[33m       [!] Import map: ${newFallbacks.length} generated jspm.io package artifact(s) returned 404; retrying them via esm.sh\x1b[0m`);
+        needsRestart = true;
+      }
+    }
+    if (!needsRestart) break;
+    console.log(`\x1b[36m       [↻] Restarting import map resolution with ${Object.keys(providers).length} esm.sh package fallback(s)...\x1b[0m`);
+    // Existing locks still point at the failed provider. Rebuild the map so
+    // the package-level provider overrides apply throughout the dependency graph.
+    generator = newGenerator(false, providers);
+    for (const key of Object.keys(failed)) delete failed[key];
   }
 
   for (const failedDep of Object.keys(failed)) {
@@ -187,19 +219,31 @@ export async function generateImportMap (packageName) {
   if (await cachedImportMap.exists()) {
     inputMap = JSON.parse((await cachedImportMap.read()).replace(/esm:\/\//g, 'https://')); // replace esm to make generator install again
   }
-  const resolutions = {};
-  let generator = createGenerator(inputMap, resolutions);
+  const providers = inputMap?._providers || {};
+  // Old maps may contain silent transitive downgrades. Maps with provider
+  // overrides also need rebuilding because their existing URL locks take
+  // precedence over those overrides.
+  if (inputMap?._resolutions || inputMap?._providers) inputMap = false;
   const failed = inputMap?._failed || {};
+  if (inputMap) {
+    delete inputMap._failed;
+    delete inputMap._providers;
+  }
+  let generator = createGenerator(inputMap, providers);
   generator = await installDeps(
     generator,
     Object.entries(pkg.config.dependencies || {}).filter(([dep]) => !dep.match(/lively(\.|-)/)),
     failed,
-    resolutions,
-    inputMap
+    providers
   );
-  const importMap = JSON.parse(JSON.stringify(generator.getMap()).replace(/https:\/\//g, 'esm://'))
+  const generatedMap = generator.getMap();
+  const usedEsmShPackages = esmShPackagesIn(generatedMap);
+  for (const [name, provider] of Object.entries(providers)) {
+    if (provider === 'esm.sh' && !usedEsmShPackages.has(name)) delete providers[name];
+  }
+  const importMap = JSON.parse(JSON.stringify(generatedMap).replace(/https:\/\//g, 'esm://'))
   if (!obj.isEmpty(failed)) importMap._failed = failed;
-  if (!obj.isEmpty(resolutions)) importMap._resolutions = resolutions;
+  if (!obj.isEmpty(providers)) importMap._providers = providers;
   if (!obj.isEmpty(importMap)) await cachedImportMap.writeJson(importMap);
   else if (inputMap) { await cachedImportMap.remove() }
   return importMap;

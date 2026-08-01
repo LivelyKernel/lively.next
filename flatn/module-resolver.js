@@ -10,11 +10,8 @@ const moduleUrlToConfig = new Map();
 function equivalentModuleUrls (url) {
   if (!url || typeof url !== 'string') return [];
   const urls = [url];
-  if (url.startsWith('https://ga.jspm.io/')) {
-    urls.push(url.replace('https://ga.jspm.io/', 'esm://ga.jspm.io/'));
-  } else if (url.startsWith('esm://ga.jspm.io/')) {
-    urls.push(url.replace('esm://ga.jspm.io/', 'https://ga.jspm.io/'));
-  }
+  if (url.startsWith('https://')) urls.push(url.replace(/^https:/, 'esm:'));
+  else if (url.startsWith('esm://')) urls.push(url.replace(/^esm:/, 'https:'));
   return urls;
 }
 

@@ -145,17 +145,18 @@ export default class L2LClient extends L2LConnection {
     this.trackerId = null;
     this._socketioClient = null;
 
-    // not socket.io already does auto reconnect when network fails but if the
-    // socket.io server disconnects a socket, it won't retry by itself. We want
-    // that behavior for l2l, however
+    // Socket.IO reconnects after transport failures. L2L only needs to
+    // re-register once the socket is connected again and explicitly reconnect
+    // after a server-initiated namespace disconnect.
     this._reconnectState = {
       closed: false,
       autoReconnect: true,
-      isReconnecting: false,
-      isReconnectingViaSocketio: false,
       registerAttempt: 0,
       registerProcess: null,
-      isOpening: false
+      registerRetry: null,
+      openProcess: null,
+      reconnecting: false,
+      generation: 0
     };
 
     Object.keys(defaultActions).forEach(name =>
@@ -178,113 +179,71 @@ export default class L2LClient extends L2LConnection {
   async open () {
     if (this.isOnline()) return this;
 
-    if (this._reconnectState.isOpening) return this;
+    const state = this._reconnectState;
+    if (state.openProcess) return state.openProcess;
 
-    await this.close();
+    state.closed = false;
+    const generation = state.generation;
+    const openProcess = (async () => {
+      let socket = this.socket;
+      if (!socket) {
+        const url = urlHelper.join(this.origin, this.namespace);
+        const opts = { path: this.path, transports: ['websocket', 'polling'] };
+        socket = this._socketioClient = ioClient(url, opts);
 
-    this._reconnectState.closed = false;
+        if (this.debug) console.log(`[${this}] connecting`);
 
-    const url = urlHelper.join(this.origin, this.namespace);
-    const opts = { path: this.path, transports: ['websocket', 'polling'] };
-    const socket = this._socketioClient = ioClient(url, opts);
+        socket.on('connect_error', err => this.debug && console.log(`[${this}] connection error: ${err}`));
 
-    if (this.debug) console.log(`[${this}] connecting`);
+        socket.on('connect', () => {
+          if (socket !== this.socket || generation !== state.generation) return;
+          this.debug && console.log(`[${this}] connected`);
+          this.emit('connected', this);
 
-    socket.on('error', (err) => {
-      this._reconnectState.isOpening = false;
-      this.debug && console.log(`[${this}] errored: ${err}`);
-    });
-    socket.on('close', (reason) => this.debug && console.log(`[${this}] closed: ${reason}`));
-    socket.on('reconnect_failed', () => this.debug && console.log(`[${this}] could not reconnect`));
-    socket.on('reconnect_error', (err) => this.debug && console.log(`[${this}] reconnect error ${err}`));
+          if (state.reconnecting) {
+            state.reconnecting = false;
+            this.register();
+          }
+        });
 
-    socket.on('connect', () => {
-      this.debug && console.log(`[${this}] connected`);
-      this.emit('connected', this);
-      this._reconnectState.isOpening = false;
-      this._reconnectState.isReconnecting = false;
-      this._reconnectState.isReconnectingViaSocketio = false;
-    });
+        socket.on('disconnect', reason => {
+          if (socket !== this.socket || generation !== state.generation) return;
 
-    socket.on('disconnect', () => {
-      this._reconnectState.isOpening = false;
+          this.debug && console.log(`[${this}] disconnected: ${reason}`);
+          this.emit('disconnected', this);
 
-      this.debug && console.log(`[${this}] disconnected`);
-      this.emit('disconnected', this);
+          if (this.trackerId && this.trackerId !== 'tracker') {
+            // Preserve message sequence numbers while the tracker is offline.
+            this.renameTarget(this.trackerId, 'tracker');
+          }
+          this.trackerId = null;
 
-      if (!this.trackerId) {
-        this.debug && console.log(`[${this}] disconnect: don't have a tracker id, won't try reconnect`);
-        this.trackerId = 'tracker';
-        return;
+          if (state.closed || !state.autoReconnect) return;
+
+          state.reconnecting = true;
+          this.emit('reconnecting', this);
+
+          // Socket.IO reconnects transport failures itself, but deliberately
+          // does not reconnect a namespace disconnected by the server.
+          if (reason === 'io server disconnect') socket.connect();
+        });
+
+        this.installEventToMessageTranslator(socket);
+      } else if (!socket.active) {
+        socket.connect();
       }
 
-      if (this.trackerId !== 'tracker') {
-        // for maintaining seq nos.
-        this.renameTarget(this.trackerId, 'tracker');
-        this.trackerId = null;
-      }
+      if (socket.connected) return this;
+      await new Promise(resolve => socket.once('connect', resolve));
+      return this;
+    })();
 
-      if (this._reconnectState.closed) {
-        this.debug && console.log(`[${this}] won't reconnect b/c client is marked as closed`);
-        return;
-      }
-
-      if (!this._reconnectState.autoReconnect) {
-        this.debug && console.log(`[${this}] won't reconnect b/c client has reconnection disabled`);
-        return;
-      }
-
-      this._reconnectState.isReconnecting = true;
-
-      setTimeout(() => {
-        // if socket.io isn't auto reconnecting we are doing it manually
-
-        if (this._reconnectState.closed) {
-          this.debug && console.log(`[${this}] won't reconnect b/c client is marked as closed 2`);
-          return;
-        }
-        if (this._reconnectState.isReconnectingViaSocketio) {
-          this.debug && console.log(`[${this}] won't reconnect again, client already reconnecting`);
-          return;
-        }
-
-        this.debug && console.log(`[${this}] initiating reconnection to tracker`);
-        this.register();
-      }, 20);
-    });
-
-    socket.on('reconnecting', () => {
-      this.debug && console.log(`[${this}] reconnecting`, this._reconnectState);
-      this.emit('reconnecting', this);
-      if (this._reconnectState.closed) {
-        this._reconnectState.isReconnecting = false;
-        this._reconnectState.isReconnectingViaSocketio = false;
-        socket.close();
-        this.close();
-      } else {
-        this._reconnectState.isReconnecting = true;
-        this._reconnectState.isReconnectingViaSocketio = true;
-      }
-    });
-
-    socket.on('reconnect', () => {
-      this.debug && console.log(`[${this}] reconnected`);
-      this._reconnectState.isReconnecting = false;
-      this._reconnectState.isReconnectingViaSocketio = false;
-      this.register();
-      if (this.onReconnect && typeof (this.onReconnect) === 'function') {
-        this.onReconnect();
-      }
-    });
-
-    this.installEventToMessageTranslator(socket);
-
-    this._reconnectState.isOpening = true;
-
-    return new Promise((resolve, reject) => {
-      socket.once('error', reject);
-      socket.once('connect', resolve);
-    }).then(() => this);
+    state.openProcess = openProcess;
+    try {
+      return await openProcess;
+    } finally {
+      if (state.openProcess === openProcess) state.openProcess = null;
+    }
   }
 
   async onReconnect () {
@@ -293,46 +252,27 @@ export default class L2LClient extends L2LConnection {
   }
 
   async close () {
-    this._reconnectState.closed = true;
+    const state = this._reconnectState;
+    state.closed = true;
+    state.reconnecting = false;
+    state.generation++;
+
+    if (state.registerRetry) clearTimeout(state.registerRetry);
+    state.registerRetry = null;
+    state.registerProcess = null;
+    state.openProcess = null;
 
     const socket = this.socket;
-    // this._socketioClient = null;
-
-    if (socket) {
-      socket.removeAllListeners('reconnect');
-      socket.removeAllListeners('reconnecting');
-      socket.removeAllListeners('disconnect');
-      socket.removeAllListeners('connect');
-      socket.removeAllListeners('reconnect_error');
-      socket.removeAllListeners('reconnect_failed');
-      socket.removeAllListeners('close');
-      socket.removeAllListeners('error');
-      socket.close();
-    }
-
-    this.debug && console.log(`[${this}] closing...`);
+    if (!socket) return this;
 
     if (this.isRegistered()) await this.unregister();
-    if (!this.isOnline() && !this.socket) {
-      if (this.debug) {
-        const reason = !this.isOnline() ? 'not online' : 'no socket';
-        this.debug && console.log(`[${this}] cannot close: ${reason}`);
-      }
-      return this;
-    }
 
-    if (socket && !socket.connected) {
-      this.debug && console.log(`[${this}] socket not connected, considering client closed`);
-      return this;
-    }
-
-    return Promise.race([
-      promise.delay(2000).then(() => socket.removeAllListeners('disconnect')),
-      new Promise(resolve => socket.once('disconnect', resolve))
-    ]).then(() => {
-      this.debug && console.log(`[${this}] closed`);
-      return this;
-    });
+    this.debug && console.log(`[${this}] closing...`);
+    socket.removeAllListeners();
+    socket.close();
+    this._socketioClient = null;
+    this.debug && console.log(`[${this}] closed`);
+    return this;
   }
 
   remove () {
@@ -343,59 +283,78 @@ export default class L2LClient extends L2LConnection {
   }
 
   async register () {
-    if (this.isRegistered()) return;
+    if (this.isRegistered()) return this;
 
-    if (this._reconnectState.closed) {
+    const state = this._reconnectState;
+    if (state.closed) {
       this.debug && console.log(`[${this}] not registering this b/c closed`);
-      this._reconnectState.registerAttempt = 0;
-      return;
+      state.registerAttempt = 0;
+      return this;
     }
 
-    if (this._reconnectState.registerProcess) {
+    if (state.registerProcess) {
       this.debug && console.log(`[${this}] not registering this b/c register process exists`);
-      return;
+      return state.registerProcess;
     }
 
+    const generation = state.generation;
+    const registerProcess = (async () => {
+      try {
+        if (!this.isOnline()) await this.open();
+        if (state.closed || generation !== state.generation) return this;
+
+        this.debug && console.log(`[${this}] register`);
+
+        const answer = await this.sendToAndWait('tracker', 'register', {
+          userName: 'unknown',
+          type: 'l2l ' + (isNode ? 'node' : 'browser'),
+          location: determineLocation(),
+          ...this.info
+        });
+
+        if (!answer.data) {
+          const err = new Error('Register answer is empty!');
+          this.emit('error', err);
+          throw err;
+        }
+
+        if (answer.data.isError) {
+          const err = new Error(answer.data.error);
+          this.emit('error', err);
+          throw err;
+        }
+
+        if (state.closed || generation !== state.generation) return this;
+
+        state.registerAttempt = 0;
+        if (state.registerRetry) clearTimeout(state.registerRetry);
+        state.registerRetry = null;
+        const { data: { trackerId, messageNumber } } = answer;
+        this.trackerId = trackerId;
+        this._incomingOrderNumberingBySenders.set(trackerId, messageNumber || 0);
+        this.emit('registered', { trackerId });
+        if (this.onReconnect && typeof (this.onReconnect) === 'function') {
+          this.onReconnect();
+        }
+      } catch (e) {
+        if (state.closed || generation !== state.generation) return this;
+
+        console.error(`Error in register request of ${this}: ${e}`);
+        const attempt = state.registerAttempt++;
+        const timeout = num.backoff(attempt, 4/* base */, 5 * 60 * 1000/* max */);
+        state.registerRetry = setTimeout(() => {
+          state.registerRetry = null;
+          this.register();
+        }, timeout);
+      }
+      return this;
+    })();
+
+    state.registerProcess = registerProcess;
     try {
-      if (!this.isOnline()) { await this.open(); }
-
-      this.debug && console.log(`[${this}] register`);
-
-      const answer = await this.sendToAndWait('tracker', 'register', {
-        userName: 'unknown',
-        type: 'l2l ' + (isNode ? 'node' : 'browser'),
-        location: determineLocation(),
-        ...this.info
-      });
-
-      if (!answer.data) {
-        const err = new Error('Register answer is empty!');
-        this.emit('error', err);
-        throw err;
-      }
-
-      if (answer.data.isError) {
-        const err = new Error(answer.data.error);
-        this.emit('error', err);
-        throw err;
-      }
-
-      this._reconnectState.registerAttempt = 0;
-      const { data: { trackerId, messageNumber } } = answer;
-      this.trackerId = trackerId;
-      this._incomingOrderNumberingBySenders.set(trackerId, messageNumber || 0);
-      this.emit('registered', { trackerId });
-      if (this.onReconnect && typeof (this.onReconnect) === 'function') {
-        this.onReconnect();
-      }
-    } catch (e) {
-      console.error(`Error in register request of ${this}: ${e}`);
-      const attempt = this._reconnectState.registerAttempt++;
-      const timeout = num.backoff(attempt, 4/* base */, 5 * 60 * 1000/* max */);
-      this._reconnectState.registerProcess = setTimeout(() => {
-        this._reconnectState.registerProcess = null;
-        this.register();
-      }, timeout);
+      return await registerProcess;
+    } finally {
+      if (state.registerProcess === registerProcess) state.registerProcess = null;
     }
   }
 
