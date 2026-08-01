@@ -5,6 +5,40 @@ import { string } from 'lively.lang';
 
 const requestMap = {};
 
+export function adaptEsmShExportsForJspmInterop (source, url) {
+  if (!url.startsWith('esm://esm.sh/')) return source;
+
+  source = source.replace(
+    /(\b[$A-Z_a-z][$\w]*)=([$A-Z_a-z][$\w]*)=>Object\.assign\(\{__esModule:true\},\2\)/g,
+    '$1=$2=>Object.create($2,{__esModule:{value:true}})'
+  );
+
+  return source.replace(
+    /export\s*\*\s*from\s*["']([^"']+)["'];?\s*export\s*\{\s*default\s*\}\s*from\s*["']\1["'];?/,
+    `import * as __livelyEsmShModule from "$1";
+export * from "$1";
+const __livelyEsmShDefault = __livelyEsmShModule.default;
+if (__livelyEsmShModule.__esModule && __livelyEsmShDefault &&
+    (typeof __livelyEsmShDefault === "object" || typeof __livelyEsmShDefault === "function")) {
+  for (const __livelyEsmShKey of Object.keys(__livelyEsmShModule)) {
+    if (!(__livelyEsmShKey in __livelyEsmShDefault)) {
+      Object.defineProperty(__livelyEsmShDefault, __livelyEsmShKey, {
+        enumerable: true,
+        get: () => __livelyEsmShModule[__livelyEsmShKey]
+      });
+    }
+  }
+  if (!("default" in __livelyEsmShDefault)) {
+    Object.defineProperty(__livelyEsmShDefault, "default", {
+      enumerable: true,
+      value: __livelyEsmShDefault
+    });
+  }
+}
+export { __livelyEsmShDefault as default };`
+  );
+}
+
 export class ESMResource extends Resource {
   static normalize (esmUrl) {
     const match = esmUrl.match(/^esm:\/\/([^\/]*)\/(.*)$/);
@@ -61,13 +95,14 @@ export class ESMResource extends Resource {
 
     if (!created) {
       let hit; let shortName = res.url.replace(this.getBaseURL(), '');
-      if (typeof lively !== 'undefined' && (hit = lively.memory_esm?.get(shortName))) return await hit.blob.text();
-      module = await res.read();
+      module = typeof lively !== 'undefined' && (hit = lively.memory_esm?.get(shortName))
+        ? await hit.blob.text()
+        : await res.read();
     } else {
       module = await resource((esmURL + id)).read();
       await res.write(module);
     }
-    return module;
+    return adaptEsmShExportsForJspmInterop(module, this.url);
   }
 
   getBaseURL () {

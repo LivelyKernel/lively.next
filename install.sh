@@ -105,11 +105,17 @@ fi
 export NODE_OPTIONS="--no-warnings --experimental-modules --loader $lv_next_dir/flatn/resolver.mjs";
 
 section "Installing packages"
-node lively.installer/install-with-node.js $PWD \
+if ! node lively.installer/install-with-node.js "$PWD"; then
+  error "Package installation failed"
+  exit 1
+fi
 
 section "Building class runtime"
 step "Compiling lively.classes runtime..."
-env CI=true npm --silent --prefix $lv_next_dir/lively.classes/ run build
+if ! env CI=true npm --silent --prefix "$lv_next_dir/lively.classes/" run build; then
+  error "Class runtime build failed"
+  exit 1
+fi
 step "Class runtime built"
 
 if [ "$1" = "--freezer-only" ];
@@ -129,10 +135,16 @@ step "SWC plugin built"
 section "Building freezer bundles"
 if [ -z "${CI}" ]; then
   step "Building unified bundle (landing page + loading screen)..."
-  env CI=true npm --silent --prefix $lv_next_dir/lively.freezer/ run build-unified
+  if ! env CI=true npm --silent --prefix "$lv_next_dir/lively.freezer/" run build-unified; then
+    error "Freezer bundle build failed"
+    exit 1
+  fi
 else
   step "Building loading screen..."
-  env CI=true npm --silent --prefix $lv_next_dir/lively.freezer/ run build-loading-screen
+  if ! env CI=true npm --silent --prefix "$lv_next_dir/lively.freezer/" run build-loading-screen; then
+    error "Loading screen build failed"
+    exit 1
+  fi
 fi
 
 if [ -d "$lv_next_dir/lively.app" ] && [ "$1" != "--no-desktop" ]; then

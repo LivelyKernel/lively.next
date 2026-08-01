@@ -237,6 +237,12 @@ async function load(url) {
 }
 
 function supportingPlugins(context = 'node', self) {
+  const livelyPackageRoot = path.resolve(process.env.lv_next_dir || process.cwd())
+    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const livelyPackage = new RegExp(
+    `^${livelyPackageRoot}/lively\\.(?!next-node_modules(?:/|$))[^/]+/`
+  );
+
   return [
     context == 'node' && {
       name: 'system-require-handler',
@@ -290,7 +296,7 @@ function supportingPlugins(context = 'node', self) {
       defaultIsModuleExports: true,
       transformMixedEsModules: true,
       dynamicRequireRoot: process.env.lv_next_dir,
-      exclude: ['../**/base/0.11.1/utils.js', '../**/use/2.0.0/utils.js', /lively./],
+      exclude: ['../**/base/0.11.1/utils.js', '../**/use/2.0.0/utils.js', livelyPackage],
       dynamicRequireTargets: [
          resolveModuleId('babel-plugin-transform-es2015-modules-systemjs')
       ]
