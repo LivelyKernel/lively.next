@@ -442,8 +442,8 @@ class NameHolder extends Morph {
     this.validName = !owner || !owner.getSubmorphNamed(newName) || oldName === newName;
     if (this.target.isComponent && !evt.hasArrowPressed) {
       // also confirm we are not in conflict with other stuff in the module scope
-      System.import('lively.ide/components/reconciliation.js').then(({ canBeRenamed }) => {
-        this.validName = this.validName && canBeRenamed(moduleManager.module(this.target[Symbol.for('lively-module-meta')].moduleId), oldName, newName);
+      System.import('lively.ide/components/component-definition.js').then(({ canBeRenamed }) => {
+        this.validName = this.validName && canBeRenamed(moduleManager.module(this.target[Symbol.for('lively-module-meta')].moduleId), newName);
         signal(this, 'valid', [this.validName, newName]);
       });
       return;
@@ -1193,7 +1193,7 @@ class ComponentHaloItem extends RoundHaloItem {
     const {
       insertComponentDefinition,
       removeComponentDefinition
-    } = await System.import('lively.ide/components/reconciliation.js');
+    } = await System.import('lively.ide/components/component-definition.js');
     const { InteractiveComponentDescriptor } = await System.import('lively.ide/components/editor.js');
     const Browser = await System.import('lively.ide/js/browser/ui.cp.js');
     if (toBeComponent) {

@@ -549,6 +549,23 @@ describe('layout', () => {
       expect(m1.position).equals(pt(200, 0));
     });
 
+    it('serializes a grid with a container before it is initialized', () => {
+      const container = morph();
+      const layout = new GridLayout({
+        autoAssign: true,
+        columnCount: 2,
+        rowCount: 1,
+        renderViaCSS: false
+      });
+      layout.container = container;
+
+      const serialized = layout.__serialize__().__expr__;
+      expect(serialized).includes('"autoAssign": true');
+      expect(serialized).includes('"columnCount": 2');
+      expect(serialized).includes('"rowCount": 1');
+      expect(serialized).not.includes('"grid"');
+    });
+
     it('allows morphs to take up multiple cells', () => {
       const [m1, m2, m3] = m.submorphs; // eslint-disable-line no-unused-vars
       m.layout = new GridLayout({
@@ -908,6 +925,11 @@ describe('layout', () => {
     }).openInWorld());
 
     afterEach(() => container.remove());
+
+    it('preserves the rendering mode in its attached spec', () => {
+      expect(container.layout.getSpec().renderViaCSS).equals(false);
+      expect(container.layout.copy().renderViaCSS).equals(false);
+    });
 
     it('does not resize by default', () => {
       checkJSAndCSS(container, () => {

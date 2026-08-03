@@ -1861,7 +1861,8 @@ export class ConstraintLayout extends Layout {
     return {
       submorphSettings,
       reactToSubmorphAnimations: this.reactToSubmorphAnimations,
-      lastExtent: this.lastExtent
+      lastExtent: this.lastExtent,
+      renderViaCSS: this.renderViaCSS
     };
   }
 
@@ -3174,7 +3175,7 @@ export class GridLayout extends Layout {
    * @return { GridLayoutSpec }
    */
   getSpec () {
-    if (!this.container) return this.config;
+    if (!this.container || !this.grid) return this.config;
     const grid = [];
     const rows = [];
     const columns = [];

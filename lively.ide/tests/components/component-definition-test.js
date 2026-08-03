@@ -3,7 +3,8 @@ import { expect } from 'mocha-es6';
 import { ComponentDescriptor, morph, part, add, component } from 'lively.morphic';
 import { Color, pt } from 'lively.graphics';
 import { InteractiveComponentDescriptor } from '../../components/editor.js';
-import { createInitialComponentDefinition } from '../../components/reconciliation.js';
+import { createInitialComponentDefinition } from '../../components/component-definition.js';
+import { ProjectionalReconciliationUnsupportedError } from '../../components/change-tracker.js';
 
 const prevDescr = component.DescriptorClass;
 component.DescriptorClass = InteractiveComponentDescriptor;
@@ -46,23 +47,28 @@ const e2 = component(e1, {
 
 component.DescriptorClass = prevDescr || ComponentDescriptor;
 
-describe('component definition reconciliation', () => {
+describe('component definition editing', () => {
   it('component proxy includes added morphs', async () => {
     const c = await e2.edit();
     expect(c.get('moppel')).not.to.be.null;
   });
 
-  it('allows to create a component proxy for editing the spec', async () => {
-    // define an ad hoc component
-    const c = await e2.edit(); // => returns a component morph from the spec that is auto mapping changes to the spec
-    c._changeTracker.componentModule = null; // prevents this file from being changed
+  it('rejects source-less proxy edits without mutating component policy', async () => {
+    const c = await e2.edit();
+    c._changeTracker.componentModule = null;
     c.withMetaDo({ reconcileChanges: true }, () => {
       c.get('alice').fill = Color.green;
       c.fill = Color.purple;
     });
-    await c._changeTracker.onceChangesProcessed();
-    expect(e2.stylePolicy.getSubSpecFor('alice').fill).to.eql(Color.green);
-    expect(e2.stylePolicy.spec.fill).to.eql(Color.purple);
+    let error;
+    try {
+      await c._changeTracker.onceChangesProcessed();
+    } catch (caughtError) {
+      error = caughtError;
+    }
+    expect(error).to.be.instanceOf(ProjectionalReconciliationUnsupportedError);
+    expect(e2.stylePolicy.getSubSpecFor('alice').fill).to.eql(Color.black);
+    expect(e2.stylePolicy.spec.fill).to.eql(Color.yellow);
   });
 
   it('allows to reify source code based on changes applied to its spec', () => {

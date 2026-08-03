@@ -1,13 +1,147 @@
-import { obj, arr, events, fun } from 'lively.lang';
+import { obj, arr, fun } from 'lively.lang';
+import { MorphicChangeSet } from './changes/change-set.js';
+import { MorphicReplayDirection } from './changes/manager.js';
 
-class Undo {
+export const EditTransactionKind = Object.freeze({
+  RECORDED_MORPH_CHANGES: 'recorded-morph-changes',
+  MORPHIC_CHANGE_SET: 'morphic-change-set',
+  COMPOSITE: 'composite',
+  COMPONENT_COMMAND: 'component-command',
+  TEXT: 'text'
+});
+
+const transactionKinds = new Set(Object.values(EditTransactionKind));
+
+export class EditTransaction {
+  constructor ({ kind, label, no = 0, timestamp = null, metadata = {} }) {
+    if (!transactionKinds.has(kind)) throw new Error(`Unknown edit transaction kind: ${kind}`);
+    if (typeof label !== 'string') throw new Error('Edit transactions require a label');
+    this.kind = kind;
+    this.label = label;
+    this.name = label;
+    this.no = no;
+    this.timestamp = timestamp;
+    this.metadata = Object.freeze({ ...metadata });
+  }
+
+  apply () { throw new Error(`${this.constructor.name}.apply is not implemented`); }
+  reverseApply () { throw new Error(`${this.constructor.name}.reverseApply is not implemented`); }
+  canMergeWith () { return false; }
+  merge () { throw new Error(`${this.constructor.name} cannot merge transactions`); }
+}
+
+export class EditTransactionRollbackError extends Error {
+  constructor (message, cause, rollbackErrors) {
+    super(message);
+    this.name = 'EditTransactionRollbackError';
+    this.cause = cause;
+    this.rollbackErrors = rollbackErrors;
+  }
+}
+
+function compensate (transactions, selector) {
+  const rollbackErrors = [];
+  transactions.slice().reverse().forEach(transaction => {
+    try { transaction[selector](); } catch (error) { rollbackErrors.push(error); }
+  });
+  return rollbackErrors;
+}
+
+export class CompositeEditTransaction extends EditTransaction {
+  constructor (transactions, { label, no, timestamp, metadata = {} } = {}) {
+    if (!transactions.length) throw new Error('Composite edit transactions cannot be empty');
+    if (transactions.some(transaction => !(transaction instanceof EditTransaction))) {
+      throw new Error('Composite entries must be EditTransaction instances');
+    }
+    super({
+      kind: EditTransactionKind.COMPOSITE,
+      label: label || transactions.map(transaction => transaction.label).join('-'),
+      no: no ?? transactions[0].no,
+      timestamp: timestamp ?? transactions[0].timestamp,
+      metadata
+    });
+    this.transactions = Object.freeze(transactions.slice());
+  }
+
+  apply () {
+    const applied = [];
+    try {
+      this.transactions.forEach(transaction => {
+        transaction.apply();
+        applied.push(transaction);
+      });
+    } catch (error) {
+      const rollbackErrors = compensate(applied, 'reverseApply');
+      if (rollbackErrors.length) {
+        throw new EditTransactionRollbackError(
+          `Failed to apply ${this.label} and to roll it back completely`,
+          error,
+          rollbackErrors
+        );
+      }
+      throw error;
+    }
+    return this;
+  }
+
+  reverseApply () {
+    const reversed = [];
+    try {
+      this.transactions.slice().reverse().forEach(transaction => {
+        transaction.reverseApply();
+        reversed.push(transaction);
+      });
+    } catch (error) {
+      const rollbackErrors = compensate(reversed, 'apply');
+      if (rollbackErrors.length) {
+        throw new EditTransactionRollbackError(
+          `Failed to reverse ${this.label} and to restore it completely`,
+          error,
+          rollbackErrors
+        );
+      }
+      throw error;
+    }
+    return this;
+  }
+}
+
+export class MorphicChangeSetTransaction extends EditTransaction {
+  constructor (changeSet, manager, { label = changeSet?.label || '', no = 0 } = {}) {
+    if (!(changeSet instanceof MorphicChangeSet)) {
+      throw new Error('MorphicChangeSetTransaction requires a MorphicChangeSet');
+    }
+    if (!manager || typeof manager.replay !== 'function') {
+      throw new Error('MorphicChangeSetTransaction requires a transaction manager');
+    }
+    super({
+      kind: EditTransactionKind.MORPHIC_CHANGE_SET,
+      label,
+      no,
+      metadata: { changeSetId: changeSet.id }
+    });
+    this.changeSet = changeSet;
+    this.manager = manager;
+  }
+
+  apply () {
+    this.manager.replay(this.changeSet, MorphicReplayDirection.REDO);
+    return this;
+  }
+
+  reverseApply () {
+    this.manager.replay(this.changeSet, MorphicReplayDirection.UNDO);
+    return this;
+  }
+}
+
+export class RecordedChangeTransaction extends EditTransaction {
   constructor (name, targets = [], no = 0) {
-    this.name = name;
+    super({ kind: EditTransactionKind.RECORDED_MORPH_CHANGES, label: name, no });
     this.targets = targets;
     this.recorder = null;
     this.changes = null;
-    this.timestamp = null;
-    this.no = no;
+    this.joinedTransactions = [];
   }
 
   recorded () { return !!this.changes; }
@@ -21,8 +155,9 @@ class Undo {
     const morph = this.targets[0];
 
     this.recorder = morph.recordChangesStart(change => {
-      const { target } = change;
-      if (target.isUsedAsEpiMorph()) return false;
+      const { target, morph: structurallyChangedMorph, owners = [] } = change;
+      const affectedMorphs = [target, structurallyChangedMorph, ...owners].filter(Boolean);
+      if (affectedMorphs.some(affectedMorph => affectedMorph.isUsedAsEpiMorph())) return false;
       if (!this.targets.some(undoTarget =>
         undoTarget === target || undoTarget.isAncestorOf(target))) return false;
       if (typeof filterFn === 'function') return filterFn(change);
@@ -37,6 +172,14 @@ class Undo {
     this.changes = morph.recordChangesStop(id);
     this.targets = null;
     this.recorder = null;
+  }
+
+  joinTransaction (transaction) {
+    if (!(transaction instanceof EditTransaction)) {
+      throw new Error('Can only join EditTransaction instances');
+    }
+    this.joinedTransactions.push(transaction);
+    return transaction;
   }
 
   apply () {
@@ -60,6 +203,16 @@ class Undo {
     this.timestamp = undos[0].timestamp;
     this.no = undos[0].no;
     this.name = undos.map(({ name }) => name).join('-');
+    this.label = this.name;
+  }
+
+  canMergeWith (transaction) {
+    return transaction instanceof RecordedChangeTransaction;
+  }
+
+  merge (transaction) {
+    this.addUndos([transaction]);
+    return this;
   }
 
   toString () {
@@ -71,7 +224,7 @@ class Undo {
         selector
           ? `${target}.${selector}(${args.map(printArg)})`
           : `${target}.${prop} = ${printArg(value)}`).join('\n  ');
-    return `Undo(${no}:${name} ${isRecording ? 'RECORDING ' : ''}${changesString})`;
+    return `RecordedChangeTransaction(${no}:${name} ${isRecording ? 'RECORDING ' : ''}${changesString})`;
   }
 }
 
@@ -112,10 +265,24 @@ export class UndoManager {
     if (!this.grouping.current.length) return;
 
     const grouped = this.grouping.current.slice(1);
-    const undoGroup = this.grouping.current[0];
-    undoGroup.addUndos(grouped);
+    const first = this.grouping.current[0];
+    let undoGroup = first;
+    for (const transaction of grouped) {
+      undoGroup = undoGroup.canMergeWith(transaction)
+        ? undoGroup.merge(transaction)
+        : new CompositeEditTransaction(
+          undoGroup instanceof CompositeEditTransaction
+            ? undoGroup.transactions.concat(transaction)
+            : [undoGroup, transaction]
+        );
+    }
     this.undos = arr.withoutAll(this.undos, grouped);
+    if (undoGroup !== first) {
+      const index = this.undos.indexOf(first);
+      this.undos[index] = undoGroup;
+    }
     this.grouping.current = [];
+    return undoGroup;
   }
 
   ensureNewGroup (morph, name = 'new undo group') {
@@ -146,7 +313,11 @@ export class UndoManager {
       console.warn(`There is already an undo being recorded. Tried to start undo ${name} for ${morph.name}, but ${this.undoInProgress.name} is currently in progress.`);
       return;
     }
-    return this.undoInProgress = new Undo(name, [morph], this.counter++).startRecording(this.filter);
+    return this.undoInProgress = new RecordedChangeTransaction(
+      name,
+      [morph],
+      this.counter++
+    ).startRecording(this.filter);
   }
 
   undoStop () {
@@ -154,10 +325,37 @@ export class UndoManager {
     if (!undo) return null;
     undo.stopRecording();
     this.undoInProgress = null;
-    this.undos.push(undo);
-    this.grouping.current.push(undo);
+    const transaction = undo.joinedTransactions.length
+      ? new CompositeEditTransaction([undo, ...undo.joinedTransactions], {
+          label: undo.label,
+          no: undo.no,
+          timestamp: undo.timestamp
+        })
+      : undo;
+    return this.addTransaction(transaction);
+  }
+
+  addTransaction (transaction, { group = true, joinActive = false } = {}) {
+    if (!(transaction instanceof EditTransaction)) {
+      throw new Error('UndoManager can only store EditTransaction instances');
+    }
+    if (joinActive && this.undoInProgress) {
+      return this.undoInProgress.joinTransaction(transaction);
+    }
+    this.undos.push(transaction);
+    if (group) this.grouping.current.push(transaction);
     if (this.redos.length) this.redos.length = 0;
-    return undo;
+    return transaction;
+  }
+
+  discardRecordedChanges (changes) {
+    const recorded = this.undoInProgress?.recorder?.changes;
+    if (!recorded) return 0;
+    const discarded = new Set(changes);
+    const retained = recorded.filter(change => !discarded.has(change));
+    const removed = recorded.length - retained.length;
+    this.undoInProgress.recorder.changes = retained;
+    return removed;
   }
 
   removeLatestUndo () {
@@ -171,9 +369,16 @@ export class UndoManager {
     const undo = this.removeLatestUndo();
     if (!undo) return;
     arr.remove(this.grouping.current, undo);
-    this.redos.unshift(undo);
     this.applyCount++;
-    try { undo.reverseApply(); } finally { this.applyCount--; }
+    try {
+      undo.reverseApply();
+      this.redos.unshift(undo);
+    } catch (error) {
+      this.undos.push(undo);
+      throw error;
+    } finally {
+      this.applyCount--;
+    }
     return undo;
   }
 
@@ -181,9 +386,16 @@ export class UndoManager {
     this.undoStop();
     const redo = this.redos.shift();
     if (!redo) return;
-    this.undos.push(redo);
     this.applyCount++;
-    try { redo.apply(); } finally { this.applyCount--; }
+    try {
+      redo.apply();
+      this.undos.push(redo);
+    } catch (error) {
+      this.redos.unshift(redo);
+      throw error;
+    } finally {
+      this.applyCount--;
+    }
     return redo;
   }
 
