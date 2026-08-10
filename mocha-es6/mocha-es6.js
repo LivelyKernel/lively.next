@@ -19808,47 +19808,17 @@ function join(pathA, pathB) {
 function installSystemInstantiateHook() {
   var name = "mochaEs6TestInstantiater";
   if (modules.isHookInstalled("instantiate", name)) return;
-  modules.installHook("instantiate", function () {
-    var _ref4 = asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(proceed, load) {
-      var executable, deps;
-      return regeneratorRuntime.wrap(function _callee4$(_context4) {
-        while (1) {
-          switch (_context4.prev = _context4.next) {
-            case 0:
-              _context4.next = 2;
-              return proceed(load);
-
-            case 2:
-              executable = _context4.sent;
-              deps = executable.deps;
-              _context4.next = 6;
-              return isMochaTestLoad(load, executable);
-
-            case 6:
-              if (!_context4.sent) {
-                _context4.next = 8;
-                break;
-              }
-
-              installMochaEs6ModuleExecute(load, executable);
-
-            case 8:
-              return _context4.abrupt("return", executable);
-
-            case 9:
-            case "end":
-              return _context4.stop();
-          }
-        }
-      }, _callee4, this);
-    }));
-
-    function mochaEs6TestInstantiater(_x6, _x7) {
-      return _ref4.apply(this, arguments);
-    }
-
-    return mochaEs6TestInstantiater;
-  }());
+  modules.installHook("instantiate", async function mochaEs6TestInstantiater(proceed, load) {
+    await proceed(load);
+    var records = System.REGISTER_INTERNAL && System.REGISTER_INTERNAL.records;
+    var record = records && records[load.name];
+    var instantiatePromise = record && record.linkRecord && record.linkRecord.instantiatePromise;
+    if (!instantiatePromise) return;
+    instantiatePromise.then(async function (link) {
+      var linkRecord = link && link.linkRecord;
+      if (await isMochaTestLoad(load, linkRecord)) installMochaEs6ModuleExecute(load, linkRecord);
+    });
+  });
   console.log("[mocha-es6] System.instantiate hook installed to allow loading mocha tests");
 }
 
@@ -19863,7 +19833,7 @@ var isMochaTestLoad = function () {
       while (1) {
         switch (_context5.prev = _context5.next) {
           case 0:
-            deps = executable.deps || [];
+            deps = executable && (executable.deps || executable.dependencies) || [];
 
             if (deps.some(function (ea) {
               return ea.endsWith("mocha-es6") || ea.endsWith("mocha-es6/index.js");

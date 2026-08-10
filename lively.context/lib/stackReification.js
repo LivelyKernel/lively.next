@@ -1,10 +1,25 @@
 /*global global, module,Global*/
 import { Path, arr, Closure } from "lively.lang";
-import { escodegen, parseFunction } from "lively.ast";
+import { ReplaceVisitor, escodegen, parseFunction } from "lively.ast";
 import { Interpreter } from "./interpreter.js";
 import { getCurrentASTRegistry, rewriteFunction } from "lively.context";
 
-let Global = window;
+let Global = typeof window !== "undefined" ? window : globalThis;
+
+function removeToplevelRecorderRefs(ast, recorderName = '__lvVarRecorder') {
+    return ReplaceVisitor.run(ast, node => {
+        if (!node) return node;
+        if (node.type !== 'MemberExpression' || node.computed || !node.object) return node;
+        if (node.object.type !== 'Identifier' || node.object.name !== recorderName) return node;
+        return node.property;
+    });
+}
+
+function ensureLivelyLangPath() {
+    if (!Global.lively) Global.lively = {};
+    if (!Global.lively.lang) Global.lively.lang = {};
+    if (!Global.lively.lang.Path) Global.lively.lang.Path = Path;
+}
 
 let NativeArrayFunctions = {
 
@@ -141,6 +156,7 @@ let debugOption = Path('lively.Config.enableDebuggerStatements');
 export function enableDebugSupport(astRegistry) {
   // FIXME currently only takes care of Array
   try {
+      ensureLivelyLangPath();
       if (!this.hasOwnProperty('configOption')) {
           this.configOption = this.debugOption.get(Global);
           this.debugOption.set(Global, true, true);
@@ -239,7 +255,7 @@ export class RewrittenClosure extends Closure {
 
   rewrite(astRegistry) {
       var src = this.getFuncSource(),
-          ast = parseFunction(src),
+          ast = removeToplevelRecorderRefs(parseFunction(src)),
           namespace = '[runtime]';
       // FIXME: URL not available here
       // if (this.originalFunc && this.originalFunc.sourceModule)

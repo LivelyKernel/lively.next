@@ -1,12 +1,21 @@
 #! /usr/bin/env node
 
 /*global require, process, __dirname*/
-require("systemjs")
+global.System = global.System || require("systemjs")
 
 var modules   = require("lively.modules")
-var resource  = lively.resources.resource;
+var lang      = require("lively.lang")
+var ast       = require("lively.ast")
+var resources = require("lively.resources")
+var livelyGlobal = global.lively || (global.lively = {});
+livelyGlobal.modules = livelyGlobal.modules || modules;
+livelyGlobal.lang = livelyGlobal.lang || lang;
+livelyGlobal.ast = livelyGlobal.ast || ast;
+livelyGlobal.resources = livelyGlobal.resources || resources;
+var resource  = resources.resource;
 var parseArgs = require('minimist');
 var glob      = require('glob');
+require("babel-regenerator-runtime/runtime.js");
 var mochaEs6  = require("../mocha-es6.js")
 var path      = require("path");
 var fs        = require("fs");
@@ -17,11 +26,12 @@ var depDir    = path.join(dir, ".dependencies")
 var step      = 1;
 var args;
 
-lively.lang.promise.chain([
+lang.promise.chain([
   () => { // prep
     modules.System.trace = true
     cacheMocha(modules.System, "file://" + mochaDir);
-    modules.unwrapModuleLoad();
+    if (modules.unwrapModuleLoad) modules.unwrapModuleLoad();
+    else modules.unwrapModuleResolution();
     readProcessArgs();
   },
   () => setupFlatn(),
@@ -37,7 +47,7 @@ lively.lang.promise.chain([
   failureCount => !args.l2l && process.exit(failureCount)
 ]).catch(err => {
   console.error(err.stack || err);
-  if (!args.l2l) process.exit(1);
+  if (!args || !args.l2l) process.exit(1);
 });
 
 function readProcessArgs() {
@@ -88,17 +98,28 @@ function cacheMocha(System, mochaDirURL) {
 
 function setupLivelyModulesTestSystem() {
   var baseURL = "file://" + dir,
-      System = lively.modules.getSystem("system-for-test", {baseURL}),
-      registry = System["__lively.modules__packageRegistry"] = new modules.PackageRegistry(System),
+      systemConfig = {baseURL},
+      nodeRequire = modules.System && modules.System._nodeRequire ||
+        global.System && global.System._nodeRequire ||
+        require,
+      System,
+      registry,
       env = process.env;
+  if (nodeRequire) systemConfig._nodeRequire = nodeRequire;
+  System = lively.modules.getSystem("system-for-test", systemConfig);
+  registry = System["__lively.modules__packageRegistry"] = new modules.PackageRegistry(System);
   registry.packageBaseDirs = env.FLATN_PACKAGE_COLLECTION_DIRS.split(":").filter(Boolean).map(resourcify);
   registry.individualPackageDirs = (env.FLATN_PACKAGE_DIRS || "").split(":").filter(Boolean).map(resourcify);
   registry.devPackageDirs = env.FLATN_DEV_PACKAGE_DIRS.split(":").filter(Boolean).map(resourcify);
   lively.modules.changeSystem(System, true);
   cacheMocha(System, "file://" + mochaDir);
-  mochaEs6.installSystemInstantiateHook();
   // System.debug = true;
-  return registry.update();
+  return registry.update()
+    .then(() => import('lively.source-transform/babel/plugin.js'))
+    .then(({ setupBabelTranspiler }) => {
+      setupBabelTranspiler(System);
+      mochaEs6.installSystemInstantiateHook();
+    });
 
   function resourcify(path) { return resource("file://" + path).asDirectory(); }
 }

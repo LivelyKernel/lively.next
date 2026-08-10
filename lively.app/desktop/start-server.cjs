@@ -488,6 +488,13 @@ function emitError (msg) {
   if (b && b.error) b.error(msg);
 }
 
+function bootUrlForPort (port) {
+  const bootUrl = process.env.LIVELY_APP_BOOT_URL || '/dashboard/';
+  if (/^https?:\/\//.test(bootUrl)) return bootUrl;
+  const path = String(bootUrl || '/dashboard/');
+  return 'http://127.0.0.1:' + port + (path.startsWith('/') ? path : '/' + path);
+}
+
 // ---------------------------------------------------------------------------
 // 5. Flatn env setup
 // ---------------------------------------------------------------------------
@@ -693,16 +700,83 @@ function setupFlatnEnv () {
 
   emitStatus('Server ready, loading lively...');
 
-  const dashboardUrl = 'http://127.0.0.1:' + port + '/dashboard/';
+  const dashboardUrl = bootUrlForPort(port);
   if (typeof nw === 'undefined') {
     log('NW.js global not available; server is ready for direct smoke mode.');
     return;
   }
 
   const win = nw.Window.get();
+  let inspectorChild = null;
+  let inspectorStartScheduled = false;
+  let inspectorStarted = false;
+
+  function startInspectorService (trigger) {
+    if (closing || inspectorStarted || process.env.LIVELY_APP_INSPECTOR_SERVICE === '0') return;
+    inspectorStarted = true;
+    const cdpPort = Number(process.env.LIVELY_APP_CDP_PORT || 9222);
+    const inspectorPort = Number.isFinite(cdpPort) && cdpPort > 0 ? cdpPort : 9222;
+    log('starting inspector service after ' + trigger + ' on CDP port ' + inspectorPort);
+    inspectorChild = spawn(nodeBin, [
+      '--no-warnings',
+      '-r', path.join(desktopDir, 'watchdog.cjs'),
+      path.join(desktopDir, 'inspector-service-runner.cjs'),
+      '--cdpPort=' + inspectorPort
+    ], {
+      cwd: rootDir,
+      env: childEnv,
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+    inspectorChild.stdout.on('data', d => log('inspector: ' + d.toString().trimEnd()));
+    inspectorChild.stderr.on('data', d => log('inspector err: ' + d.toString().trimEnd()));
+    inspectorChild.on('error', err => {
+      log('inspector: service failed to start: ' + (err.stack || err));
+    });
+    inspectorChild.on('exit', (code, signal) => {
+      log('inspector: service exited (code=' + code + ', signal=' + signal + ')');
+      try {
+        const debuggerBridge = win.window.livelyDesktop && win.window.livelyDesktop.debugger;
+        if (debuggerBridge && typeof debuggerBridge.setServiceAttached === 'function') {
+          debuggerBridge.setServiceAttached(false);
+        } else if (debuggerBridge) {
+          debuggerBridge.inspectorServiceAttached = false;
+        }
+      } catch (_) {}
+    });
+  }
+
+  function scheduleInspectorStart (trigger) {
+    if (inspectorStartScheduled || inspectorStarted || process.env.LIVELY_APP_INSPECTOR_SERVICE === '0') return;
+    inspectorStartScheduled = true;
+    const timer = setTimeout(() => {
+      inspectorStartScheduled = false;
+      startInspectorService(trigger);
+    }, Number(process.env.LIVELY_APP_INSPECTOR_START_DELAY || 500));
+    if (timer && typeof timer.unref === 'function') timer.unref();
+  }
 
   const b = livelyBoot();
   if (b && b.setDashboardUrl) b.setDashboardUrl(dashboardUrl);
+
+  if (process.env.LIVELY_APP_INSPECTOR_SERVICE !== '0') {
+    win.once('loaded', function () {
+      let href = '';
+      try { href = String(win.window.location && win.window.location.href || ''); } catch (_) {}
+      log('window loaded after server boot: ' + (href || '(unknown location)'));
+      if (/^https?:\/\//.test(href)) scheduleInspectorStart('initial page load');
+      else log('inspector service waiting for HTTP page before attaching');
+    });
+    const fallbackTimer = setTimeout(() => {
+      let href = '';
+      try { href = String(win.window.location && win.window.location.href || ''); } catch (_) {}
+      if (/^https?:\/\//.test(href)) {
+        log('inspector service load-event fallback at ' + href);
+        scheduleInspectorStart('load-event fallback');
+      }
+    }, Number(process.env.LIVELY_APP_INSPECTOR_FALLBACK_DELAY || 15000));
+    if (fallbackTimer && typeof fallbackTimer.unref === 'function') fallbackTimer.unref();
+  }
+
   if (b && b.navigate) b.navigate(dashboardUrl);
   else {
     // boot.html's script hasn't run yet — fall back and hope the direct
@@ -717,6 +791,7 @@ function setupFlatnEnv () {
     log('Window closing, killing server...');
     closing = true;
     clearTimeout(restartTimer);
+    if (inspectorChild) inspectorChild.kill('SIGTERM');
     if (currentChild) currentChild.kill('SIGTERM');
     setTimeout(() => this.close(true), 2000);
   });
