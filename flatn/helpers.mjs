@@ -15,7 +15,7 @@ export function resolveExportMapping (mapping, context) {
   if (typeof mapping === 'object') {
     switch (context) {
       case 'node-require': adjustedPath = mapping.node || mapping.require || mapping.default; break;
-      case 'systemjs-browser': 
+      case 'systemjs-browser': adjustedPath = mapping.browser || mapping.import || mapping.default; break;
       case 'node-import': adjustedPath = mapping.node || mapping.import || mapping.default; break;
       case 'module': adjustedPath = mapping.module ||  mapping.node || mapping.import || mapping.default; break;
       default: adjustedPath = mapping.default;
@@ -33,7 +33,7 @@ export function resolveImportMapping(name, mapping, context) {
   while (typeof mapping === 'object') {
     switch (context) {
       case 'node-require': mapping = mapping.node || mapping.require || mapping.default; break;
-      case 'systemjs-browser': 
+      case 'systemjs-browser': mapping = mapping.browser || mapping.import || mapping.default; break;
       case 'node-import': mapping = mapping.node || mapping.import || mapping.default; break;
       case 'module': mapping = mapping.module ||  mapping.node || mapping.import || mapping.default; break;
       default: mapping = mapping.default;
