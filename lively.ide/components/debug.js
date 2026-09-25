@@ -1,194 +1,1249 @@
-import { num, promise, string, arr } from 'lively.lang';
-import { Color, pt, Rectangle } from 'lively.graphics';
-import { Point } from 'lively.graphics/geometry-2d.js';
-import { ShadowObject, part } from 'lively.morphic';
+import { arr, obj } from 'lively.lang';
+import { Color, pt, rect } from 'lively.graphics';
+import {
+  add,
+  ConstraintLayout,
+  GridLayout,
+  morph,
+  part,
+  Polygon,
+  TilingLayout
+} from 'lively.morphic';
+import { GroupChange } from 'lively.morphic/changes.js';
 import { module } from 'lively.modules/index.js';
-import { browserForFile } from '../js/browser/ui.cp.js';
 import { parse } from 'lively.ast';
+import { SeededRandom } from './reconciliation/fuzz-random.js';
+import {
+  ComponentNodeProvenanceKind,
+  findComponentNode
+} from './reconciliation/component-document.js';
+
+export { SeededRandom } from './reconciliation/fuzz-random.js';
+export {
+  ComponentProjectionFuzzer,
+  runComponentProjectionFuzz
+} from './reconciliation/component-projection-fuzzer.js';
 
 /**
- * The following setup performs randomized operations on a component morph,
- * constantly altering the component definition. This allows us to capture
- * edge cases in the source ransformation that lead to unvalid syntax or
- * overly verbose component definitions.
+ * Deterministic stress testing for component-to-source reconciliation.
+ *
+ * Every operation is applied through the component change tracker and the
+ * resulting source is parsed only after the tracker has finished. Failures
+ * retain the seed and the complete action trace so they can be replayed.
  */
 
-/**
- * Randomly selects a descendant of this morph, or the morph itself if no submorphs present;
- * @param { Morph } aMorph - The morph whose descendants to traverse.
- * @returns { Morph } The randomly selected morph.
- */
-function randomSelectChild (aMorph) {
-  if (aMorph.submorphs.length === 0) return aMorph;
-  return arr.shuffle(aMorph.withAllSubmorphsDo((m) => m))[0];
+export const DEFAULT_RECONCILIATION_FUZZ_SEED = 0xC0FFEE;
+
+export const RECONCILIATION_FUZZ_STABLE_STYLE_PROPERTIES = Object.freeze([
+  'fill',
+  'borderColor',
+  'borderWidth',
+  'borderStyle',
+  'borderRadius',
+  'opacity',
+  'visible',
+  'scale',
+  'rotation',
+  'tooltip',
+  'origin',
+  'clipMode'
+]);
+
+export const RECONCILIATION_FUZZ_OPERATIONS = [
+  'addPlainMorph',
+  'addPart',
+  'addModelPart',
+  'addPartWithNestedAddition',
+  'removeMorph',
+  'reintroduceMorph',
+  'cycleInheritedSuppression',
+  'reparentMorph',
+  'reparentInheritedMorph',
+  'renameMorph',
+  'renameInheritedMorph',
+  'reorderMorph',
+  'setProperties',
+  'batchPropertyAndStructure',
+  'batchRenameAndLayout',
+  'resetProperty',
+  'changeText',
+  'editTextRange',
+  'burstTextEdits',
+  'changeRichText',
+  'insertEmbeddedMorph',
+  'removeEmbeddedMorph',
+  'updateEmbeddedMorph',
+  'changeLayout',
+  'changeLayoutKind',
+  'changeDetailedTilingLayout',
+  'changeLayoutPolicies',
+  'changeMaster',
+  'clearMasterState',
+  'addPolygon',
+  'changeVertices',
+  'addNameCollision',
+  'addScopedNameCollision',
+  'undoTransaction',
+  'redoTransaction'
+];
+
+export const KNOWN_BROKEN_RECONCILIATION_FUZZ_OPERATIONS = [];
+
+export const DEFAULT_RECONCILIATION_FUZZ_OPERATIONS = RECONCILIATION_FUZZ_OPERATIONS.filter(
+  operation => !KNOWN_BROKEN_RECONCILIATION_FUZZ_OPERATIONS.includes(operation)
+);
+
+const defaultBaseModuleId = 'local://lively-object-modules/Test/component-reconciliation-fuzz-base.cp.js';
+const defaultSubjectModuleId = 'local://lively-object-modules/Test/component-reconciliation-fuzz-subject.cp.js';
+
+export const reconciliationFuzzBaseSource = `
+import { component, ComponentDescriptor, part, ViewModel } from 'lively.morphic/components/core.js';
+import { Color, pt } from 'lively.graphics';
+import { Text } from 'lively.morphic';
+
+component.DescriptorClass = ComponentDescriptor;
+
+class FuzzViewModel extends ViewModel {
+  static get properties () {
+    return { label: { defaultValue: 'base' } };
+  }
 }
 
-function generateValueFor (propSpec) {
-  let { defaultValue, type, values, min = 0, max = 100 } = propSpec;
-  if (!defaultValue && !type) return;
-  if (!type) {
-    type = defaultValue.constructor?.name;
-    if (!type) return;
-  }
-  switch (type) {
-    case 'Boolean': return !!num.random(0, 1);
-    case 'String': return string.newUUID();
-    case 'Enum': return arr.shuffle(values)[0];
-    case 'Color': return Color.random();
-    // ColorGradient,
-    // Layout,
-    case 'Rectangle': return Rectangle.fromAny(Point.random(pt(500, 500)), Point.random(pt(500, 500)));
-    case 'Number': return num.random(min, max) || num.random();
-    case 'Shadow': return new ShadowObject({});
-    case 'Point': return Point.random(pt(500, 500));
-  }
-}
-
-/**
- * Generates a randomized set of properties that can be applied to the given morph.
- * @param { Morph } aMorph - The morph to generate the props for.
- */
-function generatePropsFor (aMorph) {
-  const props = aMorph.propertiesAndPropertySettings().properties;
-  const { styleProperties } = aMorph;
-  const selectedProps = arr.shuffle(styleProperties).slice(0, num.random(0, styleProperties.length / 4));
-  const generated = {};
-  for (let propName of selectedProps) {
-    generated[propName] = generateValueFor(props[propName]);
-    if (typeof generated[propName] === 'undefined') delete generated[propName];
-  }
-  return generated;
-}
-
-let editableComponent;
-const testModuleId = 'local://lively-object-modules/Test/component-monkey-patch-test-a.cp.js';
-const initSource = `
-import { part, component, ComponentDescriptor } from 'lively.morphic/components/core.js';
-import { InteractiveComponentDescriptor } from 'lively.ide/components/editor.js';
-import { Color, pt} from 'lively.graphics';
-import { Text } from "lively.morphic";
-
-component.DescriptorClass = InteractiveComponentDescriptor;
-
-const C = component({
-  fill: Color.grey,
-});
-
-const D = component({
+const Leaf = component({
+  name: 'Fuzz Leaf',
   fill: Color.purple,
   submorphs: [{
-    name: 'a deep morph',
+    name: 'leaf child',
     fill: Color.orange
   }]
 });
 
-const A = component({
+const Base = component({
+  name: 'Fuzz Base',
   fill: Color.red,
-  extent: pt(100,100),
+  extent: pt(180, 120),
   submorphs: [{
     type: Text,
-    name: 'some submorph',
-    extent: pt(50,50),
+    name: 'fuzz text',
+    textString: 'initial text',
+    extent: pt(100, 30),
     fixedWidth: true,
     fixedHeight: true,
-    fill: Color.yellow,
-  },part(D, { name: 'some ref'})]
+    readOnly: false,
+    selectable: true,
+    reactsToPointer: true
+  }, part(Leaf, { name: 'fuzz leaf part' })]
 });
 
-const Monkey = component(A, {
+const ModelPart = component({
+  name: 'Fuzz Model Part',
+  defaultViewModel: FuzzViewModel,
+  viewModel: { label: 'base' },
+  fill: Color.blue
+});
+
+export { Base, Leaf, ModelPart };
+`;
+
+export function reconciliationFuzzSubjectSource (baseModuleId = defaultBaseModuleId) {
+  return `
+import { component, ComponentDescriptor } from 'lively.morphic/components/core.js';
+import { InteractiveComponentDescriptor } from 'lively.ide/components/editor.js';
+import { Color } from 'lively.graphics';
+import { Base as AliasedBase, Leaf as AliasedLeaf, ModelPart } from '${baseModuleId}';
+
+component.DescriptorClass = InteractiveComponentDescriptor;
+
+const Subject = component(AliasedBase, {
+  name: 'Fuzz Subject',
   submorphs: [{
-    name: 'some submorph',
+    name: 'fuzz text',
     fill: Color.green
+  }, {
+    name: 'fuzz leaf part',
+    submorphs: [{
+      name: 'leaf child',
+      borderWidth: 2
+    }]
   }]
 });
 
 component.DescriptorClass = ComponentDescriptor;
 
-export { A, C, D, Monkey };
+export { Subject };
 `;
+}
 
-async function ensureModule () {
-  let testComponentModule = module(testModuleId);
+function componentName (component) {
+  return component?.[Symbol.for('lively-module-meta')]?.exportedName || component?.name;
+}
 
-  await testComponentModule.reset();
-  if (testComponentModule.format() === 'global') {
-    await testComponentModule.changeSource('', { moduleId: testModuleId });
-    await testComponentModule.reload();
-    await testComponentModule.setFormat('register');
-    await testComponentModule.changeSource(initSource, { moduleId: testModuleId });
-    await testComponentModule.reload();
-  } else {
-    // reset the module to its original code
-    await testComponentModule.changeSource(initSource, { moduleId: testModuleId });
+function printableValue (value) {
+  if (value === null || typeof value !== 'object') return String(value);
+  if (value.isPoint || value.isColor) return value.toString();
+  if (value.isLayout) return value.constructor.name;
+  return value.constructor?.name || 'Object';
+}
+
+export class ReconciliationFuzzError extends Error {
+  constructor (message, details, cause) {
+    const trace = JSON.stringify(details.actions, null, 2);
+    const fullMessage = `${message}\nseed: ${details.seed}\nstep: ${details.step}\noperation: ${details.operation}\ntrace: ${trace}`;
+    super(fullMessage);
+    this.name = 'ReconciliationFuzzError';
+    this.message = fullMessage;
+    this.cause = cause;
+    Object.assign(this, details);
   }
 }
 
-let Monkey, A, C, D;
-
-async function createSetup () {
-  await ensureModule();
-  const testComponentModule = module(testModuleId);
-  ({ Monkey, A, C, D } = await testComponentModule.load());
-  editableComponent = await Monkey.edit();
-  return await $world.execCommand('open browser', { moduleName: testModuleId, packageName: 'Test', reuse: true });
-}
-
-// performNextChange()
-
-async function performNextChange () {
-  // pick between adding a new morph,
-  // removing a morph
-  // or changing a prop
-  const target = randomSelectChild(editableComponent);
-  switch (arr.shuffle(['add', 'remove', 'prop'])[0]) {
-    case 'add':
-      let newChild = part(arr.shuffle([A, C, D])[0], { name: string.newUUID() });
-      editableComponent.withMetaDo({ reconcileChanges: true }, () => {
-        target.addMorph(newChild, arr.shuffle(target.submorphs)[0]);
-      });
-      return ['add', target, newChild];
-      break;
-    case 'remove':
-      if (target !== editableComponent) {
-        const ownerChain = target.ownerChain().map(m => m.name);
-        editableComponent.withMetaDo({ reconcileChanges: true }, () => {
-          target.remove();
-        });
-        return ['remove', target, ownerChain];
-      }
-    case 'prop':
-      let props = generatePropsFor(target);
-      editableComponent.withMetaDo({ reconcileChanges: true }, () => {
-        Object.assign(target, props);
-      });
-      return ['apply props', target, props];
+export class ReconciliationFuzzer {
+  constructor ({
+    component,
+    componentDescriptor,
+    components,
+    subjectModule,
+    seed = DEFAULT_RECONCILIATION_FUZZ_SEED,
+    operations = DEFAULT_RECONCILIATION_FUZZ_OPERATIONS,
+    validateSource,
+    maxSourceGrowthPerStep = 5000
+  }) {
+    this.component = component;
+    this.componentDescriptor = componentDescriptor;
+    this.components = components;
+    this.subjectModule = subjectModule;
+    this.seed = seed;
+    this.random = new SeededRandom(seed);
+    this.operations = operations.slice();
+    this.operationQueue = [];
+    this.validateSource = validateSource;
+    this.maxSourceGrowthPerStep = maxSourceGrowthPerStep;
+    this.actions = [];
+    this.removedMorphs = [];
+    this.propertyHistory = [];
+    this.nameCounter = 0;
+    this.initialSourceLength = null;
+    this.initialUndoCount = component.env?.undoManager?.undos.length || 0;
   }
-}
 
-// errorChange = await runSteps(1000);
-// errorChange[1].name
-// errorChange[2]
-// errorChange[3]
+  allMorphs () {
+    return this.component.withAllSubmorphsDo(morph => morph);
+  }
 
-async function runSteps (n) {
-  let sourceBefore;
-  const b = await createSetup();
-  await b.whenRendered();
-  const editor = b.get('source editor');
-  editor.scrollPageDown();
-  await b.whenRendered();
-  while (n-- > 0) {
-    await editor.whenRendered();
-    sourceBefore = editor.textString;
-    const change = await performNextChange();
-    try {
-      parse(editor.textString);
-    } catch (err) {
-      b.getWindow().remove();
-      change.push(sourceBefore);
-      change.push(editor.textString);
-      return change;
+  isEmbeddedTextMorph (morph) {
+    let current = morph;
+    while (current && current !== this.component) {
+      const owner = current.owner;
+      if (owner?.isText && owner.textAndAttributes?.includes(current)) return true;
+      current = owner;
     }
-    if (editor.textString.match(/part\((A|B|C)\)/)) debugger;
+    return false;
   }
+
+  componentMorphs () {
+    return this.allMorphs().filter(morph => !this.isEmbeddedTextMorph(morph));
+  }
+
+  semanticProvenanceKind (morph) {
+    const tracker = this.component._changeTracker;
+    const resolution = tracker?.resolveProjectionalCommandTarget?.(morph);
+    if (!resolution || resolution.committed === false) return null;
+    return findComponentNode(resolution.document, resolution.nodeId)?.provenance.kind || null;
+  }
+
+  isProjectionallyAdded (morph) {
+    return this.semanticProvenanceKind(morph) === ComponentNodeProvenanceKind.ADDED;
+  }
+
+  isProjectionallyInherited (morph) {
+    return this.semanticProvenanceKind(morph) === ComponentNodeProvenanceKind.INHERITED;
+  }
+
+  isAttached (aMorph) {
+    return aMorph === this.component || this.allMorphs().includes(aMorph);
+  }
+
+  pathOf (aMorph) {
+    if (aMorph === this.component) return [];
+    const path = [];
+    let current = aMorph;
+    while (current && current !== this.component) {
+      path.unshift(current.name);
+      current = current.owner;
+    }
+    return path;
+  }
+
+  nextName (prefix) {
+    const suffix = this.random.pick(['', " 'quoted'", ' "double"', ' \\backslash']);
+    return `${prefix} ${++this.nameCounter}${suffix}`;
+  }
+
+  randomOwner () {
+    return this.random.pick(this.componentMorphs().filter(morph => !morph.isText));
+  }
+
+  insertionPointFor (owner) {
+    if (!owner.submorphs.length || this.random.boolean()) return null;
+    return this.random.pick(owner.submorphs);
+  }
+
+  reconcile (callback, grouped = false) {
+    const reconcile = () =>
+      this.component.withMetaDo({ reconcileChanges: true }, callback);
+    return grouped
+      ? this.component.groupChangesWhile(new GroupChange(this.component), reconcile)
+      : reconcile();
+  }
+
+  nextOperation () {
+    if (!this.operationQueue.length) this.operationQueue = this.random.shuffle(this.operations);
+    return this.operationQueue.shift();
+  }
+
+  chooseAndPerformOperation () {
+    for (let attempts = 0; attempts < this.operations.length; attempts++) {
+      const operation = this.nextOperation();
+      this.selectedOperation = operation;
+      const action = this[operation]();
+      if (action) return { operation, action };
+    }
+    throw new Error('No reconciliation fuzz operation is currently applicable');
+  }
+
+  addPlainMorph () {
+    const owner = this.randomOwner();
+    if (!owner) return null;
+    const name = this.nextName('plain');
+    const submorphs = this.random.boolean(0.4)
+      ? [morph({ name: this.nextName('nested'), fill: Color.orange })]
+      : [];
+    const addedMorph = morph({
+      name,
+      fill: this.random.pick([Color.cyan, Color.orange, Color.purple]),
+      extent: pt(this.random.integer(20, 140), this.random.integer(20, 140)),
+      submorphs
+    });
+    const before = this.insertionPointFor(owner);
+    const ownerPath = this.pathOf(owner);
+    this.reconcile(() => owner.addMorph(addedMorph, before));
+    return { kind: 'addPlainMorph', ownerPath, name, before: before?.name || null, nested: submorphs.length > 0 };
+  }
+
+  addPart () {
+    const owner = this.component;
+    const descriptor = this.random.pick([this.components.base, this.components.nested]);
+    if (!owner || !descriptor) return null;
+    const name = this.nextName('part');
+    const addedPart = part(descriptor, { name });
+    const before = this.insertionPointFor(owner);
+    const ownerPath = this.pathOf(owner);
+    this.reconcile(() => owner.addMorph(addedPart, before));
+    return {
+      kind: 'addPart',
+      ownerPath,
+      component: componentName(descriptor),
+      name,
+      before: before?.name || null
+    };
+  }
+
+  addModelPart () {
+    const owner = this.component;
+    const descriptor = this.components.model;
+    if (!owner || !descriptor) return null;
+    const name = this.nextName('model part');
+    const viewModel = {
+      label: this.nextName('model'),
+      flags: [true, false, this.random.integer(0, 10)],
+      nested: { enabled: this.random.boolean() }
+    };
+    const addedPart = part(descriptor, { name, viewModel });
+    const before = this.insertionPointFor(owner);
+    const ownerPath = this.pathOf(owner);
+    this.reconcile(() => owner.addMorph(addedPart, before));
+    return {
+      kind: 'addModelPart',
+      ownerPath,
+      component: componentName(descriptor),
+      name,
+      before: before?.name || null,
+      viewModel
+    };
+  }
+
+  addPartWithNestedAddition () {
+    const owner = this.component;
+    const descriptor = this.components.nested;
+    if (!owner || !descriptor) return null;
+    const name = this.nextName('nested part');
+    const nestedName = this.nextName('part addition');
+    const addedPart = part(descriptor, {
+      name,
+      submorphs: [add({ name: nestedName, fill: Color.cyan })]
+    });
+    const before = this.insertionPointFor(owner);
+    const ownerPath = this.pathOf(owner);
+    this.reconcile(() => owner.addMorph(addedPart, before));
+    return {
+      kind: 'addPartWithNestedAddition',
+      ownerPath,
+      component: componentName(descriptor),
+      name,
+      nestedName,
+      before: before?.name || null
+    };
+  }
+
+  removeMorph () {
+    const candidates = this.componentMorphs()
+      .filter(morph => morph !== this.component && !morph.owner?.isText);
+    const target = this.random.pick(candidates);
+    if (!target) return null;
+    const path = this.pathOf(target);
+    this.reconcile(() => target.remove());
+    this.removedMorphs.push({ morph: target, path });
+    return { kind: 'removeMorph', path };
+  }
+
+  reintroduceMorph () {
+    const candidates = this.removedMorphs.filter(({ morph }) => !this.isAttached(morph));
+    const removed = this.random.pick(candidates);
+    if (!removed) return null;
+    const owner = this.randomOwner();
+    if (!owner) return null;
+    arr.remove(this.removedMorphs, removed);
+    const { morph: removedMorph, path: previousPath } = removed;
+    if (this.random.boolean()) removedMorph.fill = this.random.pick([Color.green, Color.orange, Color.purple]);
+    const before = this.insertionPointFor(owner);
+    const ownerPath = this.pathOf(owner);
+    this.reconcile(() => owner.addMorph(removedMorph, before));
+    return {
+      kind: 'reintroduceMorph',
+      previousPath,
+      ownerPath,
+      name: removedMorph.name,
+      before: before?.name || null
+    };
+  }
+
+  cycleInheritedSuppression () {
+    const target = this.random.pick(this.componentMorphs().filter(morph =>
+      morph !== this.component &&
+      this.isProjectionallyInherited(morph) &&
+      !morph.owner?.isText
+    ));
+    if (!target) return null;
+    const owner = target.owner;
+    const index = owner.submorphs.indexOf(target);
+    const before = owner.submorphs[index + 1] || null;
+    const path = this.pathOf(target);
+    this.reconcile(() => {
+      target.remove();
+      owner.addMorph(target, before);
+    });
+    return {
+      kind: 'cycleInheritedSuppression',
+      path,
+      before: before?.name || null
+    };
+  }
+
+  reparentMorphMatching (kind, matchesTarget) {
+    const morphs = this.componentMorphs();
+    const targets = morphs.filter(target =>
+      target !== this.component &&
+      matchesTarget(target) &&
+      !target.owner?.isText
+    );
+    const target = this.random.pick(targets.filter(candidate => morphs.some(owner => {
+      if (owner.isText || owner === candidate.owner) return false;
+      for (let current = owner; current; current = current.owner) {
+        if (current === candidate) return false;
+      }
+      return true;
+    })));
+    if (!target) return null;
+
+    const owners = morphs.filter(owner => {
+      if (owner.isText || owner === target.owner) return false;
+      for (let current = owner; current; current = current.owner) {
+        if (current === target) return false;
+      }
+      return true;
+    });
+    const newOwner = this.random.pick(owners);
+    if (!newOwner) return null;
+
+    const previousPath = this.pathOf(target);
+    const newOwnerPath = this.pathOf(newOwner);
+    const before = this.insertionPointFor(newOwner);
+    this.reconcile(() => newOwner.addMorph(target, before));
+    return {
+      kind,
+      previousPath,
+      newOwnerPath,
+      name: target.name,
+      before: before?.name || null
+    };
+  }
+
+  reparentMorph () {
+    return this.reparentMorphMatching(
+      'reparentMorph',
+      target => this.isProjectionallyAdded(target)
+    );
+  }
+
+  reparentInheritedMorph () {
+    return this.reparentMorphMatching(
+      'reparentInheritedMorph',
+      target => this.isProjectionallyInherited(target)
+    );
+  }
+
+  renameMorph () {
+    const candidates = this.componentMorphs().filter(morph =>
+      morph !== this.component && this.isProjectionallyAdded(morph)
+    );
+    const target = this.random.pick(candidates);
+    if (!target) return null;
+    const path = this.pathOf(target);
+    const oldName = target.name;
+    const newName = this.nextName('renamed');
+    this.reconcile(() => { target.name = newName; });
+    return { kind: 'renameMorph', path, oldName, newName };
+  }
+
+  renameInheritedMorph () {
+    const candidates = this.componentMorphs().filter(morph =>
+      morph !== this.component &&
+      this.isProjectionallyInherited(morph) &&
+      !morph.owner?.isText
+    );
+    const target = this.random.pick(candidates);
+    if (!target) return null;
+    const path = this.pathOf(target);
+    const oldName = target.name;
+    const newName = this.nextName('renamed inherited');
+    this.reconcile(() => { target.name = newName; });
+    return { kind: 'renameInheritedMorph', path, oldName, newName };
+  }
+
+  reorderMorph () {
+    const owners = this.componentMorphs().filter(morph =>
+      !morph.isText &&
+      morph.submorphs.length > 1 &&
+      morph.submorphs.some(submorph =>
+        this.isProjectionallyAdded(submorph) && !submorph.master)
+    );
+    const owner = this.random.pick(owners);
+    if (!owner) return null;
+    const ownerPath = this.pathOf(owner);
+    const child = this.random.pick(owner.submorphs.filter(submorph =>
+      this.isProjectionallyAdded(submorph) && !submorph.master
+    ));
+    let before = null;
+    if (owner.submorphs.indexOf(child) === owner.submorphs.length - 1) {
+      before = owner.submorphs[0];
+    }
+    this.reconcile(() => owner.addMorph(child, before));
+    return { kind: 'reorderMorph', ownerPath, name: child.name, before: before?.name || null };
+  }
+
+  valueForProperty (property) {
+    switch (property) {
+      case 'fill': return this.random.pick([Color.red, Color.green, Color.blue, Color.orange, Color.transparent]);
+      case 'borderWidth': return this.random.integer(0, 20);
+      case 'extent': return pt(this.random.integer(20, 200), this.random.integer(20, 200));
+      case 'position': return pt(this.random.integer(-100, 300), this.random.integer(-100, 300));
+      case 'scale': return this.random.integer(2, 21) / 10;
+      case 'opacity': return this.random.integer(1, 11) / 10;
+      case 'visible': return this.random.boolean();
+      case 'rotation': return this.random.integer(-6, 7) / 4;
+      case 'tooltip': return this.nextName('tooltip');
+    }
+  }
+
+  setProperties () {
+    const propertyNames = [
+      'fill',
+      'borderWidth',
+      'extent',
+      'position',
+      'scale',
+      'opacity',
+      'visible',
+      'rotation',
+      'tooltip'
+    ];
+    const propertiesFor = morph => propertyNames.filter(property =>
+      morph.styleProperties.includes(property) &&
+      !(property === 'position' && (
+        morph === this.component ||
+        this.component._changeTracker?.isPositionedByLayout(morph)
+      ))
+    );
+    const target = this.random.pick(this.componentMorphs().filter(morph =>
+      propertiesFor(morph).length > 0
+    ));
+    if (!target) return null;
+    const selectedProperties = this.random.shuffle(propertiesFor(target))
+      .slice(0, this.random.boolean() ? 1 : 2);
+    const changes = selectedProperties.map(property => ({
+      property,
+      previous: target[property],
+      value: this.valueForProperty(property)
+    }));
+    const path = this.pathOf(target);
+    this.reconcile(() => {
+      for (const change of changes) target[change.property] = change.value;
+    }, true);
+    this.propertyHistory.push(...changes.map(change => ({ target, ...change })));
+    return {
+      kind: 'setProperties',
+      path,
+      changes: changes.map(({ property, value }) => ({ property, value: printableValue(value) }))
+    };
+  }
+
+  batchPropertyAndStructure () {
+    const owner = this.randomOwner();
+    if (!owner) return null;
+    const name = this.nextName('batched child');
+    const addedMorph = morph({
+      name,
+      fill: this.random.pick([Color.cyan, Color.orange, Color.purple]),
+      position: this.valueForProperty('position'),
+      extent: this.valueForProperty('extent')
+    });
+    const property = this.random.pick(['fill', 'opacity', 'rotation']);
+    const previous = owner[property];
+    const value = this.valueForProperty(property);
+    const before = this.insertionPointFor(owner);
+    const ownerPath = this.pathOf(owner);
+    this.reconcile(() => {
+      owner[property] = value;
+      owner.addMorph(addedMorph, before);
+    });
+    this.propertyHistory.push({ target: owner, property, previous, value });
+    return {
+      kind: 'batchPropertyAndStructure',
+      ownerPath,
+      name,
+      before: before?.name || null,
+      property,
+      value: printableValue(value)
+    };
+  }
+
+  batchRenameAndLayout () {
+    const owners = this.componentMorphs().filter(morph =>
+      !morph.isText &&
+      morph.styleProperties.includes('layout') &&
+      morph.submorphs.some(submorph => this.isProjectionallyAdded(submorph))
+    );
+    const owner = this.random.pick(owners);
+    if (!owner) return null;
+    const target = this.random.pick(owner.submorphs.filter(submorph =>
+      this.isProjectionallyAdded(submorph)
+    ));
+    if (!target) return null;
+    const ownerPath = this.pathOf(owner);
+    const targetPath = this.pathOf(target);
+    const oldName = target.name;
+    const newName = this.nextName('batched rename');
+    const previous = owner.layout;
+    const layout = new TilingLayout({
+      axis: this.random.pick(['row', 'column']),
+      spacing: this.random.integer(0, 20),
+      renderViaCSS: false
+    });
+    this.reconcile(() => {
+      owner.layout = layout;
+      target.name = newName;
+    }, true);
+    this.propertyHistory.push({ target: owner, property: 'layout', previous, value: layout });
+    return {
+      kind: 'batchRenameAndLayout',
+      ownerPath,
+      targetPath,
+      oldName,
+      newName,
+      axis: layout.axis,
+      spacing: layout.spacing
+    };
+  }
+
+  resetProperty () {
+    const candidates = this.propertyHistory.filter(change =>
+      this.isAttached(change.target) && !obj.equals(change.target[change.property], change.previous)
+    );
+    const change = this.random.pick(candidates);
+    if (!change) return null;
+    arr.remove(this.propertyHistory, change);
+    const path = this.pathOf(change.target);
+    this.reconcile(() => { change.target[change.property] = change.previous; });
+    return {
+      kind: 'resetProperty',
+      path,
+      property: change.property,
+      value: printableValue(change.previous)
+    };
+  }
+
+  changeText () {
+    const target = this.random.pick(this.componentMorphs().filter(morph => morph.isText));
+    if (!target) return null;
+    const path = this.pathOf(target);
+    const text = this.nextName('text');
+    this.reconcile(() => { target.textAndAttributes = [text, null]; });
+    return { kind: 'changeText', path, text };
+  }
+
+  editTextRange () {
+    const target = this.random.pick(this.componentMorphs().filter(morph =>
+      morph.isText &&
+      !morph.readOnly &&
+      morph.selectable &&
+      morph.reactsToPointer &&
+      morph.document &&
+      !morph.textString.includes('\n')
+    ));
+    if (!target) return null;
+    const path = this.pathOf(target);
+    const length = target.textString.length;
+    const start = this.random.integer(0, length + 1);
+    const end = this.random.integer(start, length + 1);
+    const replacement = this.nextName('range');
+    const attributes = this.random.boolean()
+      ? {
+          fontWeight: this.random.pick(['bold', 'normal']),
+          textColor: this.random.pick([Color.red, Color.green, Color.blue])
+        }
+      : null;
+    this.reconcile(() => {
+      target.replace({
+        start: { row: 0, column: start },
+        end: { row: 0, column: end }
+      }, [replacement, attributes], false, true, true);
+    });
+    return { kind: 'editTextRange', path, start, end, replacement };
+  }
+
+  burstTextEdits () {
+    const target = this.random.pick(this.componentMorphs().filter(morph => morph.isText));
+    if (!target) return null;
+    const path = this.pathOf(target);
+    const texts = Array.from({ length: 3 }, () => this.nextName('burst'));
+    this.reconcile(() => {
+      for (const text of texts) target.textAndAttributes = [text, null];
+    });
+    return { kind: 'burstTextEdits', path, texts };
+  }
+
+  changeRichText () {
+    const target = this.random.pick(this.componentMorphs().filter(morph => morph.isText));
+    if (!target) return null;
+    const path = this.pathOf(target);
+    const text = this.nextName('rich text');
+    const embeddedName = this.nextName('embedded');
+    const embeddedMorph = morph({
+      name: embeddedName,
+      fill: this.random.pick([Color.cyan, Color.orange, Color.purple]),
+      extent: pt(this.random.integer(8, 40), this.random.integer(8, 40))
+    });
+    const attributes = {
+      fontWeight: this.random.pick(['bold', 'normal']),
+      textColor: this.random.pick([Color.red, Color.green, Color.blue])
+    };
+    this.reconcile(() => {
+      target.textAndAttributes = [
+        `${text} before `, attributes,
+        embeddedMorph, null,
+        ' after', null
+      ];
+    });
+    return { kind: 'changeRichText', path, text, embeddedName };
+  }
+
+  insertEmbeddedMorph () {
+    const target = this.random.pick(this.componentMorphs().filter(morph => morph.isText));
+    if (!target) return null;
+    const path = this.pathOf(target);
+    const embeddedName = this.nextName('inserted embedded');
+    const embeddedMorph = morph({
+      name: embeddedName,
+      fill: this.random.pick([Color.cyan, Color.orange, Color.purple]),
+      extent: pt(this.random.integer(8, 40), this.random.integer(8, 40))
+    });
+    const previous = target.textAndAttributes.slice();
+    const insertionIndex = this.random.integer(0, previous.length / 2 + 1) * 2;
+    const next = previous.slice();
+    next.splice(insertionIndex, 0, embeddedMorph, null);
+    this.reconcile(() => { target.textAndAttributes = next; });
+    return { kind: 'insertEmbeddedMorph', path, embeddedName, insertionIndex };
+  }
+
+  removeEmbeddedMorph () {
+    const candidates = this.componentMorphs()
+      .filter(morph => morph.isText)
+      .flatMap(textMorph => textMorph.textAndAttributes
+        .map((value, index) => ({ textMorph, embeddedMorph: value, index }))
+        .filter(({ embeddedMorph, index }) => embeddedMorph?.isMorph && index % 2 === 0));
+    const candidate = this.random.pick(candidates);
+    if (!candidate) return null;
+    const { textMorph, embeddedMorph, index } = candidate;
+    const path = this.pathOf(textMorph);
+    const next = textMorph.textAndAttributes.slice();
+    next.splice(index, 2);
+    this.reconcile(() => { textMorph.textAndAttributes = next; });
+    return {
+      kind: 'removeEmbeddedMorph',
+      path,
+      embeddedName: embeddedMorph.name,
+      index
+    };
+  }
+
+  updateEmbeddedMorph () {
+    const candidates = this.componentMorphs()
+      .filter(morph => morph.isText)
+      .flatMap(textMorph => textMorph.textAndAttributes
+        .filter(value => value?.isMorph)
+        .map(embeddedMorph => ({ textMorph, embeddedMorph })));
+    const candidate = this.random.pick(candidates);
+    if (!candidate) return null;
+    const { textMorph, embeddedMorph } = candidate;
+    const path = this.pathOf(textMorph);
+    const fill = this.random.pick([Color.red, Color.green, Color.blue, Color.orange]);
+    const replacement = morph({
+      ...embeddedMorph.spec(),
+      name: embeddedMorph.name,
+      fill
+    });
+    this.reconcile(() => {
+      textMorph.textAndAttributes = textMorph.textAndAttributes
+        .map(value => value === embeddedMorph ? replacement : value);
+    });
+    return {
+      kind: 'updateEmbeddedMorph',
+      path,
+      name: embeddedMorph.name,
+      fill: printableValue(fill)
+    };
+  }
+
+  changeLayout () {
+    const target = this.random.pick(this.componentMorphs().filter(morph =>
+      !morph.isText && morph.styleProperties.includes('layout')
+    ));
+    if (!target) return null;
+    const path = this.pathOf(target);
+    const spacing = this.random.integer(0, 20);
+    const previous = target.layout;
+    const layout = new TilingLayout({ spacing, renderViaCSS: false });
+    this.reconcile(() => { target.layout = layout; });
+    this.propertyHistory.push({ target, property: 'layout', previous, value: layout });
+    return { kind: 'changeLayout', path, spacing };
+  }
+
+  changeLayoutKind () {
+    const target = this.random.pick(this.componentMorphs().filter(morph =>
+      !morph.isText && morph.styleProperties.includes('layout')
+    ));
+    if (!target) return null;
+    const path = this.pathOf(target);
+    const previous = target.layout;
+    const availableKinds = ['none', 'tiling', 'constraint', 'grid']
+      .filter(kind => kind !== (
+        previous instanceof TilingLayout
+          ? 'tiling'
+          : previous instanceof ConstraintLayout
+            ? 'constraint'
+            : previous instanceof GridLayout ? 'grid' : 'none'
+      ));
+    const kind = this.random.pick(availableKinds);
+    const layout = kind === 'tiling'
+      ? new TilingLayout({ spacing: this.random.integer(0, 20), renderViaCSS: false })
+      : kind === 'constraint'
+        ? new ConstraintLayout({ renderViaCSS: false })
+        : kind === 'grid'
+          ? new GridLayout({
+              autoAssign: true,
+              columnCount: Math.max(1, Math.min(3, target.submorphs.length || 1)),
+              rowCount: Math.max(1, Math.ceil(target.submorphs.length / 3)),
+              renderViaCSS: false
+            })
+          : null;
+    this.reconcile(() => { target.layout = layout; });
+    this.propertyHistory.push({ target, property: 'layout', previous, value: layout });
+    return { kind: 'changeLayoutKind', path, layoutKind: kind };
+  }
+
+  changeDetailedTilingLayout () {
+    const target = this.random.pick(this.componentMorphs().filter(morph =>
+      !morph.isText && morph.styleProperties.includes('layout')
+    ));
+    if (!target) return null;
+    const path = this.pathOf(target);
+    const previous = target.layout;
+    const layout = new TilingLayout({
+      axis: this.random.pick(['row', 'column']),
+      align: this.random.pick(['left', 'center', 'right']),
+      axisAlign: this.random.pick(['left', 'center', 'right']),
+      justifySubmorphs: this.random.pick(['packed', 'spaced']),
+      padding: rect(
+        this.random.integer(0, 10),
+        this.random.integer(0, 10),
+        this.random.integer(0, 10),
+        this.random.integer(0, 10)
+      ),
+      spacing: this.random.integer(0, 20),
+      orderByIndex: this.random.boolean(),
+      wrapSubmorphs: this.random.boolean(),
+      renderViaCSS: false
+    });
+    this.reconcile(() => { target.layout = layout; });
+    this.propertyHistory.push({ target, property: 'layout', previous, value: layout });
+    return {
+      kind: 'changeDetailedTilingLayout',
+      path,
+      axis: layout.axis,
+      align: layout.align,
+      axisAlign: layout.axisAlign,
+      justifySubmorphs: layout.justifySubmorphs,
+      spacing: layout.spacing,
+      wrapSubmorphs: layout.wrapSubmorphs
+    };
+  }
+
+  changeLayoutPolicies () {
+    const target = this.random.pick(this.componentMorphs().filter(morph =>
+      !morph.isText &&
+      morph.styleProperties.includes('layout') &&
+      morph.submorphs.length > 0
+    ));
+    if (!target) return null;
+    const path = this.pathOf(target);
+    const spacing = this.random.integer(0, 20);
+    const resizePolicies = target.submorphs.map(submorph => [
+      submorph.name,
+      {
+        width: this.random.pick(['fixed', 'fill']),
+        height: this.random.pick(['fixed', 'fill'])
+      }
+    ]);
+    const previous = target.layout;
+    const layout = new TilingLayout({
+      spacing,
+      resizePolicies,
+      orderByIndex: this.random.boolean(),
+      wrapSubmorphs: this.random.boolean(),
+      renderViaCSS: false
+    });
+    this.reconcile(() => { target.layout = layout; });
+    this.propertyHistory.push({ target, property: 'layout', previous, value: layout });
+    return {
+      kind: 'changeLayoutPolicies',
+      path,
+      spacing,
+      resizePolicies
+    };
+  }
+
+  changeMaster () {
+    const target = this.random.pick(this.componentMorphs().filter(morph => morph.master));
+    const descriptor = this.random.pick(this.components);
+    if (!target || !descriptor) return null;
+    const path = this.pathOf(target);
+    const state = this.random.pick(['hover', 'click']);
+    const policy = target.master.copy();
+    policy.applyConfiguration({ ...(policy.getConfig() || {}), [state]: descriptor });
+    policy.attach(target);
+    this.reconcile(() => { target.setProperty('master', policy); });
+    return { kind: 'changeMaster', path, state, component: componentName(descriptor) };
+  }
+
+  clearMasterState () {
+    const target = this.random.pick(this.componentMorphs().filter(morph => {
+      const config = morph.master?.getConfig?.();
+      return config?.hover || config?.click;
+    }));
+    if (!target) return null;
+    const path = this.pathOf(target);
+    const policy = target.master.copy();
+    const config = policy.getConfig() || {};
+    const availableStates = ['hover', 'click'].filter(state => config[state]);
+    const state = this.random.pick(availableStates);
+    if (!state) return null;
+    const nextConfig = { ...config };
+    delete nextConfig[state];
+    const hasRemainingConfiguration = Object.keys(nextConfig).length > 0;
+    if (hasRemainingConfiguration) {
+      policy.reset();
+      policy.applyConfiguration(nextConfig);
+      policy.attach(target);
+    }
+    this.reconcile(() => {
+      target.setProperty('master', hasRemainingConfiguration ? policy : null);
+    });
+    return { kind: 'clearMasterState', path, state };
+  }
+
+  addPolygon () {
+    const owner = this.randomOwner();
+    if (!owner) return null;
+    const name = this.nextName('polygon');
+    const vertices = [
+      pt(0, 0),
+      pt(this.random.integer(20, 100), 0),
+      pt(this.random.integer(10, 80), this.random.integer(20, 100))
+    ];
+    const polygon = new Polygon({
+      name,
+      vertices,
+      fill: this.random.pick([Color.cyan, Color.orange, Color.purple])
+    });
+    const before = this.insertionPointFor(owner);
+    const ownerPath = this.pathOf(owner);
+    this.reconcile(() => owner.addMorph(polygon, before));
+    return { kind: 'addPolygon', ownerPath, name, before: before?.name || null };
+  }
+
+  changeVertices () {
+    const target = this.random.pick(this.componentMorphs().filter(morph =>
+      morph.isPolygon && this.isProjectionallyAdded(morph)
+    ));
+    if (!target) return null;
+    const path = this.pathOf(target);
+    const previous = target.vertices;
+    const vertices = [
+      pt(0, 0),
+      pt(this.random.integer(20, 120), this.random.integer(0, 30)),
+      pt(this.random.integer(30, 100), this.random.integer(40, 130)),
+      pt(this.random.integer(0, 20), this.random.integer(30, 100))
+    ];
+    this.reconcile(() => { target.vertices = vertices; });
+    this.propertyHistory.push({ target, property: 'vertices', previous, value: vertices });
+    return { kind: 'changeVertices', path, vertices: vertices.map(String) };
+  }
+
+  addNameCollision () {
+    const owner = this.component;
+    if (!owner) return null;
+    const requestedName = this.nextName('collision');
+    const first = morph({ name: requestedName, fill: Color.cyan });
+    const second = morph({ name: requestedName, fill: Color.orange });
+    const ownerPath = this.pathOf(owner);
+    this.reconcile(() => {
+      owner.addMorph(first);
+      owner.addMorph(second);
+    });
+    return { kind: 'addNameCollision', ownerPath, requestedName };
+  }
+
+  addScopedNameCollision () {
+    const owner = this.component;
+    const descriptor = this.components.nested;
+    if (!owner || !descriptor) return null;
+    const requestedName = this.nextName('scoped collision');
+    const firstScopeName = this.nextName('collision scope');
+    const secondScopeName = this.nextName('collision scope');
+    const firstPart = part(descriptor, {
+      name: firstScopeName,
+      submorphs: [add({ name: requestedName, fill: Color.cyan })]
+    });
+    const secondPart = part(descriptor, {
+      name: secondScopeName,
+      submorphs: [add({ name: requestedName, fill: Color.orange })]
+    });
+    const ownerPath = this.pathOf(owner);
+    this.reconcile(() => {
+      owner.addMorph(firstPart);
+      owner.addMorph(secondPart);
+    });
+    return {
+      kind: 'addScopedNameCollision',
+      ownerPath,
+      component: componentName(descriptor),
+      requestedName,
+      scopeNames: [firstScopeName, secondScopeName]
+    };
+  }
+
+  undoTransaction () {
+    const undoManager = this.component.env?.undoManager;
+    if (!undoManager || undoManager.undos.length <= this.initialUndoCount) return null;
+    const transaction = undoManager.undo();
+    if (!transaction) return null;
+    // A redo is only meaningful immediately after an undo. Schedule it next
+    // instead of leaving coverage to a shuffled turn where later edits may
+    // already have cleared the redo stack.
+    this.operationQueue = this.operationQueue.filter(
+      operation => operation !== 'redoTransaction'
+    );
+    this.operationQueue.unshift('redoTransaction');
+    return {
+      kind: 'undoTransaction',
+      transaction: transaction.label || transaction.name || transaction.constructor.name
+    };
+  }
+
+  redoTransaction () {
+    const undoManager = this.component.env?.undoManager;
+    if (!undoManager?.redos.length) return null;
+    const transaction = undoManager.redo();
+    if (!transaction) return null;
+    return {
+      kind: 'redoTransaction',
+      transaction: transaction.label || transaction.name || transaction.constructor.name
+    };
+  }
+
+  fuzzError (error, step, operation, action, sourceBefore, sourceAfter) {
+    return new ReconciliationFuzzError(
+      `Reconciliation fuzzing failed: ${error.message}`,
+      {
+        seed: this.seed,
+        step,
+        operation,
+        action,
+        actions: [...this.actions, { step, operation, ...action }],
+        sourceBefore,
+        sourceAfter
+      },
+      error
+    );
+  }
+
+  async step () {
+    const step = this.actions.length;
+    const sourceBefore = await this.subjectModule.source();
+    let operation = 'selectOperation';
+    let action = {};
+    try {
+      ({ operation, action } = this.chooseAndPerformOperation());
+      await this.component._changeTracker.onceChangesProcessed();
+      const sourceAfter = await this.subjectModule.source();
+      parse(sourceAfter);
+      const sourceLimit = this.initialSourceLength + this.maxSourceGrowthPerStep * (step + 1);
+      if (sourceAfter.length > sourceLimit) {
+        throw new Error(`Generated source grew to ${sourceAfter.length} characters (limit: ${sourceLimit})`);
+      }
+      if (this.validateSource) {
+        const changedStyleProperties = this.propertyHistory
+          .filter(change =>
+            !['layout', 'vertices'].includes(change.property) &&
+            this.isAttached(change.target)
+          )
+          .map(change => ({ path: this.pathOf(change.target), property: change.property }));
+        const introducedStyleProperties = this.allMorphs()
+          .filter(morph =>
+            this.isProjectionallyAdded(morph) ||
+            this.isEmbeddedTextMorph(morph)
+          )
+          .flatMap(morph => RECONCILIATION_FUZZ_STABLE_STYLE_PROPERTIES
+            .filter(property => morph.styleProperties.includes(property))
+            .map(property => ({ path: this.pathOf(morph), property })));
+        const styleProperties = [...changedStyleProperties, ...introducedStyleProperties];
+        await this.validateSource(sourceAfter, {
+          seed: this.seed,
+          step,
+          operation,
+          action,
+          styleProperties,
+          component: this.component,
+          componentDescriptor: this.componentDescriptor
+        });
+      }
+      const recordedAction = {
+        step,
+        operation,
+        ...action,
+        sourceLengthBefore: sourceBefore.length,
+        sourceLengthAfter: sourceAfter.length
+      };
+      this.actions.push(recordedAction);
+      return recordedAction;
+    } catch (error) {
+      if (operation === 'selectOperation' && this.selectedOperation) {
+        operation = this.selectedOperation;
+      }
+      const projectionError = error.cause || error;
+      if (!projectionError.batch) {
+        projectionError.batch = this.component._changeTracker?.lastShadowCommandBatch;
+      }
+      let sourceAfter;
+      try { sourceAfter = await this.subjectModule.source(); } catch (sourceError) { sourceAfter = String(sourceError); }
+      throw this.fuzzError(error, step, operation, action, sourceBefore, sourceAfter);
+    }
+  }
+
+  async run (steps = 100) {
+    if (!Number.isInteger(steps) || steps < 0) throw new Error(`Invalid reconciliation fuzz step count: ${steps}`);
+    this.initialSourceLength = (await this.subjectModule.source()).length;
+    while (this.actions.length < steps) await this.step();
+    return {
+      seed: this.seed,
+      steps,
+      actions: this.actions.slice(),
+      source: await this.subjectModule.source()
+    };
+  }
+}
+
+async function resetModuleSource (targetModule, source) {
+  await targetModule.reset();
+  if (targetModule.format() === 'global') {
+    await targetModule.changeSource('', { moduleId: targetModule.id });
+    await targetModule.reload();
+    await targetModule.setFormat('register');
+    await targetModule.changeSource(source, { moduleId: targetModule.id });
+    await targetModule.reload();
+  } else {
+    await targetModule.changeSource(source, { moduleId: targetModule.id });
+  }
+}
+
+export async function createReconciliationFuzzer ({
+  baseModuleId = defaultBaseModuleId,
+  subjectModuleId = defaultSubjectModuleId,
+  baseSource = reconciliationFuzzBaseSource,
+  subjectSource = reconciliationFuzzSubjectSource(baseModuleId),
+  resetSource = true,
+  ...options
+} = {}) {
+  const baseModule = module(baseModuleId);
+  const subjectModule = module(subjectModuleId);
+  if (resetSource) {
+    await resetModuleSource(baseModule, baseSource);
+    await resetModuleSource(subjectModule, subjectSource);
+  }
+
+  const { Base, Leaf, ModelPart } = await baseModule.load();
+  const { Subject } = await subjectModule.load();
+  for (const descriptor of [Base, Leaf, ModelPart, Subject]) descriptor.previouslyRemovedMorphs = new WeakMap();
+  const component = await Subject.edit();
+
+  return new ReconciliationFuzzer({
+    component,
+    componentDescriptor: Subject,
+    components: Object.assign([Base, Leaf, ModelPart], {
+      base: Base,
+      nested: Leaf,
+      model: ModelPart
+    }),
+    subjectModule,
+    ...options
+  });
+}
+
+/**
+ * Manual entry point for a workspace:
+ *   result = await runReconciliationFuzz({ steps: 1000, seed: 'my-seed' })
+ */
+export async function runReconciliationFuzz ({ steps = 100, ...options } = {}) {
+  const fuzzer = await createReconciliationFuzzer(options);
+  return fuzzer.run(steps);
 }

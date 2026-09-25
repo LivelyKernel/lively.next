@@ -5,7 +5,7 @@ import module from 'lively.modules/src/module.js';
 import { withAllViewModelsDo } from 'lively.morphic/components/policy.js';
 import { ComponentChangeTracker } from './change-tracker.js';
 import { findComponentDef, getComponentNode, scanForNamesInGenerator } from './helpers.js';
-import { replaceComponentDefinition, Reconciliation, createInitialComponentDefinition } from './reconciliation.js';
+import { replaceComponentDefinition, createInitialComponentDefinition } from './component-definition.js';
 import { parse } from 'lively.ast';
 import { once } from 'lively.bindings';
 import { evalAsSpec } from 'lively.morphic/components/core.js';
@@ -78,8 +78,9 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   ensureNamesInSourceCode () {
     if (this._hasGeneratedNames) {
       this._hasGeneratedNames = false;
-      Reconciliation.ensureNamesInSourceCode(this);
+      return false;
     }
+    return true;
   }
 
   checkForGeneratedNames () {
@@ -132,6 +133,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
       const sceneGraph = c.world().sceneGraph;
       const pos = c.position;
       const prevOwner = c.owner;
+      c._changeTracker?.dispose();
       c.remove();
       if (sceneGraph) sceneGraph.refresh();
       const updatedComponentMorph = prevOwner.addMorph(this.getComponentMorph());
@@ -181,6 +183,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   }
 
   stopEditSession () {
+    this._cachedComponent?._changeTracker?.dispose();
     this._backupComponentDef = null;
     this._cachedComponent = null;
   }

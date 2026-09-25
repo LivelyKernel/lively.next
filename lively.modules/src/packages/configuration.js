@@ -64,6 +64,7 @@ export default class PackageConfiguration {
     pkg.version = version;
     pkg.config = config;
     pkg._name = name;
+    pkg.systemjs = config.systemjs;
     pkg.mergeWithConfig(packageInSystem);
 
     return livelyConfig ? this.applyLivelyConfig(livelyConfig) : { subPackages: [] };

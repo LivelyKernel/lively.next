@@ -1251,6 +1251,10 @@ export class Morph {
     return this.env.changeManager.addMethodCallChangeDoing(spec, this, doFn);
   }
 
+  addStructuralChangeDoing (spec, doFn) {
+    return this.env.changeManager.addStructuralChangeDoing(spec, this, doFn);
+  }
+
   groupChangesWhile (groupChange, whileFn) {
     return this.env.changeManager.groupChangesWhile(this, groupChange, whileFn);
   }
@@ -1332,7 +1336,12 @@ export class Morph {
         return [target, animConfig, meta];
       });
     await Promise.all(animationConfigs.map(([target, animConfig, meta]) => {
-      return target?.withMetaDo(meta, () => target.animate(animConfig));
+      if (!target) return undefined;
+      let animation;
+      target.withMetaDo(meta, () => {
+        animation = target.animate(animConfig);
+      });
+      return animation;
     }));
   }
 
@@ -1620,15 +1629,10 @@ export class Morph {
 
     this.requestMasterStyling();
 
-    this.addMethodCallChangeDoing({
-      target: this,
+    this.addStructuralChangeDoing({
+      morph: submorph,
       selector: 'addMorphAt',
-      args: [submorph, index],
-      undo: {
-        target: this,
-        selector: 'removeMorph',
-        args: [submorph]
-      }
+      args: [submorph, index]
     }, () => {
       const prevOwner = submorph.owner;
       const submorphs = this.submorphs; let tfm;
@@ -1698,19 +1702,13 @@ export class Morph {
     const index = this.submorphs.indexOf(morph);
     if (index === -1) return;
 
-    const submorphs = this.getProperty('submorphs') || [];
-    submorphs.splice(index, 1);
-
-    this.addMethodCallChangeDoing({
-      target: this,
+    this.addStructuralChangeDoing({
+      morph,
       selector: 'removeMorph',
-      args: [morph],
-      undo: {
-        target: this,
-        selector: 'addMorphAt',
-        args: [morph, index]
-      }
+      args: [morph]
     }, () => {
+      const submorphs = this.getProperty('submorphs') || [];
+      submorphs.splice(index, 1);
       morph.suspendSteppingAll();
       morph._owner = null;
     });
