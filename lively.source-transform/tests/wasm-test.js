@@ -58,7 +58,7 @@ describe('wasm transform', function () {
   it('emits parseable System.register output', function () {
     const code = transformWithWasm('var x = 23;');
     expectIncludes(code, 'System.register([], function');
-    expectIncludes(code, `_rec = lively.FreezerRuntime || lively.frozenModules.recorderFor("${moduleId}", __contextModule__);`);
+    expectIncludes(code, `_rec = (lively.FreezerRuntime || lively.frozenModules).recorderFor("${moduleId}", __contextModule__);`);
     expectIncludes(code, `_rec.x = 23;`);
   });
 
