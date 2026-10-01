@@ -563,7 +563,7 @@ export class Foo {}"#;
     #[test]
     fn test_declaration_wrapper_uses_computed_member() {
         // With declaration_wrapper set, function declarations get wrapped with the wrapper
-        // as a direct function call, passing (name, kind, value, captureObj) as args.
+        // as a direct function call, passing (name, kind, value, captureObj, metadata).
         // Variable declarations do NOT get __define__ wrapping.
         let mut config = LivelyTransformConfig::default();
         config.capture_obj = "__lvVarRecorder".to_string();
