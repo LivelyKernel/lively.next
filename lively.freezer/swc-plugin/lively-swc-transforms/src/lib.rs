@@ -563,7 +563,7 @@ export class Foo {}"#;
     #[test]
     fn test_declaration_wrapper_uses_computed_member() {
         // With declaration_wrapper set, function declarations get wrapped with the wrapper
-        // as a direct function call, passing (name, kind, value, captureObj) as args.
+        // as a direct function call, passing (name, kind, value, captureObj, metadata).
         // Variable declarations do NOT get __define__ wrapping.
         let mut config = LivelyTransformConfig::default();
         config.capture_obj = "__lvVarRecorder".to_string();
@@ -571,9 +571,9 @@ export class Foo {}"#;
         config.module_id = "http://localhost:9011/test.js".to_string();
         let input = "function createLivelyLangObject() { return 1; }";
         let output = transform_code(input, config);
-        // Function declarations are wrapped: captureObj[wrapper]("name", "function", ident, captureObj)
+        // Function declarations pass the recorder before their source metadata.
         assert!(
-            output.contains(r#"__lvVarRecorder["defVar_http://localhost:9011/test.js"]("createLivelyLangObject", "function", createLivelyLangObject, __lvVarRecorder)"#),
+            output.contains(r#"__lvVarRecorder["defVar_http://localhost:9011/test.js"]("createLivelyLangObject", "function", createLivelyLangObject, __lvVarRecorder, {"#),
             "Expected declaration wrapper call with __lvVarRecorder as 4th arg but got:\n{}",
             output
         );
