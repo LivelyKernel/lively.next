@@ -46,7 +46,7 @@ function installDesktopDebuggerBridge (runtime) {
   desktop.debugger = {
     ...existing,
     isAvailable: existing.isAvailable || function () { return true; },
-    deliverCapture: existing.deliverCapture || function (descriptor) {
+    deliverCapture: function (descriptor) {
       return runtime.deliverCapture(descriptor);
     }
   };
@@ -128,18 +128,19 @@ export class InspectorRegistry {
     if (!context) throw new Error('Cannot store frame for unknown debug context ' + contextId);
 
     const frameId = frameSpec.frameId || frameSpec.id || 'frame-' + (++this.frameCount);
-    const frame = {
+    const frame = context.frames[frameId] || {
       frameId,
       contextId,
       index: context.frameOrder.length,
-      functionName: frameSpec.functionName || frameSpec.name || '',
-      source: frameSpec.source || null,
-      location: frameSpec.location || null,
       thisRef: null,
       argumentsRef: null,
       exceptionRef: null,
       scopeRefs: []
     };
+
+    frame.functionName = frameSpec.functionName || frameSpec.name || frame.functionName || '';
+    frame.source = frameSpec.source || frame.source || null;
+    frame.location = frameSpec.location || frame.location || null;
 
     if (own(frameSpec, 'thisValue')) frame.thisRef = this.storeValue(contextId, frameSpec.thisValue, 'this');
     else if (own(frameSpec, 'this')) frame.thisRef = this.storeValue(contextId, frameSpec.this, 'this');
@@ -154,6 +155,15 @@ export class InspectorRegistry {
     });
 
     return frame;
+  }
+
+  storeException (contextId, exception, frameId = null) {
+    const context = this.getContext(contextId);
+    if (!context) throw new Error('Cannot store exception for unknown debug context ' + contextId);
+    const exceptionRef = this.storeValue(contextId, exception, 'exception');
+    context.exceptionRef = exceptionRef;
+    if (frameId && context.frames[frameId]) context.frames[frameId].exceptionRef = exceptionRef;
+    return exceptionRef;
   }
 
   storeScope (contextId, frameId, scopeSpec = {}) {
