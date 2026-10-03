@@ -47,12 +47,17 @@
     return window.confirm([title, message].filter(Boolean).join('\n\n'));
   }
 
+  const desktop = window.livelyDesktop || {};
+  const desktopDebugger = desktop.debugger || {};
   const debuggerState = window.__LIVELY_DESKTOP_DEBUGGER__ || (window.__LIVELY_DESKTOP_DEBUGGER__ = {
     armedHalt: null,
-    captures: []
+    captures: [],
+    serviceAttached: !!desktopDebugger.inspectorServiceAttached
   });
+  if (desktopDebugger.inspectorServiceAttached) debuggerState.serviceAttached = true;
 
   function armHalt (capture) {
+    if (!debuggerState.serviceAttached) return false;
     debuggerState.armedHalt = {
       captureId: capture && capture.captureId,
       reason: capture && capture.reason || 'halt',
@@ -67,6 +72,15 @@
     return capture;
   }
 
+  function isAvailable () {
+    return !!debuggerState.serviceAttached;
+  }
+
+  function setServiceAttached (attached) {
+    debuggerState.serviceAttached = !!attached;
+    return debuggerState.serviceAttached;
+  }
+
   function deliverCapture (descriptor) {
     debuggerState.captures.push(descriptor);
     debuggerState.lastCapture = descriptor;
@@ -75,9 +89,6 @@
     } catch (_) {}
     return true;
   }
-
-  const desktop = window.livelyDesktop || {};
-  const desktopDebugger = desktop.debugger || {};
 
   window.livelyDesktop = {
     ...desktop,
@@ -89,7 +100,8 @@
       ...desktopDebugger,
       armHalt: desktopDebugger.armHalt || armHalt,
       consumeArmedHalt: desktopDebugger.consumeArmedHalt || consumeArmedHalt,
-      isAvailable: desktopDebugger.isAvailable || function () { return true; },
+      isAvailable: desktopDebugger.isAvailable || isAvailable,
+      setServiceAttached: desktopDebugger.setServiceAttached || setServiceAttached,
       deliverCapture: desktopDebugger.deliverCapture || deliverCapture
     }
   };
