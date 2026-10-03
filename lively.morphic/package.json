@@ -8,14 +8,14 @@
   },
   "dependencies": {
     "bowser": "^1.4.1",
-    "lively.modules": "https://github.com/LivelyKernel/lively.modules",
-    "lively.bindings": "https://github.com/LivelyKernel/lively.bindings",
-    "lively.graphics": "https://github.com/LivelyKernel/lively.graphics",
-    "lively.halos": "https://github.com/LivelyKernel/lively.halos",
-    "lively.components": "https://github.com/LivelyKernel/lively.components",
-    "lively.lang": "https://github.com/LivelyKernel/lively.lang",
-    "lively.serializer2": "https://github.com/LivelyKernel/lively.serializer2",
-    "lively.ide": "https://github.com/LivelyKernel/lively.ide",
+    "lively.modules": "workspace:*",
+    "lively.bindings": "workspace:*",
+    "lively.graphics": "workspace:*",
+    "lively.halos": "workspace:*",
+    "lively.components": "workspace:*",
+    "lively.lang": "workspace:*",
+    "lively.serializer2": "workspace:*",
+    "lively.ide": "workspace:*",
     "pepjs": "^0.4.3",
     "webfontloader": "^1.6.28",
     "virtual-dom": "^2.1.1",
@@ -26,7 +26,12 @@
     "css": "3.0.0",
     "dom-to-image-more": "2.8.0",
     "yoga-layout": "3.2.0",
-    "diff": "7.0.0"
+    "diff": "7.0.0",
+    "lively.notifications": "workspace:*",
+    "lively.resources": "workspace:*",
+    "lively.vm": "workspace:*",
+    "lively.storage": "workspace:*",
+    "lively.user": "workspace:*"
   },
   "devDependencies": {
     "babel-plugin-external-helpers": "^6.8.0",
@@ -37,16 +42,22 @@
     "babel-preset-es2015": "^6.16.0",
     "babel-preset-es2015-rollup": "^1.1.1",
     "babel-regenerator-runtime": "^6.5.0",
-    "lively.classes": "*",
-    "lively.source-transform": "*",
+    "lively.classes": "workspace:*",
+    "lively.source-transform": "workspace:*",
     "rollup": "0.36.4",
     "rollup-plugin-babel": "^2.6.1",
-    "uglify-es": "^3.3.9"
+    "uglify-es": "^3.3.9",
+    "lively.2lively": "workspace:*",
+    "lively.shell": "workspace:*",
+    "mocha-es6": "workspace:*"
   },
   "systemjs": {
     "main": "index.js",
     "map": {
-      "yoga-layout/load": "https://ga.jspm.io/npm:yoga-layout@3.2.0/dist/src/load.js"
+      "yoga-layout/load": {
+        "node": "yoga-layout/load",
+        "~node": "https://ga.jspm.io/npm:yoga-layout@3.2.0/dist/src/load.js"
+      }
     }
   },
   "scripts": {
@@ -58,6 +69,66 @@
       "exclude": [
         "objectdb"
       ]
+    },
+    "environments": [
+      "client"
+    ],
+    "meta": {
+      "config.js": {
+        "environments": [
+          "client",
+          "server"
+        ]
+      },
+      "rendering/fonts.js": {
+        "environments": [
+          "client",
+          "server"
+        ]
+      },
+      "text/document.js": {
+        "environments": [
+          "client",
+          "server"
+        ]
+      },
+      "text/position.js": {
+        "environments": [
+          "client",
+          "server"
+        ]
+      },
+      "text/range.js": {
+        "environments": [
+          "client",
+          "server"
+        ]
+      },
+      "text/anchors.js": {
+        "environments": [
+          "client",
+          "server"
+        ]
+      },
+      "text/attributes.js": {
+        "environments": [
+          "client",
+          "server"
+        ]
+      },
+      "events/Keys.js": {
+        "environments": [
+          "client",
+          "server"
+        ]
+      },
+      "events/KeyHandler.js": {
+        "environments": [
+          "client",
+          "server"
+        ]
+      }
     }
-  }
+  },
+  "main": "./index.js"
 }

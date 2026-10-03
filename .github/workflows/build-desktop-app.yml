@@ -39,7 +39,6 @@ on:
       - '.github/workflows/build-desktop-app.yml'
       - 'install.sh'
       - 'lively.installer/packages-config.json'
-      - 'flatn/**'
 
 concurrency:
   group: build-desktop-app-${{ github.ref_name }}
@@ -136,10 +135,8 @@ jobs:
             target_arch: x64
             archive_ext: tar.gz
           - os: ubuntu-latest
-            # Cross-compile Windows from Linux. build.mjs just downloads
-            # the Windows NW.js + Node.js binaries and stages them; no
-            # native Windows runner involved (install.sh doesn't cleanly
-            # run on Windows due to Git Bash path mangling).
+            # Stage Windows source and runtimes on Linux. Dependencies and the
+            # browser are installed and verified later on windows-latest.
             bundle: lively.next-win-x64
             target_platform: win
             target_arch: x64
@@ -150,6 +147,9 @@ jobs:
             target_arch: arm64
             archive_ext: tar.gz
     runs-on: ${{ matrix.os }}
+    env:
+      # Freezer bundling exceeds the macOS runner's default ~2 GB Node heap.
+      NODE_OPTIONS: --max-old-space-size=4096
     defaults:
       run:
         shell: bash
@@ -161,9 +161,15 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '25'
+          node-version: '24.20.0'
+
+      - name: Test portable Windows dependency layout
+        if: ${{ matrix.target_platform == 'win' }}
+        run: |
+          node lively.app/scripts/test-build-layout.mjs
+          node lively.app/scripts/test-windows-dependency-layout.mjs
 
       - name: Setup Python
         # node-gyp@9 (pulled in by leveldown etc.) imports
@@ -177,9 +183,11 @@ jobs:
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
 
       - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.95.0
         with:
           targets: wasm32-wasip1
 
@@ -190,9 +198,9 @@ jobs:
           cache-name: lively-deps
         with:
           path: |
-            lively.next-node_modules/
+            ~/.bun/install/cache/
             .puppeteer-browser-cache/
-          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json', 'flatn/package.json', 'mocha-es6/package.json') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node24-bun1.4.2-${{ hashFiles('bun.lock', 'bunfig.toml') }}
 
       - name: Install lively.next
         uses: nick-fields/retry@v3
@@ -213,9 +221,9 @@ jobs:
           cache-name: lively-deps
         with:
           path: |
-            lively.next-node_modules/
+            ~/.bun/install/cache/
             .puppeteer-browser-cache/
-          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json', 'flatn/package.json', 'mocha-es6/package.json') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node24-bun1.4.2-${{ hashFiles('bun.lock', 'bunfig.toml') }}
 
       - name: Install icon-generation tools
         # librsvg2-bin  → rsvg-convert (SVG rasterizer)
@@ -236,7 +244,7 @@ jobs:
       - name: Build freezer pages
         # Build landing-page and loading-screen through the unified freezer
         # pipeline so the desktop bundle uses the SWC freezer transform path.
-        run: env CI=true npm --silent --prefix lively.freezer run build
+        run: env CI=true bun run --cwd lively.freezer build
 
       - name: Pre-build library snapshot
         # Ship the tar.gz that dav.js would otherwise regenerate on every
@@ -248,6 +256,9 @@ jobs:
       - name: Build desktop bundle
         env:
           PACK: '1'
+          # Windows dependencies and Puppeteer are installed on windows-latest
+          # after this source/runtime staging step. Never copy Linux artifacts.
+          DEFER_TARGET_INSTALL: ${{ matrix.target_platform == 'win' && '1' || '0' }}
           # SDK flavor ships Chromium DevTools. Costs ~20% more bundle
           # size but makes every "blank screen, no clue why" bug
           # inspectable via Cmd+Opt+I / right-click → Inspect. Switch
@@ -262,19 +273,13 @@ jobs:
           LIVELY_APP_UPDATE_URL: ${{ needs.metadata.outputs.update_url }}
         run: node ./lively.app/scripts/build.mjs --platform=${{ matrix.target_platform }} --arch=${{ matrix.target_arch }}
 
-      - name: Smoke desktop app launch
-        if: ${{ matrix.target_platform != 'win' }}
+      - name: Smoke raw Linux desktop app launch
+        # macOS launch is checked below on the signed Velopack artifact.
+        if: ${{ matrix.target_platform == 'linux' }}
         run: |
-          if [ "${{ matrix.target_platform }}" = "linux" ]; then
-            xvfb-run -a --server-args="-screen 0 1440x900x24" \
-              node ./lively.app/scripts/smoke-desktop-bundle.mjs \
-                --bundleDir="dist/${{ matrix.bundle }}" \
-                --platform=${{ matrix.target_platform }}
-          else
+          xvfb-run -a --server-args="-screen 0 1440x900x24" \
             node ./lively.app/scripts/smoke-desktop-bundle.mjs \
-              --bundleDir="dist/${{ matrix.bundle }}" \
-              --platform=${{ matrix.target_platform }}
-          fi
+              --bundleDir="dist/${{ matrix.bundle }}" --platform=linux
 
       - name: Setup .NET for Velopack
         # vpk pack is platform-native. Windows packaging is handled by the
@@ -290,24 +295,44 @@ jobs:
           dotnet tool install --global vpk --version "$VELOPACK_VERSION"
           echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
 
+      - name: Test desktop payload packaging
+        if: ${{ matrix.target_platform != 'win' }}
+        run: node ./lively.app/scripts/test-package-payload.mjs
+
       - name: Build Velopack package
+        timeout-minutes: 20
         if: ${{ matrix.target_platform != 'win' }}
         env:
           LIVELY_APP_VERSION: ${{ needs.metadata.outputs.version }}
           LIVELY_APP_UPDATE_CHANNEL: ${{ needs.metadata.outputs.track }}-${{ matrix.target_platform }}-${{ matrix.target_arch }}
         run: node ./lively.app/scripts/build-velopack.mjs --platform=${{ matrix.target_platform }} --arch=${{ matrix.target_arch }}
 
-      - name: Smoke Velopack update check
+      - name: Smoke packaged Linux app
+        if: ${{ matrix.target_platform == 'linux' }}
+        timeout-minutes: 10
+        run: |
+          image="$(find "$PWD/dist/velopack/${{ matrix.bundle }}" -maxdepth 1 -name '*.AppImage' -print -quit)"
+          test -n "$image"
+          mkdir -p "$RUNNER_TEMP/lively-packaged-linux"
+          cd "$RUNNER_TEMP/lively-packaged-linux"
+          "$image" --appimage-extract > "$RUNNER_TEMP/lively-appimage-extract.log"
+          chmod -R a-w squashfs-root
+          xvfb-run -a --server-args="-screen 0 1440x900x24" \
+            node "$GITHUB_WORKSPACE/lively.app/scripts/smoke-desktop-bundle.mjs" \
+              --bundleDir="$PWD/squashfs-root/usr/bin" --platform=linux
+
+      - name: Smoke packaged macOS app and Velopack update check
         if: ${{ matrix.target_platform == 'osx' }}
         run: |
           node ./lively.app/scripts/smoke-velopack-updates.mjs \
             --artifactDir=dist/velopack/${{ matrix.bundle }} \
-            --packagesDir="$RUNNER_TEMP/lively-next-velopack-packages"
+            --packagesDir="$RUNNER_TEMP/lively-next-velopack-packages" \
+            --launch
 
       - name: Upload bundle artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.bundle }}
+          name: ${{ matrix.target_platform == 'win' && 'lively.next-win-x64-staging' || matrix.bundle }}
           path: dist/${{ matrix.bundle }}.${{ matrix.archive_ext }}
           # Free-tier retention; bump or cut per project policy.
           retention-days: 30
@@ -357,9 +382,14 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '25'
+          node-version: '24.20.0'
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
 
       - name: Setup .NET for Velopack
         uses: actions/setup-dotnet@v4
@@ -374,7 +404,7 @@ jobs:
       - name: Download raw Windows bundle
         uses: actions/download-artifact@v4
         with:
-          name: lively.next-win-x64
+          name: lively.next-win-x64-staging
           path: dist
 
       - name: Extract raw Windows bundle
@@ -383,12 +413,74 @@ jobs:
           if (-not (Test-Path dist/lively.next-win-x64/lively.next.exe)) {
             throw "Extracted Windows bundle is missing lively.next.exe"
           }
+          if (Test-Path dist/lively.next-win-x64/app/node_modules) {
+            throw "Cross-built staging bundle contains host node_modules"
+          }
+          if (Test-Path dist/lively.next-win-x64/app/.puppeteer-browser-cache) {
+            throw "Cross-built staging bundle contains a host Puppeteer cache"
+          }
+
+      - name: Install and verify target-native Windows dependencies
+        run: |
+          $bundle = (Resolve-Path dist/lively.next-win-x64).Path
+          $app = Join-Path $bundle "app"
+          $packagedBun = Join-Path $bundle "tools/bun/bin/bun.exe"
+          $packagedNode = Join-Path $bundle "node/node.exe"
+          if ((& $packagedBun --version).Trim() -ne "1.4.2") {
+            throw "Packaged Bun is not version 1.4.2"
+          }
+
+          $rootLock = Join-Path $app "bun.lock"
+          $seedLock = Join-Path $app "lively.installer/assets/partsbin-seed/bun.lock"
+          $rootHash = (Get-FileHash $rootLock -Algorithm SHA256).Hash
+          $seedHash = (Get-FileHash $seedLock -Algorithm SHA256).Hash
+          $env:PUPPETEER_CACHE_DIR = Join-Path $app ".puppeteer-browser-cache"
+          Push-Location $app
+          try {
+            & $packagedBun install --frozen-lockfile
+            if ($LASTEXITCODE -ne 0) { throw "Frozen Windows Bun install failed" }
+          } finally {
+            Pop-Location
+          }
+          if ((Get-FileHash $rootLock -Algorithm SHA256).Hash -ne $rootHash) {
+            throw "Windows install changed the root Bun lock"
+          }
+          if ((Get-FileHash $seedLock -Algorithm SHA256).Hash -ne $seedHash) {
+            throw "Windows install changed the Partsbin seed lock"
+          }
+
+          $chrome = Get-ChildItem $env:PUPPETEER_CACHE_DIR -Recurse -File -Filter chrome.exe |
+            Where-Object { $_.FullName -match "win64" } | Select-Object -First 1
+          if (-not $chrome) { throw "Puppeteer cache has no win64 chrome.exe" }
+          if (Get-ChildItem $env:PUPPETEER_CACHE_DIR -Recurse | Where-Object { $_.FullName -match "linux-" }) {
+            throw "Puppeteer cache contains a Linux browser"
+          }
+
+          $env:NODE_OPTIONS = "--experimental-import-meta-resolve"
+          Push-Location $app
+          try {
+            & $packagedNode lively.modules/tests/native-resolver-test.mjs
+            if ($LASTEXITCODE -ne 0) { throw "Windows native resolver fixture failed" }
+            & $packagedNode lively.modules/tests/native-system-live-test.mjs
+            if ($LASTEXITCODE -ne 0) { throw "Windows live SystemJS fixture failed" }
+            & $packagedNode --input-type=module -e "import {createRequire} from 'node:module'; import path from 'node:path'; import {pathToFileURL} from 'node:url'; for (const [owner,name] of [['lively.freezer','@swc/core'],['lively.morphic','yoga-layout'],['lively.modules','brotli']]) { const r=createRequire(path.resolve(owner,'package.json')); await import(pathToFileURL(r.resolve(name)).href); console.log(owner+' -> '+name+' native load passed'); }"
+            if ($LASTEXITCODE -ne 0) { throw "Windows native dependency load failed" }
+            & $packagedNode lively.server/scripts/build-package-registry-cache.cjs
+            if ($LASTEXITCODE -ne 0) { throw "Windows package registry seed build failed" }
+          } finally {
+            Pop-Location
+          }
+
+          node ./lively.app/scripts/package-windows-dependencies.mjs --app="$app"
 
       - name: Smoke desktop app launch
         run: |
           node ./lively.app/scripts/smoke-desktop-bundle.mjs `
             --bundleDir="$PWD/dist/lively.next-win-x64" `
             --platform=win
+
+      - name: Restage archive-safe Windows dependency graph
+        run: node ./lively.app/scripts/package-windows-dependencies.mjs --app="$PWD/dist/lively.next-win-x64/app"
 
       - name: Build Windows Velopack package
         env:
@@ -399,6 +491,42 @@ jobs:
             --platform=win `
             --arch=x64 `
             --bundleDir="$PWD/dist/lively.next-win-x64"
+
+      - name: Smoke relocated Velopack portable package
+        run: |
+          $portable = Get-ChildItem dist/velopack/lively.next-win-x64 -Filter *-Portable.zip | Select-Object -First 1
+          if (-not $portable) { throw "Velopack did not produce a portable Windows zip" }
+          $relocated = Join-Path $env:RUNNER_TEMP "lively windows portable relocated"
+          if (Test-Path $relocated) { Remove-Item $relocated -Recurse -Force }
+          Expand-Archive $portable.FullName -DestinationPath $relocated
+          $exe = Get-ChildItem $relocated -Recurse -File -Filter lively.next.exe |
+            Where-Object { Test-Path (Join-Path $_.Directory.FullName "package.json") } |
+            Select-Object -First 1
+          if (-not $exe) { throw "Portable Windows zip is missing the lively.next.exe app payload" }
+          node ./lively.app/scripts/smoke-desktop-bundle.mjs `
+            --bundleDir="$($exe.Directory.FullName)" `
+            --platform=win
+
+      - name: Create and verify raw Windows archive
+        run: |
+          $archive = "$PWD/dist/lively.next-win-x64.zip"
+          if (Test-Path $archive) { Remove-Item $archive -Force }
+          tar -a -c -f $archive -C dist lively.next-win-x64
+          $relocated = Join-Path $env:RUNNER_TEMP "lively windows raw relocated"
+          if (Test-Path $relocated) { Remove-Item $relocated -Recurse -Force }
+          New-Item -ItemType Directory -Force $relocated | Out-Null
+          tar -xf $archive -C $relocated
+          node ./lively.app/scripts/smoke-desktop-bundle.mjs `
+            --bundleDir="$relocated/lively.next-win-x64" `
+            --platform=win
+
+      - name: Upload target-native Windows bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lively.next-win-x64
+          path: dist/lively.next-win-x64.zip
+          retention-days: 30
+          if-no-files-found: error
 
       - name: Upload Windows Velopack feed artifact
         uses: actions/upload-artifact@v4

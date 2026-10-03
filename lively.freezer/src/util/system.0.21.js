@@ -980,7 +980,8 @@
     throw new TypeError('Cannot subclass the contextual loader only Reflect.Loader.');
   };*/
   ContextualLoader.prototype.import = function (key) {
-    if (this.loader.trace)
+    // Bundle revival can remove trace records while their import contexts survive.
+    if (this.loader.trace && this.loader.loads && this.loader.loads[this.key])
       this.loader.loads[this.key].dynamicDeps.push(key);
     return this.loader.import(key, this.key);
   };

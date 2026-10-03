@@ -12,8 +12,7 @@ import {
 
 import { TreeData } from 'lively.components/tree.js';
 
-import './tree.js';
-import { editableFiles } from './tree.js';
+import { editableFiles, listEditableFilesInDir, listJSONScope } from './tree.js';
 import JavaScriptEditorPlugin from '../editor-plugin.js';
 import JSONEditorPlugin from '../../json/editor-plugin.js';
 import JSXEditorPlugin from '../../jsx/editor-plugin.js';
@@ -346,15 +345,7 @@ export class PackageTreeData extends TreeData {
   }
 
   async listJSONScope (jsonLocation) {
-    const targetModule = 'lively.ide/js/browser/tree.js';
-    await modules.module(targetModule).revive();
-    // replace with abstraction that can respond efficiently to frequent updates
-    return (await this.systemInterface.runEval(`
-      await listJSONScope('${jsonLocation}');
-    `, {
-      targetModule,
-      ackTimeout: 30 * 1000
-    })).value;
+    return listJSONScope(jsonLocation, this.systemInterface);
   }
 
   async listMarkdownHeadings (mdFile) {
@@ -368,14 +359,15 @@ export class PackageTreeData extends TreeData {
   }
 
   async listAllPackages () {
-    let pkgs = await this.systemInterface.getPackages();
+    let [pkgs, { baseURL }] = await Promise.all([this.systemInterface.getPackages(), this.systemInterface.getConfig()]);
+    const projectsDirectory = resource(baseURL).join('local_projects').asDirectory();
 
     pkgs = arr.sortBy(pkgs.map(pkg => {
       let kind = 'git';
-      if (pkg.url.includes('node_modules')) kind = 'dependency';
       if (pkg.url.startsWith('local')) kind = 'local';
       if (pkg.name.startsWith('lively')) kind = 'core';
-      if (pkg.url.includes('projects')) kind = 'project';
+      if (resource(new URL(pkg.url, baseURL).href).asFile().parent().equals(projectsDirectory)) kind = 'project';
+      if (pkg.url.includes('/node_modules/')) kind = 'dependency';
       pkg.kind = kind;
       return {
         url: pkg.url + (pkg.url.endsWith('/') ? '' : '/'),
@@ -392,11 +384,11 @@ export class PackageTreeData extends TreeData {
     // To allow correct resolution of projects we list all available projects in the package registry.
     // This filters out projects which are entirely unloaded, to make the system browser less cluttered.
     pkgs = pkgs.filter(p => {
-      const modulesOfPkg = modules.PackageRegistry.ofSystem(System).lookup(p.name).modules();
+      const modulesOfPkg = p.pkg.modules;
       return (p.pkg.kind !== 'project' ||
       modulesOfPkg.length > 1 ||
       // This excludes packages for which only the package.json is loaded, which happens only for projects which are newly cloned as dependencies at the beginning of the session.
-      modulesOfPkg.length === 1 && !modulesOfPkg[0].id.endsWith('package.json'));
+      modulesOfPkg.length === 1 && !modulesOfPkg[0].name.endsWith('package.json'));
     });
     return pkgs;
   }
@@ -405,22 +397,11 @@ export class PackageTreeData extends TreeData {
     return await this.listEditableFilesInDir(pkg);
   }
 
-  async evalInContext (source) {
-    const targetModule = 'lively.ide/js/browser/tree.js';
-    await modules.module(targetModule).revive();
-    return (await this.systemInterface.runEval(source, {
-      targetModule,
-      ackTimeout: 30 * 1000
-    })).value;
-  }
-
   async getLoadedModuleUrls (gitIgnoreExists) {
     const selectedPkg = this.root.subNodes.find(pkg => !pkg.isCollapsed);
     const gitignore = [];
     if (gitIgnoreExists) { // keeping the second condition around for defensive programming
-      const gitIgnoreContents = await this.evalInContext(`
-        (await resource('${selectedPkg.url}').join('.gitignore').read())
-    `);
+      const gitIgnoreContents = await this.systemInterface.coreInterface.resourceRead(resource(selectedPkg.url).join('.gitignore').url);
       if (gitIgnoreContents) { gitignore.push(...gitIgnoreContents.split('\n')); }
     }
     const files = await this.systemInterface.resourcesOfPackage(selectedPkg.url, ['node_modules', 'build', 'assets', 'objectdb', '.git', ...gitignore]);
@@ -433,12 +414,8 @@ export class PackageTreeData extends TreeData {
   }
 
   async listEditableFilesInDir (folderLocation) {
-    const files = await this.evalInContext(`
-      await listEditableFilesInDir('${folderLocation}');
-    `);
-    const gitIgnoreExists = await this.evalInContext(`
-      !!(await resource('${folderLocation}').dirList()).find(f => f.url.includes('${folderLocation + '.gitignore'}'));
-    `);
+    const files = await listEditableFilesInDir(folderLocation, this.systemInterface.coreInterface);
+    const gitIgnoreExists = await this.systemInterface.coreInterface.resourceExists(resource(folderLocation).join('.gitignore').url);
 
     const loadedModules = await this.getLoadedModuleUrls(gitIgnoreExists);
     return files.map(file => {
@@ -639,6 +616,7 @@ export class BrowserModel extends ViewModel {
             { target: 'browse history', signal: 'fire', handler: 'execCommand', converter: () => 'browser history browse' },
             { target: 'browse modules', signal: 'fire', handler: 'execCommand', converter: () => 'choose and browse module' },
             { target: 'add tab', signal: 'fire', handler: 'execCommand', converter: () => 'open new tab' },
+            { target: 'module environment', signal: 'selectionChanged', handler: 'setModuleEnvironment' },
 
             { target: 'run tests in module', signal: 'onMouseDown', handler: 'execCommand', converter: () => 'run all tests in module' },
             { target: 'jump to entity', signal: 'onMouseDown', handler: 'execCommand', converter: () => 'jump to codeentity' },
@@ -749,14 +727,17 @@ export class BrowserModel extends ViewModel {
     } = this.ui;
     const { view } = this;
     const headerButtonsVisibleThreshhold = 400;
-    const headerButtonsHeight = Math.ceil(headerButtons.height);
+    const environmentControlsHeight = this.ui.moduleEnvironmentControls.height;
+    const headerButtonsHeight = Math.ceil(headerButtons.height + environmentControlsHeight);
     const tabsOffset = tabs.visible ? tabs.height : 0;
     headerButtons.visible = view.width > headerButtonsVisibleThreshhold;
     if (!headerButtons.visible) {
-      columnView.top = tabs.visible ? tabs.height : 0;
-      if (tabs.visible) tabs.top = 0;
-      columnView.height = verticalResizer.top - tabsOffset;
+      columnView.top = tabsOffset + environmentControlsHeight;
+      if (tabs.visible) tabs.top = environmentControlsHeight;
+      this.ui.moduleEnvironmentControls.top = 0;
+      columnView.height = verticalResizer.top - tabsOffset - environmentControlsHeight;
     } else {
+      this.ui.moduleEnvironmentControls.top = headerButtons.height;
       columnView.top = tabs.visible ? headerButtonsHeight + tabs.height : headerButtonsHeight;
       if (tabs.visible) tabs.top = headerButtonsHeight;
       columnView.height = verticalResizer.top - headerButtonsHeight - tabsOffset;
@@ -942,12 +923,7 @@ export class BrowserModel extends ViewModel {
 
   async setEvalBackend (newRemote) {
     newRemote = newRemote || 'local';
-    const { systemInterface: oldSystemInterface } = this;
-    if (newRemote !== oldSystemInterface.name) {
-      this.editorPlugin.setSystemInterfaceNamed(newRemote);
-      await this.toggleWindowStyle();
-      this.browse(this.browseSpec());
-    }
+    return this.browse({ ...this.browseSpec(), systemInterface: newRemote });
   }
 
   async toggleWindowStyle (animated = true) {
@@ -956,7 +932,7 @@ export class BrowserModel extends ViewModel {
     const { columnView, sourceEditor } = this.ui;
     columnView.reset();
 
-    if (this.editorPlugin.runEval && (await this.editorPlugin.runEval("System.get('@system-env').node")).value) {
+    if ((await this.systemInterface.runEval("System.get('@system-env').node", { targetModule: 'lively://system-browser/environment' })).value) {
       theme = DarkTheme.instance;
       columnView.listMaster = ColumnListDark;
     } else {
@@ -1092,11 +1068,8 @@ export class BrowserModel extends ViewModel {
       range
     } = browseSpec;
 
-    if (packageName && moduleName && packageName === this.selectedPackage?.name && moduleName === this.selectedModule?.name) return;
-
     const { sourceEditor } = this.ui;
-
-    await this.ensureColumnViewData();
+    const oldSystemInterface = this.systemInterface;
 
     if (optSystemInterface || systemInterface) {
       try {
@@ -1105,6 +1078,20 @@ export class BrowserModel extends ViewModel {
       } catch (e) { // known case: switching from a tab with markdown opened to another tab
       }
     }
+    const environmentChanged = this.systemInterface !== oldSystemInterface;
+    if (environmentChanged && this.hasUnsavedChanges() && !await this.warnForUnsavedChanges()) {
+      this.systemInterface = oldSystemInterface;
+      return;
+    }
+    if (!environmentChanged && packageName && moduleName && packageName === this.selectedPackage?.name && moduleName === this.selectedModule?.name) return;
+    if (environmentChanged) {
+      this.state.selectedPackage = null;
+      this.state.selectedModule = null;
+      this.editorPlugin.evalEnvironment.targetModule = 'lively://system-browser/environment';
+      const { showPkgVersion, showDependencyPackages, showHiddenFolders } = this.ui.columnView.treeData || {};
+      await this.ui.columnView.setTreeData(new PackageTreeData({ browser: this }, { showPkgVersion, showDependencyPackages, showHiddenFolders }));
+    }
+    await this.ensureColumnViewData();
     await this.toggleWindowStyle(false);
 
     if (packageName) {
@@ -1210,6 +1197,14 @@ export class BrowserModel extends ViewModel {
         this.updateSource('');
         win.title = 'browser';
       } else {
+        this.ui.moduleEnvironment.enabled = false;
+        const manifest = resource(p.url).join('package.json').url;
+        try {
+          if (await this.systemInterface.coreInterface.resourceExists(manifest)) {
+            const source = await this.systemInterface.coreInterface.resourceRead(manifest);
+            await this.systemInterface.packageConfChange(source, manifest, { doSave: false });
+          }
+        } catch (err) { this.view.showError(err); }
         win.title = 'browser - ' + this.formatPackageName(p);
         if (!this.ui.tabs.selectedTab.caption.includes(p.name)) this.ui.tabs.selectedTab.caption = p.name;
       }
@@ -1225,6 +1220,7 @@ export class BrowserModel extends ViewModel {
   }
 
   async reviveFrozenModuleIfNeeded () {
+    if (!this.selectedModule || this.state.moduleEnvironmentError) return;
     const m = await this.systemInterface.getModule(this.selectedModule.url);
     if (!m) return; // possibly operating within server context
     if (m._frozenModule) {
@@ -1234,6 +1230,7 @@ export class BrowserModel extends ViewModel {
 
   async updateRecorderIfNeeded () {
     const m = await this.systemInterface.getModule(this.selectedModule.url);
+    if (!m?.System) return; // Bundled recorder updates only apply to local modules.
     const rec = m.System.get('@lively-env').moduleEnv(m.id).recorder;
     if (rec?.contextModule) {
       await m.updateBundledModules([rec.contextModule]);
@@ -1259,7 +1256,6 @@ export class BrowserModel extends ViewModel {
       if (this.alreadySelectedModule(m.url)) return;
 
       await columnView.selectNode(m, animated);
-      this.state.selectedModule = { url: m.url };
       columnView.submorphs.forEach(list => {
         list.scrollSelectionIntoView();
       });
@@ -1280,12 +1276,12 @@ export class BrowserModel extends ViewModel {
 
       if (url) {
         if (this.alreadySelectedModule(url)) return;
-        this.state.selectedModule = { url };
         const td = columnView.treeData;
         await columnView.setExpandedPath(node => {
           return node === td.root || url.startsWith(node.url);
         }, td.root, false);
-        this.updateSource(await this.systemInterface.moduleRead(url), { row: 0, column: 0 });
+        m = this.getDisplayedModuleNodes().find(node => node.url === url);
+        await this.onModuleSelected(m || { url, name: resource(url).name(), nameInPackage: url.slice(p.url.length + 1) });
       }
     }
     this.ui.sourceEditor.undoManager.reset();
@@ -1358,6 +1354,7 @@ export class BrowserModel extends ViewModel {
 
   deactivateEditor () {
     const { sourceEditor, metaInfoText } = this.ui;
+    this.ui.moduleEnvironment.enabled = false;
     sourceEditor.opacity = 0.7;
     sourceEditor.readOnly = true;
     sourceEditor.submorphs = [];
@@ -1371,7 +1368,7 @@ export class BrowserModel extends ViewModel {
   reactivateEditor () {
     const { sourceEditor, metaInfoText } = this.ui;
     sourceEditor.opacity = 1;
-    sourceEditor.readOnly = false;
+    sourceEditor.readOnly = !!this.state.moduleEnvironmentError;
     metaInfoText.showDefault();
   }
 
@@ -1396,6 +1393,7 @@ export class BrowserModel extends ViewModel {
     }
 
     this.state.moduleChangeWarning = null;
+    this.state.moduleEnvironmentError = null;
 
     if (!m) {
       this.updateSource('');
@@ -1418,6 +1416,22 @@ export class BrowserModel extends ViewModel {
 
     try {
       const system = this.systemInterface;
+
+      if (['js', 'mjs', 'cjs', 'jsx'].includes(resource(m.url).ext())) {
+        const environment = await system.moduleEnvironment(m.url);
+        await this.updateModuleEnvironmentControl(m, environment);
+        const { supported, reason } = environment;
+        if (!supported) {
+          this.state.moduleEnvironmentError = reason;
+          this.state.selectedModule = m;
+          this.updateSource('// ' + reason);
+          this.ui.sourceEditor.readOnly = true;
+          Object.assign(this.editorPlugin.evalEnvironment, { targetModule: m.url, format: 'esm' });
+          return;
+        }
+      }
+
+      if (!['js', 'mjs', 'cjs', 'jsx'].includes(resource(m.url).ext())) this.ui.moduleEnvironment.enabled = false;
 
       // fixme: actually perform that in the context of the module
       if (this.isTestModule(await system.moduleRead(m.url))) {
@@ -1467,6 +1481,55 @@ export class BrowserModel extends ViewModel {
     }
   }
 
+  async updateModuleEnvironmentControl (mod, environment) {
+    const control = this.ui.moduleEnvironment;
+    const editable = mod && ['js', 'mjs', 'cjs', 'jsx'].includes(resource(mod.url).ext());
+    control.enabled = !!editable && !this.state.isChangingModuleEnvironment;
+    if (!editable) return;
+    const { environments } = environment || await this.systemInterface.moduleEnvironment(mod.url);
+    await control.select(environments.length === 1 ? environments[0] : 'shared');
+  }
+
+  async setModuleEnvironment (mode) {
+    const environments = { client: ['client'], shared: ['client', 'server'], server: ['server'] }[mode];
+    const mod = this.selectedModule;
+    const pack = this.selectedPackage;
+    const system = this.systemInterface;
+    if (!Array.isArray(environments) || !mod || !pack || this.state.isChangingModuleEnvironment ||
+        !['js', 'mjs', 'cjs', 'jsx'].includes(resource(mod.url).ext())) return false;
+    this.state.isChangingModuleEnvironment = true;
+    this.ui.moduleEnvironment.enabled = false;
+    try {
+      const { current } = await system.moduleEnvironment(mod.url);
+      const supportsCurrent = environments.includes(current);
+      if (!supportsCurrent && this.hasUnsavedChanges() && !await this.warnForUnsavedChanges()) return false;
+      const directory = resource(pack.url).asDirectory();
+      const path = mod.nameInPackage || resource(mod.url).relativePathFrom(directory);
+      if (path.startsWith('../')) throw new Error('The selected module is outside its package');
+      const manifest = directory.join('package.json').url;
+      const config = JSON.parse(await system.coreInterface.resourceRead(manifest));
+      config.lively = config.lively || {};
+      config.lively.meta = config.lively.meta || {};
+      config.lively.meta[path] = { ...config.lively.meta[path], environments };
+      if (this.systemInterface !== system || this.selectedModule?.url !== mod.url) return false;
+      await system.packageConfChange(JSON.stringify(config, null, 2), manifest);
+      if (this.systemInterface === system && this.selectedModule?.url === mod.url &&
+          (this.state.moduleEnvironmentError || !supportsCurrent)) {
+        this.resetChangedContentIndicator();
+        this.state.selectedModule = null;
+        this.ui.sourceEditor.readOnly = false;
+        await this.onModuleSelected(mod);
+      }
+      return true;
+    } catch (err) {
+      this.view.showError(err);
+      return false;
+    } finally {
+      this.state.isChangingModuleEnvironment = false;
+      await this.updateModuleEnvironmentControl(this.selectedModule);
+    }
+  }
+
   closeStatusMessage () {
     this.ui.metaInfoText.showDefault();
   }
@@ -1503,6 +1566,7 @@ export class BrowserModel extends ViewModel {
   }
 
   async prepareCodeEditorForModule (mod) {
+    if (this.state.moduleEnvironmentError) return;
     const { sourceEditor } = this.ui;
     const system = this.systemInterface;
     const format = (await system.moduleFormat(mod.url)) || 'esm';
@@ -1847,57 +1911,37 @@ export class BrowserModel extends ViewModel {
   }
 
   async installPackage (name, version, sourceIdx) {
-    try {
-      const { pkgRegistry } = await this.runOnServer(`        
-        async function installPackage(name, version) {
-          let Module = System._nodeRequire("module"),
-              flatn = Module._load("flatn")
-        
-          let env = process.env,
-              devPackageDirs = env.FLATN_DEV_PACKAGE_DIRS.split(":").filter(Boolean),
-              packageCollectionDirs = env.FLATN_PACKAGE_COLLECTION_DIRS.split(":").filter(Boolean),
-              packageDirs = env.FLATN_PACKAGE_DIRS.split(":").filter(Boolean),
-              packageMap = flatn.PackageMap.ensure(packageCollectionDirs, packageDirs, devPackageDirs);
-              buildFailed;
-
-          await flatn.installPackage(
-            name + "@" + version,
-            System.baseURL.replace("file://", "") + "custom-npm-modules",
-            packageMap,
-            undefined,
-            /*isDev = */false,
-            /*verbose = */true
-          );
-          try {          
-            await flatn.installDependenciesOfPackage(
-               packageMap.lookup(name, version),
-               System.baseURL.replace("file://", "") + 'dev-deps',
-               packageMap,
-               ['devDependencies'],
-               true
-            );
-          } catch(e) {
-            // install scripts dont really work sometimes so
-            // dont let that disrup the normal install process
-            buildFailed = e.message;
-          }
-        
-          let r = System.get("@lively-env").packageRegistry
-          await r.update();
-          return { pkgRegistry: r, buildFailed };
-        }
-        await installPackage("${name}", "${version}");   
-    `);
-      System.get('@lively-env').packageRegistry.updateFromJSON(pkgRegistry);
-    } catch (err) {
-    }
+    const packageURL = this.selectedModule && System.get('@lively-env').packageRegistry.findPackageHavingURL(this.selectedModule.url)?.url;
+    const packagePath = packageURL?.startsWith(System.baseURL) ? packageURL.slice(System.baseURL.length) : '';
+    const targetPath = packagePath && !packagePath.includes('node_modules/') ? packagePath : 'local_projects/user-packages/';
+    const result = await this.runOnServer(`(async () => {
+      const { fileURLToPath } = System._nodeRequire('node:url');
+      const { installProjectDependencies } = await System.nativeImport(new URL('lively.project/package-install.mjs', System.baseURL).href);
+      const projectURL = new URL(${JSON.stringify(targetPath)}, System.baseURL);
+      const directory = fileURLToPath(projectURL);
+      const fs = System._nodeRequire('node:fs');
+      const path = System._nodeRequire('node:path');
+      const create = !fs.existsSync(path.join(directory, 'package.json'));
+      if (create) {
+        fs.mkdirSync(directory, { recursive: true });
+        fs.writeFileSync(path.join(directory, 'package.json'), JSON.stringify({ name: 'user-packages', private: true, version: '1.0.0' }));
+      }
+      await installProjectDependencies(directory, {
+        update: create,
+        dependency: ${JSON.stringify({ name, version })}
+      });
+      const registry = System.get('@lively-env').packageRegistry;
+      await registry.update();
+      return { pkgRegistry: registry.toJSON() };
+    })()`);
+    System.get('@lively-env').packageRegistry.updateFromJSON(result.pkgRegistry);
   }
 
   async save (attempt = 0) {
     const { ui: { sourceEditor, metaInfoText }, state, systemInterface: system } = this;
     const module = this.selectedModule;
 
-    if (!module) {
+    if (!module || state.moduleEnvironmentError) {
       return;
     }
 

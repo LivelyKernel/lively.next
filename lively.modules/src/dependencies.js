@@ -16,8 +16,10 @@ function computeRequireMap (System) {
     }, {});
   }
 
-  return Object.keys(System._loader.moduleRecords).reduce((requireMap, k) => {
-    requireMap[k] = System._loader.moduleRecords[k].dependencies.filter(Boolean).map(ea => ea.name);
+  // A fresh loader has no dependency records until its first import.
+  const records = System._loader?.moduleRecords || {};
+  return Object.keys(records).reduce((requireMap, k) => {
+    requireMap[k] = records[k].dependencies.filter(Boolean).map(ea => ea.name);
     return requireMap;
   }, {});
 }

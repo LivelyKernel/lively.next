@@ -60,7 +60,8 @@ export class LivelySwcTransform {
       sourceMap = true,
       filename = 'unknown.js',
       moduleHash = null,
-      exclude = []
+      exclude = [],
+      enableDynamicImportTransform = true
     } = options;
 
     const swcConfig = {
@@ -109,7 +110,7 @@ export class LivelySwcTransform {
       packageVersion,
       enableComponentTransform: true,
       enableNamespaceTransform: true,
-      enableDynamicImportTransform: true,
+      enableDynamicImportTransform,
       enableSystemjsTransform: false,
       enableExportSplit: true,
       resolvedImports,

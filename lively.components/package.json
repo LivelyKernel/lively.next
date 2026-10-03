@@ -4,20 +4,26 @@
   "repository": "https://github.com/LivelyKernel/lively.components",
   "license": "MIT",
   "dependencies": {
-    "lively.lang": "^1.0.18",
-    "lively.morphic": "^0.1.0",
-    "lively.bindings": "^0.1.2",
-    "lively.halos": "https://github.com/LivelyKernel/lively.halos",
+    "lively.lang": "workspace:*",
+    "lively.morphic": "workspace:*",
+    "lively.bindings": "workspace:*",
+    "lively.halos": "workspace:*",
     "svg-intersections": "0.2.5",
     "kld-intersections": "^0.4.2",
     "lite-youtube-embed": "0.3.0",
     "bowser": "1.4.1",
-    "three": "0.126"
+    "three": "0.126",
+    "lively.graphics": "workspace:*",
+    "lively.resources": "workspace:*",
+    "lively.2lively": "workspace:*",
+    "lively.ide": "workspace:*",
+    "lively.freezer": "workspace:*"
   },
   "devDependencies": {
-    "mocha-es6": "*"
+    "mocha-es6": "workspace:*"
   },
   "scripts": {
     "test": "mocha-es6 tests/*-test.js"
-  }
+  },
+  "main": "./index.js"
 }

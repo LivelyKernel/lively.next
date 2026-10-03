@@ -25,8 +25,9 @@
     "js-github": "^1.0.0"
   },
   "dependencies": {
-    "lively.resources": "*",
-    "lively.storage": "*",
-    "libsodium-wrappers": "0.7.15"
+    "lively.resources": "workspace:*",
+    "lively.storage": "workspace:*",
+    "libsodium-wrappers": "0.7.15",
+    "lively.user": "workspace:*"
   }
 }

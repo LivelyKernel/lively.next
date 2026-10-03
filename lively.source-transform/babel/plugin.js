@@ -1309,20 +1309,34 @@ function rewriteToRegisterModuleToCaptureSetters (path, state, options) {
   registerBody.get('directives').find(d => d.get('value.value').node === 'use strict')?.remove(); // remove the strict directive that systemjs appears to insert
   path.get('directives').find(d => d.get('value.value').node === 'format esm')?.remove(); // remove esm directive if still present
 
-  // in each setter function: intercept the assignments to local vars and inject capture object
+  // Static re-exports compile to a setter assignment and an _export call in
+  // execute. Capture that relation so setter-only live updates keep the export.
+  const exportFunctionName = registerCall.node.arguments[1].params[0]?.name;
+  const exportedNamesByLocal = new Map();
+  execute.get('value.body.body').forEach(stmt => {
+    const call = stmt.node.expression;
+    if (stmt.node.type === 'ExpressionStatement' && call?.type === 'CallExpression' &&
+        call.callee.type === 'Identifier' && call.callee.name === exportFunctionName &&
+        call.arguments[0]?.type === 'StringLiteral' &&
+        call.arguments[1]?.type === 'Identifier') {
+      const names = exportedNamesByLocal.get(call.arguments[1].name) || [];
+      names.push(call.arguments[0].value);
+      exportedNamesByLocal.set(call.arguments[1].name, names);
+    }
+  });
+
   setters.get('value.elements').forEach(pathToFun => {
     const fun = pathToFun.node;
-    pathToFun.replaceWith(t.FunctionExpression(fun.id, [t.AssignmentPattern(fun.params[0], t.ObjectExpression([]))], t.BlockStatement(fun.body.body.map(stmt => {
+    pathToFun.replaceWith(t.FunctionExpression(fun.id, [t.AssignmentPattern(fun.params[0], t.ObjectExpression([]))], t.BlockStatement(fun.body.body.flatMap(stmt => {
       if (stmt.type !== 'ExpressionStatement' ||
        stmt.expression.type !== 'AssignmentExpression' ||
        stmt.expression.left.type !== 'Identifier' ||
-       options.exclude.includes(stmt.expression.left.name)) return stmt;
+       options.exclude.includes(stmt.expression.left.name)) return [stmt];
 
       const id = stmt.expression.left;
       if (Object.hasOwn(renamedExports,id.name)) {
         id['x-lively-object-meta'] = { exportConflict: renamedExports[id.name] };
       }
-      // FIXME: at this point, we lost the info about the renamed export from preTranspile... how do we get that info to here?
       const rhsExpr = t.AssignmentExpression(
         stmt.expression.operator || '=',
         t.cloneNode(stmt.expression.left),
@@ -1338,9 +1352,29 @@ function rewriteToRegisterModuleToCaptureSetters (path, state, options) {
           options.captureObj,
           options)
         : rhsExpr;
-      return t.ExpressionStatement(t.AssignmentExpression('=', t.MemberExpression(options.captureObj, id), rhs));
+      const captured = t.ExpressionStatement(t.AssignmentExpression('=', t.MemberExpression(options.captureObj, id), rhs));
+      const exportedNames = exportedNamesByLocal.get(id.name) || [];
+      return [captured, ...exportedNames.map(exportedName =>
+        t.ExpressionStatement(t.CallExpression(t.Identifier('__livelyScheduleExport'), [t.StringLiteral(exportedName), t.Identifier(id.name)])))];
     }))));
   });
+
+  if (exportedNamesByLocal.size) {
+    const moduleId = t.StringLiteral(options.moduleId);
+    const env = () => t.CallExpression(t.MemberExpression(t.Identifier('SystemJS'), t.Identifier('get')), [t.StringLiteral('@lively-env')]);
+    const pendingExports = t.MemberExpression(env(), t.Identifier('pendingExportChanges'));
+    const pendingForModule = () => t.MemberExpression(pendingExports, moduleId, true);
+    const helper = t.FunctionDeclaration(t.Identifier('__livelyScheduleExport'), [t.Identifier('name'), t.Identifier('value')], t.BlockStatement([
+      t.IfStatement(
+        t.CallExpression(t.MemberExpression(t.Identifier('SystemJS'), t.Identifier('get')), [moduleId]),
+        t.BlockStatement([
+          t.VariableDeclaration('var', [t.VariableDeclarator(t.Identifier('pendingExports'), t.LogicalExpression('||', pendingForModule(), t.AssignmentExpression('=', pendingForModule(), t.ObjectExpression([]))))]),
+          t.ExpressionStatement(t.AssignmentExpression('=', t.MemberExpression(t.Identifier('pendingExports'), t.Identifier('name'), true), t.Identifier('value')))
+        ]))
+    ]));
+    registerBody.get('body.0').insertAfter(helper);
+  }
+
   const execFunctionBody = execute.get('value.body.body');
   let captureInitialize = execFunctionBody.find(({ node: stmt }) =>
     stmt.type === 'ExpressionStatement' &&
@@ -1378,6 +1412,7 @@ export function livelyPostTranspile (api, options) {
     const captureObj = t.Identifier(module.recorderName);
     options = {
       captureObj,
+      moduleId: module.id,
       topLevelVarRecorder: module.recorder,
       dontTransform: module.dontTransform,
       declarationWrapper: t.MemberExpression(
@@ -1438,7 +1473,7 @@ class BabelTranspiler {
     // wrap in async function so we can use await top-level
     let System = this.System;
     var source = '(async function(__rec) {\n' + source.replace(/(\/\/# sourceURL=.+)$|$/, '\n}).call(this);\n$1'); // eslint-disable-line no-var
-    let opts = System.babelOptions;
+    let opts = System.babelOptions || {};
     let needsBabel = (opts.plugins && opts.plugins.length) || (opts.presets && opts.presets.length);
     return needsBabel
       ? babel.transform(source, opts).code

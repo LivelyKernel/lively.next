@@ -38,6 +38,7 @@ export class Interface {
   getPackages (options) { return this.coreInterface.getPackages(options); }
   getModules (a, b, c) { return this.coreInterface.getModules(a, b, c); }
   getModule (a, b, c) { return this.coreInterface.getModule(a, b, c); }
+  moduleEnvironment (name) { return this.coreInterface.moduleEnvironment(name); }
   getPackage (a, b, c) { return this.coreInterface.getPackage(a, b, c); }
   getPackageForModule (a, b, c) { return this.coreInterface.getPackageForModule(a, b, c); }
   resourcesOfPackage (packageAddress, excludes) { return this.coreInterface.resourcesOfPackage(packageAddress, excludes); }
@@ -47,7 +48,7 @@ export class Interface {
   importPackage (packageURL) { return this.coreInterface.importPackage(packageURL); }
   removePackage (packageURL) { return this.coreInterface.removePackage(packageURL); }
   reloadPackage (packageURL) { return this.coreInterface.reloadPackage(packageURL); }
-  packageConfChange (source, confFile) { return this.coreInterface.packageConfChange(source, confFile); }
+  packageConfChange (source, confFile, options) { return this.coreInterface.packageConfChange(source, confFile, options); }
   keyValueListOfVariablesInModule (moduleName, sourceOrAst) { return this.coreInterface.keyValueListOfVariablesInModule(moduleName, sourceOrAst); }
 
   interactivelyCreatePackage (requester) { return interactivelyCreatePackage(this.coreInterface, requester); }

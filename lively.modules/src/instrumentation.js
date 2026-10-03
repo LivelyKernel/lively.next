@@ -125,6 +125,7 @@ export function prepareTranslatedCodeForSetterCapture (System, source, moduleId,
     varRecorderName: module.recorderName,
     dontTransform: module.dontTransform,
     recordGlobals: true,
+    moduleId,
     declarationWrapperName: module.varDefinitionCallbackName,
     currentModuleAccessor: funcCall(
       member(
@@ -143,6 +144,10 @@ export function prepareTranslatedCodeForSetterCapture (System, source, moduleId,
     console.error('Error in prepareTranslatedCodeForSetterCapture', e.stack);
     return source;
   }
+}
+
+function isInstalledNodeDependency (System, load) {
+  return isNodeRuntime(System) && load.name.includes('/node_modules/');
 }
 
 function isMarkedForNodeRequire (System, load) {
@@ -165,14 +170,14 @@ function isMarkedForNodeRequire (System, load) {
   return null;
 }
 
-function getCachedNodejsModule (System, load, markedPackageName) {
+async function getCachedNodejsModule (System, load, markedPackageName) {
   // On nodejs we might run alongside normal node modules. To not load those
   // twice we have this little hack...
   try {
     const Module = System._nodeRequire('module').Module;
-    const id = Module._resolveFilename(load.name
-      .replace(/^file:\/\//, '') // unix
-      .replace(/^\/([a-z]:\/)/i, '$1')); // windows
+    const id = Module._resolveFilename(load.name.startsWith('file:')
+      ? System._nodeRequire('node:url').fileURLToPath(load.name)
+      : load.name);
     let nodeModule = Module._cache[id];
 
     // If not in cache but marked for node require, pre-load it
@@ -182,6 +187,11 @@ function getCachedNodejsModule (System, load, markedPackageName) {
         System._nodeRequire(id);
         nodeModule = Module._cache[id];
       } catch (e) {
+        if (e.code === 'ERR_REQUIRE_ASYNC_MODULE' && System.nativeImport) {
+          const exports = await System.nativeImport(load.name);
+          (System._nativeModuleExports ||= new Map()).set(load.name, exports);
+          return { id: load.name, exports, nativeImport: true };
+        }
         System.debug && console.log('[lively.modules getCachedNodejsModule] failed to pre-load %s: %s', markedPackageName, e.message);
       }
     }
@@ -193,15 +203,17 @@ function getCachedNodejsModule (System, load, markedPackageName) {
   return null;
 }
 
-function addNodejsWrapperSource (System, load, markedPackageName) {
+async function addNodejsWrapperSource (System, load, markedPackageName) {
   // On nodejs we might run alongside normal node modules. To not load those
   // twice we have this little hack...
-  const m = getCachedNodejsModule(System, load, markedPackageName);
+  const m = await getCachedNodejsModule(System, load, markedPackageName);
   if (m) {
     load.metadata.format = 'esm';
-    load.source = `var exports = System._nodeRequire(${JSON.stringify(m.id)}); export default exports;\n` +
-                `export var __useDefault = exports;\n` +
-                properties.allOwnPropertiesOrFunctions(m.exports).map(k =>
+    const isESModule = Object.prototype.toString.call(m.exports) === '[object Module]';
+    load.source = `var exports = ${m.nativeImport ? `System._nativeModuleExports.get(${JSON.stringify(m.id)})` : `System._nodeRequire(${JSON.stringify(m.id)})`};\n` +
+                (isESModule ? (Object.hasOwn(m.exports, 'default') ? 'export default exports.default;\n' : '')
+                  : 'export default exports; export var __useDefault = true;\n') +
+                properties.allOwnPropertiesOrFunctions(m.exports).filter(k => k !== 'default' && k !== '__useDefault').map(k =>
                   isValidIdentifier(k)
                     ? `export var ${k} = exports['${k}'];`
                     : `/*ignoring export "${k}" b/c it is not a valid identifier*/`).join('\n');
@@ -234,7 +246,10 @@ export async function customTranslate (load) {
   }
 
   // Check if this module should be loaded via System._nodeRequire()
-  const markedForNodeRequire = isNode && isMarkedForNodeRequire(System, load);
+  // Native CommonJS dependencies must execute through Node so each nested
+  // require keeps the importer-specific Bun dependency context. Lively source
+  // packages still use SystemJS instrumentation.
+  const markedForNodeRequire = isNode && (isMarkedForNodeRequire(System, load) || isInstalledNodeDependency(System, load));
 
   const ignored = (meta && meta.hasOwnProperty('instrument') && !meta.instrument) ||
               exceptions.some(exc => exc(load.name));
@@ -245,7 +260,7 @@ export async function customTranslate (load) {
     return load.source;
   }
 
-  if (isNode && addNodejsWrapperSource(System, load, markedForNodeRequire)) {
+  if (markedForNodeRequire && await addNodejsWrapperSource(System, load, markedForNodeRequire)) {
     debug && console.log('[lively.modules] loaded %s from nodejs cache', load.name);
     return load.source;
   }
@@ -347,13 +362,15 @@ export async function postCustomTranslate (load) {
   let translated = load.source;
   const debug = System.debug;
   const indexdb = System.global.indexedDB;
-  const useCache = System.useModuleTranslationCache;
   const { hashForCache, compileOptions: options, sourceMap = {} } = load.metadata;
+  // Hashing is skipped per load when the cache was disabled during translate.
+  // Do not later write that boolean marker as filesystem cache content.
+  const useCache = System.useModuleTranslationCache && typeof hashForCache === 'string';
   const mod = load.metadata.module;
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // cache experiment part 2
-  if (isNode && useCache) {
+  if (isNode && useCache && load.name.startsWith('file:')) {
     let cache = System._livelyModulesTranslationCache ||
                (System._livelyModulesTranslationCache = new NodeModuleTranslationCache());
     try {

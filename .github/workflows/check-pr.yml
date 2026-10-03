@@ -8,16 +8,49 @@ concurrency:
   cancel-in-progress: true
    
 jobs:
+  native-platforms:
+    name: Native resolution on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    env:
+      NODE_OPTIONS: --experimental-import-meta-resolve
+      PUPPETEER_SKIP_DOWNLOAD: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
+      - name: Check native resolver
+        run: node lively.modules/tests/native-resolver-test.mjs
+      - name: Check live SystemJS resolution
+        run: node --trace-uncaught lively.modules/tests/native-system-live-test.mjs
+      - name: Check desktop downloads
+        run: node lively.app/scripts/test-downloads.mjs
+      - name: Check packaged Unix payload
+        if: runner.os == 'macOS'
+        run: node lively.app/scripts/test-package-payload.mjs
+
   tests:
     name: Check if `lively.next` world loads and tests stay green
     runs-on: ubuntu-latest
     steps:
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '24.20.0'
       - name: Setup bun
         uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@1.95.0
         with:
@@ -35,9 +68,17 @@ jobs:
           cache-name: lively-deps
         with:
           path: | 
-            lively.next-node_modules/
+            ~/.bun/install/cache/
             .puppeteer-browser-cache/
-          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json', 'flatn/package.json', 'mocha-es6/package.json') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node24-bun1.4.2-${{ hashFiles('bun.lock', 'bunfig.toml') }}
+      - name: Verify fresh frozen install
+        env:
+          BUN_INSTALL_CACHE_DIR: ${{ runner.temp }}/lively-empty-bun-cache
+          PUPPETEER_CACHE_DIR: ${{ github.workspace }}/.puppeteer-browser-cache
+        run: |
+          test -f bun.lock
+          rm -rf node_modules
+          bun install --frozen-lockfile
       - name: Prepare to install `lively.next`
         run: chmod a+x ./install.sh
       - name: Install `lively.next`
@@ -46,7 +87,7 @@ jobs:
           timeout_minutes: 15
           max_attempts: 5
           retry_on: error
-          command: ./install.sh
+          command: ./install.sh --no-desktop
       - name: Cache `lively.next` dependencies
         if: ${{ steps.cache-lively-deps.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v3
@@ -54,11 +95,23 @@ jobs:
           cache-name: lively-deps
         with:
           path: |
-            lively.next-node_modules/
+            ~/.bun/install/cache/
             .puppeteer-browser-cache/           
-          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json', 'flatn/package.json', 'mocha-es6/package.json') }}
-      - name: Check if Bundled Artifacts are up to Date 
-        run:  ./scripts/check-build-status.py
+          key: ${{ runner.os }}-${{ runner.arch }}-node24-bun1.4.2-${{ hashFiles('bun.lock', 'bunfig.toml') }}
+      - name: Run migration regression tests
+        run: |
+          export BUN_PATH="$(command -v bun)"
+          node --experimental-import-meta-resolve lively.modules/tests/native-resolver-test.mjs
+          node --experimental-import-meta-resolve lively.modules/tests/native-system-live-test.mjs
+          node --experimental-import-meta-resolve lively.freezer/tests/package-resolution-test.cjs
+          node --experimental-import-meta-resolve lively.freezer/tests/dynamic-system-import-test.mjs
+          node --experimental-import-meta-resolve lively.freezer/tests/minify-test.cjs
+          node --experimental-import-meta-resolve lively.freezer/tests/project-bundle-test.mjs
+          node --experimental-import-meta-resolve lively.server/tests/browser-import-map-cache-test.mjs
+          node --experimental-import-meta-resolve lively.project/tests/package-install-test.mjs
+          node --experimental-import-meta-resolve lively.installer/tests/runtime-roots-test.mjs
+          node --experimental-import-meta-resolve lively.app/scripts/test-package-payload.mjs
+          node --experimental-import-meta-resolve lively.app/scripts/test-downloads.mjs
       - name: Run CI Test Script for Changed Folders
         run:  ./scripts/test.sh $(./scripts/tests_for_branch.sh)
       - name: Start the lively server

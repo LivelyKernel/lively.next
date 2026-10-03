@@ -77,6 +77,10 @@ export class LocalCoreInterface extends AbstractCoreInterface {
       !excludedURLs.includes(p.url) && !excludeFns.some(fn => fn(p.url)));
   }
 
+  getPackage (name) {
+    return modules.lookupPackage(name).pkg?.asSpec() || null;
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // package related
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -97,12 +101,12 @@ export class LocalCoreInterface extends AbstractCoreInterface {
     return modules.reloadPackage(packageURL, opts);
   }
 
-  async packageConfChange (source, confFile) {
+  async packageConfChange (source, confFile, { doSave = true } = {}) {
     const S = modules.System;
     const config = parseJsonLikeObj(source);
     const newSource = JSON.stringify(config, null, 2);
 
-    await modules.module(confFile).changeSource(newSource, { doEval: false });
+    if (doSave) await modules.module(confFile).changeSource(newSource, { doEval: false });
     S.set(confFile, S.newModule(config)); // FIXME, do this in lively.modules
 
     const p = await this.getPackageForModule(confFile);
@@ -136,7 +140,7 @@ export class LocalCoreInterface extends AbstractCoreInterface {
   }
 
   doesModuleExist (name, isNormalized) {
-    return modules.isModuleLoaded(name, isNormalized);
+    return modules.doesModuleExist(name, isNormalized);
   }
 
   getModule (name) {
@@ -165,6 +169,10 @@ export class LocalCoreInterface extends AbstractCoreInterface {
 
   moduleRead (moduleName) {
     return modules.module(moduleName).source();
+  }
+
+  moduleEnvironment (moduleName) {
+    return modules.module(moduleName).environment();
   }
 
   moduleSourceChange (moduleName, newSource, options) {

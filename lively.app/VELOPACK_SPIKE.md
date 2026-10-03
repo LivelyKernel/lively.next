@@ -94,8 +94,9 @@ The implementation currently wires these defaults:
 
 - Linux: `--packDir dist/lively.next-linux-x64 --mainExe nw`
 - macOS: `--packDir dist/lively.next-osx-arm64/lively.next.app --mainExe nwjs`
-- Windows: not packaged on CI yet, because `vpk pack` is platform-native and
-  the current Windows bundle is cross-built on Linux.
+- Windows: the Linux matrix stages source and runtimes without `node_modules`
+  or Puppeteer. A `windows-latest` job runs the pinned Bun frozen install,
+  verifies Windows native dependencies and Chromium, then runs `vpk pack`.
 
 The validated Linux test output was:
 
@@ -114,6 +115,23 @@ nightly builds, use a deterministic semver such as:
 
 The package id should stay stable. `next.lively.app` matches the current macOS
 bundle identifier.
+
+### Windows dependency layout
+
+The Windows job preserves Bun's isolated linker layout. It does not use a
+hoisted install: workspace/self dependencies and peer instances rely on the
+owner-relative links created by the isolated installer.
+
+Junction targets are absolute on Windows and cannot be moved safely inside a
+ZIP or Velopack payload. Before either archive is created, the job writes the
+internal directory links to `app/.lively-package-links.json` as app-relative
+paths and removes the junctions. `desktop/start-server.cjs` recreates them
+before updater or server package resolution, then the relocated raw and
+Velopack archives are smoke-tested. This requires the installed payload to be
+user-writable; the supported Windows layouts are the per-user Velopack install
+and a raw archive extracted by the user. Startup fails with an explicit error
+instead of running with an incomplete dependency graph when links cannot be
+restored.
 
 ## Runtime Architecture
 

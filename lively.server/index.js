@@ -1,17 +1,18 @@
-/*global process,require,__dirname,module,global*/
-import "systemjs";
-import * as modules from "lively.modules";
-import { resource } from 'lively.resources';
-import { obj } from 'lively.lang';
-import "socket.io";
+/*global process,global*/
 import util from 'node:util';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
-import { setupSystem } from "lively.installer";
-import { Generator } from "@jspm/generator";
 
 const require = createRequire(import.meta.url);
+globalThis.System = require('systemjs');
+const [modules, { resource }, { setupSystem }, { Generator }] = await Promise.all([
+  import('lively.modules'),
+  import('lively.resources'),
+  import('lively.installer'),
+  import('@jspm/generator'),
+  import('socket.io')
+]);
 const winston = require('winston');
 const defaultServerDir = process.cwd();
 var livelySystem;
@@ -29,7 +30,7 @@ export default async function start(hostname, port, configFile, rootDirectory, s
   setupLogger();
   var step = 1;
   console.log(`[lively.server] system base directory: ${rootDirectory}`);
-  return setupSystem(config.rootDirectory)
+  return setupSystem(directoryURL(config.rootDirectory))
     .then(sys => livelySystem = sys)
     .then(() => console.log(`[lively.server] ${step++}. preparing system`))
     .then(() => modules.registerPackage(config.serverDir))
@@ -41,19 +42,10 @@ export default async function start(hostname, port, configFile, rootDirectory, s
     .then(() => livelySystem.import("lively.vm"))
     .then(() => livelySystem.import("lively.classes"))
     .then(() => livelySystem.import('lively.modules'))
-    .then(modules => {
-      // migrate the system over 
-      modules.changeSystem(livelySystem);
-      modules.unwrapModuleResolution(livelySystem);
-      modules.wrapModuleResolution(livelySystem);
-      // what about the package registry???
-      const oldRegistry = livelySystem['__lively.modules__packageRegistry'];
-      delete livelySystem['__lively.modules__packageRegistry'];
-      const newRegistry = livelySystem['__lively.modules__packageRegistry'] = modules.PackageRegistry.ofSystem(livelySystem);
-      Object.assign(newRegistry, obj.select(oldRegistry, [
-        'packageMap', 'individualPackageDirs', 'devPackageDirs', 'packageBaseDirs'
-      ]));
-      newRegistry.resetByURL();
+    .then(loadedModules => {
+      loadedModules.changeSystem(livelySystem);
+      loadedModules.unwrapModuleResolution(livelySystem);
+      loadedModules.wrapModuleResolution(livelySystem);
     }).then(() =>
       silenceDuring(
         // we use "GLOBAL" as normally declared var, nodejs doesn't seem to care...

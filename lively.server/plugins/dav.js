@@ -160,7 +160,7 @@ export default class LivelyDAVPlugin {
     server.once('close', () => this.server = null);
     this.server = server;
     if (process.env.ENTR_SUPPORT === '1') {
-      child.exec(`find ${process.env.lv_next_dir} | entr -n -r -d -s \'curl --header "x-lively-refresh-file-hashes: true" http://localhost:${port}/file-hash-regeneration.js\'`, () => { });
+      child.execFile('sh', ['-c', `find "$1" | entr -n -r -d -s 'curl --header "x-lively-refresh-file-hashes: true" http://localhost:${port}/file-hash-regeneration.js'`, 'sh', this.options.rootDirectory], () => { });
     }
     this.patchServerForJsDAV(server);
     this.fileHashes = {};
@@ -176,10 +176,9 @@ export default class LivelyDAVPlugin {
     const rootDir = resource('file://' + this.options.rootDirectory);
     const filesToHash = await rootDir.dirList('infinity', {
       exclude: (res) => {
-        return res.url.includes('lively.next-node_modules') ||
+        return res.url.includes('/node_modules/') ||
                res.url.includes('.module_cache') ||
                !res.url.startsWith(System.baseURL + 'lively') &&
-               !res.url.startsWith(System.baseURL + 'flatn') &&
                !res.url.includes('esm_cache') ||
                res.isFile() &&
                !res.url.endsWith('.js') &&

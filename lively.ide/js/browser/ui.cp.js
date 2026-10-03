@@ -4,6 +4,7 @@ import {
   TilingLayout, ConstraintLayout, Text, Label, Icon, component, part
 } from 'lively.morphic';
 import { HorizontalResizer } from 'lively.components';
+import { ModeSelector } from 'lively.components/widgets/mode-selector.cp.js';
 import { SystemButton, DarkButton, ButtonDefault } from 'lively.components/buttons.cp.js';
 import { MullerColumnView } from 'lively.components/muller-columns.cp.js';
 import { promise, fun } from 'lively.lang';
@@ -1268,6 +1269,9 @@ const SystemBrowser = component({
       resizePolicies: [['header buttons', {
         height: 'fixed',
         width: 'fill'
+      }], ['module environment controls', {
+        height: 'fixed',
+        width: 'fill'
       }], ['tabs', {
         height: 'fixed',
         width: 'fill'
@@ -1440,6 +1444,30 @@ const SystemBrowser = component({
             }]
           })]
         }]
+    }, {
+      name: 'module environment controls',
+      extent: pt(605, 32),
+      fill: Color.transparent,
+      layout: new TilingLayout({ axisAlign: 'center', padding: rect(10, 0, 0, 0), spacing: 8 }),
+      submorphs: [{
+        type: Label,
+        name: 'module environment label',
+        textString: 'Runs in:',
+        fontSize: 12
+      }, part(ModeSelector, {
+        name: 'module environment',
+        extent: pt(270, 30),
+        tooltip: 'Set where this module can run. Updates its package.json.',
+        viewModel: {
+          enabled: false,
+          selectedItem: 'shared',
+          items: [
+            { name: 'client', text: 'Client-only', tooltip: 'Browser and desktop renderer' },
+            { name: 'shared', text: 'Shared', tooltip: 'Client and server' },
+            { name: 'server', text: 'Server-only', tooltip: 'Node server' }
+          ]
+        }
+      })]
     }, part(Tabs, {
       name: 'tabs',
       extent: pt(605, 32),

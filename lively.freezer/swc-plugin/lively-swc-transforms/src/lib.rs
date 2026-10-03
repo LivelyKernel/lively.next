@@ -571,9 +571,9 @@ export class Foo {}"#;
         config.module_id = "http://localhost:9011/test.js".to_string();
         let input = "function createLivelyLangObject() { return 1; }";
         let output = transform_code(input, config);
-        // Function declarations are wrapped: captureObj[wrapper]("name", "function", ident, captureObj)
+        // The fourth argument is the recorder; source positions follow it.
         assert!(
-            output.contains(r#"__lvVarRecorder["defVar_http://localhost:9011/test.js"]("createLivelyLangObject", "function", createLivelyLangObject, __lvVarRecorder)"#),
+            output.contains(r#"__lvVarRecorder["defVar_http://localhost:9011/test.js"]("createLivelyLangObject", "function", createLivelyLangObject, __lvVarRecorder, {"#),
             "Expected declaration wrapper call with __lvVarRecorder as 4th arg but got:\n{}",
             output
         );

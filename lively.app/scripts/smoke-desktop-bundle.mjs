@@ -9,6 +9,7 @@ const CDP_PORT = Number(process.env.LIVELY_APP_SMOKE_CDP_PORT || 9222);
 const DEFAULT_TIMEOUT = 300000;
 const WORLD_PATH = '/worlds/load?name=__newWorld__&askForWorldName=false&fastLoad=true';
 const PROJECT_PATH = '/projects/load?name=__newProject__&askForWorldName=false&fastLoad=true';
+const EXISTING_PROJECT_PATH = '/projects/load?name=smoke--project&askForWorldName=false&fastLoad=true';
 const CORE_PACKAGES = [
   'lively.modules',
   'lively.resources',
@@ -94,8 +95,9 @@ function assertExecutableExists (command) {
   if (!fs.existsSync(command)) throw new Error(`App launcher not found: ${command}`);
 }
 
-function stopApp (child) {
-  if (!child || child.exitCode !== null || child.signalCode !== null) return;
+async function stopApp (child) {
+  if (!child || !child.pid || child.exitCode !== null || child.signalCode !== null) return;
+  const exited = new Promise(resolve => child.once('exit', resolve));
   if (process.platform === 'win32') {
     spawnSync('taskkill', ['/pid', String(child.pid), '/t', '/f'], { stdio: 'ignore' });
   } else {
@@ -104,6 +106,7 @@ function stopApp (child) {
       if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
     }, 3000).unref();
   }
+  await exited;
 }
 
 async function fetchJson (url) {
@@ -139,14 +142,195 @@ async function waitForBootLogReady (logFile, timeoutMs) {
   }, timeoutMs);
 }
 
-async function waitForPageTarget (timeoutMs) {
-  return waitFor('NW.js DevTools page target', async () => {
+async function assertBrowserEnvironmentSwitching (client, port) {
+  const result = await client.send('Runtime.evaluate', {
+    awaitPromise: true,
+    returnByValue: true,
+    expression: `(async () => {
+      const { browse } = await System.import('lively.ide/js/browser/ui.cp.js');
+      const { serverInterfaceFor } = await System.import('lively-system-interface');
+      const browser = (await browse({ packageName: 'lively.lang', moduleName: 'index.js' })).viewModel;
+      const remote = serverInterfaceFor('http://127.0.0.1:${port}/eval');
+      const originalSource = browser.ui.sourceEditor.textString;
+      try {
+        for (const backend of [remote, 'local']) {
+          await browser.setEvalBackend(backend);
+          const packages = browser.ui.columnView.treeData.root.subNodes.filter(p => p.name === 'lively.lang');
+          if (packages.length !== 1) throw new Error('Browser lists duplicate lively.lang packages');
+          const expectedProtocol = backend === 'local' ? 'http:' : 'file:';
+          if (!browser.selectedModule.url.startsWith(expectedProtocol)) throw new Error('Browser retained the previous backend module URL');
+          if (browser.ui.sourceEditor.textString !== originalSource) throw new Error('Browser changed the displayed source across environments');
+          const evaluated = await browser.editorPlugin.runEval('arr.range(1, 3)');
+          if (evaluated.isError || JSON.stringify(evaluated.value) !== '[1,2,3]') throw new Error('Browser evaluation used the wrong module context: ' + evaluated.value);
+        }
+        await browser.browse({ packageName: 'lively.morphic', moduleName: 'world.js' });
+        await browser.setEvalBackend(remote);
+        if (!browser.ui.sourceEditor.readOnly || !browser.state.moduleEnvironmentError?.includes('client only')) throw new Error('Browser allowed a frontend module on the server');
+        await browser.browse({ packageName: 'lively.server', moduleName: 'server.js' });
+        await browser.setEvalBackend('local');
+        if (!browser.ui.sourceEditor.readOnly || !browser.state.moduleEnvironmentError?.includes('server only')) throw new Error('Browser allowed a server module on the client');
+        return true;
+      } finally { browser.view.getWindow().remove(); }
+    })()`
+  });
+  if (result.exceptionDetails || result.result?.value !== true) {
+    throw new Error('Desktop system browser smoke failed: ' + JSON.stringify(result.exceptionDetails || result.result));
+  }
+  console.log('Desktop app smoke passed: browser switching preserves original source, module evaluation, and environment boundaries');
+}
+
+/** Exercise local programming and verify the saved work after an app restart. */
+async function assertProjectProgramming (client, port, reopened = false) {
+  const result = await client.send('Runtime.evaluate', {
+    awaitPromise: true,
+    returnByValue: true,
+    expression: `(async () => {
+      const { browse } = await System.import('lively.ide/js/browser/ui.cp.js');
+      const { serverInterfaceFor } = await System.import('lively-system-interface');
+      const { resource } = await System.import('lively.resources');
+      const { promise } = await System.import('lively.lang');
+      const check = (condition, message) => { if (!condition) throw new Error(message); };
+      const fullName = 'smoke--programming';
+      if (!${reopened}) {
+        localStorage.setItem('LIVELY_OFFLINE_MODE', '1');
+        const { storeCurrentUser, storeCurrentUsersOrganizations } = await System.import('lively.user');
+        storeCurrentUser({ login: 'smoke', name: 'Desktop smoke', email: 'smoke@example.invalid',
+          avatar_url: 'data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%221%22%20height=%221%22/%3E' });
+        storeCurrentUsersOrganizations([]);
+        const { part } = await System.import('lively.morphic');
+        const { ProjectCreationPrompt } = await System.import('lively.project/prompts.cp.js');
+        const prompt = part(ProjectCreationPrompt);
+        const created = $world.openPrompt(prompt);
+        await promise.waitFor(60000, () => prompt.viewModel.ui.userSelector.selection);
+        prompt.viewModel.ui.projectName.textString = 'programming';
+        prompt.viewModel.checkValidity();
+        await prompt.viewModel.resolve();
+        $world.openedProject = await promise.timeout(120000, created);
+        check($world.openedProject.fullName === fullName, 'Local project creation failed');
+      }
+      const browser = (await browse({ packageName: fullName, moduleName: 'index.js' })).viewModel;
+      const remote = serverInterfaceFor('http://127.0.0.1:${port}/eval');
+      const manifest = resource(System.baseURL).join('local_projects/' + fullName + '/package.json');
+      try {
+        if (!${reopened}) {
+          await browser.setModuleEnvironment('client');
+          browser.ui.sourceEditor.textString = [
+            '/* global $world */',
+            "import { Text } from 'lively.morphic';",
+            "import { pt } from 'lively.graphics';",
+            'export const answer = 41;',
+            'export function showAnswer () {',
+            "  const label = $world.get('desktop-programming-result') || new Text({name: 'desktop-programming-result'}).openInWorld(pt(300, 150));",
+            '  label.textString = String(answer);',
+            '  return label;',
+            '}',
+            'showAnswer();',
+            'export function main () { showAnswer(); }'
+          ].join('\\n');
+          await browser.save();
+          check($world.get('desktop-programming-result')?.textString === '41', 'Client save did not run the project code');
+          browser.ui.sourceEditor.textString = browser.ui.sourceEditor.textString.replace('answer = 41', 'answer = 42');
+          await browser.save();
+          check($world.get('desktop-programming-result')?.textString === '42', 'Client edit did not update the visible result');
+        }
+        let evaluation = await browser.editorPlugin.runEval('answer');
+        check(!evaluation.isError && evaluation.value === 42, 'Client evaluation did not use saved project code');
+        check(browser.ui.sourceEditor.textString.includes('export const answer = 42'), 'Client browser did not reopen original source');
+        check(browser.ui.moduleEnvironment.selectedItem === 'client', 'Client module declaration was lost');
+        await browser.setEvalBackend(remote);
+        check(browser.ui.sourceEditor.readOnly && browser.state.moduleEnvironmentError?.includes('client only'), 'Server allowed the client entry module');
+        if (!${reopened}) {
+          const oldPrompt = $world.prompt;
+          try {
+            $world.prompt = async () => 'backend-tools';
+            await browser.interactivelyAddNewModule(browser.selectedPackage.url + '/', 'js');
+          } finally { $world.prompt = oldPrompt; }
+          await browser.whenModuleUpdated();
+          check(browser.selectedModule?.url.endsWith('/backend-tools.js'), 'New server module was not selected');
+          await promise.waitFor(60000, () => !browser.state.moduleUpdateInProgress &&
+            browser.editorPlugin.evalEnvironment.targetModule === browser.selectedModule.url);
+          await browser.setModuleEnvironment('server');
+          browser.ui.sourceEditor.textString = [
+            '/* global URL */',
+            "import { readFileSync } from 'node:fs';",
+            'export const answer = 42;',
+            'export function readProjectName () {',
+            "  return JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).name;",
+            '}'
+          ].join('\\n');
+          await browser.save();
+          evaluation = await browser.editorPlugin.runEval('answer');
+          check(!evaluation.isError && evaluation.value === 42, 'New server module did not save and evaluate: ' + (evaluation.value?.stack || evaluation.value));
+          browser.ui.sourceEditor.textString = browser.ui.sourceEditor.textString.replace('answer = 42', 'answer = 43');
+          await browser.save();
+        } else {
+          await browser.browse({ packageName: fullName, moduleName: 'backend-tools.js' });
+        }
+        evaluation = await browser.editorPlugin.runEval('answer');
+        check(!evaluation.isError && evaluation.value === 43, 'Server edit did not update evaluation');
+        check(browser.ui.sourceEditor.textString.includes('export const answer = 43'), 'Server browser did not reopen original source');
+        evaluation = await browser.editorPlugin.runEval('readProjectName()');
+        check(!evaluation.isError && evaluation.value === fullName, 'Server module could not read the project using Node');
+        check(browser.ui.moduleEnvironment.selectedItem === 'server', 'Server module declaration was lost');
+        await browser.setEvalBackend('local');
+        check(browser.ui.sourceEditor.readOnly && browser.state.moduleEnvironmentError?.includes('server only'), 'Client allowed the server module');
+        const before = (await manifest.readJson()).lively.meta;
+        check(JSON.stringify(before['index.js'].environments) === '["client"]' &&
+          JSON.stringify(before['backend-tools.js'].environments) === '["server"]', 'Module settings did not reach package.json');
+        if (!${reopened}) {
+          check(await $world.openedProject.save({message: 'Save client and server programming work'}), 'Project save failed');
+          check(JSON.stringify((await manifest.readJson()).lively.meta) === JSON.stringify(before), 'Project save discarded module environments');
+        }
+        for (const backend of [remote, 'local']) {
+          await browser.setEvalBackend(backend);
+          check(browser.ui.columnView.treeData.root.subNodes.filter(p => p.name === fullName).length === 1, 'Project was duplicated when switching backends');
+        }
+        return true;
+      } finally { browser.view.getWindow().remove(); }
+    })()`
+  });
+  if (result.exceptionDetails || result.result?.value !== true) {
+    throw new Error('Desktop project programming failed: ' + JSON.stringify(result.exceptionDetails || result.result));
+  }
+  console.log('Desktop app smoke passed: ' + (reopened
+    ? 'relaunch reopens saved client/server source, evaluation, visible output and module environments'
+    : 'local project creation, client/server module creation, live editing, evaluation and project save'));
+}
+
+async function waitForPageTarget (dashboardUrl, timeoutMs) {
+  return waitFor('NW.js dashboard DevTools page target', async () => {
     const targets = await fetchJson(`http://127.0.0.1:${CDP_PORT}/json/list`);
-    return targets.find(target =>
-      target.type === 'page' &&
+    const target = targets.find(target =>
       target.webSocketDebuggerUrl &&
-      !String(target.url || '').startsWith('devtools://'));
+      String(target.url || '').startsWith(dashboardUrl));
+    if (!target) throw new Error(`Available DevTools targets: ${JSON.stringify(targets.map(({ type, url }) => ({ type, url })))}`);
+    return target;
   }, timeoutMs);
+}
+
+/** Open a dashboard tile without replacing the frozen renderer's document. */
+async function openDashboardProject (client, fullName) {
+  const result = await waitFor('dashboard project tile', async () => {
+    const result = await client.send('Runtime.evaluate', {
+      returnByValue: true,
+      expression: `(() => {
+        localStorage.setItem('LIVELY_OFFLINE_MODE', '1');
+        const preview = $world.get('a project browser').viewModel.previews.find(p => p._project._name === ${JSON.stringify(fullName)});
+        const button = preview?.get('open button');
+        const node = button && document.getElementById(button.id);
+        if (!node) return null;
+        const bounds = node.getBoundingClientRect();
+        if (!bounds.width || !bounds.height) return null;
+        globalThis.__desktopDashboardDocument = document;
+        return { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
+      })()`
+    });
+    if (result.exceptionDetails) throw new Error('Dashboard project tile unavailable: ' + JSON.stringify(result.exceptionDetails));
+    return result.result?.value ? result : null;
+  }, 60000);
+  const { x, y } = result.result.value;
+  await client.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 });
+  await client.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 });
 }
 
 class CDPClient {
@@ -155,6 +339,7 @@ class CDPClient {
     this.nextId = 1;
     this.pending = new Map();
     this.events = [];
+    this.exceptions = [];
     this.ws = new WebSocket(url);
   }
 
@@ -175,6 +360,11 @@ class CDPClient {
       if (message.error) reject(new Error(`${message.error.message || 'CDP error'}${message.error.data ? `: ${message.error.data}` : ''}`));
       else resolve(message.result || {});
     } else if (message.method) {
+      if (message.method === 'Runtime.exceptionThrown') this.exceptions.push(message.params.exceptionDetails);
+      if (message.method === 'Page.javascriptDialogOpening' && message.params.type === 'beforeunload') {
+        this.send('Page.handleJavaScriptDialog', { accept: true })
+          .catch(err => this.exceptions.push({ text: err.message }));
+      }
       this.events.push(message);
       if (this.events.length > 200) this.events.shift();
     }
@@ -191,6 +381,10 @@ class CDPClient {
 
   close () {
     try { this.ws.close(); } catch (_) {}
+  }
+
+  assertNoRendererErrors () {
+    if (this.exceptions.length) throw new Error('Uncaught desktop renderer errors: ' + JSON.stringify(this.exceptions));
   }
 }
 
@@ -251,6 +445,8 @@ async function describePageState (client) {
           title: document.title,
           hasWorld: Boolean(world),
           worldName: world && world.name,
+          loadError: globalThis.__loadError__ && (__loadError__.stack || String(__loadError__)),
+          projectEntryExecuted: Boolean(globalThis.__livelyProjectSmokeOpened),
           bodyText: document.body && document.body.innerText && document.body.innerText.slice(0, 1000)
         };
       })()`,
@@ -417,6 +613,48 @@ async function assertRendererUsesHttpSystemURLs (client, port, timeoutMs, option
   }
 }
 
+function seedProject (dataDir) {
+  const runtimeRoot = path.join(dataDir, 'runtime-root');
+  const projectDir = path.join(runtimeRoot, 'local_projects', 'smoke--project');
+  fs.mkdirSync(path.join(projectDir, 'lib'), { recursive: true });
+  const git = (directory, args) => {
+    const result = spawnSync('git', ['-C', directory, ...args], { encoding: 'utf8' });
+    if (result.status !== 0) throw new Error(result.stderr || String(result.error));
+    return result.stdout.trim();
+  };
+  const commitArgs = ['-c', 'user.name=smoke', '-c', 'user.email=smoke@example.invalid',
+    'commit', '--quiet', '--allow-empty', '-m', 'desktop smoke fixture'];
+  // Give the project's version preflight a local baseline, without a remote.
+  git(runtimeRoot, ['init', '--quiet', '--initial-branch=main']);
+  git(runtimeRoot, commitArgs);
+  const boundLivelyVersion = git(runtimeRoot, ['rev-parse', 'HEAD']);
+  git(runtimeRoot, ['update-ref', 'refs/remotes/origin/main', boundLivelyVersion]);
+  const dependencies = { 'smoke-fixture-lib': 'file:./lib', 'is-number': '6.0.0', 'lively.morphic': '^0.1.0' };
+  fs.writeFileSync(path.join(projectDir, 'package.json'), JSON.stringify({
+    name: 'smoke--project', version: '0.1.0', type: 'module', main: 'index.js',
+    dependencies, author: { name: 'smoke' }, lively: { projectDependencies: [], boundLivelyVersion }
+  }));
+  fs.writeFileSync(path.join(projectDir, 'index.js'),
+    'import isNumber from "is-number";\n' +
+    'if (!isNumber(42)) throw new Error("Project dependency did not load");\n' +
+    'import { Morph, part } from "lively.morphic";\n' +
+    'import { LoadingScreen } from "lively.freezer/src/loading-screen.cp.js";\n' +
+    'const screen = part(LoadingScreen);\n' +
+    'if (!(screen instanceof Morph)) throw new Error("Loading screen uses a different Morph class");\n' +
+    'screen.withAllSubmorphsDo(() => {});\n' +
+    'globalThis.__livelyProjectSmokeOpened = true; export const value = 42;\n');
+  fs.writeFileSync(path.join(projectDir, 'lib', 'package.json'), JSON.stringify({
+    name: 'smoke-fixture-lib', version: '1.0.0', type: 'module', main: 'index.js'
+  }));
+  fs.writeFileSync(path.join(projectDir, 'lib', 'index.js'), 'export const value = 1;\n');
+  // Start from a legacy checkout: the app must create the first Bun lock and install.
+  for (const name of ['index.css', 'fonts.css']) fs.writeFileSync(path.join(projectDir, name), '');
+  fs.writeFileSync(path.join(projectDir, '.gitignore'), 'node_modules/\n.cachedImportMap.json\n');
+  git(projectDir, ['init', '--quiet', '--initial-branch=main']);
+  git(projectDir, ['add', '.']);
+  git(projectDir, commitArgs);
+}
+
 async function main () {
   const args = parseArgs();
   const devRoot = args.devRoot ? path.resolve(args.devRoot) : null;
@@ -431,94 +669,204 @@ async function main () {
   const { command, args: commandArgs } = devRoot ? devAppCommand(devRoot) : appCommand(bundleDir, platform);
   assertExecutableExists(command);
 
-  const smokeRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'lively-app-smoke-'));
+  // Exercise URL decoding, including Windows' RUNNER~1 temporary paths.
+  const smokeRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'lively-app-smoke~-'));
   const dataDir = path.join(smokeRoot, 'data');
   const cacheDir = path.join(smokeRoot, 'cache');
   fs.mkdirSync(dataDir, { recursive: true });
   fs.mkdirSync(cacheDir, { recursive: true });
+  if (!devRoot) seedProject(dataDir);
+  let programmingLock;
   const logFile = devRoot
     ? path.join(devRoot, 'lively.app', 'boot.log')
     : path.join(dataDir, 'boot.log');
-  try { fs.rmSync(logFile, { force: true }); } catch (_) {}
-
-  console.log(`Launching ${command}${devRoot ? ` in dev mode from ${devRoot}` : ''}`);
-  const child = spawn(command, commandArgs, {
-    cwd: devRoot || bundleDir,
-    env: {
-      ...process.env,
-      LIVELY_APP_DATA_DIR: dataDir,
-      LIVELY_APP_CACHE_DIR: cacheDir,
-      LIVELY_APP_SMOKE: '1'
-    },
-    stdio: ['ignore', 'pipe', 'pipe']
-  });
-
-  child.stdout.on('data', data => process.stdout.write(`[app stdout] ${data}`));
-  child.stderr.on('data', data => process.stderr.write(`[app stderr] ${data}`));
-  child.on('error', err => {
-    appExitStatus = { code: 'spawn-error', signal: err.message || String(err) };
-  });
-
-  try {
-    child.on('exit', (code, signal) => {
-      appExitStatus = { code, signal };
-      if (code !== null && code !== 0) console.error(`App exited with code ${code}, signal ${signal}`);
+  for (const reopened of devRoot ? [false] : [false, true]) {
+    appExitStatus = null;
+    try { fs.rmSync(logFile, { force: true }); } catch (_) {}
+    console.log(`Launching ${command}${devRoot ? ` in dev mode from ${devRoot}` : ''}`);
+    const child = spawn(command, devRoot ? commandArgs : [`--user-data-dir=${path.join(smokeRoot, 'profile')}`, ...commandArgs], {
+      cwd: devRoot || bundleDir,
+      env: {
+        ...process.env,
+        LIVELY_APP_DATA_DIR: dataDir,
+        LIVELY_APP_CACHE_DIR: cacheDir,
+        LIVELY_APP_SMOKE: '1'
+      },
+      stdio: ['ignore', 'pipe', 'pipe']
     });
 
-    const port = await waitForBootLogReady(logFile, timeoutMs);
-    console.log(`Desktop server reported ready on port ${port}`);
-    await waitForHttpOk(`http://127.0.0.1:${port}/dashboard/`, 60000);
-    console.log('Desktop server dashboard responded');
+    child.stdout.on('data', data => process.stdout.write(`[app stdout] ${data}`));
+    child.stderr.on('data', data => process.stderr.write(`[app stderr] ${data}`));
+    child.on('error', err => {
+      appExitStatus = { code: 'spawn-error', signal: err.message || String(err) };
+    });
 
-    const target = await waitForPageTarget(60000);
-    const client = new CDPClient(target.webSocketDebuggerUrl);
-    await client.open();
     try {
-      await client.send('Runtime.enable');
-      await client.send('Page.enable');
-      await client.send('Log.enable').catch(() => {});
-      const worldUrl = `http://127.0.0.1:${port}${WORLD_PATH}`;
-      console.log(`Navigating app window to ${worldUrl}`);
-      await client.send('Page.navigate', { url: worldUrl });
-      try {
-        await waitFor('world load in app window', async () => {
-          const result = await client.send('Runtime.evaluate', {
-            expression: `Boolean(globalThis.$world && $world.name === 'lively.next')`,
-            returnByValue: true
-          });
-          return result.result && result.result.value === true;
-        }, timeoutMs);
-        await assertRendererUsesHttpSystemURLs(client, port, timeoutMs);
-        console.log('Desktop app smoke passed: renderer System uses HTTP module URLs');
+      child.on('exit', (code, signal) => {
+        appExitStatus = { code, signal };
+        if (code !== null && code !== 0) console.error(`App exited with code ${code}, signal ${signal}`);
+      });
 
-        const projectUrl = `http://127.0.0.1:${port}${PROJECT_PATH}`;
-        console.log(`Navigating app window to ${projectUrl}`);
-        await client.send('Page.navigate', { url: projectUrl });
-        await waitFor('create project route bootstrap', async () => {
+      const port = await waitForBootLogReady(logFile, timeoutMs);
+      console.log(`Desktop server reported ready on port ${port}`);
+      await waitForHttpOk(`http://127.0.0.1:${port}/dashboard/`, 60000);
+      console.log('Desktop server dashboard responded');
+
+      const target = await waitForPageTarget(`http://127.0.0.1:${port}/dashboard/`, 60000);
+      console.log(`Attached to desktop page ${target.url}`);
+      const client = new CDPClient(target.webSocketDebuggerUrl);
+      await client.open();
+      try {
+        await client.send('Runtime.enable');
+        await client.send('Page.enable');
+        await client.send('Log.enable').catch(() => {});
+        await waitFor('boot screen navigation to dashboard', async () => {
           const result = await client.send('Runtime.evaluate', {
-            expression: `Boolean(globalThis.System && System.get && System.get('@lively-env') && document.readyState !== 'loading')`,
+            expression: `location.href.startsWith(${JSON.stringify(`http://127.0.0.1:${port}/dashboard/`)})`,
+            returnByValue: true
+          });
+          return result.result && result.result.value === true;
+        }, 60000);
+        await waitFor('dashboard initialization', async () => {
+          const result = await client.send('Runtime.evaluate', {
+            expression: `Boolean(globalThis.$world && $world.get('a project browser') && !globalThis.__loadError__)`,
             returnByValue: true
           });
           return result.result && result.result.value === true;
         }, timeoutMs);
-        await assertRendererUsesHttpSystemURLs(client, port, timeoutMs, { requirePopulatedSystemMap: true });
-        console.log('Desktop app smoke passed: create project route keeps System URLs on HTTP');
+        const registryResponse = await fetch(`http://127.0.0.1:${port}/package-registry.json`);
+        const { packageMap } = await registryResponse.json();
+        for (const name of ['lively.morphic', 'lively.server', 'lively.shell']) {
+          const entry = packageMap[name];
+          const pkg = entry.versions[entry.latest];
+          if (pkg.url !== name || Object.keys(entry.instances).length !== 1) {
+            throw new Error(`Desktop package ${name} has duplicate or noncanonical URLs: ${Object.values(entry.instances).map(pkg => pkg.url).join(', ')}`);
+          }
+        }
+        console.log('Desktop app smoke passed: dashboard initialized with canonical workspace packages');
+        if (!devRoot) {
+          const projects = await waitFor('dashboard project entries', async () => {
+            const result = await client.send('Runtime.evaluate', {
+              expression: "globalThis.$world.get('a project browser').viewModel.previews?.map(p => p._project._name).sort()",
+              returnByValue: true
+            });
+            const names = result.result && result.result.value;
+            return names && names.length ? names : null;
+          }, timeoutMs);
+          if (JSON.stringify(projects) !== JSON.stringify(reopened ? ['smoke--programming', 'smoke--project'] : ['smoke--project'])) {
+            throw new Error('Dashboard lists dependencies as projects: ' + JSON.stringify(projects));
+          }
+          console.log('Desktop app smoke passed: dashboard lists only the local project');
+        }
+        if (reopened) {
+          console.log('Desktop app smoke passed: relaunch preserves the project list after dependencies were installed');
+          await openDashboardProject(client, 'smoke--programming');
+          await waitFor('saved programming project after relaunch', async () => {
+            const result = await client.send('Runtime.evaluate', {
+              expression: `Boolean(globalThis.$world && $world._uiInitialized && $world.openedProject?.fullName === 'smoke--programming' && $world.get('desktop-programming-result')?.textString === '42' && globalThis.__desktopDashboardDocument === document && !globalThis.__loadError__)`,
+              returnByValue: true
+            });
+            return result.result?.value === true;
+          }, timeoutMs);
+          await assertProjectProgramming(client, port, true);
+          if (fs.readFileSync(path.join(dataDir, 'runtime-root', 'local_projects', 'smoke--programming', 'bun.lock'), 'utf8') !== programmingLock) {
+            throw new Error('Restarting the programming project changed its Bun lock');
+          }
+          client.assertNoRendererErrors();
+          continue;
+        }
+        if (!devRoot) {
+          await openDashboardProject(client, 'smoke--project');
+          await waitFor('dashboard project tile opens the studio', async () => {
+            const result = await client.send('Runtime.evaluate', {
+              expression: `Boolean(globalThis.$world && $world._uiInitialized && $world.openedProject?.fullName === 'smoke--project' && globalThis.__livelyProjectSmokeOpened && globalThis.__desktopDashboardDocument === document && !globalThis.__loadError__)`,
+              returnByValue: true
+            });
+            return result.result?.value === true;
+          }, timeoutMs);
+          console.log('Desktop app smoke passed: dashboard tile opens a project in the same document');
+        }
+        const worldUrl = `http://127.0.0.1:${port}${WORLD_PATH}`;
+        console.log(`Navigating app window to ${worldUrl}`);
+        await client.send('Page.navigate', { url: worldUrl });
+        {
+          await waitFor('world load in app window', async () => {
+            const result = await client.send('Runtime.evaluate', {
+              expression: `Boolean(globalThis.$world && $world.name === 'aLivelyWorld' && !lively.FreezerRuntime)`,
+              returnByValue: true
+            });
+            return result.result && result.result.value === true;
+          }, timeoutMs);
+          await assertRendererUsesHttpSystemURLs(client, port, timeoutMs);
+          console.log('Desktop app smoke passed: renderer System uses HTTP module URLs');
+          await assertBrowserEnvironmentSwitching(client, port);
+
+          const projectUrl = `http://127.0.0.1:${port}${devRoot ? PROJECT_PATH : EXISTING_PROJECT_PATH}`;
+          console.log(`Navigating app window to ${projectUrl}`);
+          await client.send('Page.navigate', { url: projectUrl });
+          await waitFor('project route bootstrap', async () => {
+            const result = await client.send('Runtime.evaluate', {
+              expression: `Boolean(globalThis.System && System.get && System.get('@lively-env') && document.readyState !== 'loading')`,
+              returnByValue: true
+            });
+            return result.result && result.result.value === true;
+          }, timeoutMs);
+          if (!devRoot) {
+            await waitFor('existing project entry module and studio initialization', async () => {
+              const result = await client.send('Runtime.evaluate', {
+                expression: `Boolean(globalThis.$world && $world.name === 'smoke--project' &&
+                  $world._uiInitialized && $world.openedProject && $world.openedProject.name === 'project' &&
+                  globalThis.__livelyProjectSmokeOpened && !globalThis.__loadError__)`,
+                returnByValue: true
+              });
+              return result.result && result.result.value === true;
+            }, timeoutMs);
+            const projectDir = path.join(dataDir, 'runtime-root', 'local_projects', 'smoke--project');
+            const lockFile = path.join(projectDir, 'bun.lock');
+            const lock = fs.readFileSync(lockFile, 'utf8');
+            const config = JSON.parse(fs.readFileSync(path.join(projectDir, 'package.json'), 'utf8'));
+            if (config.dependencies['lively.morphic'] || config.lively.localDependencies['lively.morphic'] !== '../../lively.morphic') {
+              throw new Error('Legacy project did not link the bundled lively.morphic workspace');
+            }
+            console.log('Desktop app smoke passed: legacy project migrated, dependency and entry module loaded');
+            await client.send('Runtime.evaluate', { expression: 'globalThis.__livelyProjectSmokeOpened = false' });
+            await client.send('Page.reload', { ignoreCache: true });
+            await waitFor('locked project reopen and studio initialization', async () => {
+              const result = await client.send('Runtime.evaluate', {
+                expression: `Boolean(globalThis.$world && $world.name === 'smoke--project' &&
+                  $world._uiInitialized && $world.openedProject && $world.openedProject.name === 'project' &&
+                  globalThis.__livelyProjectSmokeOpened && !globalThis.__loadError__)`,
+                returnByValue: true
+              });
+              return result.result && result.result.value === true;
+            }, timeoutMs);
+            if (fs.readFileSync(lockFile, 'utf8') !== lock) throw new Error('Opening a locked project changed its Bun lock');
+            console.log('Desktop app smoke passed: project reopened with its original Bun lock');
+          }
+          await assertRendererUsesHttpSystemURLs(client, port, timeoutMs, { requirePopulatedSystemMap: true });
+          console.log('Desktop app smoke passed: project route keeps System URLs on HTTP');
+          if (!devRoot) {
+            await assertProjectProgramming(client, port);
+            programmingLock = fs.readFileSync(path.join(dataDir, 'runtime-root', 'local_projects', 'smoke--programming', 'bun.lock'), 'utf8');
+          }
+        }
+        client.assertNoRendererErrors();
+        console.log('Desktop app smoke passed: server started and world loaded without uncaught renderer errors');
       } catch (err) {
         console.error(`\n--- page state ---\n${JSON.stringify(await describePageState(client), null, 2)}`);
         const diagnostics = recentCdpDiagnostics(client);
         if (diagnostics.length) console.error(`\n--- recent browser diagnostics ---\n${JSON.stringify(diagnostics, null, 2)}`);
         throw err;
+      } finally {
+        client.close();
       }
-      console.log('Desktop app smoke passed: server started and world loaded');
+    } catch (err) {
+      console.error(err.stack || err);
+      console.error(`\n--- boot.log (${logFile}) ---\n${tailFile(logFile) || '(missing)'}`);
+      throw err;
     } finally {
-      client.close();
+      await stopApp(child);
     }
-  } catch (err) {
-    console.error(err.stack || err);
-    console.error(`\n--- boot.log (${logFile}) ---\n${tailFile(logFile) || '(missing)'}`);
-    throw err;
-  } finally {
-    stopApp(child);
   }
 }
 

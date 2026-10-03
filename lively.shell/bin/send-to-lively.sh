@@ -9,7 +9,4 @@ if [ -z "$WORKSPACE_LK" ]; then
   export WORKSPACE_LK="$(cd "$DIR/.." && pwd)"
 fi
 
-ROOT_DIR="$(cd "$WORKSPACE_LK/.." && pwd)"
-RESOLVER="$ROOT_DIR/flatn/resolver.mjs"
-
-node --no-warnings --experimental-loader "$RESOLVER" --dns-result-order ipv4first "$WORKSPACE_LK/bin/send-to-lively.js" "$@"
+node --no-warnings --experimental-import-meta-resolve --dns-result-order ipv4first "$WORKSPACE_LK/bin/send-to-lively.js" "$@"

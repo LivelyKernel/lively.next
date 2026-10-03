@@ -903,5 +903,27 @@ return {
   };
 });`);
     });
+
+    it('schedules each named static re-export from its setter', () => {
+      const source = 'System.register(["dep.js"], function (_export, _context) {\n' +
+        '  var first, second, _rec;\n' +
+        '  return {\n' +
+        '    setters: [function (_dep) { first = _dep.first; second = _dep.second; }],\n' +
+        '    execute: function () {\n' +
+        '      _rec = System.get("@lively-env").moduleEnv("entry.js").recorder;\n' +
+        '      _export("firstAlias", first);\n' +
+        '      _export("firstAgain", first);\n' +
+        '      _export("secondAlias", second);\n' +
+        '    }\n' +
+        '  };\n' +
+        '});';
+      const result = stringify(rewriteToRegisterModuleToCaptureSetters(
+        parse(source), { name: '_rec', type: 'Identifier' }, { moduleId: 'entry.js' }));
+      expect(result.includes('function __livelyScheduleExport(name, value)')).equals(true);
+      expect(result.includes('__livelyScheduleExport("firstAlias", first)')).equals(true);
+      expect(result.includes('__livelyScheduleExport("firstAgain", first)')).equals(true);
+      expect(result.includes('__livelyScheduleExport("secondAlias", second)')).equals(true);
+      expect(result.includes('pendingExportChanges["entry.js"]')).equals(true);
+    });
   });
 });

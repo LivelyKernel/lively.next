@@ -1,43 +1,42 @@
-#! /usr/bin/env node
+#!/usr/bin/env -S node --experimental-import-meta-resolve
 
 /*global require, process, __dirname*/
-require("systemjs")
+global.System = require("systemjs")
 
 var modules   = require("lively.modules")
-var resource  = lively.resources.resource;
+var resource  = require("lively.resources").resource;
+var lang      = require("lively.lang");
 var parseArgs = require('minimist');
 var glob      = require('glob');
-var mochaEs6  = require("../mocha-es6.js")
+var mochaEs6  = require("../index.js")
 var path      = require("path");
 var fs        = require("fs");
-var flatn     = require("flatn");
+var fileURLToPath = require("url").fileURLToPath;
 var dir       = process.cwd();
 var mochaDir  = path.join(__dirname, "..");
-var depDir    = path.join(dir, ".dependencies")
 var step      = 1;
 var args;
 
-lively.lang.promise.chain([
+lang.promise.chain([
   () => { // prep
     modules.System.trace = true
     cacheMocha(modules.System, "file://" + mochaDir);
-    modules.unwrapModuleLoad();
     readProcessArgs();
   },
-  () => setupFlatn(),
-  () => runPreScript(),
+  () => setupWorkspace(),
   () => console.log(`${step++}. Looking for test files via globs ${args.files.join(", ")}`),
   () => findTestFiles(args.files),
   (files, state) => state.testFiles = files,
   () => console.log(`${step++}. Preparing lively.modules`),
   () => setupLivelyModulesTestSystem(),
+  () => runPreScript(),
   () => setupL2l(),
   (_, state) => console.log(`${step++}. Running tests in\n  ${state.testFiles.join("\n  ")}`),
-  (_, state) => mochaEs6.runTestFiles(state.testFiles, {package: "file://" + dir}),
+  (_, state) => mochaEs6.runTestFiles(state.testFiles, {package: "file://" + packageDirOf(state.testFiles[0])}),
   failureCount => !args.l2l && process.exit(failureCount)
 ]).catch(err => {
   console.error(err.stack || err);
-  if (!args.l2l) process.exit(1);
+  if (!args || !args.l2l) process.exit(1);
 });
 
 function readProcessArgs() {
@@ -53,7 +52,7 @@ function runPreScript() {
   if (!path.isAbsolute(scriptPath))
     scriptPath = path.join(process.cwd(), scriptPath);
   console.log(`${step++}. Running pre-script ${scriptPath}`);
-  return require(scriptPath)
+  return import(require("url").pathToFileURL(scriptPath).href)
 }
 
 function findTestFiles(files) {
@@ -69,6 +68,15 @@ function findTestFiles(files) {
     .then(files => files.map(f => "file://" + path.join(dir, f)))
 }
 
+function packageDirOf(testFile) {
+  let current = path.dirname(fileURLToPath(testFile));
+  while (current !== path.dirname(current)) {
+    if (fs.existsSync(path.join(current, "package.json"))) return current;
+    current = path.dirname(current);
+  }
+  return dir;
+}
+
 function cacheMocha(System, mochaDirURL) {
   if (typeof System !== "undefined" && !System.get(mochaDirURL + "/mocha-es6.js")) {
     System.config({
@@ -78,64 +86,52 @@ function cacheMocha(System, mochaDirURL) {
         "chai": mochaDirURL + "/dist/chai.js"
       }
     });
-    System.set(mochaDirURL + "/node_modules/lively.modules/dist/lively.modules.js", System.newModule(modules));
-    System.set(mochaDirURL + "/index.js", System.newModule(mochaEs6));
-    System.set(mochaDirURL + "/mocha-es6.js", System.newModule(mochaEs6));
     System.set(mochaDirURL + "/dist/mocha.js", System.newModule(mochaEs6.mocha));
     System.set(mochaDirURL + "/dist/chai.js", System.newModule(mochaEs6.chai));
   }
 }
 
-function setupLivelyModulesTestSystem() {
+async function setupLivelyModulesTestSystem() {
   var baseURL = "file://" + dir,
-      System = lively.modules.getSystem("system-for-test", {baseURL}),
-      registry = System["__lively.modules__packageRegistry"] = new modules.PackageRegistry(System),
-      env = process.env;
-  registry.packageBaseDirs = env.FLATN_PACKAGE_COLLECTION_DIRS.split(":").filter(Boolean).map(resourcify);
-  registry.individualPackageDirs = (env.FLATN_PACKAGE_DIRS || "").split(":").filter(Boolean).map(resourcify);
-  registry.devPackageDirs = env.FLATN_DEV_PACKAGE_DIRS.split(":").filter(Boolean).map(resourcify);
-  lively.modules.changeSystem(System, true);
+      System = modules.getSystem("system-for-test", {baseURL}),
+      registry = System["__lively.modules__packageRegistry"] = new modules.PackageRegistry(System);
+  Object.assign(System, require("lively.modules/src/node-resolver.js"));
+  const { discoverPackageRootPaths } = require("../../lively.installer/helpers.cjs");
+  let packageRoots = discoverPackageRootPaths(require("url").pathToFileURL(path.join(mochaDir, "..")).href);
+  if (!packageRoots.includes(dir)) packageRoots.push(dir);
+  let rootNodeModules = path.join(mochaDir, "..", "node_modules");
+  registry.packageBaseDirs = [resourcify(rootNodeModules)];
+  registry.nodeModulesDirs = [rootNodeModules, ...packageRoots.map(root => path.join(root, "node_modules"))].map(resourcify);
+  registry.individualPackageDirs = [];
+  registry.devPackageDirs = packageRoots.map(resourcify);
+  modules.changeSystem(System, true);
+  require("lively.source-transform/babel/plugin.js").setupBabelTranspiler(System);
   cacheMocha(System, "file://" + mochaDir);
   mochaEs6.installSystemInstantiateHook();
   // System.debug = true;
-  return registry.update();
+  await registry.update();
+  // The live loader and test harness must use one instrumented module graph.
+  // Mixing native and SystemJS copies splits recorders and class update state.
+  modules = await System.import("lively.modules");
+  modules.changeSystem(System, true);
+  modules.unwrapModuleResolution(System);
+  modules.wrapModuleResolution(System);
+  mochaEs6 = await System.import("mocha-es6");
+  global.lively = Object.assign(global.lively || {}, {
+    modules,
+    lang: await System.import("lively.lang"),
+    ast: await System.import("lively.ast"),
+    classes: await System.import("lively.classes"),
+    vm: await System.import("lively.vm"),
+    sourceTransform: await System.import("lively.source-transform")
+  });
+  return registry;
 
   function resourcify(path) { return resource("file://" + path).asDirectory(); }
 }
 
-function setupFlatn() {
-  // 1. env
-  console.log("Preparing flatn environment");
-  require("flatn/module-resolver.js");
-  let flatnBinDir = path.join(require.resolve("flatn"), "../bin"),
-      env = process.env;
-  if (!env.PATH.includes(flatnBinDir)) {
-    console.log(`Adding ${flatnBinDir} to PATH`);
-    env.PATH = flatnBinDir + ":" + env.PATH;
-  }
-  if (!env.FLATN_DEV_PACKAGE_DIRS || !env.FLATN_DEV_PACKAGE_DIRS.includes(dir)) {
-    console.log("Setting FLATN_DEV_PACKAGE_DIRS");
-    let dirs = env.FLATN_DEV_PACKAGE_DIRS ? env.FLATN_DEV_PACKAGE_DIRS.split(":") : [];
-    env.FLATN_DEV_PACKAGE_DIRS = [dir].concat(dirs).join(":");
-  }
-  if (env.FLATN_PACKAGE_COLLECTION_DIRS) {
-    depDir = env.FLATN_PACKAGE_COLLECTION_DIRS.split(":")[0]
-    console.log("Using existing FLATN_PACKAGE_COLLECTION_DIR " + depDir);
-  } else {
-    console.log("Setting FLATN_PACKAGE_COLLECTION_DIRS");
-    env.FLATN_PACKAGE_COLLECTION_DIRS = [depDir].join(":");
-  }
-  
-  let devPackageDirs = env.FLATN_DEV_PACKAGE_DIRS.split(":"),
-      packageDirs = (env.FLATN_PACKAGE_DIRS || "").split(":"),
-      packageCollectionDirs = env.FLATN_PACKAGE_COLLECTION_DIRS.split(":");
-
-  return flatn.installDependenciesOfPackage(
-    dir,
-    depDir,
-    flatn.buildPackageMap(packageCollectionDirs, packageDirs, devPackageDirs),
-    ["dependencies", "devDependencies"],
-    false/*verbose*/);
+function setupWorkspace() {
+  console.log("Using Bun workspace dependencies");
 }
 
 function setupL2l() {
