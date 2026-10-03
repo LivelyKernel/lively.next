@@ -2,7 +2,7 @@
 import { Path, arr, Closure } from "lively.lang";
 import { ReplaceVisitor, escodegen, parseFunction } from "lively.ast";
 import { Interpreter, Function as AcornFunction, Scope } from "./interpreter.js";
-import { __createClosure, originalFunctions, interpretedFunctions, capturedBindingMappings, freeFunctionReferences } from "./exception.js";
+import { __createClosure, originalFunctions, capturedBindingMappings, freeFunctionReferences } from "./exception.js";
 import { getCurrentASTRegistry, rewriteFunction } from "lively.context";
 
 let Global = typeof window !== "undefined" ? window : globalThis;
@@ -68,7 +68,10 @@ let NativeArrayFunctions = {
 
   some: function(iterator, context) {
     // show-in-doc
-    return arr.detect(this, iterator, context) !== undefined;
+    for (var i = 0, len = this.length; i < len; i++) {
+      if (i in this && iterator.call(context, this[i], i, this)) return true;
+    }
+    return false;
   },
 
   every: function(iterator, context) {
@@ -241,7 +244,6 @@ export async function prepareCapturedFunction(func, names) {
     addRecorderBindings(bindings, ast);
     capturedBindingMappings.add(bindings);
     const interpreted = new AcornFunction(ast, new Scope(bindings, new Scope(Global)), func).asFunction();
-    interpretedFunctions.set(func, interpreted);
     return interpreted;
 }
 
@@ -278,6 +280,12 @@ export class RewrittenClosure extends Closure {
   getRewrittenFunc() {
       originalFunctions.set(this.originalAst, this.getFunc());
       var func = this.recreateFuncFromSource(this.getRewrittenSource());
+      if (this.originalAst.type === 'ArrowFunctionExpression') {
+          const factory = this.recreateFuncFromSource('function() { return (' + this.getRewrittenSource() + '); }');
+          func = factory.apply(this.varMapping.this, this.varMapping.arguments || []);
+          func._lexicalThis = this.varMapping.this;
+          func._lexicalArguments = this.varMapping.arguments;
+      }
       return __createClosure('[runtime]', this.originalAst.registryId, this.frameState, func);
   }
 
@@ -361,7 +369,7 @@ export class Continuation {
 
       if (result.error) {
           const continuation = Continuation.fromUnwindException(result.error);
-          return continuation.reason === 'await' ? continuation.resume() : continuation;
+          return continuation.reason === 'await' || continuation.reason === 'bindings' ? continuation.resume() : continuation;
       }
       else
           return result.val;
@@ -383,7 +391,10 @@ export class Continuation {
   }
 
   async settleBindings() {
-      await prepareCapturedFunction(this.error.func, this.error.names);
+      const prepared = await prepareCapturedFunction(this.error.func, this.error.names);
+      const pending = this.currentFrame.pendingCall;
+      if (pending.fn === this.error.func) pending.fn = prepared;
+      else pending.recv = prepared; // Function.prototype.call/apply
       this.reason = 'debugger';
       this.error = undefined;
       return this;

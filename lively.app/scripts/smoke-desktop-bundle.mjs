@@ -941,6 +941,12 @@ async function assertDesktopDebuggerSmoke (client, timeoutMs) {
       if (!(await closureModel.stepInto())?.isContinuation || closureModel.continuation.frames().length !== 2) throw new Error('Retained method Step Into failed');
       if (closureReceiver.argReads !== 1) throw new Error('Binding capture repeated argument side effects');
       if (await closureModel.proceed() !== 5) throw new Error('Retained method resume failed');
+      externalAmount = 8;
+      const freshClosureView = openForContinuation(run(closureTask, null, [], {this: closureReceiver}), $world);
+      const freshClosureModel = freshClosureView.viewModel;
+      await freshClosureModel.stepOver();
+      await freshClosureModel.stepInto();
+      if (await freshClosureModel.proceed() !== 10 || closureReceiver.argReads !== 2) throw new Error('Retained bindings were not refreshed for the next call');
       const { openLiveCounter } = await System.import('lively.ide/js/debugger/examples/live-counter.js');
       const tutorial = openLiveCounter($world);
       const scopeView = await tutorial.debugLesson('scopeLesson'), scopeModel = scopeView.viewModel;
@@ -953,6 +959,8 @@ async function assertDesktopDebuggerSmoke (client, timeoutMs) {
       if (await scopeModel.evaluateWorkspace() !== 4) throw new Error('Block repair failed');
       scopeModel.ui.workspaceInput.textString = 'read()';
       if (await scopeModel.evaluateWorkspace() !== 4) throw new Error('Closure did not share the block binding');
+      scopeModel.ui.workspaceInput.textString = 'self.call({}) === this';
+      if (await scopeModel.evaluateWorkspace() !== true) throw new Error('Block lost lexical self');
       scopeModel.ui.workspaceInput.textString = 'receiver = {}';
       if (await scopeModel.evaluateWorkspace() !== false || !scopeModel.ui.status.textString.includes('constant')) throw new Error('Workspace bypassed const enforcement');
       const scopedResult = await scopeModel.proceed();

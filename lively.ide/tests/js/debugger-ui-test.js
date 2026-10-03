@@ -151,4 +151,10 @@ describe('lively debugger ui', function () {
     const scope = {bindings: {amount: 3}, setBinding() { throw new TypeError('constant'); }};
     expect(() => evaluateInDebuggerScopes('amount = 4', [scope])).to.throw(TypeError);
   });
+
+  it('highlights a nested function relative to its displayed source', function () {
+    const nested = {getOriginalAst: () => ({loc: {start: {line: 5}}}),
+      getPC: () => ({loc: {start: {line: 6, column: 2}}})};
+    expect(lineRangeForFrame(nested, 'function child() {\n  debugger;\n}').start.row).equals(1);
+  });
 });
