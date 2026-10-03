@@ -6,6 +6,9 @@ import { signal } from 'lively.bindings';
 import { InspectionTree, PropertyTree, printValue } from '../inspector/context.js';
 import {
   restartInspectorFrame,
+  returnFromInspectorFrame,
+  applySavedInspectorMethod,
+  runToInspectorPosition,
   resumeInspectorContinuation,
   stepOutInspectorContinuation,
   stepInspectorContinuation
@@ -42,13 +45,15 @@ function interpreterScopesForFrame (frame) {
   const scopes = [];
   let scope = frame && frame.getScope && frame.getScope();
   while (scope) {
+    const currentScope = scope;
     const mapping = scope.getMapping ? scope.getMapping() : {};
     scopes.push({
-      name: mapping === globalThis ? 'global' : 'scope',
+      name: mapping === globalThis ? 'global' : currentScope.nativeSnapshot ? 'closure snapshot' : currentScope.lexicalNodeIndex !== undefined ? 'block' : 'scope',
       type: mapping === globalThis ? 'global' : 'local',
       bindingNames () { return Object.keys(mapping); },
       hasBinding (candidate) { return Object.prototype.hasOwnProperty.call(mapping, candidate); },
       lookup (candidate) { return mapping[candidate]; },
+      setBinding (candidate, value) { return currentScope.set(candidate, value); },
       get bindings () { return mapping; }
     });
     scope = scope.getParentScope && scope.getParentScope();
@@ -130,6 +135,10 @@ export class LivelyDebuggerModel extends ViewModel {
             { target: 'step over button', signal: 'fire', handler: 'stepOver' },
             { target: 'step out button', signal: 'fire', handler: 'stepOut' },
             { target: 'restart frame button', signal: 'fire', handler: 'restartFrame' },
+            { target: 'return button', signal: 'fire', handler: 'returnFromFrame' },
+            { target: 'edit method button', signal: 'fire', handler: 'editMethod' },
+            { target: 'apply method button', signal: 'fire', handler: 'applySavedMethod' },
+            { target: 'run to cursor button', signal: 'fire', handler: 'runToCursor' },
             { target: 'workspace do button', signal: 'fire', handler: 'evaluateWorkspace' }
           ];
         }
@@ -240,11 +249,7 @@ export class LivelyDebuggerModel extends ViewModel {
 
   evaluationScopes () {
     const frameScopes = visibleScopesForFrame(this.selectedFrame);
-    const selectedScope = this.selectedScope;
-    const orderedScopes = selectedScope
-      ? [selectedScope].concat(frameScopes.filter(scope => scope !== selectedScope))
-      : frameScopes;
-    return [workspaceScope(this.workspaceBindings || {})].concat(orderedScopes);
+    return [workspaceScope(this.workspaceBindings || {})].concat(frameScopes);
   }
 
   async evaluateWorkspace () {
@@ -269,12 +274,12 @@ export class LivelyDebuggerModel extends ViewModel {
   async proceed () {
     try {
       this.rememberReleasableContinuation(this.continuation);
-      const result = resumeInspectorContinuation(this.continuation, { startFrame: this.selectedFrame });
+      const result = await resumeInspectorContinuation(this.continuation);
       signal(this.view, 'debuggerProceed', this.continuation);
       if (result && result.isContinuation) {
         this.continuation = result;
         this.refreshFromContinuation();
-        this.ui.status.textString = 'proceed stopped';
+        this.updateStatus();
       } else {
         this.closeDebugger();
       }
@@ -285,7 +290,40 @@ export class LivelyDebuggerModel extends ViewModel {
   }
 
   retry () {
-    return this.restartFrame();
+    return this.proceed();
+  }
+
+  async returnFromFrame () {
+    const source = await this.view.world().prompt('Return this value from the selected frame:', {input: 'undefined'});
+    if (source == null) return;
+    try {
+      const value = evaluateInDebuggerScopes(source, this.evaluationScopes());
+      const result = returnFromInspectorFrame(this.continuation, value, {startFrame: this.selectedFrame});
+      if (!result || !result.isContinuation) { this.closeDebugger(); return result; }
+      return this.updateAfterInterpreterResult('Return', result);
+    } catch (error) { return this.interpreterActionFailed('Return', error); }
+  }
+
+  editMethod () {
+    const frame = this.selectedFrame, original = frame && frame.func && frame.func.originalFunction;
+    return this.view.world().execCommand('open object editor', {
+      target: frame.getThis(), methodName: original && (original.methodName || original.displayName || original.name)
+    });
+  }
+
+  applySavedMethod () {
+    try {
+      const result = applySavedInspectorMethod(this.continuation, {startFrame: this.selectedFrame});
+      return this.updateAfterInterpreterResult('Apply Saved Method', result);
+    } catch (error) { return this.interpreterActionFailed('Apply Saved Method', error); }
+  }
+
+  runToCursor () {
+    try {
+      const position = this.ui.sourcePane.cursorPosition;
+      const result = runToInspectorPosition(this.continuation, position.row + 1, {startFrame: this.selectedFrame});
+      return this.updateAfterInterpreterResult('Run to Cursor', result);
+    } catch (error) { return this.interpreterActionFailed('Run to Cursor', error); }
   }
 
   stepInto () {
@@ -296,9 +334,9 @@ export class LivelyDebuggerModel extends ViewModel {
     return this.stepWithInterpreter('Step Over', 'stepOver');
   }
 
-  stepOut () {
+  async stepOut () {
     try {
-      const result = stepOutInspectorContinuation(this.continuation, {
+      const result = await stepOutInspectorContinuation(this.continuation, {
         startFrame: this.selectedFrame
       });
       return this.updateAfterInterpreterResult('Step Out', result);
@@ -316,9 +354,9 @@ export class LivelyDebuggerModel extends ViewModel {
     }
   }
 
-  stepWithInterpreter (label, action) {
+  async stepWithInterpreter (label, action) {
     try {
-      const result = stepInspectorContinuation(this.continuation, {
+      const result = await stepInspectorContinuation(this.continuation, {
         action,
         startFrame: this.selectedFrame
       });
@@ -328,15 +366,17 @@ export class LivelyDebuggerModel extends ViewModel {
     }
   }
 
-  updateAfterInterpreterResult (label, result) {
+  async updateAfterInterpreterResult (label, result) {
+    result = await result;
     if (result && result.isContinuation) {
       this.rememberReleasableContinuation(this.continuation);
       this.continuation = result;
       this.refreshFromContinuation();
-      this.ui.status.textString = label + ' stopped';
+      this.ui.status.textString = label + ' stopped' + (result.exception ? ': ' + printValue(result.exception) : '');
       return result;
     }
     this.ui.status.textString = label + ' completed: ' + printValue(result);
+    this.closeDebugger();
     return result;
   }
 
@@ -458,6 +498,14 @@ export const LivelyDebugger = component({
         tooltip: 'Restart Frame',
         viewModel: { label: { value: Icon.textAttribute('rotate-left') } }
       }),
+      part(ToolbarButton, { name: 'return button', tooltip: 'Return a value from the selected frame',
+        viewModel: { label: { value: Icon.textAttribute('reply') } } }),
+      part(ToolbarButton, { name: 'edit method button', tooltip: 'Edit the selected method on its receiver',
+        viewModel: { label: { value: Icon.textAttribute('pencil-alt') } } }),
+      part(ToolbarButton, { name: 'apply method button', tooltip: 'Apply saved changes after the current execution position',
+        viewModel: { label: { value: Icon.textAttribute('check') } } }),
+      part(ToolbarButton, { name: 'run to cursor button', tooltip: 'Run to the selected source line',
+        viewModel: { label: { value: Icon.textAttribute('bullseye') } } }),
       {
         type: Label,
         name: 'title',

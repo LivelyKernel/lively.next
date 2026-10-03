@@ -2,10 +2,91 @@
 import { arr } from "lively.lang";
 import { Scope, Frame, Function as AcornFunction } from "./interpreter.js";
 import { getCurrentASTRegistry } from "lively.context";
-import { acorn } from "lively.ast";
+import { acorn, query, escodegen } from "lively.ast";
 
 let Global = typeof window !== "undefined" ? window : globalThis;
 export const originalFunctions = new WeakMap();
+export const interpretedFunctions = new WeakMap();
+export const capturedBindingMappings = new WeakSet();
+export function freeFunctionReferences(ast) {
+  return query.findGlobalVarRefs('(' + escodegen.generate(ast) + ')');
+}
+const lexicalBindings = new WeakMap();
+const capturedScopes = new WeakMap();
+
+// Keep the same mapping object in native rewritten closures and interpreted frames.
+export function __createLexicalScope(parent, computed, astIndex, declarations, mapping = {}) {
+  __declareLexicalBindings(mapping, declarations);
+  return [computed, mapping, parent, astIndex];
+}
+
+export function __declareLexicalBindings(mapping, declarations) {
+  const cells = lexicalBindings.get(mapping) || Object.create(null);
+  for (const [name, kind] of declarations) {
+    if (cells[name]) {
+      if (cells[name].kind !== kind) throw new TypeError("Binding kind changed for '" + name + "'; restart the frame");
+      continue;
+    }
+    const cell = cells[name] = { kind, initialized: false, value: undefined };
+    Object.defineProperty(mapping, name, {
+      enumerable: true,
+      get() {
+        if (!cell.initialized) throw new ReferenceError("Cannot access '" + name + "' before initialization");
+        return cell.value;
+      },
+      set(value) {
+        if (!cell.initialized) throw new ReferenceError("Cannot access '" + name + "' before initialization");
+        if (cell.kind === 'const') throw new TypeError('Assignment to constant variable.');
+        cell.value = value;
+      }
+    });
+  }
+  lexicalBindings.set(mapping, cells);
+  return mapping;
+}
+
+export function __initializeBinding(mapping, name, value) {
+  const cells = lexicalBindings.get(mapping), cell = cells && cells[name];
+  if (!cell) return mapping[name] = value;
+  if (cell.initialized) throw new ReferenceError("Binding '" + name + "' is already initialized");
+  cell.value = value;
+  cell.initialized = true;
+  return value;
+}
+
+export function __cloneLexicalScope(scope) {
+  const cells = lexicalBindings.get(scope[1]);
+  const copy = __createLexicalScope(scope[2], scope[0], scope[3], Object.entries(cells).map(([name, cell]) => [name, cell.kind]));
+  for (const [name, cell] of Object.entries(cells)) {
+    if (cell.initialized) __initializeBinding(copy[1], name, cell.value);
+  }
+  return copy;
+}
+
+export function __captureLexicalScope(error, root, scope) {
+  const original = error;
+  error = error && (error.isUnwindException ? error.error : error.unwindException ? error.unwindException.error : error);
+  if (error && (typeof error === 'object' || typeof error === 'function')) {
+    let scopes = capturedScopes.get(error);
+    if (!scopes) capturedScopes.set(error, scopes = new Map());
+    if (!scopes.has(root)) scopes.set(root, scope);
+  }
+  return original;
+}
+
+export function __scopeForUnwind(error, root) {
+  const scopes = error && capturedScopes.get(error);
+  const scope = scopes && scopes.get(root);
+  if (scope) scopes.delete(root);
+  return scope || root;
+}
+
+export function __awaitValue(value, astIndex) {
+  throw new UnwindException({reason: 'await', promise: Promise.resolve(value), astIndex,
+    toString() { return 'Await'; }});
+}
+
+Object.assign(Global, { __createLexicalScope, __initializeBinding, __cloneLexicalScope, __captureLexicalScope, __scopeForUnwind, __awaitValue });
 
 export function __createClosure(namespace, idx, parentFrameState, f) {
   // FIXME: Either save idx and use __getClosure later or attach the AST here and now (code dup.)?
@@ -29,7 +110,7 @@ export class UnwindException {
 
     constructor(error) {
       this.error = error;
-      error.unwindException = this;
+      if (error && (typeof error === 'object' || typeof error === 'function')) error.unwindException = this;
       this.frameInfo = [];
     }
 
@@ -55,16 +136,22 @@ export class UnwindException {
         var topScope = Scope.recreateFromFrameState(frameState),
             alreadyComputed = frameState[0],
             ast = __getClosure(namespaceForOrigAst, pointerToOriginalAst),
-            func = new AcornFunction(ast, topScope, originalFunctions.get(ast)),
-            frame = Frame.create(func /*, varMapping */),
+            functionScope = topScope,
+            func,
+            frame,
             pc;
+        while (functionScope.getParentScope() && functionScope.getParentScope().computationState === frameState[0]) {
+            functionScope = functionScope.getParentScope();
+        }
+        func = new AcornFunction(ast, functionScope.getParentScope(), originalFunctions.get(ast));
+        frame = Frame.create(func /*, varMapping */);
         frame.setThis(thiz);
         if (frame.func.node && frame.func.node.type != 'Program')
             frame.setArguments(args);
         frame.setAlreadyComputed(alreadyComputed);
         if (!this.top) {
             pc = this.error && acorn.walk.findNodeByAstIndex(frame.getOriginalAst(),
-                this.error.astIndex ? this.error.astIndex : lastNodeAstIndex);
+                this.error.astIndex != null ? this.error.astIndex : lastNodeAstIndex);
         } else {
             if (frame.isAlreadyComputed(lastNodeAstIndex)) lastNodeAstIndex++;
             pc = acorn.walk.findNodeByAstIndex(frame.getOriginalAst(), lastNodeAstIndex);
@@ -78,6 +165,9 @@ export class UnwindException {
     shiftFrame(frame, isRecreating) {
         if (!isRecreating)
             this.recreateFrames();
+        for (let existing = this.top; existing; existing = existing.getParentFrame()) {
+            if (existing === frame) return frame;
+        }
         if (!frame.isResuming()) console.log('Frame without PC found!', frame);
         if (!this.top) {
             this.top = this.last = frame;

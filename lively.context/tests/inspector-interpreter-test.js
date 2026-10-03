@@ -81,10 +81,12 @@ describe('rewritten debugger actions', function () {
     expect(resumeInspectorContinuation(stepped)).equals(1);
   });
 
-  it('reports evaluation errors during stepping instead of returning them as completed values', function () {
+  it('keeps evaluation errors during stepping in a recoverable continuation', function () {
     const fn = globalThis.Function('return function compute() { debugger; unavailableDebuggerBinding(); }')();
     const stepped = stepInspectorContinuation(run(fn));
-    expect(() => stepInspectorContinuation(stepped)).to.throw(ReferenceError);
+    const failed = stepInspectorContinuation(stepped);
+    expect(failed.isContinuation).equals(true);
+    expect(failed.exception).instanceOf(ReferenceError);
   });
 
   it('restarts and resumes a rewritten frame without losing its pc or receiver', function () {
