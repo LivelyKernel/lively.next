@@ -11,6 +11,8 @@ const DEFAULT_CDP_PORT = 9222;
 const DEFAULT_TARGET_TIMEOUT = 30000;
 const DEFAULT_TARGET_INTERVAL = 250;
 const HALT_UNWIND_TAG = 'lively.context.inspector.halt';
+const BASE64_VLQ_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+const BASE64_VLQ_VALUES = new Map([...BASE64_VLQ_CHARS].map((char, index) => [char, index]));
 
 function noop () {}
 
@@ -76,21 +78,150 @@ function bindingNamesFromProperties (properties) {
     .map(prop => prop.name);
 }
 
-function sourceForFrame (frame, sourceText = '') {
-  const location = frame.location || {};
-  return {
-    url: frame.url || '',
-    scriptId: location.scriptId || '',
-    sourceText
-  };
-}
-
-function locationForFrame (frame) {
+function generatedLocationForFrame (frame) {
   const location = frame.location || {};
   return {
     scriptId: location.scriptId || '',
     lineNumber: location.lineNumber,
     columnNumber: location.columnNumber
+  };
+}
+
+function sourceForFrame (frame, sourceInfo = {}) {
+  const generatedLocation = generatedLocationForFrame(frame);
+  return {
+    url: sourceInfo.url || frame.url || '',
+    scriptId: generatedLocation.scriptId || '',
+    sourceText: sourceInfo.sourceText || '',
+    generatedUrl: frame.url || '',
+    generatedLocation,
+    sourceMap: sourceInfo.sourceMap || null
+  };
+}
+
+function locationForFrame (frame, sourceInfo = {}) {
+  return sourceInfo.location || generatedLocationForFrame(frame);
+}
+
+function decodeInlineSourceMap (sourceText = '') {
+  const matches = [...String(sourceText).matchAll(/(?:^|\n)\s*\/\/[#@]\s*sourceMappingURL=data:application\/json(?:;charset=[^;,]+)?(;base64)?,([^\s]+)/g)];
+  const match = matches[matches.length - 1];
+  if (!match) return null;
+  try {
+    const encoded = match[2];
+    const json = match[1]
+      ? Buffer.from(encoded, 'base64').toString('utf8')
+      : decodeURIComponent(encoded);
+    return JSON.parse(json);
+  } catch (err) {
+    return null;
+  }
+}
+
+function resolveSourceUrl (source, generatedUrl = '') {
+  if (!source) return '';
+  try {
+    return generatedUrl ? new URL(source, generatedUrl).href : source;
+  } catch (err) {
+    return source;
+  }
+}
+
+function decodeVlqSegment (segment) {
+  const values = [];
+  let value = 0;
+  let shift = 0;
+  for (const char of segment) {
+    const digit = BASE64_VLQ_VALUES.get(char);
+    if (digit === undefined) return [];
+    const continuation = digit & 32;
+    value += (digit & 31) << shift;
+    if (continuation) {
+      shift += 5;
+      continue;
+    }
+    const negative = value & 1;
+    values.push((value >> 1) * (negative ? -1 : 1));
+    value = 0;
+    shift = 0;
+  }
+  return shift === 0 ? values : [];
+}
+
+function originalPositionFromSourceMap (sourceMap, line, column) {
+  if (!sourceMap || typeof sourceMap.mappings !== 'string') return null;
+  if (!Number.isFinite(line)) return null;
+
+  const targetLine = Math.max(1, line);
+  const targetColumn = Number.isFinite(column) ? Math.max(0, column) : 0;
+  const lines = sourceMap.mappings.split(';');
+  let sourceIndex = 0;
+  let originalLine = 0;
+  let originalColumn = 0;
+  let nameIndex = 0;
+
+  for (let generatedLine = 1; generatedLine <= lines.length; generatedLine++) {
+    let generatedColumn = 0;
+    let closest = null;
+    let first = null;
+    const segments = lines[generatedLine - 1].split(',').filter(Boolean);
+
+    for (const segment of segments) {
+      const values = decodeVlqSegment(segment);
+      if (!values.length) continue;
+      generatedColumn += values[0];
+      if (values.length < 4) continue;
+
+      sourceIndex += values[1];
+      originalLine += values[2];
+      originalColumn += values[3];
+      if (values.length >= 5) nameIndex += values[4];
+
+      const mapping = {
+        source: sourceMap.sources && sourceMap.sources[sourceIndex],
+        line: originalLine + 1,
+        column: originalColumn,
+        name: sourceMap.names && sourceMap.names[nameIndex],
+        generatedColumn
+      };
+      if (generatedLine === targetLine) {
+        if (!first) first = mapping;
+        if (generatedColumn <= targetColumn) closest = mapping;
+      }
+    }
+
+    if (generatedLine === targetLine) return closest || first;
+  }
+  return null;
+}
+
+function originalSourceForGenerated (generatedSourceText, location = {}, generatedUrl = '') {
+  const sourceMap = decodeInlineSourceMap(generatedSourceText);
+  if (!sourceMap || !Number.isFinite(location.lineNumber)) return null;
+
+  const original = originalPositionFromSourceMap(
+    sourceMap,
+    location.lineNumber + 1,
+    Number.isFinite(location.columnNumber) ? location.columnNumber : 0
+  );
+  if (!original || !original.source || !Number.isFinite(original.line)) return null;
+
+  const sourceIndex = sourceMap.sources ? sourceMap.sources.indexOf(original.source) : -1;
+  const sourceText = sourceIndex >= 0 && sourceMap.sourcesContent
+    ? sourceMap.sourcesContent[sourceIndex] || ''
+    : '';
+  return {
+    url: resolveSourceUrl(original.source, generatedUrl),
+    sourceText,
+    location: {
+      scriptId: location.scriptId || '',
+      lineNumber: original.line - 1,
+      columnNumber: Number.isFinite(original.column) ? original.column : 0
+    },
+    sourceMap: {
+      source: original.source,
+      generatedUrl
+    }
   };
 }
 
@@ -427,15 +558,15 @@ class InspectorService {
     for (let i = 0; i < callFrames.length; i++) {
       const frame = callFrames[i];
       const frameId = 'frame-' + i;
-      const sourceText = await this.scriptSourceForFrame(frame);
+      const sourceInfo = await this.sourceInfoForFrame(frame);
       const framePayload = {
         captureId,
         reason,
         metadata: descriptor.metadata,
         frameId,
         functionName: frame.functionName || '',
-        source: sourceForFrame(frame, sourceText),
-        location: locationForFrame(frame)
+        source: sourceForFrame(frame, sourceInfo),
+        location: locationForFrame(frame, sourceInfo)
       };
       await this.storeFrame(frame, framePayload);
       await this.storeArguments(frame, framePayload);
@@ -499,6 +630,16 @@ class InspectorService {
       this.log('inspector source lookup failed: ' + (err.stack || err));
       return '';
     }
+  }
+
+  async sourceInfoForFrame (frame) {
+    const generatedSourceText = await this.scriptSourceForFrame(frame);
+    const original = originalSourceForGenerated(
+      generatedSourceText,
+      frame && frame.location || {},
+      frame && frame.url || ''
+    );
+    return original || { sourceText: generatedSourceText };
   }
 
   async consumeArmedHalt (topFrame) {
@@ -629,5 +770,7 @@ module.exports = {
   InspectorService,
   createInspectorService,
   bindingNamesFromProperties,
+  decodeInlineSourceMap,
+  originalSourceForGenerated,
   pageTarget
 };

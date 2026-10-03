@@ -8,6 +8,7 @@ import {
   sourceSummary,
   sourceUrlForFrame
 } from '../../js/debugger/source.js';
+import { evaluateInDebuggerScopes } from '../../js/debugger/evaluation.js';
 
 function frame (spec = {}) {
   return {
@@ -96,5 +97,25 @@ describe('lively debugger ui', function () {
     expect(initialFrameForContinuation({ reason: 'desktop debugger smoke' }, [runtimeFrameWithoutUrl, callerFrame])).equals(callerFrame);
     expect(initialFrameForContinuation({ reason: 'desktop debugger smoke' }, [runtimeFrame, callerFrame])).equals(callerFrame);
     expect(initialFrameForContinuation({ reason: 'exception' }, [callerFrame, runtimeFrame])).equals(callerFrame);
+  });
+
+  it('evaluates workspace code against actual selected scope bindings', function () {
+    const marker = { label: 'actual object' };
+    const selectedScope = { bindings: { marker, count: 2 } };
+    const outerScope = { bindings: { count: 99, outer: 4 } };
+
+    const result = evaluateInDebuggerScopes('marker.count = count + outer, marker', [selectedScope, outerScope]);
+
+    expect(result).equals(marker);
+    expect(marker.count).equals(6);
+  });
+
+  it('writes workspace assignments back into the selected scope binding', function () {
+    const selectedScope = { bindings: { count: 2 } };
+
+    const result = evaluateInDebuggerScopes('count = count + 5', [selectedScope]);
+
+    expect(result).equals(7);
+    expect(selectedScope.bindings.count).equals(7);
   });
 });
