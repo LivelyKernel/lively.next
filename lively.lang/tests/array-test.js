@@ -20,6 +20,8 @@ import {
   uniq,
   uniqBy,
   without,
+  include,
+  from,
   batchify,
   sum,
   min,
@@ -50,6 +52,17 @@ describe('arr', function () {
     expect(['a']).to.eql(without(array, 'c'));
     delete array[0];
     expect([]).to.eql(without(array, 'a'));
+  });
+
+  it('include', function () {
+    expect(include(['a', 'b'], 'a')).to.equal(true);
+    expect(include(['a', 'b'], 'c')).to.equal(false);
+  });
+
+  it('from', function () {
+    let args = (function () { return from(arguments); }('a', 'b'));
+    expect(args).to.eql(['a', 'b']);
+    expect(from([1, 2], n => n + 1)).to.eql([2, 3]);
   });
 
   it('mutableCompact', function () {

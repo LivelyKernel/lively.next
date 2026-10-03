@@ -18,6 +18,8 @@ export {
 };
 
 custom.addSource = addSource;
+walk.addSource = addSource;
+if (acorn.walk) acorn.walk.addSource = addSource;
 
 function addSource (parsed, source) {
   if (typeof parsed === 'string') {
