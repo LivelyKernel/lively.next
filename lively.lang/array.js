@@ -186,6 +186,14 @@ function without (array, elem) {
   return array.filter(val => val !== elem);
 }
 
+function include (array, elem) {
+  return array.includes(elem);
+}
+
+function from (arrayLike, mapFn, thisArg) {
+  return Array.from(arrayLike, mapFn, thisArg);
+}
+
 /**
  * Returns a copy of `array` without all elements in `otherArr`.
  * @param {any[]} array
@@ -1067,6 +1075,8 @@ export {
   reject,
   rejectByKey,
   without,
+  include,
+  from,
   withoutAll,
   uniq,
   uniqBy,

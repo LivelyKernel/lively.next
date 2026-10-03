@@ -47,11 +47,63 @@
     return window.confirm([title, message].filter(Boolean).join('\n\n'));
   }
 
+  const desktop = window.livelyDesktop || {};
+  const desktopDebugger = desktop.debugger || {};
+  const debuggerState = window.__LIVELY_DESKTOP_DEBUGGER__ || (window.__LIVELY_DESKTOP_DEBUGGER__ = {
+    armedHalt: null,
+    captures: [],
+    serviceAttached: !!desktopDebugger.inspectorServiceAttached
+  });
+  if (desktopDebugger.inspectorServiceAttached) debuggerState.serviceAttached = true;
+
+  function armHalt (capture) {
+    if (!debuggerState.serviceAttached) return false;
+    debuggerState.armedHalt = {
+      captureId: capture && capture.captureId,
+      reason: capture && capture.reason || 'halt',
+      armedAt: Date.now()
+    };
+    return true;
+  }
+
+  function consumeArmedHalt () {
+    const capture = debuggerState.armedHalt;
+    debuggerState.armedHalt = null;
+    return capture;
+  }
+
+  function isAvailable () {
+    return !!debuggerState.serviceAttached;
+  }
+
+  function setServiceAttached (attached) {
+    debuggerState.serviceAttached = !!attached;
+    return debuggerState.serviceAttached;
+  }
+
+  function deliverCapture (descriptor) {
+    debuggerState.captures.push(descriptor);
+    debuggerState.lastCapture = descriptor;
+    try {
+      window.dispatchEvent(new CustomEvent('lively-desktop-debugger-capture', { detail: descriptor }));
+    } catch (_) {}
+    return true;
+  }
+
   window.livelyDesktop = {
+    ...desktop,
     navigateToDashboard: navigateToDashboard,
     showDevTools: showDevTools,
     showDesktopMessage: showDesktopMessage,
-    confirmDesktopAction: confirmDesktopAction
+    confirmDesktopAction: confirmDesktopAction,
+    debugger: {
+      ...desktopDebugger,
+      armHalt: desktopDebugger.armHalt || armHalt,
+      consumeArmedHalt: desktopDebugger.consumeArmedHalt || consumeArmedHalt,
+      isAvailable: desktopDebugger.isAvailable || isAvailable,
+      setServiceAttached: desktopDebugger.setServiceAttached || setServiceAttached,
+      deliverCapture: desktopDebugger.deliverCapture || deliverCapture
+    }
   };
 
   // Keyboard shortcut: Cmd/Ctrl + Shift + D → Dashboard.

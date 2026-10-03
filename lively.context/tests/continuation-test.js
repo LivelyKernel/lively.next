@@ -7,8 +7,8 @@ import { parseFunction, stringify } from "lively.ast";
 import { Continuation, stackCaptureMode } from "../lib/stackReification.js";
 import * as StackReification from "../lib/stackReification.js";
 import { Interpreter } from "../lib/interpreter.js";
-import shallow from 'chai-shallow-deep-equal';
-shallow(chai);
+import { installShallowDeepEqual } from './helpers.js';
+installShallowDeepEqual(chai);
 
 describe('continuation', function() {
   var config,
@@ -27,6 +27,35 @@ describe('continuation', function() {
   afterEach(function() {
     rewriting.setCurrentASTRegistry(oldAstRegistry);
     debugOption.set(Global, config);
+  });
+
+  it('retains supplied closure bindings and receiver through suspend and resume', function() {
+    const marker = { count: 0 }, receiver = { step: '1' };
+    function increment() {
+      var amount = this.step;
+      debugger;
+      marker.count += amount * factor;
+      return marker.count;
+    }
+    const continuation = StackReification.run(increment, astRegistry, [], {
+      this: receiver, marker, factor: 2
+    });
+    expect(continuation.currentFrame.getThis()).equals(receiver);
+    expect(continuation.currentFrame.lookup('marker')).equals(marker);
+    expect(continuation.currentFrame.lookup('factor')).equals(2);
+    continuation.currentFrame.getScope().set('amount', 1);
+    expect(continuation.resume()).equals(2);
+    expect(marker.count).equals(2);
+  });
+
+  it('records changes to supplied primitive bindings before suspension', function() {
+    const compute = Function('factor', 'return function compute() { factor += 1; debugger; return factor; }')(1);
+    const mapping = { factor: 1 };
+    const continuation = StackReification.run(compute, astRegistry, [], mapping);
+    expect(continuation.currentFrame.lookup('factor')).equals(2);
+    expect(continuation.resume()).equals(2);
+    expect(mapping.factor).equals(2);
+    expect(compute()).equals(2);
   });
 
   it('runs code without halt', function() {

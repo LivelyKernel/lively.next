@@ -20,6 +20,41 @@ const targetPackage = process.argv[2];
 let passed = 0; let failed = 0; let skipped = 0;
 let markdownListOfFailingTests = '';
 
+function githubCommandValue (value) {
+  return String(value)
+    .replace(/%/g, '%25')
+    .replace(/\r/g, '%0D')
+    .replace(/\n/g, '%0A');
+}
+
+function truncate (value, maxLength = 8000) {
+  const str = String(value);
+  return str.length > maxLength ? `${str.slice(0, maxLength)}...` : str;
+}
+
+function shortJSON (value) {
+  try {
+    return JSON.stringify(value).slice(0, 1000);
+  } catch (_) {
+    return String(value).slice(0, 1000);
+  }
+}
+
+function testFailureDetails (test) {
+  const details = [test.fullTitle];
+  const err = test.error;
+  if (!err) return details.join('\n');
+
+  const message = err.message || err;
+  if (message) details.push(message);
+  if (err.expected !== undefined && err.actual !== undefined) {
+    details.push(`EXPECTED: ${shortJSON(err.expected)}`);
+    details.push(`ACTUAL: ${shortJSON(err.actual)}`);
+  }
+  if (err.stack && err.stack !== message) details.push(err.stack);
+  return details.join('\n');
+}
+
 if (CI) {
   console.log(`Running Tests for ${targetPackage} 📦`);
 } else {
@@ -57,7 +92,7 @@ const req = http.request(options, res => {
           errorOutput += `\nRecent browser console errors:\n${data.browserErrors}`;
         }
         if (CI) {
-          console.log(`::error:: Running the tests produced the following error:\n${errorOutput}`);
+          console.log(`::error title=${githubCommandValue(`Tests failed for ${targetPackage}`)}::${githubCommandValue(errorOutput)}`);
           fs.appendFileSync('summary.txt', `❌ Running the tests produced the following error:\n${errorOutput}\n`);
         }
         else console.log(`❌ Running the tests produced the following error:\n${errorOutput}`);
@@ -105,6 +140,7 @@ const req = http.request(options, res => {
             failed += 1;
             if (CI) {
               console.log(`${test.fullTitle} failed ❌`);
+              console.log(`::error title=${githubCommandValue(`Test failed in ${targetPackage}`)}::${githubCommandValue(truncate(testFailureDetails(test)))}`);
               markdownListOfFailingTests = markdownListOfFailingTests + `- ${test.fullTitle} failed ❌\n`;
             } else {
               console.log(`${test.fullTitle} failed ❌`);
@@ -132,7 +168,7 @@ const req = http.request(options, res => {
     } catch (err) {
       console.log('SUMMARY-INDICATE-FAILURE');
       if (CI) {
-        console.log(`::error:: Running the tests produced the following error:\n"${err}"`);
+        console.log(`::error title=${githubCommandValue(`Could not parse test results for ${targetPackage}`)}::${githubCommandValue(err)}`);
         fs.appendFileSync('test_output.md', `\n---\n❌ Running the tests for **${targetPackage}** produced the following error:\n"${err}"\n`);
       } else {
         console.log(`❌ Running the tests produced the following error:\n"${err}"`);

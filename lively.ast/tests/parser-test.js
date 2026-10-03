@@ -7,9 +7,18 @@ import { parse, parseFunction } from '../lib/parser.js';
 
 describe('parse', function () {
   it('JavaScript code', () =>
-    expect(parse('1 + 2'))
-      .nested.property('body[0].type')
+    expect(parse('1 + 2').body[0].type)
       .equals('ExpressionStatement'));
+
+  it('preserves module source fields when annotating an exported class', () => {
+    const source = 'import { x } from "a"; export { x } from "b"; export class Counter { increment() { return this.count + 1; } }';
+    const ast = parse(source, { addSource: true, addAstIndex: true });
+
+    expect(ast.body[0].source.value).equals('a');
+    expect(ast.body[1].source.value).equals('b');
+    expect(ast.body[2].source).equals(null);
+    expect(ast.body[2].declaration.body.body[0].value.source).contains('return this.count + 1;');
+  });
 
   describe('async / await', () => {
     it('parses nested awaits', () => {

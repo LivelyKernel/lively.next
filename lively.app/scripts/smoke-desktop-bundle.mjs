@@ -73,15 +73,20 @@ function hostPlatform () {
   return process.platform;
 }
 
-function appCommand (bundleDir, platform) {
+function headlessArgs (headless) {
+  return headless ? ['--headless=new', '--disable-gpu'] : [];
+}
+
+function appCommand (bundleDir, platform, headless = false) {
+  const chromiumArgs = headlessArgs(headless);
   if (platform === 'linux') {
-    return { command: path.join(bundleDir, 'nw'), args: [bundleDir] };
+    return { command: path.join(bundleDir, 'nw'), args: chromiumArgs.concat(bundleDir) };
   }
   if (platform === 'osx') {
-    return { command: path.join(bundleDir, 'lively.next.app', 'Contents', 'MacOS', 'nwjs'), args: [] };
+    return { command: path.join(bundleDir, 'lively.next.app', 'Contents', 'MacOS', 'nwjs'), args: chromiumArgs };
   }
   if (platform === 'win') {
-    return { command: path.join(bundleDir, 'lively.next.exe'), args: [bundleDir] };
+    return { command: path.join(bundleDir, 'lively.next.exe'), args: chromiumArgs.concat(bundleDir) };
   }
   throw new Error(`Unsupported smoke platform: ${platform}`);
 }
@@ -370,12 +375,33 @@ class CDPClient {
     }
   }
 
-  send (method, params = {}) {
+  send (method, params = {}, options = {}) {
     const id = this.nextId++;
     const payload = JSON.stringify({ id, method, params });
+    const timeoutMs = Number(options.timeoutMs || options.timeout || 0);
     return new Promise((resolve, reject) => {
-      this.pending.set(id, { resolve, reject });
-      this.ws.send(payload);
+      let timer = null;
+      const finish = fn => value => {
+        if (timer) clearTimeout(timer);
+        fn(value);
+      };
+      if (timeoutMs > 0) {
+        timer = setTimeout(() => {
+          this.pending.delete(id);
+          reject(new Error(`${method} timed out after ${timeoutMs}ms`));
+        }, timeoutMs);
+      }
+      this.pending.set(id, {
+        resolve: finish(resolve),
+        reject: finish(reject)
+      });
+      try {
+        this.ws.send(payload);
+      } catch (err) {
+        if (timer) clearTimeout(timer);
+        this.pending.delete(id);
+        reject(err);
+      }
     });
   }
 
@@ -655,18 +681,66 @@ function seedProject (dataDir) {
   git(projectDir, commitArgs);
 }
 
+async function assertDesktopDebuggerSmoke (client, timeoutMs) {
+  const result = await client.send('Runtime.evaluate', {
+    expression: `(async () => {
+      const { run } = await System.import('lively.context/lib/stackReification.js');
+      const { openForContinuation } = await System.import('lively.ide/js/debugger/ui.cp.js');
+      const marker = { count: 0 };
+      function smokeOuter() {
+        function smokeInner() {
+          var amount = '1';
+          debugger;
+          this.count += amount;
+          return this;
+        }
+        return smokeInner.call(this);
+      }
+      const continuation = run(smokeOuter, null, [], { this: marker });
+      if (!continuation.isContinuation || continuation.frames().length !== 2) throw new Error('Missing rewriter frames');
+      if (continuation.currentFrame.getThis() !== marker) throw new Error('Lost receiver identity');
+      const view = openForContinuation(continuation, $world);
+      const model = view.viewModel;
+      await model.selectFrame(continuation.currentFrame);
+      if (!model.ui.sourcePane.textString.includes('debugger;')) throw new Error('Missing original frame source');
+      if (!model.ui.sourcePane.markers.some(marker => marker.id === 'lively-debugger-current-line')) throw new Error('Missing current statement marker');
+      let ticked = false;
+      await new Promise(resolve => setTimeout(() => { ticked = true; resolve(); }, 30));
+      model.ui.workspaceInput.textString = 'this';
+      if (await model.evaluateWorkspace() !== marker) throw new Error('Workspace lost receiver');
+      model.ui.workspaceInput.textString = 'amount = Number(amount)';
+      if (await model.evaluateWorkspace() !== 1) throw new Error('Workspace failed to repair local');
+      const stepped = model.stepOver();
+      if (!stepped || !stepped.isContinuation) throw new Error(model.ui.status.textString);
+      const resumed = await model.proceed();
+      if (resumed !== marker || marker.count !== 1) throw new Error('Resume lost state or identity');
+      if ($world.getWindows().some(win => win.targetMorph === view)) throw new Error('Proceed did not close debugger');
+      return { frames: 2, count: marker.count, worldTimerWhileSuspended: ticked, nativeService: livelyDesktop.debugger.isAvailable() };
+    })()`,
+    awaitPromise: true,
+    returnByValue: true
+  }, { timeoutMs });
+  if (result.exceptionDetails) throw new Error('Nonpausing debugger smoke failed: ' + JSON.stringify(result.exceptionDetails));
+  if (!result.result.value?.worldTimerWhileSuspended || result.result.value.nativeService) {
+    throw new Error('Expected a responsive world with the native pause service disabled: ' + JSON.stringify(result.result));
+  }
+  console.log('Desktop debugger smoke passed: original frames, live receiver, source, local repair, stepping, and resume');
+}
+
 async function main () {
   const args = parseArgs();
   const devRoot = args.devRoot ? path.resolve(args.devRoot) : null;
   const bundleDir = devRoot ? null : path.resolve(args.bundleDir || '');
   const platform = args.platform || hostPlatform();
   const timeoutMs = Number(args.timeout || process.env.LIVELY_APP_SMOKE_TIMEOUT || DEFAULT_TIMEOUT);
+  const debuggerSmoke = args.debuggerSmoke === '1' || args.debuggerSmoke === 'true';
+  const headless = args.headless === '1' || args.headless === 'true';
   if (!devRoot && (!bundleDir || bundleDir === process.cwd())) throw new Error('Pass --bundleDir=<desktop bundle dir> or --devRoot=<repo root>');
   if (devRoot && !fs.existsSync(path.join(devRoot, 'lively.app', 'start.sh'))) {
     throw new Error(`Dev root does not look like lively.next: ${devRoot}`);
   }
 
-  const { command, args: commandArgs } = devRoot ? devAppCommand(devRoot) : appCommand(bundleDir, platform);
+  const { command, args: commandArgs } = devRoot ? devAppCommand(devRoot) : appCommand(bundleDir, platform, headless);
   assertExecutableExists(command);
 
   // Exercise URL decoding, including Windows' RUNNER~1 temporary paths.
@@ -690,7 +764,8 @@ async function main () {
         ...process.env,
         LIVELY_APP_DATA_DIR: dataDir,
         LIVELY_APP_CACHE_DIR: cacheDir,
-        LIVELY_APP_SMOKE: '1'
+        LIVELY_APP_SMOKE: '1',
+        LIVELY_APP_HEADLESS: headless ? '1' : ''
       },
       stdio: ['ignore', 'pipe', 'pipe']
     });
@@ -800,6 +875,7 @@ async function main () {
           await assertRendererUsesHttpSystemURLs(client, port, timeoutMs);
           console.log('Desktop app smoke passed: renderer System uses HTTP module URLs');
           await assertBrowserEnvironmentSwitching(client, port);
+          if (debuggerSmoke) await assertDesktopDebuggerSmoke(client, timeoutMs);
 
           const projectUrl = `http://127.0.0.1:${port}${devRoot ? PROJECT_PATH : EXISTING_PROJECT_PATH}`;
           console.log(`Navigating app window to ${projectUrl}`);
