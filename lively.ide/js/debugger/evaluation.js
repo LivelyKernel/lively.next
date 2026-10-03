@@ -41,5 +41,7 @@ function evaluatorForSource (source) {
 
 export function evaluateInDebuggerScopes (source, scopes = [], fallback = globalThis) {
   const proxy = scopeLookupProxy(scopes, fallback);
-  return evaluatorForSource(String(source || ''))(proxy);
+  const receiverScope = scopes.find(scope => own(bindingsForScope(scope), 'this'));
+  const receiver = receiverScope ? bindingsForScope(receiverScope).this : fallback;
+  return evaluatorForSource(String(source || '')).call(receiver, proxy);
 }

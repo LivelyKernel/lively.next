@@ -1,11 +1,17 @@
 import { resource } from 'lively.resources';
 
+function locationForFrame (frame) {
+  if (frame && frame.location) return frame.location;
+  const pc = frame && frame.getPC && frame.getPC();
+  return pc && pc.loc ? { lineNumber: pc.loc.start.line - 1, columnNumber: pc.loc.start.column } : {};
+}
+
 export const CURRENT_LINE_MARKER_ID = 'lively-debugger-current-line';
 
 export function sourceSummary (frame) {
   if (!frame) return '';
   const source = frame.source || {};
-  const location = frame.location || {};
+  const location = locationForFrame(frame);
   const lines = [
     frame.functionName ? 'function ' + frame.functionName : '<anonymous frame>',
     source.url || source.scriptId || '(no source url)',
@@ -18,7 +24,7 @@ export function sourceSummary (frame) {
 
 export function sourceUrlForFrame (frame) {
   const source = frame && frame.source || {};
-  return source.url || '';
+  return source.url || (frame && frame.getOriginalAst && frame.getOriginalAst().sourceFile) || '';
 }
 
 export function isInspectorRuntimeFrame (frame) {
@@ -43,14 +49,14 @@ export function initialFrameForContinuation (continuation, frames = continuation
 export function locationStringForFrame (frame) {
   if (!frame) return '';
   const source = frame.source || {};
-  const location = frame.location || {};
+  const location = locationForFrame(frame);
   const url = source.url || source.scriptId || '(no source url)';
   if (!Number.isFinite(location.lineNumber)) return url;
   return url + ':' + (location.lineNumber + 1) + ':' + ((location.columnNumber || 0) + 1);
 }
 
 export function lineRangeForFrame (frame, sourceText = '') {
-  const location = frame && frame.location || {};
+  const location = locationForFrame(frame);
   if (!Number.isFinite(location.lineNumber)) return null;
   const lines = String(sourceText || '').split('\n');
   if (!lines.length) return null;
@@ -63,6 +69,7 @@ export function lineRangeForFrame (frame, sourceText = '') {
 
 export async function readFrameSource (frame, read = url => resource(url).read()) {
   if (!frame) return '';
+  if (frame.func && frame.func.getSource) return frame.func.getSource();
   const capturedSource = frame.source && frame.source.sourceText;
   if (capturedSource) return String(capturedSource);
   const url = sourceUrlForFrame(frame);
