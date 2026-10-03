@@ -17,12 +17,16 @@
     "url": "git+https://github.com/LivelyKernel/lively.changesets.git"
   },
   "dependencies": {
-    "lively.modules": "0.5.25",
-    "lively.notifications": "^0.3.2",
-    "lively.lang": "^1.0.0"
+    "lively.modules": "workspace:*",
+    "lively.notifications": "workspace:*",
+    "lively.lang": "workspace:*",
+    "lively.ide": "workspace:*",
+    "lively.shell": "workspace:*",
+    "lively.freezer": "workspace:*",
+    "js-git-browser": "0.0.3"
   },
   "devDependencies": {
-    "mocha-es6": "^0.5"
+    "mocha-es6": "workspace:*"
   },
   "systemjs": {
     "map": {

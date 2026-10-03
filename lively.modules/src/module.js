@@ -193,6 +193,36 @@ class ModuleInterface {
     return load ? load.metadata : null;
   }
 
+  environment () {
+    const pkg = this.System.get('@lively-env').packageRegistry?.findPackageHavingURL(this.id) || this.package();
+    let root = pkg && pkg.url + '/';
+    if (pkg && !this.id.startsWith(root)) {
+      const manifest = this.System.decanonicalize(pkg.url + '/package.json', this.id);
+      root = this.System.resource(manifest).parent().url;
+    }
+    const path = root && this.id.startsWith(root) ? this.id.slice(root.length) : this.id;
+    let environments = pkg?.lively?.environments || ['client', 'server'];
+    // Reuse package module metadata; the most specific matching pattern wins.
+    const meta = { ...pkg?.meta, ...pkg?.lively?.meta };
+    const patterns = Object.keys(meta).filter(pattern => meta[pattern]?.environments &&
+      new RegExp('^' + regExpEscape(pattern).replace(/\\\*/g, '.*') + '$').test(path))
+      .sort((a, b) => a.replace(/\*/g, '').length - b.replace(/\*/g, '').length);
+    for (const pattern of patterns) environments = meta[pattern].environments;
+    environments = this.System.CONFIG.meta[this.id]?.environments || environments;
+    const env = this.System.get('@system-env');
+    const current = env.node && !env.browser && !env.nw ? 'server' : 'client';
+    const supported = environments.includes(current);
+    return {
+      current, environments, supported,
+      reason: supported ? null : `${pkg ? pkg.name + '/' + path : this.id} is ${environments.join('/')} only; it cannot run in the ${current} environment.`
+    };
+  }
+
+  assertEnvironment () {
+    const { supported, reason } = this.environment();
+    if (!supported) throw new Error(reason);
+  }
+
   addMetadata (addedMeta) {
     const { System, id } = this;
     const oldMeta = this.metadata();
@@ -234,6 +264,7 @@ class ModuleInterface {
   async load (opts) {
     // opts = {format, instrument}
     const { id, System } = this;
+    this.assertEnvironment();
     opts && this.addMetadata(opts);
     return System.get(id) || await System.import(id);
   }
@@ -388,6 +419,7 @@ class ModuleInterface {
 
   changeSource (newSource, options) {
     options = { doSave: true, doEval: true, ...options };
+    if (options.doEval) this.assertEnvironment();
     const { System, id } = this; const format = this.format(); let result;
     this.reset();
     this.lastModifiedAt = new Date();
@@ -621,7 +653,7 @@ class ModuleInterface {
 
           if (key === undefined) return depExports;
 
-          if (!Object.hasOwnProperty.bind(depExports)(key)) { console.warn(`import from ${depExports}: Has no export ${key}!`); }
+          if (!Object.hasOwnProperty.bind(depExports)(key)) { console.warn(`import from ${depId}: Has no export ${key}!`); }
 
           return depExports[key];
         }
@@ -635,12 +667,14 @@ class ModuleInterface {
     // fail because the native function receives the recorder as `this` instead
     // of `window`. The Proxy intercepts assignments and binds native functions
     // to the global object so they work correctly regardless of call site.
+    // Bundle re-execution resets globalProps; existing recorders keep their lookup.
+    const globalNativeFunctions = globalProps.globalNativeFunctions;
     this._recorder = new Proxy(recorderTarget, {
       set (target, prop, value) {
         // Only bind non-constructor native functions (no .prototype).
         // Constructors like Promise, Map, Array have static methods
         // (e.g. Promise.resolve) that are lost by .bind().
-        if (typeof value === 'function' && !value.prototype && globalProps.globalNativeFunctions.has(value)) {
+        if (typeof value === 'function' && !value.prototype && globalNativeFunctions.has(value)) {
           target[prop] = value.bind(S.global);
         } else {
           target[prop] = value;
@@ -733,6 +767,7 @@ class ModuleInterface {
   // evaluationStart/End are also compiled into instrumented module code so are
   // also activated during module executions
   evaluationStart () {
+    this.assertEnvironment();
     this.ensureRecord();
     this._evaluationsInProgress++;
   }

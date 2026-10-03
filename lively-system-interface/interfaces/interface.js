@@ -248,7 +248,7 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
     return this.runEvalAndStringify(`
       var {resource} = await System.import("lively.resources");
       (await resource("${url}").dirList(${JSON.stringify(depth)}, ${JSON.stringify(opts)}))
-        .map(({url}) => ({url}))`);
+        .map(({url, size, lastModified}) => ({url, size, lastModified}))`);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -308,6 +308,10 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
       await livelySystem.localInterface.getPackageForModule(${JSON.stringify(moduleId)})`);
   }
 
+  getPackage (name) {
+    return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.lookupPackage(${JSON.stringify(name)}).pkg?.asSpec() || null`);
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // package related
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -336,13 +340,13 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
     return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.reloadPackage(${JSON.stringify(packageURL)}, ${JSON.stringify(opts)})`);
   }
 
-  packageConfChange (source, confFile) {
+  packageConfChange (source, confFile, options) {
     return this.runEvalAndStringify(`
       ${this.livelySystemAccessor()};
-      await livelySystem.localInterface.packageConfChange(${JSON.stringify(source)}, ${JSON.stringify(confFile)})`);
+      await livelySystem.localInterface.packageConfChange(${JSON.stringify(source)}, ${JSON.stringify(confFile)}, ${JSON.stringify(options)})`);
   }
 
-  async resourcesOfPackage (packageOrAddress, exclude = ['.git', 'node_modules', '.module_cache', 'lively.next-node_modules']) {
+  async resourcesOfPackage (packageOrAddress, exclude = ['.git', 'node_modules', '.module_cache']) {
     if (packageOrAddress.address) packageOrAddress = packageOrAddress.address;
     return this.runEvalAndStringify(`
       ${this.livelySystemAccessor()};
@@ -355,7 +359,7 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
 
   async getModule (name) {
     let spec = (await this.getModules()).find(ea => ea.name === name);
-    return spec ? modules.module(spec.name) : null;
+    return spec ? { ...spec, id: spec.name } : null;
   }
 
   importModule (name) {
@@ -380,6 +384,10 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
 
   moduleRead (moduleName) {
     return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.module(${JSON.stringify(moduleName)}).source()`);
+  }
+
+  moduleEnvironment (moduleName) {
+    return this.runEvalAndStringify(`${this.livelyModulesAccessor()}, modules.module(${JSON.stringify(moduleName)}).environment()`);
   }
 
   moduleSourceChange (moduleName, newSource, options) {

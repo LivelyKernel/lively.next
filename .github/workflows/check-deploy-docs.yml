@@ -19,15 +19,19 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v4
     - name: Setup `node`
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
-        node-version: '24'
-    - name: Install `jsdoc`
-      run: npm install -g jsdoc@3.6.7
-    - name: Install `jsdoc` theme
-      run: npm install clean-jsdoc-theme@4.2.14
+        node-version: '24.20.0'
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: 1.4.2
+    - name: Install locked tooling
+      run: |
+        test -f bun.lock
+        bun install --frozen-lockfile
     - name: Build Documentation
-      run: jsdoc -c conf.json -R README.md
+      run: ./node_modules/.bin/jsdoc -c conf.json -R README.md
     - name: Copy over Custom Style Files for Theme
       run: |
         cp doc-style/fonts/* docs/fonts/

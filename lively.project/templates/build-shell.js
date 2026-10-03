@@ -6,8 +6,6 @@ while [ "$#" -gt 0 ]; do
     -*) echo "unknown option: $1" >&2; exit 1;;
   esac
 done
-. ../../scripts/lively-next-env.sh
-lively_next_env "$(dirname "$(dirname "$(pwd)")")"
-export FLATN_DEV_PACKAGE_DIRS=$FLATN_DEV_PACKAGE_DIRS:$(pwd);
-node --no-warnings --experimental-import-meta-resolve --experimental-loader ../../flatn/resolver.mjs ./tools/build.mjs $verbose
+node ../../lively.project/package-install.mjs "$(pwd)" || exit 1
+node --no-warnings --experimental-import-meta-resolve ./tools/build.mjs $verbose
 `

@@ -337,7 +337,7 @@ class MasterComponentTreeData extends TreeData {
     if (!selectedPkg) return {};
     const files = await resource(selectedPkg.url).dirList('infinity', {
       exclude: (res) => {
-        if (res.url.match(/\.git|\.gitignore|.github|assets|build/)) return true;
+        if (res.name() === 'node_modules' || res.url.match(/\.git|\.gitignore|.github|assets|build/)) return true;
         return !(res.url.endsWith('.cp.js') || res.isDirectory() || !module(res.url).isLoaded());
       }
     });
@@ -1200,7 +1200,7 @@ export class ComponentBrowserModel extends ViewModel {
       const componentModules = Array.from(await Promise.all(rootUrls.map(url => {
         return resource(url).dirList(10, {
           exclude: (file) => {
-            return file.isFile() && (!file.url.endsWith('cp.js') || file.url.includes('tests') || file.url.includes('node_modules'));
+            return file.name() === 'node_modules' || file.isFile() && (!file.url.endsWith('cp.js') || file.url.includes('tests'));
           }
         });
       }))).flat().filter(file => file.url.endsWith('cp.js'))

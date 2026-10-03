@@ -26,7 +26,8 @@
   },
   "homepage": "https://github.com/LivelyKernel/lively.keyboard",
   "dependencies": {
-    "lively.lang": "^1.0.0"
+    "lively.lang": "workspace:*",
+    "bowser": "^1.4.1"
   },
   "devDependencies": {
     "babel-core": "^6.16.0",

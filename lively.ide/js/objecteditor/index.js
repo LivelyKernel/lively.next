@@ -21,6 +21,7 @@ import DarkTheme from '../../themes/dark.js';
 import DefaultTheme from '../../themes/default.js';
 import { stringifyFunctionWithoutToplevelRecorder } from 'lively.source-transform';
 import { interactivelyFreezePart } from 'lively.freezer';
+import { evalOnServer } from 'lively.freezer/src/util/helpers.js';
 import { generateReferenceExpression } from '../inspector/helpers.js';
 import { getClassName } from 'lively.serializer2';
 import { resource } from 'lively.resources';
@@ -1739,40 +1740,22 @@ export class ImportControllerModel extends ViewModel {
         // Add package to package.json and regenerate import map
         const li = LoadingIndicator.open('Adding package to project...');
         try {
-          const { pkgName, pkgUrl } = await editor.withContextDo(async (ctx) => {
+          const { pkgName, pkgUrl } = await editor.withContextDo(ctx => {
             const pkg = ctx.selectedModule.package();
-            if (!pkg) {
-              throw new Error('No package found for the current module');
-            }
-            const packageJsonUrl = pkg.url + '/package.json';
-            const packageJsonResource = resource(packageJsonUrl);
-
-            // Read current package.json
-            let packageConfig = await packageJsonResource.readJson();
-
-            // Add to dependencies
-            if (!packageConfig.dependencies) packageConfig.dependencies = {};
-            packageConfig.dependencies[name] = `^${version}`;
-
-            // Write updated package.json
-            await packageJsonResource.writeJson(packageConfig, true);
-
+            if (!pkg) throw new Error('No package found for the current module');
             return { pkgName: pkg.name, pkgUrl: pkg.url };
-          }, { name, version });
-
-          // Trigger server to regenerate import map and fetch it
-          li.label = 'Regenerating import map...';
+          });
+          const packagePath = pkgUrl.replace(System.baseURL, '');
+          await evalOnServer(`(async () => {
+            const { installProjectDependencies } = await System.nativeImport(new URL('lively.project/package-install.mjs', System.baseURL).href);
+            const directory = System._nodeRequire('node:url').fileURLToPath(new URL(${JSON.stringify(packagePath)}, System.baseURL));
+            await installProjectDependencies(directory, { dependency: ${JSON.stringify({ name, version })} });
+            await System.get('@lively-env').packageRegistry.update();
+          })()`);
+          li.label = 'Applying import map...';
           const importMapUrl = resource(System.baseURL).join(`/import-map.json?projectName=${encodeURIComponent(pkgName)}`).url;
           const importMapResponse = await resource(importMapUrl).readJson();
-
-          if (!importMapResponse) {
-            throw new Error('Failed to retrieve import map from server');
-          }
-
-          // Write the cached import map to the package
-          li.label = 'Applying import map...';
-          const cachedImportMapResource = resource(pkgUrl).join('.cachedImportMap.json');
-          await cachedImportMapResource.writeJson(importMapResponse, true);
+          importMapResponse._mapUrl = resource(pkgUrl).join('browser-import-map.json').url;
 
           // Update the package config with the new import map
           await editor.withContextDo(async (ctx) => {

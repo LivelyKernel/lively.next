@@ -9,9 +9,6 @@
 
 lv_next_dir=$PWD
 
-. $lv_next_dir/scripts/lively-next-env.sh
-lively_next_env $lv_next_dir
-
 # ln -sf $lv_next_dir/mocha-es6/bin/{mocha-es6.js,mocha-es6}
 # export PATH=$lv_next_dir/mocha-es6/bin:$PATH
 
@@ -50,4 +47,4 @@ read -r -d '' CODE <<- EOM
        .catch(err => console.error(err));
 EOM
 
-node -e "${CODE}"
+node --experimental-import-meta-resolve -e "${CODE}"

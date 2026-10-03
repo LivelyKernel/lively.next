@@ -18,7 +18,15 @@ export default class PackageConfiguration {
     // and uses the "lively" section as described in `applyLivelyConfig`
 
     let { System, packageURL, pkg } = this;
+    const suppliedConfig = config;
     config = obj.deepMerge(pkg.config, config);
+    // Environment declarations replace lists, including when narrowing access.
+    if (suppliedConfig.lively?.environments) config.lively.environments = [...suppliedConfig.lively.environments];
+    for (const section of ['lively', 'systemjs']) {
+      for (const [path, meta] of Object.entries(suppliedConfig[section]?.meta || {})) {
+        if (meta.environments) config[section].meta[path].environments = [...meta.environments];
+      }
+    }
 
     let name = config.name || packageURL.split('/').slice(-1)[0];
     let version = config.version;
@@ -63,6 +71,7 @@ export default class PackageConfiguration {
     // System.packages doesn't allow us to store our own properties
     pkg.version = version;
     pkg.config = config;
+    pkg.lively = livelyConfig;
     pkg._name = name;
     pkg.mergeWithConfig(packageInSystem);
 

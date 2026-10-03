@@ -9,6 +9,7 @@ export async function loadMochaTestFile (file, testsByFile = []) {
 export async function runMochaTests (grep, testsByFile, onChange, onError) {
   for (let { file } of testsByFile) {
     var { mocha } = await loadMochaTestFile(file, testsByFile);
+    if (!mocha) continue;
     if (grep) mocha = mocha.grep(grep);
     await mochaRun(mocha);
   }
@@ -17,6 +18,7 @@ export async function runMochaTests (grep, testsByFile, onChange, onError) {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   function mochaRun (mocha) {
+    let runner;
     return new Promise((resolve, reject) => {
       let files = arr.compact(mocha.suite.suites).map(({ file }) => file);
       let tests = chain(testsByFile)
@@ -64,7 +66,7 @@ export async function runMochaTests (grep, testsByFile, onChange, onError) {
         });
       });
 
-      mocha.run(failures => resolve({ testsByFile, mocha }));
-    });
+      runner = mocha.run(failures => resolve({ testsByFile, mocha }));
+    }).finally(() => runner?.dispose?.());
   }
 }

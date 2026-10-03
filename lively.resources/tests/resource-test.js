@@ -120,7 +120,8 @@ describe('http', function () {
       const r = resource(testProjectDir);
       const file1 = (await r.dirList())[0];
       const { size, lastModified } = file1;
-      expect(+lastModified).greaterThan(Date.now() - 1000);
+      const expectedLastModified = (await r1.readProperties()).lastModified;
+      expect(+lastModified).equals(+expectedLastModified);
       expect(size).equals(7);
       expect((await r.dirList()).map(ea => ea.url)).deep.equals([
         r.join('file1.js').url,

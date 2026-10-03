@@ -8,10 +8,8 @@
 //     <bundle>/app/ next to the NW.js binary. The server runs from a
 //     per-user runtime root so caches/projects/uploads stay outside the app.
 //
-// ESM resolver hooks (module.register, registerHooks, NODE_OPTIONS) all crash
-// NW.js's Blink renderer. So the server runs in a managed child process where
-// --experimental-loader works normally. From the user's perspective it's
-// invisible — launch the app, lively starts, close the window, everything stops.
+// The server runs under the packaged Node executable in a managed child process.
+// Launch the app, lively starts, close the window, and the server stops with it.
 
 const path = require('path');
 const fs = require('fs');
@@ -19,8 +17,8 @@ const net = require('net');
 const os = require('os');
 const { createHash } = require('crypto');
 const { spawn, execSync } = require('child_process');
-const { pathToFileURL } = require('url');
 const { runVelopackStartup } = require('./updates.cjs');
+const { desktopCacheDir, manifestName, preparePackagedSources } = require('./package-payload.cjs');
 
 // ---------------------------------------------------------------------------
 // 0. Detect mode: dev (monorepo) vs bundled (standalone distribution)
@@ -35,7 +33,8 @@ function findRootDir () {
     path.resolve(__dirname, '..')              // fallback: desktop/ → bundle root
   ];
   for (const c of candidates) {
-    if (fs.existsSync(path.join(c, 'lively.installer/packages-config.json'))) return c;
+    if (fs.existsSync(path.join(c, 'lively.installer/packages-config.json')) ||
+        fs.existsSync(path.join(c, manifestName))) return c;
   }
   throw new Error('Could not locate lively.next root directory from ' + __dirname);
 }
@@ -49,17 +48,6 @@ function desktopDataDir () {
     return path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'lively.next');
   }
   return path.join(process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share'), 'lively.next');
-}
-
-function desktopCacheDir () {
-  if (process.env.LIVELY_APP_CACHE_DIR) return process.env.LIVELY_APP_CACHE_DIR;
-  if (process.platform === 'darwin') {
-    return path.join(os.homedir(), 'Library', 'Caches', 'lively.next');
-  }
-  if (process.platform === 'win32') {
-    return path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local'), 'lively.next', 'Cache');
-  }
-  return path.join(process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache'), 'lively.next');
 }
 
 const sourceRootDir = findRootDir();
@@ -83,6 +71,46 @@ fs.writeFileSync(logFile, '');
 function log (msg) {
   fs.appendFileSync(logFile, '[' + new Date().toISOString() + '] ' + msg + '\n');
 }
+
+function pathIsInside (root, candidate) {
+  const relative = path.relative(path.resolve(root), path.resolve(candidate));
+  return relative === '' ||
+    (relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
+}
+
+function restorePackagedDirectoryLinks (sourceRoot, logFn) {
+  const manifestFile = path.join(sourceRoot, '.lively-package-links.json');
+  if (!fs.existsSync(manifestFile)) return;
+  const links = JSON.parse(fs.readFileSync(manifestFile, 'utf8'));
+  if (!Array.isArray(links)) throw new Error('Invalid packaged dependency link manifest');
+  for (const entry of links) {
+    const link = path.resolve(sourceRoot, entry.link);
+    const target = path.resolve(sourceRoot, entry.target);
+    if (!pathIsInside(sourceRoot, link) || !pathIsInside(sourceRoot, target) || !fs.statSync(target).isDirectory()) {
+      throw new Error(`Invalid packaged dependency link: ${entry.link} -> ${entry.target}`);
+    }
+    let create = true;
+    try {
+      const stat = fs.lstatSync(link);
+      if (!stat.isSymbolicLink()) throw new Error(`Refusing to replace packaged path: ${link}`);
+      if (fs.realpathSync(link) === fs.realpathSync(target)) create = false;
+      else fs.rmSync(link, { recursive: true, force: true });
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err;
+    }
+    if (!create) continue;
+    fs.mkdirSync(path.dirname(link), { recursive: true });
+    try {
+      fs.symlinkSync(target, link, process.platform === 'win32' ? 'junction' : 'dir');
+    } catch (err) {
+      throw new Error(
+        `Cannot restore packaged dependency link ${entry.link}. ` +
+        'Install or extract the desktop app in a user-writable location.',
+        { cause: err });
+    }
+  }
+  logFn(`restored ${links.length} packaged dependency links`);
+}
 // Stamp bundle build info so the log identifies the exact commit
 let buildInfo = '(no build-info.json)';
 try {
@@ -91,6 +119,10 @@ try {
 } catch (_) {}
 log('node-main starting, mode=' + (bundled ? 'bundled' : 'dev') + ', sourceRootDir=' + sourceRootDir);
 log('build: ' + buildInfo);
+
+// Windows archives cannot portably retain Bun's junction graph. Recreate it
+// before updater or server code resolves any installed package.
+if (bundled) restorePackagedDirectoryLinks(sourceRootDir, log);
 
 // Velopack must see its install/update hook arguments before the app starts
 // expensive UI/server work. In raw/dev builds this simply reports unavailable.
@@ -144,7 +176,10 @@ function ensureDirectoryOverlay (sourceDir, targetDir, mutableNames, logFn) {
 function copyFileWithMode (source, target) {
   const sourceStat = fs.statSync(source);
   try {
-    if (fs.lstatSync(target).isDirectory()) fs.rmSync(target, { recursive: true, force: true });
+    const targetStat = fs.lstatSync(target);
+    if (targetStat.isDirectory() || targetStat.isSymbolicLink()) {
+      fs.rmSync(target, { recursive: true, force: true });
+    }
   } catch (_) {}
   fs.copyFileSync(source, target);
   fs.chmodSync(target, sourceStat.mode & 0o777);
@@ -197,18 +232,22 @@ function prepareDesktopRuntimeRoot (sourceRoot, dataDir, logFn) {
     fs.mkdirSync(path.join(runtimeRoot, d), { recursive: true });
   }
 
+  // Keep cached modules writable for project additions while seeding offline core imports.
+  if (fs.existsSync(path.join(sourceRoot, 'esm_cache'))) {
+    ensureDirectoryCopy(path.join(sourceRoot, 'esm_cache'), path.join(runtimeRoot, 'esm_cache'), logFn);
+  }
+
   const topLevelDirs = fs.readdirSync(sourceRoot, { withFileTypes: true })
     .filter(ea =>
       ea.isDirectory() &&
       (ea.name.startsWith('lively.') ||
        ea.name === 'lively-system-interface' ||
-       ea.name === 'flatn' ||
        ea.name === 'mocha-es6' ||
        ea.name === 'scripts' ||
        ea.name === 'assets' ||
        ea.name === 'documents' ||
        ea.name === 'doc-style' ||
-       ea.name === 'lively.next-node_modules'))
+       ea.name === 'node_modules'))
     .map(ea => ea.name);
 
   for (const name of topLevelDirs) {
@@ -248,16 +287,18 @@ function prepareDesktopRuntimeRoot (sourceRoot, dataDir, logFn) {
     ensureSymlink(path.join(sourceRoot, name), path.join(runtimeRoot, name), 'dir', logFn);
   }
 
-  for (const name of ['config.js', 'localconfig.js', 'conf.json', 'chrome.json', 'favicon.ico', 'README.md', 'LICENSE']) {
-    ensureSymlink(path.join(sourceRoot, name), path.join(runtimeRoot, name), 'file', logFn);
+  for (const name of ['package.json', 'bun.lock', 'bunfig.toml', 'config.js', 'localconfig.js', 'conf.json', 'chrome.json', 'favicon.ico', 'README.md', 'LICENSE']) {
+    const source = path.join(sourceRoot, name);
+    if (fs.existsSync(source)) copyFileWithMode(source, path.join(runtimeRoot, name));
   }
 
   logFn('desktop runtime root ready: ' + runtimeRoot);
   return runtimeRoot;
 }
 
+const packagedSourceRootDir = bundled ? preparePackagedSources(sourceRootDir, log) : sourceRootDir;
 const preparedRootDir = bundled
-  ? prepareDesktopRuntimeRoot(sourceRootDir, desktopDataDir(), log)
+  ? prepareDesktopRuntimeRoot(packagedSourceRootDir, desktopDataDir(), log)
   : sourceRootDir;
 const rootDir = bundled ? fs.realpathSync(preparedRootDir) : preparedRootDir;
 if (rootDir !== preparedRootDir) log('desktop runtime root canonicalized: ' + preparedRootDir + ' -> ' + rootDir);
@@ -273,7 +314,7 @@ const desktopDir = __dirname;
 // 3. Locate a node binary
 // ---------------------------------------------------------------------------
 // Bundled mode: look in the packaged Node.js directory.
-// Dev mode: first PATH entry that isn't flatn/bin/node.
+// Dev mode: first node on PATH.
 
 function findNodeBinary () {
   const nodeName = process.platform === 'win32' ? 'node.exe' : 'node';
@@ -288,7 +329,7 @@ function findNodeBinary () {
     const lookup = process.platform === 'win32' ? 'where node' : 'which -a node';
     const found = execSync(lookup, { encoding: 'utf8' })
       .split('\n').map(p => p.trim())
-      .find(p => p && !p.replace(/\\/g, '/').includes('/flatn/'));
+      .find(Boolean);
     if (found) return found;
   } catch (_) {}
   throw new Error('No node binary found (checked bundle and PATH)');
@@ -359,7 +400,7 @@ function localProjectSignature (localProjectsDir) {
     .filter(ea => ea.isDirectory())
     .map(ea => {
       const dir = path.join(localProjectsDir, ea.name);
-      const files = ['package.json', '.livelyForkInformation']
+      const files = ['package.json', 'bun.lock', '.cachedImportMap.json', '.livelyForkInformation']
         .map(file => {
           const full = path.join(dir, file);
           try {
@@ -368,35 +409,46 @@ function localProjectSignature (localProjectsDir) {
             return [file, 0];
           }
         });
-      return [ea.name, files];
+      return [ea.name, files, packageLinkSignature(path.join(dir, 'node_modules'))];
     })
     .sort((a, b) => a[0].localeCompare(b[0]));
 }
 
-function packageCollectionSignature (collectionDir) {
-  if (!fs.existsSync(collectionDir)) return [];
-  return fs.readdirSync(collectionDir, { withFileTypes: true })
-    .filter(ea => ea.isDirectory())
-    .map(ea => {
-      const dir = path.join(collectionDir, ea.name);
-      try {
-        return [ea.name, fs.statSync(dir).mtimeMs];
-      } catch (_) {
-        return [ea.name, 0];
+function fileDigest (...files) {
+  const hash = createHash('sha256');
+  for (const file of files) {
+    try { hash.update(fs.readFileSync(file)); } catch (_) {}
+  }
+  return hash.digest('hex');
+}
+
+function packageLinkSignature (nodeModulesDir) {
+  if (!fs.existsSync(nodeModulesDir)) return [];
+  const links = [];
+  function visit (dir, prefix = '') {
+    for (const ea of fs.readdirSync(dir, { withFileTypes: true })) {
+      const entry = path.join(dir, ea.name);
+      if (ea.isSymbolicLink()) {
+        links.push([prefix + ea.name, fs.readlinkSync(entry)]);
+      } else if (!prefix && ea.isDirectory() && ea.name.startsWith('@')) {
+        visit(entry, ea.name + '/');
       }
-    })
-    .sort((a, b) => a[0].localeCompare(b[0]));
+    }
+  }
+  visit(nodeModulesDir);
+  return links.sort((a, b) => a[0].localeCompare(b[0]));
 }
 
 function packageRegistryCacheKey () {
   return JSON.stringify({
     buildInfo,
-    rootDir,
-    packageCollectionDirs: process.env.FLATN_PACKAGE_COLLECTION_DIRS || '',
-    packageDirs: process.env.FLATN_PACKAGE_DIRS || '',
-    devPackageDirs: process.env.FLATN_DEV_PACKAGE_DIRS || '',
-    customNpmModules: packageCollectionSignature(path.join(rootDir, 'custom-npm-modules')),
-    localProjects: localProjectSignature(path.join(rootDir, 'local_projects'))
+    install: fileDigest(
+      path.join(packagedSourceRootDir, 'package.json'),
+      path.join(packagedSourceRootDir, 'bun.lock'),
+      path.join(packagedSourceRootDir, 'bunfig.toml')),
+    packageLinks: packageLinkSignature(path.join(packagedSourceRootDir, 'node_modules')),
+    localProjects: localProjectSignature(path.join(rootDir, 'local_projects')),
+    userPackages: localProjectSignature(path.join(rootDir, 'custom-npm-modules'))
   });
 }
 
@@ -453,10 +505,6 @@ function livelyBoot () {
   } catch (_) { return null; }
 }
 
-function asImportSpecifier (filePath) {
-  return process.platform === 'win32' ? pathToFileURL(filePath).href : filePath;
-}
-
 function pathEnvValue (env) {
   const key = Object.keys(env || {}).find(key =>
     process.platform === 'win32' ? key.toLowerCase() === 'path' : key === 'PATH');
@@ -489,42 +537,10 @@ function emitError (msg) {
 }
 
 // ---------------------------------------------------------------------------
-// 5. Flatn env setup
-// ---------------------------------------------------------------------------
-// In dev mode start.sh sources scripts/lively-next-env.sh before launching.
-// In bundled mode there's no launcher script — we set the env vars here.
-
-function setupFlatnEnv () {
-  if (process.env.FLATN_DEV_PACKAGE_DIRS) return;  // already set by launcher
-  const collectionRoots = Array.from(new Set((bundled ? [rootDir] : [rootDir, sourceRootDir]).filter(Boolean)));
-  const pkgs = JSON.parse(fs.readFileSync(
-    path.join(sourceRootDir, 'lively.installer/packages-config.json'), 'utf8'));
-  const devDirs = pkgs
-    .map(p => path.join(rootDir, p.name))
-    .filter(d => fs.existsSync(d));
-  const localProjects = path.join(rootDir, 'local_projects');
-  if (fs.existsSync(localProjects)) {
-    for (const d of fs.readdirSync(localProjects, { withFileTypes: true })) {
-      if (d.isDirectory()) devDirs.push(path.join(localProjects, d.name));
-    }
-  }
-  const collectionDirs = collectionRoots.flatMap(root => [
-    path.join(root, 'lively.next-node_modules'),
-    path.join(root, 'custom-npm-modules')
-  ]).filter(d => fs.existsSync(d));
-  process.env.FLATN_PACKAGE_COLLECTION_DIRS = Array.from(new Set(collectionDirs)).join(path.delimiter);
-  process.env.FLATN_DEV_PACKAGE_DIRS = Array.from(new Set(devDirs)).join(path.delimiter);
-  process.env.FLATN_PACKAGE_DIRS = '';
-  process.env.lv_next_dir = rootDir;
-}
-
-// ---------------------------------------------------------------------------
-// 6. Boot
+// 5. Boot
 // ---------------------------------------------------------------------------
 
 (async () => {
-  setupFlatnEnv();
-
   // Runtime directories the server's library-snapshot step expects. Excluded
   // from the bundle since they're populated at runtime; create empty ones
   // on first launch.
@@ -543,8 +559,11 @@ function setupFlatnEnv () {
   const bundledGitDirs = bundledGitPathEntries();
   const bundledWindowsBash = findBundledWindowsBash();
   const serverSourceRootDir = bundled ? rootDir : sourceRootDir;
+  const bundledBun = bundled
+    ? path.join(appPayloadRoot, 'tools', 'bun', 'bin', process.platform === 'win32' ? 'bun.exe' : 'bun')
+    : null;
   const commandPath = [
-    path.join(serverSourceRootDir, 'flatn', 'bin'),
+    ...(bundledBun && fs.existsSync(bundledBun) ? [path.dirname(bundledBun)] : []),
     ...bundledGitDirs,
     path.dirname(nodeBin),
     pathEnvValue(process.env)
@@ -565,10 +584,10 @@ function setupFlatnEnv () {
   // If the bundle ships a pre-built library snapshot, point dav.js at it so
   // the server skips the tar+gzip step on every startup.
   const prebuiltSnapshot = bundled
-    ? path.join(sourceRootDir, 'lively.server', '.library-snapshot.tar.gz')
+    ? path.join(packagedSourceRootDir, 'lively.server', '.library-snapshot.tar.gz')
     : '';
   const prebuiltRegistryCache = bundled
-    ? path.join(sourceRootDir, 'lively.server', '.package-registry-cache.json')
+    ? path.join(packagedSourceRootDir, 'lively.server', '.package-registry-cache.json')
     : '';
 
   const childEnv = withPathEnv({
@@ -576,10 +595,11 @@ function setupFlatnEnv () {
     ENTR_SUPPORT: '0',
     NODE_OPTIONS: '',
     LIVELY_DESKTOP_APP: '1',
-    // The ws native addons are optional performance helpers. In the packaged
-    // flatn/SystemJS runtime, especially on Windows, their dynamic require can
-    // resolve to an incompatible module shape instead of throwing. Force ws to
-    // use its built-in JavaScript fallback in the desktop server process.
+    lv_next_dir: rootDir,
+    PUPPETEER_CACHE_DIR: path.join(packagedSourceRootDir, '.puppeteer-browser-cache'),
+    ...(bundledBun && fs.existsSync(bundledBun) ? { BUN_PATH: bundledBun } : {}),
+    // The ws native addons are optional performance helpers. Keep the desktop
+    // server on ws's portable JavaScript fallback across packaged platforms.
     WS_NO_BUFFER_UTIL: '1',
     WS_NO_UTF_8_VALIDATE: '1',
     LIVELY_APP_PARENT_PID: String(process.pid),
@@ -615,14 +635,10 @@ function setupFlatnEnv () {
     emitStatus('Starting lively.server on 127.0.0.1:' + port + '...');
     const child = spawn(nodeBin, [
       '--no-warnings',
+      '--experimental-import-meta-resolve',
       '--dns-result-order', 'ipv4first',
-      ...(bundled ? ['--preserve-symlinks', '--preserve-symlinks-main'] : []),
       // Parent-death watchdog (first so other preloads failing can't orphan us)
       '-r', path.join(desktopDir, 'watchdog.cjs'),
-      // Flatn CJS resolver hook
-      '-r', path.join(serverSourceRootDir, 'flatn/resolver.cjs'),
-      // Flatn ESM resolver hook
-      '--experimental-loader', asImportSpecifier(path.join(serverSourceRootDir, 'flatn/resolver.mjs')),
       path.join(serverSourceRootDir, 'lively.server/bin/start-server.js'),
       '--root-directory', rootDir,
       '--config', configFile,

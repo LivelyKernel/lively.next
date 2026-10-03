@@ -136,6 +136,18 @@ describe('export lookup', () => {
       ]);
     });
 
+    it('excludes module URLs before inspecting them', async () => {
+      const lookup = ExportLookup.forSystem(S);
+      lookup.clearCacheFor(file1m);
+      const mod = module(S, file1m);
+      const pathInPackage = mod.pathInPackage;
+      mod.pathInPackage = () => { throw new Error('Excluded modules must not be inspected'); };
+      try {
+        const result = await lookup.rawExportsOfModule(file1m, { excludedPackages: [id => id === file1m] });
+        expect(result).equals(null);
+      } finally { mod.pathInPackage = pathInPackage; }
+    });
+
     it('resolves and excludes packages', async () => {
       let exports = await ExportLookup.run(S, { excludedPackages: ['test-project-2'] });
       expect(exports).containSubset([

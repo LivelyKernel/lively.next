@@ -1,27 +1,24 @@
-/*global process,require,System, global*/
-import path from 'path';
+/*global process*/
+import path from 'node:path';
 
-let nodeVersion = process.versions.node;
-let majorVersion = Number(nodeVersion.split('.')[0]);
-if (majorVersion < 18) {
-  console.error("Your node.js version %s is not supported by lively.next.  Please use at least node.js 18.", majorVersion);
+const majorVersion = Number(process.versions.node.split('.')[0]);
+if (majorVersion < 24) {
+  console.error('Your node.js version %s is not supported by lively.next. Please use Node.js 24.', process.versions.node);
   process.exit(1);
 }
 
 if (!process.argv[2]) {
-  console.error("No installation dir specified!")
+  console.error('No installation dir specified!');
   process.exit(1);
 }
 
-// System.debug = true;
-var installDir = path.resolve(process.argv[2]),
-    dependenciesDir = path.join(installDir, "lively.next-node_modules"),
-    verbose = false;
-
-// misses a system-install...
-
-// install.sh handles the logging header
 global.$__curScript = undefined;
-import('lively.installer/install.js').then(installer => {
-  installer.install(installDir, dependenciesDir, verbose)
-});
+const installDir = path.resolve(process.argv[2]);
+
+try {
+  const installer = await import('./install.js');
+  await installer.install(installDir);
+} catch (err) {
+  console.error(err.stack || err);
+  process.exit(1);
+}

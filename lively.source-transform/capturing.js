@@ -120,29 +120,61 @@ export function rewriteToRegisterModuleToCaptureSetters (parsed, assignToObj, op
   const execute = registerReturn.argument.properties.find(prop => prop.key.name === 'execute');
   if (!execute) { throw new Error(`rewriteToRegisterModuleToCaptureSetters: input doesn't seem to be a System.register call, at finding execute: ${stringify(parsed).slice(0, 300)}...`); }
 
-  // in each setter function: intercept the assignments to local vars and inject capture object
+  // Static re-exports compile to a setter assignment and an _export call in
+  // execute.  Capture that mapping so a later dependency update can schedule
+  // the already-evaluated re-export without running execute again.
+  const exportFunctionName = registerCall.arguments[1].params[0]?.name;
+  const exportedNamesByLocal = new Map();
+  execute.value.body.body.forEach(stmt => {
+    const call = stmt.expression;
+    if (stmt.type === 'ExpressionStatement' && call?.type === 'CallExpression' &&
+        call.callee.type === 'Identifier' && call.callee.name === exportFunctionName &&
+        call.arguments[0]?.type === 'Literal' && typeof call.arguments[0].value === 'string' &&
+        call.arguments[1]?.type === 'Identifier') {
+      const names = exportedNamesByLocal.get(call.arguments[1].name) || [];
+      names.push(call.arguments[0].value);
+      exportedNamesByLocal.set(call.arguments[1].name, names);
+    }
+  });
+
+  // In each setter function intercept assignments to local vars and inject the
+  // capture object.  When the local is re-exported, schedule that export too.
   setters.value.elements.forEach(funcExpr => {
     funcExpr.params[0] = assign(funcExpr.params[0], nodes.objectLiteral({}));
-    funcExpr.body.body = funcExpr.body.body.map(stmt => {
+    funcExpr.body.body = funcExpr.body.body.flatMap(stmt => {
       if (stmt.type !== 'ExpressionStatement' ||
        stmt.expression.type !== 'AssignmentExpression' ||
        stmt.expression.left.type !== 'Identifier' ||
-       options.exclude.includes(stmt.expression.left.name)) return stmt;
+       options.exclude.includes(stmt.expression.left.name)) return [stmt];
 
-      const id = stmt.expression.left;
+      const local = stmt.expression.left;
       const rhs = options.declarationWrapper
         ? declarationWrapperCall(
           options.declarationWrapper,
           null,
-          literal(id.name),
+          literal(local.name),
           literal('var'),
           stmt.expression,
           options.captureObj,
           options)
         : stmt.expression;
-      return exprStmt(assign(member(options.captureObj, id), rhs));
+      const captured = exprStmt(assign(member(options.captureObj, local), rhs));
+      const exportedNames = exportedNamesByLocal.get(local.name) || [];
+      return [captured, ...exportedNames.map(exportedName =>
+        exprStmt(funcCall(id('__livelyScheduleExport'), literal(exportedName), local)))];
     });
   });
+
+  if (exportedNamesByLocal.size) {
+    const moduleId = JSON.stringify(options.moduleId);
+    const helper = parse(`function __livelyScheduleExport(name, value) {
+      if (SystemJS.get(${moduleId})) {
+        var pendingExports = SystemJS.get('@lively-env').pendingExportChanges[${moduleId}] || (SystemJS.get('@lively-env').pendingExportChanges[${moduleId}] = {});
+        pendingExports[name] = value;
+      }
+    }`).body[0];
+    registerBody.splice(1, 0, helper);
+  }
 
   let captureInitialize = execute.value.body.body.find(stmt =>
     stmt.type === 'ExpressionStatement' &&

@@ -81,7 +81,7 @@ function updateModuleExports (System, moduleId, keysAndValues) {
           if (found) {
             if (debug) {
               let mod = module(System, importerModule.name);
-              console.log(`[lively.vm es6 updateModuleExports] calling setters of ${mod.package().name}/${mod.pathInPackage()}`);
+              console.log(`[lively.vm es6 updateModuleExports] calling setters of ${mod.package()?.name || '<unpackaged>'}/${mod.pathInPackage()}`);
             }
 
             // We could run the entire module again with

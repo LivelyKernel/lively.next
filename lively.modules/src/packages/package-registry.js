@@ -106,6 +106,26 @@ function packageLookupURL (url) {
   return url.endsWith('/') ? url.slice(0, -1) : url;
 }
 
+// Native resolution realpaths file URLs. Keep that canonical location as an
+// additional lookup key while retaining the runtime/symlink URL as the package
+// instance identity. A collision stays ambiguous rather than merging peers.
+function canonicalPackageLookupURL (System, url) {
+  const lookupURL = packageLookupURL(url);
+  if (!isNodeSystem(System) || !System?._nodeRequire ||
+      !(/^(?:\/|[a-z]:\/)/i.test(lookupURL))) return lookupURL;
+  try {
+    const fs = System._nodeRequire('node:fs');
+    const realpath = fs.realpathSync.native || fs.realpathSync;
+    const path = System._nodeRequire('node:path');
+    // Desktop overlays link package files individually so their directories
+    // stay writable. The manifest identifies the shared source package.
+    try { return packageLookupURL(path.dirname(realpath(path.join(lookupURL, 'package.json')))); } catch (_) {}
+    return packageLookupURL(realpath(lookupURL));
+  } catch (_) {
+    return lookupURL;
+  }
+}
+
 export class PackageRegistry {
   static ofSystem (System) {
     // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -132,7 +152,8 @@ export class PackageRegistry {
 
   constructor (System, opts = {}) {
     this.System = System;
-    this.packageBaseDirs = opts.packageBaseDirs || [];
+    this.packageBaseDirs = opts.packageBaseDirs || []; // installed node_modules roots
+    this.nodeModulesDirs = opts.nodeModulesDirs || this.packageBaseDirs;
     this.devPackageDirs = opts.devPackageDirs || [];
     this.individualPackageDirs = opts.individualPackageDirs || [];
     this._readyPromise = null;
@@ -140,6 +161,7 @@ export class PackageRegistry {
     this.moduleUrlToPkg = new Map();
     this._byURL = null;
     this._byLookupURL = null;
+    this._byCanonicalLookupURL = null;
   }
 
   get byURL () {
@@ -158,9 +180,26 @@ export class PackageRegistry {
     return this._byLookupURL;
   }
 
+  get byCanonicalLookupURL () {
+    if (!this._byCanonicalLookupURL) {
+      this._byCanonicalLookupURL = {};
+      for (let p of this.allPackages()) {
+        const canonicalURL = canonicalPackageLookupURL(this.System, p.url);
+        const packageURL = packageLookupURL(p.url);
+        if (canonicalURL === packageURL) continue;
+        if (Object.hasOwn(this._byCanonicalLookupURL, canonicalURL) &&
+            this._byCanonicalLookupURL[canonicalURL] !== p) {
+          this._byCanonicalLookupURL[canonicalURL] = null;
+        } else this._byCanonicalLookupURL[canonicalURL] = p;
+      }
+    }
+    return this._byCanonicalLookupURL;
+  }
+
   resetByURL () {
     this._byURL = null;
     this._byLookupURL = null;
+    this._byCanonicalLookupURL = null;
   }
 
   allPackageURLs () { return Object.keys(this.byURL); }
@@ -183,13 +222,17 @@ export class PackageRegistry {
       for (let version in spec.versions) {
         packageMapJso[pName].versions[version] = spec.versions[version].toJSON();
       }
+      if (spec.instances) packageMapJso[pName].instances = Object.fromEntries(
+        Object.values(spec.instances).map(pkg => [packageLookupURL(pkg.url), pkg.toJSON()]));
     }
 
     return {
       packageMap: packageMapJso,
       individualPackageDirs: individualPackageDirs.map(serializeURL), // eslint-disable-line no-use-before-define
       devPackageDirs: devPackageDirs.map(serializeURL), // eslint-disable-line no-use-before-define
-      packageBaseDirs: packageBaseDirs.map(serializeURL) // eslint-disable-line no-use-before-define
+      packageBaseDirs: packageBaseDirs.map(serializeURL), // eslint-disable-line no-use-before-define
+      nodeModulesDirs: this.nodeModulesDirs.map(serializeURL), // eslint-disable-line no-use-before-define
+      schema: 2
     };
 
     function serializeURL ({ url }) {
@@ -203,22 +246,30 @@ export class PackageRegistry {
     let packageMap = {}; let { System } = this; let base = resource(System.baseURL);
     for (let pName in jso.packageMap) {
       let spec = jso.packageMap[pName];
-      packageMap[pName] = {};
-      packageMap[pName].latest = spec.latest;
-      packageMap[pName].versions = {};
-      for (let version in spec.versions) {
-        let pkgSpec = spec.versions[version];
+      const entry = packageMap[pName] = { latest: spec.latest, versions: {}, instances: {} };
+      const byLocation = {};
+      const deserializePackage = pkgSpec => {
         let url = pkgSpec.url;
         if (!isAbsolute(url)) url = base.join(url).url;
-        let pkg = Package.fromJSON(System, { ...pkgSpec, url });
-        packageMap[pName].versions[version] = pkg;
+        const key = packageLookupURL(url);
+        return byLocation[key] || (byLocation[key] = Package.fromJSON(System, { ...pkgSpec, url }));
+      };
+      for (let version in spec.versions) {
+        const pkg = deserializePackage(spec.versions[version]);
+        entry.versions[version] = pkg;
+        entry.instances[packageLookupURL(pkg.url)] = pkg;
+      }
+      for (let pkgSpec of Object.values(spec.instances || {})) {
+        const pkg = deserializePackage(pkgSpec);
+        entry.instances[packageLookupURL(pkg.url)] = pkg;
       }
     }
 
     this.packageMap = packageMap;
     this.individualPackageDirs = jso.individualPackageDirs.map(deserializeURL); // eslint-disable-line no-use-before-define
     this.devPackageDirs = jso.devPackageDirs.map(deserializeURL); // eslint-disable-line no-use-before-define
-    this.packageBaseDirs = jso.packageBaseDirs.map(deserializeURL); // eslint-disable-line no-use-before-define
+    this.packageBaseDirs = (jso.packageBaseDirs || []).map(deserializeURL); // eslint-disable-line no-use-before-define
+    this.nodeModulesDirs = (jso.nodeModulesDirs || this.packageBaseDirs).map(deserializeURL); // eslint-disable-line no-use-before-define
     this.resetByURL();
     classHolder.ModulePackageMapping.forSystem(System).clearCache();
 
@@ -232,25 +283,28 @@ export class PackageRegistry {
   }
 
   updateFromJSON (jso) {
-    let { packageMap } = this;
+    let { packageMap, System } = this; let base = resource(System.baseURL);
     for (let pName in jso.packageMap) {
       let spec = jso.packageMap[pName];
-
-      if (!packageMap[pName]) packageMap[pName] = {};
-
-      if (packageMap[pName].latest) {
-        if (compareVersions(spec.latest, packageMap[pName].latest) > 0) { packageMap[pName].latest = spec.latest; }
-      } else packageMap[pName].latest = spec.latest;
-
-      if (!packageMap[pName].versions) packageMap[pName].versions = {};
-
-      let { System } = this; let base = resource(System.baseURL);
-      for (let version in spec.versions) {
-        let pkgSpec = spec.versions[version];
+      const entry = packageMap[pName] || (packageMap[pName] = { latest: null, versions: {}, instances: {} });
+      if (!entry.latest || compareVersions(spec.latest, entry.latest) > 0) entry.latest = spec.latest;
+      entry.versions ||= {};
+      entry.instances ||= {};
+      const deserializePackage = pkgSpec => {
         let url = pkgSpec.url;
         if (!isAbsolute(url)) url = base.join(url).url;
-        let pkg = new Package.fromJSON(System, { ...pkgSpec, url });
-        packageMap[pName].versions[version] = pkg;
+        const key = packageLookupURL(url);
+        const existing = entry.instances[key];
+        return existing
+          ? existing.fromJSON({ ...pkgSpec, url })
+          : (entry.instances[key] = Package.fromJSON(System, { ...pkgSpec, url }));
+      };
+      for (let version in spec.versions) {
+        entry.versions[version] = deserializePackage(spec.versions[version]);
+      }
+      for (let pkgSpec of Object.values(spec.instances || {})) {
+        const pkg = deserializePackage(pkgSpec);
+        entry.instances[packageLookupURL(pkg.url)] = pkg;
       }
     }
 
@@ -263,18 +317,17 @@ export class PackageRegistry {
 
   isReady () { return !this._readyPromise; }
 
+  instancesOf (spec) { return Object.values(spec.instances || spec.versions); }
+
   withPackagesDo (doFn) {
     for (let pName in this.packageMap) {
-      let versions = this.packageMap[pName].versions;
-      for (let versionName in versions) { doFn(versions[versionName]); }
+      for (let pkg of this.instancesOf(this.packageMap[pName])) doFn(pkg);
     }
   }
 
   findPackage (matchFn) {
     for (let pName in this.packageMap) {
-      let versions = this.packageMap[pName].versions;
-      for (let versionName in versions) {
-        let pkg = versions[versionName];
+      for (let pkg of this.instancesOf(this.packageMap[pName])) {
         if (matchFn(pkg)) return pkg;
       }
     }
@@ -291,8 +344,7 @@ export class PackageRegistry {
   allPackages () {
     let result = [];
     for (let pName in this.packageMap) {
-      let versions = this.packageMap[pName].versions;
-      for (let versionName in versions) { result.push(versions[versionName]); }
+      result.push(...this.instancesOf(this.packageMap[pName]));
     }
     return result;
   }
@@ -322,10 +374,11 @@ export class PackageRegistry {
 
   coversDirectory (dir) {
     dir = ensureResource(dir).asDirectory();
-    let { packageBaseDirs, devPackageDirs, individualPackageDirs } = this;
+    let { packageBaseDirs, nodeModulesDirs, devPackageDirs, individualPackageDirs } = this;
 
     if (individualPackageDirs.some(ea => ea.equals(dir))) return 'individualPackageDirs';
     if (devPackageDirs.some(ea => ea.equals(dir))) return 'devPackageDirs';
+    if (nodeModulesDirs.some(ea => dir.url.startsWith(ea.url)) && this.findPackageWithURL(dir.url)) return 'nodeModulesDirs';
     let parent = dir.parent().parent();
     if (packageBaseDirs.some(ea => ea.equals(parent))) {
       return this.allPackages().find(pkg =>
@@ -350,7 +403,7 @@ export class PackageRegistry {
     if (!versionRange || versionRange === 'latest') { return pkgData.versions[pkgData.latest]; }
 
     if (!semver.validRange(versionRange, true)) { throw new Error(`PackageRegistry>>lookup of ${pkgName}: Invalid version - ${versionRange}`); }
-    let pkgs = obj.values(pkgData.versions).filter(pkg =>
+    let pkgs = this.instancesOf(pkgData).filter(pkg =>
       this.matches(pkg, pkgName, versionRange));
     if (pkgs.length <= 1) return pkgs[0];
     return arr.last(this.sortPackagesByVersion(pkgs));
@@ -358,35 +411,49 @@ export class PackageRegistry {
 
   findPackageDependency (basePkg, name, version) {
     // name@version is dependency of basePkg
-    if (!version) version = basePkg.dependencies[name] || basePkg.devDependencies[name];
+    if (!basePkg) return null;
+    const dependencies = basePkg.dependencies || basePkg.config?.dependencies || {};
+    const devDependencies = basePkg.devDependencies || basePkg.config?.devDependencies || {};
+    if (!version) version = dependencies[name] || devDependencies[name];
     if (!semver.validRange(version, true)) version = null;
     return this.lookup(name, version);
   }
 
   findPackageWithURL (url) {
-    let lookupURL = packageLookupURL(url);
-    return this.byURL[lookupURL] || this.byLookupURL[lookupURL];
+    const lookupURL = packageLookupURL(url);
+    const canonicalURL = canonicalPackageLookupURL(this.System, url);
+    return this.byURL[lookupURL] || this.byLookupURL[lookupURL] ||
+      this.byCanonicalLookupURL[canonicalURL];
   }
 
   findPackageHavingURL (url) {
-    // does url identify a resource inside pkg, maybe pkg.url === url?
-    let originalURL = url.isResource ? url.url : url;
-    let lookupURL = packageLookupURL(url);
-    let penaltySoFar = Infinity; let found = null; let { byLookupURL } = this;
-    for (let pkgURL in byLookupURL) {
-      if (lookupURL.indexOf(pkgURL) !== 0) continue;
-      let penalty = lookupURL.slice(pkgURL.length).length;
-      if (penalty >= penaltySoFar) continue;
-      penaltySoFar = penalty;
-      found = byLookupURL[pkgURL];
+    // Does url identify a resource inside a package, perhaps pkg.url itself?
+    const originalURL = url.isResource ? url.url : url;
+    const lookupURL = packageLookupURL(url);
+    const canonicalURL = canonicalPackageLookupURL(this.System, url);
+    let penaltySoFar = Infinity; let found = null;
+    for (const [candidateURL, index] of [
+      [lookupURL, this.byLookupURL],
+      [canonicalURL, this.byCanonicalLookupURL]
+    ]) {
+      for (const pkgURL in index) {
+        const pkg = index[pkgURL];
+        if (!pkg || !candidateURL.startsWith(pkgURL)) continue;
+        const penalty = candidateURL.slice(pkgURL.length).length;
+        if (penalty >= penaltySoFar) continue;
+        penaltySoFar = penalty;
+        found = pkg;
+      }
     }
     if (!found) {
       if (this.moduleUrlToPkg.has(originalURL)) return this.moduleUrlToPkg.get(originalURL);
       if (this.moduleUrlToPkg.has(lookupURL)) return this.moduleUrlToPkg.get(lookupURL);
+      if (this.moduleUrlToPkg.has(canonicalURL)) return this.moduleUrlToPkg.get(canonicalURL);
     }
     if (found) {
       this.moduleUrlToPkg.set(originalURL, found);
       this.moduleUrlToPkg.set(lookupURL, found);
+      this.moduleUrlToPkg.set(canonicalURL, found);
     }
     return found;
   }
@@ -421,7 +488,9 @@ export class PackageRegistry {
       if (path.startsWith('.')) {
         let res = resource(parentIdOrPkg);
         if (!res.isDirectory()) res = res.parent();
-        return res.join(path).withRelativePartsResolved().url;
+        try { return new URL(path, res.asDirectory().url).href; } catch (_) {
+          return res.join(path).withRelativePartsResolved().url;
+        }
       }
       parentPackage = this.findPackageHavingURL(parentIdOrPkg);
     }
@@ -447,16 +516,15 @@ export class PackageRegistry {
     this._readyPromise = deferred.promise;
 
     this.packageBaseDirs = this.packageBaseDirs.map(ea => ea.asDirectory());
+    this.nodeModulesDirs = this.nodeModulesDirs.map(ea => ea.asDirectory());
     this.individualPackageDirs = this.individualPackageDirs.map(ea => ea.asDirectory());
     this.devPackageDirs = this.devPackageDirs.map(ea => ea.asDirectory());
 
     let discovered = {};
 
     try {
-      for (let dir of this.packageBaseDirs) {
-        for (let dirWithVersions of await dir.dirList(1)) {
-          for (let subDir of (await dirWithVersions.dirList(1)).filter(ea => ea.isDirectory())) { discovered = await this._discoverPackagesIn(subDir, discovered, 'packageCollectionDirs'); }
-        }
+      for (let dir of this.nodeModulesDirs) {
+        discovered = await this._discoverInstalledPackagesIn(dir, discovered);
       }
 
       for (let dir of this.individualPackageDirs) { discovered = await this._discoverPackagesIn(dir, discovered, 'individualPackageDirs'); }
@@ -500,21 +568,30 @@ export class PackageRegistry {
     return this.findPackageWithURL(url);
   }
 
+  _removeFromPackageMap (pkg, name, version) {
+    const entry = this.packageMap[name];
+    if (!entry) return;
+    const key = packageLookupURL(pkg.url);
+    const primary = entry.versions[version];
+    delete entry.instances?.[key];
+    if (primary && packageLookupURL(primary.url) === key) {
+      const replacement = this.instancesOf(entry).find(candidate => candidate.version === version);
+      if (replacement) entry.versions[version] = replacement;
+      else delete entry.versions[version];
+    }
+    if (!this.instancesOf(entry).length) delete this.packageMap[name];
+  }
+
   removePackage (pkg, updateLatestPackage = true) {
     let { url, name, version } = pkg;
     let dir = ensureResource(url);
     let known = this.coversDirectory(dir);
     if (known === 'devPackageDirs') { this.devPackageDirs = this.devPackageDirs.filter(ea => !ea.equals(dir)); } else if (known === 'individualPackageDirs') { this.individualPackageDirs = this.individualPackageDirs.filter(ea => !ea.equals(dir)); }
 
-    let { packageMap } = this;
-    if (packageMap[name]) {
-      delete packageMap[name].versions[version];
-      if (Object.keys(packageMap[name].versions).length === 0) { delete packageMap[name]; }
-    }
-
+    this._removeFromPackageMap(pkg, name, version);
     this.resetByURL();
     classHolder.ModulePackageMapping.forSystem(this.System).clearCache();
-    if (updateLatestPackage) this._updateLatestPackages(pkg.name);
+    if (updateLatestPackage) this._updateLatestPackages(name);
   }
 
   updateNameAndVersionOf (pkg, oldName, oldVersion, newName, newVersion) {
@@ -524,12 +601,12 @@ export class PackageRegistry {
     } else if (!packageMap[oldName].versions[oldVersion]) {
       console.warn(`[PackageRegistry>>updateNameAndVersionOf] No version entry ${oldVersion} of ${oldName} found in registry (${pkg.url})`);
     }
+    this._removeFromPackageMap(pkg, oldName, oldVersion);
     this._addToPackageMap(pkg, newName, newVersion);
-    if (packageMap[oldName] && packageMap[oldName].versions[oldVersion]) {
-      delete packageMap[oldName].versions[oldVersion];
-      if (Object.keys(packageMap[oldName].versions).length === 0) { delete packageMap[oldName]; }
-    }
-    this._updateLatestPackages(pkg.name);
+    this.resetByURL();
+    classHolder.ModulePackageMapping.forSystem(this.System).clearCache();
+    this._updateLatestPackages(oldName);
+    if (newName !== oldName) this._updateLatestPackages(newName);
   }
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -544,6 +621,77 @@ export class PackageRegistry {
       packageMap[eaName].latest = arr.last(sortVersions(
         Object.keys(packageMap[eaName].versions)));
     }
+  }
+
+  async _discoverInstalledPackagesIn (dir, discovered) {
+    const nodeRequire = this.System._nodeRequire;
+    if (!nodeRequire || !dir.url.startsWith('file:')) {
+      // Browser registries discover installed packages through the DAV resource
+      // API. Scan the store itself rather than following dependency symlinks.
+      const visit = async root => {
+        let entries;
+        try { entries = await root.dirList(1); } catch (_) { return; }
+        for (const entry of entries) {
+          if (!entry.isDirectory() || entry.name() === '.bin') continue;
+          if (entry.name() === '.bun') {
+            for (const instance of await entry.dirList(1)) {
+              if (instance.isDirectory()) await visit(instance.join('node_modules/'));
+            }
+          } else if (entry.name().startsWith('@')) await visit(entry);
+          else discovered = await this._discoverPackagesIn(entry, discovered, 'nodeModulesDirs');
+        }
+      };
+      await visit(dir);
+      return discovered;
+    }
+    const fs = nodeRequire('node:fs');
+    const path = nodeRequire('node:path');
+    const { fileURLToPath, pathToFileURL } = nodeRequire('node:url');
+    // Rebase canonical packages through server-visible mounts. Desktop roots
+    // overlay workspace/store links onto a writable runtime directory.
+    const mounts = [resource(this.System.baseURL), ...this.nodeModulesDirs, ...this.devPackageDirs]
+      .flatMap(root => {
+        if (!root.url.startsWith('file:')) return [];
+        try {
+          const mounted = fileURLToPath(root.asFile().url);
+          return [{ mounted, real: canonicalPackageLookupURL(this.System, root.url) }];
+        } catch (_) { return []; }
+      }).sort((a, b) => b.real.length - a.real.length);
+    const visited = new Set();
+    const visitNodeModules = async nodeModulesPath => {
+      let entries;
+      try { entries = fs.readdirSync(nodeModulesPath, { withFileTypes: true }); } catch (_) { return; }
+      for (const entry of entries) {
+        if (entry.name === '.bin') continue;
+        const entryPath = path.join(nodeModulesPath, entry.name);
+        if (entry.name === '.bun') {
+          let storeEntries = [];
+          try { storeEntries = fs.readdirSync(entryPath, { withFileTypes: true }); } catch (_) {}
+          for (const storeEntry of storeEntries) await visitNodeModules(path.join(entryPath, storeEntry.name, 'node_modules'));
+          continue;
+        }
+        if (entry.name.startsWith('@')) { await visitNodeModules(entryPath); continue; }
+        await visitPackage(entryPath);
+      }
+    };
+    const visitPackage = async packagePath => {
+      let realPath;
+      try { realPath = fs.realpathSync(packagePath); } catch (_) { return; }
+      if (visited.has(realPath) || !fs.existsSync(path.join(realPath, 'package.json'))) return;
+      visited.add(realPath);
+      let mountedPath = packagePath;
+      for (const mount of mounts) {
+        const relative = path.relative(mount.real, realPath);
+        if (relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) continue;
+        mountedPath = path.join(mount.mounted, relative);
+        break;
+      }
+      const packageURL = pathToFileURL(mountedPath).href;
+      discovered = await this._discoverPackagesIn(resource(packageURL).asDirectory(), discovered, 'nodeModulesDirs');
+      await visitNodeModules(path.join(mountedPath, 'node_modules'));
+    };
+    try { await visitNodeModules(fileURLToPath(dir.asFile().url)); } catch (_) {}
+    return discovered;
   }
 
   async _discoverPackagesIn (dir, discovered, covered, existingPackageMap = null) {
@@ -579,14 +727,16 @@ export class PackageRegistry {
     if (!version) version = '0.0.0';
     let { packageMap } = this;
     let packageEntry = packageMap[name] ||
-          (packageMap[name] = { versions: {}, latest: null });
+          (packageMap[name] = { versions: {}, instances: {}, latest: null });
+    packageEntry.instances ||= {};
     let isOverride = packageEntry.versions[version];
     if (isOverride) {
       let msg = `Redefining version ${version} of package ${pkg.url}`;
       if (!allowOverride) throw new Error(msg + ' not allowed');
-      // duplicate version entries are expected when bun + flatn both install packages
+      // Location, rather than name/version, is the installed-instance identity.
     }
-    packageEntry.versions[version] = pkg;
+    packageEntry.instances[packageLookupURL(pkg.url)] = pkg;
+    packageEntry.versions[version] ||= pkg;
   }
 
   _addPackageWithConfig (pkg, config, dir, covered = null) {
@@ -602,11 +752,7 @@ export class PackageRegistry {
   _addPackageDir (dir, preferedLocation = 'individualPackageDirs', uniqCheck = true) {
     dir = ensureResource(dir).asDirectory();
 
-    if (preferedLocation === 'packageCollectionDirs' ||
-    preferedLocation === 'maybe packageCollectionDirs') {
-      let covers = this.coversDirectory(dir) || '';
-      if (covers.includes('packageCollectionDirs')) { return 'packageCollectionDirs'; }
-    }
+
     let prop = preferedLocation;
     let dirs = this[prop].concat(dir);
     this[prop] = uniqCheck ? arr.uniqBy(dirs, (a, b) => a.equals(b)) : dirs;

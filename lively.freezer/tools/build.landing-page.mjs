@@ -2,7 +2,7 @@
 import { rollup } from '@rollup/wasm-node';
 import jsonPlugin from '@rollup/plugin-json';
 import { babel } from '@rollup/plugin-babel';
-import { lively } from 'lively.freezer/src/plugins/rollup';
+import { lively } from 'lively.freezer/src/plugins/rollup.js';
 import resolver from 'lively.freezer/src/resolvers/node.cjs';
 import PresetEnv from '@babel/preset-env';
 
@@ -31,7 +31,7 @@ try {
         isResurrectionBuild: true,
         asBrowserModule: true,
         excludedModules: [
-          'chai','mocha', // references old lgtg that breaks the build
+          'mocha-es6', 'chai', 'mocha', // references old lgtg that breaks the build
           'rollup', // has a dist file that cant be parsed by rollup
           // other stuff that is only needed by rollup
           '@babel/preset-env',

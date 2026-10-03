@@ -131,14 +131,14 @@ export default class ExportLookup {
                     (opts.excludedURLs = excludedPackages.filter(ea => typeof ea === 'string'));
     let excludeFns = opts.excludeFns ||
                   (opts.excludeFns = excludedPackages.filter(ea => typeof ea === 'function'));
+    if (excludeFns.some(fn => fn(moduleId))) return null;
     let excludedPackageURLs = opts.excludedPackageURLs ||
                            (opts.excludedPackageURLs = excludedURLs.concat(excludedURLs.map(url =>
                              System.decanonicalize(url.replace(/\/?$/, '/')).replace(/\/$/, ''))));
 
     if (cache[moduleId]) {
       let result = cache[moduleId].rawExports;
-      return excludedPackageURLs.includes(result.packageURL) ||
-          excludeFns.some(fn => fn(moduleId))
+      return excludedPackageURLs.includes(result.packageURL)
         ? null
         : cache[moduleId];
     }
@@ -160,13 +160,12 @@ export default class ExportLookup {
       exports: []
     };
 
-    if (excludedPackageURLs.includes(packageURL) ||
-     excludeFns.some(fn => fn(moduleId))) return null;
+    if (excludedPackageURLs.includes(packageURL)) return null;
 
     try {
       let format = mod.format();
       if (['register', 'es6', 'esm'].includes(format)) {
-        const cached = await System._livelyModulesTranslationCache.fetchStoredModuleSource(mod.id);
+        const cached = await System._livelyModulesTranslationCache?.fetchStoredModuleSource(mod.id);
         if (cached && cached.exports) result.exports = JSON.parse(cached.exports);
         else if (mod._frozenModule) {
           result.exports = this.getExportSpec(mod.id);

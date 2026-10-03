@@ -7,8 +7,7 @@
 //
 // Keep the cachedDirs / excludedDirs lists in sync with dav.js manually
 // for now — extracting them into a shared module would require either
-// inlining them via a build step or converting this script to ESM with
-// flatn resolution.
+// inlining them via a build step
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -16,32 +15,6 @@ const zlib = require('node:zlib');
 
 const rootDir = path.resolve(__dirname, '..', '..');
 const outFile = path.join(__dirname, '..', '.library-snapshot.tar.gz');
-
-// Self-sufficient: set FLATN env vars + install the CJS resolver hook,
-// so this script runs standalone without requiring the caller to source
-// scripts/lively-next-env.sh first.
-if (!process.env.FLATN_DEV_PACKAGE_DIRS) {
-  const pkgs = JSON.parse(fs.readFileSync(
-    path.join(rootDir, 'lively.installer/packages-config.json'), 'utf8'));
-  const devDirs = pkgs
-    .map(p => path.join(rootDir, p.name))
-    .filter(d => fs.existsSync(d));
-  process.env.FLATN_PACKAGE_COLLECTION_DIRS = [
-    path.join(rootDir, 'lively.next-node_modules'),
-    path.join(rootDir, 'custom-npm-modules')
-  ].join(':');
-  process.env.FLATN_DEV_PACKAGE_DIRS = devDirs.join(':');
-  process.env.FLATN_PACKAGE_DIRS = '';
-}
-
-// Load flatn's CJS hook to resolve packages in its flat-layout node_modules.
-// Preserve process.execPath — flatn/resolver.cjs overrides it with its wrapper
-// script path, which breaks things that rely on execPath downstream.
-const _savedExecPath = process.execPath;
-const _savedArgv0 = process.argv[0];
-require(path.join(rootDir, 'flatn', 'resolver.cjs'));
-process.execPath = _savedExecPath;
-process.argv[0] = _savedArgv0;
 
 const tar = require('tar-fs');
 

@@ -12,7 +12,7 @@
                     "lively.collab"
                     ],
         "includePattern": "\\.js$",
-        "excludePattern": "jsdom\\.worker\\.js"
+        "excludePattern": "(^|[\\\\/])node_modules([\\\\/]|$)|jsdom\\.worker\\.js"
     },
     "sourceType": "module",
     "opts": {

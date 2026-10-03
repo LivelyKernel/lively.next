@@ -3,7 +3,7 @@ import { rollup } from '@rollup/wasm-node';
 import jsonPlugin from '@rollup/plugin-json';
 import util from 'node:util';
 import fs from 'node:fs/promises';
-import { lively } from 'lively.freezer/src/plugins/rollup';
+import { lively } from 'lively.freezer/src/plugins/rollup.js';
 import resolver from 'lively.freezer/src/resolvers/node.cjs';
 
 const verbose = process.argv[2] === '--verbose';
@@ -12,7 +12,7 @@ const sourceMap = !!process.env.DEBUG;
 
 // Combine excluded modules from both builds to ensure compatibility
 const commonExcludedModules = [
-  'chai', 'mocha', // references old lgtg that breaks the build
+  'mocha-es6', 'chai', 'mocha', // references old lgtg that breaks the build
   'rollup', // has a dist file that cant be parsed by rollup
   'picomatch', 'path-is-absolute', 'fs.realpath', // from loading-screen build
   // other stuff that is only needed by rollup

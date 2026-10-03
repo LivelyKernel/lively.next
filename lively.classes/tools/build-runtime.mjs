@@ -2,7 +2,7 @@
 import { rollup } from '@rollup/wasm-node';
 import jsonPlugin from '@rollup/plugin-json';
 import { babel } from '@rollup/plugin-babel';
-import { lively } from 'lively.freezer/src/plugins/rollup';
+import { lively } from 'lively.freezer/src/plugins/rollup.js';
 import resolver from 'lively.freezer/src/resolvers/node.cjs';
 import PresetEnv from '@babel/preset-env';
 

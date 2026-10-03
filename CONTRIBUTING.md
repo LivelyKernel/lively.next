@@ -27,7 +27,6 @@ The packages are coded with emojis as follows:
 - collab: 💭
 - components: 🎛️
 - context: 🗺️
-- flatn: 🫓
 - freezer: ❄️
 - git: 🛤️
 - graphics: 🖌️
@@ -56,3 +55,21 @@ The packages are coded with emojis as follows:
 ### Commit History
 
 As we merge PRs via rebase, please take the time to ensure that there is the necessary number of commits in your PR (and not more) and the history helps to understand what you did and why you did it.
+
+Dependency changes use Bun 1.4.2 with the committed workspace lock. Add dependencies to the package that imports them. Browser import maps are generated as hidden `.cachedImportMap.json` caches and must not be committed. Installation refreshes missing or stale maps; `bun run update:browser-import-maps <workspace>` forces regeneration. Ordinary installs must leave `bun.lock` unchanged.
+
+Launch and build commands work directly, without sourcing an environment script. Bun provides local script binaries; the installer and test runner discover packages from the workspace manifest and `local_projects`. Puppeteer uses `.puppeteerrc.cjs`; packaged desktop launchers supply their own runtime paths.
+
+Run package tests with, for example, `bun run --cwd lively.lang test`. Resolution regression checks:
+
+```sh
+node --experimental-import-meta-resolve lively.modules/tests/native-resolver-test.mjs
+node --experimental-import-meta-resolve lively.modules/tests/native-system-live-test.mjs
+node --experimental-import-meta-resolve lively.freezer/tests/package-resolution-test.cjs
+node --experimental-import-meta-resolve lively.freezer/tests/dynamic-system-import-test.mjs
+node --experimental-import-meta-resolve lively.freezer/tests/minify-test.cjs
+node --experimental-import-meta-resolve lively.freezer/tests/project-bundle-test.mjs
+node --experimental-import-meta-resolve lively.server/tests/browser-import-map-cache-test.mjs
+node --experimental-import-meta-resolve lively.project/tests/package-install-test.mjs
+node --experimental-import-meta-resolve lively.installer/tests/runtime-roots-test.mjs
+```
