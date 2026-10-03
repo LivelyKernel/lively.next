@@ -4,7 +4,7 @@ import { escodegen, parseFunction } from "lively.ast";
 import { Interpreter } from "./interpreter.js";
 import { getCurrentASTRegistry, rewriteFunction } from "lively.context";
 
-let Global = window;
+let Global = typeof window !== "undefined" ? window : globalThis;
 
 let NativeArrayFunctions = {
 

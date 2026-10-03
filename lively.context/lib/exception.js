@@ -4,6 +4,8 @@ import { Scope, Frame, Function as AcornFunction } from "./interpreter.js";
 import { getCurrentASTRegistry } from "lively.context";
 import { acorn } from "lively.ast";
 
+let Global = typeof window !== "undefined" ? window : globalThis;
+
 export function __createClosure(namespace, idx, parentFrameState, f) {
   // FIXME: Either save idx and use __getClosure later or attach the AST here and now (code dup.)?
   var registry = getCurrentASTRegistry();
@@ -14,7 +16,7 @@ export function __createClosure(namespace, idx, parentFrameState, f) {
   return f;
 }
 
-window.__createClosure = __createClosure;
+Global.__createClosure = __createClosure;
 
 // FIXME naming -- actually we return the ast node not a closure
 export function __getClosure(namespace, idx) {
@@ -106,4 +108,4 @@ export class UnwindException {
 }
 
 // fixme: User proper reqriting that does not depend on global var
-window.UnwindException = UnwindException;
+Global.UnwindException = UnwindException;
