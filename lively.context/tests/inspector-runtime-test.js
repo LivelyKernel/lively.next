@@ -220,7 +220,10 @@ describe('inspector runtime', function () {
     const calls = [];
     installInspectorRuntime({
       env: {},
-      bridge: { armHalt: capture => calls.push(capture) }
+      bridge: {
+        isAvailable: () => true,
+        armHalt: capture => calls.push(capture)
+      }
     });
 
     try {
@@ -235,5 +238,19 @@ describe('inspector runtime', function () {
     }
 
     throw new Error('halt did not throw');
+  });
+
+  it('refuses to halt when the inspector service is not attached', function () {
+    const calls = [];
+    installInspectorRuntime({
+      env: {},
+      bridge: {
+        isAvailable: () => false,
+        armHalt: capture => calls.push(capture)
+      }
+    });
+
+    expect(() => halt('not ready')).to.throw(/not attached/);
+    expect(calls).to.have.length(0);
   });
 });
