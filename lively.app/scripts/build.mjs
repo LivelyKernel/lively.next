@@ -658,7 +658,7 @@ async function main () {
   manifest.version = APP_VERSION;
   manifest.main = 'boot.html';
   manifest['bg-script'] = 'desktop/background-menu.js';
-  manifest['node-main'] = (process.env.LIVELY_APP_FUNCTION_SCOPES === '1' ? '--nw-node-inspector ' : '') + 'desktop/start-server.cjs';
+  manifest['node-main'] = 'desktop/start-server.cjs';
   fs.writeFileSync(path.join(BUNDLE, 'package.json'), JSON.stringify(manifest, null, 2));
 
   fs.copyFileSync(path.join(APP_DIR, 'desktop', 'boot.html'),        path.join(BUNDLE, 'boot.html'));

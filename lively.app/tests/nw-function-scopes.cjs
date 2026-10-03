@@ -1,8 +1,7 @@
-// Run from NW.js's background page, after building with
-// LIVELY_APP_FUNCTION_SCOPES=1. Do not attach a second DevTools inspector.
+// Run from NW.js's background page with its ordinary DOM inspector enabled.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const { captureFunctionBindings } = require('../desktop/function-scopes.cjs');
+const { captureRendererFunctionBindings } = require('../desktop/function-scopes.cjs');
 
 module.exports = async function verifyFunctionScopes (nw, reportFile) {
   const report = { nw: process.versions.nw, v8: process.versions.v8, pid: process.pid, steps: [] };
@@ -33,34 +32,17 @@ module.exports = async function verifyFunctionScopes (nw, reportFile) {
     report.missingNames = names;
     assert.deepEqual(names.sort(), ['marker', 'step']);
     mark('identified missing retained bindings with lively.ast');
-    const values = await captureFunctionBindings(sample.fn, names);
+    const capture = () => captureRendererFunctionBindings(renderer, sample.fn, names,
+      Number(process.env.LIVELY_APP_CDP_PORT || 9222));
+    const [values, repeated] = await Promise.all([capture(), capture()]);
+    assert.equal(repeated.marker, sample.marker);
+    report.concurrentRendererInspection = true;
     assert.equal(values.marker, sample.marker);
     values.marker.count = 2;
     assert.equal(sample.marker.count, 2);
     values.step = 7;
     assert.equal(sample.read(), '1');
     values.step = '1';
-    const session = new (require('node:inspector').Session)();
-    const post = (method, params = {}) => new Promise((resolve, reject) => {
-      session.post(method, params, (error, value) => error ? reject(error) : resolve(value));
-    });
-    global.__livelyNwScopeWriteProbe = sample.fn;
-    try {
-      session.connect();
-      await post('Runtime.enable');
-      const fn = (await post('Runtime.evaluate', { expression: 'global.__livelyNwScopeWriteProbe' })).result;
-      const properties = await post('Runtime.getProperties', { objectId: fn.objectId, ownProperties: true });
-      const scopes = properties.internalProperties.find(property => property.name === '[[Scopes]]').value;
-      const list = await post('Runtime.getProperties', { objectId: scopes.objectId, ownProperties: true });
-      const closure = list.result.find(property => property.name === '0').value;
-      const changed = await post('Runtime.callFunctionOn', {
-        objectId: closure.objectId, functionDeclaration: 'function(){this.object.step=7;return this.object.step;}', returnByValue: true
-      });
-      assert(!changed.exceptionDetails);
-      assert.equal(changed.result.value, 7);
-      assert.equal(sample.read(), '1');
-      report.scopeSnapshotAssignmentChangesOriginalBinding = false;
-    } finally { session.disconnect(); delete global.__livelyNwScopeWriteProbe; }
     report.objectIdentity = true;
     report.objectMutation = sample.marker.count;
     report.bindingMapAssignmentChangesOriginalBinding = false;

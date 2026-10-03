@@ -10,7 +10,8 @@ rewritten `debugger` statement. `Continuation` reconstructs those frames and
 resumes through the existing interpreter. The Lively world keeps running.
 
 The rewriter already supplies locals, arguments, the receiver, execution position,
-and intermediate results. A separately created function can retain **external
+and intermediate results, including the conditional decisions needed to resume
+inside a branch without reevaluating its condition. A separately created function can retain **external
 closure bindings** that source recreation cannot recover. Supply those values in
 `run(fn, registry, args, mapping)`. The mapping is now retained in reconstructed
 scopes; `mapping.this` supplies the receiver. Nested rewritten functions continue
@@ -43,20 +44,19 @@ openLiveCounter();
    computation and opens Lively Debugger. Move a window while it is suspended.
 2. Evaluate `this.count`, `amount`, and `typeof amount` in the debugger workspace.
    Expect `0`, `'1'`, and `'string'`. The string step is an intentional bug.
-3. Evaluate `amount = Number(amount)`, then **Proceed**. Expect `1`.
+3. Evaluate `amount = Number(amount)`, **Step Over**, then **Proceed**. Expect `1`.
    The repaired local belongs to the existing continuation's recorded scope.
-   Also try **Step Over**: in this conditional-debugger example it currently
-   completes the function rather than stopping at the next statement.
+   Step Over stops before the next statement without changing the count.
 4. Click **Edit source**. Change `var amount = this.step;` to
    `var amount = Number(this.step);` in the Object Editor and save. Wait until the
    save finishes, then click **Increment** again. The existing object uses the new
    method; proceed to reach `2`.
 5. While suspended, replace the saved increment with `Number(this.step) * 2`.
-   **Restart Frame** still displays the captured AST. In the packaged tutorial,
-   restart then loses the program counter and **Proceed** reports
-   `Cannot resume because frame has no pc!`. Close that debugger and invoke the
-   counter again: the next invocation uses the saved method. Active-frame source
-   replacement and reliable restart remain broken.
+   **Restart Frame** resolves the current saved method on the same receiver and
+   stops at its first statement. The source pane now shows the replacement method.
+   Proceed to the rewritten debugger statement, inspect `amount`, then proceed
+   again. Restart reexecutes earlier statements; it does not migrate an arbitrary
+   old execution position into edited code.
 6. Add `decrement() { this.count -= 1; this.updateCount(); }` in the Object Editor.
    Evaluate `this.decrement()` in the suspended debugger workspace. Continue
    changing methods and state on the same counter, without recreating it.
@@ -73,11 +73,16 @@ environment experiment recovered exactly `step` and `marker`, preserved the mark
 identity, kept a renderer timer running during suspension, and resumed to `3` after
 repairing `amount`. These results use the original continuation machinery.
 
+The interpreter accepts the `let` and `const` declarations produced by the Object
+Editor using the rewriter's existing function scope. Full block scope, temporal dead
+zones, and const-write enforcement remain outside this legacy declaration model.
+Restart preserves captured outer bindings and original arguments; introducing new
+retained bindings still requires supplying their values in the mapping.
+
 ## NW.js retained-environment experiment
 
-Build with `LIVELY_APP_FUNCTION_SCOPES=1 FLAVOR=sdk` and launch with
-`LIVELY_APP_FUNCTION_SCOPES=1`. This opt-in build adds NW.js's documented
-`--nw-node-inspector` startup flag. The background Node context exposes:
+Build with `FLAVOR=sdk` and launch with `LIVELY_APP_FUNCTION_SCOPES=1`.
+The background Node context uses NW.js's existing browser inspector transport and exposes:
 
 ```js
 const values = await livelyDesktop.debugger.captureFunctionBindings(fn, ['step', 'marker']);
@@ -92,12 +97,14 @@ Run `node lively.app/tests/function-scopes-test.cjs` for the reader's native che
 packaged renderer, using `lively.ast.query.findGlobalVarRefs` to identify the exact
 missing bindings and the original `Continuation` to resume.
 
-NW.js inspector ownership remains an integration issue: without its startup flag,
-Runtime posts stalled; combining the Node inspector with concurrent DevTools traffic
-reproduced a renderer SIGSEGV. Isolated Runtime-only inspection succeeded. Do not
-attach a second inspector during this experiment. This does not establish that the
-debugger needs an external process. The experimental flag changes NW.js's DOM
-inspector/console behavior, so ordinary builds keep it off while this bug is investigated.
+The original direct `node:inspector` experiment stalled without NW.js's startup
+flag and reproduced a renderer SIGSEGV when combined with DOM inspector traffic.
+The renderer bridge now uses Runtime commands through the existing CDP client,
+leaves the DOM inspector enabled, and requires no special Node inspector flag.
+Concurrent reader requests and a normal DevTools evaluation verified identity and
+continuation resume in NW.js 0.111.1. The ordinary Node reader still uses
+`node:inspector` for its native check. No external controller or native stack capture
+is involved; the crash was an integration bug in attaching competing inspector backends.
 
 Primary implementation and runtime guidance:
 [V8 function scopes](https://github.com/v8/v8/blob/main/src/inspector/v8-debugger.cc),

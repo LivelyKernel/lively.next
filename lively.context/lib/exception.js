@@ -5,6 +5,7 @@ import { getCurrentASTRegistry } from "lively.context";
 import { acorn } from "lively.ast";
 
 let Global = typeof window !== "undefined" ? window : globalThis;
+export const originalFunctions = new WeakMap();
 
 export function __createClosure(namespace, idx, parentFrameState, f) {
   // FIXME: Either save idx and use __getClosure later or attach the AST here and now (code dup.)?
@@ -53,7 +54,8 @@ export class UnwindException {
     createAndShiftFrame(thiz, args, frameState, lastNodeAstIndex, namespaceForOrigAst, pointerToOriginalAst) {
         var topScope = Scope.recreateFromFrameState(frameState),
             alreadyComputed = frameState[0],
-            func = new AcornFunction(__getClosure(namespaceForOrigAst, pointerToOriginalAst), topScope),
+            ast = __getClosure(namespaceForOrigAst, pointerToOriginalAst),
+            func = new AcornFunction(ast, topScope, originalFunctions.get(ast)),
             frame = Frame.create(func /*, varMapping */),
             pc;
         frame.setThis(thiz);

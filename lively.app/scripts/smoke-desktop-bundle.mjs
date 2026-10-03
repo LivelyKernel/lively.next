@@ -715,6 +715,35 @@ async function assertDesktopDebuggerSmoke (client, timeoutMs) {
       const resumed = await model.proceed();
       if (resumed !== marker || marker.count !== 1) throw new Error('Resume lost state or identity');
       if ($world.getWindows().some(win => win.targetMorph === view)) throw new Error('Proceed did not close debugger');
+      const counter = { count: 0, step: '1', pause: true };
+      counter.increment = globalThis.Function('return function old_increment() { let amount = this.step; if (this.pause) debugger; this.count += Number(amount); return this.count; }')();
+      counter.increment.displayName = 'increment';
+      const counterView = openForContinuation(run(counter.increment, null, [], { this: counter }), $world);
+      const counterModel = counterView.viewModel;
+      await counterModel.selectFrame(counterModel.continuation.currentFrame);
+      if (!counterModel.stepOver()?.isContinuation || counter.count !== 0) throw new Error('Conditional Step Over completed the function');
+      counter.increment = globalThis.Function('return function new_increment() { let amount = Number(this.step) * 2; if (this.pause) debugger; this.count += amount; return this.count; }')();
+      counter.increment.displayName = 'increment';
+      if (!counterModel.restartFrame()?.isContinuation) throw new Error('Restart failed');
+      await counterModel.selectFrame(counterModel.continuation.currentFrame);
+      if (counterModel.continuation.currentFrame.pc?.type !== 'VariableDeclaration') throw new Error('Restart lost its pc');
+      if (!counterModel.ui.sourcePane.textString.includes('* 2')) throw new Error('Restart retained the old method');
+      if (!(await counterModel.proceed())?.isContinuation) throw new Error('Restart did not reach debugger');
+      await counterModel.selectFrame(counterModel.continuation.currentFrame);
+      if (counterModel.continuation.currentFrame.lookup('amount') !== 2) throw new Error('Restart lost lexical local');
+      if (await counterModel.proceed() !== 2 || counter.count !== 2) throw new Error('Restart lost receiver');
+      const retained = { count: 0 };
+      let incrementStep = '1';
+      function retainedIncrement() { var amount = incrementStep; debugger; retained.count += amount; return retained.count; }
+      const capture = () => livelyDesktop.debugger.captureFunctionBindings(retainedIncrement, ['retained', 'incrementStep']);
+      const [values, repeated] = await Promise.all([capture(), capture()]);
+      if (values.retained !== retained || repeated.retained !== retained) throw new Error('Scope reader lost object identity');
+      values.incrementStep = 7;
+      if (incrementStep !== '1') throw new Error('Snapshot changed the original binding');
+      values.incrementStep = '1';
+      const retainedContinuation = run(retainedIncrement, null, [], values);
+      retainedContinuation.currentFrame.getScope().set('amount', 1);
+      if (retainedContinuation.resume() !== 1 || retained.count !== 1) throw new Error('Retained closure resume failed');
       return { frames: 2, count: marker.count, worldTimerWhileSuspended: ticked, nativeService: livelyDesktop.debugger.isAvailable() };
     })()`,
     awaitPromise: true,
@@ -724,7 +753,7 @@ async function assertDesktopDebuggerSmoke (client, timeoutMs) {
   if (!result.result.value?.worldTimerWhileSuspended || result.result.value.nativeService) {
     throw new Error('Expected a responsive world with the native pause service disabled: ' + JSON.stringify(result.result));
   }
-  console.log('Desktop debugger smoke passed: original frames, live receiver, source, local repair, stepping, and resume');
+  console.log('Desktop debugger smoke passed: original frames, conditional stepping, live-method restart, retained identity, and concurrent Runtime-only inspection');
 }
 
 async function main () {
@@ -765,6 +794,7 @@ async function main () {
         LIVELY_APP_DATA_DIR: dataDir,
         LIVELY_APP_CACHE_DIR: cacheDir,
         LIVELY_APP_SMOKE: '1',
+        LIVELY_APP_FUNCTION_SCOPES: debuggerSmoke ? '1' : process.env.LIVELY_APP_FUNCTION_SCOPES,
         LIVELY_APP_HEADLESS: headless ? '1' : ''
       },
       stdio: ['ignore', 'pipe', 'pipe']

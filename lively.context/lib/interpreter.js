@@ -199,6 +199,7 @@ export class Interpreter {
         this.runWithFrame(frame.getOriginalAst(), frame);
     } catch (e) {
       // TODO: create continuation
+      if (!e.isUnwindException && !e.unwindException) throw e;
       if (e.isUnwindException && e.error.toString() == 'Break')
         e = e.error;
       return e;
@@ -240,6 +241,9 @@ export class Interpreter {
     // Have we reached the statement the pc is in already? If yes then we
     // need to resume interpretation
     if (frame.resumeHasReachedPCStatement()) return true;
+
+    // An enclosing branch may need its recorded condition to reach the pc.
+    if (frame.isAlreadyComputed(node)) return true;
 
     // is the pc is in sub-ast of node? return false if not
     if (node.astIndex < frame.pcStatement.astIndex) return false;
@@ -650,7 +654,9 @@ export class Interpreter {
 
   visitVariableDeclaration(node, state) {
     var oldResult = state.result;
-    if (node.kind == 'var') {
+    // ponytail: lexical declarations use the rewriter's existing function scope;
+    // block-scoped bindings require extending both rewriter and interpreter.
+    if (node.kind == 'var' || node.kind == 'let' || node.kind == 'const') {
       node.declarations.forEach(function(decl) {
         this.accept(decl, state);
       }, this);
@@ -1000,6 +1006,7 @@ export class Function {
   get isInterpretableFunction() { return true }
 
   constructor(node, scope, optFunc) {
+    this.originalFunction = optFunc;
     this.lexicalScope = scope;
     this.node = node;
     this.source = undefined;
