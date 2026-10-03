@@ -479,7 +479,7 @@ export class Rewriter {
   }
 
   rewriteFunction(node) {
-      if (node.type !== "FunctionExpression")
+      if (node.type !== "FunctionExpression" && node.type !== 'ArrowFunctionExpression')
           throw new Error('no a valid function expression/statement? ' + acorn.printAst(node));
       if (!node.id) node.id = this.newNode("Identifier", {name: ""});
 
@@ -1779,7 +1779,20 @@ export class RewriteVisitor extends BaseVisitor {
   }
 
   visitArrowFunctionExpression(n, rewriter) {
-    return this.visitFunctionExpression(n, rewriter);
+    const result = this.visitFunctionExpression(n, rewriter);
+    const wrapped = result.expression.right;
+    const func = wrapped.arguments[3];
+    func.type = 'ArrowFunctionExpression';
+    func.expression = false;
+    delete func.id;
+    const call = func.body.body[0].handler.body.body[1].expression;
+    call.arguments[1] = rewriter.newNode('ArrayExpression', {elements: n.params});
+    if (!n.params.some(param => param.name === 'arguments')) {
+        const scopeName = func.body.body[0].block.body[0].declarations[4].id.name;
+        func.body.body[0].block.body.splice(2, 0, ...parse(scopeName + '.arguments = typeof arguments === "undefined" ? undefined : arguments;').body);
+    }
+    wrapped.arguments.push(parse('({this: this, arguments: typeof arguments === "undefined" ? undefined : arguments})').body[0].expression);
+    return result;
   }
 
   visitFunctionExpression(n, rewriter) {

@@ -859,7 +859,7 @@ describe('rewriting', function() {
         astCopy = obj.deepCopy(ast),
         result = rewrite(ast),
         sourceResult = escodegen.generate(result);
-    expect(sourceResult).to.include("function (foo)", "arrow expr not converted to function?");
+    expect(sourceResult).to.include('foo =>', 'arrow must preserve lexical this');
     expect(sourceResult).to.include("return { x: 23 };", "arrow result not returning?");
   });
 

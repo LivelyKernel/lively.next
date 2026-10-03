@@ -6,7 +6,6 @@ import { acorn, query, escodegen } from "lively.ast";
 
 let Global = typeof window !== "undefined" ? window : globalThis;
 export const originalFunctions = new WeakMap();
-export const interpretedFunctions = new WeakMap();
 export const capturedBindingMappings = new WeakSet();
 export function freeFunctionReferences(ast) {
   return query.findGlobalVarRefs('(' + escodegen.generate(ast) + ')');
@@ -88,13 +87,18 @@ export function __awaitValue(value, astIndex) {
 
 Object.assign(Global, { __createLexicalScope, __initializeBinding, __cloneLexicalScope, __captureLexicalScope, __scopeForUnwind, __awaitValue });
 
-export function __createClosure(namespace, idx, parentFrameState, f) {
+export function __createClosure(namespace, idx, parentFrameState, f, lexical) {
   // FIXME: Either save idx and use __getClosure later or attach the AST here and now (code dup.)?
   var registry = getCurrentASTRegistry();
   f._cachedAst = registry && registry[namespace] && registry[namespace][idx];
   // parentFrameState = [computedValues, varMapping, parentParentFrameState]
   f._cachedScopeObject = parentFrameState;
   f.livelyDebuggingEnabled = true;
+  if (lexical) {
+    f._lexicalThis = lexical.this;
+    f._lexicalArguments = lexical.arguments;
+    if (!originalFunctions.has(f._cachedAst)) originalFunctions.set(f._cachedAst, f);
+  }
   return f;
 }
 
@@ -144,6 +148,10 @@ export class UnwindException {
             functionScope = functionScope.getParentScope();
         }
         func = new AcornFunction(ast, functionScope.getParentScope(), originalFunctions.get(ast));
+        if (ast.type === 'ArrowFunctionExpression') {
+            func.lexicalThis = thiz;
+            if (functionScope.has('arguments')) func.lexicalArguments = functionScope.get('arguments');
+        }
         frame = Frame.create(func /*, varMapping */);
         frame.setThis(thiz);
         if (frame.func.node && frame.func.node.type != 'Program')
