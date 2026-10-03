@@ -911,6 +911,9 @@ async function assertDesktopDebuggerSmoke (client, timeoutMs) {
       if (!(await counterModel.proceed())?.isContinuation) throw new Error('Restart did not reach debugger');
       await counterModel.selectFrame(counterModel.continuation.currentFrame);
       if (counterModel.continuation.currentFrame.lookup('amount') !== 2) throw new Error('Restart lost lexical local');
+      counter.pause = false;
+      if (!counterModel.stepOver()?.isContinuation || counter.count !== 0) throw new Error('Restart lost its captured branch decision');
+      await counterModel.selectFrame(counterModel.continuation.currentFrame);
       if (await counterModel.proceed() !== 2 || counter.count !== 2) throw new Error('Restart lost receiver');
       const retained = { count: 0 };
       let incrementStep = '1';
