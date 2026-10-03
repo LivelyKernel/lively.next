@@ -501,14 +501,8 @@ describe('continuation', function() {
       return x + 4;
     }
 
-    var expected = { isContinuation: true },
-        runResult;
-    try {
-      StackReification.run(code, astRegistry);
-      expect().to.not.be.ok; // Error was not detected and triggered!
-    } catch (e) {
-      runResult = Continuation.fromUnwindException(e.unwindException);
-    }
+    var runResult = StackReification.run(code, astRegistry);
+    expect(runResult.exception).instanceOf(Error);
     var frame = runResult.frames()[0];
     expect(runResult.isContinuation).to.exist; // continuation
 
@@ -526,14 +520,8 @@ describe('continuation', function() {
       throw e;
     }
 
-    var continuation, frame;
-    try {
-      StackReification.run(code, astRegistry);
-      expect().no.to.be.ok; // Error was not detected and triggered!
-    } catch (e) {
-      continuation = Continuation.fromUnwindException(e.unwindException);
-      frame = continuation.frames()[0];
-    }
+    var continuation = StackReification.run(code, astRegistry), frame = continuation.frames()[0];
+    expect(continuation.exception).instanceOf(Error);
 
     var capturedAst = frame.getOriginalAst();
     expect(capturedAst.body.body[1].astIndex).to.equal(frame.getPC().astIndex); // pc

@@ -1,13 +1,14 @@
 import { obj, arr } from "lively.lang";
-import { acorn, escodegen } from "lively.ast";
-import { UnwindException, __getClosure } from "./exception.js";
+import { acorn, escodegen, parseFunction } from "lively.ast";
+import { UnwindException, __getClosure, __createLexicalScope, __declareLexicalBindings, __initializeBinding, __cloneLexicalScope, __awaitValue, interpretedFunctions, capturedBindingMappings, freeFunctionReferences } from "./exception.js";
 import { getGlobal } from "lively.vm/lib/util.js";
 
 let Global = getGlobal();
 
 export class Interpreter {
 
-  constructor() {
+  constructor({captureErrors = false} = {}) {
+    this.captureErrors = captureErrors;
     this.breakAtStatement = false; // for e.g. step over
     this.breakAtCall    = false; // for e.g. step into
   }
@@ -111,6 +112,7 @@ export class Interpreter {
     acorn.walk.matchNodes(node, {
       VariableDeclaration: (node, state, depth, type)  =>{
         if (type != 'VariableDeclaration') return;
+        if (node.kind !== 'var') return;
         node.declarations.forEach(function(decl) {
           frame.getScope().addToMapping(decl.id.name);
         });
@@ -125,10 +127,12 @@ export class Interpreter {
   invoke(recv, func, argValues, frame, isNew) {
     // if we send apply to a function (recv) we want to interpret it
     // although apply is a native function
-    if (recv && obj.isFunction(recv) && func === Function.prototype.apply) {
+    if (recv && obj.isFunction(recv) && (func === globalThis.Function.prototype.apply || func === globalThis.Function.prototype.call)) {
+      argValues = argValues.slice();
+      const isCall = func === globalThis.Function.prototype.call;
       func = recv; // The function object is what we want to run
       recv = argValues.shift(); // thisObj is first parameter
-      argValues = argValues[0]; // the second arg are the arguments (as an array)
+      argValues = isCall ? argValues : argValues[0] || [];
     }
     var origFunc = func;
 
@@ -252,8 +256,15 @@ export class Interpreter {
   }
 
   fetchInterpretedFunction(func) {
-    if (!func.livelyDebuggingEnabled) return null;
+    if (typeof func !== 'function' || this.isNative(func)) return null;
+    if (interpretedFunctions.has(func)) return interpretedFunctions.get(func);
     if (func.isInterpretableFunction !== undefined) return func;
+    if (!func.livelyDebuggingEnabled) {
+      const ast = parseFunction(func.toString(), {locations: true, addSource: true, addAstIndex: true});
+      const names = [...new Set(freeFunctionReferences(ast).map(ref => ref.name))].filter(name => !(name in Global));
+      if (names.length) throw new UnwindException({reason: 'bindings', func, names, toString() { return 'Function bindings'; }});
+      return new Function(ast, new Scope(Global), func).asFunction();
+    }
     var topScope = Scope.recreateFromFrameState(func._cachedScopeObject);
     func = new Function(func._cachedAst, topScope, func);
     return func.asFunction();
@@ -296,7 +307,7 @@ export class Interpreter {
     try {
       this['visit' + node.type](node, state);
     } catch (e) {
-      if (lively.Config && lively.Config.loadRewrittenCode && !(e instanceof UnwindException)) {
+      if ((this.captureErrors || lively.Config && lively.Config.loadRewrittenCode) && !(e instanceof UnwindException)) {
         if (e.unwindException)
           e = e.unwindException;
         else {
@@ -328,11 +339,32 @@ export class Interpreter {
 
   visitBlockStatement(node, state) {
     var frame = state.currentFrame;
+    const declarations = node.body.filter(n => n.type === 'VariableDeclaration' && n.kind !== 'var')
+        .flatMap(n => n.declarations.map(d => [d.id.name, n.kind]));
+    const previousScope = frame.getScope();
+    let blockScope = previousScope;
+    if (declarations.length) {
+      if (frame.isResuming()) {
+        let scope = previousScope;
+        while (scope && scope.lexicalNodeIndex !== node.astIndex) scope = scope.getParentScope();
+        if (scope) blockScope = scope;
+        // Function-body lexical declarations share the recorded function scope.
+        else if (node === frame.getOriginalAst().body) blockScope = frame.getFunctionScope();
+        else throw new Error('Missing recorded block scope at ' + node.astIndex);
+      } else {
+        const mapping = __createLexicalScope(null, frame.alreadyComputed, node.astIndex, declarations)[1];
+        blockScope = new Scope(mapping, previousScope);
+        blockScope.lexicalNodeIndex = node.astIndex;
+        frame.setScope(blockScope);
+      }
+      __declareLexicalBindings(blockScope.getMapping(), declarations);
+    }
     for (var i = 0; i < node.body.length; i++) {
       this.accept(node.body[i], state);
       if (frame.returnTriggered || frame.breakTriggered || frame.continueTriggered)
-        return;
+        break;
     }
+    if (declarations.length && blockScope.lexicalNodeIndex === node.astIndex) frame.setScope(blockScope.getParentScope());
   }
 
   visitExpressionStatement(node, state) {
@@ -450,6 +482,13 @@ export class Interpreter {
     try {
       this.accept(node.block, state);
     } catch (e) {
+      if (e.isUnwindException || e.unwindException) {
+        const unwind = e.isUnwindException ? e : e.unwindException;
+        if (!(unwind.error instanceof Error) || !node.handler) throw unwind;
+        e = unwind.error;
+        delete e.unwindException;
+        frame.setPC(null);
+      }
       if (lively.Config && lively.Config.loadRewrittenCode) {
         if (e instanceof UnwindException)
           throw e;
@@ -469,12 +508,11 @@ export class Interpreter {
         delete state.error;
       }
     } catch (e) {
+      if (e.isUnwindException || e.unwindException) throw e;
       hasError = true;
       err = e;
-    } finally {
-      if (node.finalizer !== null)
-        this.accept(node.finalizer, state);
     }
+    if (node.finalizer !== null) this.accept(node.finalizer, state);
 
     if (hasError)
       throw err;
@@ -555,6 +593,21 @@ export class Interpreter {
   visitForStatement(node, state) {
     var result = state.result,
         frame = state.currentFrame;
+    const lexical = node.init && node.init.type === 'VariableDeclaration' && node.init.kind !== 'var';
+    let loopScope;
+    if (lexical) {
+      if (frame.isResuming()) {
+        loopScope = frame.getScope();
+        while (loopScope && loopScope.lexicalNodeIndex !== node.astIndex) loopScope = loopScope.getParentScope();
+        if (!loopScope) throw new Error('Missing recorded loop scope');
+      } else {
+        const mapping = __createLexicalScope(null, frame.alreadyComputed, node.astIndex,
+          node.init.declarations.map(d => [d.id.name, node.init.kind]))[1];
+        loopScope = new Scope(mapping, frame.getScope());
+        loopScope.lexicalNodeIndex = node.astIndex;
+        frame.setScope(loopScope);
+      }
+    }
     node.init && this.accept(node.init, state);
 
     var testVal = true;
@@ -578,8 +631,14 @@ export class Interpreter {
         if (frame.continueTriggered) // still on: different labeled continue
           break;
       }
-      if (frame.returnTriggered)
-        return;
+      if (frame.returnTriggered) break;
+
+      if (lexical) {
+        const mapping = __cloneLexicalScope([frame.alreadyComputed, loopScope.getMapping(), null, node.astIndex])[1];
+        loopScope = new Scope(mapping, loopScope.getParentScope());
+        loopScope.lexicalNodeIndex = node.astIndex;
+        frame.setScope(loopScope);
+      }
 
       if (node.update) {
         this.accept(node.update, state);
@@ -591,6 +650,7 @@ export class Interpreter {
       }
       state.result = result;
     }
+    if (lexical) frame.setScope(loopScope.getParentScope());
   }
 
   visitForInStatement(node, state) {
@@ -655,12 +715,13 @@ export class Interpreter {
 
   visitVariableDeclaration(node, state) {
     var oldResult = state.result;
-    // ponytail: lexical declarations use the rewriter's existing function scope;
-    // block-scoped bindings require extending both rewriter and interpreter.
     if (node.kind == 'var' || node.kind == 'let' || node.kind == 'const') {
+      const previousKind = state.declarationKind;
+      state.declarationKind = node.kind;
       node.declarations.forEach(function(decl) {
         this.accept(decl, state);
       }, this);
+      state.declarationKind = previousKind;
     } else
       throw new Error('No semantics for VariableDeclaration of kind ' + node.kind + '!');
     state.result = oldResult;
@@ -668,10 +729,17 @@ export class Interpreter {
 
   visitVariableDeclarator(node, state) {
     var oldResult = state.result, val;
-    if (node.init) {
-      this.accept(node.init, state);
+    if (node.init || state.declarationKind !== 'var') {
+      if (node.init) this.accept(node.init, state);
+      else state.result = undefined;
       // addToMapping is done in evaluateDeclarations()
-      this.setVariable(node.id.name, state);
+      if (state.declarationKind === 'var') this.setVariable(node.id.name, state);
+      else {
+        let scope = state.currentFrame.getScope();
+        while (scope && !scope.has(node.id.name)) scope = scope.getParentScope();
+        if (!scope) throw new ReferenceError(node.id.name + ' has no lexical scope');
+        __initializeBinding(scope.getMapping(), node.id.name, state.result);
+      }
     }
     state.result = oldResult;
   }
@@ -787,9 +855,10 @@ export class Interpreter {
         this.accept(node.argument, state);
         state.result = typeof state.result;
       } catch(e) {
-        var ex = (lively.Config && lively.Config.loadRewrittenCode && (e instanceof UnwindException)) ?
+        var ex = e instanceof UnwindException ?
               e.error : e;
-        if (ex instanceof ReferenceError)
+        if (ex instanceof ReferenceError && node.argument.type === 'Identifier' &&
+            !state.currentFrame.getScope().hasInChain(node.argument.name))
           state.result = 'undefined';
         else
           throw e;
@@ -911,7 +980,12 @@ export class Interpreter {
   }
 
   visitCallExpression(node, state) {
-    var recv, prop, fn;
+    var recv, prop, fn, args = [];
+    const frame = state.currentFrame;
+    if (frame.pendingCall && frame.pendingCall.node === node) {
+      ({recv, fn, args} = frame.pendingCall);
+      delete frame.pendingCall;
+    } else {
     if (node.callee.type == 'MemberExpression') {
       // send
       this.accept(node.callee.object, state);
@@ -929,14 +1003,15 @@ export class Interpreter {
       this.accept(node.callee, state);
       fn = state.result;
     }
-    var args = [];
     node.arguments.forEach(function(arg) {
       this.accept(arg, state);
       args.push(state.result);
     }, this);
+    }
     try {
       state.result = this.invoke(recv, fn, args, state.currentFrame, state.isNew);
     } catch (e) {
+      if (e.isUnwindException && e.error.reason === 'bindings') frame.pendingCall = {node, recv, fn, args};
       if (lively.Config && lively.Config.loadRewrittenCode && e.unwindException)
         e = e.unwindException;
       state.result = e;
@@ -983,6 +1058,17 @@ export class Interpreter {
   visitLiteral(node, state) {
     state.result = node.value;
     return;
+  }
+
+  visitAwaitExpression(node, state) {
+    const frame = state.currentFrame;
+    if (frame.awaitRejection) {
+      const error = frame.awaitRejection;
+      delete frame.awaitRejection;
+      throw error;
+    }
+    this.accept(node.argument, state);
+    __awaitValue(state.result, node.astIndex);
   }
 
   static stripInterpreterFrames(topFrame) {
@@ -1214,7 +1300,7 @@ export class Frame {
     try {
       var args = this.getArguments();
     } catch (e) { /* might throw ReferenceError */ }
-    this.scope       = new Scope(null, this.scope.getParentScope());
+    this.scope       = new Scope(null, this.func.lexicalScope);
     this.returnTriggered   = false;
     this.breakTriggered  = null;    // null, true or string (labeled break)
     this.continueTriggered = null;    // null, true or string (labeled continue)
@@ -1230,6 +1316,12 @@ export class Frame {
   setScope(scope) { return this.scope = scope; }
 
   getScope() { return this.scope; }
+
+  getFunctionScope() {
+    let scope = this.scope;
+    while (scope.getParentScope() && scope.getParentScope() !== this.func.lexicalScope) scope = scope.getParentScope();
+    return scope;
+  }
 
   setParentFrame(frame) { return this.parentFrame = frame; }
 
@@ -1266,6 +1358,8 @@ export class Frame {
   setThis(thisObj) { return this.thisObj = thisObj; }
 
   getThis() { return this.thisObj !== undefined ? this.thisObj : Global; }
+
+  getException() { return this.exception; }
 
  // control flow
 
@@ -1371,6 +1465,7 @@ export class Scope {
   constructor(mapping, parentScope) {
     this.mapping     = mapping || {};
     this.parentScope = parentScope || null;
+    this.nativeSnapshot = capturedBindingMappings.has(this.mapping);
   }
 
 	copy() {
@@ -1392,7 +1487,9 @@ export class Scope {
 
   // accessing - mapping
 
-  has(name) { return this.mapping.hasOwnProperty(name); }
+  has(name) { return Object.prototype.hasOwnProperty.call(this.mapping, name); }
+
+  hasInChain(name) { return this.has(name) || !!(this.parentScope && this.parentScope.hasInChain(name)); }
 
   get(name) { return this.mapping[name]; }
 
@@ -1436,6 +1533,8 @@ obj.extend(Scope, {
     // frameState: [0], alreadyComputed, [1] = varMapping, [2] = parentFrameState
     do {
       newScope = new Scope(frameState == Global ? Global : frameState[1]);
+      if (frameState !== Global) newScope.computationState = frameState[0];
+      if (frameState !== Global && frameState[3] !== undefined) newScope.lexicalNodeIndex = frameState[3];
       if (scope)
         scope.setParentScope(newScope);
       else

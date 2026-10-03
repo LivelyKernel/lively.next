@@ -864,7 +864,7 @@ function seedProject (dataDir) {
 async function assertDesktopDebuggerSmoke (client, timeoutMs) {
   const result = await client.send('Runtime.evaluate', {
     expression: `(async () => {
-      const { run } = await System.import('lively.context/lib/stackReification.js');
+      const { run, runWithCapturedBindings } = await System.import('lively.context/lib/stackReification.js');
       const { openForContinuation } = await System.import('lively.ide/js/debugger/ui.cp.js');
       const marker = { count: 0 };
       function smokeOuter() {
@@ -890,7 +890,7 @@ async function assertDesktopDebuggerSmoke (client, timeoutMs) {
       if (await model.evaluateWorkspace() !== marker) throw new Error('Workspace lost receiver');
       model.ui.workspaceInput.textString = 'amount = Number(amount)';
       if (await model.evaluateWorkspace() !== 1) throw new Error('Workspace failed to repair local');
-      const stepped = model.stepOver();
+      const stepped = await model.stepOver();
       if (!stepped || !stepped.isContinuation) throw new Error(model.ui.status.textString);
       const resumed = await model.proceed();
       if (resumed !== marker || marker.count !== 1) throw new Error('Resume lost state or identity');
@@ -901,10 +901,10 @@ async function assertDesktopDebuggerSmoke (client, timeoutMs) {
       const counterView = openForContinuation(run(counter.increment, null, [], { this: counter }), $world);
       const counterModel = counterView.viewModel;
       await counterModel.selectFrame(counterModel.continuation.currentFrame);
-      if (!counterModel.stepOver()?.isContinuation || counter.count !== 0) throw new Error('Conditional Step Over completed the function');
+      if (!(await counterModel.stepOver())?.isContinuation || counter.count !== 0) throw new Error('Conditional Step Over completed the function');
       counter.increment = globalThis.Function('return function new_increment() { let amount = Number(this.step) * 2; if (this.pause) debugger; this.count += amount; return this.count; }')();
       counter.increment.displayName = 'increment';
-      if (!counterModel.restartFrame()?.isContinuation) throw new Error('Restart failed');
+      if (!(await counterModel.restartFrame())?.isContinuation) throw new Error('Restart failed');
       await counterModel.selectFrame(counterModel.continuation.currentFrame);
       if (counterModel.continuation.currentFrame.pc?.type !== 'VariableDeclaration') throw new Error('Restart lost its pc');
       if (!counterModel.ui.sourcePane.textString.includes('* 2')) throw new Error('Restart retained the old method');
@@ -912,7 +912,7 @@ async function assertDesktopDebuggerSmoke (client, timeoutMs) {
       await counterModel.selectFrame(counterModel.continuation.currentFrame);
       if (counterModel.continuation.currentFrame.lookup('amount') !== 2) throw new Error('Restart lost lexical local');
       counter.pause = false;
-      if (!counterModel.stepOver()?.isContinuation || counter.count !== 0) throw new Error('Restart lost its captured branch decision');
+      if (!(await counterModel.stepOver())?.isContinuation || counter.count !== 0) throw new Error('Restart lost its captured branch decision');
       await counterModel.selectFrame(counterModel.continuation.currentFrame);
       if (await counterModel.proceed() !== 2 || counter.count !== 2) throw new Error('Restart lost receiver');
       const retained = { count: 0 };
@@ -927,6 +927,49 @@ async function assertDesktopDebuggerSmoke (client, timeoutMs) {
       const retainedContinuation = run(retainedIncrement, null, [], values);
       retainedContinuation.currentFrame.getScope().set('amount', 1);
       if (retainedContinuation.resume() !== 1 || retained.count !== 1) throw new Error('Retained closure resume failed');
+      const autoCaptured = await runWithCapturedBindings(retainedIncrement);
+      if (autoCaptured.currentFrame.lookup('retained') !== retained) throw new Error('Automatic capture lost identity');
+      autoCaptured.currentFrame.getScope().set('amount', 1);
+      if (await autoCaptured.resume() !== 2) throw new Error('Automatic binding capture failed');
+      let externalAmount = 4;
+      const closureReceiver = {argReads: 0, child: function child(value) { let local = externalAmount + value; return local; }};
+      const closureTask = globalThis.Function('return function task() { debugger; return this.child(++this.argReads); }')();
+      const closureView = openForContinuation(run(closureTask, null, [], {this: closureReceiver}), $world);
+      const closureModel = closureView.viewModel;
+      await closureModel.selectFrame(closureModel.continuation.currentFrame);
+      await closureModel.stepOver();
+      if (!(await closureModel.stepInto())?.isContinuation || closureModel.continuation.frames().length !== 2) throw new Error('Retained method Step Into failed');
+      if (closureReceiver.argReads !== 1) throw new Error('Binding capture repeated argument side effects');
+      if (await closureModel.proceed() !== 5) throw new Error('Retained method resume failed');
+      const { openLiveCounter } = await System.import('lively.ide/js/debugger/examples/live-counter.js');
+      const tutorial = openLiveCounter($world);
+      const scopeView = await tutorial.debugLesson('scopeLesson'), scopeModel = scopeView.viewModel;
+      await scopeModel.selectFrame(scopeModel.continuation.currentFrame);
+      scopeModel.ui.workspaceInput.textString = 'let scratch = amount * 2; scratch';
+      if (await scopeModel.evaluateWorkspace() !== 4) throw new Error('Workspace declaration failed');
+      scopeModel.ui.workspaceInput.textString = 'scratch += 1';
+      if (await scopeModel.evaluateWorkspace() !== 5) throw new Error('Workspace temporary was lost');
+      scopeModel.ui.workspaceInput.textString = 'amount = 4';
+      if (await scopeModel.evaluateWorkspace() !== 4) throw new Error('Block repair failed');
+      scopeModel.ui.workspaceInput.textString = 'read()';
+      if (await scopeModel.evaluateWorkspace() !== 4) throw new Error('Closure did not share the block binding');
+      scopeModel.ui.workspaceInput.textString = 'receiver = {}';
+      if (await scopeModel.evaluateWorkspace() !== false || !scopeModel.ui.status.textString.includes('constant')) throw new Error('Workspace bypassed const enforcement');
+      const scopedResult = await scopeModel.proceed();
+      if (scopedResult.outer !== 1 || scopedResult.inner !== 4 || scopedResult.receiver !== tutorial) throw new Error('Block scope or receiver lost');
+      const loopView = await tutorial.debugLesson('loopLesson');
+      const loopModel = loopView.viewModel;
+      await loopModel.selectFrame(loopModel.continuation.currentFrame);
+      if (loopModel.continuation.currentFrame.lookup('i') !== 1) throw new Error('Loop scope was not captured');
+      if (JSON.stringify(await loopModel.proceed()) !== '[0,1,2]' || tutorial.count !== 3) throw new Error('Per-iteration closure state failed');
+      const asyncView = await tutorial.debugLesson('awaitLesson');
+      const asyncModel = asyncView.viewModel;
+      await asyncModel.selectFrame(asyncModel.continuation.currentFrame);
+      if (asyncModel.continuation.currentFrame.lookup('amount') !== 1) throw new Error('Await lost its frame local');
+      if (await asyncModel.proceed() !== 4 || tutorial.count !== 4) throw new Error('Await resume failed');
+      tutorial.getWindow().close(false);
+      const { runTestFiles } = await System.import('mocha-es6');
+      if (await runTestFiles(['lively.ide/tests/js/debugger-ui-test.js', 'lively.context/tests/tutorial-test.js'])) throw new Error('Renderer tutorial regressions failed');
       return { frames: 2, count: marker.count, worldTimerWhileSuspended: ticked, nativeService: livelyDesktop.debugger.isAvailable() };
     })()`,
     awaitPromise: true,
@@ -936,7 +979,7 @@ async function assertDesktopDebuggerSmoke (client, timeoutMs) {
   if (!result.result.value?.worldTimerWhileSuspended || result.result.value.nativeService) {
     throw new Error('Expected a responsive world with the native pause service disabled: ' + JSON.stringify(result.result));
   }
-  console.log('Desktop debugger smoke passed: original frames, conditional stepping, live-method restart, retained identity, and concurrent Runtime-only inspection');
+  console.log('Desktop debugger smoke passed: live edits, lexical closures, await, persistent workspace, renderer regressions, and Runtime-only binding capture');
 }
 
 async function main () {
