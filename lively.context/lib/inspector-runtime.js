@@ -517,8 +517,11 @@ export function halt (reason = 'halt') {
   if (bridge.armHalt({ reason, captureId }) === false) {
     throw new Error('lively.context inspector service rejected the halt request');
   }
+  if (typeof bridge.breakpointTrap !== 'function') {
+    throw new Error('lively.context inspector breakpoint trap is not installed');
+  }
 
-  debugger;
+  bridge.breakpointTrap(captureId);
   throw new InspectorHaltUnwind(reason, captureId);
 }
 
