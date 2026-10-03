@@ -70,6 +70,17 @@ describe('rewritten debugger actions', function () {
     expect(resumeInspectorContinuation(stepped)).equals(1);
   });
 
+  it('keeps a branch entered by the interpreter after restarting a frame', function () {
+    const { receiver, continuation } = capturedCounter();
+    const restarted = restartInspectorFrame(continuation);
+    const stopped = resumeInspectorContinuation(restarted);
+    receiver.pause = false;
+    const stepped = stepInspectorContinuation(stopped);
+    expect(stepped.isContinuation).equals(true);
+    expect(receiver.count).equals(0);
+    expect(resumeInspectorContinuation(stepped)).equals(1);
+  });
+
   it('reports evaluation errors during stepping instead of returning them as completed values', function () {
     const fn = globalThis.Function('return function compute() { debugger; unavailableDebuggerBinding(); }')();
     const stepped = stepInspectorContinuation(run(fn));
