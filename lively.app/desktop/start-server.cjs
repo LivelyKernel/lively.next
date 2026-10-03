@@ -752,7 +752,7 @@ function bootUrlForPort (port) {
   let inspectorStarted = false;
 
   function startInspectorService (trigger) {
-    if (closing || inspectorStarted || process.env.LIVELY_APP_INSPECTOR_SERVICE === '0') return;
+    if (closing || inspectorStarted || (process.env.LIVELY_APP_INSPECTOR_SERVICE !== '1' || process.env.LIVELY_APP_FUNCTION_SCOPES === '1')) return;
     inspectorStarted = true;
     const cdpPort = Number(process.env.LIVELY_APP_CDP_PORT || 9222);
     const inspectorPort = Number.isFinite(cdpPort) && cdpPort > 0 ? cdpPort : 9222;
@@ -786,7 +786,7 @@ function bootUrlForPort (port) {
   }
 
   function scheduleInspectorStart (trigger) {
-    if (inspectorStartScheduled || inspectorStarted || process.env.LIVELY_APP_INSPECTOR_SERVICE === '0') return;
+    if (inspectorStartScheduled || inspectorStarted || (process.env.LIVELY_APP_INSPECTOR_SERVICE !== '1' || process.env.LIVELY_APP_FUNCTION_SCOPES === '1')) return;
     inspectorStartScheduled = true;
     const timer = setTimeout(() => {
       inspectorStartScheduled = false;
@@ -798,7 +798,16 @@ function bootUrlForPort (port) {
   const b = livelyBoot();
   if (b && b.setDashboardUrl) b.setDashboardUrl(dashboardUrl);
 
-  if (process.env.LIVELY_APP_INSPECTOR_SERVICE !== '0') {
+  if (process.env.LIVELY_APP_FUNCTION_SCOPES === '1') {
+    const { captureFunctionBindings } = require('./function-scopes.cjs');
+    win.on('loaded', function () {
+      const desktop = win.window.livelyDesktop || (win.window.livelyDesktop = {});
+      const debuggerBridge = desktop.debugger || (desktop.debugger = {});
+      debuggerBridge.captureFunctionBindings = captureFunctionBindings;
+    });
+  }
+
+  if (process.env.LIVELY_APP_INSPECTOR_SERVICE === '1' && process.env.LIVELY_APP_FUNCTION_SCOPES !== '1') {
     win.once('loaded', function () {
       let href = '';
       try { href = String(win.window.location && win.window.location.href || ''); } catch (_) {}

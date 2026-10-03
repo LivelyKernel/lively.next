@@ -2,6 +2,7 @@
 import { Path, arr, Closure } from "lively.lang";
 import { ReplaceVisitor, escodegen, parseFunction } from "lively.ast";
 import { Interpreter } from "./interpreter.js";
+import { __createClosure } from "./exception.js";
 import { getCurrentASTRegistry, rewriteFunction } from "lively.context";
 
 let Global = typeof window !== "undefined" ? window : globalThis;
@@ -152,15 +153,15 @@ export const debugReplacements = {
     }
 
 let debugOption = Path('lively.Config.enableDebuggerStatements');
+let configOption, debugSupportDepth = 0;
 
 export function enableDebugSupport(astRegistry) {
   // FIXME currently only takes care of Array
   try {
       ensureLivelyLangPath();
-      if (!this.hasOwnProperty('configOption')) {
-          this.configOption = this.debugOption.get(Global);
-          this.debugOption.set(Global, true, true);
-      }
+      if (debugSupportDepth++) return;
+      configOption = debugOption.get(Global);
+      debugOption.set(Global, true, true);
       var replacements = debugReplacements;
       for (var method in replacements.Array) {
           if (!replacements.Array.hasOwnProperty(method)) continue;
@@ -170,16 +171,14 @@ export function enableDebugSupport(astRegistry) {
           Array.prototype[method] = dbgVersion;
       }
   } catch(e) {
-      this.disableDebugSupport();
+      disableDebugSupport();
       throw e;
   }
 }
 
 export function disableDebugSupport() {
-  if (this.hasOwnProperty('configOption')) {
-      this.debugOption.set(Global, this.configOption, true);
-      delete this.configOption;
-  }
+  if (!debugSupportDepth || --debugSupportDepth) return;
+  debugOption.set(Global, configOption, true);
   var replacements = debugReplacements;
   for (var method in replacements.Array) {
       var spec = replacements.Array[method],
@@ -193,12 +192,13 @@ export function run(func, astRegistry, args, optMapping) {
   //        lively.ast.Rewriting.getCurrentASTRegistry()
   astRegistry = astRegistry || getCurrentASTRegistry();
   enableDebugSupport(astRegistry);
-  if (!func.livelyDebuggingEnabled)
-      func = stackCaptureMode(func, optMapping, astRegistry);
   try {
-      return { isContinuation: false, returnValue: func.apply(null, args || []) };
+      if (!func.livelyDebuggingEnabled)
+          func = stackCaptureMode(func, optMapping, astRegistry);
+      return { isContinuation: false, returnValue: func.apply(optMapping && optMapping.this, args || []) };
   } catch (e) {
       // e will not be an UnwindException in rewritten system (gets unwrapped)
+      if (!e.isUnwindException && !e.unwindException) throw e;
       e = e.isUnwindException ? e : e.unwindException;
       if (e.error instanceof Error)
           throw e.error;
@@ -241,8 +241,7 @@ export class RewrittenClosure extends Closure {
 
   getRewrittenFunc() {
       var func = this.recreateFuncFromSource(this.getRewrittenSource());
-      func.livelyDebuggingEnabled = true;
-      return func;
+      return __createClosure('[runtime]', this.originalAst.registryId, this.frameState, func);
   }
 
   getRewrittenSource() {
@@ -255,12 +254,15 @@ export class RewrittenClosure extends Closure {
 
   rewrite(astRegistry) {
       var src = this.getFuncSource(),
-          ast = removeToplevelRecorderRefs(parseFunction(src)),
+          ast = removeToplevelRecorderRefs(parseFunction(src, { locations: true, addSource: true })),
           namespace = '[runtime]';
       // FIXME: URL not available here
       // if (this.originalFunc && this.originalFunc.sourceModule)
       //     namespace = new URL(this.originalFunc.sourceModule.findUri()).relativePathFrom(URL.root);
-      return this.ast = rewriteFunction(ast, astRegistry, namespace);
+      this.originalAst = ast;
+      this.frameState = [{}, this.varMapping, Global];
+      this.varMapping = { ...this.varMapping, __livelyClosureFrameState: this.frameState };
+      return this.ast = rewriteFunction(ast, astRegistry, namespace, '__livelyClosureFrameState', Object.keys(this.frameState[1]));
   }
 
 };

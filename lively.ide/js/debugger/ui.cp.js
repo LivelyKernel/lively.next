@@ -20,7 +20,7 @@ import {
 import { evaluateInDebuggerScopes } from './evaluation.js';
 
 function frameLabel (frame, index) {
-  const name = frame.functionName || '<anonymous>';
+  const name = frame.functionName || (frame.func && frame.func.name()) || '<anonymous>';
   const location = frame.location || {};
   const line = Number.isFinite(location.lineNumber) ? ':' + (location.lineNumber + 1) : '';
   return '#' + index + '  ' + name + line;
@@ -637,5 +637,6 @@ export function openForContinuation (continuation, world = null) {
   const targetWorld = world || (typeof $world !== 'undefined' && $world);
   const win = debuggerMorph.openInWindow({ title: 'Lively Debugger', world: targetWorld });
   if (win && win.activate) win.activate();
+  if (win && win.ensureToBeInWorldBounds) win.ensureToBeInWorldBounds();
   return debuggerMorph;
 }
