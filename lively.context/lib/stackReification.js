@@ -2,7 +2,7 @@
 import { Path, arr, Closure } from "lively.lang";
 import { ReplaceVisitor, escodegen, parseFunction } from "lively.ast";
 import { Interpreter } from "./interpreter.js";
-import { __createClosure } from "./exception.js";
+import { __createClosure, originalFunctions } from "./exception.js";
 import { getCurrentASTRegistry, rewriteFunction } from "lively.context";
 
 let Global = typeof window !== "undefined" ? window : globalThis;
@@ -240,6 +240,7 @@ export class RewrittenClosure extends Closure {
   }
 
   getRewrittenFunc() {
+      originalFunctions.set(this.originalAst, this.getFunc());
       var func = this.recreateFuncFromSource(this.getRewrittenSource());
       return __createClosure('[runtime]', this.originalAst.registryId, this.frameState, func);
   }

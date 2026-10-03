@@ -1539,6 +1539,9 @@ export class RewriteVisitor extends BaseVisitor {
       var test = this.accept(n.test, rewriter),
           consequent = this.accept(n.consequent, rewriter),
           alternate = n.alternate;
+      if (!rewriter.isStoredComputationResult(test)) {
+          test = rewriter.storeComputationResult(test, n.test.start, n.test.end, n.test.astIndex);
+      }
       if (n.consequent.type == 'DebuggerStatement')
           consequent = rewriter.newNode('BlockStatement', { body: [consequent] });
       if (alternate) {

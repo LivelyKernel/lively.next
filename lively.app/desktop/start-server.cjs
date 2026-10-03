@@ -799,11 +799,12 @@ function bootUrlForPort (port) {
   if (b && b.setDashboardUrl) b.setDashboardUrl(dashboardUrl);
 
   if (process.env.LIVELY_APP_FUNCTION_SCOPES === '1') {
-    const { captureFunctionBindings } = require('./function-scopes.cjs');
+    const { captureRendererFunctionBindings } = require('./function-scopes.cjs');
     win.on('loaded', function () {
       const desktop = win.window.livelyDesktop || (win.window.livelyDesktop = {});
       const debuggerBridge = desktop.debugger || (desktop.debugger = {});
-      debuggerBridge.captureFunctionBindings = captureFunctionBindings;
+      debuggerBridge.captureFunctionBindings = (func, names) => captureRendererFunctionBindings(
+        win.window, func, names, Number(process.env.LIVELY_APP_CDP_PORT || 9222));
     });
   }
 

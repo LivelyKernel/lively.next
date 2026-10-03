@@ -767,6 +767,7 @@ function createInspectorService (options) {
 
 module.exports = {
   CDPClient,
+  defaultFetchJson,
   InspectorService,
   createInspectorService,
   bindingNamesFromProperties,
