@@ -33,9 +33,14 @@ export default class TestRunner {
       const { loadPackage } = await System.import("lively-system-interface/commands/packages.js");
       const packageToTestLoaded = localInterface.coreInterface.getPackages().find(pkg => pkg.name === '${module_to_test}');
       if (!packageToTestLoaded){
+        const repositoryPackage = resource('http://localhost:9011/${module_to_test}/');
+        const localProjectPackage = resource('http://localhost:9011/local_projects/${module_to_test}/');
+        const packageBase = await repositoryPackage.join('package.json').exists()
+          ? repositoryPackage
+          : localProjectPackage;
         await loadPackage(localInterface.coreInterface, {
           name: '${module_to_test}',
-          address: 'http://localhost:9011/local_projects/${module_to_test}',
+          address: packageBase.asFile().url,
           type: 'package'
         });
       }
