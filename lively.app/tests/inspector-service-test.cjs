@@ -31,19 +31,19 @@ class FakeCDPClient {
       return { result: this.properties[params.objectId] || [] };
     }
     if (method === 'Runtime.callFunctionOn') {
-      if (params.functionDeclaration.includes('IsHaltUnwind')) {
-        return { result: { value: params.objectId === 'halt-unwind' } };
+      if (params.functionDeclaration.includes('HaltUnwindDescriptor')) {
+        return {
+          result: {
+            value: params.objectId === 'halt-unwind'
+              ? { isHaltUnwind: true, captureId: 'capture-test', reason: 'halt' }
+              : null
+          }
+        };
       }
       return { result: { value: true } };
     }
     if (method === 'Runtime.evaluate') {
-      if (String(params.expression).includes('breakpointTrap')) {
-        return { result: { type: 'function', objectId: 'breakpoint-trap' } };
-      }
       return { result: { value: true } };
-    }
-    if (method === 'Debugger.setBreakpointOnFunctionCall') {
-      return { breakpointId: 'breakpoint-on-trap' };
     }
     return {};
   }
@@ -96,11 +96,10 @@ async function testStartMarksRendererServiceAttached () {
   assert(client.calls.some(call => call.method === 'Runtime.enable'));
   assert(client.calls.some(call => call.method === 'Debugger.enable'));
   assert(client.calls.some(call =>
-    call.method === 'Runtime.evaluate' &&
-    call.params.expression.includes('breakpointTrap')));
-  assert(client.calls.some(call =>
-    call.method === 'Debugger.setBreakpointOnFunctionCall' &&
-    call.params.objectId === 'breakpoint-trap'));
+    call.method === 'Debugger.setPauseOnExceptions' &&
+    call.params.state === 'all'));
+  assert(!client.calls.some(call =>
+    call.method === 'Debugger.setBreakpointOnFunctionCall'));
   assert(client.calls.some(call =>
     call.method === 'Runtime.evaluate' &&
     call.params.expression.includes('inspectorServiceAttached = true')));
@@ -128,12 +127,6 @@ async function testCaptureStoresValuesInRenderer () {
 
   const getPropertiesCalls = client.calls.filter(call => call.method === 'Runtime.getProperties');
   assert.strictEqual(getPropertiesCalls.length, 2);
-
-  const ensureRuntime = client.calls.find(call =>
-    call.method === 'Runtime.evaluate' &&
-    call.params.expression.includes('installInspectorRuntime'));
-  assert(ensureRuntime);
-  assert.strictEqual(ensureRuntime.params.awaitPromise, true);
 
   const argumentStore = client.calls.find(call =>
     call.method === 'Debugger.evaluateOnCallFrame' &&
@@ -166,7 +159,7 @@ async function testExceptionCaptureStoresExceptionObject () {
   const service = new InspectorService({ client });
   const descriptor = await service.capturePaused(pausedPayload({
     reason: 'exception',
-    data: { type: 'object', objectId: 'exception-1', description: 'Error: boom' }
+    data: { type: 'object', objectId: 'exception-1', description: 'Error: boom', uncaught: true }
   }));
 
   assert.strictEqual(descriptor.reason, 'exception');
@@ -179,12 +172,9 @@ async function testExceptionCaptureStoresExceptionObject () {
     call.params.functionDeclaration.includes('storeException'));
   assert(frameStoreIndex > -1);
   assert(exceptionStoreIndex > frameStoreIndex);
-  assert(client.calls.some(call =>
-    call.method === 'Runtime.evaluate' &&
-    call.params.expression.includes('installInspectorRuntime')));
 }
 
-async function testTaggedHaltUnwindIsIgnored () {
+async function testTaggedHaltUnwindIsCaptured () {
   const client = new FakeCDPClient({ armed: null });
   const service = new InspectorService({ client });
   const descriptor = await service.capturePaused(pausedPayload({
@@ -192,14 +182,12 @@ async function testTaggedHaltUnwindIsIgnored () {
     data: { type: 'object', objectId: 'halt-unwind', description: '[LivelyInspectorHalt halt]' }
   }));
 
-  assert.strictEqual(descriptor, null);
+  assert.strictEqual(descriptor.captureId, 'capture-test');
+  assert.strictEqual(descriptor.reason, 'halt');
   const unwindCheck = client.calls.find(call =>
     call.method === 'Runtime.callFunctionOn' &&
     call.params.objectId === 'halt-unwind');
   assert.doesNotThrow(() => new Function('return (' + unwindCheck.params.functionDeclaration + ')')());
-  assert(!client.calls.some(call =>
-    call.method === 'Runtime.getProperties' ||
-    (call.method === 'Runtime.callFunctionOn' && call.params.objectId === 'scope-local')));
 }
 
 async function testHandlePausedResumesAndDeliversDescriptor () {
@@ -241,7 +229,7 @@ async function run () {
   await testStartMarksRendererServiceAttached();
   await testCaptureStoresValuesInRenderer();
   await testExceptionCaptureStoresExceptionObject();
-  await testTaggedHaltUnwindIsIgnored();
+  await testTaggedHaltUnwindIsCaptured();
   await testHandlePausedResumesAndDeliversDescriptor();
   await testDesktopBuildCopiesNodeMainSiblingRequires();
   console.log('inspector service tests ok');

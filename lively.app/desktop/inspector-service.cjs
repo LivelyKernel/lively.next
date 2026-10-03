@@ -98,6 +98,10 @@ function remoteObjectLabel (remoteObject) {
   return remoteObject.description || remoteObject.value || remoteObject.type || '';
 }
 
+function exceptionIsUncaught (data) {
+  return !!(data && data.uncaught === true);
+}
+
 const RENDERER_HELPERS = `
 function livelyInspectorRegistryForCapture(payload) {
   const Global = typeof globalThis !== 'undefined' ? globalThis : window;
@@ -178,34 +182,6 @@ const CONSUME_ARMED_HALT_EXPRESSION = `(() => {
   return debuggerBridge.consumeArmedHalt();
 })()`;
 
-const IS_HALT_UNWIND_FUNCTION = `function livelyInspectorIsHaltUnwind() {
-  return !!this && (this.isLivelyInspectorHaltUnwind || this.tag === '${HALT_UNWIND_TAG}');
-}`;
-
-const ENSURE_INSPECTOR_RUNTIME_EXPRESSION = `(() => {
-  const Global = typeof globalThis !== 'undefined' ? globalThis : window;
-  if (Global.__LIVELY_INSPECTOR_CAPTURE_RUNTIME__) return true;
-
-  const install = mod => {
-    if (mod && typeof mod.installInspectorRuntime === 'function') {
-      mod.installInspectorRuntime();
-      return true;
-    }
-    return false;
-  };
-
-  if (Global.System && typeof Global.System.import === 'function') {
-    return Global.System.import('lively.context').then(install);
-  }
-
-  const modules = Global.lively && Global.lively.modules;
-  if (modules && typeof modules.importPackage === 'function') {
-    return modules.importPackage('lively.context').then(install);
-  }
-
-  return false;
-})()`;
-
 function serviceAttachedExpression (attached) {
   return `(() => {
     const desktop = globalThis.livelyDesktop || (globalThis.livelyDesktop = {});
@@ -221,16 +197,15 @@ function serviceAttachedExpression (attached) {
   })()`;
 }
 
-const BREAKPOINT_TRAP_EXPRESSION = `(() => {
-  const desktop = globalThis.livelyDesktop || (globalThis.livelyDesktop = {});
-  const debuggerBridge = desktop.debugger || (desktop.debugger = {});
-  if (typeof debuggerBridge.breakpointTrap !== 'function') {
-    debuggerBridge.breakpointTrap = function livelyInspectorBreakpointTrap() {
-      return true;
-    };
-  }
-  return debuggerBridge.breakpointTrap;
-})()`;
+const HALT_UNWIND_DESCRIPTOR_FUNCTION = `function livelyInspectorHaltUnwindDescriptor() {
+  const isHaltUnwind = !!this && (this.isLivelyInspectorHaltUnwind || this.tag === '${HALT_UNWIND_TAG}');
+  if (!isHaltUnwind) return null;
+  return {
+    isHaltUnwind: true,
+    captureId: this.captureId || null,
+    reason: this.reason || 'halt'
+  };
+}`;
 
 const STORE_ARGUMENTS_FUNCTION = `(payload => {
   ${RENDERER_HELPERS}
@@ -318,7 +293,6 @@ class InspectorService {
     this.captureCount = 0;
     this.started = false;
     this.handlingPause = false;
-    this.functionCallBreakpointId = null;
   }
 
   async start () {
@@ -332,9 +306,8 @@ class InspectorService {
       this.client.onEvent((method, params) => {
         if (method === 'Debugger.paused') this.handlePaused(params);
         if (method === 'Runtime.executionContextCreated' || method === 'Page.loadEventFired') {
-          this.installBreakpointTrap().then(() =>
-            this.markRendererServiceAttached(true)).catch(err => {
-              this.log('inspector service status refresh failed: ' + (err.stack || err));
+          this.markRendererServiceAttached(true).catch(err => {
+            this.log('inspector service status refresh failed: ' + (err.stack || err));
           });
         }
       });
@@ -342,9 +315,8 @@ class InspectorService {
     await this.client.send('Runtime.enable');
     await this.client.send('Page.enable').catch(() => {});
     await this.client.send('Debugger.enable');
-    await this.client.send('Debugger.setPauseOnExceptions', { state: 'uncaught' });
+    await this.client.send('Debugger.setPauseOnExceptions', { state: 'all' });
     this.started = true;
-    await this.installBreakpointTrap();
     await this.markRendererServiceAttached(true);
     this.log('inspector service attached to renderer target');
     return this;
@@ -369,32 +341,6 @@ class InspectorService {
       this.log('inspector service status update failed: ' + (err.stack || err));
       return false;
     }
-  }
-
-  async installBreakpointTrap () {
-    if (!this.client) return null;
-    if (this.functionCallBreakpointId) {
-      try {
-        await this.client.send('Debugger.removeBreakpoint', {
-          breakpointId: this.functionCallBreakpointId
-        });
-      } catch (_) {}
-      this.functionCallBreakpointId = null;
-    }
-
-    const trap = await this.client.send('Runtime.evaluate', {
-      expression: BREAKPOINT_TRAP_EXPRESSION,
-      returnByValue: false,
-      silent: true
-    });
-    const objectId = trap && trap.result && trap.result.objectId;
-    if (!objectId) throw new Error('Could not install inspector breakpoint trap');
-
-    const breakpoint = await this.client.send('Debugger.setBreakpointOnFunctionCall', {
-      objectId
-    });
-    this.functionCallBreakpointId = breakpoint && breakpoint.breakpointId || null;
-    return this.functionCallBreakpointId;
   }
 
   async waitForPageTarget () {
@@ -449,12 +395,18 @@ class InspectorService {
     const callFrames = params.callFrames || [];
     if (!callFrames.length) return null;
 
-    if (params.reason === 'exception' && params.data && params.data.objectId &&
-        await this.isHaltUnwindException(params.data.objectId)) {
-      return null;
+    const exceptionObjectId = params.reason === 'exception' && params.data && params.data.objectId;
+    const haltUnwind = exceptionObjectId
+      ? await this.haltUnwindDescriptor(exceptionObjectId)
+      : null;
+    let armed = await this.consumeArmedHalt(callFrames[0]);
+    if (!armed && haltUnwind) {
+      armed = {
+        captureId: haltUnwind.captureId,
+        reason: haltUnwind.reason || 'halt'
+      };
     }
-
-    const armed = await this.consumeArmedHalt(callFrames[0]);
+    if (!armed && params.reason === 'exception' && !exceptionIsUncaught(params.data)) return null;
     if (!armed && params.reason !== 'exception') return null;
 
     const captureId = armed && armed.captureId || this.createCaptureId();
@@ -470,9 +422,6 @@ class InspectorService {
       },
       frames: []
     };
-
-    const exceptionObjectId = params.reason === 'exception' && params.data && params.data.objectId;
-    await this.ensureInspectorRuntime();
 
     for (let i = 0; i < callFrames.length; i++) {
       const frame = callFrames[i];
@@ -555,32 +504,22 @@ class InspectorService {
   }
 
   async isHaltUnwindException (objectId) {
+    const descriptor = await this.haltUnwindDescriptor(objectId);
+    return !!(descriptor && descriptor.isHaltUnwind);
+  }
+
+  async haltUnwindDescriptor (objectId) {
     try {
       const result = await this.client.send('Runtime.callFunctionOn', {
         objectId,
-        functionDeclaration: IS_HALT_UNWIND_FUNCTION,
+        functionDeclaration: HALT_UNWIND_DESCRIPTOR_FUNCTION,
         returnByValue: true,
         silent: true
       });
-      return !!(result && result.result && result.result.value);
+      return result && result.result && result.result.value || null;
     } catch (err) {
       this.log('inspector halt unwind check failed: ' + (err.stack || err));
-      return false;
-    }
-  }
-
-  async ensureInspectorRuntime () {
-    try {
-      const result = await this.client.send('Runtime.evaluate', {
-        expression: ENSURE_INSPECTOR_RUNTIME_EXPRESSION,
-        awaitPromise: true,
-        returnByValue: true,
-        silent: true
-      });
-      return !!(result && result.result && result.result.value);
-    } catch (err) {
-      this.log('inspector runtime install failed: ' + (err.stack || err));
-      return false;
+      return null;
     }
   }
 
@@ -653,7 +592,8 @@ class InspectorService {
         const descriptor = ${jsonForExpression(descriptor)};
         const debuggerBridge = globalThis.livelyDesktop && globalThis.livelyDesktop.debugger;
         if (debuggerBridge && typeof debuggerBridge.deliverCapture === 'function') {
-          return debuggerBridge.deliverCapture(descriptor);
+          debuggerBridge.deliverCapture(descriptor);
+          return true;
         }
         globalThis.__LIVELY_PENDING_DEBUGGER_CAPTURES__ =
           globalThis.__LIVELY_PENDING_DEBUGGER_CAPTURES__ || [];
