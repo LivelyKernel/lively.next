@@ -2,7 +2,7 @@
 // LIVELY_APP_FUNCTION_SCOPES=1. Do not attach a second DevTools inspector.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const path = require('node:path');
+const { captureFunctionBindings } = require('../desktop/function-scopes.cjs');
 
 module.exports = async function verifyFunctionScopes (nw, reportFile) {
   const report = { nw: process.versions.nw, v8: process.versions.v8, pid: process.pid, steps: [] };
@@ -11,8 +11,13 @@ module.exports = async function verifyFunctionScopes (nw, reportFile) {
     let renderer;
     const deadline = Date.now() + 120000;
     while (Date.now() < deadline) {
-      renderer = await new Promise(resolve => nw.Window.getAll(windows => resolve(windows.find(win =>
-        win.window.$world && win.window.$world._uiInitialized && win.window.$world.openedProject)?.window)));
+      renderer = await new Promise(resolve => nw.Window.getAll(windows => {
+        report.windows = windows.map(win => ({ url: win.window.location.href,
+          project: win.window.$world?.openedProject?.fullName,
+          error: String(win.window.__loadError__ || '') }));
+        fs.writeFileSync(reportFile, JSON.stringify(report, null, 2));
+        resolve(windows.find(win => win.window.$world?.openedProject)?.window);
+      }));
       if (renderer) break;
       await new Promise(resolve => setTimeout(resolve, 500));
     }
@@ -28,7 +33,6 @@ module.exports = async function verifyFunctionScopes (nw, reportFile) {
     report.missingNames = names;
     assert.deepEqual(names.sort(), ['marker', 'step']);
     mark('identified missing retained bindings with lively.ast');
-    const { captureFunctionBindings } = require(path.join(nw.App.startPath, 'desktop/function-scopes.cjs'));
     const values = await captureFunctionBindings(sample.fn, names);
     assert.equal(values.marker, sample.marker);
     values.marker.count = 2;
