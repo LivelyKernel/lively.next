@@ -1,7 +1,5 @@
 # sourced for lively commands
 
-eval $( node -e 'let pathParts = process.env.PATH.split(":"); let found = pathParts.findIndex(ea => ea.endsWith("flatn/bin")); if (found > 0) { console.log("export PATH=" + [...pathParts.splice(found, 1), ...pathParts].join(":").replace(/([ ])/g, "\\$1"));}' )
-
 function cd {
   builtin cd "${1:-$HOME}" || return $?
   DIR=$(pwd)
@@ -25,7 +23,6 @@ function find_in_lively {
     -name node_modules \
     -o -name bower_components \
     -o -name .module_cache \
-    -o -name lively.next-node_modules \
     -o -name lively.app \
     -o -name livelify-web.js \
     -o -name dist \

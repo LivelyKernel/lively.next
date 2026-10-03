@@ -2,7 +2,7 @@
 import { rollup } from '@rollup/wasm-node';
 import jsonPlugin from '@rollup/plugin-json';
 import { rm, writeFile } from 'node:fs/promises';
-import { lively } from 'lively.freezer/src/plugins/rollup';
+import { lively } from 'lively.freezer/src/plugins/rollup.js';
 import resolver from 'lively.freezer/src/resolvers/node.cjs';
 
 const verbose = true; // process.argv[2] === '--verbose';
@@ -31,7 +31,7 @@ try {
         isResurrectionBuild: true,
         asBrowserModule: true,
         excludedModules: [
-          'mocha', 'chai', 'picomatch', // references old lgtg that breaks the build
+          'mocha-es6', 'mocha', 'chai', 'picomatch', // references old lgtg that breaks the build
           'path-is-absolute', 'fs.realpath', // has a dist file that cant be parsed by rollup
           '@babel/preset-env',
           '@babel/plugin-syntax-import-meta',
@@ -65,7 +65,7 @@ try {
 
 } catch (err) {
   console.error('\x1b[31m   [ERROR] Loading screen build failed:\x1b[0m');
-  console.error('   ' + (err.message || err));
+  console.error('   ' + (err.stack || err.message || err));
   process.exit(1);
 }
 

@@ -23,7 +23,7 @@ async function interactivelyCreateNewLocalPackage() {
   // create package files
   await Promise.all([
     resource(join(dir, "package.json")).write(`{\n  "name": "${packageName}",\n  "version": "0.1.0"\n}`),
-    resource(join(dir, ".gitignore")).write("node_modules\n"),
+    resource(join(dir, ".gitignore")).write("node_modules\n.cachedImportMap.json\n"),
     resource(join(dir, "index.js")).write(`"format esm";\n`),
   ]).catch(err => { throw new Error(`could not create package files: ${err}`) })
   

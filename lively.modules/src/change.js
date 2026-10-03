@@ -16,7 +16,7 @@ async function moduleSourceChangeEsm (System, moduleId, newSource, options) {
     address: moduleId,
     linkSets: [],
     dependencies: [],
-    metadata: { format: 'esm' }
+    metadata: { format: 'esm', module: classHolder.module(System, moduleId) }
   };
 
   // translate the source and produce a {declare: FUNCTION, localDeps:

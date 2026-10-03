@@ -26,7 +26,7 @@ if (typeof System !== 'undefined' && isNodeRuntime(System)) {
   // 2. Compiled import via cjs bundle of rollup. -> Just bundle as is
   // 3. SystemJS import in node.js -> bypass SystemJS since it cant load node-fetch properly
   // 4. SystemJS import in browser. -> no need to load fetch
-  fetch = _fetch || System._nodeRequire('node-fetch');
+  fetch = globalThis.fetch || _fetch || System._nodeRequire('node-fetch').default;
 }
 
 let jsFileHashMap;
@@ -37,7 +37,7 @@ export async function fetchResource (proceed, load) {
   const largeModuleSize = 250 * 1000;
   const url = load.name + (isCjs ? '!cjs' : '');
   let res = System.resource(url);
-  const useNodeFetch = isNodeRuntime(System) && !res.isNodeJSFileResource && !res.isESMResource;
+  const useNodeFetch = isNodeRuntime(System) && res.isHTTPResource;
 
   if (useNodeFetch) res = await fetch(url);
   if (!res) return proceed(load);

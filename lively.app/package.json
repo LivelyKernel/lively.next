@@ -27,8 +27,8 @@
     ".": "./index.js"
   },
   "dependencies": {
-    "lively.server": "*",
-    "lively.installer": "*",
+    "lively.server": "workspace:*",
+    "lively.installer": "workspace:*",
     "nw": "0.111.1-sdk",
     "velopack": "0.0.1444-gc245055"
   },

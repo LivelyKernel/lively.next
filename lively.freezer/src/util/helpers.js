@@ -2,7 +2,7 @@
 import * as classes from 'lively.classes';
 import { toJsIdentifier } from 'lively.classes/util.js';
 import { resource } from 'lively.resources';
-import { arr, Path, fun, promise, string } from 'lively.lang';
+import { arr, Path, fun, string } from 'lively.lang';
 import { es5Transpilation, stringifyFunctionWithoutToplevelRecorder } from 'lively.source-transform';
 import runEval from './eval.cjs';
 import zlib from 'zlib';
@@ -117,75 +117,10 @@ export async function evalOnServer (code) {
   return await remoteInterface.runEvalAndStringify(code, { classTransform: classes.classToFunctionTransform });
 }
 
-export async function getConfig (resolver) {
-  const os = await await evalOnServer('process.platform');
-  return {
-    os,
-    cwd: (await evalOnServer('require.resolve("lively.freezer")')).replace('/index.js', ''),
-    presetPath: await evalOnServer('require.resolve(\'@babel/preset-env\').replace(\'file://\', \'\')'),
-    babelPath: await evalOnServer('require.resolve(\'@babel/cli/bin/babel.js\')'),
-    tmp: resource(resolver.ensureFileFormat(resolver.decanonicalizeFileName('lively.freezer/tmp.js'))),
-    min: resource(resolver.ensureFileFormat(resolver.decanonicalizeFileName('lively.freezer/tmp.min.js'))),
-    babelConfig: resource(resolver.ensureFileFormat(resolver.decanonicalizeFileName('lively.freezer/.babelrc'))),
-    preprocessViaBabel: !!resolver.isBrowserResolver,
-    pathToGoogleClosure: await evalOnServer(`require('lively.freezer/src/resolvers/node.cjs').decanonicalizeFileName(\"google-closure-compiler-${os === 'darwin' ? 'osx' : 'linux'}\/compiler\")`)
-  };
-}
-
-export async function compileOnServer (code, resolver, useTerser) {
-  const { cwd, tmp, min, presetPath, babelPath, babelConfig, pathToGoogleClosure, preprocessViaBabel } = await getConfig(resolver);
-  tmp.onProgress = (evt) => {
-    // set progress of loading indicator
-    const p = evt.loaded / evt.total;
-    resolver.setStatus({ progress: p, status: 'Sending code to Google Closure: ' + (100 * p).toFixed() + '%' });
-  };
-  min.onProgress = (evt) => {
-    // set progress of loading indicator
-    const p = evt.loaded / evt.total;
-    resolver.setStatus({ progress: p, status: 'Retrieving compiled code...' + (100 * p).toFixed() + '%' });
-  };
-  await tmp.write(code); // write the file to the filesystem for working in the shell
-  let c; const res = {};
-  if (preprocessViaBabel || useTerser) {
-    // Terser fails to convert class definitions into functions, so we need to
-    // preprocess with babel transform even if there is no preprocessing requested
-    await babelConfig.writeJson({
-      plugins: [await evalOnServer('require.resolve(\'@babel/plugin-proposal-optional-chaining\')')],
-      presets: [[presetPath, { modules: false }]]
-    });
-    c = await resolver.spawn({ command: `${babelPath} -o tmp.es5.js tmp.js`, cwd });
-    resolver.setStatus({ status: 'Transpiling source...', progress: 0.5 });
-    await promise.waitFor(100 * 1000, () => c.status.startsWith('exited'));
-    c = await resolver.spawn({ command: 'mv tmp.es5.js tmp.js', cwd });
-    await promise.waitFor(100 * 1000, () => c.status.startsWith('exited'));
-    babelConfig.remove();
-  }
-
-  resolver.setStatus({ status: 'Minifying source files...', progress: 0.5 });
-
-  if (useTerser) {
-    c = await resolver.spawn({
-      command: 'terser --compress --mangle --comments false --ecma 5 --output tmp.min.js -- tmp.js',
-      cwd
-    });
-  } else {
-    // ensure that optional chaining has been removed beforehand
-    c = await resolver.spawn({
-      command: `${pathToGoogleClosure} tmp.js > tmp.min.js --warning_level=QUIET --language_out=ECMASCRIPT_2018 --language_in=ECMASCRIPT_NEXT`,
-      cwd
-    });
-  }
-  await promise.waitFor(100 * 1000, () => c.status.startsWith('exited'));
-  if (c.stderr && c.exitCode !== 0) {
-    resolver.finish();
-    throw new Error(c.stderr);
-  }
-  resolver.setStatus({ status: 'finished compression' });
-  res.code = code;
-
-  res.min = await min.read();
-  await Promise.all([tmp, min].map(m => m.remove()));
-  return res;
+export async function compileOnServer (code, resolver) {
+  resolver.setStatus({ status: 'Transpiling and minifying source...' });
+  if (isNode) return runEval(`require('lively.freezer/src/minify.cjs')(${JSON.stringify(code)})`);
+  return evalOnServer(`System._nodeRequire(System._nodeRequire('node:url').fileURLToPath(new URL('lively.freezer/src/minify.cjs', System.baseURL)))(${JSON.stringify(code)})`);
 }
 
 /**

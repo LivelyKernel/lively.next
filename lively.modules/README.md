@@ -53,6 +53,37 @@ for more details.
 
 ## API
 
+### Client and server environments
+
+Packages run in both environments unless their `package.json` specifies
+`lively.environments`. Module entries in the existing `lively.meta` section
+override the package default; `*` patterns are supported and the most specific
+matching entry wins:
+
+```json
+{
+  "lively": {
+    "environments": ["client"],
+    "meta": {
+      "shared/*.js": { "environments": ["client", "server"] },
+      "server.js": { "environments": ["server"] }
+    }
+  }
+}
+```
+
+The client environment includes browser and desktop renderers; the server
+environment is Node. `module(id).environment()` reports compatibility and a
+reason when unavailable. SystemJS imports, module evaluation, and evaluated
+source changes reject incompatible modules before executing them. The system
+browser shows the reason instead of loading or evaluating such a module.
+Resource reads remain available for inspecting files and package configuration.
+The system browser's **Runs in** control changes the selected JavaScript module
+between **Client-only**, **Shared**, and **Server-only**. It writes an exact module
+entry in `lively.meta` in the package's `package.json`, preserving package defaults,
+wildcard rules, and other metadata. The change applies immediately; switching
+backends reads the saved declarations.
+
 ### [main interface](index.js)
 
 ### `lively.modules.importPackage(packageName)`

@@ -27,6 +27,7 @@ let S, opts, packagesToRemove;
 describe('object package', function () {
   beforeEach(async () => {
     S = getSystem('test', { baseURL: testBaseURL });
+    S.useModuleTranslationCache = false;
     const transpiler = System.transpiler;
     S.set(transpiler, System.get(transpiler));
     S.config({ transpiler });

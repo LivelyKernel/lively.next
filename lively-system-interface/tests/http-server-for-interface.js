@@ -2,6 +2,7 @@
 import { string, promise } from 'lively.lang';
 import { exec as node_exec } from 'child_process';
 import * as fs from 'fs';
+import { resource } from 'lively.resources';
 
 const isNode = System.get('@system-env').node;
 
@@ -63,7 +64,7 @@ let modules, setupSystem, livelySystem;
 
 Promise.all([import('lively.modules'), import('lively.installer')])
   .then(([m1, m2]) => { modules = m1, setupSystem = m2.setupSystem })
-  .then(() => setupSystem(process.env.lv_next_dir))
+  .then(() => setupSystem(new URL('../', import.meta.url).href))
   .then((sys) => {
    global.System = livelySystem = sys;  
    return new Promise((resolve, reject) =>
@@ -124,7 +125,7 @@ function cors(req, res, next) {
 
 export async function startServer (path = '/lively', port = 3011, timeout = 30 * 1000/* ms */) {
   // 1. prepare server file
-  let WORKSPACE_LK = (isNode ? string.joinPath(process.env.lv_next_dir, 'lively.server') : lively.shell.WORKSPACE_LK) || '.';
+  let WORKSPACE_LK = (isNode ? resource(System.decanonicalize('lively.server/index.js')).parent().path() : lively.shell.WORKSPACE_LK) || '.';
   let fn = string.joinPath(WORKSPACE_LK, '.lively.next-eval-server-for-test.mjs');
   let serverCodePatched = serverCode
     .replace(/__PORT__/g, port)
@@ -133,7 +134,7 @@ export async function startServer (path = '/lively', port = 3011, timeout = 30 *
   await writeFile(fn, serverCodePatched);
 
   // 2. start server process and wait until lively-system-interface is ready
-  let cmd = exec(`node --inspect --experimental-loader $lv_next_dir/flatn/resolver.mjs ${fn}`, { cwd: WORKSPACE_LK });
+  let cmd = exec(`node --inspect --experimental-import-meta-resolve ${JSON.stringify(fn)}`, { cwd: WORKSPACE_LK });
   let start = Date.now(); let outputSeen = '';
   return new Promise(function waitForServerStart (resolve, reject) {
     if (cmd.output !== outputSeen) { // for debugging

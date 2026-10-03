@@ -1,0 +1,63 @@
+{
+  "name": "lively.next",
+  "private": true,
+  "packageManager": "bun@1.4.2",
+  "engines": {
+    "node": "24.20.0"
+  },
+  "workspaces": [
+    "lively.lang",
+    "lively.bindings",
+    "lively.ast",
+    "lively.source-transform",
+    "lively.classes",
+    "lively.vm",
+    "lively.resources",
+    "lively.storage",
+    "lively.notifications",
+    "lively.modules",
+    "mocha-es6",
+    "lively-system-interface",
+    "lively.installer",
+    "lively.serializer2",
+    "lively.graphics",
+    "lively.keyboard",
+    "lively.morphic",
+    "lively.changesets",
+    "lively.shell",
+    "lively.server",
+    "lively.2lively",
+    "lively.git",
+    "lively.traits",
+    "lively.halos",
+    "lively.components",
+    "lively.ide",
+    "lively.headless",
+    "lively.freezer",
+    "lively.collab",
+    "lively.project",
+    "lively.user",
+    "lively.app"
+  ],
+  "trustedDependencies": [
+    "@parcel/watcher",
+    "@swc/core",
+    "brotli",
+    "leveldown",
+    "puppeteer",
+    "yoga-layout"
+  ],
+  "scripts": {
+    "update:browser-import-maps": "node --experimental-import-meta-resolve scripts/update-browser-import-maps.mjs",
+    "cache:browser-dependencies": "node scripts/cache-browser-dependencies.mjs",
+    "postinstall": "node scripts/link-workspace-self-references.mjs"
+  },
+  "devDependencies": {
+    "@babel/eslint-parser": "7.29.7",
+    "clean-jsdoc-theme": "4.2.14",
+    "eslint": "8.57.0",
+    "eslint-plugin-jsdoc": "61.2.0",
+    "jsdoc": "3.6.7",
+    "octokit": "5.0.5"
+  }
+}

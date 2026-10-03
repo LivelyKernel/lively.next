@@ -11,7 +11,7 @@ import * as _loose from 'acorn-loose';
 // If we are running in node, load the modules natively.
 // The reason is, that in node.js we can not load the esm
 // compiled modules served via jspm.dev but instead have to
-// use the ones that are installed from NPM.org via flatn.
+// use the ones that are installed from npm.
 // These are entirely written in cjs, which does not bode well
 // with our SystemJS version + custom source transformation.
 // If lively.ast is loaded entirely natively this is not an issue.

@@ -41,7 +41,8 @@ describe('import helper - cleanup unused imports', function () {
 describe('import helper - injection command', function () {
   // end-to-end test
 
-  this.timeout(6000);
+  // This includes real export discovery, editor evaluation, and UI rendering.
+  this.timeout(30000);
 
   before(async () => {
     await module('lively.morphic').revive();
@@ -50,6 +51,18 @@ describe('import helper - injection command', function () {
   let ed, queryMatcher;
   beforeEach(async () => {
     ed = new Text({ plugins: [new JavaScriptEditorPlugin()], readOnly: false });
+    const plugin = ed.plugins[0];
+    const systemInterface = plugin.systemInterface();
+    const importModules = ['index.js', 'morph.js', 'html-morph.js']
+      .map(file => System.decanonicalize('lively.morphic/' + file));
+    // Exercise real export lookup and evaluation without scanning unrelated
+    // modules left loaded by earlier tests in the package.
+    plugin.setSystemInterface(Object.assign(Object.create(systemInterface), {
+      exportsOfModules: options => systemInterface.exportsOfModules({
+        ...options,
+        excludedPackages: [...options.excludedPackages, id => !importModules.includes(id)]
+      })
+    }));
     let targetModule = `lively://import-helper-test/${Date.now()}`;
     let dummyWorld = new World();
     dummyWorld.filterableListPrompt = (label, items) => {

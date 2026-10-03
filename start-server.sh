@@ -8,32 +8,30 @@ fi
 
 lv_next_dir=$PWD
 
-. $lv_next_dir/scripts/lively-next-env.sh
-lively_next_env $lv_next_dir
-
 config_file="$lv_next_dir/config.js"
 if [ ! -f "$config_file" ]; then
   config_file="$lv_next_dir/lively.installer/assets/config.js"
 fi
 
-cd lively.server;
+cd "$lv_next_dir/lively.server" || exit 1
 
-options="--no-warnings --dns-result-order ipv4first \
-         --experimental-loader $lv_next_dir/flatn/resolver.mjs \
-         bin/start-server.js \
-         --root-directory $lv_next_dir \
-         --config $config_file"
+options=(
+  --no-warnings
+  --dns-result-order ipv4first
+  --experimental-import-meta-resolve
+  bin/start-server.js
+  --root-directory "$lv_next_dir"
+  --config "$config_file"
+)
 
 if [ "$1" = "--debug" ]; then
-  options="--inspect $options"
+  options=(--inspect "${options[@]}")
+  port="${2:-}"
+else
+  port="${1:-}"
 fi
-
-if [ "$1" != "--debug" ] && [ -n "$1" ]; then
-  options="$options --port $1"
-fi
-
-if [ -n "$2" ]; then
-  options="$options --port $2"
+if [ -n "$port" ]; then
+  options+=(--port "$port")
 fi
 
 # https://stackoverflow.com/a/5947802/4418325 for colored output.
@@ -47,4 +45,4 @@ else
   export ENTR_SUPPORT=0
   echo -e "${RED}\`entr\` is not installed. Hot-reloading of files changed outside of \`lively.next\` will be disabled.${NC}"
 fi
-node $options
+node "${options[@]}"

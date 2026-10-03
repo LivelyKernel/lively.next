@@ -9,18 +9,18 @@ import { string } from 'lively.lang';
 // FIXME put this in either config or have it provided by server
 // var defaultConnection = {url: `${document.location.origin}/lively-socket.io`, namespace: "l2l"};
 
-const defaultConnection = { url: `${document.location.origin}/lively-socket.io`, namespace: 'l2l' };
+const defaultConnection = () => ({ url: `${document.location.origin}/lively-socket.io`, namespace: 'l2l' });
 
 // var cmd = runCommand("ls"); await cmd.whenDone(); cmd.output;
 export function runCommand (commandString, opts = {}) {
-  return _runCommand(commandString, { l2lClient: L2LClient.ensure(defaultConnection), ...opts });
+  return _runCommand(commandString, { l2lClient: L2LClient.ensure(defaultConnection()), ...opts });
 }
 
 // await defaultDirectory()
-export async function defaultDirectory () { return await _defaultDirectory(L2LClient.ensure(defaultConnection)); }
+export async function defaultDirectory () { return await _defaultDirectory(L2LClient.ensure(defaultConnection())); }
 
 // await env()
-export function env () { return _env(L2LClient.ensure(defaultConnection)); }
+export function env () { return _env(L2LClient.ensure(defaultConnection())); }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
@@ -69,8 +69,7 @@ const defaultGrepExclusions = [
   '.git',
   'node_modules',
   'dist',
-  '.module_cache',
-  'lively.next-node_modules'
+  '.module_cache'
 ];
 
 export function doGrep (queryString, path, options = {}) {

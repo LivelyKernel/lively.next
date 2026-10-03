@@ -133,7 +133,10 @@ async function loadTestModuleAndExtractTestState (testModuleName, testsByFile = 
   mod = modules.module(id);
   let mocha = mod.recorder.mocha;
 
-  if (!mocha) { throw new Error(`After importing mocha test ${id} no mocha object is present in module context!`); }
+  if (!mod.isMochaTest()) return { mocha: null, testsByFile };
+  if (!mocha || typeof mocha.suite?.fullTitle !== 'function') {
+    throw new Error(`After importing mocha test ${id} no mocha object is present in module context!`);
+  }
 
   let tests = gatherTests(mocha.suite);
   let prev = testsByFile.findIndex(ea => ea.file === id);
@@ -149,7 +152,7 @@ async function runTestFiles (files, options) {
 
   if (options.package) {
     (options.logger || console).log('[mocha-es6] importing package %s', options.package);
-    await lively.modules.importPackage(options.package);
+    await modules.importPackage(options.package);
     files = files.map(f =>
       f.match(/^(\/|[a-z-A-Z]:\\|[^:]+:\/\/)/)
         ? f
@@ -162,18 +165,24 @@ async function runTestFiles (files, options) {
   for (let f of files) {
     let testState = await loadTestModuleAndExtractTestState(f);
     var { mocha, testsByFile } = testState;
+    if (!mocha) continue;
 
     let grep = options.grep || mocha.options.grep || /.*/;
 
     mocha.grep(grep);
     options.invert && mocha.invert();
 
+    let runner;
     try {
-      failures += await new Promise((resolve, reject) => mocha.run(failures => resolve(failures)));
+      failures += await new Promise(resolve => { runner = mocha.run(resolve); });
     } catch (err) {
       (options.logger || console).log('[mocha-es6] error running tests!\n' + err.stack);
       console.error(err);
       throw err;
+    } finally {
+      // Each file creates its own runner. Release process error listeners before
+      // the next file runs, otherwise Mocha's unhandled handlers re-emit in a loop.
+      runner?.dispose?.();
     }
   }
 
