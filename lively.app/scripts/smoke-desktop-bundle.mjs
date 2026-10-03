@@ -8,6 +8,7 @@ import { spawn, spawnSync } from 'node:child_process';
 
 const CDP_PORT = Number(process.env.LIVELY_APP_SMOKE_CDP_PORT || 9222);
 const DEFAULT_TIMEOUT = 300000;
+const DEBUGGER_SMOKE_REASON = 'desktop debugger smoke';
 const WORLD_PATH = '/worlds/load?name=__newWorld__&askForWorldName=false&fastLoad=true';
 const PROJECT_PATH = '/projects/load?name=__newProject__&askForWorldName=false&fastLoad=true';
 const EXISTING_PROJECT_PATH = '/projects/load?name=smoke--project&askForWorldName=false&fastLoad=true';
@@ -74,15 +75,20 @@ function hostPlatform () {
   return process.platform;
 }
 
-function appCommand (bundleDir, platform) {
+function headlessArgs (headless) {
+  return headless ? ['--headless=new', '--disable-gpu'] : [];
+}
+
+function appCommand (bundleDir, platform, headless = false) {
+  const chromiumArgs = headlessArgs(headless);
   if (platform === 'linux') {
-    return { command: path.join(bundleDir, 'nw'), args: [bundleDir] };
+    return { command: path.join(bundleDir, 'nw'), args: chromiumArgs.concat(bundleDir) };
   }
   if (platform === 'osx') {
-    return { command: path.join(bundleDir, 'lively.next.app', 'Contents', 'MacOS', 'nwjs'), args: [] };
+    return { command: path.join(bundleDir, 'lively.next.app', 'Contents', 'MacOS', 'nwjs'), args: chromiumArgs };
   }
   if (platform === 'win') {
-    return { command: path.join(bundleDir, 'lively.next.exe'), args: [bundleDir] };
+    return { command: path.join(bundleDir, 'lively.next.exe'), args: chromiumArgs.concat(bundleDir) };
   }
   throw new Error(`Unsupported smoke platform: ${platform}`);
 }
@@ -532,12 +538,33 @@ class CDPClient {
     }
   }
 
-  send (method, params = {}) {
+  send (method, params = {}, options = {}) {
     const id = this.nextId++;
     const payload = JSON.stringify({ id, method, params });
+    const timeoutMs = Number(options.timeoutMs || options.timeout || 0);
     return new Promise((resolve, reject) => {
-      this.pending.set(id, { resolve, reject });
-      this.ws.send(payload);
+      let timer = null;
+      const finish = fn => value => {
+        if (timer) clearTimeout(timer);
+        fn(value);
+      };
+      if (timeoutMs > 0) {
+        timer = setTimeout(() => {
+          this.pending.delete(id);
+          reject(new Error(`${method} timed out after ${timeoutMs}ms`));
+        }, timeoutMs);
+      }
+      this.pending.set(id, {
+        resolve: finish(resolve),
+        reject: finish(reject)
+      });
+      try {
+        this.ws.send(payload);
+      } catch (err) {
+        if (timer) clearTimeout(timer);
+        this.pending.delete(id);
+        reject(err);
+      }
     });
   }
 
@@ -835,18 +862,231 @@ function seedProject (dataDir) {
   }
 }
 
+async function waitForDesktopDebuggerBridge (client, timeoutMs) {
+  await waitFor('desktop debugger bridge attachment', async () => {
+    const result = await client.send('Runtime.evaluate', {
+      expression: `(() => {
+        const bridge = globalThis.livelyDesktop && globalThis.livelyDesktop.debugger;
+        return Boolean(bridge && typeof bridge.isAvailable === 'function' && bridge.isAvailable());
+      })()`,
+      returnByValue: true
+    }, { timeoutMs: 10000 });
+    return result.result && result.result.value === true;
+  }, timeoutMs);
+}
+
+function debuggerSmokeExpression () {
+  return `(() => Promise.resolve().then(async () => {
+    async function importLivelyContext() {
+      return Function('url', 'return import(url)')(
+        new URL('/lively.context/lib/inspector-runtime.js', location.origin).href);
+    }
+    function describeError(err) {
+      if (!err) return null;
+      return {
+        name: err.name || '',
+        message: err.message || String(err),
+        stack: err.stack || '',
+        originalErr: err.originalErr ? describeError(err.originalErr) : null
+      };
+    }
+    try {
+      const mod = await importLivelyContext();
+      const { halt, isInspectorHaltUnwind, installInspectorRuntime } = mod;
+      installInspectorRuntime();
+
+      const marker = {
+        label: 'desktop-debugger-smoke-marker',
+        value: 23,
+        nested: { identity: 'actual-object' }
+      };
+
+      globalThis.__LIVELY_DEBUGGER_SMOKE_MARKER__ = marker;
+      globalThis.__LIVELY_DEBUGGER_SMOKE_AFTER_HALT__ = false;
+
+      try {
+        function smokeOuter() {
+          const closedOver = { marker, closed: true };
+          function smokeInner(arg) {
+            const localObject = { marker, arg, closedOver };
+            halt(${JSON.stringify(DEBUGGER_SMOKE_REASON)});
+            globalThis.__LIVELY_DEBUGGER_SMOKE_AFTER_HALT__ = true;
+            return localObject;
+          }
+          return smokeInner(marker);
+        }
+        smokeOuter();
+      } catch (err) {
+        if (!isInspectorHaltUnwind(err)) {
+          return {
+            unwound: false,
+            markerValue: marker.value,
+            afterHaltRan: globalThis.__LIVELY_DEBUGGER_SMOKE_AFTER_HALT__,
+            error: describeError(err)
+          };
+        }
+        return {
+          unwound: true,
+          markerValue: marker.value,
+          afterHaltRan: globalThis.__LIVELY_DEBUGGER_SMOKE_AFTER_HALT__
+        };
+      }
+
+      return {
+        unwound: false,
+        markerValue: marker.value,
+        afterHaltRan: globalThis.__LIVELY_DEBUGGER_SMOKE_AFTER_HALT__
+      };
+    } catch (err) {
+      return {
+        unwound: false,
+        setupError: describeError(err)
+      };
+    }
+  }))()`;
+}
+
+function debuggerSmokeStateExpression () {
+  return `(() => {
+    const system = globalThis.System;
+    const env = system && system.get && system.get('@lively-env');
+    const registry = env && env.debuggerContexts;
+    const contexts = registry && registry.contexts || {};
+    const context = Object.values(contexts).find(ctx => ctx && ctx.reason === ${JSON.stringify(DEBUGGER_SMOKE_REASON)}) || null;
+    const marker = globalThis.__LIVELY_DEBUGGER_SMOKE_MARKER__;
+    const windows = globalThis.$world && typeof $world.getWindows === 'function' ? $world.getWindows() : [];
+    const debuggerWindow = windows.find(win => {
+      const target = win && (win.targetMorph || win.owner || win.contentMorph);
+      return win && (
+        win.title === 'Lively Debugger' ||
+        win.name === 'Lively Debugger' ||
+        target && target.name === 'lively debugger'
+      );
+    });
+
+    function summarizeBinding (value) {
+      if (value === marker) return { actualMarker: true, value: value.value, label: value.label };
+      if (value && typeof value === 'object') {
+        if (value.marker === marker) return { containsActualMarker: true, keys: Object.keys(value) };
+        return {
+          type: Object.prototype.toString.call(value),
+          keys: Object.keys(value).slice(0, 10),
+          value: value.value,
+          label: value.label
+        };
+      }
+      return { primitive: value };
+    }
+
+    const inspectedBindings = [];
+    let hasActualMarker = false;
+    let hasActualMarkerCarrier = false;
+
+    if (context) {
+      for (const scope of Object.values(context.scopes || {})) {
+        for (const [name, value] of Object.entries(scope.bindings || {})) {
+          if (['marker', 'arg', 'localObject', 'closedOver'].includes(name)) {
+            const summary = summarizeBinding(value);
+            inspectedBindings.push({
+              frameId: scope.frameId,
+              scopeId: scope.scopeId,
+              scopeType: scope.type,
+              name,
+              summary
+            });
+            if (value === marker) hasActualMarker = true;
+            if (value && typeof value === 'object' && value.marker === marker) hasActualMarkerCarrier = true;
+          }
+        }
+      }
+    }
+
+    return {
+      hasRegistry: Boolean(registry),
+      hasContext: Boolean(context),
+      contextId: context && context.id,
+      reason: context && context.reason,
+      frameCount: context ? Object.keys(context.frames || {}).length : 0,
+      scopeCount: context ? Object.keys(context.scopes || {}).length : 0,
+      hasActualMarker,
+      hasActualMarkerCarrier,
+      inspectedBindings,
+      hasDebuggerWindow: Boolean(debuggerWindow),
+      debuggerWindowTitle: debuggerWindow && (debuggerWindow.title || debuggerWindow.name),
+      windowTitles: windows.map(win => win && (win.title || win.name || '')).filter(Boolean)
+    };
+  })()`;
+}
+
+async function assertDesktopDebuggerSmoke (client, timeoutMs) {
+  await waitForDesktopDebuggerBridge(client, timeoutMs);
+  await waitFor('final lively world load before debugger smoke', async () => {
+    const result = await client.send('Runtime.evaluate', {
+      expression: `Boolean(globalThis.$world &&
+        $world.name &&
+        $world.name !== 'lively.next' &&
+        typeof $world.getWindows === 'function')`,
+      returnByValue: true
+    }, { timeoutMs: 10000 });
+    return result.result && result.result.value === true;
+  }, timeoutMs);
+
+  const trigger = await client.send('Runtime.evaluate', {
+    expression: debuggerSmokeExpression(),
+    awaitPromise: true,
+    returnByValue: true
+  }, { timeoutMs: Math.min(timeoutMs, 30000) });
+
+  const triggerValue = trigger.result && trigger.result.value;
+  if (!triggerValue || triggerValue.unwound !== true || triggerValue.afterHaltRan) {
+    throw new Error([
+      'Desktop debugger smoke did not unwind at halt().',
+      `Observed trigger result: ${JSON.stringify(triggerValue, null, 2)}`,
+      `Raw CDP trigger result: ${JSON.stringify(trigger, null, 2)}`
+    ].join('\n'));
+  }
+
+  const state = await waitFor('desktop debugger capture and UI', async () => {
+    const result = await client.send('Runtime.evaluate', {
+      expression: debuggerSmokeStateExpression(),
+      returnByValue: true
+    }, { timeoutMs: 10000 });
+    const value = result.result && result.result.value;
+    if (!value || !value.hasContext || !value.hasDebuggerWindow) return null;
+    return value;
+  }, timeoutMs);
+
+  const errors = [];
+  if (!state.frameCount) errors.push('capture did not record any stack frames');
+  if (!state.scopeCount) errors.push('capture did not record any scopes');
+  if (!state.hasActualMarker && !state.hasActualMarkerCarrier) {
+    errors.push('capture did not expose the in-process marker object through a scope binding');
+  }
+  if (errors.length) {
+    throw new Error([
+      'Desktop debugger smoke failed.',
+      ...errors,
+      `Observed state: ${JSON.stringify(state, null, 2)}`
+    ].join('\n'));
+  }
+
+  console.log('Desktop app smoke passed: lively.context debugger captures stack values and opens UI');
+}
+
 async function main () {
   const args = parseArgs();
   const devRoot = args.devRoot ? path.resolve(args.devRoot) : null;
   const bundleDir = devRoot ? null : path.resolve(args.bundleDir || '');
   const platform = args.platform || hostPlatform();
   const timeoutMs = Number(args.timeout || process.env.LIVELY_APP_SMOKE_TIMEOUT || DEFAULT_TIMEOUT);
+  const debuggerSmoke = args.debuggerSmoke === '1' || args.debuggerSmoke === 'true';
+  const headless = args.headless === '1' || args.headless === 'true';
   if (!devRoot && (!bundleDir || bundleDir === process.cwd())) throw new Error('Pass --bundleDir=<desktop bundle dir> or --devRoot=<repo root>');
   if (devRoot && !fs.existsSync(path.join(devRoot, 'lively.app', 'start.sh'))) {
     throw new Error(`Dev root does not look like lively.next: ${devRoot}`);
   }
 
-  const { command, args: commandArgs } = devRoot ? devAppCommand(devRoot) : appCommand(bundleDir, platform);
+  const { command, args: commandArgs } = devRoot ? devAppCommand(devRoot) : appCommand(bundleDir, platform, headless);
   assertExecutableExists(command);
 
   // Exercise URL decoding, including Windows' RUNNER~1 temporary paths.
@@ -879,7 +1119,8 @@ async function main () {
         ...process.env,
         LIVELY_APP_DATA_DIR: dataDir,
         LIVELY_APP_CACHE_DIR: cacheDir,
-        LIVELY_APP_SMOKE: '1'
+        LIVELY_APP_SMOKE: '1',
+        LIVELY_APP_HEADLESS: headless ? '1' : ''
       },
       stdio: ['ignore', 'pipe', 'pipe']
     });
@@ -1021,6 +1262,7 @@ async function main () {
           console.log('Desktop app smoke passed: renderer System uses HTTP module URLs');
           await assertBrowserEnvironmentSwitching(client, port);
           await assertBrowserSwc(client);
+          if (debuggerSmoke) await assertDesktopDebuggerSmoke(client, timeoutMs);
 
           const projectUrl = `http://127.0.0.1:${port}${devRoot ? PROJECT_PATH : EXISTING_PROJECT_PATH}`;
           console.log(`Navigating app window to ${projectUrl}`);
