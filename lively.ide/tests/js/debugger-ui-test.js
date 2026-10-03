@@ -1,4 +1,4 @@
-/* global describe, it */
+/* global describe, it, System, $world */
 import { expect } from 'mocha-es6';
 import {
   initialFrameForContinuation,
@@ -27,6 +27,26 @@ function frame (spec = {}) {
 }
 
 describe('lively debugger ui', function () {
+  it('renders an editable workspace below the scope inspector', async function () {
+    const { run } = await System.import('lively.context/lib/stackReification.js');
+    const { openForContinuation } = await System.import('lively.ide/js/debugger/ui.cp.js');
+    const view = openForContinuation(run(function workspaceLayout () {
+      var amount = 2;
+      debugger;
+      return amount;
+    }), $world);
+    try {
+      const model = view.viewModel, input = model.ui.workspaceInput;
+      input.textString = 'amount = 3';
+      await new Promise(resolve => setTimeout(resolve, 100));
+      const node = document.getElementById(input.id);
+      expect(node.getBoundingClientRect().width).above(100);
+      expect(node.getBoundingClientRect().height).above(50);
+      expect(node.textContent).contains('amount');
+      expect(await model.evaluateWorkspace()).equals(3);
+    } finally { view.viewModel.closeDebugger(); }
+  });
+
   it('shows the source and current statement of a rewriter continuation', async function () {
     const originalFrame = {
       func: { getSource: () => 'function increment() {\n  debugger;\n}' },
