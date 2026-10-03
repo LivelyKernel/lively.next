@@ -1,4 +1,6 @@
 const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
 const {
   InspectorService,
   bindingNamesFromProperties,
@@ -186,6 +188,21 @@ async function testHandlePausedResumesAndDeliversDescriptor () {
   assert(deliver.params.expression.includes('deliverCapture'));
 }
 
+async function testDesktopBuildCopiesNodeMainSiblingRequires () {
+  const startServerSource = fs.readFileSync(path.join(__dirname, '..', 'desktop', 'start-server.cjs'), 'utf8');
+  const buildSource = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'build.mjs'), 'utf8');
+
+  const copiedFilesMatch = buildSource.match(/for \(const f of \[([^\]]+)\]\) \{\s*fs\.copyFileSync\(path\.join\(APP_DIR, 'desktop', f\)/s);
+  assert(copiedFilesMatch, 'could not find desktop script copy list in build.mjs');
+
+  const copiedFiles = new Set([...copiedFilesMatch[1].matchAll(/'([^']+)'/g)].map(match => match[1]));
+  const siblingRequires = [...startServerSource.matchAll(/require\('\.\/([^']+)'\)/g)].map(match => match[1]);
+
+  for (const file of siblingRequires) {
+    assert(copiedFiles.has(file), `build.mjs must copy desktop/${file} because start-server.cjs requires it`);
+  }
+}
+
 async function run () {
   await testBindingNameFiltering();
   await testTargetSelection();
@@ -193,6 +210,7 @@ async function run () {
   await testExceptionCaptureStoresExceptionObject();
   await testTaggedHaltUnwindIsIgnored();
   await testHandlePausedResumesAndDeliversDescriptor();
+  await testDesktopBuildCopiesNodeMainSiblingRequires();
   console.log('inspector service tests ok');
 }
 
