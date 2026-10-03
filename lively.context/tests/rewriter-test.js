@@ -500,7 +500,7 @@ describe('rewriting', function() {
 
   it('rewrites function re-declarations', function() {
     var src = 'function foo() { 1; } foo(); function foo() { 2; }',
-        ast = parser.parse(src),
+        ast = parser.parse(src, { sourceType: 'script' }),
         astCopy = obj.deepCopy(ast),
         result = rewrite(ast),
         expected = tryCatch(0, { 'foo': closureWrapper(0, 'foo', [], {}, '2;\n') },
