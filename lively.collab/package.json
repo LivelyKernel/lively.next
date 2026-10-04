@@ -4,7 +4,19 @@
   "lively": {
     "isObjectPackage": false
   },
-  "dependencies": {},
-  "devDependencies": {},
+  "dependencies": {
+    "lively.morphic": "workspace:*",
+    "lively.graphics": "workspace:*",
+    "lively.ide": "workspace:*",
+    "lively.lang": "workspace:*",
+    "lively.user": "workspace:*",
+    "lively.bindings": "workspace:*",
+    "lively.components": "workspace:*",
+    "lively.halos": "workspace:*"
+  },
+  "devDependencies": {
+    "mocha-es6": "workspace:*",
+    "lively.modules": "workspace:*"
+  },
   "main": "index.js"
 }

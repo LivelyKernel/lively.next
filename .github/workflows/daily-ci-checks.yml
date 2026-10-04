@@ -14,11 +14,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup `node`
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '24.20.0'
       - name: Setup bun
         uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@1.95.0
         with:
@@ -32,9 +34,9 @@ jobs:
           cache-name: lively-deps
         with:
           path: |
-            lively.next-node_modules/ 
+            ~/.bun/install/cache/
             .puppeteer-browser-cache/          
-          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json', 'flatn/package.json', 'mocha-es6/package.json') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node24-bun1.4.2-${{ hashFiles('bun.lock', 'bunfig.toml') }}
       - name: Prepare to install `lively.next`
         run: |
           chmod a+x ./install.sh
@@ -52,9 +54,16 @@ jobs:
           cache-name: lively-deps
         with:
           path: |
-            lively.next-node_modules/
+            ~/.bun/install/cache/
             .puppeteer-browser-cache/           
-          key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('lively*/package.json', 'flatn/package.json', 'mocha-es6/package.json') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-node24-bun1.4.2-${{ hashFiles('bun.lock', 'bunfig.toml') }}
+      - name: Verify locks are unchanged
+        run: >-
+          git diff --exit-code --
+          package.json bun.lock bunfig.toml
+          */package.json
+          lively.installer/assets/partsbin-seed/package.json
+          lively.installer/assets/partsbin-seed/bun.lock
       - name: Run CI Test Script
         run:  ./scripts/test.sh
       - name: Circumvent buggy behavior of GHA Job Summaries
@@ -64,28 +73,96 @@ jobs:
           name: test_output
           path: test_output_clean.md
           retention-days: 1
+  cold-install:
+    name: Cold frozen install, build, and smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Configure private caches
+        run: |
+          echo "BUN_INSTALL_CACHE_DIR=$RUNNER_TEMP/lively-bun-cache" >> "$GITHUB_ENV"
+          echo "XDG_CACHE_HOME=$RUNNER_TEMP/lively-xdg-cache" >> "$GITHUB_ENV"
+          echo "JSPM_CACHE_DIR=$RUNNER_TEMP/lively-jspm-cache" >> "$GITHUB_ENV"
+          echo "PUPPETEER_CACHE_DIR=$RUNNER_TEMP/lively-puppeteer-cache" >> "$GITHUB_ENV"
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@1.95.0
+        with:
+          targets: wasm32-wasip1
+      - name: Install and build without shared caches
+        run: |
+          test -f bun.lock
+          chmod +x ./install.sh
+          CI=true ./install.sh --no-desktop
+      - name: Verify locks are unchanged
+        run: >-
+          git diff --exit-code --
+          package.json bun.lock bunfig.toml
+          */package.json
+          lively.installer/assets/partsbin-seed/package.json
+          lively.installer/assets/partsbin-seed/bun.lock
+      - name: Run migration regression tests
+        run: |
+          export BUN_PATH="$(command -v bun)"
+          node --experimental-import-meta-resolve lively.modules/tests/native-resolver-test.mjs
+          node --experimental-import-meta-resolve lively.modules/tests/native-system-live-test.mjs
+          node --experimental-import-meta-resolve lively.freezer/tests/package-resolution-test.cjs
+          node --experimental-import-meta-resolve lively.freezer/tests/dynamic-system-import-test.mjs
+          node --experimental-import-meta-resolve lively.freezer/tests/minify-test.cjs
+          node --experimental-import-meta-resolve lively.freezer/tests/project-bundle-test.mjs
+          node --experimental-import-meta-resolve lively.server/tests/browser-import-map-cache-test.mjs
+          node --experimental-import-meta-resolve lively.project/tests/package-install-test.mjs
+          node --experimental-import-meta-resolve lively.installer/tests/runtime-roots-test.mjs
+          cd lively.lang
+          node --experimental-import-meta-resolve ../mocha-es6/bin/mocha-es6.js tests/string-test.js
+      - name: Run strict browser boot smoke
+        run: |
+          chmod +x ./start-server.sh ./scripts/check-boot.sh
+          ./start-server.sh 9021 > /tmp/lively-next-cold-server.log 2>&1 &
+          server_pid=$!
+          cleanup() {
+            pkill -TERM -P "$server_pid" 2>/dev/null || true
+            kill "$server_pid" 2>/dev/null || true
+            wait "$server_pid" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          node ./scripts/wait-for-server.js http://127.0.0.1:9021/ 120000 1000 "$server_pid"
+          LIVELY_BOOT_URL=http://127.0.0.1:9021 ./scripts/check-boot.sh
+
   docs-coverage:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Setup `node`
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '24'
-      - name: Install `eslint`
-        run: npm install eslint@8.57.0 # pin this version as newer ones require us to use eslint@9 which comes with a new config format
-      - name: Install `jsdoc` plugin for `eslint`
-        run: npm install eslint-plugin-jsdoc
-      - name: Install `eslint` parser for `babel`
-        run: npm install @babel/eslint-parser@7.29.7 # pin to Babel 7; Babel 8 requires eslint@9 or newer
+          node-version: '24.20.0'
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - name: Install locked tooling
+        env:
+          PUPPETEER_CACHE_DIR: ${{ github.workspace }}/.puppeteer-browser-cache
+        run: |
+          test -f bun.lock
+          bun install --frozen-lockfile
       - name: Setup GitHub Action Summary
         run: |
           echo '' >> docs_output.md
           echo '---' >> docs_output.md
           echo '# Status of Documentation <g-emoji class="g-emoji" alias="books" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/1f4da.png"><img class="emoji" alt="books" src="https://github.githubassets.com/images/icons/emoji/unicode/1f4da.png" width="20" height="20"></g-emoji>' >> docs_output.md
       - name: Lint Code and Summarize Number of Errors
-        run: npx eslint -c .eslintrc.js lively.*/*.js | grep '✖' >> docs_output.md
+        run: ./node_modules/.bin/eslint -c .eslintrc.js lively.*/*.js | grep '✖' >> docs_output.md
       - name: Circumvent buggy behavior of GHA Job Summaries
         uses: actions/upload-artifact@v4
         with:

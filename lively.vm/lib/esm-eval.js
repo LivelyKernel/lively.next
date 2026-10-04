@@ -171,6 +171,7 @@ export function runEval (System, code, options) {
   }
 
   let module = System.get('@lively-env').moduleEnv(targetModule);
+  module.assertEnvironment();
   let { recorder, recorderName, dontTransform } = module;
   let transpiler = getEs6Transpiler(System, options, module);
   let header = `var _moduleExport = ${recorderName}._moduleExport,\n` +

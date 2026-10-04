@@ -6,25 +6,26 @@
     "url": "https://github.com/LivelyKernel/lively.ide"
   },
   "dependencies": {
-    "lively-system-interface": "https://github.com/LivelyKernel/lively-system-interface",
-    "lively.2lively": "https://github.com/LivelyKernel/lively.2lively",
-    "lively.ast": "https://github.com/LivelyKernel/lively.ast",
-    "lively.bindings": "https://github.com/LivelyKernel/lively.bindings",
-    "lively.changesets": "https://github.com/LivelyKernel/lively.changesets",
-    "lively.classes": "https://github.com/LivelyKernel/lively.classes",
-    "lively.components": "https://github.com/LivelyKernel/lively.components",
-    "lively.graphics": "https://github.com/LivelyKernel/lively.graphics",
-    "lively.halos": "https://github.com/LivelyKernel/lively.halos",
-    "lively.ide": "https://github.com/LivelyKernel/lively.ide",
-    "lively.modules": "https://github.com/LivelyKernel/lively.modules",
-    "lively.morphic": "https://github.com/LivelyKernel/lively.morphic",
-    "lively.notifications": "https://github.com/LivelyKernel/lively.notifications",
-    "lively.resources": "https://github.com/LivelyKernel/lively.resources",
-    "lively.shell": "https://github.com/LivelyKernel/lively.shell",
-    "lively.lang": "^1.0.0",
+    "lively-system-interface": "workspace:*",
+    "lively.2lively": "workspace:*",
+    "lively.ast": "workspace:*",
+    "lively.bindings": "workspace:*",
+    "lively.changesets": "workspace:*",
+    "lively.classes": "workspace:*",
+    "lively.components": "workspace:*",
+    "lively.graphics": "workspace:*",
+    "lively.halos": "workspace:*",
+    "lively.ide": "workspace:*",
+    "lively.modules": "workspace:*",
+    "lively.morphic": "workspace:*",
+    "lively.notifications": "workspace:*",
+    "lively.resources": "workspace:*",
+    "lively.shell": "workspace:*",
+    "lively.lang": "workspace:*",
     "prettier": "1.18.2",
     "semver": "5.3.0",
     "mermaid-it-markdown": "1.0.8",
+    "mermaid": "10.9.5",
     "diff": "7.0.0",
     "parse5": "7.0.0",
     "eslint": "7.32.0",
@@ -37,12 +38,65 @@
     "highlight.js": "11.9.0",
     "sinon-chai": "4.0.0",
     "sinon": "21.0.0",
-    "js-beautify": "^1.15.4"
+    "js-beautify": "^1.15.4",
+    "lively.serializer2": "workspace:*",
+    "lively.freezer": "workspace:*",
+    "lively.vm": "workspace:*",
+    "lively.source-transform": "workspace:*",
+    "lively.project": "workspace:*",
+    "lively.user": "workspace:*",
+    "lively.git": "workspace:*",
+    "lively.collab": "workspace:*",
+    "lively.installer": "workspace:*"
   },
   "devDependencies": {
-    "mocha-es6": "^0.5"
+    "mocha-es6": "workspace:*"
   },
   "scripts": {
     "test": "mocha-es6 tests/{,diff/,js/,shell/}*-test.js"
+  },
+  "main": "./index.js",
+  "lively": {
+    "environments": [
+      "client"
+    ],
+    "meta": {
+      "index.js": {
+        "environments": [
+          "client",
+          "server"
+        ]
+      },
+      "diff/file-patch.js": {
+        "environments": [
+          "client",
+          "server"
+        ]
+      },
+      "diff/tokenizer.js": {
+        "environments": [
+          "client",
+          "server"
+        ]
+      },
+      "js/navigator.js": {
+        "environments": [
+          "client",
+          "server"
+        ]
+      },
+      "text/snippets.js": {
+        "environments": [
+          "client",
+          "server"
+        ]
+      },
+      "js/browser/tree.js": {
+        "environments": [
+          "client",
+          "server"
+        ]
+      }
+    }
   }
 }

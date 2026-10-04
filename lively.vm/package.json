@@ -26,11 +26,11 @@
   },
   "homepage": "https://github.com/LivelyKernel/lively.vm",
   "dependencies": {
-    "lively.ast": ">=0.11.1",
-    "lively.lang": ">=1.0.23",
-    "lively.notifications": "*",
-    "lively.classes": "*",
-    "lively.source-transform": "*"
+    "lively.ast": "workspace:*",
+    "lively.lang": "workspace:*",
+    "lively.notifications": "workspace:*",
+    "lively.classes": "workspace:*",
+    "lively.source-transform": "workspace:*"
   },
   "devDependencies": {
     "babel-core": "^6.16.0",
@@ -43,6 +43,7 @@
     "babel-regenerator-runtime": "^6.5.0",
     "rollup": "^0.36.1",
     "rollup-plugin-babel": "^2.6.1",
-    "uglify-js": "^2.8.22"
+    "uglify-js": "^2.8.22",
+    "mocha-es6": "workspace:*"
   }
 }

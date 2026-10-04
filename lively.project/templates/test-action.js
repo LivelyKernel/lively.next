@@ -14,11 +14,13 @@ jobs:
       - name: Setup \`node\`
         uses: actions/setup-node@v3
         with:
-          node-version: '24'
+          node-version: '24.20.0'
       - name: Setup bun
         uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
       - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.95.0
         with:
           targets: wasm32-wasip1
       - name: Restore \`lively.next\` installation
@@ -39,7 +41,6 @@ jobs:
       - name: Prepare to install \`lively.next\`
         run: chmod a+x ./install.sh
       - name: Install \`lively.next\`
-        if: \${{ steps.cache-lively-with-build.outputs.cache-hit != 'true' }}
         uses: nick-fields/retry@v3
         with:
           timeout_minutes: 15
@@ -60,6 +61,8 @@ jobs:
         with:
           ref: \${{ github.ref }}
           path: local_projects/%PROJECT_NAME%%PROJECT_DEPENDENCIES%
+      - name: Install Project Dependencies
+        run: node lively.project/package-install.mjs local_projects/%PROJECT_NAME%
       - name: Start \`lively.next\`
         run: |
           ./start-server.sh > /dev/null 2>&1 &

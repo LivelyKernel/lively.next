@@ -39,7 +39,7 @@ import {
   compileOnServer
 } from './util/helpers.js';
 import { joinPath, ensureFolder } from 'lively.lang/string.js';
-import { resolveViaImportMap } from 'flatn/helpers.mjs';
+import { resolveViaImportMap } from 'lively.modules/src/import-map.js';
 
 
 const separator = `__${'Separator'}__`; // obscure formatting to prevent breaking builds when this files in included
@@ -71,7 +71,7 @@ const CLASS_INSTRUMENTATION_MODULES_EXCLUSION = ['lively.lang'];
 // rsm 30.7.24: There are packages which when bundled will crash any build reliably. We exclude these from any build by default.
 const ALWAYS_EXCLUDED_MODULES = ['mermaid-it-markdown'];
 
-const baseURL = typeof System !== 'undefined' ? System.baseURL : ensureFolder(process.env.lv_next_dir || process.cwd());
+const baseURL = typeof System !== 'undefined' ? System.baseURL : ensureFolder(process.env.lv_next_dir || resource(new URL('../../', import.meta.url).href).path());
 
 export function bulletProofNamespaces (code, chunkFileName, isResurrectionBuild, sourceMap = false) {
   if (sourceMap) {
@@ -277,7 +277,7 @@ export default class LivelyRollup {
   }) {
     this.verbose = verbose; // wether or not to log the warnings to the console that happen during build
     this.resolver = resolver; // resolves the modules to the respective urls, for either client or browser
-    this.useTerser = useTerser; // needed because google closure sometimes does crazy stuff during optimization
+    this.useTerser = useTerser;
     this.useSwc = useSwc;
     this.includePolyfills = includePolyfills; // wether or not to include the pointer event polyfill
     this.snapshot = null; // DEPRECATED
@@ -290,7 +290,7 @@ export default class LivelyRollup {
     this.isResurrectionBuild = isResurrectionBuild; // If set to true, this will make the lively.core modules hot swappable. This requires not only scope capturing but also embedding of constructs in the build that allow for hot swapping of the modules in the static build scripts.
     this.includeLivelyAssets = includeLivelyAssets; // If set to true, will include the default fonts and css from lively.next into the bundle. Disabling this is probably a bad idea.
     this.compress = compress; // If true, this will perform custom compression of the files to brotli and gzip.
-    this.minify = minify; // If true, will invoke the google closure minification to further reduce source code size.
+    this.minify = minify;
     this.sourceMap = sourceMap;
     this.swcTransform = null;
     this._swcTransformPromise = null;
@@ -334,8 +334,7 @@ export default class LivelyRollup {
 
   /**
    * Depending in the configuration of the bundle, we return a different
-   * kind of resolution context. This can be plain flatn, or flatn combined with
-   * systemjs custom import maps for either node.js or the browser.
+   * kind of resolution context, with Lively mappings for Node or the browser.
    * @returns { "node"|"systemjs-node"|"systemjs-browser" }
    */
   getResolutionContext () {
@@ -475,7 +474,7 @@ export default class LivelyRollup {
     };
   }
 
-  getSwcTransformOptions (modId, source, { instrumentClasses, moduleHash } = {}) {
+  getSwcTransformOptions (modId, source, { instrumentClasses, moduleHash, enableDynamicImportTransform = true } = {}) {
     if (modId === '@empty.js') return {};
     let parsedSource;
     try {
@@ -536,6 +535,7 @@ export default class LivelyRollup {
       // export { x } from '...' splitting (when capture_imports is false,
       // it still splits re-export-from statements for capture).
       captureImports: this.sourceMap,
+      enableDynamicImportTransform,
       resurrection: this.isResurrectionBuild,
       // For resurrection builds, wrap function declarations through __define__
       ...(this.isResurrectionBuild ? { declarationWrapper: `__varRecorder__["${normalizedId}__define__"]` } : {}),
@@ -670,6 +670,28 @@ export default class LivelyRollup {
    */
   needsDynamicLoadTransform (sourceCode) {
     return sourceCode.includes('System.import'); // good enough
+  }
+
+  rewriteExcludedDynamicImports (sourceCode) {
+    if (!this.needsDynamicLoadTransform(sourceCode)) return sourceCode;
+    const replacements = [];
+    babel.traverse(babel.parse(sourceCode), {
+      CallExpression: path => {
+        const { callee } = path.node;
+        if (!t.isMemberExpression(callee) || callee.computed ||
+            !t.isIdentifier(callee.object, { name: 'System' }) ||
+            !t.isIdentifier(callee.property, { name: 'import' }) ||
+            path.node.arguments.length !== 1) return;
+        const specifier = path.get('arguments.0').evaluate();
+        if (specifier.confident && typeof specifier.value === 'string' &&
+            this.excludedModules.some(pkg => specifier.value === pkg || specifier.value.startsWith(`${pkg}/`))) {
+          replacements.push({ start: callee.start, end: callee.end });
+        }
+      }
+    });
+    return replacements.reverse().reduce(
+      (rewritten, { start, end }) => rewritten.slice(0, start) + "System['import']" + rewritten.slice(end),
+      sourceCode);
   }
 
   /**
@@ -874,6 +896,7 @@ export default class LivelyRollup {
       source = source.replaceAll(projectAssetRegex, assetNameRewriter); // needs to be performed in a way to preserve sourcemap
     }
 
+    source = this.rewriteExcludedDynamicImports(source);
     const needsLoadInstrumentation = this.needsDynamicLoadTransform(source);
 
     if (this.useSwc) {
@@ -897,7 +920,7 @@ export default class LivelyRollup {
       // before System references get captured as __varRecorder__.System.
       if (needsLoadInstrumentation) this.hasDynamicImports = true;
       const moduleHash = this.isResurrectionBuild ? string.hashCode(await this.resolver.load(id)) : undefined;
-      const swcOptions = this.getSwcTransformOptions(id, source, { instrumentClasses, moduleHash });
+      const swcOptions = this.getSwcTransformOptions(id, source, { instrumentClasses, moduleHash, enableDynamicImportTransform: needsLoadInstrumentation });
       let { code, map } = await swcTransform.transformAsync(source, swcOptions);
       if (this.shouldCompareSwcForModule(id)) {
         if (!this._swcComparedModules) this._swcComparedModules = new Set();
@@ -972,7 +995,7 @@ export default class LivelyRollup {
 
     if (importMap) {
       this._defaultCdnImportMap = importMap;
-      let remapped = resolveViaImportMap(id, importMap, importer)
+      let remapped = resolveViaImportMap(id, importMap, this.resolver.ensureFileFormat(importer))
       if (remapped) id = remapped;
     }
     
@@ -990,8 +1013,7 @@ export default class LivelyRollup {
       }
     }
 
-    // this needs to be done by flatn if we are running in nodejs. In the client, this also may lead to bogus
-    // results since we are not taking into account in package.json
+    // Resolve from the importing module so separate dependency instances stay separate.
 
     absolutePath = this.resolver.resolveModuleId(id, importer, this.getResolutionContext());
     if (this.belongsToExcludedPackage(absolutePath)) return id;
@@ -1014,7 +1036,7 @@ export default class LivelyRollup {
    * @param { string } importer - The id of the module where the dynamic import is triggered from.
    */
   resolveDynamicImport (node, importer) {
-    if (node.type && this.isLivelyCoreModule(importer)) return null;
+    if (typeof node !== 'string') return null;
     const id = node;
     const res = this.resolveId(id, importer);
     if (res && obj.isString(res)) {
@@ -1503,10 +1525,10 @@ export default class LivelyRollup {
       this.resolver.setStatus({ status: 'Minifying chunks...' });
 
       if (this.useTerser) {
-        // Legacy subprocess-based minification (Terser/Closure)
+        // Babel and Terser run on the Node host.
         await Promise.all(modules.map(async (chunk, i) => {
           try {
-            const { min: minifiedCode } = await compileOnServer(chunk.code, this.resolver, true);
+            const { min: minifiedCode } = await compileOnServer(chunk.code, this.resolver);
             chunk.code = minifiedCode.replace("'use strict';", '');
           } catch (err) {
             console.warn(`\x1b[33m       [!] Minification failed for chunk ${i}: ${err.message}\x1b[0m`);

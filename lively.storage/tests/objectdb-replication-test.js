@@ -95,7 +95,7 @@ describe('replication', function () {
     let root = objectDB.snapshotLocation;
     let origPaths = (await root.dirList()).map(ea => ea.relativePathFrom(root));
     let replicatedPaths = (await replicationLocation.dirList()).map(ea => ea.relativePathFrom(replicationLocation));
-    expect(origPaths).equals(replicatedPaths);
+    expect(origPaths).deep.members(replicatedPaths);
   });
 
   it('replicates from', async () => {
@@ -111,7 +111,7 @@ describe('replication', function () {
     let origPaths = (await root.dirList()).map(ea => ea.relativePathFrom(root));
     let replicatedPaths = (await replicationLocation.dirList()).map(ea =>
       ea.relativePathFrom(replicationLocation));
-    expect(origPaths).equals(replicatedPaths);
+    expect(origPaths).deep.members(replicatedPaths);
   });
 
   describe('sync', () => {
@@ -161,7 +161,9 @@ describe('replication', function () {
       await sync1.waitForIt(); await sync2.waitForIt();
 
       expect(sync1.conflicts).containSubset([{ id: 'world/foo' }]);
-      expect(sync1.changes).deep.members([
+      // Concurrent sync can also pull the other writer's commit. Check this
+      // writer's outgoing changes independently of that scheduling order.
+      expect(sync1.changes.filter(change => change.direction === 'push')).deep.members([
         { id: commit1._id, direction: 'push', kind: 'commits', name: 'foo', type: 'world' },
         { id: 'world/foo', direction: 'push', kind: 'versions' }
       ]);

@@ -71,9 +71,9 @@ describe('search', () => {
 
   describe('in all loaded modules', () => {
     it('does not find unloaded string constants', async () => {
-      module1.unload(); module2.unload();
+      await module1.unload(); await module2.unload();
       const res = await searchLoadedModules(S, 'hello');
-      expect(res).to.containSubset([]);
+      expect(res).to.have.length(0);
     });
 
     it('finds string constants', async () => {

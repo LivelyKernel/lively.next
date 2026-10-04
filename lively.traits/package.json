@@ -1,4 +1,13 @@
 {
   "name": "lively.traits",
-  "version": "0.1.0"
+  "version": "0.1.0",
+  "dependencies": {
+    "lively.serializer2": "workspace:*",
+    "lively.graphics": "workspace:*",
+    "lively.classes": "workspace:*"
+  },
+  "devDependencies": {
+    "mocha-es6": "workspace:*"
+  },
+  "main": "./index.js"
 }

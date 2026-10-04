@@ -4,8 +4,9 @@ import { parse } from 'lively.ast';
 export const editableFiles = ['md', 'js', 'json', 'css', 'html', 'mjs', 'cjs'];
 
 /* eslint-disable no-unused-vars */
-async function listEditableFilesInDir (url) {
-  const resources = (await resource(url).dirList())
+export async function listEditableFilesInDir (url, system) {
+  const resources = (system ? await system.resourceDirList(url) : await resource(url).dirList())
+    .map(res => res.isResource ? res : Object.assign(resource(res.url), res))
     .filter(res => res.isDirectory() || editableFiles.includes(res.ext()));
   return resources.map(res => {
     let type;
@@ -67,8 +68,8 @@ function transformJSONNode (property) {
   return property;
 }
 
-async function listJSONScope (url) {
-  const json = await resource(url).read();
+export async function listJSONScope (url, system) {
+  const json = await (system ? system.moduleRead(url) : resource(url).read());
   // declaring the json as variable allows us to use acorn to parse it
   const parsedNode = parse('const test = ' + json);
   const entries = parsedNode.body[0].declarations[0].init.properties;

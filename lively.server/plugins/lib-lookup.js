@@ -1,11 +1,8 @@
 /*global System*/
 import fs from "fs";
 import path, { join } from "path";
-import { fileURLToPath } from "url";
-import { resource } from "lively.resources";
-import { parseQuery } from "lively.resources";
-import { arr, obj } from "lively.lang";
-const Generator = System.get('@jspm_generator').default;
+import { fileURLToPath, pathToFileURL } from "url";
+let Generator;
 const jspmAvailabilityCache = new Map();
 const JSPM_AVAILABILITY_TTL = 60 * 1000;
 
@@ -14,10 +11,11 @@ const JSPM_AVAILABILITY_TTL = 60 * 1000;
 // - packages specified as git refs instead of registry versions
 // - wildcard version specs
 function isUnresolvableOnCDN ([name, version]) {
-  if (version === '*' || version.includes('/')) return true; // wildcard or github ref
+  if (version === '*' || version.startsWith('workspace:') || version.startsWith('link:') || version.startsWith('file:') || version.includes('/')) return true; // wildcard or github ref
   if (/^@rollup\/rollup-/.test(name)) return true;
   if (/^@swc\/core(-|$)/.test(name)) return true;
   if (name === '@jspm/generator') return true;
+  if (name === '@buxlabs/amd-to-es6') return true; // Used only by the Node freezer resolver.
   if (name === 'nw') return true;
   if (name === 'puppeteer' || name === 'puppeteer-core') return true;
   return false;
@@ -37,9 +35,11 @@ function extractFailingPackage (errMsg) {
   return null;
 }
 
-function createGenerator (inputMap, providers) {
+function createGenerator (inputMap, providers, baseUrl) {
   return new Generator({
     env: ["browser", "module", "import"],
+    baseUrl,
+    mapUrl: baseUrl && new URL(".cachedImportMap.json", baseUrl),
     defaultProvider: 'jspm.io',
     inputMap,
     ...(Object.keys(providers).length ? { providers } : {})
@@ -156,7 +156,7 @@ export async function installDeps (
     let needsRestart = false;
 
     for (let dep of deps) {
-      if (dep[0] == 'tar-fs' || isUnresolvableOnCDN(dep) || !!generator.map.imports[dep[0]]) continue;
+      if (dep[0] == 'tar-fs' || isUnresolvableOnCDN(dep)) continue;
       const depName = dep[0];
       const depSpec = dep.join('@');
       try {
@@ -205,48 +205,62 @@ export async function installDeps (
   for (const failedDep of Object.keys(failed)) {
     if (!depNames.includes(failedDep)) delete failed[failedDep];
   }
-  const toUninstall = arr.withoutAll(Object.keys(generator.map.imports), deps.map(d => d[0]));
+  const toUninstall = Object.keys(generator.map.imports).filter(name => !deps.some(([dependency]) => dependency === name));
   await generator.uninstall(toUninstall);
   return generator;
 }
 
-export async function generateImportMap (packageName) {
+// Browser maps are generated cache data, independent of Bun's installed graph.
+export async function generateImportMapForPackage (packageDir, { update = false } = {}) {
+  const config = JSON.parse(await fs.promises.readFile(join(packageDir, 'package.json'), 'utf8'));
+  const dependencies = Object.fromEntries(Object.entries(config.dependencies || {}).sort(([a], [b]) => a.localeCompare(b)));
+  const cacheFile = join(packageDir, '.cachedImportMap.json');
+  let cached;
+  try { cached = JSON.parse(await fs.promises.readFile(cacheFile, 'utf8')); }
+  catch (err) { if (err.code !== 'ENOENT') throw err; }
+  if (!update && cached && JSON.stringify(cached._dependencies) === JSON.stringify(dependencies) && Array.isArray(cached._modules)) {
+    return cached;
+  }
+  if (!Generator) ({ Generator } = await import('@jspm/generator'));
+  const providers = { ...cached?._providers };
+  const failed = {};
+  // Reuse previously selected URLs, except when refreshing or changing providers.
   let inputMap = false;
-  const packageRegistry = System.get("@lively-env").packageRegistry;
-  const pkg = packageName && packageRegistry.lookup(packageName);
-  if (!pkg) return {};
-  const cachedImportMap = resource(pkg.url).join('.cachedImportMap.json');
-  if (await cachedImportMap.exists()) {
-    inputMap = JSON.parse((await cachedImportMap.read()).replace(/esm:\/\//g, 'https://')); // replace esm to make generator install again
+  if (!update && cached && !cached._resolutions && !cached._providers) {
+    const { imports, scopes, integrity } = JSON.parse(JSON.stringify(cached).replace(/esm:\/\//g, 'https://'));
+    inputMap = { imports, scopes, integrity };
   }
-  const providers = inputMap?._providers || {};
-  // Old maps may contain silent transitive downgrades. Maps with provider
-  // overrides also need rebuilding because their existing URL locks take
-  // precedence over those overrides.
-  if (inputMap?._resolutions || inputMap?._providers) inputMap = false;
-  const failed = inputMap?._failed || {};
-  if (inputMap) {
-    delete inputMap._failed;
-    delete inputMap._providers;
-  }
-  let generator = createGenerator(inputMap, providers);
+  const newGenerator = (inputMap, overrides) => createGenerator(inputMap, overrides, pathToFileURL(path.resolve(packageDir) + path.sep));
+  let generator = newGenerator(inputMap, providers);
   generator = await installDeps(
     generator,
-    Object.entries(pkg.config.dependencies || {}).filter(([dep]) => !dep.match(/lively(\.|-)/)),
+    Object.entries(dependencies).filter(([name]) => !name.match(/lively(\.|-)/)),
     failed,
-    providers
+    providers,
+    newGenerator
   );
-  const generatedMap = generator.getMap();
+  if (Object.keys(failed).length) {
+    throw new Error(`Cannot generate browser import map for ${config.name}: ${Object.keys(failed).join(', ')}`);
+  }
+  const { map: generatedMap, staticDeps, dynamicDeps } = await generator.extractMap(Object.keys(generator.map.imports), undefined, undefined, true);
   const usedEsmShPackages = esmShPackagesIn(generatedMap);
   for (const [name, provider] of Object.entries(providers)) {
     if (provider === 'esm.sh' && !usedEsmShPackages.has(name)) delete providers[name];
   }
-  const importMap = JSON.parse(JSON.stringify(generatedMap).replace(/https:\/\//g, 'esm://'))
-  if (!obj.isEmpty(failed)) importMap._failed = failed;
-  if (!obj.isEmpty(providers)) importMap._providers = providers;
-  if (!obj.isEmpty(importMap)) await cachedImportMap.writeJson(importMap);
-  else if (inputMap) { await cachedImportMap.remove() }
+  const importMap = JSON.parse(JSON.stringify(generatedMap).replace(/https:\/\//g, 'esm://'));
+  importMap._dependencies = dependencies;
+  importMap._modules = [...new Set([...staticDeps, ...dynamicDeps])].sort();
+  if (Object.keys(providers).length) importMap._providers = providers;
+  const temporary = `${cacheFile}.${process.pid}.tmp`;
+  await fs.promises.writeFile(temporary, JSON.stringify(importMap, null, 2) + '\n');
+  await fs.promises.rename(temporary, cacheFile);
   return importMap;
+}
+
+export async function generateImportMap (packageName, options) {
+  const pkg = packageName && System.get('@lively-env').packageRegistry.lookup(packageName);
+  if (!pkg) throw new Error(`Unknown package: ${packageName}`);
+  return generateImportMapForPackage(fileURLToPath(pkg.url), options);
 }
 
 export default class LibLookupPlugin {
@@ -269,8 +283,6 @@ export default class LibLookupPlugin {
 
   async close() {}
 
-  get libPath() { return "/lively.next-node_modules/"; }
-
   get fsRootDir() {
     let {_fsRootDir} = this;
     if (!_fsRootDir) throw new Error("fsRootDir not set, was setup(livelyServer) called?")
@@ -286,63 +298,20 @@ export default class LibLookupPlugin {
   }
 
   async sendImportmap (req, res) {
-    const { projectName } = parseQuery(req.url);
-    res.writeHead(200,  {"Content-Type": "application/json"});
-    res.end(JSON.stringify( await generateImportMap(projectName)));
+    const projectName = new URL(req.url, 'http://localhost').searchParams.get('projectName');
+    try {
+      const importMap = await generateImportMap(projectName);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(importMap));
+    } catch (err) {
+      res.writeHead(409, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
+    }
   }
 
   async handleRequest(req, res, next) {
-    let {libPath, fsRootDir} = this, {url: path} = req;
-
-    if (path === "/package-registry.json") return this.sendPackageRegistry(req, res);
-    if (path.startsWith("/import-map.json")) return await this.sendImportmap(req, res);
-
-    if (!path.startsWith(libPath) || path === libPath) return next();
-    if (fs.existsSync(join(fsRootDir, path))) return next();
-
-    path = decodeURIComponent(path);
-
-    try {
-    let lookupPath = path.split("/").slice(2).join("/"),
-        version = false, // for now disable
-        fullLibPath = System._nodeRequire.resolve(lookupPath);
-
-    if (version) {
-      if (fs.existsSync(join(fullLibPath, packageName, version))) return next();
-    } else {
-      if (fs.existsSync(fullLibPath)) {
-        if (fullLibPath.endsWith(path)) { return next(); }
-        else {
-          res.writeHead(301, { location: fullLibPath.replace(fsRootDir, '') });
-          res.end();
-          return;
-        }
-      }
-    }
-
-    } catch (err) { return next() }
-
-
-    let registry = this.packageRegistry;
-    if (!registry) return next();
-
-    let pkg = registry.lookup(packageName, version);
-    if (!pkg) return next();
-
-    let pkgURL = resource(pkg.url).path(),
-        index = pkgURL.indexOf(fullLibPath)
-
-    if (index !== 0) return next();
-
-    let newPath = join(libPath, pkgURL.slice(fullLibPath.length), ...rest);
-    req.url = newPath;
-
-    if (fs.existsSync(join(fsRootDir, newPath)))
-      res.writeHead(301,  {location: newPath});
-    else
-      res.writeHead(404);
-
-    res.end();
+    if (req.url === '/package-registry.json') return this.sendPackageRegistry(req, res);
+    if (req.url.startsWith('/import-map.json')) return this.sendImportmap(req, res);
+    return next();
   }
-
 }

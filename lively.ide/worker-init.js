@@ -28,7 +28,7 @@ function init() {
         try {
           if (self.excludedModules.has(load.name))
             res = System.newModule({});
-          else 
+          else
             res = originalExecute();
         } catch(e) {
           console.warn(`[Worker] ${load.name} could not be executed inside worker context!`);
@@ -45,7 +45,7 @@ function init() {
   self.DOMParser = DOMParser;
   self.XPathEvaluator = XPathEvaluator;
   self.XPathResult = XPathResult;
-  
+
   Promise.resolve()
     //.then(polyfills)
     .then(function() { return bootstrapLivelySystem(); })
@@ -65,7 +65,7 @@ function init() {
         console.error(printed);
        }
     });
-  
+
   function bootstrapLivelySystem() {
     // for loading an instrumented version of the packages comprising the lively.system
     return Promise.resolve()
@@ -81,27 +81,27 @@ function init() {
         return importPackageAndDo(
           "lively.lang",
           function(m) { delete m._prevLivelyGlobal; }); })
-  
+
       .then(function() {
         return importPackageAndDo(
           "lively.ast",
           function(m) { lively.ast = m; }); })
-  
+
       .then(function() {
         return importPackageAndDo(
           "lively.source-transform",
           function(m) { lively.sourceTransform = m; }); })
-  
+
       .then(function() {
         return importPackageAndDo(
           "lively.classes",
           function(m) { lively.classes = m; }); })
-  
+
       .then(function() {
         return importPackageAndDo(
           "lively.vm",
           function(m) { lively.vm = m; }); })
-  
+
       .then(function() {
         return importPackageAndDo(
           "lively.modules",
@@ -117,11 +117,11 @@ function init() {
           })})
       .then(function () {
         self.excludedModules = new Set([
-            'lively.next-node_modules/web-animations-js/2.3.1/web-animations.min.js',
-            'lively.next-node_modules/svgjs/2.6.2/dist/svg.js',
-            'lively.next-node_modules/svg.easing.js/1.0.0/svg.easing.js',
-            'lively.next-node_modules/svg.pathmorphing.js/0.1.1/dist/svg.pathmorphing.js'
-          ].map(url => System.baseURL + url));    
+            'web-animations-js/web-animations.min.js',
+            'svgjs/dist/svg.js',
+            'svg.easing.js/svg.easing.js',
+            'svg.pathmorphing.js/dist/svg.pathmorphing.js'
+          ].map(id => System.decanonicalize(id, System.baseURL + 'lively.morphic/index.js')));
          return System.import('lively.modules/src/hooks.js').then(
               ({install}) => {
                    install(System, "instantiate", instantiate_triggerOnLoadCallbacks)
@@ -132,7 +132,7 @@ function init() {
           "lively.storage",
           function(m) { lively.storage = m; })})
   }
-  
+
   function importPackageAndDo(packageURL, doFunc) {
     var name = packageURL.split("/").slice(-1)[0];
   //  log(`...loading ${name}...`);

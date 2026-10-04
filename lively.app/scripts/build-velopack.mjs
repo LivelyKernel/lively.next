@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { stagePackagedSources } from '../desktop/package-payload.cjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const APP_DIR = path.resolve(__dirname, '..');
@@ -252,5 +253,14 @@ if (targetPlatform === 'osx') console.log(`  signing: ${signAppIdentity && signA
 console.log(`  packDir: ${packDir}`);
 console.log(`  output:  ${outputDir}`);
 
-execFileSync(vpk, cmd, { cwd: ROOT_DIR, stdio: 'inherit' });
-validateVelopackOutput();
+const sourceRoot = targetPlatform === 'osx'
+  ? path.join(packDir, 'Contents', 'Resources', 'app.nw', 'app')
+  : path.join(packDir, 'app');
+const restoreSources = targetPlatform === 'win' ? () => {} : await stagePackagedSources(sourceRoot, path.dirname(packDir));
+try {
+  execFileSync(vpk, cmd, { cwd: ROOT_DIR, stdio: 'inherit' });
+  validateVelopackOutput();
+} finally {
+  // Raw desktop archives and later smoke tests keep their original layout.
+  restoreSources();
+}

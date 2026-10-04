@@ -1,3 +1,4 @@
+import { normalizeEsmCachePath } from './esm-cache-path.js';
 // global process
 import Resource from './resource.js';
 import { resource } from './helpers.js';
@@ -40,44 +41,7 @@ export { __livelyEsmShDefault as default };`
 }
 
 export class ESMResource extends Resource {
-  static normalize (esmUrl) {
-    const match = esmUrl.match(/^esm:\/\/([^\/]*)\/(.*)$/);
-    const domain = match?.[1];
-    const id = match?.[2] || esmUrl;
-
-    let pathStructure = id.split('/').filter(Boolean);
-
-    // ESM CDNs serve both the entry point into a package and package subcontent.
-    // differentiate these cases by introducing an index.js which will automatically be served by systemJS
-    if (pathStructure.length === 1 ||
-        !pathStructure[pathStructure.length - 1].endsWith('+esm') &&
-        !pathStructure[pathStructure.length - 1].endsWith('js') &&
-        !pathStructure[pathStructure.length - 1].endsWith('!cjs')) {
-      let fileName = 'index.js';
-      if (pathStructure.length === 1) {
-        if (pathStructure[0].endsWith('!cjs')) fileName = 'index.cjs';
-        pathStructure[0] = pathStructure[0].replace('!cjs', '');
-      }
-      pathStructure.push(fileName);
-    }
-
-    if (pathStructure[pathStructure.length - 1].endsWith('+esm')) {
-      pathStructure[pathStructure.length - 1] = pathStructure[pathStructure.length - 1].replace('+esm', 'esm.js');
-    }
-
-    if (pathStructure[pathStructure.length - 1].endsWith('.js!cjs')) {
-      pathStructure[pathStructure.length - 1] = pathStructure[pathStructure.length - 1].replace('.js!cjs', '.cjs');
-    }
-
-    if (pathStructure[pathStructure.length - 1].endsWith('!cjs')) {
-      pathStructure[pathStructure.length - 1] = pathStructure[pathStructure.length - 1].replace('!cjs', '.cjs');
-    }
-
-    // The provider is part of the cache identity. Different CDNs can use the
-    // same path for different transformed source.
-    if (domain) pathStructure.unshift(domain);
-    return pathStructure;
-  }
+  static normalize (esmUrl) { return normalizeEsmCachePath(esmUrl); }
 
   getEsmURL () {
     const domain = this.url.match(/esm:\/\/([^\/]*)\//)?.[1];
@@ -185,6 +149,10 @@ export class ESMResource extends Resource {
   }
 
   async exists () {
+    const shortName = 'esm_cache/' + ESMResource.normalize(this.url).join('/');
+    if (typeof lively !== 'undefined' && lively.memory_esm?.has(shortName)) return true;
+    const base = this.getBaseURL();
+    if (base && await resource(string.joinPath(base, shortName)).exists()) return true;
     const id = this.url.replace(/esm:\/\/([^\/]*)\//g, '');
     const baseUrl = this.getEsmURL();
     return await resource(baseUrl).join(id).exists();

@@ -7,16 +7,14 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const Module = require('module');
 const { spawn } = require('child_process');
+const { preparePackagedSources } = require('./package-payload.cjs');
 
 const VELOPACK_PACKAGE = 'velopack';
-const NEON_LOAD_PACKAGE = '@neon-rs/load';
 const WINDOWS_HELPER_ENV = 'LIVELY_VELOPACK_HELPER';
 
 let velopackModule = null;
 let velopackLoadError = null;
-let flatnResolverInstalled = false;
 
 function noop () {}
 
@@ -28,47 +26,6 @@ function readJson (file) {
   }
 }
 
-function packageDirName (name) {
-  return name.replace(/\//g, '__SLASH__');
-}
-
-function findFlatnPackageDir (rootDir, name) {
-  const parent = path.join(rootDir, 'lively.next-node_modules', packageDirName(name));
-  if (!fs.existsSync(parent)) return null;
-
-  const versions = fs.readdirSync(parent, { withFileTypes: true })
-    .filter(ea => ea.isDirectory())
-    .map(ea => ea.name)
-    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-
-  return versions.length ? path.join(parent, versions[versions.length - 1]) : null;
-}
-
-function packageMain (dir) {
-  const pkg = readJson(path.join(dir, 'package.json'));
-  return path.join(dir, pkg && pkg.main ? pkg.main : 'index.js');
-}
-
-function installFlatnResolver (rootDir) {
-  if (flatnResolverInstalled) return;
-
-  const velopackDir = findFlatnPackageDir(rootDir, VELOPACK_PACKAGE);
-  const neonLoadDir = findFlatnPackageDir(rootDir, NEON_LOAD_PACKAGE);
-  if (!velopackDir || !neonLoadDir) return;
-
-  const velopackMain = packageMain(velopackDir);
-  const neonLoadMain = packageMain(neonLoadDir);
-  const resolveFilename = Module._resolveFilename;
-
-  Module._resolveFilename = function livelyDesktopVelopackResolve (request, parent, isMain, options) {
-    if (request === VELOPACK_PACKAGE) return velopackMain;
-    if (request === NEON_LOAD_PACKAGE) return neonLoadMain;
-    return resolveFilename.call(this, request, parent, isMain, options);
-  };
-
-  flatnResolverInstalled = true;
-}
-
 function loadVelopack (rootDir, log = noop) {
   if (velopackModule) return { ok: true, module: velopackModule };
   if (velopackLoadError) return { ok: false, error: velopackLoadError };
@@ -78,13 +35,12 @@ function loadVelopack (rootDir, log = noop) {
   }
 
   try {
-    // Packaged builds use flatn instead of a conventional node_modules tree.
-    // Install these aliases before the first require; unresolved package lookup
-    // can be surprisingly expensive in NW.js.
-    log('Velopack SDK installing flatn resolver');
-    installFlatnResolver(rootDir);
     log('Velopack SDK requiring package');
-    velopackModule = require(VELOPACK_PACKAGE);
+    const packageRoot = preparePackagedSources(rootDir, log);
+    const entry = require.resolve(VELOPACK_PACKAGE, {
+      paths: [path.join(packageRoot, 'lively.app'), packageRoot]
+    });
+    velopackModule = require(entry);
     log('Velopack SDK package required');
     return { ok: true, module: velopackModule };
   } catch (err) {

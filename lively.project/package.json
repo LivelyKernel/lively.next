@@ -2,6 +2,22 @@
   "name": "lively.project",
   "version": "0.1.0",
   "dependencies": {
-    "semver": "^5.3.0"
-  }
+    "semver": "^5.3.0",
+    "es-module-lexer": "1.7.0",
+    "lively.resources": "workspace:*",
+    "lively.shell": "workspace:*",
+    "lively-system-interface": "workspace:*",
+    "lively.ide": "workspace:*",
+    "lively.halos": "workspace:*",
+    "lively.modules": "workspace:*",
+    "lively.user": "workspace:*",
+    "lively.graphics": "workspace:*",
+    "lively.lang": "workspace:*",
+    "lively.morphic": "workspace:*",
+    "lively.freezer": "workspace:*",
+    "lively.git": "workspace:*",
+    "lively.components": "workspace:*",
+    "lively.bindings": "workspace:*"
+  },
+  "main": "./index.js"
 }

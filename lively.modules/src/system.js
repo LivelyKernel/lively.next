@@ -8,7 +8,7 @@ import { wrapResource, fetchResource } from './resource.js';
 import { emit } from 'lively.notifications';
 import { join, urlResolve } from './url-helpers.js';
 import { resource } from 'lively.resources';
-import { resolveExportMapping, resolveImportMapping, resolveViaImportMap } from 'flatn/helpers.mjs';
+import { resolveViaImportMap } from './import-map.js';
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 function isBrowserRuntime (System) {
@@ -34,6 +34,11 @@ function isNodeRuntime (System) {
   return !isBrowserRuntime(System) &&
     typeof process !== 'undefined' &&
     !!process.versions?.node;
+}
+
+function usesNativeResolution (System, name, parent) {
+  return isNodeRuntime(System) && parent?.startsWith('file:') && !!System.nativeResolve &&
+    name !== '@empty' && !name.startsWith('@node/');
 }
 
 const isNode = isNodeRuntime(System);
@@ -73,10 +78,6 @@ function safeAssign (proceed, ...args) {
   return proceed(...args);
 }
 
-function packageResolutionContext (System) {
-  return isNodeRuntime(System) ? 'node-require' : 'module';
-}
-
 export function wrapModuleResolution (System) {
   // System.resolve and System.prepareImport
   if (!isHookInstalled(Object, 'assign', 'safeAssign')) {
@@ -88,6 +89,9 @@ export function wrapModuleResolution (System) {
   }
   if (!isHookInstalled(System, 'resolve', 'normalizeHook')) {
     installHook(System, 'resolve', normalizeHook, 'normalizeHook');
+  }
+  if (!isHookInstalled(System, 'import', 'importHook')) {
+    installHook(System, 'import', importHook, 'importHook');
   }
   if (!isHookInstalled(System, 'decanonicalize', 'decanonicalizeHook')) {
     installHook(System, 'decanonicalize', decanonicalizeHook, 'decanonicalizeHook');
@@ -147,6 +151,7 @@ export function unwrapModuleResolution (System) {
   removeHook(Object, 'assign', 'safeAssign');
   removeHook(System, 'normalize', 'normalizeHook');
   removeHook(System, 'resolve', 'normalizeHook');
+  removeHook(System, 'import', 'importHook');
   removeHook(System, 'decanonicalize', 'decanonicalizeHook');
   removeHook(System, 'normalizeSync', 'decanonicalizeHook');
   removeHook(System, 'newModule', 'newModule_volatile');
@@ -250,7 +255,8 @@ function makeSystem (cfg) {
 }
 
 function prepareSystem (System, config) {
-  if (typeof lively !== 'undefined') System.trace = lively.isResurrectionBuild;
+  // Live edits require SystemJS load records, including in cloned loaders.
+  System.trace = true;
   delete System.get;
   config = config || {};
 
@@ -370,18 +376,21 @@ function prepareSystem (System, config) {
   }
 
   if (isNode) {
-    const nodejsCoreModules = ['addons', 'assert', 'buffer', 'child_process',
+    const nodejsCoreModules = ['assert', 'buffer', 'child_process',
       'cluster', 'console', 'crypto', 'dgram', 'dns', 'domain', 'events', 'fs',
       'http', 'https', 'module', 'net', 'os', 'path', 'punycode', 'querystring',
-      'readline', 'repl', 'stream', 'stringdecoder', 'timers', 'tls',
+      'readline', 'repl', 'stream', 'string_decoder', 'timers', 'tls',
       'tty', 'url', 'util', 'v8', 'vm', 'zlib', 'constants', 'worker_threads', 'process'];
     map = nodejsCoreModules.reduce((map, ea) => { map[ea] = map['node:' + ea] = '@node/' + ea; return map; }, {});
     config.map = obj.merge(map, config.map);
     // for sth l ike map: {"lively.lang": "node_modules:lively.lang"}
+    if (System._nodeRequire) {
+      for (const name of nodejsCoreModules) { try { const exports = System._nodeRequire(name); const module = System.newModule({ ...exports, default: exports }); System.set("@node/" + name, module); System.set("node:" + name, module); } catch (_) {} }
+    }
     // cfg.paths = obj.merge({"node_modules:*": "./node_modules/*"}, cfg.paths);
   }
 
-  config.packageConfigPaths = config.packageConfigPaths || ['./node_modules/*/package.json'];
+  config.packageConfigPaths = config.packageConfigPaths || [];
 
   if (!config.transpiler && System.transpiler === 'traceur') {
     const initialSystem = GLOBAL.System;
@@ -455,24 +464,22 @@ function preNormalize (System, name, parent) {
   // '{node: "events", "~node": "@empty"}' mapping but we need it
   const { packageRegistry } = System.get('@lively-env');
   if (packageRegistry) {
-    let importMap, mappedObject, packageURL;
+    let importMap, mappedObject, hasPackageMapping, globalMapping, packageURL;
     let pkg = parent && packageRegistry.findPackageHavingURL(parent);
     if (pkg) {
       let map, systemjs, config;
       ({ map, url: packageURL, systemjs, config } = pkg);
-      const resolutionContext = packageResolutionContext(System);
-      if (config.imports) {
-        try {
-          name = resolveImportMapping(name, config.imports, resolutionContext);
-          if (name.startsWith('.')) name = urlResolve(join(packageURL, name));
-        } catch (err) {}
-      }
       if (config.optionalDependencies?.[name] ||
           config.peerDependenciesMeta?.[name]?.optional) return '@empty';
-      importMap = !isNode && systemjs?.importMap; // only works in the browser
-      mappedObject = map?.[name] || isNode && System.map[name]; // only consider the global map if no local importMap
+      importMap = !isNodeRuntime(System) && systemjs?.importMap; // only works in the browser
+      // A package map is an explicit package-local override. Generated
+      // System.map entries are only a fallback: a package's generated browser
+      // import map must see the original bare specifier first.
+      hasPackageMapping = !!map && Object.hasOwn(map, name);
+      mappedObject = map?.[name];
+      globalMapping = System.map[name];
     }
-    if (!importMap && !isNode && parent) {
+    if (!importMap && !isNodeRuntime(System) && parent) {
       importMap = System.importMapCache.get(parent);
     }
 
@@ -487,15 +494,40 @@ function preNormalize (System, name, parent) {
       if (name.startsWith('.')) name = urlResolve(join(packageURL, name));
     }
 
+    let importMapResolved = false;
     if (importMap) {
       let remapped = resolveViaImportMap(name, importMap, parent);
       if (remapped) {
         name = remapped;
+        importMapResolved = true;
         packageRegistry.moduleUrlToPkg.set(name, pkg);
       }
     }
 
+    // System.map contains legacy/generated fallbacks. Applying it before an
+    // import map changes a bare package name to an obsolete URL, leaving the
+    // locked map no bare specifier to resolve.
+    if (!hasPackageMapping && !importMapResolved && globalMapping &&
+        (!isNodeRuntime(System) || typeof globalMapping !== 'string' || !Object.hasOwn(System.CONFIG.packages, globalMapping.replace(/\/$/, '')))) {
+      mappedObject = globalMapping;
+      if (typeof mappedObject === 'object') {
+        mappedObject = normalize_doMapWithObject(mappedObject, pkg, System);
+      }
+      if (typeof mappedObject === 'string' && mappedObject !== '') name = mappedObject;
+      if (name.startsWith('.')) name = new URL(name, System.baseURL).href;
+    }
+
     if (!importMap && name.startsWith('node:')) name = '@node/' + name.slice(5); // some jspm bullshit
+
+    if (usesNativeResolution(System, name, parent)) {
+      // A SystemJS CJS load marks its parent with !cjs. Resolve that dependency
+      // through createRequire so Node selects the require export condition.
+      const isCjsParent = parent.endsWith('!cjs');
+      const resolverParent = isCjsParent ? parent.slice(0, -4) : parent;
+      // Node selects the precise installed instance from this importer. Do not
+      // send its result through the registry's old name/version lookup again.
+      return System.nativeResolve(name, resolverParent, isCjsParent ? 'require' : 'import');
+    }
 
     let resolved = packageRegistry.resolvePath(name, parent);
     if (resolved) {
@@ -509,23 +541,6 @@ function preNormalize (System, name, parent) {
     
     if (pkg && importMap && !packageRegistry.moduleUrlToPkg.has(name)) {
       packageRegistry.moduleUrlToPkg.set(name, pkg); // orphaned ESM modules, that do not have their own packages
-    } else if (pkg = packageRegistry.findPackageWithURL(name)) {
-      // check if the exports exports are defined here, and adjust them now!
-      let { exports: exportMappings } = pkg.config
-
-      if (exportMappings?.['.']) { // only in case the request was root
-          let adjustedPath = resolveExportMapping(exportMappings['.'], packageResolutionContext(System));
-          name = join(pkg.url, adjustedPath);
-      }
-    } else if (pkg = packageRegistry.findPackageHavingURL(name)) {
-      // for cases where we import a package via subpath like packageName/subpath
-      // which are not captured properly by packageWithURL
-      let { exports: exportMappings } = pkg.config
-      const subPath = name.replace(pkg.url, '.');
-      if (exportMappings?.[subPath]) {
-         let adjustedPath = resolveExportMapping(exportMappings[subPath], packageResolutionContext(System));
-        name = join(pkg.url, adjustedPath);
-      }
     }
   }
 
@@ -626,22 +641,36 @@ export function propagateImportMapCache (System, sourceId, ...normalizedIds) {
   }
 }
 
+async function importHook (proceed, name, parent) {
+  // Frozen bundles use registry records rather than live module interfaces.
+  if (!isLivelyTranspiler(this.transpiler)) return proceed(name, parent);
+  const id = this.decanonicalize(name, parent);
+  // SystemJS returns cached modules before invoking the resolution hooks.
+  if (/\.(?:[cm]?js|jsx)(?:!cjs)?$/.test(id) && this.get(id)) {
+    classHolder.module(this, id).assertEnvironment();
+  }
+  return proceed(name, parent);
+}
+
 async function normalizeHook (proceed, name, parent, parentAddress) {
   const System = this;
   if (!isLivelyTranspiler(System.transpiler)) return await proceed(name, parent, true);
   if (parent && name === 'cjs') {
     return 'cjs';
   }
-  if (parent && parent.endsWith('!cjs')) {
-    // SystemJS 0.21.6 runs into trouble when the parent url includes a plain plugin,
-    // so removing it here seems to solve that issue
-    parent = parent.replace('!cjs', '');
-  }
   if (name === 'lively.fetch') return name;
   if (name === '@system-env') return name;
+  const nativeResolution = usesNativeResolution(System, name, parent);
+  // preNormalize needs the CJS plugin marker to select Node's require export
+  // condition; SystemJS itself must receive the marker-free parent afterwards.
   const stage1 = preNormalize(System, name, parent);
+  if (parent && parent.endsWith('!cjs')) {
+    // SystemJS 0.21.6 cannot continue with a plain CJS plugin in the parent.
+    parent = parent.replace('!cjs', '');
+  }
+  const preserveResolvedURL = nativeResolution || stage1.startsWith('file:');
   const stage2 = await proceed(stage1, parent, true);
-  let stage3 = postNormalize(System, stage2 || stage1, false);
+  let stage3 = preserveResolvedURL ? (stage2 || stage1) : postNormalize(System, stage2 || stage1, false);
   stage3 = await finalizeNormalization(System, name, stage3);
   propagateImportMapCache(System, stage1, stage2, stage3);
   System.debug && console.log(`[normalize] ${name} => ${stage3}`);
@@ -650,27 +679,31 @@ async function normalizeHook (proceed, name, parent, parentAddress) {
     System.METADATA[stage3] = System.METADATA[stage2]; 
   }
 
+  if (/\.(?:[cm]?js|jsx)(?:!cjs)?$/.test(stage3)) {
+    classHolder.module(System, stage3).assertEnvironment();
+  }
+
   return stage3;
 }
 
 function decanonicalizeHook (proceed, name, parent, isPlugin) {
   let plugin;
   const System = this;
+  const nativeResolution = usesNativeResolution(System, name, parent);
   const stage1 = preNormalize(System, name, parent);
   if (parent && parent.endsWith('!cjs')) {
     parent = parent.replace('!cjs', '');
   }
   let stage2 = proceed(stage1, parent, isPlugin);
   if (stage1.endsWith('/')) {
-    const isNodePath = stage2.startsWith('file:');
-    let main = this.CONFIG.packages[(isNodePath ? 'file://' : '') + stage1.replace(/\/*$/, '')]?.main || 'index.js';
+    let main = this.CONFIG.packages[stage1.replace(/\/*$/, '')]?.main || 'index.js';
     if (main?.startsWith('./')) main = main.replace('./', '');
     // SystemJS 0.21 has appended the main module, which is something we do not like
     // if we decanonicalize a '/' terminated url
     if (stage2.endsWith(main)) stage2 = stage2.replace(main, '');
     else if (!stage2.endsWith('/')) stage2 += '/';
   }
-  let stage3 = postNormalize(System, stage2, true);
+  let stage3 = nativeResolution || stage1.startsWith('file:') ? stage2 : postNormalize(System, stage2, true);
   if (/^[^:]+:\/\//.test(stage3)) stage3 = urlResolve(stage3);
   if (plugin) stage3 += plugin;
   System.debug && console.log(`[normalizeSync] ${name} => ${stage3}`);

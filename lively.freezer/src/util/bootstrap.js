@@ -46,7 +46,7 @@ function extractModule (id, systemId = id) {
 
 function polyfills () {
   const loads = [];
-  if (!('PointerEvent' in window)) { loads.push(loadViaScript(resource(System.baseURL).join('/lively.next-node_modules/pepjs/dist/pep.js').url)); }
+  if (!('PointerEvent' in window)) { loads.push(loadViaScript(System.decanonicalize('pepjs/dist/pep.js', System.baseURL + 'lively.morphic/index.js'))); }
   if (!('fetch' in window)) { loads.push(loadViaScript('//cdnjs.cloudflare.com/ajax/libs/fetch/1.0.0/fetch.js')); }
   return Promise.all(loads);
 }

@@ -234,6 +234,7 @@ import {
   wrapModuleResolution as _wrapModuleResolution,
   whenLoaded as _whenLoaded
 } from './src/system.js';
+export { resolveViaImportMap } from './src/import-map.js';
 import _module, {
   doesModuleExist as _doesModuleExist,
   isModuleLoaded as _isModuleLoaded

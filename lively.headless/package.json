@@ -2,6 +2,14 @@
   "name": "lively.headless",
   "version": "0.1.1",
   "dependencies": {
-    "puppeteer": "22.8.0"
-  }
+    "puppeteer": "22.8.0",
+    "lively.lang": "workspace:*",
+    "lively.ast": "workspace:*",
+    "lively.2lively": "workspace:*",
+    "lively.server": "workspace:*"
+  },
+  "devDependencies": {
+    "mocha-es6": "workspace:*"
+  },
+  "main": "./index.js"
 }

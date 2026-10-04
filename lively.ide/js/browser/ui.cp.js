@@ -4,6 +4,7 @@ import {
   TilingLayout, ConstraintLayout, Text, Label, Icon, component, part
 } from 'lively.morphic';
 import { HorizontalResizer } from 'lively.components';
+import { DarkDropDownList, DarkList } from 'lively.components/list.cp.js';
 import { SystemButton, DarkButton, ButtonDefault } from 'lively.components/buttons.cp.js';
 import { MullerColumnView } from 'lively.components/muller-columns.cp.js';
 import { promise, fun } from 'lively.lang';
@@ -1085,6 +1086,35 @@ const MetaInfoContainerExpanded = component({
         hugContentsHorizontally: true
       }),
       submorphs: [
+        part(DarkDropDownList, {
+          name: 'module environment',
+          extent: pt(112, 28),
+          borderWidth: 0,
+          borderRadius: 4,
+          fill: Color.transparent,
+          master: {
+            hover: component({ fill: Color.black.withA(0.2) }),
+            click: component({ fill: Color.black.withA(0.4) })
+          },
+          tooltip: 'Set where this module can run: client, server, or both.',
+          viewModel: {
+            deactivated: true,
+            selection: 'shared',
+            listMaster: DarkList,
+            openListInWorld: true,
+            items: [
+              { isListItem: true, string: 'Client-only', value: 'client' },
+              { isListItem: true, string: 'Shared', value: 'shared' },
+              { isListItem: true, string: 'Server-only', value: 'server' }
+            ]
+          },
+          submorphs: [{
+            name: 'label',
+            fontColor: Color.white,
+            fontFamily: 'IBM Plex Mono',
+            fontSize: 12
+          }]
+        }),
         part(EmbeddedIcon, {
           type: Label,
           tooltip: 'Freeze this module',

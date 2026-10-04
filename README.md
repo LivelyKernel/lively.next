@@ -39,12 +39,12 @@ You need to install `lively.next` on your system.
 Currently, MacOS, Linux, and the Linux Subsystem for Windows are supported.
 Make sure you have the following software installed:
 
-1. `node.js v24` or higher
+1. `node.js v24.20.0`
 2. `git`.
-3. `bun`
+3. `bun v1.4.2`
 4. `rust` via `rustup` (this also installs `cargo`)
 
-We require Node.js v24 or higher for compatibility with modern JavaScript features.
+The supported toolchain uses Node.js 24.20.0 and Bun 1.4.2. Bun installs dependencies; Node runs the server.
 
 For some more advanced development operations (such as bulk testing from the command line and spell checking inside of `lively.next`), you will also need 
 
@@ -65,7 +65,7 @@ If you are on macOS, install the required tooling first:
 
 ```bash
 xcode-select --install
-curl -fsSL https://bun.sh/install | bash
+curl -fsSL https://bun.sh/install | bash -s "bun-v1.4.2"
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
@@ -86,6 +86,16 @@ cargo --version
 > You can use `start.sh` with a `--debug` or `-d` flag to inspect the lively server with a `node` debugger. You can also use `--port=<PORT>` or `-p <PORT>` to specify on which port the lively server should run.
 
 Usually, running `start.sh` will now be enough to get you going again.
+
+### Dependency installation and updates
+
+`install.sh` consumes the committed `bun.lock` for installed packages. Browser import maps are dynamically generated through JSPM and cached in each package's hidden, Git-ignored `.cachedImportMap.json`. Missing caches and dependency manifest changes regenerate the maps automatically. Browser module content is materialized into `esm_cache` for desktop and release builds.
+
+To update a dependency intentionally, run `bun add <package>@<version>` from its owning workspace, then `bun run update:browser-import-maps <workspace>` and `bun run cache:browser-dependencies`. Review and commit the changed manifest and Bun lock; generated maps remain untracked.
+
+For a user project, run `node lively.project/package-install.mjs local_projects/<name> --update` once to create or update its own lock and explicit local source links. Subsequent installs and project builds consume that lock. Core source links are recorded in `lively.localDependencies`; they do not modify the core dependency lock.
+
+When upgrading from the old flatn installation, preserve any edited files in `custom-npm-modules` or `lively.next-node_modules` as local projects before reinstalling. The new installation does not use those directories. Verify startup and your projects before removing them. Do not copy old dependency trees into `node_modules`.
 
 ### Updating `lively.next`
 

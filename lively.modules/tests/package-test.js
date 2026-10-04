@@ -98,12 +98,12 @@ describe('package loading', function () {
     it('matches encoded Windows drive paths against file package URLs', async () => {
       const registry = PackageRegistry.ofSystem(S);
       const pkg = {
-        url: 'file:///C:/Users/RUNNER~1/AppData/Local/Temp/lively-app-smoke/data/runtime-root/lively.next-node_modules/ws/8.20.1',
+        url: 'file:///C:/Users/RUNNER~1/AppData/Local/Temp/lively-app-smoke/data/runtime-root/node_modules/.bun/ws@8.20.1/node_modules/ws',
         name: 'ws',
         version: '8.20.1',
         config: { optionalDependencies: { 'utf-8-validate': '>=5.0.2' } }
       };
-      const encodedParent = 'C:/Users/RUNNER%7E1/AppData/Local/Temp/lively-app-smoke/data/runtime-root/lively.next-node_modules/ws/8.20.1/lib/validation.js';
+      const encodedParent = 'C:/Users/RUNNER%7E1/AppData/Local/Temp/lively-app-smoke/data/runtime-root/node_modules/.bun/ws@8.20.1/node_modules/ws/lib/validation.js';
       registry.packageMap = { ws: { latest: '8.20.1', versions: { '8.20.1': pkg } } };
       registry.resetByURL();
 
@@ -114,7 +114,7 @@ describe('package loading', function () {
     it('maps optional peer dependencies to empty modules', async () => {
       const registry = PackageRegistry.ofSystem(S);
       const pkg = {
-        url: 'file:///C:/Users/RUNNER~1/AppData/Local/Temp/lively-app-smoke/data/runtime-root/lively.next-node_modules/ws/8.20.1',
+        url: 'file:///C:/Users/RUNNER~1/AppData/Local/Temp/lively-app-smoke/data/runtime-root/node_modules/.bun/ws@8.20.1/node_modules/ws',
         name: 'ws',
         version: '8.20.1',
         config: {
@@ -122,7 +122,7 @@ describe('package loading', function () {
           peerDependenciesMeta: { 'utf-8-validate': { optional: true } }
         }
       };
-      const encodedParent = 'C:/Users/RUNNER%7E1/AppData/Local/Temp/lively-app-smoke/data/runtime-root/lively.next-node_modules/ws/8.20.1/lib/validation.js';
+      const encodedParent = 'C:/Users/RUNNER%7E1/AppData/Local/Temp/lively-app-smoke/data/runtime-root/node_modules/.bun/ws@8.20.1/node_modules/ws/lib/validation.js';
       registry.packageMap = { ws: { latest: '8.20.1', versions: { '8.20.1': pkg } } };
       registry.resetByURL();
 
@@ -130,17 +130,17 @@ describe('package loading', function () {
       expect(await S.normalize('utf-8-validate', encodedParent)).equals('@empty');
     });
 
-    it('uses require exports when resolving packages in node runtimes', async () => {
+    it('uses registry roots for synthetic node paths', async () => {
       if (!System.get('@system-env').node) return;
       const registry = PackageRegistry.ofSystem(S);
       const engine = {
-        url: 'file:///C:/Users/RUNNER~1/AppData/Local/Temp/lively-app-smoke/data/runtime-root/lively.next-node_modules/engine.io/6.6.8',
+        url: 'file:///C:/Users/RUNNER~1/AppData/Local/Temp/lively-app-smoke/data/runtime-root/node_modules/.bun/engine.io@6.6.8/node_modules/engine.io',
         name: 'engine.io',
         version: '6.6.8',
         config: { dependencies: { ws: '~8.20.1' } }
       };
       const ws = {
-        url: 'file:///C:/Users/RUNNER~1/AppData/Local/Temp/lively-app-smoke/data/runtime-root/lively.next-node_modules/ws/8.20.1',
+        url: 'file:///C:/Users/RUNNER~1/AppData/Local/Temp/lively-app-smoke/data/runtime-root/node_modules/.bun/ws@8.20.1/node_modules/ws',
         name: 'ws',
         version: '8.20.1',
         config: {
@@ -153,22 +153,22 @@ describe('package loading', function () {
           }
         }
       };
-      const encodedParent = 'C:/Users/RUNNER%7E1/AppData/Local/Temp/lively-app-smoke/data/runtime-root/lively.next-node_modules/engine.io/6.6.8/build/server.js';
+      const encodedParent = 'C:/Users/RUNNER%7E1/AppData/Local/Temp/lively-app-smoke/data/runtime-root/node_modules/.bun/engine.io@6.6.8/node_modules/engine.io/build/server.js';
       registry.packageMap = {
         'engine.io': { latest: '6.6.8', versions: { '6.6.8': engine } },
         ws: { latest: '8.20.1', versions: { '8.20.1': ws } }
       };
       registry.resetByURL();
 
-      expect(await S.normalize('ws', encodedParent)).equals(ws.url + '/index.js');
+      expect(await S.normalize('ws', encodedParent)).equals(ws.url);
     });
 
 
     it('preserves package metadata needed for cached resolver lookups', async () => {
       if (!System.get('@system-env').node) return;
       const registry = PackageRegistry.ofSystem(S);
-      const engineURL = 'file:///Users/robin.schreiber/Library/Application Support/lively.next/runtime-root/lively.next-node_modules/engine.io/6.6.8';
-      const wsURL = 'file:///Users/robin.schreiber/Library/Application Support/lively.next/runtime-root/lively.next-node_modules/ws/8.20.1';
+      const engineURL = 'file:///Users/robin.schreiber/Library/Application Support/lively.next/runtime-root/node_modules/.bun/engine.io@6.6.8/node_modules/engine.io';
+      const wsURL = 'file:///Users/robin.schreiber/Library/Application Support/lively.next/runtime-root/node_modules/.bun/ws@8.20.1/node_modules/ws';
       const engine = new Package(S, engineURL, null, null, {
         name: 'engine.io',
         version: '6.6.8',
@@ -197,9 +197,9 @@ describe('package loading', function () {
       registry.packageMap = {};
       registry.fromJSON(cached);
 
-      const encodedEngineParent = '/Users/robin.schreiber/Library/Application%20Support/lively.next/runtime-root/lively.next-node_modules/engine.io/6.6.8/build/server.js';
-      const encodedWsParent = '/Users/robin.schreiber/Library/Application%20Support/lively.next/runtime-root/lively.next-node_modules/ws/8.20.1/lib/buffer-util.js';
-      expect(await S.normalize('ws', encodedEngineParent)).equals(wsURL + '/index.js');
+      const encodedEngineParent = '/Users/robin.schreiber/Library/Application%20Support/lively.next/runtime-root/node_modules/.bun/engine.io@6.6.8/node_modules/engine.io/build/server.js';
+      const encodedWsParent = '/Users/robin.schreiber/Library/Application%20Support/lively.next/runtime-root/node_modules/.bun/ws@8.20.1/node_modules/ws/lib/buffer-util.js';
+      expect(S.decanonicalize('ws', encodedEngineParent)).equals(wsURL + '/index.js');
       expect(await S.normalize('bufferutil', encodedWsParent)).equals('@empty');
       expect(await S.normalize('utf-8-validate', encodedWsParent)).equals('@empty');
     });
@@ -520,7 +520,7 @@ describe('package configuration test', () => {
       ...await resource(project1aDir).join('package.json').readJson(),
       lively: { meta: { foo: { format: 'global' } } }
     }, 'some-project');
-    let pURL = S.decanonicalize('some-project/').replace(/\/$/, '');
+    let pURL = getPackage(S, 'some-project').url;
     expect(S.getConfig().packages[pURL].meta).containSubset({ foo: { format: 'global' } });
   });
 
@@ -582,32 +582,31 @@ describe('package registry', () => {
 
   beforeEach(async () => {
     await createFiles(testDir, {
-      packages: {
-        p1: {
-          '0.2.2': {
+      node_modules: {
+        '.bun': {
+          'p1@0.2.2': { node_modules: { p1: {
             'index.js': "export var x = 3 + y; import { y } from 'p2';",
             'package.json': '{"name": "p1", "version": "0.2.2", "dependencies": {"p2": "^1.0"}}'
-          },
-          '0.1.0': {
+          } } },
+          'p1@0.1.0': { node_modules: { p1: {
             'index.js': "export var x = 2 + y; import { y } from 'p2';",
             'package.json': '{"name": "p1", "version": "0.1.0"}'
-          }
-        },
-        p2: {
-          '2.0.0': {
+          } } },
+          'p2@2.0.0': { node_modules: { p2: {
             'index.js': 'export var y = 24;',
             'package.json': '{"name": "p2", "version": "2.0.0"}'
-          },
-          '1.0.0': {
+          } } },
+          'p2@1.0.0': { node_modules: { p2: {
             'index.js': 'export var y = 23;',
             'package.json': '{"name": "p2", "version": "1.0.0"}'
-          }
+          } } }
         }
       }
     });
     S = prepareSystem('test', testDir);
     registry = PackageRegistry.ofSystem(S);
-    registry.packageBaseDirs = [resource(testDir).join('packages/')];
+    registry.packageBaseDirs = [];
+    registry.nodeModulesDirs = [resource(testDir).join('node_modules/')];
     await registry.update();
   });
 
@@ -619,22 +618,22 @@ describe('package registry', () => {
   describe('lookup', () => {
     it('from packageBaseDirs', async () => {
       expect(registry.lookup('p1')).containSubset({
-        url: testDir + 'packages/p1/0.2.2',
+        url: testDir + 'node_modules/.bun/p1@0.2.2/node_modules/p1',
         name: 'p1',
         version: '0.2.2'
       });
       expect(registry.lookup('p1', '^0.2')).containSubset({
-        url: testDir + 'packages/p1/0.2.2',
+        url: testDir + 'node_modules/.bun/p1@0.2.2/node_modules/p1',
         name: 'p1',
         version: '0.2.2'
       });
       expect(registry.lookup('p1', '^0.1')).containSubset({
-        url: testDir + 'packages/p1/0.1.0',
+        url: testDir + 'node_modules/.bun/p1@0.1.0/node_modules/p1',
         name: 'p1',
         version: '0.1.0'
       });
       expect(registry.lookup('p1', 'latest')).containSubset({
-        url: testDir + 'packages/p1/0.2.2',
+        url: testDir + 'node_modules/.bun/p1@0.2.2/node_modules/p1',
         name: 'p1',
         version: '0.2.2'
       });
@@ -649,35 +648,31 @@ describe('package registry', () => {
 
     it('ignores invalid package versions when choosing latest', async () => {
       await createFiles(testDir, {
-        packages: {
-          p1: {
-            aM: {
-              'index.js': 'export var x = 42;',
-              'package.json': '{"name": "p1", "version": "aM"}'
-            }
-          }
-        }
+        node_modules: { '.bun': { 'p1@aM': { node_modules: { p1: {
+          'index.js': 'export var x = 42;',
+          'package.json': '{"name": "p1", "version": "aM"}'
+        } } } } }
       });
       await registry.update();
 
       expect(registry.packageMap.p1.latest).equals('0.2.2');
       expect(registry.lookup('p1', '*')).containSubset({
-        url: testDir + 'packages/p1/0.2.2',
+        url: testDir + 'node_modules/.bun/p1@0.2.2/node_modules/p1',
         name: 'p1',
         version: '0.2.2'
       });
     });
 
     it('resolve path', async () => {
-      expect(registry.resolvePath('p1/index.js')).equals(testDir + 'packages/p1/0.2.2/index.js');
-      expect(registry.resolvePath('p1@0.1.0/index.js')).equals(testDir + 'packages/p1/0.1.0/index.js');
+      expect(registry.resolvePath('p1/index.js')).equals(testDir + 'node_modules/.bun/p1@0.2.2/node_modules/p1/index.js');
+      expect(registry.resolvePath('p1@0.1.0/index.js')).equals(testDir + 'node_modules/.bun/p1@0.1.0/node_modules/p1/index.js');
       expect(registry.resolvePath('foo/index.js')).equals(null);
 
-      expect(registry.resolvePath('./bar.js', testDir + 'packages/p1/0.2.2/index.js')).equals(testDir + 'packages/p1/0.2.2/bar.js');
-      expect(registry.resolvePath('../bar.js', testDir + 'packages/p1/0.2.2/index.js')).equals(testDir + 'packages/p1/bar.js');
+      expect(registry.resolvePath('./bar.js', testDir + 'node_modules/.bun/p1@0.2.2/node_modules/p1/index.js')).equals(testDir + 'node_modules/.bun/p1@0.2.2/node_modules/p1/bar.js');
+      expect(registry.resolvePath('../bar.js', testDir + 'node_modules/.bun/p1@0.2.2/node_modules/p1/index.js')).equals(testDir + 'node_modules/.bun/p1@0.2.2/node_modules/bar.js');
 
-      expect(registry.resolvePath('p2/index.js', testDir + 'packages/p1/0.2.2/index.js')).equals(testDir + 'packages/p2/1.0.0/index.js');
-      expect(registry.resolvePath('p2', testDir + 'packages/p1/0.2.2/index.js')).equals(testDir + 'packages/p2/1.0.0');
+      expect(registry.resolvePath('p2/index.js', testDir + 'node_modules/.bun/p1@0.2.2/node_modules/p1/index.js')).equals(testDir + 'node_modules/.bun/p2@1.0.0/node_modules/p2/index.js');
+      expect(registry.resolvePath('p2', testDir + 'node_modules/.bun/p1@0.2.2/node_modules/p1/index.js')).equals(testDir + 'node_modules/.bun/p2@1.0.0/node_modules/p2');
     });
   });
 
@@ -704,7 +699,7 @@ describe('package registry', () => {
 
   describe('update', () => {
     it('of package in packageBaseDirs', async () => {
-      let dir = resource(testDir + 'packages/p1/0.2.2/');
+      let dir = resource(testDir + 'node_modules/.bun/p1@0.2.2/node_modules/p1/');
       let pkg = registry.findPackageWithURL(dir.url);
       pkg.updateConfig({ name: 'p1', version: '0.3.0', dependencies: { p2: '^1.0' } });
       // await dir.join("package.json").writeJson({"name": "p1", "version": "0.3.0", "dependencies": {"p2": "^1.0"}});
@@ -714,11 +709,11 @@ describe('package registry', () => {
           latest: '0.3.0',
           versions: {
             '0.1.0': {
-              url: testDir + 'packages/p1/0.1.0',
+              url: testDir + 'node_modules/.bun/p1@0.1.0/node_modules/p1',
               version: '0.1.0'
             },
             '0.3.0': {
-              url: testDir + 'packages/p1/0.2.2',
+              url: testDir + 'node_modules/.bun/p1@0.2.2/node_modules/p1',
               version: '0.3.0'
             }
           }
@@ -750,10 +745,10 @@ describe('package registry', () => {
   describe('reload', () => {
     it('of package in packageCollectionDir', async () => {
       let p = registry.lookup('p1', '0.2.2');
-      expect(registry.coversDirectory(p.url)).equals('packageCollectionDirs');
+      expect(registry.coversDirectory(p.url)).equals('nodeModulesDirs');
       await p.reload();
 
-      expect(registry.coversDirectory(p.url)).equals('packageCollectionDirs');
+      expect(registry.coversDirectory(p.url)).equals('nodeModulesDirs');
       expect(registry.devPackageDirs).length(0);
       expect(registry.lookup('p1', '0.2.2')).equals(p);
     });

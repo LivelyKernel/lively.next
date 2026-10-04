@@ -8,15 +8,7 @@ import nodePolyfills from 'rollup-plugin-polyfill-node';
 import { availableFonts } from 'lively.morphic/rendering/fonts.js';
 
 function resolveModuleId (moduleName, importer) {
-  // in the client, we just discard the importer. This works out almost all the time.
-  // however what about conflicting version of a package loaded at the same time in the system?
-  // resolving acorn for instance will lead to different results down the line depending
-  // on what the package.json says. But 99% of the time we do not really use deps
-  // in the package.json. Instead we import lively packages (custom resolve and no version conflicts)
-  // or we fetch via absolute url from esm cdn in which case we have no conflicts since the
-  // version is part of the module name in the first place.
-  // fixme: revise module resoluton in client, and unify resolution of modules in the client as well as node.js.
-  return module(moduleName).id;
+  return System.decanonicalize(moduleName, importer);
 }
 
 function ensureFileFormat (url) { return url; }

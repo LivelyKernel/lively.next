@@ -6,17 +6,22 @@
     "url": "https://github.com/LivelyKernel/lively.halos"
   },
   "dependencies": {
-    "lively.bindings": "https://github.com/LivelyKernel/lively.bindings",
-    "lively.morphic": "https://github.com/LivelyKernel/lively.morphic",
-    "lively.graphics": "https://github.com/LivelyKernel/lively.graphics",
-    "lively.components": "https://github.com/LivelyKernel/lively.components",
-    "lively.lang": "^1.0.0",
-    "svg-intersections": "0.2.5"
+    "lively.bindings": "workspace:*",
+    "lively.morphic": "workspace:*",
+    "lively.graphics": "workspace:*",
+    "lively.components": "workspace:*",
+    "lively.lang": "workspace:*",
+    "svg-intersections": "0.2.5",
+    "lively.modules": "workspace:*",
+    "lively.ide": "workspace:*",
+    "lively.resources": "workspace:*",
+    "lively-system-interface": "workspace:*"
   },
   "devDependencies": {
-    "mocha-es6": "*"
+    "mocha-es6": "workspace:*"
   },
   "scripts": {
     "test": "mocha-es6 tests/*-test.js"
-  }
+  },
+  "main": "./index.js"
 }
