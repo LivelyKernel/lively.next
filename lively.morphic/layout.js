@@ -241,6 +241,7 @@ class Layout {
   onOwnerChanged (newOwner) {}
 
   onChange ({ selector, args, prop, value, prevValue, meta }) {
+    this.container?.env.renderer?._layoutCSSOrder?.delete(this);
     const anim = this.reactToSubmorphAnimations && meta && meta.animation;
     const submorph = args && args[0];
     switch (selector) {
@@ -276,6 +277,7 @@ class Layout {
   }
 
   onConfigUpdate () {
+    this.container?.env.renderer?._layoutCSSOrder?.delete(this);
     this.scheduleApply();
     if (!this._configChanged) {
       this._configChanged = true;
@@ -290,6 +292,7 @@ class Layout {
   }
 
   onSubmorphChange (submorph, change) {
+    this.container?.env.renderer?._layoutCSSOrder?.delete(this);
     if (!change.meta?.isLayoutAction) {
       return this.scheduleApply(submorph, this.reactToSubmorphAnimation && change.meta.animation);
     }
@@ -445,6 +448,8 @@ export class TilingLayout extends Layout {
   }
 
   get layoutableSubmorphs () {
+    const cached = this.container?.env.renderer?._layoutCSSOrder?.get(this);
+    if (cached) return cached.layoutableSubmorphs;
     const layoutableSubmorphs = super.layoutableSubmorphs;
     if (this.renderViaCSS) return layoutableSubmorphs;
     else return layoutableSubmorphs.filter(m => m.visible);
@@ -954,7 +959,18 @@ export class TilingLayout extends Layout {
     let node = morph._yogaNode;
     if (!node) return; // no yoga no layout
     const nestedLayout = morph.layout;
-    style['z-index'] = this.container.submorphs.indexOf(morph);
+    const cache = this.container.env.renderer?._layoutCSSOrder;
+    let order = cache?.get(this);
+    if (!order) {
+      const submorphs = this.container.submorphs;
+      const layoutableSubmorphs = this.layoutableSubmorphs;
+      order = { submorphIndices: new Map(), layoutableIndices: new Map(), layoutableSubmorphs };
+      // Preserve indexOf's first index for repeated embedded morphs.
+      submorphs.forEach((m, i) => { if (!order.submorphIndices.has(m)) order.submorphIndices.set(m, i); });
+      layoutableSubmorphs.forEach((m, i) => { if (!order.layoutableIndices.has(m)) order.layoutableIndices.set(m, i); });
+      cache?.set(this, order);
+    }
+    style['z-index'] = order.submorphIndices.get(morph) ?? -1;
     style['min-height'] = '0px';
     style['min-width'] = '0px';
     if (!node?._computedMargin) {
@@ -962,7 +978,8 @@ export class TilingLayout extends Layout {
     }
     if (!morph.isLayoutable) return;
     let margin = node._computedMargin;
-    const { axis, layoutableSubmorphs } = this;
+    const { axis } = this;
+    const { layoutableSubmorphs } = order;
     const { scrollbarVisible } = this.container;
     const isVertical = axis === 'column';
 
@@ -998,7 +1015,7 @@ export class TilingLayout extends Layout {
     }
     style.top = 'unset';
     style.left = 'unset';
-    style.order = layoutableSubmorphs.indexOf(morph); // already handled by the node ordering
+    style.order = order.layoutableIndices.get(morph) ?? -1; // already handled by the node ordering
     const hasNextSibling = layoutableSubmorphs.length > style.order + 1;
     const hasPrevSibling = style.order > 0;
 
@@ -3578,8 +3595,9 @@ export class GridLayout extends Layout {
     layoutableSubmorph.renderingState.cssLayoutToMeasureWith = this;
   }
 
-  measureSubmorph (layoutableSubmorph) {
-    this.onDomResize(null, layoutableSubmorph);
+  measureSubmorph (layoutableSubmorph, measuredLayouts) {
+    if (measuredLayouts?.has(this)) return;
+    if (this.onDomResize(null, layoutableSubmorph)) measuredLayouts?.add(this);
   }
 
   /**
@@ -3614,6 +3632,7 @@ export class GridLayout extends Layout {
       if (!node) continue;
       this.updateSubmorphViaDom(layoutableSubmorph, node, resize, true);
     }
+    return true;
   }
 
   /**
