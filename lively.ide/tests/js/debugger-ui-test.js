@@ -210,9 +210,9 @@ describe('lively debugger ui', function () {
     const { LiveCounter } = await System.import('lively.ide/js/debugger/examples/live-counter.js');
     const { RuntimeSourceDescriptor } = await System.import('lively.classes/source-descriptors.js');
     const counter = new LiveCounter();
-    for (const [method, statement] of [
-      ['nestedLesson', 'let doubled = value * 2;'],
-      ['scopeLesson', 'read = function () { return amount; };']
+    for (const [method, statement, callerStatement] of [
+      ['nestedLesson', 'let doubled = value * 2;', 'let amount = this.double(2);'],
+      ['scopeLesson', 'read = function () { return amount; };', 'this.count = read();']
     ]) {
       let stopped = run(counter[method], null, [], {this: counter});
       stopped = stepInspectorContinuation(stopped);
@@ -222,7 +222,7 @@ describe('lively debugger ui', function () {
         const source = await readFrameSource(frame);
         expect(source).equals(RuntimeSourceDescriptor.for(LiveCounter).moduleSource);
         const row = lineRangeForFrame(frame, source).start.row;
-        if (frame === stopped.currentFrame) expect(source.split('\n')[row].trim()).equals(statement);
+        expect(source.split('\n')[row].trim()).equals(frame === stopped.currentFrame ? statement : callerStatement);
         expect(locationStringForFrame(frame)).contains('/live-counter.js:');
       }
     }
