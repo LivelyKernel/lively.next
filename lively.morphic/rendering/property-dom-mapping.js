@@ -1,7 +1,7 @@
 /* eslint-disable no-use-before-define */
 import { Color } from 'lively.graphics';
 import { string, num } from 'lively.lang';
-import { defaultAttributes } from './morphic-default';
+import { defaultAttributes } from './morphic-default.js';
 import bowser from 'bowser';
 
 const propsToDelete = [

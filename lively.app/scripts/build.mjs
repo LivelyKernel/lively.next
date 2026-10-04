@@ -15,7 +15,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import https from 'node:https';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -28,8 +27,19 @@ const DIST_DIR = path.join(ROOT_DIR, 'dist');
 const NW_VERSION = process.env.LIVELY_NW_VERSION || '0.111.1';
 const NW_DOWNLOAD_BASE = process.env.LIVELY_NW_DOWNLOAD_BASE || 'https://dl.nwjs.io/live-build/v0.111.1-04292210-39517e80d';
 const NW_DOWNLOAD_BASE_KEY = crypto.createHash('sha1').update(NW_DOWNLOAD_BASE).digest('hex').slice(0, 8);
-const NODE_VERSION = (process.env.LIVELY_APP_NODE_VERSION || '25.6.1').replace(/^v/, '');
+const NODE_VERSION = (process.env.LIVELY_APP_NODE_VERSION || '24.20.0').replace(/^v/, '');
 const GIT_FOR_WINDOWS_VERSION = process.env.LIVELY_GIT_FOR_WINDOWS_VERSION || '2.54.0';
+const BUN_VERSION = '1.4.2';
+const BUN_ASSETS = {
+  'darwin-aarch64': '90987a3a16d7db556d886ac3d551e7b6d3edf0a1cf43acaed622e8676be1d12f',
+  'darwin-x64': '80520d7e17526308c9185d261679ac6d27798d3803a0e9f7ff9121ab8affb012',
+  'linux-aarch64': '54328bbc2d9c8e0c9f892c544d66c57a83b84139e34909e5ee81758f1ac8fda7',
+  'linux-x64': '36368faef7527875d5ffa52e53cd48021741f2a83eb6208a8dd64068d422a913',
+  'windows-aarch64': 'a7a16b876a305fd1029c66dbd27007b4f6112ae896532f675878731a21e50cfd',
+  'windows-x64': 'ce4c17497b2f29712a99d3d53f028de28cd42e3bacb8589599e7f000e49b6405'
+};
+const BUN_PLATFORM_KV = { linux: 'linux', osx: 'darwin', win: 'windows' };
+const BUN_ARCH_KV = { x64: 'x64', arm64: 'aarch64' };
 const GIT_FOR_WINDOWS_RELEASE = process.env.LIVELY_GIT_FOR_WINDOWS_RELEASE || `v${GIT_FOR_WINDOWS_VERSION}.windows.1`;
 const APP_VERSION = process.env.LIVELY_APP_VERSION || '0.1.0';
 const APP_UPDATE_CHANNEL = process.env.LIVELY_APP_UPDATE_CHANNEL || '';
@@ -66,6 +76,9 @@ const TARGET_NODE_PLATFORM = TARGET_NW_PLATFORM === 'osx' ? 'darwin' : TARGET_NW
 const FLAVOR = process.env.FLAVOR || 'normal';
 const LOCALES = (process.env.LOCALES || 'en-US').split(/\s+/).filter(Boolean);
 const PACK = process.env.PACK === '1';
+// A cross-built Windows bundle gets its target-native isolated install and
+// Puppeteer browser on windows-latest. Never stage the Linux install graph.
+const DEFER_TARGET_INSTALL = process.env.DEFER_TARGET_INSTALL === '1';
 
 if (!TARGET_NW_PLATFORM || !TARGET_ARCH) {
   die(`Unsupported host platform/arch: ${process.platform}/${process.arch}`);
@@ -112,37 +125,20 @@ const die = msg => { console.error(`ERROR: ${msg}`); process.exit(1); };
 // ---------------------------------------------------------------------------
 
 function download (url, dest) {
-  return new Promise((resolve, reject) => {
-    function attempt (u, redirects = 0) {
-      if (redirects > 5) return reject(new Error('Too many redirects: ' + u));
-      https.get(u, res => {
-        if ([301, 302, 303, 307, 308].includes(res.statusCode)) {
-          res.resume();
-          return attempt(new URL(res.headers.location, u).toString(), redirects + 1);
-        }
-        if (res.statusCode !== 200) {
-          return reject(new Error(`HTTP ${res.statusCode} for ${u}`));
-        }
-        const total = Number(res.headers['content-length']) || 0;
-        let got = 0, lastPct = -1;
-        const out = fs.createWriteStream(dest);
-        res.on('data', chunk => {
-          got += chunk.length;
-          if (total) {
-            const pct = Math.floor(got / total * 100);
-            if (pct !== lastPct) {
-              process.stdout.write(`\r   ${pct}%  `);
-              lastPct = pct;
-            }
-          }
-        });
-        res.pipe(out);
-        out.on('finish', () => { out.close(); process.stdout.write('\n'); resolve(); });
-        out.on('error', reject);
-      }).on('error', reject);
-    }
-    attempt(url);
-  });
+  const temporary = `${dest}.download-${process.pid}`;
+  try {
+    execFileSync('curl', [
+      '--fail', '--location', '--proto', '=http,https',
+      '--proto-redir', `=${new URL(url).protocol.slice(0, -1)}`,
+      '--retry', '3', '--retry-all-errors',
+      '--connect-timeout', '30', '--max-time', '600',
+      '--speed-limit', '1024', '--speed-time', '60',
+      '--output', temporary, url
+    ], { stdio: 'inherit' });
+    fs.renameSync(temporary, dest);
+  } finally {
+    fs.rmSync(temporary, { force: true });
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -191,11 +187,11 @@ async function fetchAndExtract (url, extractTo, flagFile) {
   fs.writeFileSync(flagFile, 'ok');
 }
 
-async function fetchAndExtractVerified (url, extractTo, flagFile, sha256) {
+async function fetchAndExtractVerified (url, extractTo, flagFile, sha256, cacheName = path.basename(url)) {
   if (fs.existsSync(flagFile)) return;
   const cacheDir = path.join(DIST_DIR, '.cache');
   fs.mkdirSync(cacheDir, { recursive: true });
-  const archivePath = path.join(cacheDir, path.basename(url));
+  const archivePath = path.join(cacheDir, cacheName);
   if (!fs.existsSync(archivePath)) {
     step(`Downloading ${path.basename(url)}...`);
     await download(url, archivePath);
@@ -259,6 +255,11 @@ function makeFilter (patterns) {
   };
 }
 
+function pathIsInside (root, candidate) {
+  const rel = path.relative(path.resolve(root), path.resolve(candidate));
+  return rel === '' || (rel !== '..' && !rel.startsWith(`..${path.sep}`) && !path.isAbsolute(rel));
+}
+
 function copyMonorepo (src, dst, excludeFilter) {
   function walk (currentSrc, currentDst) {
     const ents = fs.readdirSync(currentSrc, { withFileTypes: true });
@@ -268,18 +269,64 @@ function copyMonorepo (src, dst, excludeFilter) {
       const rel = path.relative(src, s);
       if (!excludeFilter(rel)) continue;
       if (ent.isSymbolicLink()) {
-        const link = fs.readlinkSync(s);
-        try { fs.symlinkSync(link, d); } catch (_) {}
+        const sourceTarget = path.resolve(path.dirname(s), fs.readlinkSync(s));
+        if (!pathIsInside(src, sourceTarget)) {
+          throw new Error(`Refusing to package external symlink: ${s} -> ${sourceTarget}`);
+        }
+        const bundledTarget = path.join(dst, path.relative(src, sourceTarget));
+        const link = path.relative(path.dirname(d), bundledTarget) || '.';
+        fs.symlinkSync(link, d, fs.statSync(s).isDirectory() ? 'dir' : 'file');
       } else if (ent.isDirectory()) {
         fs.mkdirSync(d, { recursive: true });
         walk(s, d);
       } else if (ent.isFile()) {
         fs.copyFileSync(s, d);
+        fs.chmodSync(d, fs.statSync(s).mode & 0o777);
       }
     }
   }
   fs.mkdirSync(dst, { recursive: true });
   walk(src, dst);
+}
+
+function assertSelfContainedSymlinks (root) {
+  function walk (dir) {
+    for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+      const entry = path.join(dir, ent.name);
+      if (ent.isSymbolicLink()) {
+        const target = path.resolve(path.dirname(entry), fs.readlinkSync(entry));
+        if (!pathIsInside(root, target) || !fs.existsSync(entry)) {
+          throw new Error(`Packaged symlink escapes or is broken: ${entry} -> ${target}`);
+        }
+        const realTarget = fs.realpathSync(entry);
+        if (!pathIsInside(root, realTarget)) {
+          throw new Error(`Packaged symlink resolves outside bundle: ${entry} -> ${realTarget}`);
+        }
+      } else if (ent.isDirectory()) {
+        walk(entry);
+      }
+    }
+  }
+  walk(root);
+}
+
+function materializeFileSymlinksAndRejectDirectorySymlinks (root) {
+  function walk (dir) {
+    for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+      const entry = path.join(dir, ent.name);
+      if (ent.isSymbolicLink()) {
+        const target = fs.realpathSync(entry);
+        const stat = fs.statSync(target);
+        if (stat.isDirectory()) {
+          throw new Error(`Deferred target staging contains a directory symlink: ${entry} -> ${target}`);
+        }
+        fs.rmSync(entry, { force: true });
+        fs.copyFileSync(target, entry);
+        fs.chmodSync(entry, stat.mode & 0o777);
+      } else if (ent.isDirectory()) walk(entry);
+    }
+  }
+  walk(root);
 }
 
 // ---------------------------------------------------------------------------
@@ -379,7 +426,7 @@ function finalizeMacOS () {
   fs.mkdirSync(appNw, { recursive: true });
 
   // Move our payload into Contents/Resources/app.nw/
-  for (const f of ['package.json', 'boot.html', 'desktop', 'app', 'node']) {
+  for (const f of ['package.json', 'boot.html', 'desktop', 'app', 'node', 'tools']) {
     const src = path.join(BUNDLE, f);
     if (fs.existsSync(src)) fs.renameSync(src, path.join(appNw, f));
   }
@@ -513,6 +560,34 @@ async function stageGitForWindows () {
 
 // ---------------------------------------------------------------------------
 // Build steps
+async function stageBun () {
+  const platform = BUN_PLATFORM_KV[TARGET_NW_PLATFORM];
+  const arch = BUN_ARCH_KV[TARGET_ARCH];
+  const key = `${platform}-${arch}`;
+  const sha256 = BUN_ASSETS[key];
+  if (!platform || !arch || !sha256) {
+    die(`No Bun ${BUN_VERSION} desktop binary configured for ${TARGET_NW_PLATFORM}-${TARGET_ARCH}`);
+  }
+
+  section(`Fetching Bun v${BUN_VERSION} for ${platform}-${arch}`);
+  const archive = `bun-${platform}-${arch}.zip`;
+  const bunCache = path.join(DIST_DIR, '.cache', 'bun', `${BUN_VERSION}-${key}`);
+  await fetchAndExtractVerified(
+    `https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/${archive}`,
+    bunCache,
+    path.join(bunCache, '.extracted'),
+    sha256,
+    `bun-${BUN_VERSION}-${platform}-${arch}.zip`);
+
+  const binaryName = platform === 'windows' ? 'bun.exe' : 'bun';
+  const source = path.join(bunCache, path.basename(archive, '.zip'), binaryName);
+  if (!fs.existsSync(source)) die(`Bun archive did not contain ${source}`);
+  const target = path.join(BUNDLE, 'tools', 'bun', 'bin', binaryName);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.copyFileSync(source, target);
+  if (platform !== 'windows') fs.chmodSync(target, 0o755);
+}
+
 // ---------------------------------------------------------------------------
 
 async function main () {
@@ -570,6 +645,7 @@ async function main () {
   if (TARGET_NODE_PLATFORM !== 'win') fs.chmodSync(nodeBinDst, 0o755);
 
   await stageGitForWindows();
+  await stageBun();
 
   // -----------------------------------------------------------------------
   // 3. App manifest + desktop/ scripts + boot.html
@@ -587,7 +663,7 @@ async function main () {
 
   fs.copyFileSync(path.join(APP_DIR, 'desktop', 'boot.html'),        path.join(BUNDLE, 'boot.html'));
   fs.mkdirSync(path.join(BUNDLE, 'desktop'), { recursive: true });
-  for (const f of ['background-menu.js', 'start-server.cjs', 'watchdog.cjs', 'server-config.js', 'inject.js', 'updates.cjs', 'velopack-helper.cjs']) {
+  for (const f of ['background-menu.js', 'start-server.cjs', 'watchdog.cjs', 'server-config.js', 'inject.js', 'updates.cjs', 'velopack-helper.cjs', 'package-payload.cjs']) {
     fs.copyFileSync(path.join(APP_DIR, 'desktop', f), path.join(BUNDLE, 'desktop', f));
   }
   // Stamp the build SHA so boot.log identifies the exact commit, no more
@@ -603,6 +679,7 @@ async function main () {
       nwVersion: NW_VERSION,
       nwDownloadBase: NW_DOWNLOAD_BASE,
       nodeVersion: NODE_VERSION,
+      bunVersion: BUN_VERSION,
       ...(TARGET_NW_PLATFORM === 'win' ? { gitForWindowsVersion: GIT_FOR_WINDOWS_VERSION } : {}),
       platform: TARGET_NW_PLATFORM,
       arch: TARGET_ARCH
@@ -613,77 +690,61 @@ async function main () {
   // -----------------------------------------------------------------------
   section('Copying lively.next source + node_modules into bundle/app/');
 
-  const crossPlatformNativeExcludes = (() => {
-    // Strip native bindings from other platforms to save space.
-    const patterns = [];
-    const KEEP = {
-      'linux-x64':    ['linux-x64'],
-      'linux-arm64':  ['linux-arm64'],
-      'osx-x64':      ['darwin-x64'],
-      'osx-arm64':    ['darwin-arm64'],
-      'win-x64':      ['win32-x64', 'win-x64'],
-    };
-    const keep = KEEP[`${TARGET_NW_PLATFORM}-${TARGET_ARCH}`] || [];
-    const ALL = ['darwin-arm64', 'darwin-x64', 'linux-x64', 'linux-arm64', 'linux-x64-gnu', 'linux-x64-musl', 'linux-arm64-gnu', 'linux-arm64-musl', 'win32-x64', 'win32-x64-msvc'];
-    for (const tag of ALL) {
-      if (keep.some(k => tag.includes(k))) continue;
-      patterns.push(`lively.next-node_modules/@swc__SLASH__core-${tag}/`);
-      patterns.push(`lively.next-node_modules/@rollup__SLASH__rollup-${tag}/`);
-    }
-    return patterns;
-  })();
-
   const excludes = [
-    // Anchored (source-root-relative) — avoid stripping legit nested dirs
-    // like systemjs/0.21.6/dist/ (that IS the package source).
     '/.git/',
     '/.claude/',
     '/.github/',
     '/dist/',
-    '/esm_cache/',
     '/tmp/',
     '/.module_cache/',
     '/local_projects/',
-    '/node_modules/',
+    '/custom-npm-modules/',
+    // Ignore a stale pre-migration flatn install if one is left in the checkout.
+    '/lively.next-node_modules/',
     '/lively.freezer/swc-plugin/target/',
     '/lively.freezer/swc-plugin/src/',
     '/lively.freezer/swc-plugin/Cargo.toml',
     '/lively.freezer/swc-plugin/Cargo.lock',
-    '/lively.next-node_modules/nw/',
-    '/lively.next-node_modules/puppeteer/',
-    '/lively.next-node_modules/puppeteer-core/',
-    '/lively.next-node_modules/@puppeteer/',
     '/lively.headless/chrome-data-dir/',
     '/lively.app/dist/',
-    '/lively.app/boot.log',
-    // Anywhere
-    '**/.cachedImportMap.json',
-    // In-dep cruft
-    'lively.next-node_modules/**/test/',
-    'lively.next-node_modules/**/tests/',
-    'lively.next-node_modules/**/__tests__/',
-    'lively.next-node_modules/**/example/',
-    'lively.next-node_modules/**/examples/',
-    'lively.next-node_modules/**/docs/',
-    'lively.next-node_modules/**/*.md',
-    'lively.next-node_modules/**/*.markdown',
-    'lively.next-node_modules/**/*.map',
-    'lively.next-node_modules/**/.bin/',
-    'lively.next-node_modules/**/CHANGELOG*',
-    ...crossPlatformNativeExcludes,
+    '/lively.app/boot.log'
   ];
 
-  step('Copying monorepo (this may take a minute)...');
-  copyMonorepo(ROOT_DIR, path.join(BUNDLE, 'app'), makeFilter(excludes));
+  const requiredInputs = ['package.json', 'bun.lock', 'bunfig.toml', 'esm_cache'];
+  if (!DEFER_TARGET_INSTALL) requiredInputs.push('node_modules', '.puppeteer-browser-cache');
+  for (const required of requiredInputs) {
+    if (!fs.existsSync(path.join(ROOT_DIR, required))) {
+      die(`Missing ${required}; run the frozen install and browser cache build before desktop packaging`);
+    }
+  }
+  if (!DEFER_TARGET_INSTALL && fs.readdirSync(path.join(ROOT_DIR, '.puppeteer-browser-cache')).length === 0) {
+    die('Puppeteer browser cache is empty; run the frozen install with PUPPETEER_CACHE_DIR set before desktop packaging');
+  }
 
-  step('Pre-building package registry cache...');
-  execFileSync(process.execPath, [
-    path.join(BUNDLE, 'app', 'lively.server', 'scripts', 'build-package-registry-cache.cjs')
-  ], {
-    cwd: path.join(BUNDLE, 'app'),
-    env: { ...process.env, FLATN_DISABLE_WATCH: '1' },
-    stdio: 'inherit'
+  step('Copying monorepo (this may take a minute)...');
+  const includeFile = makeFilter(excludes);
+  copyMonorepo(ROOT_DIR, path.join(BUNDLE, 'app'), relative => {
+    // Ignore stale cache paths from before portable filename encoding.
+    const posix = relative.split(path.sep).join('/');
+    const parts = posix.split('/');
+    if (DEFER_TARGET_INSTALL &&
+        (parts.includes('node_modules') || parts[0] === '.puppeteer-browser-cache')) return false;
+    return includeFile(relative) && !(posix.startsWith('esm_cache/') && /[<>:"\\|?*]/.test(posix));
   });
+  assertSelfContainedSymlinks(path.join(BUNDLE, 'app'));
+
+  if (DEFER_TARGET_INSTALL) {
+    step('Deferring target dependency install and package registry cache to the native runner...');
+  } else {
+    step('Pre-building package registry cache...');
+    execFileSync(process.execPath, [
+      '--experimental-import-meta-resolve',
+      path.join(BUNDLE, 'app', 'lively.server', 'scripts', 'build-package-registry-cache.cjs')
+    ], {
+      cwd: path.join(BUNDLE, 'app'),
+      stdio: 'inherit'
+    });
+  }
 
   // -----------------------------------------------------------------------
   // 5. Platform-specific launchers / layout
@@ -692,6 +753,7 @@ async function main () {
   if (TARGET_NW_PLATFORM === 'linux') finalizeLinux();
   else if (TARGET_NW_PLATFORM === 'osx') finalizeMacOS();
   else if (TARGET_NW_PLATFORM === 'win') finalizeWindows();
+  if (DEFER_TARGET_INSTALL) materializeFileSymlinksAndRejectDirectorySymlinks(BUNDLE);
 
   // -----------------------------------------------------------------------
   // 6. Report + optional pack
@@ -733,4 +795,14 @@ async function main () {
   }
 }
 
-main().catch(err => { console.error(err); process.exit(1); });
+export {
+  download,
+  assertSelfContainedSymlinks,
+  copyMonorepo,
+  makeFilter,
+  materializeFileSymlinksAndRejectDirectorySymlinks
+};
+
+if (path.resolve(process.argv[1] || '') === fileURLToPath(import.meta.url)) {
+  main().catch(err => { console.error(err); process.exit(1); });
+}

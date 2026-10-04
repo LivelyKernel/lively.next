@@ -34,6 +34,13 @@ describe('module loading', () => {
     expect(exports).to.have.property('x', 3);
   });
 
+  it('imports cached frozen records before the live transpiler is installed', async () => {
+    S.config({ transpiler: 'stub-transpiler' });
+    S.set(module1, S.newModule({ x: 3 }));
+    S.get('@lively-env').loadedModules[module1] = { exports: { x: 3 }, recorder: {} };
+    expect(await S.import(module1)).to.have.property('x', 3);
+  });
+
   it('has module interface objects', async () => {
     await S.import(testDir + 'file1.js');
     let m = loadedModules(S)[module1];

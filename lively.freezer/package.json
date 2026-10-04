@@ -25,7 +25,35 @@
     "js-untar": "2.0.0",
     "@swc/core": "1.10.1",
     "@swc/core-darwin-arm64": "1.10.1",
-    "@swc/core-linux-x64-gnu": "1.10.1"
+    "@swc/core-linux-x64-gnu": "1.10.1",
+    "enhanced-resolve": "5.18.3",
+    "lively.modules": "workspace:*",
+    "@buxlabs/amd-to-es6": "0.16.3",
+    "@babel/plugin-transform-modules-commonjs": "7.14.0",
+    "chalk": "4.1.2",
+    "lively.morphic": "workspace:*",
+    "lively.resources": "workspace:*",
+    "lively.lang": "workspace:*",
+    "lively.components": "workspace:*",
+    "lively.serializer2": "workspace:*",
+    "lively.ide": "workspace:*",
+    "lively.ast": "workspace:*",
+    "lively.user": "workspace:*",
+    "lively.classes": "workspace:*",
+    "lively.source-transform": "workspace:*",
+    "lively.graphics": "workspace:*",
+    "lively.bindings": "workspace:*",
+    "lively.project": "workspace:*",
+    "babel-plugin-transform-es2015-modules-systemjs": "^6.19.0",
+    "lively-system-interface": "workspace:*",
+    "lively.2lively": "workspace:*",
+    "lively.collab": "workspace:*",
+    "lively.git": "workspace:*",
+    "lively.halos": "workspace:*",
+    "lively.shell": "workspace:*",
+    "lively.storage": "workspace:*",
+    "lively.vm": "workspace:*",
+    "terser": "5.51.2"
   },
   "scripts": {
     "build-loading-screen": "./tools/build-loading-screen.sh",
@@ -44,7 +72,9 @@
         "node": "@rollup/wasm-node",
         "~node": "@rollup/browser"
       },
-      "zlib": { "~node": "@empty" }
+      "zlib": {
+        "~node": "@empty"
+      }
     }
   },
   "lively": {
@@ -54,5 +84,9 @@
         "landing-page"
       ]
     }
-  }
+  },
+  "devDependencies": {
+    "mocha-es6": "workspace:*"
+  },
+  "main": "./index.js"
 }

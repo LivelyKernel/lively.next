@@ -1,0 +1,43 @@
+{
+  "name": "LivelyKernel--partsbin",
+  "author": {
+    "name": "linusha"
+  },
+  "description": "A repository to collect and share components in lively.next.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LivelyKernel/partsbin"
+  },
+  "scripts": {
+    "build": "rm -rf build/* && export MINIFY='' && ./tools/build.sh",
+    "build-minified": "rm -rf build/* && export MINIFY=true && ./tools/build.sh"
+  },
+  "dependencies": {
+    "@rollup/plugin-json": "4.1.0",
+    "rollup": "^2.70.2",
+    "rollup-plugin-export-default": "1.4.0",
+    "rollup-plugin-polyfill-node": "0.9.0"
+  },
+  "lively": {
+    "projectDependencies": [],
+    "boundLivelyVersion": "1b4b476f5ec787d05e4b80913470a98770071d59",
+    "canUsePages": true,
+    "testOnPush": false,
+    "buildOnPush": false,
+    "deployOnPush": false,
+    "localDependencies": {
+      "mocha-es6": "../../mocha-es6",
+      "lively.freezer": "../../lively.freezer",
+      "lively.morphic": "../../lively.morphic",
+      "lively.graphics": "../../lively.graphics",
+      "lively.lang": "../../lively.lang",
+      "lively.ide": "../../lively.ide",
+      "lively.bindings": "../../lively.bindings"
+    }
+  },
+  "version": "0.7.2",
+  "devDependencies": {
+    "@rollup/plugin-babel": "5.3.1",
+    "@babel/preset-env": "7.27.1"
+  }
+}

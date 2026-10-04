@@ -1,9 +1,10 @@
 /* global process, require, module */
-const { findPackageConfig } = require('flatn/flatn-cjs.js');
 const babel = require('@babel/core');
-const { flatnResolve, findPackagePathForModule, findPackageConfig: findPackageConfigBrowser } = require('flatn/module-resolver.js');
+const { create: createResolver } = require('enhanced-resolve');
+const { fileURLToPath, pathToFileURL } = require('node:url');
 const path = require('node:path');
 const fs = require('node:fs');
+const livelyRoot = path.resolve(process.env.lv_next_dir || path.join(__dirname, '../../..'));
 const { builtinModules } = require('node:module');
 const child_process = require("node:child_process");
 const commonjs = require('@rollup/plugin-commonjs');
@@ -57,17 +58,49 @@ function isAlreadyResolved(url) {
 }
 
 function ensureFileFormat(url) {
-  return url && url.startsWith('/') ? 'file://' + url : url;
+  return url && path.isAbsolute(url) ? pathToFileURL(url).href : url;
 }
 
-function resolveModuleId (moduleName, importer, context = 'systemjs-node') {
-  if (moduleName.startsWith('esm://')) {
-    return moduleName;
+// The freezer calls resolution synchronously, including outside Rollup hooks.
+// Delegate package conditions to the maintained resolver rather than parsing exports.
+const browserResolve = createResolver.sync({
+  conditionNames: ['browser', 'import', 'default'],
+  mainFields: ['browser', 'module', 'main'],
+  aliasFields: ['browser'],
+  extensions: ['.js', '.mjs', '.cjs', '.json', '.node'],
+  symlinks: true
+});
+const nodeResolve = createResolver.sync({
+  conditionNames: ['node', 'import', 'default'],
+  mainFields: ['main'],
+  extensions: ['.js', '.mjs', '.cjs', '.json', '.node'],
+  symlinks: true
+});
+
+function resolveModuleId (moduleName, importer = __filename, context = 'systemjs-node') {
+  if (moduleName.startsWith('file:')) return fileURLToPath(moduleName);
+  if (isAlreadyResolved(moduleName) || path.isAbsolute(moduleName) || moduleName === '@empty') return moduleName;
+  if (moduleName.startsWith('./') || moduleName.startsWith('../')) return null;
+  if (builtinModules.includes(moduleName) || moduleName.startsWith('node:')) return moduleName;
+  const parent = importer.startsWith('file:') ? fileURLToPath(importer) : importer;
+  const resolve = context === 'systemjs-browser' ? browserResolve : nodeResolve;
+  const basedir = path.isAbsolute(parent) ? path.dirname(parent) : process.cwd();
+  const resolved = resolve(basedir, moduleName);
+  return resolved === false ? '@empty' : resolved;
+}
+
+function findPackagePathForModule (moduleName) {
+  if (!moduleName || isCdnImport(moduleName) || moduleName.startsWith('node:')) return;
+  let location = moduleName.startsWith('file:') ? fileURLToPath(moduleName) : moduleName;
+  if (!path.isAbsolute(location)) return;
+  let dir = fs.existsSync(location) && fs.statSync(location).isDirectory() ? location : path.dirname(location);
+  while (true) {
+    const manifest = path.join(dir, 'package.json');
+    if (fs.existsSync(manifest) && JSON.parse(fs.readFileSync(manifest, 'utf8')).name) return dir;
+    const parent = path.dirname(dir);
+    if (parent === dir) return;
+    dir = parent;
   }
-  if (isAlreadyResolved(moduleName) || moduleName.startsWith('/')) return moduleName; // already fully resolved name
-  if (moduleName.startsWith('./') || moduleName.startsWith('../'))
-    return null; // relative imports are handled by rollup itself
-  return flatnResolve(moduleName, importer, context);
 }
 
 function detectFormatFromSource (source) {
@@ -75,11 +108,13 @@ function detectFormatFromSource (source) {
 }
 
 function normalizeFileName (fileName) {
+  if (fileName.startsWith('file:')) fileName = fileURLToPath(fileName);
   if (isAlreadyResolved(fileName)) return fileName;
   return require.resolve(fileName);
 }
 
 function decanonicalizeFileName (fileName) {
+  if (fileName.startsWith('file:')) fileName = fileURLToPath(fileName);
   if (isAlreadyResolved(fileName)) return fileName;
   let url = require.resolve(fileName);
   if (fileName.endsWith('.js') &&
@@ -90,11 +125,16 @@ function decanonicalizeFileName (fileName) {
   return url;
 }
 
-function resolvePackage (moduleName, context) {
-  // if the moduleName is from a ESM cdn, we cannot determine the
-  // package based on the module path
-  if (isCdnImport(moduleName)) return;
-  return context === 'systemjs-browser' ? findPackageConfigBrowser(moduleName) : findPackageConfig(moduleName);
+function resolvePackage (moduleName) {
+  if (!moduleName || isCdnImport(moduleName) || moduleName.startsWith('node:') || builtinModules.includes(moduleName) || moduleName.startsWith('@empty')) return;
+  const packageDir = findPackagePathForModule(moduleName);
+  if (!packageDir) return;
+  const config = JSON.parse(fs.readFileSync(path.join(packageDir, 'package.json'), 'utf8'));
+  const mapFile = path.join(packageDir, '.cachedImportMap.json');
+  if (fs.existsSync(mapFile)) {
+    config.systemjs = { ...config.systemjs, importMap: { ...JSON.parse(fs.readFileSync(mapFile, 'utf8')), _mapUrl: pathToFileURL(mapFile).href } };
+  }
+  return config;
 }
 
 function dontTransform (moduleId, knownGlobals) {
@@ -218,7 +258,9 @@ async function fetchFile (url) {
   const maxAttempts = 3;
   while (true) {
     try {
-      return await resource(ensureFileFormat(url)).read();
+      const source = resource(ensureFileFormat(url));
+      if (source.isESMResource) source.getBaseURL = () => pathToFileURL(livelyRoot + path.sep).href;
+      return await source.read();
     } catch (err) {
       attempt++;
       if (attempt < maxAttempts) {
@@ -237,10 +279,10 @@ async function load(url) {
 }
 
 function supportingPlugins(context = 'node', self) {
-  const livelyPackageRoot = path.resolve(process.env.lv_next_dir || process.cwd())
+  const livelyPackageRoot = livelyRoot
     .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const livelyPackage = new RegExp(
-    `^${livelyPackageRoot}/lively\\.(?!next-node_modules(?:/|$))[^/]+/`
+    `^${livelyPackageRoot}/lively\\.[^/]+/`
   );
 
   return [
@@ -295,7 +337,7 @@ function supportingPlugins(context = 'node', self) {
       sourceMap: false,
       defaultIsModuleExports: true,
       transformMixedEsModules: true,
-      dynamicRequireRoot: process.env.lv_next_dir,
+      dynamicRequireRoot: livelyRoot,
       exclude: ['../**/base/0.11.1/utils.js', '../**/use/2.0.0/utils.js', livelyPackage],
       dynamicRequireTargets: [
          resolveModuleId('babel-plugin-transform-es2015-modules-systemjs')

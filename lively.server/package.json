@@ -14,21 +14,34 @@
     "formidable": "^1.2.2",
     "@babel/core": "7.26.10",
     "tar-fs": "^3.0.5",
-    "lively-system-interface": "https://github.com/LivelyKernel/lively-system-interface",
-    "lively.2lively": "https://github.com/LivelyKernel/lively.2lively.git",
-    "lively.modules": "*",
-    "lively.resources": "*",
-    "lively.shell": "https://github.com/LivelyKernel/lively.shell"
+    "lively-system-interface": "workspace:*",
+    "lively.2lively": "workspace:*",
+    "lively.modules": "workspace:*",
+    "lively.resources": "workspace:*",
+    "lively.shell": "workspace:*",
+    "lively.lang": "workspace:*",
+    "lively.installer": "workspace:*",
+    "lively.storage": "workspace:*",
+    "lively.headless": "workspace:*",
+    "lively.vm": "workspace:*",
+    "lively.classes": "workspace:*",
+    "lively.morphic": "workspace:*",
+    "lively.ide": "workspace:*"
   },
   "devDependencies": {
-    "mocha-es6": "^0.5"
+    "mocha-es6": "workspace:*"
   },
   "scripts": {
-    "test": "mocha-es6 tests/*-test.js --pre-script ./tests/node-pre.js",
+    "test": "mocha-es6 tests/*-test.js",
     "start": "$npm_node_execpath bin/start-server.js --port 9011 --hostname 0.0.0.0"
   },
   "main": "./index.js",
   "systemjs": {
     "main": "./server.js"
+  },
+  "lively": {
+    "environments": [
+      "server"
+    ]
   }
 }

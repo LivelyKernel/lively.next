@@ -10,6 +10,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 
 function parseArgs () {
   const args = {};
@@ -19,6 +20,7 @@ function parseArgs () {
     if (arg === '--help' || arg === '-h') args.help = true;
     else if (arg === '--json') args.json = true;
     else if (arg === '--keep') args.keep = true;
+    else if (arg === '--launch') args.launch = true;
     else {
       const eq = arg.match(/^--([^=]+)=(.*)$/);
       if (eq) args[eq[1]] = eq[2];
@@ -41,7 +43,8 @@ Options:
   --channel      Override LIVELY_APP_UPDATE_CHANNEL for the smoke run.
   --packagesDir  Temporary Velopack packages directory for this smoke run.
   --json         Print machine-readable JSON.
-  --keep         Keep the temporary extracted portable app.`);
+  --keep         Keep the temporary extracted portable app.
+  --launch       Run desktop project-opening smoke checks on the same extracted app.`);
 }
 
 function die (msg, details = null) {
@@ -218,6 +221,12 @@ async function main () {
     console.log('  state:   ' + summary.state + (summary.targetVersion ? ` (${summary.targetVersion})` : ''));
   }
 
+  if (args.launch) {
+    execFileSync(process.execPath, [
+      fileURLToPath(new URL('./smoke-desktop-bundle.mjs', import.meta.url)),
+      `--bundleDir=${path.dirname(layout.appBundle)}`, '--platform=osx'
+    ], { stdio: 'inherit' });
+  }
   if (extracted) extracted.cleanup();
 }
 

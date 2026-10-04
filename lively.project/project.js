@@ -55,10 +55,12 @@ async function addPackageAtIfMissing (registry, packageDir, preferredLocation) {
   return registry.addPackageAt(packageDir, preferredLocation);
 }
 
-async function addProjectPackageOnServerIfMissing (fullName) {
+async function addProjectPackageOnServerIfMissing (fullName, update = false) {
   await evalOnServer(`(async () => {
     const registry = System.get("@lively-env").packageRegistry;
     const projectURL = System.baseURL + "local_projects/" + ${JSON.stringify(fullName)};
+    const { installProjectDependencies } = await System.nativeImport(new URL('lively.project/package-install.mjs', System.baseURL).href);
+    await installProjectDependencies(System._nodeRequire('node:url').fileURLToPath(projectURL), { update: ${JSON.stringify(update)} });
     if (!registry.findPackageWithURL(projectURL)) await registry.addPackageAt(projectURL);
     return true;
   })()`);
@@ -106,27 +108,14 @@ export class Project {
     if (System.get('@system-env').node || (typeof lively !== 'undefined' && lively.isInOfflineMode)) return false;
     if (!fullName) return false;
 
-    try {
-      const projectDir = projectURL
-        ? resource(projectURL).asDirectory()
-        : await Project.projectDirectory(fullName);
-      const cachedImportMap = projectDir.join('.cachedImportMap.json');
-      if (await cachedImportMap.exists()) return false;
-
-      const importMapUrl = resource(System.baseURL).join(`/import-map.json?projectName=${encodeURIComponent(fullName)}`).url;
-      const importMap = await resource(importMapUrl).readJson();
-      if (!importMap || obj.isEmpty(importMap)) return false;
-
-      await cachedImportMap.writeJson(importMap, true);
-      return true;
-    } catch (err) {
-      console.warn(`[lively.project] Failed to create import map for ${fullName}`, err);
-      return false;
-    }
+    const importMapUrl = resource(System.baseURL).join(`/import-map.json?projectName=${encodeURIComponent(fullName)}`).url;
+    // Generate or refresh the hidden cache before loading the project config.
+    await resource(importMapUrl).readJson();
+    return true;
   }
 
   static async resetConfigFiles (gitResource) {
-    await gitResource.resetFile('package.json');
+    // Dependency manifests and locks are user-owned; do not discard local updates.
     await gitResource.resetFile('.github/workflows/ci-tests.yml');
   }
 
@@ -195,6 +184,11 @@ export class Project {
         'rollup-plugin-export-default': '1.4.0',
         'rollup-plugin-polyfill-node': '0.9.0'
       },
+      devDependencies: {
+        '@babel/core': '7.26.10',
+        '@babel/preset-env': '7.27.1',
+        '@rollup/plugin-babel': '5.3.1'
+      },
       lively: {
         projectDependencies: []
       },
@@ -211,13 +205,16 @@ export class Project {
 
     let projectsCandidates = [];
     Object.keys(packageCache.packageMap).forEach(pack =>
-      Object.keys(packageCache.packageMap[pack].versions).forEach(v => {
+      Object.keys(packageCache.packageMap[pack].instances || packageCache.packageMap[pack].versions).forEach(v => {
         // filters out invalid projects (e.g., with invalid package.json file)
-        if (v === '0.0.0') return;
-        projectsCandidates.push(packageCache.packageMap[pack].versions[v]);
+        const pkg = (packageCache.packageMap[pack].instances || packageCache.packageMap[pack].versions)[v];
+        if ((pkg.version || pkg._version) === '0.0.0') return;
+        projectsCandidates.push(pkg);
       })
     );
-    projectsCandidates = projectsCandidates.filter(p => p.url.includes('local_projects'));
+    const projectsDirectory = resource(baseURL).join('local_projects').asDirectory();
+    projectsCandidates = projectsCandidates.filter(p =>
+      resource(new URL(p.url, baseURL).href).parent()?.equals(projectsDirectory));
     const includePartsbinSetting = localStorage.getItem('livelyIncludePartsbinInList');
     if (forProjectBrowser && (!includePartsbinSetting || includePartsbinSetting == 'false')) projectsCandidates = projectsCandidates.filter(p => p._name !== 'LivelyKernel--partsbin');
     projectsCandidates.forEach(p => {
@@ -343,6 +340,7 @@ export class Project {
       }
     }
 
+    await addProjectPackageOnServerIfMissing(fullName);
     loadedProject.config = await loadedProject.configFile.readJson();
     await Project.ensureImportMapForProject(fullName, loadedProject.url);
 
@@ -503,6 +501,20 @@ export class Project {
       throw Error('No config file found. Should never happen.');
     }
     try {
+      // The browser and Bun edit module configuration and dependencies on disk.
+      // Preserve those edits when saving the project's version and settings.
+      const source = await this.configFile.read();
+      if (source.trim()) {
+        const stored = JSON.parse(source);
+        for (const key of ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies', 'systemjs']) {
+          if (key in stored) this.config[key] = stored[key];
+          else delete this.config[key];
+        }
+        for (const key of ['meta', 'environments', 'localDependencies']) {
+          if (key in (stored.lively || {})) this.config.lively[key] = stored.lively[key];
+          else delete this.config.lively[key];
+        }
+      }
       delete this.config.hasUnsavedChanges;
       await this.configFile.write(JSON.stringify(this.config, null, 2));
     } catch (e) {
@@ -621,7 +633,7 @@ export class Project {
       await system.resourceCreateFiles(projectDir, {
         'index.js': "'format esm';\nexport async function main () {\n    // THIS FUNCTION IS THE ENTRY POINT IN THE BUNDLED APPLICATION!\n}",
         'package.json': '',
-        '.gitignore': 'node_modules/\nbuild/\n.livelyForkInformation',
+        '.gitignore': 'node_modules/\nbuild/\n.cachedImportMap.json\n.livelyForkInformation',
         'README.md': `# ${this.name}\n\nNo description for package ${this.name} yet.\n`,
         tools: {
           'build.sh': '',
@@ -653,7 +665,8 @@ export class Project {
       }
       await this.saveConfigData();
 
-      await addProjectPackageOnServerIfMissing(this.fullName);
+      await addProjectPackageOnServerIfMissing(this.fullName, true);
+      this.config = await this.configFile.readJson();
       await addPackageAtIfMissing(System.get('@lively-env').packageRegistry, projectDir);
 
       const pkg = await loadPackage(system, {

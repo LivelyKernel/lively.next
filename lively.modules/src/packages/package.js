@@ -33,6 +33,12 @@ function normalizePackageURL (System, packageURL, allPackageURLs = []) {
 function lookupPackage (System, packageURL, isNormalized = false) {
   let registry = classHolder.PackageRegistry.ofSystem(System);
   let allPackageURLs = registry.allPackageURLs();
+  // A configured SystemJS package name decanonicalizes to its main file. Keep
+  // bare registry lookups at the package root so config, rename, and reload
+  // callers do not accidentally look up that main module as a package.
+  const registered = !isNormalized && typeof packageURL === 'string' &&
+    !isURL(packageURL) && !packageURL.startsWith('.') && registry.lookup(packageURL);
+  if (registered) return { pkg: registered, url: registered.url, allPackageURLs, registry };
   let url = isNormalized
     ? packageURL
     : normalizePackageURL(System, packageURL, allPackageURLs);
@@ -177,6 +183,13 @@ class Package {
       'isFork'
     ]);
     if (jso.url.startsWith(System.baseURL)) { jso.url = jso.url.slice(System.baseURL.length).replace(/^\//, ''); }
+    const mapURL = jso.systemjs?.importMap?._mapUrl;
+    if (mapURL?.startsWith(System.baseURL)) {
+      jso.systemjs = {
+        ...jso.systemjs,
+        importMap: { ...jso.systemjs.importMap, _mapUrl: mapURL.slice(System.baseURL.length).replace(/^\//, '') }
+      };
+    }
     return jso;
   }
 
@@ -195,6 +208,13 @@ class Package {
     this.exports = jso.exports;
     this.imports = jso.imports;
     this.systemjs = jso.systemjs;
+    const mapURL = this.systemjs?.importMap?._mapUrl;
+    if (mapURL && !isURL(mapURL)) {
+      this.systemjs = {
+        ...this.systemjs,
+        importMap: { ...this.systemjs.importMap, _mapUrl: join(System.baseURL, mapURL) }
+      };
+    }
     this.description = jso.description;
     this.author = jso.author;
     this.isFork = jso.isFork;
@@ -281,7 +301,7 @@ class Package {
 
   async resources (
     matches /* = url => url.match(/\.js$/) */,
-    exclude = ['.git', 'node_modules', '.module_cache', 'lively.next-node_modules']
+    exclude = ['.git', 'node_modules', '.module_cache']
   ) {
     let { System, url } = this;
     let allPackages = Package.allPackageURLs(System);
@@ -352,14 +372,15 @@ class Package {
 
     try {
       let config = System.get(packageConfigURL) || await System.import(packageConfigURL);
-      const importMap = await this.hasResource('.cachedImportMap.json') && await resource(url + '/.cachedImportMap.json').readJson();
+      const importMapFile = '.cachedImportMap.json';
+      const importMap = await this.hasResource(importMapFile) && await resource(url + '/' + importMapFile).readJson();
       let packageConfigPaths = [...System.packageConfigPaths];
       arr.pushIfNotIncluded(packageConfigPaths, packageConfigURL); // to inform systemjs that there is a config
       System.config({ packageConfigPaths });
       if (config.__useDefault) config = config.default;
       if (importMap) {
         if (!config.systemjs) config.systemjs = {};
-        config.systemjs.importMap = importMap;
+        config.systemjs.importMap = { ...(importMap.map || importMap), _mapUrl: resource(url + '/' + importMapFile).url };
       }
       return config;
     } catch (err) {
@@ -488,9 +509,8 @@ class Package {
   }
 
   async changeAddress (newURL, newName = null, removeOriginal = true) {
-    newURL = newURL.replace(/\/?/, '');
-
     let { System, url: oldURL } = this;
+    newURL = new URL(newURL, System.baseURL).href.replace(/\/$/, '');
     let config = await this.runtimeConfig;
     let oldPackageDir = resource(oldURL).asDirectory();
     let newP = new Package(System, newURL);
@@ -579,7 +599,7 @@ class Package {
     let modules = options.includeUnloaded
       ? (await this.resources(
           url => url.endsWith('.js'),
-          ['.git', 'node_modules', 'dist', '.module_cache', 'lively.next-node_modules', ...options.excludedModules || []]))
+          ['.git', 'node_modules', 'dist', '.module_cache', ...options.excludedModules || []]))
           .map(({ url }) => module(this.System, url))
       : this.modules().filter(ea => ea.isLoaded());
     return Promise.all(

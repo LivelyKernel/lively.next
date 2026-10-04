@@ -19,7 +19,4 @@ if [ "${FILE:0:1}" != "/" ]; then
   fi
 fi
 
-ROOT_DIR="$(cd "$WORKSPACE_LK/.." && pwd)"
-RESOLVER="$ROOT_DIR/flatn/resolver.mjs"
-
-node --no-warnings --experimental-loader "$RESOLVER" --dns-result-order ipv4first "$DIR/lively-as-editor.js" "$FILE"
+node --no-warnings --experimental-import-meta-resolve --dns-result-order ipv4first "$DIR/lively-as-editor.js" "$FILE"

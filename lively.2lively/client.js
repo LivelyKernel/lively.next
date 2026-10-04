@@ -13,8 +13,8 @@ import _ioClient from 'socket.io-client';
 import { resource } from 'lively.resources';
 let ioClient;
 if (isNode) {
-  const require = System._nodeRequire('module')._load;
-  ioClient = require('socket.io-client');
+  const moduleURL = System.decanonicalize('lively.2lively/client.js');
+  ioClient = System._nodeRequire('node:module').createRequire(moduleURL)('socket.io-client');
 } else {
   ioClient = _ioClient;
 }

@@ -9,7 +9,7 @@ import { joinPath } from 'lively.lang/string.js';
 const baseURL = typeof window !== 'undefined' && window.SERVER_URL ||
                 typeof System !== 'undefined' && System.baseURL ||
                 typeof document !== 'undefined' && document.location.origin ||
-                typeof process !== 'undefined' && 'file://' + process.env.lv_next_dir;
+                typeof process !== 'undefined' && new URL('../', import.meta.url).href;
 
 if (typeof $world !== 'undefined') {
   $world.withAllSubmorphsDo(ea =>
@@ -103,7 +103,6 @@ const config = {
         'lively.web', 'no group',
         url => url.includes('lively.morphic/objectdb') ||
                url.includes('lively.morphic/inspector') ||
-               url.includes('lively.next-node_modules') ||
                url.includes('node_modules') ||
                url.includes('custom-npm-modules') ||
                url.includes('mocha-es6') ||

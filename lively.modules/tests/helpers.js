@@ -130,6 +130,7 @@ function runInIframe (id, func) {
 
 function prepareSystem (name, testProjectDir) {
   const S = getSystem(name, { baseURL: testProjectDir });
+  S.trace = true;
   const transpiler = System.transpiler;
   S.set(transpiler, System.get(transpiler));
   S.config({ transpiler });

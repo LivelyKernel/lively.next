@@ -2,9 +2,10 @@
   "name": "lively.2lively",
   "version": "0.1.1",
   "dependencies": {
-    "lively.lang": "*",
-    "lively.storage": "*",
-    "socket.io-client": "^4.4.1"
+    "lively.lang": "workspace:*",
+    "lively.storage": "workspace:*",
+    "socket.io-client": "^4.4.1",
+    "lively.resources": "workspace:*"
   },
   "devDependencies": {
     "babel-core": "^6.24.1",
@@ -13,14 +14,14 @@
     "babel-plugin-transform-async-to-generator": "^6.24.1",
     "babel-plugin-transform-object-rest-spread": "^6.23.0",
     "babel-preset-es2015": "^6.24.1",
-    "lively.server": "git://github.com/LivelyKernel/lively.server.git",
-    "mocha-es6": "^0.5",
+    "lively.server": "workspace:*",
+    "mocha-es6": "workspace:*",
     "rollup": "^0.36.1",
     "rollup-plugin-babel": "^2.7.1",
     "uglify-js": "^2.8.22"
   },
   "scripts": {
-    "test": "mocha-es6 tests/*-test.js --pre-script ./tests/node-pre.js",
+    "test": "mocha-es6 tests/*-test.js",
     "build": "node tools/build.js"
   },
   "systemjs": {
@@ -34,5 +35,6 @@
         "format": "cjs"
       }
     }
-  }
+  },
+  "main": "./index.js"
 }

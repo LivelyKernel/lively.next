@@ -42,11 +42,11 @@ function initWorker () {
   const w = worker.create({
     workerId: '@lively-worker',
     scriptsToLoad: [
-      'lively.next-node_modules/systemjs/dist/system.src.js',
+      System.decanonicalize('systemjs/dist/system.src.js', System.baseURL + 'lively.modules/index.js'),
       'lively.modules/dist/lively.modules.js',
       'lively.ide/jsdom.worker.js'
       // 'lively.ide/worker-init.js'
-    ].map(url => System.baseURL + url)
+    ].map(url => url.includes('://') ? url : System.baseURL + url)
   });
   w.eval('(' + stringifyFunctionWithoutToplevelRecorder(async function () {
     await lively.lang.promise.waitFor(5000, () => self.initialized);

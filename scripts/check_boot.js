@@ -1,35 +1,42 @@
-const puppeteer = require('puppeteer');
+const path = require('node:path');
+const { createRequire } = require('node:module');
+const puppeteer = createRequire(path.join(__dirname, '../lively.headless/package.json'))('puppeteer');
 
 const aliveTimeout = 300 * 1000;
 const aliveRepeatTimeout = 300;
-let page;
+const bootURL = process.env.LIVELY_BOOT_URL || 'http://localhost:9011';
 
 (async () => {
-  const browser = await puppeteer.launch({
-    headless: 'new', 
-    args: [
-      '--no-sandbox',
-    ]
-  });
-  page = await browser.newPage();
-
+  let browser;
   try {
-    console.log('ℹ️ Began Loading lively.');
-    await page.goto('http://localhost:9011/worlds/load?name=__newWorld__&askForWorldName=false&fastLoad=true');
-    const startTime = Date.now();
-    while (true) {
-      if (Date.now() - startTime > aliveTimeout) {
-        process.exit(1);
+    browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'] });
+    const page = await browser.newPage();
+    await page.setCacheEnabled(false);
+    await page.setRequestInterception(true);
+    const externalDependencies = [];
+    const serverOrigin = new URL(bootURL).origin;
+    page.on('request', request => {
+      const url = new URL(request.url());
+      if (['http:', 'https:'].includes(url.protocol) && url.origin !== serverOrigin) {
+        if (!['image', 'font', 'media'].includes(request.resourceType())) externalDependencies.push(request.url());
+        return request.abort();
       }
-      if (await page.evaluate(`typeof $world !== 'undefined' && $world.name == 'lively.next'`)) break;
-      await new Promise((resolve) => setTimeout(resolve, aliveRepeatTimeout));
-    };
-    console.log('✅ Lively loaded successfully.');
-    process.exit(0);
+      return request.continue();
+    });
+    console.log('ℹ️ Began Loading lively with external HTTP blocked.');
+    await page.goto(new URL('/worlds/load?name=__newWorld__&askForWorldName=false&fastLoad=true', bootURL).href);
+    const startTime = Date.now();
+    while (!await page.evaluate(`typeof $world !== 'undefined' && $world.isWorld && $world._uiInitialized`)) {
+      if (Date.now() - startTime > aliveTimeout) throw new Error('Timed out initializing the Lively UI');
+      await new Promise(resolve => setTimeout(resolve, aliveRepeatTimeout));
+    }
+    if (externalDependencies.length) throw new Error('Uncached external dependencies: ' + externalDependencies.join(', '));
+    console.log('✅ Lively loaded successfully offline.');
   } catch (err) {
-    console.log(err);
-    console.log('❌ Error loading lively.');
-    process.exit(1);
+    console.error(err);
+    console.error('❌ Error loading lively.');
+    process.exitCode = 1;
+  } finally {
+    await browser?.close();
   }
 })();
-

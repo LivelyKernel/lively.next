@@ -1,9 +1,7 @@
 #!/bin/bash
 
 NODE_VERSION=$(node -v)
-NODE_VERSION=$(echo "$NODE_VERSION" | sed -En 's/v([0-9]+)\..*/\1/p')
-
-if [[ $NODE_VERSION -lt 24 ]]; then
-  echo -n "Your node version is not supported. Please use node 24.X or higher."; echo;
-  exit 1;
+if [ "$NODE_VERSION" != "v24.20.0" ]; then
+  echo "Your node version is not supported. Please use Node.js 24.20.0 (found $NODE_VERSION)."
+  exit 1
 fi

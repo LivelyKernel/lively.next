@@ -56,7 +56,7 @@ class VersionChecker extends Morph {
   }
 
   static async cwd () {
-    return await evalOnServer('System.baseURL').then(cwd => cwd.replace('file://', ''));
+    return await evalOnServer('System.resource(System.baseURL).path()');
   }
 
   get isVersionChecker () {
