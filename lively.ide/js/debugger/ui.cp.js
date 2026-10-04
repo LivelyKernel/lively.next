@@ -16,14 +16,18 @@ import {
 import {
   CURRENT_LINE_MARKER_ID,
   initialFrameForContinuation,
+  interpreterLineForSourcePosition,
+  sourceNameForFrame,
+  sourceUrlForFrame,
   lineRangeForFrame,
   locationStringForFrame,
   readFrameSource
 } from './source.js';
+import JavaScriptEditorPlugin from '../editor-plugin.js';
 import { evaluateInDebuggerScopes } from './evaluation.js';
 
 function frameLabel (frame, index) {
-  const name = frame.functionName || (frame.func && frame.func.name()) || '<anonymous>';
+  const name = sourceNameForFrame(frame);
   const location = frame.location || {};
   const line = Number.isFinite(location.lineNumber) ? ':' + (location.lineNumber + 1) : '';
   return '#' + index + '  ' + name + line;
@@ -220,8 +224,14 @@ export class LivelyDebuggerModel extends ViewModel {
     const source = await readFrameSource(frame);
     if (this.selectedFrame !== frame) return;
     this.currentSourceText = source;
-    this.ui.sourcePane.textString = source;
+    const pane = this.ui.sourcePane;
+    const plugin = pane.pluginFind(p => p.isJSEditorPlugin) || pane.addPlugin(new JavaScriptEditorPlugin());
+    plugin.evalEnvironment = {...plugin.evalEnvironment, targetModule: sourceUrlForFrame(frame)};
+    pane.textString = source;
     this.refreshSelectedLine(source);
+    await pane.whenRendered();
+    if (this.selectedFrame !== frame) return;
+    plugin.highlight();
     const scopes = visibleScopesForFrame(frame);
     this.ui.scopeList.items = scopes.map(scope => ({
       isListItem: true,
@@ -321,7 +331,7 @@ export class LivelyDebuggerModel extends ViewModel {
   runToCursor () {
     try {
       const position = this.ui.sourcePane.cursorPosition;
-      const result = runToInspectorPosition(this.continuation, position.row + 1, {startFrame: this.selectedFrame});
+      const result = runToInspectorPosition(this.continuation, interpreterLineForSourcePosition(this.selectedFrame, position), {startFrame: this.selectedFrame});
       return this.updateAfterInterpreterResult('Run to Cursor', result);
     } catch (error) { return this.interpreterActionFailed('Run to Cursor', error); }
   }
