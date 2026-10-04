@@ -132,7 +132,6 @@ export class LivelyDebuggerModel extends ViewModel {
           return [
             { target: 'stack list', signal: 'selection', handler: 'selectFrame' },
             { target: 'scope list', signal: 'selection', handler: 'selectScope' },
-            { target: 'close button', signal: 'fire', handler: 'closeDebugger' },
             { target: 'proceed button', signal: 'fire', handler: 'proceed' },
             { target: 'retry button', signal: 'fire', handler: 'retry' },
             { target: 'step into button', signal: 'fire', handler: 'stepInto' },
@@ -153,6 +152,7 @@ export class LivelyDebuggerModel extends ViewModel {
   viewDidLoad () {
     this.rememberReleasableContinuation(this.continuation);
     this.refreshFromContinuation();
+    this.refreshWorkspaceEditor();
   }
 
   renderDraggableTreeLabel (args) {
@@ -240,6 +240,7 @@ export class LivelyDebuggerModel extends ViewModel {
     }));
     this.ui.scopeList.selection = scopes[0] || null;
     this.selectScope(scopes[0] || null);
+    this.refreshWorkspaceEditor();
   }
 
   async selectScope (scope) {
@@ -262,22 +263,34 @@ export class LivelyDebuggerModel extends ViewModel {
     return [workspaceScope(this.workspaceBindings || {})].concat(frameScopes);
   }
 
-  async evaluateWorkspace () {
+  refreshWorkspaceEditor () {
     const editor = this.ui.workspaceInput;
-    const source = editor && editor.textString || '';
+    const plugin = editor.pluginFind(p => p.isJSEditorPlugin) || editor.addPlugin(new JavaScriptEditorPlugin());
+    plugin.runEval = source => this.evaluateWorkspaceSource(source);
+    plugin.evalEnvironment.knownGlobals = this.evaluationScopes().flatMap(scope => scope.bindingNames());
+    plugin.highlight();
+  }
+
+  async evaluateWorkspace () {
+    const result = await this.evaluateWorkspaceSource(this.ui.workspaceInput.textString);
+    return result.isError ? false : result.value;
+  }
+
+  async evaluateWorkspaceSource (source) {
     this.workspaceBindings = this.workspaceBindings || {};
     try {
       const result = await Promise.resolve(evaluateInDebuggerScopes(source, this.evaluationScopes()));
       this.workspaceBindings.it = result;
       this.ui.workspaceResult.textString = printValue(result);
       this.ui.status.textString = 'workspace: ' + printValue(result);
-      return result;
+      this.refreshWorkspaceEditor();
+      return { value: result, isError: false };
     } catch (err) {
       const message = err && (err.stack || err.message) || String(err);
       this.ui.workspaceResult.textString = message;
       this.ui.status.textString = 'workspace failed: ' + (err && err.message || err);
       signal(this.view, 'debuggerActionFailed', { actionName: 'Workspace', frame: this.selectedFrame, error: err });
-      return false;
+      return { value: err, isError: true };
     }
   }
 
@@ -420,7 +433,8 @@ export class LivelyDebuggerModel extends ViewModel {
 
 const ToolbarButton = component(SystemButton, {
   extent: pt(35, 26),
-  borderRadius: 5,
+  borderRadius: 0,
+  borderWidth: { top: 1, bottom: 1, left: 0, right: 1 },
   padding: rect(0, 0, 0, 0),
   submorphs: [{
     name: 'label',
@@ -433,10 +447,8 @@ export const LivelyDebugger = component({
   name: 'lively debugger',
   defaultViewModel: LivelyDebuggerModel,
   extent: pt(900, 560),
-  fill: Color.rgb(245, 247, 248),
-  borderColor: Color.rgb(149, 165, 166),
-  borderRadius: 3,
-  borderWidth: 1,
+  fill: Color.transparent,
+  reactsToPointer: false,
   layout: new GridLayout({
     autoAssign: false,
     grid: [
@@ -455,87 +467,92 @@ export const LivelyDebugger = component({
       1, { width: 1 }
     ],
     rows: [
-      0, { fixed: 36 },
+      0, { fixed: 44 },
       1, { height: 1 },
       2, { fixed: 26 }
     ]
   }),
   submorphs: [{
     name: 'toolbar',
-    fill: Color.rgb(236, 240, 241),
-    borderColor: Color.rgb(215, 219, 221),
-    borderWidth: { bottom: 1 },
+    extent: pt(900, 44),
+    fill: Color.transparent,
+    reactsToPointer: false,
     layout: new TilingLayout({
       axisAlign: 'center',
       orderByIndex: true,
-      padding: rect(6, 6, 6, 6),
-      spacing: 5,
-      resizePolicies: [['title', { width: 'fill', height: 'fixed' }]]
+      padding: rect(10, 0, 0, 0),
+      spacing: 0
     }),
     submorphs: [
       part(ToolbarButton, {
-        name: 'close button',
-        tooltip: 'Close',
-        viewModel: { label: { value: Icon.textAttribute('times') } }
-      }),
-      part(ToolbarButton, {
         name: 'proceed button',
         tooltip: 'Proceed',
-        viewModel: { label: { value: Icon.textAttribute('play-circle') } }
+        borderRadius: { topLeft: 5, bottomLeft: 5, topRight: 0, bottomRight: 0 },
+        borderWidth: 1,
+        submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('play-circle') }]
       }),
       part(ToolbarButton, {
         name: 'retry button',
         tooltip: 'Retry',
-        viewModel: { label: { value: Icon.textAttribute('redo') } }
+        borderRadius: { topLeft: 0, bottomLeft: 0, topRight: 5, bottomRight: 5 },
+        submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('redo') }]
       }),
+      { name: 'execution spacer', fill: Color.transparent, extent: pt(15, 26) },
       part(ToolbarButton, {
         name: 'step into button',
         tooltip: 'Step Into',
-        viewModel: { label: { value: Icon.textAttribute('arrow-down') } }
+        borderRadius: { topLeft: 5, bottomLeft: 5, topRight: 0, bottomRight: 0 },
+        borderWidth: 1,
+        submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('arrow-down') }]
       }),
       part(ToolbarButton, {
         name: 'step over button',
         tooltip: 'Step Over',
-        viewModel: { label: { value: Icon.textAttribute('arrow-right') } }
+        submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('arrow-right') }]
       }),
       part(ToolbarButton, {
         name: 'step out button',
         tooltip: 'Step Out',
-        viewModel: { label: { value: Icon.textAttribute('arrow-up') } }
+        submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('arrow-up') }]
       }),
+      part(ToolbarButton, {
+        name: 'run to cursor button',
+        tooltip: 'Run to the selected source line',
+        borderRadius: { topLeft: 0, bottomLeft: 0, topRight: 5, bottomRight: 5 },
+        submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('bullseye') }]
+      }),
+      { name: 'stepping spacer', fill: Color.transparent, extent: pt(15, 26) },
       part(ToolbarButton, {
         name: 'restart frame button',
         tooltip: 'Restart Frame',
-        viewModel: { label: { value: Icon.textAttribute('rotate-left') } }
+        borderRadius: { topLeft: 5, bottomLeft: 5, topRight: 0, bottomRight: 0 },
+        borderWidth: 1,
+        submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('rotate-left') }]
       }),
       part(ToolbarButton, { name: 'return button', tooltip: 'Return a value from the selected frame',
-        viewModel: { label: { value: Icon.textAttribute('reply') } } }),
+        borderRadius: { topLeft: 0, bottomLeft: 0, topRight: 5, bottomRight: 5 },
+        submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('reply') }] }),
+      { name: 'frame spacer', fill: Color.transparent, extent: pt(15, 26) },
       part(ToolbarButton, { name: 'edit method button', tooltip: 'Edit the selected method on its receiver',
-        viewModel: { label: { value: Icon.textAttribute('pencil-alt') } } }),
+        borderRadius: { topLeft: 5, bottomLeft: 5, topRight: 0, bottomRight: 0 },
+        borderWidth: 1,
+        submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('pencil-alt') }] }),
       part(ToolbarButton, { name: 'apply method button', tooltip: 'Apply saved changes after the current execution position',
-        viewModel: { label: { value: Icon.textAttribute('check') } } }),
-      part(ToolbarButton, { name: 'run to cursor button', tooltip: 'Run to the selected source line',
-        viewModel: { label: { value: Icon.textAttribute('bullseye') } } }),
-      {
-        type: Label,
-        name: 'title',
-        value: 'Lively Debugger',
-        fontColor: Color.rgb(52, 73, 94),
-        fontFamily: 'IBM Plex Sans',
-        fontSize: 14,
-        fontWeight: 'bold',
-        reactsToPointer: false
-      }
+        borderRadius: { topLeft: 0, bottomLeft: 0, topRight: 5, bottomRight: 5 },
+        submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('check') }] })
     ]
   },
   part(SystemList, {
     name: 'stack list',
-    fontFamily: 'IBM Plex Mono',
-    fontSize: 12,
+    fontFamily: 'IBM Plex Sans',
+    fontSize: 14,
     itemHeight: 24,
     manualItemHeight: true,
     padding: rect(4, 4, 4, 4),
-    borderRadius: 0
+    borderRadius: 0,
+    borderColor: Color.rgb(204, 204, 204),
+    fill: Color.white,
+    dropShadow: null
   }),
   {
     name: 'main pane',
@@ -566,9 +583,8 @@ export const LivelyDebugger = component({
     }),
     submorphs: [{
       name: 'source header',
-      fill: Color.rgb(245, 247, 248),
-      borderColor: Color.rgb(215, 219, 221),
-      borderWidth: { bottom: 1 },
+      extent: pt(640, 26),
+      fill: Color.transparent,
       layout: new TilingLayout({
         axisAlign: 'center',
         orderByIndex: true,
@@ -591,10 +607,10 @@ export const LivelyDebugger = component({
       fixedWidth: true,
       fixedHeight: true,
       lineWrapping: 'by-chars',
-      padding: rect(8, 8, 0, 0),
-      borderColor: Color.rgb(189, 195, 199),
+      padding: rect(4, 2, 0, 0),
+      borderColor: Color.rgb(204, 204, 204),
       borderWidth: 1,
-      fill: Color.rgb(253, 253, 253),
+      fill: Color.white,
       ...config.codeEditor.defaultStyle,
       fontSize: 13,
       textString: ''
@@ -616,18 +632,21 @@ export const LivelyDebugger = component({
       submorphs: [
         part(SystemList, {
           name: 'scope list',
-          fontFamily: 'IBM Plex Mono',
-          fontSize: 12,
+          fontFamily: 'IBM Plex Sans',
+          fontSize: 14,
           itemHeight: 22,
           manualItemHeight: true,
           padding: rect(4, 4, 4, 4),
-          borderRadius: 0
+          borderRadius: 0,
+          borderColor: Color.rgb(204, 204, 204),
+          fill: Color.white,
+          dropShadow: null
         }),
         {
           type: PropertyTree,
           name: 'value tree',
           fill: Color.white,
-          borderColor: Color.rgb(189, 195, 199),
+          borderColor: Color.rgb(204, 204, 204),
           borderWidth: 1,
           clipMode: 'hidden',
           fontFamily: 'IBM Plex Mono',
@@ -636,13 +655,12 @@ export const LivelyDebugger = component({
         }]
     }, {
       name: 'workspace header',
-      fill: Color.rgb(245, 247, 248),
-      borderColor: Color.rgb(215, 219, 221),
-      borderWidth: { bottom: 1 },
+      extent: pt(640, 26),
+      fill: Color.transparent,
       layout: new TilingLayout({
         axisAlign: 'center',
         orderByIndex: true,
-        padding: rect(8, 2, 8, 2),
+        padding: rect(0, 0, 0, 0),
         spacing: 6,
         resizePolicies: [['workspace result', { width: 'fill', height: 'fixed' }]]
       }),
@@ -650,7 +668,10 @@ export const LivelyDebugger = component({
         part(ToolbarButton, {
           name: 'workspace do button',
           tooltip: 'Do It',
-          viewModel: { label: { value: Icon.textAttribute('play') } }
+          extent: pt(28, 24),
+          borderRadius: 5,
+          borderWidth: 1,
+          submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('play') }]
         }),
         {
           type: Label,
@@ -670,10 +691,10 @@ export const LivelyDebugger = component({
       fixedWidth: true,
       fixedHeight: true,
       lineWrapping: 'by-chars',
-      padding: rect(8, 8, 0, 0),
-      borderColor: Color.rgb(189, 195, 199),
+      padding: rect(4, 2, 0, 0),
+      borderColor: Color.rgb(204, 204, 204),
       borderWidth: 1,
-      fill: Color.rgb(253, 253, 253),
+      fill: Color.white,
       ...config.codeEditor.defaultStyle,
       fontSize: 13,
       textString: ''
@@ -682,7 +703,7 @@ export const LivelyDebugger = component({
     type: Label,
     name: 'status',
     value: '',
-    fill: Color.rgb(236, 240, 241),
+    fill: Color.transparent,
     fontColor: Color.rgb(44, 62, 80),
     fontFamily: 'IBM Plex Sans',
     fontSize: 12,
