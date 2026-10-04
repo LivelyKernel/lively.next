@@ -71,7 +71,10 @@ export function lineRangeForFrame (frame, sourceText = '') {
 
 export async function readFrameSource (frame, read = url => resource(url).read()) {
   if (!frame) return '';
-  if (frame.func && frame.func.getSource) return frame.func.getSource();
+  if (frame.func && frame.func.getSource) {
+    const ast = frame.getOriginalAst && frame.getOriginalAst();
+    return ast && ast.source || frame.func.getSource();
+  }
   const capturedSource = frame.source && frame.source.sourceText;
   if (capturedSource) return String(capturedSource);
   const url = sourceUrlForFrame(frame);

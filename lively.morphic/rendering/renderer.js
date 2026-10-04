@@ -1860,7 +1860,7 @@ export default class Renderer {
       alreadyRenderedMarkers,
       markersToRender,
       markerPart => this.renderMarkerPart(...Object.values(markerPart)),
-      noOpUpdate,
+      (node, markerPart) => { node.style.cssText = this.renderMarkerPart(...Object.values(markerPart)).style.cssText; },
       submorphsNode || morph.renderingState.textLayer,
       selectionNode || cursorNode
     );
