@@ -49,6 +49,9 @@ pub struct ScopeCapturingTransform {
     /// Top-level variables that should be captured
     capturable_vars: HashSet<Id>,
 
+    /// Local export bindings must stay synchronized with recorder writes.
+    exported_vars: HashSet<Id>,
+
     /// Identifier names referenced in the original module before this pass
     /// generates recorder/System wrapper code. This mirrors Babel's
     /// refsToReplace shape: generated identifiers are not captured just
@@ -63,8 +66,7 @@ pub struct ScopeCapturingTransform {
     imported_vars: HashSet<Id>,
 
     /// Map from imported local name → (source module, original/imported name)
-    /// Used to convert `export { importedVar }` to `export { orig } from 'src'`
-    /// to work around SWC system_js dropping re-exported import bindings.
+    /// Also recognizes imported names in generated capture assignments.
     import_sources: HashMap<String, (String, String)>,
 
     /// Top-level function capture assignments that must run before body code
@@ -331,6 +333,7 @@ impl ScopeCapturingTransform {
             source_accessor_name,
             original_source,
             capturable_vars: HashSet::new(),
+            exported_vars: HashSet::new(),
             original_ref_names: HashSet::new(),
             loop_header_vars: HashSet::new(),
             imported_vars: HashSet::new(),
@@ -577,10 +580,24 @@ impl ScopeCapturingTransform {
                         *init_expr,
                         meta.clone(),
                     );
-                    stmts.push(Stmt::Expr(ExprStmt {
-                        span: DUMMY_SP,
-                        expr: Box::new(create_assign_expr(expr_to_assign_target(member), value)),
-                    }));
+                    let assignment = create_assign_expr(expr_to_assign_target(member), value);
+                    if self.exported_vars.contains(&id.to_id()) {
+                        let kind = match declaration_kind {
+                            "let" => VarDeclKind::Let,
+                            "const" => VarDeclKind::Const,
+                            _ => VarDeclKind::Var,
+                        };
+                        stmts.push(Stmt::Decl(create_var_decl_with_ident(
+                            kind,
+                            id.clone(),
+                            Some(assignment),
+                        )));
+                    } else {
+                        stmts.push(Stmt::Expr(ExprStmt {
+                            span: DUMMY_SP,
+                            expr: Box::new(assignment),
+                        }));
+                    }
                 } else if let Some(init_expr) = init {
                     let kind = match declaration_kind {
                         "let" => VarDeclKind::Let,
@@ -934,9 +951,16 @@ impl ScopeCapturingTransform {
                 } else {
                     (Expr::Ident(id.clone()), *init_expr)
                 };
+                let mut assignment = create_assign_expr(expr_to_assign_target(target), value);
+                if self.exported_vars.contains(&id.to_id()) && self.should_capture(&id.to_id()) {
+                    assignment = create_assign_expr(
+                        expr_to_assign_target(Expr::Ident(id.clone())),
+                        assignment,
+                    );
+                }
                 stmts.push(Stmt::Expr(ExprStmt {
                     span: DUMMY_SP,
-                    expr: Box::new(create_assign_expr(expr_to_assign_target(target), value)),
+                    expr: Box::new(assignment),
                 }));
             }
             Pat::Array(ArrayPat { elems, .. }) => {
@@ -1909,286 +1933,9 @@ impl ScopeCapturingTransform {
                 }
                 items
             }
+            // Preserve live aliases; the browser pipeline normalizes imported exports.
             ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(export_decl)) => {
-                // Split `export { x } from '...'` into import + export + recorder capture.
-                // Only for capture_imports mode (source-map builds).
-                // Resurrection builds use a different approach below.
-                if self.capture_imports && export_decl.src.is_some() {
-                    // Keep the original re-export as-is (system_js handles
-                    // `export { X } from 'mod'` correctly via the setter).
-                    // Add a SEPARATE import so scope capture can access the
-                    // bindings via the recorder.  Previously this replaced the
-                    // re-export with a local `export { X }` which system_js
-                    // silently drops for imported bindings.
-                    let src = export_decl.src.as_ref().unwrap().value.to_string();
-                    let mut import_specs = Vec::new();
-                    let mut assigns = Vec::new();
-                    let mut alias_specs = Vec::new();
-
-                    for spec in &export_decl.specifiers {
-                        if let ExportSpecifier::Named(named) = spec {
-                            let exported_name = match &named.exported {
-                                Some(ModuleExportName::Ident(id)) => id.sym.to_string(),
-                                Some(ModuleExportName::Str(s)) => s.value.to_string(),
-                                None => match &named.orig {
-                                    ModuleExportName::Ident(id) => id.sym.to_string(),
-                                    ModuleExportName::Str(s) => s.value.to_string(),
-                                },
-                            };
-
-                            let import_name = match &named.orig {
-                                ModuleExportName::Ident(id) => id.sym.to_string(),
-                                ModuleExportName::Str(s) => s.value.to_string(),
-                            };
-
-                            let local_name = format!("__reexport_{}__", exported_name);
-
-                            import_specs.push(ImportSpecifier::Named(ImportNamedSpecifier {
-                                span: DUMMY_SP,
-                                local: Ident::new(
-                                    local_name.as_str().into(),
-                                    DUMMY_SP,
-                                    SyntaxContext::empty(),
-                                ),
-                                imported: Some(ModuleExportName::Ident(Ident::new(
-                                    import_name.as_str().into(),
-                                    DUMMY_SP,
-                                    SyntaxContext::empty(),
-                                ))),
-                                is_type_only: false,
-                            }));
-
-                            let member = self.create_captured_member(&exported_name);
-                            let assign = create_assign_expr(
-                                expr_to_assign_target(member),
-                                Expr::Ident(Ident::new(
-                                    local_name.as_str().into(),
-                                    DUMMY_SP,
-                                    SyntaxContext::empty(),
-                                )),
-                            );
-                            assigns.push(ModuleItem::Stmt(Stmt::Expr(ExprStmt {
-                                span: DUMMY_SP,
-                                expr: Box::new(assign),
-                            })));
-
-                            let alias_name = format!("__export_{}__", exported_name);
-                            assigns.push(ModuleItem::Stmt(Stmt::Decl(create_var_decl(
-                                VarDeclKind::Var,
-                                &alias_name,
-                                Some(create_ident_expr(&local_name)),
-                            ))));
-                            alias_specs.push(ExportSpecifier::Named(ExportNamedSpecifier {
-                                span: DUMMY_SP,
-                                orig: ModuleExportName::Ident(Ident::new(
-                                    alias_name.as_str().into(),
-                                    DUMMY_SP,
-                                    SyntaxContext::empty(),
-                                )),
-                                exported: Some(ModuleExportName::Ident(Ident::new(
-                                    exported_name.as_str().into(),
-                                    DUMMY_SP,
-                                    SyntaxContext::empty(),
-                                ))),
-                                is_type_only: false,
-                            }));
-                        }
-                    }
-
-                    let import_decl = ModuleItem::ModuleDecl(ModuleDecl::Import(ImportDecl {
-                        span: DUMMY_SP,
-                        specifiers: import_specs,
-                        src: Box::new(Str {
-                            span: DUMMY_SP,
-                            value: src.clone().into(),
-                            raw: None,
-                        }),
-                        type_only: false,
-                        with: None,
-                        phase: Default::default(),
-                    }));
-
-                    let mut items = vec![import_decl];
-                    items.extend(assigns);
-                    if !alias_specs.is_empty() {
-                        items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(
-                            NamedExport {
-                                span: DUMMY_SP,
-                                specifiers: alias_specs,
-                                src: None,
-                                type_only: false,
-                                with: None,
-                            },
-                        )));
-                    }
-                    return items;
-                }
-                // Workaround for SWC system_js bug #2: system_js drops
-                // `export { importedBinding }` (no _export call generated).
-                // Materialize imported exports as local aliases instead:
-                // `var __export_x__ = x; export { __export_x__ as x }`.
-                // This is not a live binding, but it matches the existing
-                // browser/runtime need and forces a concrete `_export`.
-                if export_decl.src.is_none() {
-                    let mut items: Vec<ModuleItem> = Vec::new();
-                    let mut local_specs: Vec<ExportSpecifier> = Vec::new();
-                    let mut alias_specs: Vec<ExportSpecifier> = Vec::new();
-
-                    for spec in &export_decl.specifiers {
-                        let local_name = match spec {
-                            ExportSpecifier::Named(n) => match &n.orig {
-                                ModuleExportName::Ident(id) => Some(id.sym.to_string()),
-                                _ => None,
-                            },
-                            _ => None,
-                        };
-                        let src_info = local_name.as_ref().and_then(|n| self.import_sources.get(n));
-                        // Skip namespace imports ("*") — they can't be
-                        // re-exported as named specifiers in this path.
-                        if let (Some(ExportSpecifier::Named(named)), Some((_src, orig_name))) =
-                            (Some(spec), src_info)
-                        {
-                            if orig_name == "*" {
-                                local_specs.push(spec.clone());
-                                continue;
-                            }
-                            let local_name_str = local_name.unwrap();
-                            let exported_name = match &named.exported {
-                                Some(ModuleExportName::Ident(id)) => id.sym.to_string(),
-                                Some(ModuleExportName::Str(s)) => s.value.to_string(),
-                                None => local_name_str.clone(),
-                            };
-                            let alias_name = format!("__export_{}__", exported_name);
-                            items.push(ModuleItem::Stmt(Stmt::Decl(create_var_decl(
-                                VarDeclKind::Var,
-                                &alias_name,
-                                Some(create_ident_expr(&local_name_str)),
-                            ))));
-                            alias_specs.push(ExportSpecifier::Named(ExportNamedSpecifier {
-                                span: DUMMY_SP,
-                                orig: ModuleExportName::Ident(Ident::new(
-                                    alias_name.as_str().into(),
-                                    DUMMY_SP,
-                                    SyntaxContext::empty(),
-                                )),
-                                exported: Some(ModuleExportName::Ident(Ident::new(
-                                    exported_name.as_str().into(),
-                                    DUMMY_SP,
-                                    SyntaxContext::empty(),
-                                ))),
-                                is_type_only: false,
-                            }));
-                        } else {
-                            local_specs.push(spec.clone());
-                        }
-                    }
-
-                    if !alias_specs.is_empty() {
-                        if !local_specs.is_empty() {
-                            items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(
-                                NamedExport {
-                                    span: DUMMY_SP,
-                                    specifiers: local_specs,
-                                    src: None,
-                                    type_only: false,
-                                    with: None,
-                                },
-                            )));
-                        }
-                        items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(
-                            NamedExport {
-                                span: DUMMY_SP,
-                                specifiers: alias_specs,
-                                src: None,
-                                type_only: false,
-                                with: None,
-                            },
-                        )));
-                        return items;
-                    }
-                }
-
-                // Desugar `export { X as Y }` → `var __export_Y__ = X; export { __export_Y__ }`
-                // to prevent system_js from hoisting the short alias `Y` that
-                // collides with locals in minified code.  The long prefix
-                // `__export_` avoids collisions.  Phase 3 (restore_export_aliases)
-                // rewrites _export("__export_Y__", ...) → _export("Y", ...).
-                let has_alias = export_decl.src.is_none()
-                    && export_decl
-                        .specifiers
-                        .iter()
-                        .any(|s| matches!(s, ExportSpecifier::Named(n) if n.exported.is_some()));
-                if has_alias {
-                    let mut items = Vec::new();
-                    let mut new_specs = Vec::new();
-                    for spec in &export_decl.specifiers {
-                        if let ExportSpecifier::Named(named) = spec {
-                            if let Some(ref exported) = named.exported {
-                                let exported_name = match exported {
-                                    ModuleExportName::Ident(id) => id.sym.to_string(),
-                                    ModuleExportName::Str(s) => s.value.to_string(),
-                                };
-                                let local_ident = match &named.orig {
-                                    ModuleExportName::Ident(id) => id.clone(),
-                                    ModuleExportName::Str(_) => {
-                                        new_specs.push(spec.clone());
-                                        continue;
-                                    }
-                                };
-                                // Only desugar if the orig name is a module-level
-                                // declaration (in capturable_vars). CJS-to-ESM
-                                // converters can create exports referencing
-                                // function-scoped vars (e.g. `export { Le as X }`
-                                // where Le is inside dew()). Skip these.
-                                if !self
-                                    .capturable_vars
-                                    .iter()
-                                    .any(|id| id.0.as_ref() == local_ident.sym.as_ref())
-                                {
-                                    new_specs.push(spec.clone());
-                                    continue;
-                                }
-                                // Use a long internal name to avoid collision
-                                let internal_name = format!("__export_{}__", exported_name);
-                                items.push(ModuleItem::Stmt(Stmt::Decl(create_var_decl(
-                                    VarDeclKind::Var,
-                                    &internal_name,
-                                    Some(Expr::Ident(local_ident)),
-                                ))));
-                                new_specs.push(ExportSpecifier::Named(ExportNamedSpecifier {
-                                    span: DUMMY_SP,
-                                    orig: ModuleExportName::Ident(Ident::new(
-                                        internal_name.as_str().into(),
-                                        DUMMY_SP,
-                                        SyntaxContext::empty(),
-                                    )),
-                                    exported: Some(ModuleExportName::Ident(Ident::new(
-                                        exported_name.as_str().into(),
-                                        DUMMY_SP,
-                                        SyntaxContext::empty(),
-                                    ))),
-                                    is_type_only: false,
-                                }));
-                            } else {
-                                new_specs.push(spec.clone());
-                            }
-                        } else {
-                            new_specs.push(spec.clone());
-                        }
-                    }
-                    items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(
-                        NamedExport {
-                            span: DUMMY_SP,
-                            specifiers: new_specs,
-                            src: None,
-                            type_only: false,
-                            with: None,
-                        },
-                    )));
-                    items
-                } else {
-                    vec![ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(export_decl))]
-                }
+                vec![ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(export_decl))]
             }
             ModuleItem::ModuleDecl(ModuleDecl::ExportAll(export_all)) => {
                 // For capture_imports builds, add namespace import + Object.assign.
@@ -2607,6 +2354,37 @@ impl VisitMut for ScopeCapturingTransform {
             .filter(|id| !self.excluded.contains(id.0.as_ref()))
             .collect();
 
+        self.exported_vars.clear();
+        for item in &module.body {
+            match item {
+                ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(export)) if export.src.is_none() => {
+                    for specifier in &export.specifiers {
+                        if let ExportSpecifier::Named(named) = specifier {
+                            if let ModuleExportName::Ident(local) = &named.orig {
+                                self.exported_vars.insert(local.to_id());
+                            }
+                        }
+                    }
+                }
+                ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(export)) => match &export.decl {
+                    Decl::Var(decl) => {
+                        for declarator in &decl.decls {
+                            self.exported_vars
+                                .extend(extract_idents_from_pat(&declarator.name));
+                        }
+                    }
+                    Decl::Fn(decl) => {
+                        self.exported_vars.insert(decl.ident.to_id());
+                    }
+                    Decl::Class(decl) => {
+                        self.exported_vars.insert(decl.ident.to_id());
+                    }
+                    _ => {}
+                },
+                _ => {}
+            }
+        }
+
         // Collect export metadata for resurrection builds BEFORE the transform
         // (since the transform removes export statements from the AST).
         // imported_vars is now populated so we can skip re-exported imports.
@@ -2705,6 +2483,24 @@ impl VisitMut for ScopeCapturingTransform {
     }
 
     fn visit_mut_expr(&mut self, expr: &mut Expr) {
+        let exported_write = match &*expr {
+            Expr::Assign(assign) => match &assign.left {
+                AssignTarget::Simple(SimpleAssignTarget::Ident(binding)) => {
+                    Some((&binding.id, false))
+                }
+                _ => None,
+            },
+            Expr::Update(update) => match &*update.arg {
+                Expr::Ident(binding) => Some((binding, !update.prefix)),
+                _ => None,
+            },
+            _ => None,
+        }
+        .filter(|(binding, _)| {
+            self.exported_vars.contains(&binding.to_id()) && self.should_capture(&binding.to_id())
+        })
+        .map(|(binding, postfix)| (binding.clone(), postfix));
+
         // Transform identifier references to captured members
         match expr {
             Expr::Assign(assign) => {
@@ -2745,6 +2541,43 @@ impl VisitMut for ScopeCapturingTransform {
         }
 
         expr.visit_mut_children_with(self);
+        if let Some((binding, postfix)) = exported_write {
+            let value = if postfix {
+                // Export the new value while returning the old numeric value of x++/x--.
+                let result_name = format!("{}$livelyResult", binding.sym);
+                create_call_expr(
+                    create_arrow_fn(
+                        vec![],
+                        BlockStmtOrExpr::BlockStmt(BlockStmt {
+                            span: DUMMY_SP,
+                            ctxt: Default::default(),
+                            stmts: vec![
+                                Stmt::Decl(create_var_decl(
+                                    VarDeclKind::Const,
+                                    &result_name,
+                                    Some(expr.clone()),
+                                )),
+                                Stmt::Expr(ExprStmt {
+                                    span: DUMMY_SP,
+                                    expr: Box::new(create_assign_expr(
+                                        expr_to_assign_target(Expr::Ident(binding.clone())),
+                                        self.create_captured_member(binding.sym.as_ref()),
+                                    )),
+                                }),
+                                Stmt::Return(ReturnStmt {
+                                    span: DUMMY_SP,
+                                    arg: Some(Box::new(create_ident_expr(&result_name))),
+                                }),
+                            ],
+                        }),
+                    ),
+                    vec![],
+                )
+            } else {
+                create_assign_expr(expr_to_assign_target(Expr::Ident(binding)), expr.clone())
+            };
+            *expr = value;
+        }
     }
 
     fn visit_mut_stmt(&mut self, stmt: &mut Stmt) {
@@ -3414,7 +3247,7 @@ mod tests {
 
     #[test]
     fn test_export_var() {
-        // Babel: 'var x = 23; export { x };' → '_rec.x = 23; var x = _rec.x; export { x };'
+        // Keep the exported local binding initialized alongside the recorder.
         let output = transform_code("var x = 23; export { x };");
         assert!(
             output.contains("__varRecorder__.x = 23;"),
@@ -3422,8 +3255,8 @@ mod tests {
             output
         );
         assert!(
-            output.contains("var x = __varRecorder__.x;"),
-            "re-declares var from recorder: {}",
+            output.contains("var x = __varRecorder__.x = 23;"),
+            "initializes the live export binding with the recorder: {}",
             output
         );
         assert!(
@@ -3435,7 +3268,7 @@ mod tests {
 
     #[test]
     fn test_export_aliased_var() {
-        // 'var x = 23; export { x as y };' → captures x, renames export local to __export_y__
+        // Preserve the alias of the original live local binding.
         let output = transform_code("var x = 23; export { x as y };");
         assert!(
             output.contains("__varRecorder__.x = 23;"),
@@ -3443,13 +3276,13 @@ mod tests {
             output
         );
         assert!(
-            output.contains("var __export_y__ = __varRecorder__.x;"),
-            "re-declares with __export_ prefix: {}",
+            output.contains("var x = __varRecorder__.x = 23;"),
+            "keeps the original live binding: {}",
             output
         );
         assert!(
-            output.contains("export { __export_y__ as y }"),
-            "keeps aliased export with renamed local: {}",
+            output.contains("export { x as y }"),
+            "keeps the alias of the live binding: {}",
             output
         );
     }
@@ -3493,21 +3326,11 @@ mod tests {
 
     #[test]
     fn test_re_export_named_from_source() {
-        // SWC materializes re-exports as local aliases so SystemJS emits concrete exports.
+        // Leave re-exports live; the full pipeline captures their imported bindings.
         let output = transform_code("export { name1, name2 } from \"foo\";");
         assert!(
-            output.contains("export { __export_name1__ as name1, __export_name2__ as name2 }"),
+            output.contains("export { name1, name2 } from \"foo\""),
             "keeps re-export with names: {}",
-            output
-        );
-        assert!(
-            output.contains("__varRecorder__.name1 = __reexport_name1__"),
-            "captures re-exported name1: {}",
-            output
-        );
-        assert!(
-            output.contains("__varRecorder__.name2 = __reexport_name2__"),
-            "captures re-exported name2: {}",
             output
         );
     }
@@ -4716,8 +4539,8 @@ mod tests {
             output
         );
         assert!(
-            output.contains("var x = __varRecorder__.x;"),
-            "re-declares var from recorder: {}",
+            output.contains("var x = __varRecorder__.x = 23;"),
+            "initializes the live export binding with the recorder: {}",
             output
         );
         assert!(
@@ -4729,7 +4552,7 @@ mod tests {
 
     #[test]
     fn babel_export_aliased_var_statement() {
-        // 'var x = 23; export { x as y };' → captures x, renames export local to __export_y__
+        // Preserve the alias of the original live local binding.
         let output = transform_code("var x = 23; export { x as y };");
         assert!(
             output.contains("__varRecorder__.x = 23;"),
@@ -4737,13 +4560,13 @@ mod tests {
             output
         );
         assert!(
-            output.contains("var __export_y__ = __varRecorder__.x;"),
-            "re-declares with __export_ prefix: {}",
+            output.contains("var x = __varRecorder__.x = 23;"),
+            "keeps the original live binding: {}",
             output
         );
         assert!(
-            output.contains("export { __export_y__ as y }"),
-            "keeps aliased export with renamed local: {}",
+            output.contains("export { x as y }"),
+            "keeps the alias of the live binding: {}",
             output
         );
     }
@@ -4880,10 +4703,10 @@ mod tests {
 
     #[test]
     fn babel_re_export_named() {
-        // SWC materializes re-exports as local aliases so SystemJS emits concrete exports.
+        // Leave re-exports live; the full pipeline captures their imported bindings.
         let output = transform_code("export { name1, name2 } from \"foo\";");
         assert!(
-            output.contains("export { __export_name1__ as name1, __export_name2__ as name2 }"),
+            output.contains("export { name1, name2 } from \"foo\""),
             "keeps re-export with both names: {}",
             output
         );

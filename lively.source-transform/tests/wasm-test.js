@@ -90,6 +90,41 @@ describe('wasm transform', function () {
     expectIncludes(code, 'function* values()');
     expectIncludes(code, 'yield* _rec.items;');
     expectIncludes(code, '_rec.values = values;');
-    expectIncludes(code, '_export("result", result = _rec.result);');
+    expectIncludes(code, '_export("result", result = _rec.result =');
+  });
+
+  it('propagates captured mutations and dependency updates to live exports', async function () {
+    const recorder = {};
+    const exports = {};
+    let declaration;
+    const context = { id: moduleId };
+    const testSystem = {
+      get: () => ({ evaluationStart () {}, evaluationEnd () {} }),
+      register (dependencies, factory) {
+        declaration = factory((name, value) => {
+          if (typeof name === 'object') Object.assign(exports, name);
+          else exports[name] = value;
+          return value;
+        }, context);
+      }
+    };
+    const code = transformWithWasm(`
+      import { value } from 'dep';
+      export { value as alias };
+      let count = 0;
+      export { count, count as default };
+      export function next() { return count++; }
+    `);
+    const runtime = { FreezerRuntime: { recorderFor: () => recorder } };
+    new Function('System', 'lively', '__contextModule__', code)(testSystem, runtime, context);
+    declaration.setters[0]({ value: 3 });
+    await declaration.execute();
+    expect(exports.alias).equals(3);
+    expect(exports.next()).equals(0);
+    expect(exports.count).equals(1);
+    expect(exports.default).equals(1);
+    expect(recorder.count).equals(1);
+    declaration.setters[0]({ value: 9 });
+    expect(exports.alias).equals(9);
   });
 });

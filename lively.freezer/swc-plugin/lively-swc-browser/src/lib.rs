@@ -30,7 +30,7 @@ pub fn transform(source: &str, config_json: &str) -> Result<String, JsError> {
     GLOBALS.set(&Globals::default(), || transform_inner(source, config))
 }
 
-fn transform_inner(source: &str, config: LivelyTransformConfig) -> Result<String, JsError> {
+fn transform_inner(source: &str, mut config: LivelyTransformConfig) -> Result<String, JsError> {
     let cm = Lrc::new(SourceMap::default());
     let fm = cm.new_source_file(
         FileName::Custom(config.module_id.clone()).into(),
@@ -60,6 +60,9 @@ fn transform_inner(source: &str, config: LivelyTransformConfig) -> Result<String
     let declaration_wrapper = config.declaration_wrapper.clone();
     let excluded = config.exclude.clone();
     let has_scope_capture = config.enable_scope_capture;
+    // Resolver and hygiene now keep mixed default/named imports distinct.
+    // Preserve their live bindings instead of making a default-import snapshot.
+    config.rewrite_mixed_default_imports = false;
     let mut visitor = LivelyTransformVisitor::new(config);
     program.visit_mut_with(&mut visitor);
 
@@ -1013,7 +1016,7 @@ const System = {{
         }}, __contextModule__);
         for (let i = 0; i < dependencies.length; i++) {{
             assert.equal(dependencies[i], 'dep');
-            declaration.setters[i]({{ value: 3 }});
+            declaration.setters[i]({{ value: 3, default: 5 }});
         }}
         updateDependency = dependency => declaration.setters.forEach(setter => setter(dependency));
         execution = declaration.execute();
@@ -1039,20 +1042,24 @@ Promise.resolve(execution).then(async () => {{
 
     #[test]
     fn live_exports_update_inside_expressions() {
-        assert_module_runs(
-            "export let count = 0; export function next() { return Math.max(0, ++count); }",
-            false,
-            "assert.equal(exportsOfModule.next(), 1); assert.equal(exportsOfModule.count, 1);",
-        );
+        for capture in [false, true] {
+            assert_module_runs(
+                "export let count = 0; export function next() { return Math.max(0, ++count); }",
+                capture,
+                "assert.equal(exportsOfModule.next(), 1); assert.equal(exportsOfModule.count, 1);",
+            );
+        }
     }
 
     #[test]
     fn shadowed_bindings_leave_module_exports_unchanged() {
-        assert_module_runs(
-            "export let count = 10; export function local(count) { return Math.max(0, ++count); }",
-            false,
-            "assert.equal(exportsOfModule.local(2), 3); assert.equal(exportsOfModule.count, 10);",
-        );
+        for capture in [false, true] {
+            assert_module_runs(
+                "export let count = 10; export function local(count) { return Math.max(0, ++count); }",
+                capture,
+                "assert.equal(exportsOfModule.local(2), 3); assert.equal(exportsOfModule.count, 10);",
+            );
+        }
     }
 
     #[test]
@@ -1093,25 +1100,29 @@ Promise.resolve(execution).then(async () => {{
 
     #[test]
     fn destructured_assignments_remain_valid() {
-        assert_module_runs(
-            "export let value; ({value} = {value: 3});",
-            false,
-            "assert.equal(exportsOfModule.value, 3);",
-        );
+        for capture in [false, true] {
+            assert_module_runs(
+                "export let value; ({value} = {value: 3});",
+                capture,
+                "assert.equal(exportsOfModule.value, 3);",
+            );
+        }
     }
 
     #[test]
     fn exported_updates_preserve_numeric_conversion_and_return_values() {
-        assert_module_runs(
-            "export let count = '4'; export function next() { return count++; } export function previous() { return count--; } export function increment() { return ++count; } export function decrement() { return --count; }",
-            false,
-            "assert.equal(exportsOfModule.next(), 4); assert.equal(exportsOfModule.count, 5); assert.equal(exportsOfModule.previous(), 5); assert.equal(exportsOfModule.count, 4); assert.equal(exportsOfModule.increment(), 5); assert.equal(exportsOfModule.decrement(), 4); assert.equal(exportsOfModule.count, 4);",
-        );
-        assert_module_runs(
-            "export let count = 4n; export function next() { return count++; } export function previous() { return --count; }",
-            false,
-            "assert.equal(exportsOfModule.next(), 4n); assert.equal(exportsOfModule.count, 5n); assert.equal(exportsOfModule.previous(), 4n); assert.equal(exportsOfModule.count, 4n);",
-        );
+        for capture in [false, true] {
+            assert_module_runs(
+                "export let count = '4'; export function next() { return count++; } export function previous() { return count--; } export function increment() { return ++count; } export function decrement() { return --count; }",
+                capture,
+                "assert.equal(exportsOfModule.next(), 4); assert.equal(exportsOfModule.count, 5); assert.equal(exportsOfModule.previous(), 5); assert.equal(exportsOfModule.count, 4); assert.equal(exportsOfModule.increment(), 5); assert.equal(exportsOfModule.decrement(), 4); assert.equal(exportsOfModule.count, 4);",
+            );
+            assert_module_runs(
+                "export let count = 4n; export function next() { return count++; } export function previous() { return --count; }",
+                capture,
+                "assert.equal(exportsOfModule.next(), 4n); assert.equal(exportsOfModule.count, 5n); assert.equal(exportsOfModule.previous(), 4n); assert.equal(exportsOfModule.count, 4n);",
+            );
+        }
     }
 
     #[test]
@@ -1148,25 +1159,49 @@ Promise.resolve(execution).then(async () => {{
 
     #[test]
     fn imported_export_aliases_keep_their_binding_and_public_name() {
+        for capture in [false, true] {
+            assert_module_runs(
+                "const value = 3; export { value as answer };",
+                capture,
+                "assert.equal(exportsOfModule.answer, 3);",
+            );
+            assert_module_runs(
+                "import { value } from 'dep'; export { value as answer };",
+                capture,
+                "assert.equal(exportsOfModule.answer, 3); updateDependency({value: 7}); assert.equal(exportsOfModule.answer, 7);",
+            );
+            assert_module_runs(
+                "import { value } from 'dep'; export { value as default };",
+                capture,
+                "assert.equal(exportsOfModule.default, 3); updateDependency({value: 7}); assert.equal(exportsOfModule.default, 7);",
+            );
+            assert_module_runs(
+                "import * as values from 'dep'; export { values as namespace };",
+                capture,
+                "assert.equal(exportsOfModule.namespace.value, 3);",
+            );
+        }
+    }
+
+    #[test]
+    fn captured_assignments_keep_all_export_aliases_live() {
         assert_module_runs(
-            "const value = 3; export { value as answer };",
-            false,
-            "assert.equal(exportsOfModule.answer, 3);",
+            "let count = 0; export { count as total, count as default }; export function add(value) { return count += value; } export function reset(value) { return count = value; }",
+            true,
+            "assert.equal(exportsOfModule.add(3), 3); assert.equal(recorder.count, 3); assert.equal(exportsOfModule.total, 3); assert.equal(exportsOfModule.default, 3); assert.equal(exportsOfModule.reset(7), 7); assert.equal(exportsOfModule.total, 7); assert.equal(exportsOfModule.default, 7);",
         );
-        assert_module_runs(
-            "import { value } from 'dep'; export { value as answer };",
-            false,
-            "assert.equal(exportsOfModule.answer, 3); updateDependency({value: 7}); assert.equal(exportsOfModule.answer, 7);",
-        );
-        assert_module_runs(
-            "import { value } from 'dep'; export { value as default };",
-            false,
-            "assert.equal(exportsOfModule.default, 3); updateDependency({value: 7}); assert.equal(exportsOfModule.default, 7);",
-        );
-        assert_module_runs(
-            "import * as values from 'dep'; export { values as namespace };",
-            false,
-            "assert.equal(exportsOfModule.namespace.value, 3);",
-        );
+    }
+    #[test]
+    fn captured_reexports_and_mixed_imports_follow_dependency_updates() {
+        for source in [
+            "import original, { value } from 'dep'; export { original as answer, value as named };",
+            "export { default as answer, value as named } from 'dep';",
+        ] {
+            assert_module_runs(
+                source,
+                true,
+                "assert.equal(exportsOfModule.answer, 5); assert.equal(exportsOfModule.named, 3); updateDependency({default: 7, value: 9}); assert.equal(exportsOfModule.answer, 7); assert.equal(exportsOfModule.named, 9);",
+            );
+        }
     }
 }
