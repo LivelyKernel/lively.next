@@ -164,13 +164,18 @@ export function initialFrameForContinuation (continuation, frames = continuation
   return frames.find(frame => !isInspectorRuntimeFrame(frame)) || frames[0];
 }
 
-export function locationStringForFrame (frame) {
+export function sourcePathForFrame (frame) {
   if (!frame) return '';
   const source = frame.source || {};
-  const location = locationForFrame(frame);
   const context = sourceContextForFrame(frame);
-  const url = (context && context.moduleName || sourceUrlForFrame(frame) || source.scriptId || '(no source url)')
+  return (context && context.moduleName || sourceUrlForFrame(frame) || source.scriptId || '(no source url)')
     .replace(/^https?:\/\/[^/]+\/?/i, '');
+}
+
+export function locationStringForFrame (frame) {
+  if (!frame) return '';
+  const location = locationForFrame(frame);
+  const url = sourcePathForFrame(frame);
   if (!Number.isFinite(location.lineNumber)) return url;
   return url + ':' + (location.lineNumber + 1) + ':' + ((location.columnNumber || 0) + 1);
 }

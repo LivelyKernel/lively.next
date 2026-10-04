@@ -159,7 +159,11 @@ describe('lively debugger ui', function () {
       expect(pane.textString).contains('export class LiveCounter extends Morph');
       expect(pane.textString).contains('  increment () {');
       expect(pane.textString).not.contains('function LiveCounter_increment_');
-      expect(model.ui.locationLabel.textString.startsWith('lively.ide/js/debugger/examples/live-counter.js:')).equals(true);
+      expect(view.getWindow().title).equals('debugger - [lively.ide] js/debugger/examples/live-counter.js');
+      expect(!!view.getSubmorphNamed('source header')).equals(false);
+      view.env.forceUpdate();
+      const bounds = morph => document.getElementById(morph.id).getBoundingClientRect();
+      expect(bounds(pane).top).closeTo(bounds(view.get('toolbar')).bottom, 0.5);
       const plugin = pane.pluginFind(p => p.isJSEditorPlugin);
       expect(!!plugin).equals(true);
       for (const fontSize of [13, 16, 22]) {
@@ -190,6 +194,13 @@ describe('lively debugger ui', function () {
       await model.selectFrame(stopped.currentFrame);
       expect(pane.selection.range.start.row).equals(targetRow);
       expect(counter.count).equals(0);
+      const capturedFrame = frame({url: 'https://example.org:9012/lively.ide/example.js'});
+      capturedFrame.source.sourceText = 'function captured () {\n  debugger;\n}';
+      await model.selectFrame(capturedFrame);
+      expect(view.getWindow().title).equals('debugger - lively.ide/example.js');
+      expect(!!pane.document).equals(true);
+      await model.selectFrame(stopped.currentFrame);
+      expect(view.getWindow().title).equals('debugger - [lively.ide] js/debugger/examples/live-counter.js');
     } finally { view.viewModel.closeDebugger(); }
   });
 

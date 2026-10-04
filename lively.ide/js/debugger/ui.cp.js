@@ -1,10 +1,12 @@
-import { GridLayout, TilingLayout, ViewModel, component, part, without, Label, Text, Icon, config } from 'lively.morphic';
+import { GridLayout, TilingLayout, ViewModel, component, part, without, Text, Icon, config } from 'lively.morphic';
 import { Color, pt, rect } from 'lively.graphics';
 import { SystemButton } from 'lively.components/buttons.cp.js';
 import { SystemList } from '../../styling/shared.cp.js';
 import { signal } from 'lively.bindings';
 import { parse } from 'lively.ast';
 import { localInterface } from 'lively-system-interface';
+import { module } from 'lively.modules';
+import { BrowserModel } from '../browser/index.js';
 import { InspectionTree, PropertyTree, printValue } from '../inspector/context.js';
 import { SystemInspector } from '../inspector/ui.cp.js';
 import {
@@ -24,7 +26,7 @@ import {
   sourceUrlForFrame,
   moduleUrlForFrame,
   lineRangeForFrame,
-  locationStringForFrame,
+  sourcePathForFrame,
   readFrameSource
 } from './source.js';
 import JavaScriptEditorPlugin from '../editor-plugin.js';
@@ -190,7 +192,6 @@ export class LivelyDebuggerModel extends ViewModel {
       ? Color.red : Color.rgb(204, 204, 204);
     if (this.ui.sourcePane.textString !== this.currentSourceText) {
       this.ui.sourcePane.removeMarker(CURRENT_LINE_MARKER_ID);
-      this.ui.locationLabel.textString = locationStringForFrame(this.selectedFrame) + ' (edited source; Apply or Restart Frame)';
     }
   }
 
@@ -237,7 +238,6 @@ export class LivelyDebuggerModel extends ViewModel {
     if (sourcePane.removeMarker) sourcePane.removeMarker(CURRENT_LINE_MARKER_ID);
 
     const range = lineRangeForFrame(this.selectedFrame, sourceText);
-    this.ui.locationLabel.textString = locationStringForFrame(this.selectedFrame);
     if (sourceText !== this.currentSourceText) {
       this.rememberSourceEdits();
       return null;
@@ -298,6 +298,12 @@ export class LivelyDebuggerModel extends ViewModel {
     }
     this.currentSourceText = source;
     this.currentModuleUrl = url;
+    const mod = url && module(url), pkg = mod && mod.package();
+    const path = pkg
+      ? `[${BrowserModel.prototype.formatPackageName(pkg)}] ${mod.pathInPackage()}`
+      : sourcePathForFrame(frame);
+    const win = this.view.getWindow();
+    if (win) win.title = 'debugger' + (path ? ' - ' + path : '');
     const pane = this.ui.sourcePane;
     const plugin = pane.pluginFind(p => p.isJSEditorPlugin) || pane.addPlugin(new JavaScriptEditorPlugin());
     plugin.evalEnvironment = {...plugin.evalEnvironment, targetModule: sourceUrlForFrame(frame)};
@@ -362,11 +368,11 @@ export class LivelyDebuggerModel extends ViewModel {
     const { workspaceInput: editor, workspaceResizer: resizer, terminalToggler, mainPane } = this.ui;
     const { layout, extent } = mainPane;
     if (show !== this.isWorkspaceVisible()) {
-      if (!show) this.workspaceHeight = layout.row(4).height;
+      if (!show) this.workspaceHeight = layout.row(3).height;
       layout.disable();
       this.withoutBindingsDo(() => {
-        layout.row(4).height = show ? this.workspaceHeight || 110 : 0;
-        layout.row(3).height = show ? 5 : 0;
+        layout.row(3).height = show ? this.workspaceHeight || 110 : 0;
+        layout.row(2).height = show ? 5 : 0;
         mainPane.extent = extent;
       });
       layout.enable();
@@ -384,9 +390,9 @@ export class LivelyDebuggerModel extends ViewModel {
     if (!this.isWorkspaceVisible()) return;
     const { mainPane } = this.ui;
     const { layout, extent } = mainPane;
-    const height = layout.row(4).height;
+    const height = layout.row(3).height;
     layout.disable();
-    layout.row(4).height = Math.max(50, Math.min(height - evt.state.dragDelta.y, layout.row(2).height + height - 50));
+    layout.row(3).height = Math.max(50, Math.min(height - evt.state.dragDelta.y, layout.row(1).height + height - 50));
     mainPane.extent = extent;
     layout.enable();
     layout.forceLayout();
@@ -705,50 +711,29 @@ export const LivelyDebugger = component({
     layout: new GridLayout({
       autoAssign: false,
       grid: [
-        ['source header'],
         ['source pane'],
         ['scope/value pane'],
         ['workspace resizer'],
         ['workspace input']
       ],
       groups: {
-        'source header': { align: 'topLeft', resize: true },
         'source pane': { align: 'topLeft', resize: true },
         'scope/value pane': { align: 'topLeft', resize: true },
         'workspace resizer': { align: 'topLeft', resize: true },
         'workspace input': { align: 'topLeft', resize: true }
       },
       rows: [
-        0, { fixed: 26 },
-        1, { fixed: 210, paddingBottom: 6 },
-        2, { height: 1 },
-        3, { fixed: 0 },
-        4, { fixed: 0 }
+        0, { fixed: 210, paddingBottom: 6 },
+        1, { height: 1 },
+        2, { fixed: 0 },
+        3, { fixed: 0 }
       ]
     }),
     submorphs: [{
-      name: 'source header',
-      extent: pt(640, 26),
-      fill: Color.transparent,
-      layout: new TilingLayout({
-        axisAlign: 'center',
-        orderByIndex: true,
-        padding: rect(8, 0, 8, 0)
-      }),
-      submorphs: [{
-        type: Label,
-        name: 'location label',
-        value: '',
-        fontColor: Color.rgb(52, 73, 94),
-        fontFamily: 'IBM Plex Sans',
-        fontSize: 12,
-        padding: rect(0, 3, 0, 0),
-        reactsToPointer: false
-      }]
-    }, {
       type: Text,
       name: 'source pane',
       readOnly: true,
+      needsDocument: true,
       fixedWidth: true,
       fixedHeight: true,
       lineWrapping: 'by-chars',
@@ -808,7 +793,7 @@ export const LivelyDebugger = component({
 export function openForContinuation (continuation, world = null) {
   const debuggerMorph = part(LivelyDebugger, { viewModel: { continuation } });
   const targetWorld = world || (typeof $world !== 'undefined' && $world);
-  const win = debuggerMorph.openInWindow({ title: 'Lively Debugger', world: targetWorld });
+  const win = debuggerMorph.openInWindow({ title: 'debugger', world: targetWorld });
   if (win && win.activate) win.activate();
   if (win && win.ensureToBeInWorldBounds) win.ensureToBeInWorldBounds();
   return debuggerMorph;
