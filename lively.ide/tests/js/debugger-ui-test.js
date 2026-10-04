@@ -158,6 +158,7 @@ describe('lively debugger ui', function () {
       expect(pane.textString).contains('export class LiveCounter extends Morph');
       expect(pane.textString).contains('  increment () {');
       expect(pane.textString).not.contains('function LiveCounter_increment_');
+      expect(model.ui.locationLabel.textString.startsWith('lively.ide/js/debugger/examples/live-counter.js:')).equals(true);
       const plugin = pane.pluginFind(p => p.isJSEditorPlugin);
       expect(!!plugin).equals(true);
       for (const fontSize of [13, 16, 22]) {
@@ -304,6 +305,8 @@ describe('lively debugger ui', function () {
     const capturedFrame = frame({ lineNumber: 1, columnNumber: 14 });
 
     expect(locationStringForFrame(capturedFrame)).equals('file:///tmp/debugger-smoke.js:2:15');
+    expect(locationStringForFrame(frame({url: 'https://example.org:9012/lively.ide/example.js', lineNumber: 1, columnNumber: 14})))
+      .equals('lively.ide/example.js:2:15');
     expect(lineRangeForFrame(capturedFrame, source)).deep.equals({
       start: { row: 1, column: 0 },
       end: { row: 1, column: 'const stopped = 2;'.length }
