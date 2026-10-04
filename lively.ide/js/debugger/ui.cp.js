@@ -333,14 +333,12 @@ export class LivelyDebuggerModel extends ViewModel {
     const tree = this.ui.valueTree;
     const treeData = InspectionTree.forObject(valueTreeObjectForScope(scope), this);
     await treeData.collapse(treeData.root, false);
-    if (treeData.root.children && treeData.root.children[0]) {
-      await treeData.collapse(treeData.root.children[0], false);
-    }
+    const bindings = treeData.root.children[0];
+    await treeData.collapse(bindings, false);
+    treeData.root.children = bindings.children;
+    for (const node of bindings.children) treeData.parentMap.set(node, treeData.root);
+    tree.selectedNode = null;
     tree.treeData = treeData;
-    if (tree.treeData.root.isCollapsed) {
-      await tree.onNodeCollapseChanged({ node: treeData.root, isCollapsed: false });
-      tree.selectedIndex = 1;
-    }
   }
 
   evaluationScopes () {
