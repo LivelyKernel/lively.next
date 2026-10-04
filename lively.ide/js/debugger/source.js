@@ -139,6 +139,12 @@ export function sourceUrlForFrame (frame) {
   return context && context.url || source.url || (frame && frame.getOriginalAst && frame.getOriginalAst().sourceFile) || '';
 }
 
+export function moduleUrlForFrame (frame) {
+  // Only a resolved module context contains the complete, editable module.
+  const context = sourceContextForFrame(frame);
+  return context && context.url || null;
+}
+
 export function isInspectorRuntimeFrame (frame) {
   const url = sourceUrlForFrame(frame);
   const sourceText = frame && frame.source && frame.source.sourceText || '';

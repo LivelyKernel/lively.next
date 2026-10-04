@@ -4,6 +4,7 @@ import {
   initialFrameForContinuation,
   lineRangeForFrame,
   locationStringForFrame,
+  moduleUrlForFrame,
   readFrameSource,
   sourceSummary,
   sourceUrlForFrame
@@ -27,6 +28,95 @@ function frame (spec = {}) {
 }
 
 describe('lively debugger ui', function () {
+  it('saves the whole module in the debugger and applies future edits to the suspended computation', async function () {
+    this.timeout(10000);
+    const { resource } = await System.import('lively.resources');
+    const { module } = await System.import('lively.modules');
+    const { run } = await System.import('lively.context/lib/stackReification.js');
+    const { openForContinuation } = await System.import('lively.ide/js/debugger/ui.cp.js');
+    const file = resource('local://debugger-save-test/counter.js');
+    const source = 'export class Counter { increment() { let amount = 2; debugger; this.count += amount; return this.count; } other() { return 1; } }';
+    await file.write(source);
+    const mod = module(file.url);
+    let view;
+    try {
+      const { Counter } = await mod.load();
+      const counter = new Counter();
+      counter.count = 0;
+      view = openForContinuation(run(counter.increment, null, [], {this: counter}), $world);
+      const model = view.viewModel, pane = model.ui.sourcePane;
+      await model.selectFrame(model.continuation.currentFrame);
+      expect(pane.readOnly).equals(false);
+      const edited = source.replace('+= amount;', '+= amount * 3;').replace('return 1;', 'return 7;');
+      pane.textString = edited;
+      await model.stepOver();
+      await model.selectFrame(model.continuation.currentFrame);
+      expect(pane.textString).equals(edited);
+      expect(await pane.execCommand('save debugger module')).equals(true);
+      expect(await file.read()).equals(edited);
+      expect(counter.other()).equals(7);
+      expect(counter.constructor).equals(Counter);
+      expect(counter.count).equals(0);
+      const external = edited + '\n// saved from another editor';
+      await mod.changeSource(external);
+      expect((await model.applySavedMethod()).isContinuation).equals(true);
+      await model.selectFrame(model.continuation.currentFrame);
+      expect(pane.textString).equals(external);
+      expect(pane.getLine(pane.selection.range.start.row)).contains('amount * 3');
+      expect(await model.proceed()).equals(6);
+      expect(counter.count).equals(6);
+    } finally {
+      if (view) {
+        view.viewModel.sourceBuffers?.clear();
+        await view.viewModel.closeDebugger();
+      }
+      await mod.unload();
+      await file.remove();
+    }
+  });
+
+  it('keeps invalid drafts and protects external changes and closing from data loss', async function () {
+    this.timeout(10000);
+    const { resource } = await System.import('lively.resources');
+    const { module } = await System.import('lively.modules');
+    const { run } = await System.import('lively.context/lib/stackReification.js');
+    const { openForContinuation } = await System.import('lively.ide/js/debugger/ui.cp.js');
+    const file = resource('local://debugger-save-test/guard.js');
+    const source = 'export class Guard { task() { debugger; return 1; } }';
+    await file.write(source);
+    const mod = module(file.url);
+    let view;
+    const confirm = $world.confirm;
+    try {
+      const { Guard } = await mod.load();
+      view = openForContinuation(run(Guard.prototype.task, null, [], {this: new Guard()}), $world);
+      const model = view.viewModel, pane = model.ui.sourcePane;
+      await model.selectFrame(model.continuation.currentFrame);
+      pane.textString = source + '\nthis is invalid JavaScript';
+      expect(await model.saveModule()).equals(false);
+      expect(await file.read()).equals(source);
+      expect(model.hasUnsavedChanges()).equals(true);
+      pane.textString = source.replace('return 1', 'return 2');
+      const external = source + '\n// changed outside the debugger';
+      await file.write(external);
+      let prompts = 0;
+      $world.confirm = async () => { prompts++; return false; };
+      expect(await model.saveModule()).equals(false);
+      expect(await file.read()).equals(external);
+      expect(await model.onWindowClose()).equals(false);
+      expect(!!model.continuation).equals(true);
+      expect(prompts).equals(2);
+    } finally {
+      $world.confirm = confirm;
+      if (view) {
+        if (view.viewModel.sourceBuffers) view.viewModel.sourceBuffers.clear();
+        await view.viewModel.closeDebugger();
+      }
+      await mod.unload();
+      await file.remove();
+    }
+  });
+
   it('uses transparent window controls and grouped browser buttons without a duplicate title', async function () {
     const { run } = await System.import('lively.context/lib/stackReification.js');
     const { openForContinuation } = await System.import('lively.ide/js/debugger/ui.cp.js');
@@ -41,7 +131,8 @@ describe('lively debugger ui', function () {
       expect(bounds('retry button').left).closeTo(bounds('proceed button').right, 0.5);
       expect(bounds('step into button').left - bounds('retry button').right).at.least(12);
       expect(bounds('step over button').left).closeTo(bounds('step into button').right, 0.5);
-      expect(bounds('apply method button').left).closeTo(bounds('edit method button').right, 0.5);
+      expect(bounds('save module button').left).closeTo(bounds('edit method button').right, 0.5);
+      expect(bounds('apply method button').left).closeTo(bounds('save module button').right, 0.5);
       const { pt } = await System.import('lively.graphics');
       for (const name of ['step over button', 'workspace do button']) {
         const button = view.get(name), box = bounds(name);
@@ -52,6 +143,7 @@ describe('lively debugger ui', function () {
   });
 
   it('shows the original module with syntax colors and an accurate statement highlight', async function () {
+    this.timeout(10000);
     const { run } = await System.import('lively.context/lib/stackReification.js');
     const { LiveCounter } = await System.import('lively.ide/js/debugger/examples/live-counter.js');
     const { openForContinuation } = await System.import('lively.ide/js/debugger/ui.cp.js');
@@ -169,6 +261,7 @@ describe('lively debugger ui', function () {
       getPC: () => ({ loc: { start: { line: 2, column: 2 } } })
     };
     const source = await readFrameSource(originalFrame);
+    expect(moduleUrlForFrame(originalFrame)).equals(null);
     expect(source).contains('function increment');
     expect(lineRangeForFrame(originalFrame, source).start.row).equals(1);
   });
