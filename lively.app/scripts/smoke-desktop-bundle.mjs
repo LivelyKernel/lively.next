@@ -891,7 +891,7 @@ async function assertDesktopDebuggerSmoke (client, timeoutMs) {
       model.ui.workspaceInput.textString = 'amount = Number(amount)';
       if (await model.evaluateWorkspace() !== 1) throw new Error('Workspace failed to repair local');
       const stepped = await model.stepOver();
-      if (!stepped || !stepped.isContinuation) throw new Error(model.ui.status.textString);
+      if (!stepped || !stepped.isContinuation) throw new Error('Step Over failed to suspend');
       const resumed = await model.proceed();
       if (resumed !== marker || marker.count !== 1) throw new Error('Resume lost state or identity');
       if ($world.getWindows().some(win => win.targetMorph === view)) throw new Error('Proceed did not close debugger');
@@ -961,8 +961,8 @@ async function assertDesktopDebuggerSmoke (client, timeoutMs) {
       if (await scopeModel.evaluateWorkspace() !== 4) throw new Error('Closure did not share the block binding');
       scopeModel.ui.workspaceInput.textString = 'self.call({}) === this';
       if (await scopeModel.evaluateWorkspace() !== true) throw new Error('Block lost lexical self');
-      scopeModel.ui.workspaceInput.textString = 'receiver = {}';
-      if (await scopeModel.evaluateWorkspace() !== false || !scopeModel.ui.status.textString.includes('constant')) throw new Error('Workspace bypassed const enforcement');
+      const constantResult = await scopeModel.evaluateWorkspaceSource('receiver = {}');
+      if (!constantResult.isError || !String(constantResult.value).includes('constant')) throw new Error('Workspace bypassed const enforcement');
       const scopedResult = await scopeModel.proceed();
       if (scopedResult.outer !== 1 || scopedResult.inner !== 4 || scopedResult.receiver !== tutorial) throw new Error('Block scope or receiver lost');
       const loopView = await tutorial.debugLesson('loopLesson');

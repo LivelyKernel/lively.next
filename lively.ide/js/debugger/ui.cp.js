@@ -215,7 +215,7 @@ export class LivelyDebuggerModel extends ViewModel {
       await localInterface.interactivelyChangeModule(url, source, {doSave: true, doEval: true});
       buffer.savedSource = source;
       this.rememberSourceEdits();
-      this.ui.status.textString = 'Module saved. Apply Saved Method or Restart Frame to use it in the suspended computation.';
+      this.view.setStatusMessage('Module saved. Apply Saved Method or Restart Frame to use it in the suspended computation.');
       return true;
     } catch (err) {
       return this.interpreterActionFailed('Save Module', err);
@@ -280,14 +280,7 @@ export class LivelyDebuggerModel extends ViewModel {
     const initialFrame = initialFrameForContinuation(this.continuation, frames);
     this.ui.stackList.selection = initialFrame;
     this.selectFrame(initialFrame);
-    this.updateStatus();
-  }
-
-  updateStatus () {
-    const reason = this.continuation && this.continuation.reason || 'debugger';
-    const exception = this.continuation && this.continuation.exception;
-    const exceptionText = exception ? '  ' + printValue(exception) : '';
-    this.ui.status.textString = reason + exceptionText;
+    if (this.continuation?.exception) this.view.showError(this.continuation.exception);
   }
 
   async selectFrame (frame) {
@@ -402,7 +395,8 @@ export class LivelyDebuggerModel extends ViewModel {
 
   async evaluateWorkspace () {
     const result = await this.evaluateWorkspaceSource(this.ui.workspaceInput.textString);
-    return result.isError ? false : result.value;
+    if (result.isError) { this.view.showError(result.value); return false; }
+    return result.value;
   }
 
   async evaluateWorkspaceSource (source) {
@@ -410,11 +404,9 @@ export class LivelyDebuggerModel extends ViewModel {
     try {
       const result = await Promise.resolve(evaluateInDebuggerScopes(source, this.evaluationScopes()));
       this.workspaceBindings.it = result;
-      this.ui.status.textString = 'workspace: ' + printValue(result);
       this.refreshWorkspaceEditor();
       return { value: result, isError: false };
     } catch (err) {
-      this.ui.status.textString = 'workspace failed: ' + (err && err.message || err);
       signal(this.view, 'debuggerActionFailed', { actionName: 'Workspace', frame: this.selectedFrame, error: err });
       return { value: err, isError: true };
     }
@@ -428,7 +420,6 @@ export class LivelyDebuggerModel extends ViewModel {
       if (result && result.isContinuation) {
         this.continuation = result;
         this.refreshFromContinuation();
-        this.updateStatus();
       } else {
         this.continuation = null;
         await this.closeDebugger();
@@ -523,10 +514,9 @@ export class LivelyDebuggerModel extends ViewModel {
       this.rememberReleasableContinuation(this.continuation);
       this.continuation = result;
       this.refreshFromContinuation();
-      this.ui.status.textString = label + ' stopped' + (result.exception ? ': ' + printValue(result.exception) : '');
       return result;
     }
-    this.ui.status.textString = label + ' completed: ' + printValue(result);
+    this.view.setStatusMessage(label + ' completed: ' + printValue(result));
     this.continuation = null;
     await this.closeDebugger();
     return result;
@@ -534,7 +524,7 @@ export class LivelyDebuggerModel extends ViewModel {
 
   interpreterActionFailed (actionName, err) {
     const message = actionName + ' failed: ' + (err && err.message || err);
-    this.ui.status.textString = message;
+    this.view.showError(message);
     signal(this.view, 'debuggerActionFailed', { actionName, frame: this.selectedFrame, error: err });
     return false;
   }
@@ -609,14 +599,12 @@ export const LivelyDebugger = component({
     autoAssign: false,
     grid: [
       ['toolbar', 'toolbar'],
-      ['stack list', 'main pane'],
-      ['status', 'status']
+      ['stack list', 'main pane']
     ],
     groups: {
       toolbar: { align: 'topLeft', resize: true },
       'stack list': { align: 'topLeft', resize: true },
-      'main pane': { align: 'topLeft', resize: true },
-      status: { align: 'topLeft', resize: true }
+      'main pane': { align: 'topLeft', resize: true }
     },
     columns: [
       0, { fixed: 260, paddingRight: 6 },
@@ -624,8 +612,7 @@ export const LivelyDebugger = component({
     ],
     rows: [
       0, { fixed: 44 },
-      1, { height: 1 },
-      2, { fixed: 26 }
+      1, { height: 1 }
     ]
   }),
   submorphs: [{
@@ -815,15 +802,6 @@ export const LivelyDebugger = component({
     part(InspectorWorkspaceResizer),
     part(InspectorWorkspaceEditor),
     part(InspectorWorkspaceControls)]
-  }, {
-    type: Label,
-    name: 'status',
-    value: '',
-    fill: Color.transparent,
-    fontColor: Color.rgb(44, 62, 80),
-    fontFamily: 'IBM Plex Sans',
-    fontSize: 12,
-    padding: rect(6, 4, 0, 0)
   }]
 });
 
