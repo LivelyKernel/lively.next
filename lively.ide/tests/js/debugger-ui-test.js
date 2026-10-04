@@ -134,7 +134,8 @@ describe('lively debugger ui', function () {
       expect(bounds('save module button').left).closeTo(bounds('edit method button').right, 0.5);
       expect(bounds('apply method button').left).closeTo(bounds('save module button').right, 0.5);
       const { pt } = await System.import('lively.graphics');
-      for (const name of ['step over button', 'workspace do button']) {
+      expect(!!view.getSubmorphNamed('workspace do button')).equals(false);
+      for (const name of ['step over button']) {
         const button = view.get(name), box = bounds(name);
         const position = pt(box.left + box.width / 2, box.top + box.height / 2);
         expect(button.viewModel.considerPress({ positionIn: morph => morph.localize(position) })).equals(true);
@@ -217,6 +218,7 @@ describe('lively debugger ui', function () {
   });
 
   it('renders a syntax highlighted workspace whose editor commands evaluate in the suspended scope', async function () {
+    this.timeout(10000);
     const { run } = await System.import('lively.context/lib/stackReification.js');
     const { openForContinuation } = await System.import('lively.ide/js/debugger/ui.cp.js');
     const view = openForContinuation(run(function workspaceLayout () {
@@ -227,6 +229,17 @@ describe('lively debugger ui', function () {
     try {
       const model = view.viewModel, input = model.ui.workspaceInput;
       await model.selectFrame(model.continuation.currentFrame);
+      expect(!!view.getSubmorphNamed('workspace do button')).equals(false);
+      expect(model.isWorkspaceVisible()).equals(false);
+      const scopes = view.get('scope/value pane');
+      const collapsedHeight = scopes.height;
+      const windowExtent = view.getWindow().extent;
+      await view.execCommand('focus debugger workspace');
+      view.env.forceUpdate();
+      expect(model.isWorkspaceVisible()).equals(true);
+      expect(scopes.height).below(collapsedHeight);
+      expect(view.getWindow().extent.equals(windowExtent)).equals(true);
+      expect(model.ui.workspaceResizer.visible).equals(true);
       input.textString = 'let scratch = amount * 2; scratch';
       await new Promise(resolve => setTimeout(resolve, 100));
       const plugin = input.pluginFind(p => p.isJSEditorPlugin);
@@ -241,6 +254,20 @@ describe('lively debugger ui', function () {
       input.selectAll();
       expect((await input.execCommand('doit')).value).equals(4);
       expect(model.workspaceBindings.scratch).equals(4);
+      model.adjustWorkspaceProportions({ state: { dragDelta: { y: -20 } } });
+      view.env.forceUpdate();
+      const workspaceHeight = input.height;
+      model.toggleWorkspace();
+      view.env.forceUpdate();
+      expect(model.isWorkspaceVisible()).equals(false);
+      expect(scopes.height).closeTo(collapsedHeight, 0.5);
+      expect(model.ui.workspaceResizer.visible).equals(false);
+      model.toggleWorkspace();
+      view.env.forceUpdate();
+      expect(input.height).closeTo(workspaceHeight, 0.5);
+      expect(view.getWindow().extent.equals(windowExtent)).equals(true);
+      expect(input.textString).equals('let scratch = amount * 2; scratch');
+      expect(model.workspaceBindings.scratch).equals(4);
       input.textString = 'amount = scratch - 1';
       input.selectAll();
       expect((await input.execCommand('doit')).value).equals(3);
@@ -252,6 +279,10 @@ describe('lively debugger ui', function () {
       expect(result.value).equals(false);
       input.textString = 'amount';
       expect(await model.evaluateWorkspace()).equals(3);
+      input.textString = 'amount';
+      input.selectAll();
+      await input.execCommand('printit');
+      expect(input.textString).contains('3');
     } finally { view.viewModel.closeDebugger(); }
   });
 

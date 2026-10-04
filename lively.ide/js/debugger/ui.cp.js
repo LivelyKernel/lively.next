@@ -1,4 +1,4 @@
-import { GridLayout, TilingLayout, ViewModel, component, part, Label, Text, Icon, config } from 'lively.morphic';
+import { GridLayout, TilingLayout, ViewModel, component, part, without, Label, Text, Icon, config } from 'lively.morphic';
 import { Color, pt, rect } from 'lively.graphics';
 import { SystemButton } from 'lively.components/buttons.cp.js';
 import { SystemList } from '../../styling/shared.cp.js';
@@ -6,6 +6,7 @@ import { signal } from 'lively.bindings';
 import { parse } from 'lively.ast';
 import { localInterface } from 'lively-system-interface';
 import { InspectionTree, PropertyTree, printValue } from '../inspector/context.js';
+import { SystemInspector } from '../inspector/ui.cp.js';
 import {
   restartInspectorFrame,
   returnFromInspectorFrame,
@@ -150,7 +151,8 @@ export class LivelyDebuggerModel extends ViewModel {
             { target: 'source pane', signal: 'textChange', handler: 'rememberSourceEdits' },
             { target: 'apply method button', signal: 'fire', handler: 'applySavedMethod' },
             { target: 'run to cursor button', signal: 'fire', handler: 'runToCursor' },
-            { target: 'workspace do button', signal: 'fire', handler: 'evaluateWorkspace' }
+            { target: 'terminal toggler', signal: 'onMouseDown', handler: 'toggleWorkspace', override: false },
+            { target: 'workspace resizer', signal: 'onDrag', handler: 'adjustWorkspaceProportions', override: false }
           ];
         }
       }
@@ -165,11 +167,17 @@ export class LivelyDebuggerModel extends ViewModel {
   }
 
   get commands () {
-    return [{ name: 'save debugger module', exec: () => this.saveModule() }];
+    return [
+      { name: 'save debugger module', exec: () => this.saveModule() },
+      { name: 'focus debugger workspace', exec: () => { this.makeWorkspaceVisible(true); return true; } }
+    ];
   }
 
   get keybindings () {
-    return [{ keys: { mac: 'Command-S', win: 'Ctrl-S' }, command: 'save debugger module' }];
+    return [
+      { keys: { mac: 'Command-S', win: 'Ctrl-S' }, command: 'save debugger module' },
+      { keys: 'F2', command: 'focus debugger workspace' }
+    ];
   }
 
   rememberSourceEdits () {
@@ -346,6 +354,41 @@ export class LivelyDebuggerModel extends ViewModel {
     plugin.highlight();
   }
 
+  isWorkspaceVisible () { return this.ui.workspaceInput.visible; }
+
+  makeWorkspaceVisible (show) {
+    const { workspaceInput: editor, workspaceResizer: resizer, terminalToggler, mainPane } = this.ui;
+    const { layout, extent } = mainPane;
+    if (show !== this.isWorkspaceVisible()) {
+      if (!show) this.workspaceHeight = layout.row(5).height;
+      layout.disable();
+      this.withoutBindingsDo(() => {
+        layout.row(5).height = show ? this.workspaceHeight || 110 : 0;
+        layout.row(4).height = show ? 5 : 0;
+        mainPane.extent = extent;
+      });
+      layout.enable();
+      editor.visible = resizer.visible = show;
+      terminalToggler.fontColor = show ? Color.rgbHex('00e0ff') : Color.white;
+      layout.forceLayout();
+    }
+    (show ? editor : this.ui.sourcePane).focus();
+  }
+
+  toggleWorkspace () { this.makeWorkspaceVisible(!this.isWorkspaceVisible()); }
+
+  adjustWorkspaceProportions (evt) {
+    if (!this.isWorkspaceVisible()) return;
+    const { mainPane } = this.ui;
+    const { layout, extent } = mainPane;
+    const height = layout.row(5).height;
+    layout.disable();
+    layout.row(5).height = Math.max(50, Math.min(height - evt.state.dragDelta.y, layout.row(2).height + height - 50));
+    mainPane.extent = extent;
+    layout.enable();
+    layout.forceLayout();
+  }
+
   async evaluateWorkspace () {
     const result = await this.evaluateWorkspaceSource(this.ui.workspaceInput.textString);
     return result.isError ? false : result.value;
@@ -356,13 +399,10 @@ export class LivelyDebuggerModel extends ViewModel {
     try {
       const result = await Promise.resolve(evaluateInDebuggerScopes(source, this.evaluationScopes()));
       this.workspaceBindings.it = result;
-      this.ui.workspaceResult.textString = printValue(result);
       this.ui.status.textString = 'workspace: ' + printValue(result);
       this.refreshWorkspaceEditor();
       return { value: result, isError: false };
     } catch (err) {
-      const message = err && (err.stack || err.message) || String(err);
-      this.ui.workspaceResult.textString = message;
       this.ui.status.textString = 'workspace failed: ' + (err && err.message || err);
       signal(this.view, 'debuggerActionFailed', { actionName: 'Workspace', frame: this.selectedFrame, error: err });
       return { value: err, isError: true };
@@ -521,6 +561,30 @@ const ToolbarButton = component(SystemButton, {
   }]
 });
 
+const InspectorWorkspaceControls = component(SystemInspector.stylePolicy.extractStylePolicyFor('editor controls wrapper'), {
+  name: 'workspace controls',
+  extent: pt(640, 26),
+  submorphs: [
+    { name: 'terminal toggler', tooltip: 'Show or hide the evaluation workspace (F2 to focus)' },
+    without('this binding selector'),
+    without('fix import button')
+  ]
+});
+
+const InspectorWorkspaceResizer = component(SystemInspector.stylePolicy.extractStylePolicyFor('resizer'), {
+  name: 'workspace resizer',
+  visible: false
+});
+
+const InspectorWorkspaceEditor = component(SystemInspector.stylePolicy.extractStylePolicyFor('code editor'), {
+  name: 'workspace input',
+  visible: false,
+  borderColor: Color.rgb(204, 204, 204),
+  borderWidth: 1,
+  fill: Color.white,
+  fontSize: 13
+});
+
 export const LivelyDebugger = component({
   name: 'lively debugger',
   defaultViewModel: LivelyDebuggerModel,
@@ -643,14 +707,16 @@ export const LivelyDebugger = component({
         ['source header'],
         ['source pane'],
         ['scope/value pane'],
-        ['workspace header'],
+        ['workspace controls'],
+        ['workspace resizer'],
         ['workspace input']
       ],
       groups: {
         'source header': { align: 'topLeft', resize: true },
         'source pane': { align: 'topLeft', resize: true },
         'scope/value pane': { align: 'topLeft', resize: true },
-        'workspace header': { align: 'topLeft', resize: true },
+        'workspace controls': { align: 'topLeft', resize: true },
+        'workspace resizer': { align: 'topLeft', resize: true },
         'workspace input': { align: 'topLeft', resize: true }
       },
       rows: [
@@ -658,7 +724,8 @@ export const LivelyDebugger = component({
         1, { fixed: 210, paddingBottom: 6 },
         2, { height: 1, paddingBottom: 6 },
         3, { fixed: 26 },
-        4, { fixed: 110 }
+        4, { fixed: 0 },
+        5, { fixed: 0 }
       ]
     }),
     submorphs: [{
@@ -733,52 +800,10 @@ export const LivelyDebugger = component({
           fontSize: 13,
           treeData: {}
         }]
-    }, {
-      name: 'workspace header',
-      extent: pt(640, 26),
-      fill: Color.transparent,
-      layout: new TilingLayout({
-        axisAlign: 'center',
-        orderByIndex: true,
-        padding: rect(0, 0, 0, 0),
-        spacing: 6,
-        resizePolicies: [['workspace result', { width: 'fill', height: 'fixed' }]]
-      }),
-      submorphs: [
-        part(ToolbarButton, {
-          name: 'workspace do button',
-          tooltip: 'Do It',
-          extent: pt(28, 24),
-          borderRadius: 5,
-          borderWidth: 1,
-          submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('play') }]
-        }),
-        {
-          type: Label,
-          name: 'workspace result',
-          value: '',
-          fontColor: Color.rgb(52, 73, 94),
-          fontFamily: 'IBM Plex Mono',
-          fontSize: 12,
-          clipMode: 'hidden',
-          reactsToPointer: false
-        }
-      ]
-    }, {
-      type: Text,
-      name: 'workspace input',
-      readOnly: false,
-      fixedWidth: true,
-      fixedHeight: true,
-      lineWrapping: 'by-chars',
-      padding: rect(4, 2, 0, 0),
-      borderColor: Color.rgb(204, 204, 204),
-      borderWidth: 1,
-      fill: Color.white,
-      ...config.codeEditor.defaultStyle,
-      fontSize: 13,
-      textString: ''
-    }]
+    },
+    part(InspectorWorkspaceControls),
+    part(InspectorWorkspaceResizer),
+    part(InspectorWorkspaceEditor)]
   }, {
     type: Label,
     name: 'status',
