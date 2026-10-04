@@ -152,7 +152,9 @@ export class LivelyDebuggerModel extends ViewModel {
             { target: 'apply method button', signal: 'fire', handler: 'applySavedMethod' },
             { target: 'run to cursor button', signal: 'fire', handler: 'runToCursor' },
             { target: 'terminal toggler', signal: 'onMouseDown', handler: 'toggleWorkspace', override: false },
-            { target: 'workspace resizer', signal: 'onDrag', handler: 'adjustWorkspaceProportions', override: false }
+            { target: 'workspace resizer', signal: 'onDrag', handler: 'adjustWorkspaceProportions', override: false },
+            { target: /^(scope\/value pane|workspace input)$/, signal: 'extent', handler: 'relayoutWorkspaceControls' },
+            { target: /^(scope\/value pane|workspace input)$/, signal: 'position', handler: 'relayoutWorkspaceControls' }
           ];
         }
       }
@@ -164,6 +166,7 @@ export class LivelyDebuggerModel extends ViewModel {
     this.rememberReleasableContinuation(this.continuation);
     this.refreshFromContinuation();
     this.refreshWorkspaceEditor();
+    this.relayoutWorkspaceControls();
   }
 
   get commands () {
@@ -356,15 +359,21 @@ export class LivelyDebuggerModel extends ViewModel {
 
   isWorkspaceVisible () { return this.ui.workspaceInput.visible; }
 
+  relayoutWorkspaceControls () {
+    const { workspaceInput, workspaceControls } = this.ui;
+    const pane = this.isWorkspaceVisible() ? workspaceInput : this.view.getSubmorphNamed('scope/value pane');
+    workspaceControls.bottomLeft = pane.bounds().bottomLeft();
+  }
+
   makeWorkspaceVisible (show) {
     const { workspaceInput: editor, workspaceResizer: resizer, terminalToggler, mainPane } = this.ui;
     const { layout, extent } = mainPane;
     if (show !== this.isWorkspaceVisible()) {
-      if (!show) this.workspaceHeight = layout.row(5).height;
+      if (!show) this.workspaceHeight = layout.row(4).height;
       layout.disable();
       this.withoutBindingsDo(() => {
-        layout.row(5).height = show ? this.workspaceHeight || 110 : 0;
-        layout.row(4).height = show ? 5 : 0;
+        layout.row(4).height = show ? this.workspaceHeight || 110 : 0;
+        layout.row(3).height = show ? 5 : 0;
         mainPane.extent = extent;
       });
       layout.enable();
@@ -372,6 +381,7 @@ export class LivelyDebuggerModel extends ViewModel {
       terminalToggler.fontColor = show ? Color.rgbHex('00e0ff') : Color.white;
       layout.forceLayout();
     }
+    this.relayoutWorkspaceControls();
     (show ? editor : this.ui.sourcePane).focus();
   }
 
@@ -381,12 +391,13 @@ export class LivelyDebuggerModel extends ViewModel {
     if (!this.isWorkspaceVisible()) return;
     const { mainPane } = this.ui;
     const { layout, extent } = mainPane;
-    const height = layout.row(5).height;
+    const height = layout.row(4).height;
     layout.disable();
-    layout.row(5).height = Math.max(50, Math.min(height - evt.state.dragDelta.y, layout.row(2).height + height - 50));
+    layout.row(4).height = Math.max(50, Math.min(height - evt.state.dragDelta.y, layout.row(2).height + height - 50));
     mainPane.extent = extent;
     layout.enable();
     layout.forceLayout();
+    this.relayoutWorkspaceControls();
   }
 
   async evaluateWorkspace () {
@@ -563,9 +574,11 @@ const ToolbarButton = component(SystemButton, {
 
 const InspectorWorkspaceControls = component(SystemInspector.stylePolicy.extractStylePolicyFor('editor controls wrapper'), {
   name: 'workspace controls',
-  extent: pt(640, 26),
+  isLayoutable: false,
+  extent: pt(35, 26),
   submorphs: [
     { name: 'terminal toggler', tooltip: 'Show or hide the evaluation workspace (F2 to focus)' },
+    without('filler'),
     without('this binding selector'),
     without('fix import button')
   ]
@@ -582,6 +595,7 @@ const InspectorWorkspaceEditor = component(SystemInspector.stylePolicy.extractSt
   borderColor: Color.rgb(204, 204, 204),
   borderWidth: 1,
   fill: Color.white,
+  padding: rect(4, 2, 0, 26),
   fontSize: 13
 });
 
@@ -707,7 +721,6 @@ export const LivelyDebugger = component({
         ['source header'],
         ['source pane'],
         ['scope/value pane'],
-        ['workspace controls'],
         ['workspace resizer'],
         ['workspace input']
       ],
@@ -715,17 +728,15 @@ export const LivelyDebugger = component({
         'source header': { align: 'topLeft', resize: true },
         'source pane': { align: 'topLeft', resize: true },
         'scope/value pane': { align: 'topLeft', resize: true },
-        'workspace controls': { align: 'topLeft', resize: true },
         'workspace resizer': { align: 'topLeft', resize: true },
         'workspace input': { align: 'topLeft', resize: true }
       },
       rows: [
         0, { fixed: 26 },
         1, { fixed: 210, paddingBottom: 6 },
-        2, { height: 1, paddingBottom: 6 },
-        3, { fixed: 26 },
-        4, { fixed: 0 },
-        5, { fixed: 0 }
+        2, { height: 1 },
+        3, { fixed: 0 },
+        4, { fixed: 0 }
       ]
     }),
     submorphs: [{
@@ -801,9 +812,9 @@ export const LivelyDebugger = component({
           treeData: {}
         }]
     },
-    part(InspectorWorkspaceControls),
     part(InspectorWorkspaceResizer),
-    part(InspectorWorkspaceEditor)]
+    part(InspectorWorkspaceEditor),
+    part(InspectorWorkspaceControls)]
   }, {
     type: Label,
     name: 'status',
