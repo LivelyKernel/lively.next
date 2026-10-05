@@ -17,6 +17,7 @@ const previousCwd = process.cwd();
 const previousRuntimeRoot = process.env.lv_next_dir;
 let build;
 try {
+  await fs.mkdir(path.join(root, 'esm_cache'), { recursive: true });
   const config = JSON.parse(await fs.readFile(path.join(root, 'package.json'), 'utf8'));
   await fs.writeFile(path.join(runtimeRoot, 'package.json'), JSON.stringify(config));
   for (const workspace of config.workspaces) await fs.symlink(path.join(root, workspace), path.join(runtimeRoot, workspace), process.platform === 'win32' ? 'junction' : 'dir');
