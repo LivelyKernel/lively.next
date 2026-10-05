@@ -282,7 +282,7 @@ function supportingPlugins(context = 'node', self) {
   // Packaged workspaces are mounted in the writable runtime root, but Node
   // resolves their files to the application payload.
   const livelyPackageRoot = [livelyRoot, path.resolve(__dirname, '../../..')]
-    .map(root => root.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+    .map(root => root.replace(/\\/g, '/').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
   const livelyPackage = new RegExp(
     `^(?:${livelyPackageRoot})/lively\\.[^/]+/`
   );
