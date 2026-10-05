@@ -337,10 +337,11 @@ export default class Renderer {
       this.submorphWrapperNodeFor(morph);
       wrapperNode = morph.renderingState.submorphNode;
       if (morph.isText && morph.document) {
-        const scrollWrapper = morph.renderingState.scrollWrapper;
+        let scrollWrapper = morph.renderingState.scrollWrapper;
         if (!scrollWrapper) {
           morph.renderingState.needsScrollLayerAdded = true;
           this.handleScrollLayer(node, morph);
+          scrollWrapper = morph.renderingState.scrollWrapper;
         }
         // As we use `keyed` to patch these nodes, handling references to the currently mounted ones would probably cause more trouble than benefit.
         const markerNode = scrollWrapper.querySelector('.newtext-marker-layer') || null;
@@ -880,6 +881,8 @@ export default class Renderer {
 
       node.style.overflow = morph.isClip() ? 'hidden' : 'visible';
       scrollWrapper.appendChild(textLayerNode);
+      const submorphNode = morph.renderingState.submorphNode;
+      if (submorphNode) scrollWrapper.appendChild(submorphNode);
       node.appendChild(scrollLayer);
       node.appendChild(scrollWrapper);
       this.patchClipModeForText(node, morph, morph.scrollActive);
@@ -909,6 +912,7 @@ export default class Renderer {
       Array.from(scrollWrapper.children).forEach(c => node.append(c));
       scrollWrapper.remove();
       delete morph.renderingState.scrollWrapper;
+      node.style.overflow = morph.clipMode;
       delete morph.renderingState.needsScrollLayerRemoved;
       morph.renderingState.adaptScrollAfterDocumentRemoval = morph.renderingState.firstVisibleRow;
     }
