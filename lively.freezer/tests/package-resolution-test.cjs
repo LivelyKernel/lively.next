@@ -6,7 +6,7 @@ const { pathToFileURL } = require('node:url');
 const { createRequire } = require('node:module');
 const vm = require('node:vm');
 const resolver = require('../src/resolvers/node.cjs');
-const root = fs.mkdtempSync(path.join(os.tmpdir(), 'lively-browser-resolve-'));
+const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'lively-browser-resolve-')));
 const previousRuntimeRoot = process.env.lv_next_dir;
 try {
   const pkg = path.join(root, 'node_modules', 'conditional');
