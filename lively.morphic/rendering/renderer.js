@@ -1143,7 +1143,6 @@ export default class Renderer {
     attr = attr || {};
     const rendered = this.renderMorph(morph);
     rendered.style.position = 'sticky';
-    rendered.style.transform = '';
     rendered.style.textAlign = 'initial';
     rendered.style.removeProperty('top');
     rendered.style.removeProperty('left');

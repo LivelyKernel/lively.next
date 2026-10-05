@@ -40,7 +40,6 @@ export function applyStylingToNode (morph, node) {
 
   if (morph.owner && morph.owner.isText && morph.owner.embeddedMorphMap.has(morph)) {
     styleProps.position = 'sticky';
-    styleProps.transform = '';
     styleProps.textAlign = 'initial';
     delete styleProps.top;
     delete styleProps.left;

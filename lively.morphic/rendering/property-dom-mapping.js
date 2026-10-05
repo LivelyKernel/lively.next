@@ -128,7 +128,10 @@ export function addTransform (morph, style) {
   if (promoteToCompositionLayer) {
     style['will-change'] = 'transform';
   }
-  if ((owner && owner.isText && !owner.layout?.renderViaCSS) || promoteToCompositionLayer) {
+  if (owner?.isText && owner.embeddedMorphMap.has(morph)) {
+    // The text flow supplies the position; retain the morph's visual transforms.
+    style.transform = `translate(${-origin.x}px, ${-origin.y}px)`;
+  } else if ((owner && owner.isText && !owner.layout?.renderViaCSS) || promoteToCompositionLayer) {
     style.transform = (promoteToCompositionLayer ? `translate(${x}px, ${y}px)` : `translate(${x}px, ${y}px)`);
     style.top = owner?.layout?.renderViaCSS ? '0px' : '';
     style.left = owner?.layout?.renderViaCSS ? '0px' : '';
