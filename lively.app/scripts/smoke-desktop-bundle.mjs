@@ -1095,8 +1095,10 @@ async function main () {
             if (cached.result?.value !== 'previous build') throw new Error('Upgrade regression did not prime the browser HTTP cache');
           } else console.log('Desktop app smoke passed: app upgrade invalidates cached HTTP responses');
         }
-        const registryResponse = await fetch(`http://127.0.0.1:${port}/package-registry.json`);
-        const { packageMap } = await registryResponse.json();
+        const { packageMap } = await waitFor('desktop package registry', async () => {
+          const response = await fetch(`http://127.0.0.1:${port}/package-registry.json`);
+          return response.ok ? response.json() : null;
+        }, 60000);
         for (const name of ['lively.modules', 'lively.morphic', 'lively.server', 'lively.shell', 'lively.freezer']) {
           const entry = packageMap[name];
           const pkg = entry.versions[entry.latest];
