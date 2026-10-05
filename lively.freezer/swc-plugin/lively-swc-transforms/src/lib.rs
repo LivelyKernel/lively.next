@@ -185,6 +185,49 @@ mod tests {
         assert!(output.contains("var rainbow = __varRecorder__.rainbow"));
     }
 
+    #[test]
+    fn captured_component_exports_allow_initializer_self_references() {
+        for resurrection in [false, true] {
+            let config = LivelyTransformConfig {
+                resurrection,
+                module_id: "test.cp.js".into(),
+                exclude: vec!["component".into(), "System".into()],
+                ..Default::default()
+            };
+            let code = transform_code(
+                "const PropertySectionActive = component({});
+                 const PropertySectionInactive = component(PropertySectionActive, { master: PropertySectionInactive });
+                 export { PropertySectionInactive };",
+                config,
+            );
+            let script = format!(
+                r#"
+import assert from 'node:assert/strict';
+const recorder = {{}};
+const __contextModule__ = {{ id: 'test.cp.js' }};
+const lively = {{ frozenModules: {{ recorderFor: () => recorder }} }};
+const System = {{}};
+const component = (parent, props) => ({{ parent, props }});
+component.for = generator => generator();
+{code}
+assert.equal(PropertySectionInactive, recorder.PropertySectionInactive);
+assert.equal(PropertySectionInactive.parent, recorder.PropertySectionActive);
+assert.equal(PropertySectionInactive.props.master, undefined);
+"#
+            );
+            let output = std::process::Command::new("node")
+                .args(["--input-type=module", "-e", &script])
+                .output()
+                .expect("Node is required to execute the component capture regression");
+            assert!(
+                output.status.success(),
+                "Captured component failed:\n{}\nGenerated code:\n{}",
+                String::from_utf8_lossy(&output.stderr),
+                code
+            );
+        }
+    }
+
     fn config_with_class_to_function() -> LivelyTransformConfig {
         let mut config = LivelyTransformConfig::default();
         config.class_to_function = Some(crate::config::ClassToFunctionConfig {

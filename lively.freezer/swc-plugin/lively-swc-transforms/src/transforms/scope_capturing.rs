@@ -52,6 +52,9 @@ pub struct ScopeCapturingTransform {
     /// Local export bindings must stay synchronized with recorder writes.
     exported_vars: HashSet<Id>,
 
+    /// Export aliases that must not be overwritten by same-named local definitions.
+    renamed_exports: HashMap<String, String>,
+
     /// Identifier names referenced in the original module before this pass
     /// generates recorder/System wrapper code. This mirrors Babel's
     /// refsToReplace shape: generated identifiers are not captured just
@@ -334,6 +337,7 @@ impl ScopeCapturingTransform {
             original_source,
             capturable_vars: HashSet::new(),
             exported_vars: HashSet::new(),
+            renamed_exports: HashMap::new(),
             original_ref_names: HashSet::new(),
             loop_header_vars: HashSet::new(),
             imported_vars: HashSet::new(),
@@ -496,6 +500,15 @@ impl ScopeCapturingTransform {
                 to_expr_or_spread(value),
                 to_expr_or_spread(create_ident_expr(&self.capture_obj)),
             ];
+            let mut meta = meta;
+            if let Some(local) = self.renamed_exports.get(name) {
+                let conflict = create_prop("exportConflict", create_string_expr(local));
+                if let Some(Expr::Object(object)) = &mut meta {
+                    object.props.push(conflict);
+                } else {
+                    meta = Some(create_object_lit(vec![conflict]));
+                }
+            }
             if let Some(meta) = meta {
                 args.push(to_expr_or_spread(meta));
             }
@@ -582,13 +595,10 @@ impl ScopeCapturingTransform {
                     );
                     let assignment = create_assign_expr(expr_to_assign_target(member), value);
                     if self.exported_vars.contains(&id.to_id()) {
-                        let kind = match declaration_kind {
-                            "let" => VarDeclKind::Let,
-                            "const" => VarDeclKind::Const,
-                            _ => VarDeclKind::Var,
-                        };
+                        // Captured exports have historically used hoisted bindings.
+                        // Component initializers can read their own binding synchronously.
                         stmts.push(Stmt::Decl(create_var_decl_with_ident(
-                            kind,
+                            VarDeclKind::Var,
                             id.clone(),
                             Some(assignment),
                         )));
@@ -2355,6 +2365,7 @@ impl VisitMut for ScopeCapturingTransform {
             .collect();
 
         self.exported_vars.clear();
+        self.renamed_exports = renamed_exports(module);
         for item in &module.body {
             match item {
                 ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(export)) if export.src.is_none() => {

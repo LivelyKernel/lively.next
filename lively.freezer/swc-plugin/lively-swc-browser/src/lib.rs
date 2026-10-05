@@ -52,6 +52,7 @@ fn transform_inner(source: &str, mut config: LivelyTransformConfig) -> Result<St
     )
     .map_err(|e| JsError::new(&format!("Parse error: {:?}", e)))?;
 
+    let renamed_exports = renamed_exports(&module);
     let mut program = swc_ecma_ast::Program::Module(module);
 
     // Phase 1: Run lively transforms (scope capture, class-to-function, etc.)
@@ -108,6 +109,7 @@ fn transform_inner(source: &str, mut config: LivelyTransformConfig) -> Result<St
             &recorder,
             declaration_wrapper.as_deref(),
             &excluded,
+            &renamed_exports,
         );
         insert_evaluation_hooks(&mut program, &module_id);
     }
@@ -717,6 +719,7 @@ fn rewrite_setters(
     capture_obj: &Ident,
     declaration_wrapper: Option<&str>,
     excluded: &[String],
+    renamed_exports: &std::collections::HashMap<String, String>,
 ) {
     for stmt in get_stmts_mut(program) {
         let call = match stmt {
@@ -844,6 +847,18 @@ fn rewrite_setters(
                     // if (typeof __rec !== "undefined") __rec.X = [defVar(..., X, __rec) | X]
                     let value_expr = Expr::Ident(binding);
                     let rhs = if let Some(wrapper) = declaration_wrapper {
+                        let mut args = vec![
+                            to_expr_or_spread(create_string_expr(&lhs_name)),
+                            to_expr_or_spread(create_string_expr("var")),
+                            to_expr_or_spread(value_expr),
+                            to_expr_or_spread(Expr::Ident(capture_obj.clone())),
+                        ];
+                        if let Some(local) = renamed_exports.get(&lhs_name) {
+                            args.push(to_expr_or_spread(create_object_lit(vec![create_prop(
+                                "exportConflict",
+                                create_string_expr(local),
+                            )])));
+                        }
                         Expr::Call(CallExpr {
                             span: DUMMY_SP,
                             ctxt: Default::default(),
@@ -859,32 +874,7 @@ fn rewrite_setters(
                                     }))),
                                 }),
                             }))),
-                            args: vec![
-                                ExprOrSpread {
-                                    spread: None,
-                                    expr: Box::new(Expr::Lit(Lit::Str(Str {
-                                        span: DUMMY_SP,
-                                        value: lhs_name.as_str().into(),
-                                        raw: None,
-                                    }))),
-                                },
-                                ExprOrSpread {
-                                    spread: None,
-                                    expr: Box::new(Expr::Lit(Lit::Str(Str {
-                                        span: DUMMY_SP,
-                                        value: "var".into(),
-                                        raw: None,
-                                    }))),
-                                },
-                                ExprOrSpread {
-                                    spread: None,
-                                    expr: Box::new(value_expr),
-                                },
-                                ExprOrSpread {
-                                    spread: None,
-                                    expr: Box::new(Expr::Ident(capture_obj.clone())),
-                                },
-                            ],
+                            args,
                             type_args: None,
                         })
                     } else {
@@ -990,6 +980,7 @@ mod tests {
             enable_scope_capture: capture,
             enable_component_transform: false,
             enable_dynamic_import_transform: false,
+            declaration_wrapper: Some("__define__".into()),
             ..Default::default()
         };
         let result: serde_json::Value = serde_json::from_str(
@@ -1001,7 +992,13 @@ mod tests {
             r#"
 const assert = require('node:assert/strict');
 const exportsOfModule = {{}};
-const recorder = {{}};
+const recorder = {{
+    __define__(name, kind, value, recorder, meta) {{
+        recorder[name] = value;
+        if (name in exportsOfModule && !meta?.exportConflict) exportsOfModule[name] = value;
+        return value;
+    }}
+}};
 const __contextModule__ = {{ id: 'test.js' }};
 const lively = {{ FreezerRuntime: {{ recorderFor: () => recorder }} }};
 let execution;
@@ -1038,6 +1035,21 @@ Promise.resolve(execution).then(async () => {{
             String::from_utf8_lossy(&output.stderr),
             code
         );
+    }
+
+    #[test]
+    fn definition_callbacks_do_not_overwrite_other_bindings_export_aliases() {
+        for source in [
+            "import { value as answer } from 'dep'; function source() { return 42; } export { source as answer };",
+            "let answer = 3; function source() { return 42; } export { source as answer };",
+            "function answer() { return 3; } function source() { return 42; } export { source as answer };",
+        ] {
+            assert_module_runs(
+                source,
+                true,
+                "assert.equal(exportsOfModule.answer(), 42); updateDependency({value: 9}); assert.equal(exportsOfModule.answer(), 42);",
+            );
+        }
     }
 
     #[test]
