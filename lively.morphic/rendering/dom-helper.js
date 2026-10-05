@@ -42,7 +42,10 @@ class DomEnvironment {
 }
 
 async function createDOMEnvironment_browser () {
-  return new IFramedDomEnvironment(await createIFrame(document.body)); // eslint-disable-line no-use-before-define
+  const env = new IFramedDomEnvironment(await createIFrame(document.body)); // eslint-disable-line no-use-before-define
+  const cssUrl = new URL('assets/morphic.css', System.decanonicalize('lively.morphic/index.js')).href;
+  await addOrChangeLinkedCSS('lively-morphic-css', cssUrl, env.document);
+  return env;
 }
 
 function createDOMEnvironment_node () {
