@@ -54,7 +54,18 @@ The packages are coded with emojis as follows:
 
 ### Commit History
 
-As we merge PRs via rebase, please take the time to ensure that there is the necessary number of commits in your PR (and not more) and the history helps to understand what you did and why you did it.
+PRs are squash merged. Their titles must follow the commit-message convention,
+including every affected package emoji in the order listed above. Root files,
+documentation, and tooling use 🛠️; lively.app uses 📦. Leave room in the subject
+length for GitHub's appended PR number, such as ` (#1814)`.
+
+The required `Lively commit message` check validates titles and any queued
+auto-merge subject. If you customize the subject when enabling auto-merge, keep
+the same package prefix and lowercase summary. Changing a title or enabling
+auto-merge reruns validation; re-enable auto-merge if its saved subject is stale.
+
+Run the validator's regression checks with
+`node scripts/tests/pr-commit-message-test.cjs`.
 
 Dependency changes use Bun 1.4.2 with the committed workspace lock. Add dependencies to the package that imports them. Browser import maps are generated as hidden `.cachedImportMap.json` caches and must not be committed. Installation refreshes missing or stale maps; `bun run update:browser-import-maps <workspace>` forces regeneration. Ordinary installs must leave `bun.lock` unchanged.
 
