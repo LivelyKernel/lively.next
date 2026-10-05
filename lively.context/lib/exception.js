@@ -23,8 +23,10 @@ export function runtimeFunctionSource(func) {
 export function removeRuntimeClosureAnnotations(ast) {
   const cells = new Set();
   const isCapture = node => node?.type === 'CallExpression' && node.callee.type === 'MemberExpression' &&
-    node.callee.property.name === 'recordDebugClosure' && node.callee.object.type === 'CallExpression' &&
-    node.callee.object.callee.property?.name === 'moduleEnv' && node.arguments[1]?.type === 'ObjectExpression' &&
+    node.callee.property.name === 'recordDebugClosure' &&
+    (node.callee.object.type === 'CallExpression' && node.callee.object.callee.property?.name === 'moduleEnv' ||
+      node.callee.object.type === 'MemberExpression' && node.callee.object.property.name === '__currentLivelyModule') &&
+    node.arguments[1]?.type === 'ObjectExpression' &&
     node.arguments[4]?.type === 'Identifier';
   withMozillaAstDo(ast, null, (next, node) => {
     if (isCapture(node)) for (const property of node.arguments[1].properties)

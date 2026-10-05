@@ -38,7 +38,13 @@ describe('module loading', () => {
     const source = 'export function make(value) { "use strict"; const ledger = {}; function charge(amount) { return value + amount; } return {charge, read: () => value, ledger}; }';
     await resource(module1).write(source);
     const {make} = await S.import(module1);
-    const account = make(2), bindings = account.charge[Symbol.for('lively-debug-bindings')];
+    const decanonicalize = S.decanonicalize;
+    let account;
+    try {
+      S.decanonicalize = () => { throw new Error('closure recording must not invoke module resolution'); };
+      account = make(2);
+    } finally { S.decanonicalize = decanonicalize; }
+    const bindings = account.charge[Symbol.for('lively-debug-bindings')];
     expect(account.charge.name).equals('charge');
     expect(bindings.value).equals(2);
     bindings.value = 7;
