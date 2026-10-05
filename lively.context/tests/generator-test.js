@@ -2,7 +2,7 @@
 import { expect } from 'mocha-es6';
 import { run } from '../lib/stackReification.js';
 import { serialize, deserialize } from '../../lively.serializer2/index.js';
-import { resumeInspectorContinuation, stepInspectorContinuation, stepOutInspectorContinuation, returnFromInspectorFrame } from '../lib/inspector-interpreter.js';
+import { resumeInspectorContinuation, stepInspectorContinuation, stepOutInspectorContinuation, returnFromInspectorFrame, applySavedInspectorMethod } from '../lib/inspector-interpreter.js';
 
 const fn = source => globalThis.Function('return (' + source + ')')();
 
@@ -172,5 +172,15 @@ describe('generator and async iterator continuations', function () {
     const iterator = run(fn('function* values() { yield* [1, 2]; }')).returnValue;
     iterator.next();
     expect(iterator.return(7)).deep.equals({value: 7, done: true});
+  });
+
+  it('keeps iterator state when applying a future generator edit', function () {
+    const source = 'function* values() { for (const quantity of [2, 3]) { let amount = quantity; debugger; yield amount; } }';
+    const receiver = {values: fn(source)};
+    const stopped = run(fn('function task() { let total = 0; for (const value of this.values()) total += value; return total; }'), null, [], {this: receiver});
+    receiver.values = fn(source.replace('yield amount;', 'yield amount * 2;'));
+    const second = resumeInspectorContinuation(applySavedInspectorMethod(stopped));
+    expect(second.currentFrame.lookup('quantity')).equals(3);
+    expect(resumeInspectorContinuation(second)).equals(10);
   });
 });
