@@ -303,7 +303,7 @@ export default class L2LClient extends L2LConnection {
       return this;
     }
 
-    if (state.registerProcess) {
+    if (state.registerProcess && !force) {
       this.debug && console.log(`[${this}] not registering this b/c register process exists`);
       return state.registerProcess;
     }
@@ -357,7 +357,7 @@ export default class L2LClient extends L2LConnection {
         const timeout = num.backoff(attempt, 4/* base */, 5 * 60 * 1000/* max */);
         state.registerRetry = setTimeout(() => {
           state.registerRetry = null;
-          this.register();
+          this.register(force);
         }, timeout);
       }
       return this;

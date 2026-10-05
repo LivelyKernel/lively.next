@@ -159,9 +159,11 @@ describe('l2l', function () {
       client1.once('registered', registered.resolve);
       try {
         L2LClient.default = () => client1;
+        expect(L2LClient.forLivelyInBrowser({ world: 'intermediate world' })).equals(client1);
         expect(L2LClient.forLivelyInBrowser(info)).equals(client1);
         await promise.timeout(1000, registered.promise);
         expect(routableDuringUpdate).equals(true, 'metadata update removed the route for in-flight commands');
+        await promise.waitFor(1000, () => tracker.clients.get(client1.id)?.info.world === info.world);
         expect(tracker.clients.get(client1.id).info).containSubset(info);
         expect((await tracker.sendToAndWait(client1.id, 'metadata-probe', 'after')).data).equals('after');
       } finally {
