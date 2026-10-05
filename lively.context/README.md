@@ -22,6 +22,8 @@ for runtime function literals. Closures created by the same factory share their 
 Debugger assignments update the original native binding and sibling closures;
 `const` and declaration timing retain JavaScript semantics. The source pane displays
 the complete original module, with the selected closure highlighted in its factory.
+The SWC module loader uses its existing Babel fallback for nested functions until
+the WASM transform supplies the same retained binding cells and source metadata.
 
 For older or uninstrumented functions, the NW.js reader reads requested bindings through a function's `[[Scopes]]`
 using only `Runtime` inspector commands. Objects retain identity. Primitive bindings
