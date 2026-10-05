@@ -62,15 +62,6 @@
       "astq": {
         "node": "@empty"
       },
-      "acorn-private-methods": {
-        "node": "@empty"
-      },
-      "acorn-class-fields": {
-        "node": "@empty"
-      },
-      "acorn-static-class-features": {
-        "node": "@empty"
-      },
       "util": {
         "node": "@node/util",
         "~node": "@empty"

@@ -1516,9 +1516,9 @@ function isNodeSystem (System) {
 }
 // setupBabelTranspiler(System)
 export function setupBabelTranspiler (System) {
-  const useNodeRequire = isNodeSystem(System) && typeof require !== 'undefined';
+  const useNodeRequire = isNodeSystem(System) && (!!System._nodeRequire || typeof require !== 'undefined');
   if (useNodeRequire) {
-    System._nodeRequire = eval('require'); // hack to enable dynamic requires in bundles
+    System._nodeRequire ||= eval('require'); // hack to enable dynamic requires in bundles
   } else if (isBrowserSystem(System)) {
     delete System._nodeRequire;
   }

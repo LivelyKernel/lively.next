@@ -16,7 +16,7 @@ function nativeConstructor (imported, moduleName) {
   }
   return typeof constructor === 'function'
     ? constructor
-    : System._nodeRequire(moduleName);
+    : System._nodeRequire('node:module').createRequire(import.meta.url)(moduleName);
 }
 
 let ASTQ = nativeConstructor(_ASTQ, 'astq');
