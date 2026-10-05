@@ -18,6 +18,10 @@
         return [...localURLs].some(base => parsed.href === base + '/' + service);
       } catch (_) { return false; }
     },
+    assetURL (url) {
+      const origin = [...localURLs].find(base => base.startsWith('http:') && url.startsWith(base + '/'));
+      return origin ? backend.baseURL + url.slice(origin.length + 1) : url;
+    },
     route (route) {
       const url = new URL(route, 'http://desktop/');
       if (url.pathname === '/dashboard/') return backend.dashboardURL;

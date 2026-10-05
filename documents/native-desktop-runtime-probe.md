@@ -42,7 +42,7 @@ LIVELY_DESKTOP_MODE=native /path/to/bundle/launch.sh
 
 The dashboard and loading screen load from packaged files. `inject-start.js` checks the real paths of these two entry pages before exposing the bridge. HTTP pages receive no native bridge. Native dispatch uses an ObjectDB operation whitelist and JSON value isolation. The frontend SystemJS loader retains browser semantics; backend modules have a separate Node SystemJS loader. Registry and file reads initialize the module runtime; persistent storage loads only when an ObjectDB operation needs it. Shell services also initialize on first use. Explicitly remote ObjectDB, evaluation and collaboration connections retain their network transports.
 
-The saved HTTP origin in `local-endpoint.json`, plus the canonical desktop aliases at port 9011, identify legacy desktop-local connections. Other origins and ports remain remote. Constructor names and stored ObjectDB server URLs remain compatible.
+The saved HTTP origin in `local-endpoint.json`, plus the canonical desktop aliases at port 9011, identify legacy desktop-local connections. Other origins and ports remain remote. Constructor names and stored ObjectDB server URLs remain compatible. Image morphs resolve saved desktop-local HTTP asset URLs to packaged files in native mode. Newly saved native image URLs use the existing serializer expression format relative to `System.baseURL`, so the same snapshots load their images after relaunch or HTTP rollback.
 
 ### HTTP dependency inventory
 
