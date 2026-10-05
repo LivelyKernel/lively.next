@@ -113,9 +113,12 @@ export default class Renderer {
     if (this.renderWorldLoopLater || this._stopped) return;
     this.renderWorldLoopLater = this.requestAnimationFrame(() => {
       this.renderWorldLoopLater = null;
-      if (this.renderWorldLoopLaterCounter > 0) { this.renderLater(this.renderWorldLoopLaterCounter - 1); }
-      try { this.renderStep(); } catch (err) {
+      let needsAnotherRender = true;
+      try { needsAnotherRender = this.renderStep(); } catch (err) {
         console.error('Error rendering morphs:', err); // eslint-disable-line no-console
+      }
+      if (needsAnotherRender && !this.renderWorldLoopLater && this.renderWorldLoopLaterCounter > 0) {
+        this.renderLater(this.renderWorldLoopLaterCounter - 1);
       }
     });
   }
@@ -127,75 +130,97 @@ export default class Renderer {
    * Afterwards, we take care of CSS Layouts, morphs for which we need to adjust properties and morphs for which we need to adjust structure, e.g., a submorph was added.
    */
   renderStep () {
-    this.emptyRenderQueues();
-    this.worldMorph.applyLayoutIfNeeded(); // cascades through all submorphs and applies the javascript layouts
+    this._layoutCSSOrder = new WeakMap();
+    try {
+      this.emptyRenderQueues();
+      this.worldMorph.applyLayoutIfNeeded(); // cascades through all submorphs and applies the javascript layouts
 
-    const morphsToHandle = this.worldMorph.withAllSubmorphsDo(m => m);
+      const morphsToHandle = [];
+      tree.prewalk(this.worldMorph, m => morphsToHandle.push(m), m => m.submorphs);
 
-    this.renderFixedMorphs();
+      this.renderFixedMorphs();
 
-    for (let morph of morphsToHandle) {
-      if (morph.isLabel) morph.fitIfNeeded();
-    }
-
-    for (let morph of morphsToHandle) {
-      if (morph._requestMasterStyling && morph.master) {
-        morph._requestMasterStyling = false;
-        morph.master.applyIfNeeded(true);
+      for (let morph of morphsToHandle) {
+        if (morph.isLabel) morph.fitIfNeeded();
       }
-    }
 
-    this.worldMorph.applyLayoutIfNeeded();
-
-    // handling these first allows us to assume correct wrapping, when we have submorphs already!
-    for (let morph of morphsToHandle) {
-      if (morph.renderingState.hasCSSLayoutChange) this.renderLayoutChange(morph);
-    }
-
-    for (let morph of morphsToHandle) {
-      if (morph.renderingState.hasMorphRemoved) this.morphsWithStructuralChanges.unshift(morph);
-      else if (morph.renderingState.hasStructuralChanges) this.morphsWithStructuralChanges.push(morph);
-      if (morph.renderingState.needsRerender) this.renderedMorphsWithChanges.unshift(morph);
-      if (morph.renderingState.animationAdded) this.renderedMorphsWithAnimations.push(morph);
-      if (morph.renderingState.cssLayoutToMeasureWith) this.renderedMorphsToBeMeasured.unshift([morph, morph.renderingState.cssLayoutToMeasureWith]);
-    }
-
-    for (let morph of this.morphsWithStructuralChanges) {
-      morph.withAllSubmorphsDo(m => !this.renderMap.has(m) && this.renderMorph(m));
-    }
-
-    this.morphsToRevisit = [];
-
-    for (let morph of this.renderedMorphsWithChanges) {
-      this.renderStylingChanges(morph);
-    }
-
-    for (let morph of this.morphsWithStructuralChanges) {
-      this.renderStructuralChanges(morph);
-    }
-
-    for (let morph of this.renderedMorphsWithAnimations) {
-      this.handleAddedAnimationChange(morph);
-    }
-
-    for (let [morph, affectedLayout] of this.renderedMorphsToBeMeasured) {
-      // the problem is that this remeasure will in turn lead to a next render
-      // CSS layouts should be able to make conclusive renders in ONE pass
-      morph.renderingState.cssLayoutToMeasureWith = null;
-      if (affectedLayout.measureSubmorph) {
-        affectedLayout.measureSubmorph(morph);
-        this.morphsToRevisit.push(morph);
+      for (let morph of morphsToHandle) {
+        if (morph._requestMasterStyling && morph.master) {
+          morph._requestMasterStyling = false;
+          morph.master.applyIfNeeded(true);
+        }
       }
-    }
-    for (let morph of this.morphsToRevisit) {
-      this.renderStylingChanges(morph);
-    }
 
-    for (let [morph, affectedLayout] of this.renderedMorphsToBeMeasured) {
-      // the corrected layouts may now require a remeasure
-      if (affectedLayout.measureSubmorph) {
-        affectedLayout.measureSubmorph(morph);
+      this.worldMorph.applyLayoutIfNeeded();
+
+      // handling these first allows us to assume correct wrapping, when we have submorphs already!
+      for (let morph of morphsToHandle) {
+        if (morph.renderingState.hasCSSLayoutChange) this.renderLayoutChange(morph);
       }
+
+      for (let morph of morphsToHandle) {
+        if (morph.renderingState.hasMorphRemoved) this.morphsWithStructuralChanges.unshift(morph);
+        else if (morph.renderingState.hasStructuralChanges) this.morphsWithStructuralChanges.push(morph);
+        if (morph.renderingState.needsRerender) this.renderedMorphsWithChanges.push(morph);
+        if (morph.renderingState.animationAdded) this.renderedMorphsWithAnimations.push(morph);
+        if (morph.renderingState.cssLayoutToMeasureWith) this.renderedMorphsToBeMeasured.push([morph, morph.renderingState.cssLayoutToMeasureWith]);
+      }
+
+      this.renderedMorphsWithChanges.reverse();
+      this.renderedMorphsToBeMeasured.reverse();
+
+      for (let morph of this.morphsWithStructuralChanges) {
+        morph.withAllSubmorphsDo(m => !this.renderMap.has(m) && this.renderMorph(m));
+      }
+
+      this.morphsToRevisit = [];
+
+      for (let morph of this.renderedMorphsWithChanges) {
+        this.renderStylingChanges(morph);
+      }
+
+      for (let morph of this.morphsWithStructuralChanges) {
+        this.renderStructuralChanges(morph);
+      }
+
+      for (let morph of this.renderedMorphsWithAnimations) {
+        this.handleAddedAnimationChange(morph);
+      }
+
+      const measuredLayouts = new Set();
+      for (let [morph, affectedLayout] of this.renderedMorphsToBeMeasured) {
+        // the problem is that this remeasure will in turn lead to a next render
+        // CSS layouts should be able to make conclusive renders in ONE pass
+        morph.renderingState.cssLayoutToMeasureWith = null;
+        if (affectedLayout.measureSubmorph) {
+          affectedLayout.measureSubmorph(morph, measuredLayouts);
+          this.morphsToRevisit.push(morph);
+        }
+      }
+      this._layoutCSSOrder = new WeakMap();
+      for (let morph of this.morphsToRevisit) {
+        this.renderStylingChanges(morph);
+      }
+
+      measuredLayouts.clear();
+      for (let [morph, affectedLayout] of this.renderedMorphsToBeMeasured) {
+        // the corrected layouts may now require a remeasure
+        if (affectedLayout.measureSubmorph) {
+          affectedLayout.measureSubmorph(morph, measuredLayouts);
+        }
+      }
+
+      // Inspect the current tree: layout/master application can add morphs after collection.
+      return !!tree.find(this.worldMorph, morph => {
+        const rs = morph.renderingState;
+        return rs.needsRerender || rs.hasStructuralChanges || rs.hasMorphRemoved ||
+          rs.hasCSSLayoutChange || rs.cssLayoutToMeasureWith || rs.animationAdded ||
+          rs.needsFit || (morph.isLabel && rs.needsRemeasure) ||
+          rs.needsScrollLayerAdded || rs.needsScrollLayerRemoved || rs.needsLinesToBeCleared ||
+          morph._requestMasterStyling || (!morph.layout?.renderViaCSS && morph.layout?.applyRequests);
+      }, morph => morph.submorphs);
+    } finally {
+      this._layoutCSSOrder = null;
     }
   }
 

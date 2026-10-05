@@ -2558,7 +2558,7 @@ export class Morph {
   applyLayoutIfNeeded () {
     if (!this.needsRerender()) return;
     this.layout && !this.layout.manualUpdate && this.layout.onContainerRender();
-    for (let i = 0; i < this.submorphs.length; i++) { this.submorphs[i].applyLayoutIfNeeded(); }
+    for (const submorph of this.submorphs) submorph.applyLayoutIfNeeded();
   }
 
   requestMasterStyling () {
