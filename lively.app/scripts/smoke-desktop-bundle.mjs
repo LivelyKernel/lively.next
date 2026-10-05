@@ -479,6 +479,7 @@ async function openDashboardProject (client, fullName) {
         const button = preview?.get('open button');
         const node = button && document.getElementById(button.id);
         if (!node) return null;
+        node.scrollIntoView({ block: 'center' });
         const bounds = node.getBoundingClientRect();
         if (!bounds.width || !bounds.height) return null;
         globalThis.__desktopDashboardDocument = document;
@@ -977,7 +978,7 @@ async function assertDesktopDebuggerSmoke (client, timeoutMs) {
       if (await asyncModel.proceed() !== 4 || tutorial.count !== 4) throw new Error('Await resume failed');
       tutorial.getWindow().close(false);
       const { runTestFiles } = await System.import('mocha-es6');
-      if (await runTestFiles(['lively.ide/tests/js/debugger-ui-test.js', 'lively.ide/tests/js/debugger-runtime-closure-test.js', 'lively.ide/tests/js/debugger-order-desk-test.js', 'lively.context/tests/tutorial-test.js', 'lively.context/tests/persistence-test.js'])) throw new Error('Renderer tutorial regressions failed');
+      if (await runTestFiles(['lively.ide/tests/js/debugger-ui-test.js', 'lively.ide/tests/js/debugger-runtime-closure-test.js', 'lively.ide/tests/js/debugger-order-desk-test.js', 'lively.context/tests/tutorial-test.js', 'lively.context/tests/persistence-test.js', 'lively.context/tests/generator-test.js'])) throw new Error('Renderer tutorial regressions failed');
       return { frames: 2, count: marker.count, worldTimerWhileSuspended: ticked, nativeService: livelyDesktop.debugger.isAvailable() };
     })()`,
     awaitPromise: true,
