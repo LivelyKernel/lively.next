@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { runInNewContext } from 'node:vm';
 import { rollup } from '@rollup/wasm-node';
 import { lively } from '../src/plugins/rollup.js';
 import LivelyRollup from '../src/bundler.js';
@@ -10,7 +11,7 @@ import resolver from '../src/resolvers/node.cjs';
 import { installProjectDependencies } from 'lively.project/package-install.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
-const runtimeRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'project runtime with spaces-'));
+const runtimeRoot = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'project runtime with spaces-')));
 const directory = path.join(runtimeRoot, 'local_projects', `bun-bundle-test-${process.pid}`);
 const previousCwd = process.cwd();
 const previousRuntimeRoot = process.env.lv_next_dir;
@@ -39,6 +40,13 @@ try {
     resolver.resolveModuleId('lively.classes/runtime.js'));
   assert.equal(bundler.normalizedId(path.join(root, 'lively.morphic', 'lively-world.js').replace(/\\/g, '/')),
     'lively.morphic/lively-world.js');
+  const assetBundler = new LivelyRollup({ resolver: { ...resolver, detectFormatFromSource: () => 'global' }, minify: false });
+  for (const separator of ['/', '\\']) {
+    const id = ['C:', 'runtime', 'local_projects', 'fixture', 'index.js'].join(separator);
+    const transformed = await assetBundler.transform("globalThis.asset = projectAsset('logo.svg');", id);
+    const code = typeof transformed === 'string' ? transformed : transformed.code;
+    assert.equal(runInNewContext(code, { projectAsset: name => name }), 'fixture__logo.svg');
+  }
   build = await rollup({ input: path.join(directory, 'index.js'), plugins: [lively({ resolver, minify: false, asBrowserModule: true })] });
   const { output } = await build.generate({ format: 'esm' });
   assert.ok(output.some(chunk => chunk.type === 'chunk' && Object.keys(chunk.modules).some(id => id.includes('is-number@6.0.0'))));

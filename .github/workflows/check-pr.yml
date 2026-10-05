@@ -33,6 +33,8 @@ jobs:
         run: node lively.freezer/tests/package-resolution-test.cjs
       - name: Check dynamic import paths
         run: node lively.freezer/tests/dynamic-system-import-test.mjs
+      - name: Check project bundles
+        run: node lively.freezer/tests/project-bundle-test.mjs
       - name: Check native resolver
         run: node lively.modules/tests/native-resolver-test.mjs
       - name: Check live SystemJS resolution
