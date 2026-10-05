@@ -294,8 +294,11 @@ export class LivelyDebuggerModel extends ViewModel {
     if (url && (!buffer || buffer.source === buffer.savedSource)) {
       const savedSource = await localInterface.moduleRead(url);
       if (this.selectedFrame !== frame) return;
-      buffer = {source: savedSource, savedSource, moduleName: module(url).shortName()};
-      this.sourceBuffers.set(url, buffer);
+      buffer = this.sourceBuffers.get(url);
+      if (!buffer || buffer.source === buffer.savedSource) {
+        buffer = {source: savedSource, savedSource, moduleName: module(url).shortName()};
+        this.sourceBuffers.set(url, buffer);
+      }
     }
     this.currentSourceText = source;
     this.currentModuleUrl = url;
