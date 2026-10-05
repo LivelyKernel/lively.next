@@ -75,7 +75,7 @@ describe('wasm transform', function () {
 
     await setupSwcTranspiler(testSystem);
     expect(testSystem.transpiler).equals('lively.transpiler.swc');
-    expect(modules.get('lively.transpiler.swc').default.name).equals('SwcBrowserTranspiler');
+    expect(modules.get('lively.transpiler.swc').default).equals(SwcBrowserTranspiler);
   });
 
   it('captures top-level var declarations and references', function () {
