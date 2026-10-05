@@ -26,6 +26,20 @@ describe('lines', () => {
 });
 
 describe('document as text tree', () => {
+  it('accepts floating-point height drift at a rounding boundary', () => {
+    const doc = new Document([{ text: 'a', width: 100, height: 249.5 }]);
+    doc.root.height = 249.49999999999997;
+    expect(() => doc.consistencyCheck()).not.to.throw();
+  });
+
+  it('still rejects incorrect or non-finite cached heights', () => {
+    const doc = new Document([{ text: 'a', width: 100, height: 249.5 }]);
+    for (const height of [249.51, NaN, Infinity]) {
+      doc.root.height = height;
+      expect(() => doc.consistencyCheck()).to.throw(/Sum of child Height/);
+    }
+  });
+
   it('finds lines by row', () => {
     const doc = new Document([{ text: 'a', height: 10 }, { text: 'b', height: 20 }, { text: 'c', height: 5 }, { text: 'd', height: 15 }]);
     doc.consistencyCheck();
