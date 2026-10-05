@@ -1,0 +1,42 @@
+name: Check Lively merge message
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, reopened, synchronize, edited, ready_for_review, auto_merge_enabled, auto_merge_disabled]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request to validate
+        required: true
+        type: number
+
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+
+concurrency:
+  group: lively-commit-message-${{ github.event.pull_request.number || inputs.pr_number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate merge message
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Always use trusted base-branch code, never the pull request's checkout.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Test the validator
+        run: node scripts/tests/pr-commit-message-test.cjs
+      - uses: actions/github-script@v8
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+        with:
+          script: |
+            const { checkPullRequest } = require('./scripts/check-pr-commit-message.cjs');
+            await checkPullRequest(github, context, Number(process.env.PR_NUMBER));

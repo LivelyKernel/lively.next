@@ -111,6 +111,7 @@ jobs:
           node --experimental-import-meta-resolve lively.server/tests/browser-import-map-cache-test.mjs
           node --experimental-import-meta-resolve lively.project/tests/package-install-test.mjs
           node --experimental-import-meta-resolve lively.installer/tests/runtime-roots-test.mjs
+          node lively.morphic/tests/rollup-build-test.cjs
           node --experimental-import-meta-resolve lively.app/scripts/test-package-payload.mjs
           node --experimental-import-meta-resolve lively.app/scripts/test-downloads.mjs
       - name: Run CI Test Script for Changed Folders

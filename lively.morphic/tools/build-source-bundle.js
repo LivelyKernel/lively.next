@@ -62,7 +62,7 @@ module.exports = Promise.resolve()
   .then(() => {
     console.log('rolling up...')
     return rollup.rollup({
-      entry: "index.js",
+      input: "index.js",
       plugins: [
         {transform: (source, id) => {
             return ast.stringify(ast.transform.objectSpreadTransform(classes.classToFunctionTransform(source, opts)));
@@ -120,7 +120,6 @@ module.exports = Promise.resolve()
       return bundle.generate({
          format: 'iife',
          name: 'lively.morphic',
-         moduleName: 'lively.morphic',
          globals: globals,
        });
   })
@@ -132,7 +131,7 @@ module.exports = Promise.resolve()
   // 3. massage code a little
   .then((bundled)=> {
     console.log("massaging code...")
-    var origSource = bundled.code;
+    var origSource = bundled.output[0].code;
      // remove the mangling that rollup performs
     let varName, m, mangled = [];
     while (m = origSource.match(/^var \S*\$1 = function \(/m)) {
