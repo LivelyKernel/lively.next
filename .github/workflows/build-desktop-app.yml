@@ -281,6 +281,21 @@ jobs:
             node ./lively.app/scripts/smoke-desktop-bundle.mjs \
               --bundleDir="dist/${{ matrix.bundle }}" --platform=linux
 
+      - name: Smoke native Linux desktop services and HTTP rollback
+        if: ${{ matrix.target_platform == 'linux' }}
+        timeout-minutes: 15
+        run: |
+          xvfb-run -a --server-args="-screen 0 1440x900x24" \
+            node ./lively.app/scripts/smoke-desktop-bundle.mjs \
+              --bundleDir="dist/${{ matrix.bundle }}" --platform=linux --mode=native \
+              | tee native-desktop-smoke.log
+          data_dir="$(awk '/^Smoke data: / { sub(/^Smoke data: /, ""); print; exit }' native-desktop-smoke.log)"
+          test -n "$data_dir"
+          xvfb-run -a --server-args="-screen 0 1440x900x24" \
+            node ./lively.app/scripts/smoke-desktop-bundle.mjs \
+              --bundleDir="dist/${{ matrix.bundle }}" --platform=linux --mode=http \
+              --dataDir="$data_dir" --checkSavedWorld=true
+
       - name: Setup .NET for Velopack
         # vpk pack is platform-native. Windows packaging is handled by the
         # package-windows-velopack job from the cross-built raw Windows bundle.

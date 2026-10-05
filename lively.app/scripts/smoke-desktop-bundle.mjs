@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { createServer } from 'node:http';
 import { spawn, spawnSync } from 'node:child_process';
 
@@ -11,6 +12,7 @@ const DEFAULT_TIMEOUT = 300000;
 const WORLD_PATH = '/worlds/load?name=__newWorld__&askForWorldName=false&fastLoad=true';
 const PROJECT_PATH = '/projects/load?name=__newProject__&askForWorldName=false&fastLoad=true';
 const EXISTING_PROJECT_PATH = '/projects/load?name=smoke--project&askForWorldName=false&fastLoad=true';
+const SAVED_WORLD = 'desktop-storage-smoke';
 const CORE_PACKAGES = [
   'lively.modules',
   'lively.resources',
@@ -76,13 +78,13 @@ function hostPlatform () {
 
 function appCommand (bundleDir, platform) {
   if (platform === 'linux') {
-    return { command: path.join(bundleDir, 'nw'), args: [bundleDir] };
+    return { command: path.join(bundleDir, 'nw'), args: ['--nwapp=' + bundleDir] };
   }
   if (platform === 'osx') {
     return { command: path.join(bundleDir, 'lively.next.app', 'Contents', 'MacOS', 'nwjs'), args: [] };
   }
   if (platform === 'win') {
-    return { command: path.join(bundleDir, 'lively.next.exe'), args: [bundleDir] };
+    return { command: path.join(bundleDir, 'lively.next.exe'), args: ['--nwapp=' + bundleDir] };
   }
   throw new Error(`Unsupported smoke platform: ${platform}`);
 }
@@ -130,7 +132,7 @@ async function waitForHttpOk (url, timeoutMs) {
   }, timeoutMs);
 }
 
-async function waitForBootLogReady (logFile, timeoutMs) {
+async function waitForBootLogReady (logFile, timeoutMs, native = false) {
   let seenPort = null;
   return waitFor('desktop server startup', () => {
     const log = readTextFile(logFile);
@@ -138,6 +140,7 @@ async function waitForBootLogReady (logFile, timeoutMs) {
     if (/ERROR:|Server crashed|Boot failed/.test(log)) {
       throw new Error(`desktop boot failed:\n${log}`);
     }
+    if (native && log.includes('Native interface ready, loading lively')) return 9011;
     if (seenPort && log.includes('Server ready, loading lively')) return seenPort;
     return null;
   }, timeoutMs);
@@ -312,7 +315,7 @@ async function assertBrowserEnvironmentSwitching (client, port) {
           await browser.setEvalBackend(backend);
           const packages = browser.ui.columnView.treeData.root.subNodes.filter(p => p.name === 'lively.lang');
           if (packages.length !== 1) throw new Error('Browser lists duplicate lively.lang packages');
-          const expectedProtocol = backend === 'local' ? 'http:' : 'file:';
+          const expectedProtocol = globalThis.livelyNative || backend !== 'local' ? 'file:' : 'http:';
           if (!browser.selectedModule.url.startsWith(expectedProtocol)) throw new Error('Browser retained the previous backend module URL');
           if (browser.ui.sourceEditor.textString !== originalSource) throw new Error('Browser changed the displayed source across environments');
           const evaluated = await browser.editorPlugin.runEval('arr.range(1, 3)');
@@ -332,6 +335,75 @@ async function assertBrowserEnvironmentSwitching (client, port) {
     throw new Error('Desktop system browser smoke failed: ' + JSON.stringify(result.exceptionDetails || result.result));
   }
   console.log('Desktop app smoke passed: browser switching preserves original source, module evaluation, and environment boundaries');
+}
+
+async function saveSmokeWorld (client) {
+  const result = await client.send('Runtime.evaluate', {
+    awaitPromise: true, returnByValue: true,
+    expression: `(async () => {
+      const { Morph } = await System.import('lively.morphic');
+      const { interactivelySaveWorld } = await System.import('lively.morphic/world-loading.js');
+      $world.name = ${JSON.stringify(SAVED_WORLD)};
+      $world.metadata ||= {};
+      delete $world.metadata.commit;
+      $world.addMorph(new Morph({ name: 'desktop-persistent-marker' }));
+      const commit = await interactivelySaveWorld($world, {
+        showSaveDialog: false, confirmOverwrite: false, moduleManager: await System.import('lively.modules')
+      });
+      if (!commit?._id) throw new Error('World save did not return a commit');
+      return true;
+    })()`
+  });
+  if (result.exceptionDetails || result.result?.value !== true) throw new Error('World save failed: ' + JSON.stringify(result));
+}
+
+async function reopenSmokeWorld (client, url, timeoutMs) {
+  await client.send('Page.navigate', { url });
+  await waitFor('saved world reopen', async () => {
+    const result = await client.send('Runtime.evaluate', {
+      expression: `Boolean(globalThis.$world?.name === ${JSON.stringify(SAVED_WORLD)} && $world.get('desktop-persistent-marker') && !globalThis.__loadError__)`,
+      returnByValue: true
+    });
+    return result.result?.value === true;
+  }, timeoutMs);
+  console.log('Desktop app smoke passed: saved world and its contents reopen through ObjectDB');
+}
+
+async function assertNativeAssets (client) {
+  const result = await client.send('Runtime.evaluate', {
+    awaitPromise: true, returnByValue: true,
+    expression: `(async () => {
+      const { resourceClass } = await livelyNative.fileExtension();
+      const file = new resourceClass(livelyNative.baseURL + 'desktop-smoke-worker.js');
+      let worker;
+      const stylesheet = document.createElement('link');
+      try {
+        await file.write('self.onmessage = event => self.postMessage(event.data + 1);');
+        const image = new Image();
+        image.src = livelyNative.baseURL + 'lively.morphic/assets/lively-web-logo-small.svg';
+        await image.decode();
+        await new FontFace('DesktopAssetProbe', 'url("' + livelyNative.baseURL + 'lively.morphic/assets/fonts/IBMPlexSans-Regular.woff2")').load();
+        await new Promise((resolve, reject) => {
+          stylesheet.rel = 'stylesheet';
+          stylesheet.href = livelyNative.baseURL + 'lively.morphic/assets/morphic.css';
+          stylesheet.onload = resolve;
+          stylesheet.onerror = () => reject(new Error('Native stylesheet failed to load'));
+          document.head.appendChild(stylesheet);
+        });
+        worker = new Worker(file.url);
+        const answer = new Promise((resolve, reject) => {
+          worker.onmessage = event => resolve(event.data);
+          worker.onerror = event => reject(new Error(event.message));
+        });
+        worker.postMessage(41);
+        const { promise } = await System.import('lively.lang');
+        if (await promise.timeout(10000, answer) !== 42) throw new Error('Native worker returned the wrong result');
+        return true;
+      } finally { worker?.terminate(); stylesheet.remove(); await file.remove(); }
+    })()`
+  });
+  if (result.exceptionDetails || result.result?.value !== true) throw new Error('Native assets failed: ' + JSON.stringify(result));
+  console.log('Desktop app smoke passed: browser images, fonts, styles and workers load directly from the native filesystem');
 }
 
 /** Exercise local programming and verify the saved work after an app restart. */
@@ -435,6 +507,17 @@ async function assertProjectProgramming (client, port, reopened = false) {
         if (!${reopened}) {
           check(await $world.openedProject.save({message: 'Save client and server programming work'}), 'Project save failed');
           check(JSON.stringify((await manifest.readJson()).lively.meta) === JSON.stringify(before), 'Project save discarded module environments');
+          check(await $world.openedProject.generateBuildScripts() === 0, 'Project build script setup failed');
+          const { runCommand } = await System.import('lively.shell/client-command.js');
+          const { default: ShellClientResource } = await System.import('lively.shell/client-resource.js');
+          const cwd = await remote.coreInterface.runEvalAndStringify('System._nodeRequire("node:url").fileURLToPath(new URL("local_projects/' + fullName + '", System.baseURL))');
+          // Declare the new imports through the existing explicit update API.
+          await remote.coreInterface.runEvalAndStringify(
+            '(async () => { const { installProjectDependencies } = await System.nativeImport(new URL("lively.project/package-install.mjs", System.baseURL).href); await installProjectDependencies(' + JSON.stringify(cwd) + ', { update: true }); return true; })()',
+            { promiseTimeout: 120000 });
+          const build = await promise.timeout(300000, runCommand('bash tools/build.sh', { cwd, l2lClient: ShellClientResource.defaultL2lClient }).whenDone());
+          check(build.exitCode === 0, 'Project build failed: ' + build.output.slice(0, 5000) + build.output.slice(-3000));
+          check(await resource(System.baseURL).join('local_projects/' + fullName + '/build/index.html').exists(), 'Project build did not produce index.html');
         }
         for (const backend of [remote, 'local']) {
           await browser.setEvalBackend(backend);
@@ -496,6 +579,8 @@ class CDPClient {
     this.events = [];
     this.exceptions = [];
     this.nonCanonicalModuleURLs = new Set();
+    this.forbiddenOrigins = new Set();
+    this.localNetworkRequests = new Set();
     this.ws = new WebSocket(url);
   }
 
@@ -516,8 +601,9 @@ class CDPClient {
       if (message.error) reject(new Error(`${message.error.message || 'CDP error'}${message.error.data ? `: ${message.error.data}` : ''}`));
       else resolve(message.result || {});
     } else if (message.method) {
-      if (message.method === 'Network.requestWillBeSent') {
-        const url = message.params.request.url;
+      if (['Network.requestWillBeSent', 'Network.webSocketCreated'].includes(message.method)) {
+        const url = message.params.request?.url || message.params.url;
+        if (this.forbiddenOrigins.has(new URL(url.replace(/^ws/, 'http')).origin)) this.localNetworkRequests.add(url);
         if (/\/node_modules\/lively[.-]/.test(url) && !url.includes('/node_modules/.bun/') && /\.(?:[cm]?js|jsx)(?:[?#]|$)/.test(url)) {
           this.nonCanonicalModuleURLs.add(url);
         }
@@ -546,6 +632,7 @@ class CDPClient {
   }
 
   assertNoRendererErrors () {
+    if (this.localNetworkRequests.size) throw new Error('Native renderer requested the local HTTP backend: ' + [...this.localNetworkRequests].join(', '));
     if (this.nonCanonicalModuleURLs.size) throw new Error('Noncanonical workspace module requests: ' + [...this.nonCanonicalModuleURLs].join(', '));
     if (this.exceptions.length) throw new Error('Uncaught desktop renderer errors: ' + JSON.stringify(this.exceptions));
   }
@@ -622,6 +709,22 @@ async function describePageState (client) {
 }
 
 async function assertRendererUsesHttpSystemURLs (client, port, timeoutMs, options = {}) {
+  if (options.native) {
+    const result = await client.send('Runtime.evaluate', {
+      awaitPromise: true, returnByValue: true,
+      expression: `(async () => {
+        const env = System.get('@system-env');
+        if (env.node || env.nodeRequire || System._nodeRequire) throw new Error('Renderer acquired Node resolution');
+        if (System.baseURL !== livelyNative.baseURL) throw new Error('Native renderer has the wrong root: ' + System.baseURL);
+        for (const name of ${JSON.stringify(CORE_PACKAGES)}) {
+          if (!(await System.normalize(name)).startsWith(livelyNative.baseURL)) throw new Error('Nonlocal native module: ' + name);
+        }
+        return true;
+      })()`
+    });
+    if (result.exceptionDetails || result.result?.value !== true) throw new Error('Native module resolution failed: ' + JSON.stringify(result));
+    return;
+  }
   const expectedOrigin = `http://127.0.0.1:${port}`;
   const requirePopulatedSystemMap = Boolean(options.requirePopulatedSystemMap);
   const result = await waitFor('renderer System HTTP module resolution', async () => {
@@ -837,6 +940,10 @@ function seedProject (dataDir) {
 
 async function main () {
   const args = parseArgs();
+  const native = args.mode === 'native';
+  const startupOnly = args.startupOnly === 'true';
+  const checkSavedWorld = args.checkSavedWorld === 'true';
+  if (args.mode && !['native', 'http'].includes(args.mode)) throw new Error('Unknown desktop mode: ' + args.mode);
   const devRoot = args.devRoot ? path.resolve(args.devRoot) : null;
   const bundleDir = devRoot ? null : path.resolve(args.bundleDir || '');
   const platform = args.platform || hostPlatform();
@@ -850,15 +957,15 @@ async function main () {
   assertExecutableExists(command);
 
   // Exercise URL decoding, including Windows' RUNNER~1 temporary paths.
-  const smokeRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'lively-app-smoke~-'));
-  const dataDir = path.join(smokeRoot, 'data');
+  const smokeRoot = args.dataDir ? path.dirname(path.resolve(args.dataDir)) : fs.mkdtempSync(path.join(os.tmpdir(), 'lively-app-smoke~ spaces-'));
+  const dataDir = args.dataDir ? path.resolve(args.dataDir) : path.join(smokeRoot, 'data');
   const cacheDir = path.join(smokeRoot, 'cache');
   fs.mkdirSync(dataDir, { recursive: true });
   fs.mkdirSync(cacheDir, { recursive: true });
-  if (!devRoot) seedProject(dataDir);
+  if (!devRoot && !args.dataDir) seedProject(dataDir);
   let programmingLock;
   let cachedBuild = 'previous build';
-  const cacheProbe = devRoot ? null : createServer((req, res) => {
+  const cacheProbe = devRoot || native || startupOnly || checkSavedWorld ? null : createServer((req, res) => {
     res.writeHead(200, { 'access-control-allow-origin': '*', 'cache-control': 'max-age=31536000' });
     res.end(cachedBuild);
   });
@@ -869,9 +976,10 @@ async function main () {
   const logFile = devRoot
     ? path.join(devRoot, 'lively.app', 'boot.log')
     : path.join(dataDir, 'boot.log');
-  for (const reopened of devRoot ? [false] : [false, true]) {
+  for (const reopened of devRoot || checkSavedWorld ? [false] : [false, true]) {
     appExitStatus = null;
     try { fs.rmSync(logFile, { force: true }); } catch (_) {}
+    console.log(`Smoke data: ${dataDir}`);
     console.log(`Launching ${command}${devRoot ? ` in dev mode from ${devRoot}` : ''}`);
     const child = spawn(command, devRoot ? commandArgs : [`--user-data-dir=${path.join(smokeRoot, 'profile')}`, ...commandArgs], {
       cwd: devRoot || bundleDir,
@@ -879,7 +987,8 @@ async function main () {
         ...process.env,
         LIVELY_APP_DATA_DIR: dataDir,
         LIVELY_APP_CACHE_DIR: cacheDir,
-        LIVELY_APP_SMOKE: '1'
+        LIVELY_APP_SMOKE: '1',
+        LIVELY_DESKTOP_MODE: native ? 'native' : 'http'
       },
       stdio: ['ignore', 'pipe', 'pipe']
     });
@@ -896,14 +1005,26 @@ async function main () {
         if (code !== null && code !== 0) console.error(`App exited with code ${code}, signal ${signal}`);
       });
 
-      const port = await waitForBootLogReady(logFile, timeoutMs);
-      console.log(`Desktop server reported ready on port ${port}`);
-      await waitForHttpOk(`http://127.0.0.1:${port}/dashboard/`, 60000);
-      console.log('Desktop server dashboard responded');
-
-      const target = await waitForPageTarget(`http://127.0.0.1:${port}/dashboard/`, 60000);
+      const launchStarted = Date.now();
+      const port = await waitForBootLogReady(logFile, timeoutMs, native);
+      const rootURL = pathToFileURL(path.join(dataDir, 'runtime-root') + path.sep).href;
+      const routeURL = route => {
+        if (!native) return `http://127.0.0.1:${port}${route}`;
+        if (route === '/dashboard/') return rootURL + 'lively.freezer/landing-page/index.html';
+        const url = new URL(route, 'http://desktop/');
+        url.searchParams.set('route', route.startsWith('/projects/') ? 'projects' : 'worlds');
+        return rootURL + 'lively.freezer/loading-screen/index.html' + url.search;
+      };
+      const dashboardURL = routeURL('/dashboard/');
+      if (!native) await waitForHttpOk(dashboardURL, 60000);
+      const target = await waitForPageTarget(dashboardURL, 60000);
       console.log(`Attached to desktop page ${target.url}`);
       const client = new CDPClient(target.webSocketDebuggerUrl);
+      if (native) {
+        const endpointFile = path.join(dataDir, 'local-endpoint.json');
+        client.forbiddenOrigins = new Set(['http://127.0.0.1:9011', 'http://localhost:9011',
+          ...(fs.existsSync(endpointFile) ? [JSON.parse(fs.readFileSync(endpointFile)).origin] : [])]);
+      }
       await client.open();
       try {
         await client.send('Runtime.enable');
@@ -912,18 +1033,28 @@ async function main () {
         await client.send('Network.enable');
         await waitFor('boot screen navigation to dashboard', async () => {
           const result = await client.send('Runtime.evaluate', {
-            expression: `location.href.startsWith(${JSON.stringify(`http://127.0.0.1:${port}/dashboard/`)})`,
+            expression: `location.href.startsWith(${JSON.stringify(dashboardURL)})`,
             returnByValue: true
           });
           return result.result && result.result.value === true;
         }, 60000);
+        if (startupOnly) await client.send('Runtime.evaluate', { expression: `
+          globalThis.__desktopFrames = { last: performance.now(), longest: 0 };
+          requestAnimationFrame(function sample (time) {
+            const frames = globalThis.__desktopFrames;
+            frames.longest = Math.max(frames.longest, time - frames.last);
+            frames.last = time;
+            requestAnimationFrame(sample);
+          });
+        ` });
         await waitFor('dashboard initialization', async () => {
           const result = await client.send('Runtime.evaluate', {
-            expression: `Boolean(globalThis.$world && $world.get('a project browser') && !globalThis.__loadError__)`,
+            expression: `Boolean(globalThis.$world && $world.get('a project browser')?.opacity > 0.9 && !globalThis.__loadError__)`,
             returnByValue: true
           });
           return result.result && result.result.value === true;
         }, timeoutMs);
+        console.log(JSON.stringify({ mode: native ? 'native' : 'http', reopened, dashboardMs: Date.now() - launchStarted }));
         if (cacheProbe) {
           const expression = `fetch('http://127.0.0.1:${cacheProbe.address().port}/').then(r => r.text())`;
           const result = await client.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
@@ -936,16 +1067,44 @@ async function main () {
             if (cached.result?.value !== 'previous build') throw new Error('Upgrade regression did not prime the browser HTTP cache');
           } else console.log('Desktop app smoke passed: app upgrade invalidates cached HTTP responses');
         }
-        const registryResponse = await fetch(`http://127.0.0.1:${port}/package-registry.json`);
-        const { packageMap } = await registryResponse.json();
+        const registryResult = native && await client.send('Runtime.evaluate', {
+          expression: 'livelyNative.fileExtension().then(({resourceClass}) => new resourceClass(livelyNative.baseURL + \'package-registry.json\').readJson())', awaitPromise: true, returnByValue: true
+        });
+        if (registryResult?.exceptionDetails) throw new Error('Native registry failed: ' + JSON.stringify(registryResult));
+        const registry = native ? registryResult.result.value
+          : await (await fetch(`http://127.0.0.1:${port}/package-registry.json`)).json();
+        const { packageMap } = registry;
         for (const name of ['lively.modules', 'lively.morphic', 'lively.server', 'lively.shell', 'lively.freezer']) {
           const entry = packageMap[name];
           const pkg = entry.versions[entry.latest];
-          if (pkg.url !== name || Object.keys(entry.instances).length !== 1) {
+          if ((pkg.url !== name && pkg.url !== rootURL + name) || Object.keys(entry.instances).length !== 1) {
             throw new Error(`Desktop package ${name} has duplicate or noncanonical URLs: ${Object.values(entry.instances).map(pkg => pkg.url).join(', ')}`);
           }
         }
         console.log('Desktop app smoke passed: dashboard initialized with canonical workspace packages');
+        const readyEvent = readTextFile(logFile).match(/^\[([^\]]+)\] (?:Native backend ready|Server ready, loading lively)/m);
+        if (!readyEvent) throw new Error('Backend readiness event missing from boot log');
+        console.log(JSON.stringify({ mode: native ? 'native' : 'http', reopened, backendReadyMs: Date.parse(readyEvent[1]) - launchStarted }));
+        if (startupOnly) {
+          const frames = await client.send('Runtime.evaluate', { expression: '__desktopFrames.longest', returnByValue: true });
+          console.log(JSON.stringify({ mode: native ? 'native' : 'http', reopened, longestDashboardFrameMs: Math.round(frames.result.value) }));
+        }
+        if (startupOnly || checkSavedWorld) {
+          if (checkSavedWorld) await reopenSmokeWorld(client, routeURL('/worlds/load?name=' + SAVED_WORLD + '&fastLoad=true'), timeoutMs);
+          else {
+            await client.send('Page.navigate', { url: routeURL(WORLD_PATH) });
+            await waitFor('startup world readiness', async () => {
+              const state = await client.send('Runtime.evaluate', {
+                expression: 'Boolean(globalThis.$world?.name === "aLivelyWorld" && $world._uiInitialized && $world.opacity > 0.9 && !lively.FreezerRuntime && !globalThis.__loadError__)', returnByValue: true
+              });
+              return state.result?.value === true;
+            }, timeoutMs);
+            console.log(JSON.stringify({ mode: native ? 'native' : 'http', reopened, worldMs: Date.now() - launchStarted }));
+          }
+          if (native) await assertNativeAssets(client);
+          client.assertNoRendererErrors();
+          continue;
+        }
         if (!devRoot) {
           const projects = await waitFor('dashboard project entries', async () => {
             const result = await client.send('Runtime.evaluate', {
@@ -962,6 +1121,8 @@ async function main () {
         }
         if (reopened) {
           console.log('Desktop app smoke passed: relaunch preserves the project list after dependencies were installed');
+          await reopenSmokeWorld(client, routeURL('/worlds/load?name=' + SAVED_WORLD + '&fastLoad=true'), timeoutMs);
+          await client.send('Page.navigate', { url: routeURL('/dashboard/') });
           // Open the upgraded legacy project before any other project warms the live loader.
           await openDashboardProject(client, 'smoke--project');
           await waitFor('legacy project after app upgrade', async () => {
@@ -974,7 +1135,7 @@ async function main () {
           client.assertNoRendererErrors();
           console.log('Desktop app smoke passed: upgraded legacy project opens from the cold dashboard');
           await assertBrowserSwc(client);
-          await client.send('Page.navigate', { url: `http://127.0.0.1:${port}/dashboard/` });
+          await client.send('Page.navigate', { url: routeURL('/dashboard/') });
           await openDashboardProject(client, 'smoke--programming');
           await waitFor('saved programming project after relaunch', async () => {
             const result = await client.send('Runtime.evaluate', {
@@ -1006,7 +1167,7 @@ async function main () {
           await assertFrozenModuleResurrection(client);
           await assertBrowserSwc(client);
         }
-        const worldUrl = `http://127.0.0.1:${port}${WORLD_PATH}`;
+        const worldUrl = routeURL(WORLD_PATH);
         console.log(`Navigating app window to ${worldUrl}`);
         await client.send('Page.navigate', { url: worldUrl });
         {
@@ -1017,12 +1178,16 @@ async function main () {
             });
             return result.result && result.result.value === true;
           }, timeoutMs);
-          await assertRendererUsesHttpSystemURLs(client, port, timeoutMs);
-          console.log('Desktop app smoke passed: renderer System uses HTTP module URLs');
+          await assertRendererUsesHttpSystemURLs(client, port, timeoutMs, { native });
+          if (native) await assertNativeAssets(client);
+          console.log('Desktop app smoke passed: renderer System preserves browser module resolution');
+          console.log(JSON.stringify({ mode: native ? 'native' : 'http', reopened, worldMs: Date.now() - launchStarted }));
           await assertBrowserEnvironmentSwitching(client, port);
           await assertBrowserSwc(client);
+          await saveSmokeWorld(client);
+          await reopenSmokeWorld(client, routeURL('/worlds/load?name=' + SAVED_WORLD + '&fastLoad=true'), timeoutMs);
 
-          const projectUrl = `http://127.0.0.1:${port}${devRoot ? PROJECT_PATH : EXISTING_PROJECT_PATH}`;
+          const projectUrl = routeURL(devRoot ? PROJECT_PATH : EXISTING_PROJECT_PATH);
           console.log(`Navigating app window to ${projectUrl}`);
           await client.send('Page.navigate', { url: projectUrl });
           await waitFor('project route bootstrap', async () => {
@@ -1065,8 +1230,8 @@ async function main () {
             if (fs.readFileSync(lockFile, 'utf8') !== lock) throw new Error('Opening a locked project changed its Bun lock');
             console.log('Desktop app smoke passed: project reopened with its original Bun lock');
           }
-          await assertRendererUsesHttpSystemURLs(client, port, timeoutMs, { requirePopulatedSystemMap: true });
-          console.log('Desktop app smoke passed: project route keeps System URLs on HTTP');
+          await assertRendererUsesHttpSystemURLs(client, port, timeoutMs, { requirePopulatedSystemMap: true, native });
+          console.log('Desktop app smoke passed: project route preserves browser module resolution');
           if (!devRoot) {
             await assertProjectProgramming(client, port);
             await assertBrowserSwc(client);
@@ -1074,13 +1239,21 @@ async function main () {
           }
         }
         client.assertNoRendererErrors();
-        console.log('Desktop app smoke passed: server started and world loaded without uncaught renderer errors');
+        console.log('Desktop app smoke passed: backend started and world loaded without uncaught renderer errors');
       } catch (err) {
         console.error(`\n--- page state ---\n${JSON.stringify(await describePageState(client), null, 2)}`);
         const diagnostics = recentCdpDiagnostics(client);
         if (diagnostics.length) console.error(`\n--- recent browser diagnostics ---\n${JSON.stringify(diagnostics, null, 2)}`);
         throw err;
       } finally {
+        if (native && child.exitCode === null) {
+          const closed = new Promise(resolve => child.once('exit', resolve));
+          await client.send('Runtime.evaluate', { expression: 'nw.Window.get().close()' });
+          let timer;
+          const code = await Promise.race([closed, new Promise(resolve => { timer = setTimeout(() => resolve('timeout'), 15000); })]);
+          clearTimeout(timer);
+          if (code !== 0) throw new Error('Native clean shutdown failed: ' + code);
+        }
         client.close();
       }
     } catch (err) {
