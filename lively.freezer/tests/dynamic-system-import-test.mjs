@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { runInNewContext } from 'node:vm';
+import babel from '@babel/core';
 import LivelyRollup from '../src/bundler.js';
 
 const sandbox = { module: { exports: {} }, location: { href: 'http://fixture.test/' }, console };
@@ -54,3 +55,24 @@ for (const [name, useSwc] of [['SWC', true], ['legacy', false]]) {
 }
 
 console.log('Excluded SystemJS imports remain runtime namespace lookups.');
+
+for (const useSwc of [false, true]) {
+  for (const sourceMap of [false, true]) {
+    const bundler = new LivelyRollup({ resolver, useSwc, sourceMap });
+    for (const specifier of [String.raw`D:\a\lively.next\lively.resources\index.js`, String.raw`D:\app spaces\quoted "name"\index.js`]) {
+      const id = 'esm://fixture@1.0.0/escaped.js';
+      const source = `export const load = () => System.import(${JSON.stringify(specifier)});`;
+      bundler.moduleSources[id] = source;
+      const transformed = await bundler.transform(source, id);
+      const code = typeof transformed === 'string' ? transformed : transformed.code;
+      const imports = [];
+      babel.traverse(babel.parse(code), {
+        CallExpression ({ node }) {
+          if (node.callee.type === 'Import') imports.push(node.arguments[0].value);
+        }
+      });
+      assert.deepEqual(imports, [specifier], `useSwc=${useSwc}, sourceMap=${sourceMap}`);
+    }
+  }
+}
+console.log('SWC and legacy dynamic imports preserve Windows paths and embedded quotes.');

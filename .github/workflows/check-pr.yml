@@ -31,6 +31,8 @@ jobs:
         run: bun install --frozen-lockfile
       - name: Check freezer package resolution
         run: node lively.freezer/tests/package-resolution-test.cjs
+      - name: Check dynamic import paths
+        run: node lively.freezer/tests/dynamic-system-import-test.mjs
       - name: Check native resolver
         run: node lively.modules/tests/native-resolver-test.mjs
       - name: Check live SystemJS resolution
