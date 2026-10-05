@@ -7,6 +7,12 @@
 
 export const noOpUpdate = (a, b) => {};
 
+export function insertNodeBefore (parent, node, before = null) {
+  if (node.parentNode === parent && node.nextSibling === before) return;
+  if (parent.moveBefore && parent.isConnected && node.isConnected && node.ownerDocument === parent.ownerDocument) parent.moveBefore(node, before);
+  else parent.insertBefore(node, before);
+}
+
 function findGreatestIndexLEQ (seq, n) {
   // invariant: lo is guaranteed to be index of a value <= n, hi to be >
   // therefore, they actually start out of range: (-1, last + 1)
@@ -94,7 +100,7 @@ export function keyed (key, parent, renderedValues, data, createFn, noOp = noOpU
     let node; let mode = afterNode ? 1 : 0;
     for (let i = 0, len = data.length; i < len; i++) {
       node = createFn(data[i]);
-      mode ? parent.insertBefore(node, afterNode) : parent.appendChild(node);
+      insertNodeBefore(parent, node, mode ? afterNode : null);
     }
     return;
   }
@@ -143,7 +149,7 @@ export function keyed (key, parent, renderedValues, data, createFn, noOp = noOpU
       loop = true;
       noOp(prevEndNode, b);
       _node = prevEndNode.previousSibling;
-      parent.insertBefore(prevEndNode, newStartNode);
+      insertNodeBefore(parent, prevEndNode, newStartNode);
       prevEndNode = _node;
       newStart++;
       prevEnd--;
@@ -158,7 +164,7 @@ export function keyed (key, parent, renderedValues, data, createFn, noOp = noOpU
       loop = true;
       noOp(prevStartNode, b);
       _node = prevStartNode.nextSibling;
-      parent.insertBefore(prevStartNode, afterNode);
+      insertNodeBefore(parent, prevStartNode, afterNode || null);
       prevStart++;
       afterNode = prevStartNode;
       prevStartNode = _node;
@@ -193,7 +199,7 @@ export function keyed (key, parent, renderedValues, data, createFn, noOp = noOpU
       let node; let mode = afterNode ? 1 : 0;
       while (newStart <= newEnd) {
         node = createFn(data[newStart]);
-        mode ? parent.insertBefore(node, afterNode) : parent.appendChild(node);
+        insertNodeBefore(parent, node, mode ? afterNode : null);
         newStart++;
       }
     }
@@ -241,7 +247,7 @@ export function keyed (key, parent, renderedValues, data, createFn, noOp = noOpU
     let node; let mode = afterNode ? 1 : 0;
     for (let i = newStart; i <= newEnd; i++) {
       node = createFn(data[i]);
-      mode ? parent.insertBefore(node, afterNode) : parent.appendChild(node);
+      insertNodeBefore(parent, node, mode ? afterNode : null);
     }
 
     return;
@@ -273,7 +279,7 @@ export function keyed (key, parent, renderedValues, data, createFn, noOp = noOpU
         tmpD = nodes[P[i]];
         noOp(tmpD, data[i]);
       }
-      parent.insertBefore(tmpD, afterNode);
+      insertNodeBefore(parent, tmpD, afterNode || null);
       afterNode = tmpD;
     }
   }

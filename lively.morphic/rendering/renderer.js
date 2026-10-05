@@ -5,7 +5,7 @@ import { Rectangle, pt, Transform } from 'lively.graphics';
 import { objectReplacementChar } from 'lively.morphic/text/document.js';
 import { splitTextAndAttributesIntoLines } from 'lively.morphic/text/attributes.js';
 
-import { keyed, noOpUpdate } from './keyed.js';
+import { keyed, noOpUpdate, insertNodeBefore } from './keyed.js';
 import { applyStylingToNode } from './morphic-default.js';
 
 const svgNs = 'http://www.w3.org/2000/svg';
@@ -179,6 +179,20 @@ export default class Renderer {
         this.renderStylingChanges(morph);
       }
 
+      // Keep reparented nodes connected until their new owner's reconciliation.
+      // The existing fixed layer holds them only for this synchronous render pass.
+      if (this.fixedMorphNode.moveBefore) {
+        for (const owner of this.morphsWithStructuralChanges) {
+          for (const child of owner.submorphs) {
+            if (owner.isText && owner.embeddedMorphMap.has(child)) continue;
+            const node = this.getNodeForMorph(child);
+            const parent = owner.isWorld && child.hasFixedPosition
+              ? this.fixedMorphNode
+              : owner.layout?.renderViaCSS ? this.getNodeForMorph(owner) : owner.renderingState.submorphNode;
+            if (node?.isConnected && node.ownerDocument === this.doc && node.parentNode !== parent) insertNodeBefore(this.fixedMorphNode, node);
+          }
+        }
+      }
       for (let morph of this.morphsWithStructuralChanges) {
         this.renderStructuralChanges(morph);
       }
