@@ -5,9 +5,13 @@ on:
     types: [opened, reopened]
     branches-ignore:
       - main
-    
+
+permissions:
+  contents: read
+  issues: write
+
 env:
-  TOKEN: ${{ secrets.LABELLING_TOKEN_LINUS }}
+  TOKEN: ${{ github.token }}
   NUMBER: ${{ github.event.number }}
 
 jobs:
