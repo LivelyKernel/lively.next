@@ -156,6 +156,7 @@ describe('lively debugger ui', function () {
     const { openForContinuation } = await System.import('lively.ide/js/debugger/ui.cp.js');
     const view = openForContinuation(run(function toolbarLayout () { debugger; }), $world);
     try {
+      view.env.forceUpdate();
       await view.whenRendered();
       view.env.forceUpdate();
       expect(view.fill.a).equals(0);
