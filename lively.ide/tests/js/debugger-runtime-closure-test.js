@@ -6,7 +6,7 @@ import { runWithCapturedBindings } from 'lively.context/lib/stackReification.js'
 import { resumeInspectorContinuation } from 'lively.context/lib/inspector-interpreter.js';
 import { serialize, deserialize } from 'lively.serializer2';
 import { openForContinuation } from '../../js/debugger/ui.cp.js';
-import { readFrameSource, moduleUrlForFrame, lineRangeForFrame } from '../../js/debugger/source.js';
+import { readFrameSource, moduleUrlForFrame, lineRangeForFrame, sourceNameForFrame } from '../../js/debugger/source.js';
 import { serializeMorph, loadMorphFromSnapshot } from 'lively.morphic/serialization.js';
 import * as modules from 'lively.modules';
 import { LivelyWorld } from '../../world.js';
@@ -24,7 +24,7 @@ describe('runtime closure bindings', function () {
       const lesson = new Lesson();
       const stopped = await runWithCapturedBindings(lesson.checkout, null, [], {this: lesson});
       expect(stopped.exception).equals(undefined);
-      expect(stopped.currentFrame.func.name()).contains('values');
+      expect(sourceNameForFrame(stopped.currentFrame)).contains('values');
       view = openForContinuation(stopped, $world);
       const model = view.viewModel;
       await model.selectFrame(stopped.currentFrame);
