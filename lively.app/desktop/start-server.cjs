@@ -1,6 +1,6 @@
 // NW.js node-main script
 // Runs in Node context BEFORE any window opens.
-// Boots lively.server, then navigates the window to it.
+// Loads packaged pages directly in native mode, or boots the HTTP deployment.
 //
 // Works in two modes:
 //   - Dev mode: lively.app/ inside the monorepo at <root>/lively.app/
@@ -8,8 +8,8 @@
 //     <bundle>/app/ next to the NW.js binary. The server runs from a
 //     per-user runtime root so caches/projects/uploads stay outside the app.
 //
-// The server runs under the packaged Node executable in a managed child process.
-// Launch the app, lively starts, close the window, and the server stops with it.
+// LIVELY_DESKTOP_MODE=native uses NW.js's Node context. HTTP is the default
+// during rollout and runs under the packaged Node executable.
 
 const path = require('path');
 const fs = require('fs');
@@ -534,6 +534,12 @@ function emitError (msg) {
   log('ERROR: ' + msg);
   const b = livelyBoot();
   if (b && b.error) b.error(msg);
+  else nw.Window.getAll(windows => {
+    for (const { window } of windows) {
+      if (window.livelyBoot) window.livelyBoot.error(msg);
+      else window.$world?.showError(msg);
+    }
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -561,10 +567,6 @@ function emitError (msg) {
       }
     }
   }
-
-  emitStatus('Finding free port...');
-  const port = await findFreePort(9011);
-
   let configFile = path.join(desktopDir, 'server-config.js');
   if (!fs.existsSync(configFile)) configFile = path.join(rootDir, 'config.js');
   if (!fs.existsSync(configFile)) configFile = path.join(rootDir, 'lively.installer/assets/config.js');
@@ -639,6 +641,59 @@ function emitError (msg) {
       ? { LIVELY_PREBUILT_LIBRARY_SNAPSHOT: prebuiltSnapshot }
       : {})
   }, commandPath);
+
+  if (process.env.LIVELY_DESKTOP_MODE && !['native', 'http'].includes(process.env.LIVELY_DESKTOP_MODE)) {
+    throw new Error('Unknown desktop mode: ' + process.env.LIVELY_DESKTOP_MODE);
+  }
+  if (process.env.LIVELY_DESKTOP_MODE === 'native') {
+    if (process.env.LIVELY_APP_SMOKE === '1') {
+      const listen = net.Server.prototype.listen;
+      net.Server.prototype.listen = function (endpoint, ...args) {
+        if (typeof endpoint !== 'string' || !path.isAbsolute(endpoint) && !endpoint.startsWith('\\\\.\\pipe\\')) {
+          throw new Error('Native desktop opened a TCP/HTTP listener');
+        }
+        return listen.call(this, endpoint, ...args);
+      };
+    }
+    Object.assign(process.env, childEnv);
+    process.chdir(path.join(rootDir, 'lively.server'));
+    const { pathToFileURL } = require('node:url');
+    const backend = require('./native-backend.cjs')(rootDir, {
+      log, onError: err => emitError('Native backend initialization failed: ' + err.stack)
+    });
+    const baseURL = pathToFileURL(rootDir + path.sep).href;
+    const endpointFile = path.join(desktopDataDir(), 'local-endpoint.json');
+    let legacyOrigin = 'http://127.0.0.1:9011';
+    if (fs.existsSync(endpointFile)) legacyOrigin = JSON.parse(fs.readFileSync(endpointFile, 'utf8')).origin;
+    const dashboardURL = baseURL + 'lively.freezer/landing-page/index.html';
+    module.exports.livelyNative = Object.freeze({
+      baseURL, dashboardURL, legacyOrigin,
+      request: backend.request,
+      fileExtension: backend.fileExtension,
+      evaluate: backend.evaluate,
+      send: backend.send,
+      disconnect: backend.disconnect
+    });
+    emitStatus('Native interface ready, loading lively...');
+    const win = await new Promise(resolve => {
+      const findWindow = () => nw.Window.getAll(windows => {
+        if (windows[0]) resolve(windows[0]);
+        else setTimeout(findWindow, 25);
+      });
+      findWindow();
+    });
+    const navigate = () => { win.window.location.href = dashboardURL; };
+    if (win.window.document.readyState === 'loading') win.once('loaded', navigate);
+    else navigate();
+    win.on('close', function () {
+      backend.close().then(() => this.close(true), err => emitError('Native shutdown failed: ' + err.stack));
+    });
+    return;
+  }
+
+  emitStatus('Finding free port...');
+  const port = await findFreePort(9011);
+  fs.writeFileSync(path.join(desktopDataDir(), 'local-endpoint.json'), JSON.stringify({ origin: 'http://127.0.0.1:' + port }));
 
   let currentChild = null;
   let closing = false;

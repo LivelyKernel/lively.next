@@ -214,6 +214,16 @@ export async function generateLoadHtml (htmlConfig, importMap, resolver, modules
       renderFrozenPart: (domNode, baseURL) => {
         if (baseURL) System.config( { baseURL });
         if (!baseURL) baseURL = './';
+        if (window.livelyNative) {
+          System.set('@lively-native-files', System.newModule({
+            fetch: load => livelyNative.fileExtension().then(({ resourceClass }) => new resourceClass(load.address).read())
+          }));
+          System.config({ meta: {
+            [new URL('./', document.location.href).href + '*.js']: { loader: false, scriptLoad: true },
+            [new URL('livelyClassesRuntime.js', document.location.href).href]: { loader: '@lively-native-files', scriptLoad: false }
+          } });
+        }
+
         System.config({
           meta: {
            ${
@@ -255,6 +265,16 @@ export async function generateLoadHtmlForEntry (htmlConfig, importMap, resolver,
       renderFrozenPart: (domNode, baseURL) => {
         if (baseURL) System.config( { baseURL });
         if (!baseURL) baseURL = './';
+        if (window.livelyNative) {
+          System.set('@lively-native-files', System.newModule({
+            fetch: load => livelyNative.fileExtension().then(({ resourceClass }) => new resourceClass(load.address).read())
+          }));
+          System.config({ meta: {
+            [new URL('./', document.location.href).href + '*.js']: { loader: false, scriptLoad: true },
+            [new URL('livelyClassesRuntime.js', document.location.href).href]: { loader: '@lively-native-files', scriptLoad: false }
+          } });
+        }
+
         System.config({
           meta: {
            ${

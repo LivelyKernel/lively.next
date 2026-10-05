@@ -210,7 +210,7 @@ async function shallowReloadModulesIfNeeded (modulesToCheck, moduleHashes, R) {
   return arr.uniq(modsToReload);
 }
 
-const baseURL = window.SYSTEM_BASE_URL || document.location.origin; // usually the server is located at the origin, but this can be overridden via this window var
+const baseURL = (window.SYSTEM_BASE_URL || document.location.origin).replace(/\/$/, '');
 function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false || window.FORCE_FAST_LOAD) {
   lively.wasFastLoaded = fastLoad;
   // for loading an instrumented version of the packages comprising the lively.system
@@ -259,7 +259,8 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
         // denote the exports
         m._frozenModule = true;
       }
-      oldSystem.config({ baseURL }); // this system keeps lurking around inside lively.modules somehow, so this fixes that issue for the time being
+      // Frozen desktop chunks still resolve their class runtime beside the entry page.
+      if (!window.livelyNative) oldSystem.config({ baseURL });
       installFetchHook();
       logInfo('Load package info:', Date.now() - ts + 'ms');
     })
@@ -489,7 +490,7 @@ export async function bootstrap ({
       };
       if (snapshot) {
         let World, loadMorphFromSnapshot, loadWorld;
-        if (!snapshot.startsWith('http')) snapshot = resource(System.baseURL).join(snapshot).url;
+        if (!/^(https?|file):/.test(snapshot)) snapshot = resource(System.baseURL).join(snapshot).url;
         ({ World } = await lively.modules.module('lively.morphic/world.js').recorder);
         ({ loadWorld } = await lively.modules.module('lively.morphic/world-loading.js').recorder);
         ({ loadMorphFromSnapshot } = await lively.modules.module('lively.morphic/serialization.js').recorder);

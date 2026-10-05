@@ -279,10 +279,12 @@ async function load(url) {
 }
 
 function supportingPlugins(context = 'node', self) {
-  const livelyPackageRoot = livelyRoot
-    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // Packaged workspaces are mounted in the writable runtime root, but Node
+  // resolves their files to the application payload.
+  const livelyPackageRoot = [livelyRoot, path.resolve(__dirname, '../../..')]
+    .map(root => root.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
   const livelyPackage = new RegExp(
-    `^${livelyPackageRoot}/lively\\.[^/]+/`
+    `^(?:${livelyPackageRoot})/lively\\.[^/]+/`
   );
 
   return [

@@ -64,7 +64,8 @@ export function pathForBrowserHistory (worldName, queryString, project = false) 
   if (!lively.isResurrectionBuild || lively.doNotUseFastLoad ) query.fastLoad = false;
 
   // ensure the name param in the query string matches worldName
-  return `${basePath}?${stringifyQuery(query)}`;
+  const route = `${basePath}?${stringifyQuery(query)}`;
+  return globalThis.livelyNative ? livelyNative.route(route) : route;
 }
 
 export function addClassMappings (mapping) {

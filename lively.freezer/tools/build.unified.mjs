@@ -26,8 +26,15 @@ const commonExcludedModules = [
 const commonAutoRunConfig = {
   title: 'lively.next',
   head: `
-  <link rel="preload" id="compressed" href="/compressed-sources" as="fetch" crossOrigin>
-  <link rel="preload" id="registry" href="/package-registry.json" as="fetch" crossOrigin>
+  <script>
+    if (!window.livelyNative) {
+      for (const [id, href] of [['compressed', '/compressed-sources'], ['registry', '/package-registry.json']]) {
+        const link = document.createElement('link');
+        Object.assign(link, { rel: 'preload', id, href, as: 'fetch', crossOrigin: 'anonymous' });
+        document.head.appendChild(link);
+      }
+    }
+  </script>
   `
 };
 

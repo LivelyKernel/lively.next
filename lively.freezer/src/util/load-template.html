@@ -31,7 +31,7 @@
       window.location.origin = window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port: '');
     }
     lively = {};
-    window.SERVER_URL = window.location.origin;
+    window.SERVER_URL ||= window.location.origin;
   </script>
   <script>
   // check browser support
