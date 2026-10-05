@@ -17,7 +17,13 @@ closure bindings** that source recreation cannot recover. Supply those values in
 scopes; `mapping.this` supplies the receiver. Nested rewritten functions continue
 to use the existing closure/frame-state chain.
 
-The NW.js experiment reads requested bindings through a function's `[[Scopes]]`
+Newly compiled Lively modules record retained binding cells and original source spans
+for runtime function literals. Closures created by the same factory share their cells.
+Debugger assignments update the original native binding and sibling closures;
+`const` and declaration timing retain JavaScript semantics. The source pane displays
+the complete original module, with the selected closure highlighted in its factory.
+
+For older or uninstrumented functions, the NW.js reader reads requested bindings through a function's `[[Scopes]]`
 using only `Runtime` inspector commands. Objects retain identity. Primitive bindings
 are captured values: assigning to either the returned map or V8's synthetic scope
 representation does **not** update the original lexical binding. Assigning an
@@ -47,8 +53,9 @@ openLiveCounter();
 3. Evaluate `amount = Number(amount)`, **Step Over**, then **Proceed**. Expect `1`.
    The repaired local belongs to the existing continuation's recorded scope.
    Step Over stops before the next statement without changing the count.
-4. Click **Edit source**. Change `var amount = this.step;` to
-   `var amount = Number(this.step);` in the Object Editor and save. Wait until the
+4. Change `var amount = this.step;` to
+   `var amount = Number(this.step);` in the debugger source pane and save the module
+   with Ctrl-S (Command-S on macOS). Wait until the
    save finishes, then click **Increment** again. The existing object uses the new
    method; proceed to reach `2`.
 5. While suspended, replace the saved increment with `Number(this.step) * 2`.
@@ -57,14 +64,93 @@ openLiveCounter();
    Proceed to the rewritten debugger statement, inspect `amount`, then proceed
    again. Restart reexecutes earlier statements; it does not migrate an arbitrary
    old execution position into edited code.
-6. Add `decrement() { this.count -= 1; this.updateCount(); }` in the Object Editor.
+6. Add `decrement() { this.count -= 1; this.updateCount(); }` in the debugger source pane and save.
    Evaluate `this.decrement()` in the suspended debugger workspace. Continue
    changing methods and state on the same counter, without recreating it.
 7. Set `this.pause = false` when finished. Quit, relaunch, reopen the project via the
    dashboard, and check saved source. Runtime objects require a world save to persist.
 
 Record the action, selected statement, expected count, actual count, and status error.
-The debugger source pane displays captured source; the Object Editor saves methods.
+The debugger source pane displays the original module, saves it, and retains unsaved
+drafts while changing frames. The Object Editor remains available through Edit Method.
+
+### Order desk: a longer implementation session
+
+Open the completed exercise in a JavaScript workspace:
+
+```js
+const { openOrderDesk } = await System.import('lively.ide/js/debugger/examples/order-desk.js');
+openOrderDesk();
+```
+
+The example combines two cart lines, quantity/price validation, a VIP discount,
+VAT, an asynchronous delivery quote, atomic inventory updates and undo. Checkout
+pauses before pricing and again before committing. Its fixed-position timer shows
+that the surrounding world remains active. Amounts are integer cents.
+
+1. Click **Checkout**. Inspect `this.cart`, `this.stock` and `this.attempts` in the
+   debugger eval space. Select an expression and use Do It or Print It.
+2. Proceed to the second stop. Inspect
+   `[receipt.subtotal, receipt.discount, receipt.tax, receipt.shipping, receipt.total]`:
+   expect `[3850, 385, 693, 500, 4658]`. Inventory is still unchanged.
+3. Step Over the debugger statement, Step Into `commitOrder`, then Step Out and
+   Proceed. Expect stock `{tea: 1, cake: 2}`, one receipt, one attempt and one quote.
+4. Click **Undo**, then Proceed. Expect stock `{tea: 3, cake: 5}` and no receipts.
+5. Reset, click **Bad cart**, then Checkout and Proceed. The exception reports an
+   invalid cake quantity. Evaluate `line.quantity = '3'` and Retry: the first
+   line's subtotal is retained and the checkout attempt is not replayed.
+6. Reset and start another checkout. Change the second cart line to
+   `{sku: 'tea', quantity: '2', unit: 1250}`. Proceed twice. The combined quantity
+   exceeds stock; the exception leaves all inventory and receipts unchanged.
+7. While paused, edit the original module in the source pane and save with Ctrl-S
+   (Command-S on macOS). Apply Saved Method installs future changes in the held
+   frame. Editing completed code requires Restart Frame, which repeats its effects.
+
+The earlier reel exposed failures in `for…of`, object spread, missing-method
+errors, and Run to Cursor across awaits. These now have regression checks. The
+example uses `for…of` and object spread directly; its acceptance check exercises
+pricing, retries, async quotes, stock updates and undo. Print It uses Lively's
+object formatter, including array brackets and nesting. A UI regression moves a
+saved method by 250 lines and checks that its execution line remains visible.
+
+### Runtime closure: inspect the original factory
+
+```js
+const { openRuntimeClosure } = await System.import('lively.ide/js/debugger/examples/runtime-closure.js');
+await openRuntimeClosure();
+```
+
+The factory has already returned. Step Over to the `charge` call and Step Into.
+The source pane shows `charge` at its original location inside `makeRuntimeCharge`,
+including the rest of the module and syntax colors. Proceed to its debugger stop.
+Evaluate `rate`, `amount`, and `ledger.visits`: expect `'2'`, `'23'`, and `1`.
+Evaluate `rate = 2` and `amount = rate + quantity`. Select the caller and evaluate
+`this.account.readRate()`: expect `2`, demonstrating native binding writeback.
+Proceed: expect `6`, ledger total `5`, and one visit.
+
+Save the world while the debugger is open, quit and reopen it. The interpreter
+frames, program counters, computed effects, receiver, shared closure cells,
+workspace variables and source drafts are part of the saved object graph.
+Proceed resumes the saved computation without replaying completed statements.
+
+If an await was saved before its operation completed, Proceed asks for its
+result in the restored frame's scope. The checkpoint does not reissue the request.
+A pending timer, socket or OS operation is not a persisted runtime handle.
+Array and string iteration can be saved mid-loop; a still-active native iterator
+without a serializable cursor rejects saving explicitly.
+
+Saved module bindings and source drafts use package paths, so reopening on another
+desktop server origin still resolves the current module. The packaged Linux x64
+NW.js check saves the complete world with a repaired runtime closure and two frames,
+quits, relaunches and opens the project through the dashboard in the same document.
+The restored debugger is rendered, retains `scratch = 13` and its unsaved draft,
+and resumes to `6` with ledger total `5` and one visit. Core and renderer regression
+checks cover the tutorial failures and the shared world/style restoration fixes.
+
+Regression checks: `lively.context/tests/tutorial-test.js`,
+`lively.context/tests/persistence-test.js`,
+`lively.ide/tests/js/debugger-runtime-closure-test.js`, and
+`lively.ide/tests/js/debugger-order-desk-test.js`.
 
 ### Smalltalk-style acceptance session
 
@@ -93,9 +179,9 @@ debugger abandons its continuation; it does not replay or undo completed effects
 | Restart with new source | Save an earlier edit and Restart Frame | The same receiver and original arguments enter the saved method from its first statement. Earlier effects will run again. |
 | Handle exceptions and cleanup | Set `this.rejectLesson = true`, run `exceptionLesson`, and Proceed into its catch | The catch binding is available; cleanup stays dormant at stops and runs once on completion. |
 | Await external work without freezing the world | `awaitLesson`; move a window during its timer, inspect `amount`, repair it and Proceed | The timer settles, the original frame stops after await, and the repaired value reaches the counter. |
-| Inspect a foreign retained environment | Run the retained-environment experiment below, or use `runWithCapturedBindings(fn, null, [], mapping)` | Missing names are read from `[[Scopes]]`; objects retain identity. Imported primitive values remain snapshots of the original native environment. |
+| Inspect and repair a runtime closure | Run the runtime-closure lesson; change `rate` and inspect its sibling `readRate()` | Managed native closures share writable bindings and original module locations. Older uninstrumented closures use inspector snapshots. |
 | Abort a computation | Close a debugger before its count assignment | No remaining statements execute; other computations remain interactive. Completed effects remain visible. |
-| Preserve source and the image | Save in the Object Editor; save the world using the existing world/project controls; quit and reopen via the dashboard | Source persists. A world save is required for runtime objects; an unsaved suspended stack is not serialized as a resumable native stack. |
+| Preserve source, drafts and a suspended computation | Save the module in the debugger and save the world; quit and reopen via the dashboard | The debugger restores interpreter frames, scopes, workspace variables and drafts. Completed effects are retained. |
 
 The toolbar's Edit Method opens the existing Object Editor for the selected
 receiver. Apply Saved Method maps the old AST position and recorded expression
@@ -110,8 +196,8 @@ controls inspection; expression lookup retains lexical shadowing order.
 
 `await` yields through `UnwindException` and resumes through `Continuation` after
 the promise settles. Rejections remain inspectable and Return can supply a result.
-This does not reconstruct arbitrary native promise callback stacks or serialize
-pending OS operations. Native code that was never rewritten still cannot expose
+A saved pending await requires a supplied result after reopening; it does not
+serialize pending OS operations or reconstruct arbitrary native promise callback stacks. Native code that was never rewritten still cannot expose
 arbitrary stack locals through retained function environments.
 
 The packaged NW.js 0.111.1 tutorial verified local repair, receiver identity,
@@ -164,8 +250,16 @@ Primary implementation and runtime guidance:
 Writing V8's synthetic scope object does not establish native lexical writeback.
 The protocol's [setVariableValue](https://chromedevtools.github.io/devtools-protocol/tot/Debugger/#method-setVariableValue)
 requires a paused call frame, and [V8 rejects it while execution is running](https://github.com/v8/v8/blob/main/src/inspector/v8-debugger-agent-impl.cc).
-Managed rewritten closure cells supply writable shared state without that pause;
-imported native primitive bindings cannot be treated as writable handles.
+Managed closure cells, including those recorded by the module compiler, supply
+writable shared state without that pause. Older uninstrumented native primitive
+bindings remain snapshots; inspector access alone cannot turn them into writable
+handles. Instrument their factory before creating a new closure.
+
+This is not a claim of full current ECMAScript/ESM evaluation conformance. Module
+loading stays with Lively's module system. The continuation interpreter supports
+the constructs exercised above; generators, async iteration and arbitrary native
+stack reconstruction require additional execution state. Restart Frame intentionally
+repeats earlier effects when edits change code that already executed.
 
 Run `lively.context/tests/tutorial-test.js` with mocha-es6 for the executable core
 acceptance cases. The packaged desktop debugger smoke also exercises actual UI

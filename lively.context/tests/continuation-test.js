@@ -7,6 +7,7 @@ import { parseFunction, stringify } from "lively.ast";
 import { Continuation, stackCaptureMode } from "../lib/stackReification.js";
 import * as StackReification from "../lib/stackReification.js";
 import { Interpreter } from "../lib/interpreter.js";
+import { runtimeFunctionSource } from '../lib/exception.js';
 import { installShallowDeepEqual } from './helpers.js';
 installShallowDeepEqual(chai);
 
@@ -135,7 +136,7 @@ describe('continuation', function() {
     expect(stringify(actualAst)).equals(stringify(expectedAst))
     ///expect(actualAst).to.shallowDeepEqual(expectedAst);
     //expect(frame2.getOriginalAst()).to.shallowDeepEqual(parseFunction(String(code)));
-    expect(stringify(frame2.getOriginalAst())).equals(stringify(parseFunction(String(code))));
+    expect(stringify(frame2.getOriginalAst())).equals(stringify(parseFunction(runtimeFunctionSource(code))));
 
     // access the node where execution stopped
     var resumeNode = frame1.getPC(),

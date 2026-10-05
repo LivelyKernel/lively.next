@@ -41,6 +41,17 @@ describe('rendering', function () {
   beforeEach(async () => env = await MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment())).setWorld(createDummyWorld()));
   afterEach(() => MorphicEnv.popDefault().uninstall());
 
+  it('keeps the new world attached when replacing a world in the same environment', async function () {
+    this.timeout(5000);
+    env.forceUpdate();
+    const previous = env.renderer, parent = previous.bodyNode;
+    await env.setWorld(morph({type: 'world', name: 'replacement'}));
+    expect(env.renderer.bodyNode).equals(parent);
+    await previous.clear();
+    env.forceUpdate();
+    expect(env.renderer.rootNode.isConnected).equals(true);
+  });
+
   it('morph id is DOM node id', () => {
     expect(world.id).equals(env.renderer.rootNode.id);
   });

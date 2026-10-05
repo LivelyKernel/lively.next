@@ -2,13 +2,13 @@
 import { Path, arr, Closure } from "lively.lang";
 import { ReplaceVisitor, escodegen, parseFunction } from "lively.ast";
 import { Interpreter, Function as AcornFunction, Scope } from "./interpreter.js";
-import { __createClosure, originalFunctions, capturedBindingMappings, freeFunctionReferences } from "./exception.js";
+import { __createClosure, originalFunctions, capturedBindingMappings, freeFunctionReferences, runtimeFunctionSource, removeRuntimeClosureAnnotations } from "./exception.js";
 import { getCurrentASTRegistry, rewriteFunction } from "lively.context";
 
 let Global = typeof window !== "undefined" ? window : globalThis;
 
 function removeToplevelRecorderRefs(ast, recorderName = '__lvVarRecorder') {
-    return ReplaceVisitor.run(ast, node => {
+    return ReplaceVisitor.run(removeRuntimeClosureAnnotations(ast), node => {
         if (!node) return node;
         if (node.type !== 'MemberExpression' || node.computed || !node.object) return node;
         if (node.object.type !== 'Identifier' || node.object.name !== recorderName) return node;
@@ -213,41 +213,65 @@ export function run(func, astRegistry, args, optMapping) {
 }
 
 export async function runWithCapturedBindings(func, astRegistry, args, mapping = {}) {
-    const ast = parseFunction(func.toString());
+    const ast = removeRuntimeClosureAnnotations(parseFunction(runtimeFunctionSource(func)));
     const missing = [...new Set(freeFunctionReferences(ast).map(ref => ref.name))]
         .filter(name => !Object.prototype.hasOwnProperty.call(mapping, name) && !(name in Global));
     if (!missing.length) return run(func, astRegistry, args, mapping);
+    const liveBindings = func[Symbol.for('lively-debug-bindings')];
     const capture = Global.livelyDesktop && Global.livelyDesktop.debugger.captureFunctionBindings;
-    if (!capture) throw new Error('Missing closure bindings: ' + missing.join(', ') + '. Launch NW.js with LIVELY_APP_FUNCTION_SCOPES=1.');
-    const bindings = await capture(func, missing);
+    if (liveBindings) addRecorderBindings(liveBindings, ast);
+    const available = liveBindings && missing.every(name => Object.prototype.hasOwnProperty.call(liveBindings, name));
+    if (!capture && !available) throw new Error('Missing closure bindings: ' + missing.join(', ') + '. Launch NW.js with LIVELY_APP_FUNCTION_SCOPES=1.');
+    const bindings = available ? Object.defineProperties({}, Object.getOwnPropertyDescriptors(liveBindings)) : await capture(func, missing);
     addRecorderBindings(bindings, ast);
-    capturedBindingMappings.add(bindings);
+    if (!liveBindings) capturedBindingMappings.add(bindings);
     Object.defineProperties(bindings, Object.getOwnPropertyDescriptors(mapping));
     return run(func, astRegistry, args, bindings);
 }
 
-function addRecorderBindings(bindings, ast) {
+export function addRecorderBindings(bindings, ast) {
     const recorder = bindings.__lvVarRecorder;
     if (!recorder) return;
+    const namesKey = Symbol.for('lively-debug-module-bindings');
+    if (!bindings[namesKey]) Object.defineProperty(bindings, namesKey, {value: []});
     for (const ref of freeFunctionReferences(removeToplevelRecorderRefs(ast))) {
         if (Object.prototype.hasOwnProperty.call(bindings, ref.name) || !(ref.name in recorder)) continue;
         Object.defineProperty(bindings, ref.name, {enumerable: true, configurable: true,
             get() { return recorder[ref.name]; }, set(value) { recorder[ref.name] = value; }});
+        bindings[namesKey].push(ref.name);
     }
 }
 
 export async function prepareCapturedFunction(func, names) {
+    const liveBindings = func[Symbol.for('lively-debug-bindings')];
     const capture = Global.livelyDesktop && Global.livelyDesktop.debugger.captureFunctionBindings;
-    if (!capture) throw new Error('Missing closure bindings: ' + names.join(', ') + '. Launch NW.js with LIVELY_APP_FUNCTION_SCOPES=1.');
-    const bindings = await capture(func, names);
-    const ast = parseFunction(func.toString(), {locations: true, addSource: true, addAstIndex: true});
+    const ast = removeRuntimeClosureAnnotations(parseFunction(runtimeFunctionSource(func), {locations: true, addSource: true, addAstIndex: true}));
+    if (liveBindings) addRecorderBindings(liveBindings, ast);
+    const available = liveBindings && names.every(name => Object.prototype.hasOwnProperty.call(liveBindings, name));
+    if (!capture && !available) throw new Error('Missing closure bindings: ' + names.join(', ') + '. Launch NW.js with LIVELY_APP_FUNCTION_SCOPES=1.');
+    const bindings = available ? liveBindings : await capture(func, names);
     addRecorderBindings(bindings, ast);
-    capturedBindingMappings.add(bindings);
+    if (!liveBindings) capturedBindingMappings.add(bindings);
     const interpreted = new AcornFunction(ast, new Scope(bindings, new Scope(Global)), func).asFunction();
     return interpreted;
 }
 
 export function asRewrittenClosure(func, varMapping, astRegistry) {
+    const bindings = func[Symbol.for('lively-debug-bindings')];
+    if (bindings) {
+        addRecorderBindings(bindings, parseFunction(runtimeFunctionSource(func)));
+        const supplied = varMapping || {};
+        varMapping = Object.defineProperties({}, Object.getOwnPropertyDescriptors(bindings));
+        Object.defineProperties(varMapping, Object.getOwnPropertyDescriptors(supplied));
+        const cellKey = Symbol.for('lively-debug-binding-cells');
+        const overrides = name => Object.prototype.hasOwnProperty.call(supplied, name) &&
+            Object.getOwnPropertyDescriptor(supplied, name).get !== Object.getOwnPropertyDescriptor(bindings, name).get;
+        if (Object.keys(bindings[cellKey]).some(overrides)) {
+            const descriptors = Object.getOwnPropertyDescriptors(varMapping);
+            descriptors[cellKey] = {value: Object.fromEntries(Object.entries(bindings[cellKey]).filter(([name]) => !overrides(name))), configurable: true};
+            varMapping = Object.defineProperties({}, descriptors);
+        }
+    }
     var closure = new RewrittenClosure(func, varMapping);
     closure.rewrite(astRegistry);
     return closure;
@@ -282,9 +306,11 @@ export class RewrittenClosure extends Closure {
       var func = this.recreateFuncFromSource(this.getRewrittenSource());
       if (this.originalAst.type === 'ArrowFunctionExpression') {
           const factory = this.recreateFuncFromSource('function() { return (' + this.getRewrittenSource() + '); }');
-          func = factory.apply(this.varMapping.this, this.varMapping.arguments || []);
-          func._lexicalThis = this.varMapping.this;
-          func._lexicalArguments = this.varMapping.arguments;
+          const receiver = this.originalFunc && Object.prototype.hasOwnProperty.call(this.originalFunc, '_lexicalThis') ? this.originalFunc._lexicalThis : this.varMapping.this;
+          const args = this.originalFunc && this.originalFunc._lexicalArguments || this.varMapping.arguments;
+          func = factory.apply(receiver, args || []);
+          func._lexicalThis = receiver;
+          func._lexicalArguments = args;
       }
       return __createClosure('[runtime]', this.originalAst.registryId, this.frameState, func);
   }
@@ -298,7 +324,7 @@ export class RewrittenClosure extends Closure {
   }
 
   rewrite(astRegistry) {
-      var src = this.getFuncSource(),
+      var src = this.originalFunc ? runtimeFunctionSource(this.originalFunc) : this.getFuncSource(),
           ast = removeToplevelRecorderRefs(parseFunction(src, { locations: true, addSource: true })),
           namespace = '[runtime]';
       // FIXME: URL not available here
@@ -306,13 +332,20 @@ export class RewrittenClosure extends Closure {
       //     namespace = new URL(this.originalFunc.sourceModule.findUri()).relativePathFrom(URL.root);
       this.originalAst = ast;
       this.frameState = [{}, this.varMapping, Global];
-      this.varMapping = { ...this.varMapping, __livelyClosureFrameState: this.frameState };
+      this.varMapping = Object.defineProperties({__livelyClosureFrameState: this.frameState}, Object.getOwnPropertyDescriptors(this.varMapping));
       return this.ast = rewriteFunction(ast, astRegistry, namespace, '__livelyClosureFrameState', Object.keys(this.frameState[1]));
   }
 
 };
 
 export class Continuation {
+
+  get __dont_serialize__() { return ['error', 'onSuspend']; }
+
+  __additionally_serialize__(snapshot, ref, pool, addFn) {
+      if (this.currentFrame.pendingAwait) addFn('reason', 'await');
+      else addFn('error', this.error);
+  }
 
   get isContinuation() { return true }
 
@@ -369,6 +402,7 @@ export class Continuation {
 
       if (result.error) {
           const continuation = Continuation.fromUnwindException(result.error);
+          continuation.onSuspend = this.onSuspend;
           return continuation.reason === 'await' || continuation.reason === 'bindings' ? continuation.resume() : continuation;
       }
       else
@@ -377,16 +411,27 @@ export class Continuation {
 
   async settleAwait() {
       const frame = this.currentFrame;
+      if (!this.error?.promise) throw new Error('The saved await needs a result. Supply it in the debugger before proceeding.');
+      if (this.onSuspend) this.onSuspend(this);
       try {
           const value = await this.error.promise;
-          frame.alreadyComputed[frame.getPC().astIndex] = value;
-          this.reason = 'debugger';
-          this.error = undefined;
+          this.supplyAwaitResult(value);
       } catch (error) {
           const exception = error instanceof Error ? error : new Error(String(error));
           this.reason = 'exception';
           this.error = this.exception = frame.exception = frame.awaitRejection = exception;
+          delete frame.pendingAwait;
       }
+      return this;
+  }
+
+  supplyAwaitResult(value) {
+      const frame = this.currentFrame;
+      if (!frame.pendingAwait) throw new Error('No pending await in this frame');
+      frame.alreadyComputed[frame.pendingAwait.astIndex] = value;
+      delete frame.pendingAwait;
+      this.reason = 'debugger';
+      this.error = undefined;
       return this;
   }
 

@@ -490,7 +490,7 @@ export class LivelyWorld extends World {
     else anonymousMode = !askForWorldName;
 
     if (!this.metadata) { // not entered when loading an existing world snapshot
-      let worldName;
+      let worldName = this.name;
       if (openNewWorldPrompt) { // We open a non-existing world without being anonymous
         if (!anonymousMode) worldName = await this.askForName();
         else if (anonymousMode) worldName = 'aLivelyWorld';

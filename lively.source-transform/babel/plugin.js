@@ -960,6 +960,55 @@ export function getScopeFromPath (path) {
   };
 }
 
+function captureRuntimeClosures(program, options) {
+  if (!options.currentModuleAccessor || !options.sourceAccessorName) return;
+  const cells = new Map(), insertions = new Map(), functions = [];
+  program.traverse({Function(path) { if (!path.isMethod()) functions.push(path); }});
+  const insert = (block, statement) => {
+    const statements = insertions.get(block) || [];
+    statements.push(statement); insertions.set(block, statements);
+  };
+  for (const path of functions) {
+    const fn = path.node, captures = new Map();
+    if (!Number.isFinite(fn.start) || !Number.isFinite(fn.end)) continue;
+    path.traverse({ReferencedIdentifier(ref) {
+      const binding = ref.scope.getBinding(ref.node.name);
+      if (!binding || binding.scope === program.scope || binding.identifier.start >= fn.start && binding.identifier.end <= fn.end) return;
+      const owner = binding.scope.path;
+      const block = owner.isBlockStatement() ? owner : owner.get('body');
+      if (!block?.isBlockStatement() || fn.start < block.node.start || fn.end > block.node.end) return;
+      let cell = cells.get(binding);
+      if (!cell) {
+        const name = binding.identifier.name, kind = binding.kind === 'const' ? 'const' : binding.kind === 'var' ? 'var' : 'let';
+        const identifier = program.scope.generateUidIdentifier('debugCell');
+        const parameter = program.scope.generateUidIdentifier('bindingValue');
+        const source = 'const ' + identifier.name + ' = {kind: ' + JSON.stringify(kind) + ', get initialized() { try { void ' + name + '; return true; } catch (error) { if (error.name === "ReferenceError") return false; throw error; } }, get value() { return ' + name + '; }, set value(' + parameter.name + ') { ' + name + ' = ' + parameter.name + '; }, get __only_serialize__() { return this.initialized ? ["kind", "initialized", "value"] : ["kind", "initialized"]; }};';
+        cell = identifier; cells.set(binding, cell);
+        insert(block, babel.parse(source).program.body[0]);
+      }
+      captures.set(ref.node.name, cell);
+    }});
+    const parent = path.parentPath;
+    const name = fn.id?.name || (parent.isVariableDeclarator() ? parent.node.id.name : parent.isObjectProperty() && !parent.node.computed ? parent.node.key.name || parent.node.key.value : '');
+    const call = t.CallExpression(t.MemberExpression(t.cloneNode(options.currentModuleAccessor, true), t.Identifier('recordDebugClosure')), [
+      path.isFunctionDeclaration() ? t.cloneNode(fn.id) : fn,
+      t.ObjectExpression([...captures].map(([name, cell]) => t.ObjectProperty(t.StringLiteral(name), t.cloneNode(cell)))),
+      t.NumericLiteral(fn.start), t.NumericLiteral(fn.end), t.Identifier(options.sourceAccessorName), t.StringLiteral(name || '')
+    ]);
+    if (path.isArrowFunctionExpression()) {
+      call.arguments.push(t.ThisExpression());
+      // Resolve arguments at creation, before a caller can rebind the block.
+      call.arguments.push(t.ConditionalExpression(t.BinaryExpression('===', t.UnaryExpression('typeof', t.Identifier('arguments')), t.StringLiteral('undefined')), t.Identifier('undefined'), t.Identifier('arguments')));
+    }
+    if (path.isFunctionDeclaration()) {
+      if (parent.isBlockStatement()) insert(parent, t.ExpressionStatement(call));
+    } else path.replaceWith(call);
+  }
+  // Babel keeps directive prologues separately from the body.
+  for (const [block, statements] of insertions) block.unshiftContainer('body', statements);
+  program.scope.crawl();
+}
+
 function evalCodeTransform (path, state, options) {
   // A: Rewrite the component definitions to create component descriptors.
   let { moduleName } = options;
@@ -1000,6 +1049,8 @@ function evalCodeTransform (path, state, options) {
         }
       }));
   }
+
+  captureRuntimeClosures(path, options);
 
   // 3. capture top level vars into topLevelVarRecorder "environment"
 

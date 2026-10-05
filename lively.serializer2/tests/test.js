@@ -49,6 +49,11 @@ describe('object registration', () => {
 describe('snapshots', () => {
   beforeEach(() => objPool = new ObjectPool());
 
+  it('serializes dictionaries without a constructor', () => {
+    const dictionary = Object.assign(Object.create(null), {value: 23});
+    expect(serializationRoundtrip(dictionary).value).equals(23);
+  });
+
   it('snapshots', () => {
     let o = { foo: 23, ref: { bar: 24 } };
     let { id, snapshot } = objPool.snapshotObject(o);

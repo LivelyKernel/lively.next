@@ -1,5 +1,5 @@
 import * as Inspector from '../js/inspector/ui.cp.js';
-import { string } from 'lively.lang';
+import { string, obj } from 'lively.lang';
 import { Morph, part } from 'lively.morphic';
 import { pt, Color } from 'lively.graphics';
 import { runCommand, defaultDirectory } from '../shell/shell-interface.js';
@@ -127,7 +127,7 @@ export const codeEvaluationCommands = [
       } catch (e) { err = e; }
       morph.selection.collapseToEnd();
       // morph.insertTextAndSelect(err ? err.stack || String(err) : String(result.value));
-      const isColor = result.value && result.value.isColor;
+      const isColor = !err && result?.value && result.value.isColor;
       if (isColor) {
         morph.selection.text = String(result.value);
         const embeddedMorph = new Morph({
@@ -148,7 +148,7 @@ export const codeEvaluationCommands = [
       morph.insertTextAndSelect(
         err
           ? String(err) + (err.stack ? '\n' + err.stack : '')
-          : String(result.value));
+          : typeof result.value === 'string' ? result.value : obj.inspect(result.value, {maxDepth: 4}));
       morph.focus();
       return result;
     }

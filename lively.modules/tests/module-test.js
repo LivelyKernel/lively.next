@@ -34,6 +34,22 @@ describe('module loading', () => {
     expect(exports).to.have.property('x', 3);
   });
 
+  it('records runtime closure source and shared native bindings without changing function identity', async () => {
+    const source = 'export function make(value) { "use strict"; const ledger = {}; function charge(amount) { return value + amount; } return {charge, read: () => value, ledger}; }';
+    await resource(module1).write(source);
+    const {make} = await S.import(module1);
+    const account = make(2), bindings = account.charge[Symbol.for('lively-debug-bindings')];
+    expect(account.charge.name).equals('charge');
+    expect(bindings.value).equals(2);
+    bindings.value = 7;
+    expect(account.read()).equals(7);
+    expect(account.charge(3)).equals(10);
+    const meta = account.charge[Symbol.for('lively-object-meta')];
+    expect(source.slice(meta.start, meta.end)).equals('function charge(amount) { return value + amount; }');
+    expect(account.read[Symbol.for('lively-debug-bindings')][Symbol.for('lively-debug-binding-cells')].value)
+      .equals(bindings[Symbol.for('lively-debug-binding-cells')].value);
+  });
+
   it('imports cached frozen records before the live transpiler is installed', async () => {
     S.config({ transpiler: 'stub-transpiler' });
     S.set(module1, S.newModule({ x: 3 }));
