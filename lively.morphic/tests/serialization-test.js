@@ -58,16 +58,16 @@ describe('morph serialization', function () {
     const previousBase = System.baseURL;
     try {
       globalThis.livelyNative = { assetURL: url => url };
-      System.baseURL = 'file:///desktop/runtime-root/';
+      System.config({ baseURL: 'file:///desktop/runtime-root/' });
       const image = morph({ type: 'image', imageUrl: System.baseURL + 'assets/image.svg' });
       const snapshot = serializeMorph(image);
       globalThis.livelyNative = undefined;
-      System.baseURL = previousBase;
+      System.config({ baseURL: previousBase });
       const copy = deserializeMorph(snapshot);
       expect(copy.imageUrl).equals(previousBase + 'assets/image.svg');
       expect(image.imageUrl).equals('file:///desktop/runtime-root/assets/image.svg');
     } finally {
-      System.baseURL = previousBase;
+      System.config({ baseURL: previousBase });
       globalThis.livelyNative = previousNative;
     }
   });
