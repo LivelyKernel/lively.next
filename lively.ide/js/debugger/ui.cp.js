@@ -336,7 +336,8 @@ export class LivelyDebuggerModel extends ViewModel {
     await treeData.collapse(treeData.root, false);
     const bindings = treeData.root.children[0];
     await treeData.collapse(bindings, false);
-    treeData.root.children = bindings.children;
+    const names = scope?.bindingNames() || [];
+    treeData.root.children = bindings.children.filter(node => names.includes(node.key));
     for (const node of bindings.children) treeData.parentMap.set(node, treeData.root);
     tree.selectedNode = null;
     tree.treeData = treeData;
