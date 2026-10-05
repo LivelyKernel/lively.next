@@ -99,7 +99,7 @@ class Layout {
     if (layoutableSubmorph.ownerChain().find(m => !m.visible)) return;
     const submorphNode = this.getNodeFor(layoutableSubmorph);
     if (!layoutableSubmorph.isLayoutable) return;
-    this.onDomResize(submorphNode, layoutableSubmorph);
+    this.onDomResize?.(submorphNode, layoutableSubmorph);
   }
 
   copy () { return new this.constructor(this); }
@@ -756,12 +756,9 @@ export class TilingLayout extends Layout {
   }
 
   /**
-   * Defines wether or not this specific layout object should be rendered via CSS
-   * (therefore dispatching any layout ops to the browser stack) or manually computing
-   * the submorph positions through JavaScript.
-   * CSS renders generally have a much better performance but lack precision with regards
-   * transitioning smoothly between different configurations (layout animations).
-   * When you animate your layout operations it's best to set this property to false.
+   * Selects CSS flex rendering or explicit morph positioning. Yoga computes the
+   * layout in both modes; bounds are synchronized from Yoga rather than measured
+   * from DOM nodes. Explicit positioning supports animated layout changes.
    * @type {Boolean}
    */
   get renderViaCSS () {
@@ -803,19 +800,6 @@ export class TilingLayout extends Layout {
       });
     }
   }
-
-  /**************
-   * CSS LAYOUT *
-   **************/
-
-  /**
-   * In reaction to changes in the DOM that have happend due to a
-   * render pass, we update the morphic model to align with the
-   * values in the DOM. Since we delegate the placement of morphs
-   * to the browser, we need to confirm the definite bounds of
-   * the layoutable submorphs from there.
-   */
-  onDomResize (node, morph) {} // eslint-disable-line no-unused-vars
 
   measureSubmorph () {} // do nothing
 
@@ -883,15 +867,7 @@ export class TilingLayout extends Layout {
       });
   }
 
-  /**
-   * Attempt an immediate measure of the morph's rendered node
-   * to retrieve bounds from the DOM. If not possible, defer to
-   * the next render pass.
-   */
-  tryToMeasureNodeNow (aSubmorph) {
-    this.updateSubmorphBounds(aSubmorph);
-  }
-
+  /** Synchronize a morph's bounds from its computed Yoga layout. */
   updateSubmorphBounds (morph) {
     const node = this.ensureYogaNodeFor(morph);
     const isPreliminary = !node._computedMargin;
@@ -1755,8 +1731,6 @@ export class ConstraintLayout extends Layout {
   }
 
   measureSubmorph () { }
-
-  onDomResize (node, morph) { }
 
   getContainerExtent () {
     if (this.container._yogaNode) {
@@ -3666,7 +3640,7 @@ export class GridLayout extends Layout {
       }
     });
     if (layoutableSubmorph.layout && layoutableSubmorph.layout.renderViaCSS) {
-      layoutableSubmorph.layout.onDomResize(node, layoutableSubmorph);
+      layoutableSubmorph.layout.onDomResize?.(node, layoutableSubmorph);
     }
   }
 
