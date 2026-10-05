@@ -183,4 +183,14 @@ describe('generator and async iterator continuations', function () {
     expect(second.currentFrame.lookup('quantity')).equals(3);
     expect(resumeInspectorContinuation(second)).equals(10);
   });
+
+  it('awaits each yielded value after applying an async generator edit', async function () {
+    const source = 'async function* values() { for (const quantity of [2, 3]) { let amount = quantity; await Promise.resolve(); debugger; yield amount; } }';
+    const receiver = {values: fn(source)};
+    const stopped = await run(fn('async function task() { let total = 0; for await (const value of this.values()) total += value; return total; }'), null, [], {this: receiver});
+    receiver.values = fn(source.replace('yield amount;', 'yield amount * 2;'));
+    const second = await resumeInspectorContinuation(applySavedInspectorMethod(stopped));
+    expect(second.currentFrame.lookup('quantity')).equals(3);
+    expect(await resumeInspectorContinuation(second)).equals(10);
+  });
 });

@@ -334,6 +334,8 @@ export class Interpreter {
     }
 
     try {
+      // A new iteration may suspend before overwriting its previous result.
+      if (node.astIndex != null && node.type.endsWith('Expression')) delete frame.alreadyComputed[node.astIndex];
       this['visit' + node.type](node, state);
       if (node.astIndex != null && node.type.endsWith('Expression') && (typeof state.result !== 'function' || state.result.isInterpretableFunction)) frame.alreadyComputed[node.astIndex] = state.result;
     } catch (e) {
