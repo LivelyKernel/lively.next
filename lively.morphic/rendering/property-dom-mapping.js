@@ -4,39 +4,6 @@ import { string, num } from 'lively.lang';
 import { defaultAttributes } from './morphic-default.js';
 import bowser from 'bowser';
 
-const propsToDelete = [
-  'padding-left',
-  'padding-right',
-  'margin-bottom',
-  'margin-top',
-  'margin',
-  'gap',
-  'background',
-  'background-image',
-  'clip-path',
-  'place-content',
-  'flex-flow', 'flex-grow', 'flex-shrink',
-  'align-items', 'align-self',
-  'grid-column-start',
-  'grid-column-end',
-  'grid-row-start',
-  'grid-row-end',
-  'justify-self',
-  'display',
-  'order',
-  'overflow',
-  'width', 'height',
-  'top', 'left', 'right', 'bottom', 'position',
-  'margin-left',
-  'margin-right',
-  'grid-template-rows',
-  'grid-template-columns',
-  'will-change',
-  'filter',
-  'backdrop-filter',
-  'z-index'
-];
-
 /**
  * Actually applies styles as defined in an Object to a DOM node.
  * @param {Object} styleProps - The styles to apply.
@@ -45,10 +12,10 @@ const propsToDelete = [
  */
 export function stylepropsToNode (styleProps, node) {
   const previousStyleProps = node._previousStyleProps || {};
-  for (let prop of propsToDelete) {
-    if (previousStyleProps[prop] === styleProps[prop]) continue;
-    if (prop in styleProps) continue; // not need to reset what we are patching afterwards anyways
-    node.style.removeProperty(prop);
+  for (let prop in previousStyleProps) {
+    if (prop in styleProps) continue;
+    if (prop.startsWith('--')) node.style.removeProperty(prop);
+    else node.style[prop] = '';
   }
   for (let prop in styleProps) {
     if (previousStyleProps[prop] === styleProps[prop]) continue;
