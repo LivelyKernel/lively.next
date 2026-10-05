@@ -383,6 +383,34 @@ export class RichTextControlModel extends ViewModel {
   }
 }
 
+const TextColorInput = component(ColorInput, {
+  name: 'text color input',
+  viewModel: {
+    colorPickerComponent: DarkColorPicker
+  },
+  layout: new TilingLayout({
+    axisAlign: 'center',
+    orderByIndex: true,
+    padding: rect(20, 1, -10, 1),
+    resizePolicies: [['hex input', {
+      height: 'fill',
+      width: 'fixed'
+    }], ['opacity input', {
+      height: 'fill',
+      width: 'fixed'
+    }]],
+    spacing: 10
+  }),
+  extent: pt(250, 25),
+  submorphs: [{
+    name: 'hex input',
+    extent: pt(74.8, 22)
+  }, {
+    name: 'opacity input',
+    extent: pt(83.4, 22)
+  }]
+});
+
 const RichTextControl = component(PropertySection, {
   defaultViewModel: RichTextControlModel,
   name: 'rich text control',
@@ -618,32 +646,8 @@ const RichTextControl = component(PropertySection, {
     fixedWidth: true,
     extent: pt(250, 16),
     padding: rect(20, 0, -20, 0)
-  })), add(part(ColorInput, {
-    name: 'font color input',
-    viewModel: {
-      colorPickerComponent: DarkColorPicker
-    },
-    layout: new TilingLayout({
-      axisAlign: 'center',
-      orderByIndex: true,
-      padding: rect(20, 1, -10, 1),
-      resizePolicies: [['hex input', {
-        height: 'fill',
-        width: 'fixed'
-      }], ['opacity input', {
-        height: 'fill',
-        width: 'fixed'
-      }]],
-      spacing: 10
-    }),
-    extent: pt(250.3, 25),
-    submorphs: [{
-      name: 'hex input',
-      extent: pt(74.8, 22)
-    }, {
-      name: 'opacity input',
-      extent: pt(83.4, 22)
-    }]
+  })), add(part(TextColorInput, {
+    name: 'font color input'
   })),
 
   add(part(PropLabel, {
@@ -654,10 +658,9 @@ const RichTextControl = component(PropertySection, {
     extent: pt(250, 16),
     padding: rect(20, 0, -20, 0)
   })),
-  add(part(ColorInput, {
+  add(part(TextColorInput, {
     name: 'decoration color input',
-    tooltip: 'Decoration Color',
-    viewModel: { colorPickerComponent: DarkColorPicker }
+    tooltip: 'Decoration Color'
   })),
   add({
     name: 'selection controls',
@@ -683,10 +686,9 @@ const RichTextControl = component(PropertySection, {
         },
         submorphs: [{ name: 'label', fontSize: 12 }]
       })]
-    }, part(ColorInput, {
+    }, part(TextColorInput, {
       name: 'selection color input',
-      tooltip: 'Selection Color',
-      viewModel: { colorPickerComponent: DarkColorPicker }
+      tooltip: 'Selection Color'
     })]
   }),
   add({
