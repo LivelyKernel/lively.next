@@ -352,6 +352,12 @@ export function stepInspectorContinuation (continuation, {
     ? interpreter.stepToNextCallOrStatement(frame)
     : interpreter.stepToNextStatement(frame);
   const next = continuationFromStepResult(result, interpreterContinuation);
+  if (next?.reason === 'yield' && frame.generator) {
+    frame.generator.state = 'yield';
+    const caller = returnFromInspectorFrame(interpreterContinuation, {value: next.error.value, done: false}, {startFrame: frame, iteratorResult: true});
+    frame.setParentFrame(null);
+    return caller;
+  }
   if (!next || !next.isContinuation) return returnFromInspectorFrame(interpreterContinuation, next, {startFrame: frame});
   if (next && next.reason === 'bindings') return next.settleBindings().then(stopped => stepInspectorContinuation(stopped, {action}));
   return next && next.reason === 'await'
@@ -370,7 +376,10 @@ export function stepOutInspectorContinuation (continuation, {
   const frame = interpreterContinuation.currentFrame;
   const parentFrame = frame && frame.getParentFrame && frame.getParentFrame();
   let result;
-  try { result = new Interpreter({captureErrors: true}).runFromPC(frame); }
+  try {
+    const interpreter = new Interpreter({captureErrors: true});
+    result = frame.generator ? frame.generator.resume(interpreter) : interpreter.runFromPC(frame);
+  }
   catch (error) { result = continuationFromStepResult(error, interpreterContinuation); if (!result || !result.isContinuation) throw error; }
   result = continuationFromStepResult(result, interpreterContinuation);
   if (result && result.reason === 'await') return result.settleAwait().then(stopped =>
@@ -379,7 +388,7 @@ export function stepOutInspectorContinuation (continuation, {
   if (!parentFrame) return result;
   const parentPC = parentFrame.getPC && parentFrame.getPC();
   if (parentPC && parentPC.astIndex !== undefined) {
-    parentFrame.alreadyComputed[parentPC.astIndex] = result;
+    parentFrame.supplyCallResult(result);
   }
   return new Continuation(parentFrame);
 }
@@ -506,13 +515,17 @@ export function resumeInspectorContinuation (continuation, options = {}) {
   return asInterpreterContinuation(continuation).resume();
 }
 
-export function returnFromInspectorFrame (continuation, value, {startFrame = null} = {}) {
+export function returnFromInspectorFrame (continuation, value, {startFrame = null, iteratorResult = false} = {}) {
   const interpreted = asInterpreterContinuation(continuation);
   const frame = startFrame || interpreted.currentFrame;
   if (!interpreted.frames().includes(frame)) throw new InspectorInterpreterError('Selected frame is no longer suspended.');
   const parent = frame.getParentFrame();
+  if (frame.generator && !iteratorResult) {
+    frame.generator.state = 'done';
+    value = {value, done: true};
+  }
   if (!parent) return value;
-  const pc = parent.getPC();
-  parent.alreadyComputed[pc.astIndex] = value;
+  parent.supplyCallResult(value);
+  if (frame.generator) frame.setParentFrame(null);
   return new Continuation(parent);
 }

@@ -2,12 +2,14 @@ import { obj, arr } from "lively.lang";
 import { acorn, escodegen, parseFunction } from "lively.ast";
 import { UnwindException, __getClosure, __createLexicalScope, __declareLexicalBindings, __initializeBinding, __cloneLexicalScope, __awaitValue, __forOf, __closeIteratorsAfterCatch, bindingCells, restoreBindingCells, capturedBindingMappings, freeFunctionReferences, runtimeFunctionSource, removeRuntimeClosureAnnotations } from "./exception.js";
 import { getGlobal } from "lively.vm/lib/util.js";
+import { Continuation } from './stackReification.js';
 
 let Global = getGlobal();
 
 export function RestoredFunction() {
   const fn = function() { return fn.interpretedFunction.asFunction().apply(this, arguments); };
   fn.__after_deserialize__ = function() {
+    if (!fn.interpretedFunction.node) { fn.interpretedFunction._restoredFunction = fn; return; }
     Object.assign(fn, fn.interpretedFunction.asFunction());
     Object.defineProperty(fn, 'name', {value: fn.interpretedFunction.name(), configurable: true});
   };
@@ -144,6 +146,11 @@ export class Interpreter {
 
   invoke(recv, func, argValues, frame, isNew) {
     if (typeof func !== 'function') throw new TypeError(String(func) + ' is not a function');
+    const generatorMethod = func === ManagedGenerator.prototype.next ? 'next' : func === ManagedGenerator.prototype.throw ? 'throw' : func === ManagedGenerator.prototype.return ? 'return' : null;
+    if (recv instanceof ManagedGenerator && generatorMethod) {
+      if (this.breakAtCall) { this.breakAtCall = false; this.breakAtStatement = true; }
+      return recv.advance(generatorMethod, argValues[0], frame, this);
+    }
     // if we send apply to a function (recv) we want to interpret it
     // although apply is a native function
     if (recv && obj.isFunction(recv) && (func === globalThis.Function.prototype.apply || func === globalThis.Function.prototype.call)) {
@@ -302,15 +309,18 @@ export class Interpreter {
     if (!this.wantsInterpretation(node, frame)) return;
 
     if (frame.isResuming()) {
+      const pc = frame.getPC();
+      const enclosesPC = node !== pc && node.start <= pc.start && node.end >= pc.end;
       if (frame.isPCStatement(node)) frame.resumeReachedPCStatement();
       if (frame.resumesAt(node)) {
+        if (node.type === 'ForOfStatement') state.resumingIterator = node.astIndex;
         frame.resumesNow();
         if (this.breakOnResume) {
           this.breakOnResume = false;
           throw throwableBreak();
         }
       }
-      if (frame.isAlreadyComputed(node.astIndex)) {
+      if (!enclosesPC && frame.isAlreadyComputed(node.astIndex)) {
         state.result = frame.alreadyComputed[node.astIndex];
         return;
       }
@@ -325,7 +335,9 @@ export class Interpreter {
 
     try {
       this['visit' + node.type](node, state);
+      if (node.astIndex != null && node.type.endsWith('Expression') && (typeof state.result !== 'function' || state.result.isInterpretableFunction)) frame.alreadyComputed[node.astIndex] = state.result;
     } catch (e) {
+      if (e.isGeneratorReturn || e.isGeneratorThrow) throw e;
       if ((this.captureErrors || lively.Config && lively.Config.loadRewrittenCode) && !(e instanceof UnwindException)) {
         if (e.unwindException)
           e = e.unwindException;
@@ -495,47 +507,50 @@ export class Interpreter {
   }
 
   visitTryStatement(node, state) {
-    var frame = state.currentFrame,
-        hasError = false, err;
-
-    try {
-      this.accept(node.block, state);
-    } catch (e) {
-      if (e.isUnwindException || e.unwindException) {
-        const unwind = e.isUnwindException ? e : e.unwindException;
-        if (!(unwind.error instanceof Error) || !node.handler) throw unwind;
-        __closeIteratorsAfterCatch(unwind);
-        e = unwind.error;
-        delete e.unwindException;
-        frame.setPC(null);
+    const frame = state.currentFrame, key = '__finally_' + node.astIndex;
+    let completion = frame.alreadyComputed[key];
+    const pc = frame.getPC();
+    const inHandler = pc && node.handler && node.handler.start <= pc.start && pc.end <= node.handler.end;
+    if (!completion) {
+      completion = {};
+      try {
+        try { if (!inHandler) this.accept(node.block, state); }
+        catch (error) {
+          if (error.isGeneratorReturn || !node.handler) throw error;
+          const unwind = error.isUnwindException ? error : error.unwindException;
+          if (unwind) {
+            if (!(unwind.error instanceof Error)) throw unwind;
+            __closeIteratorsAfterCatch(unwind);
+            error = unwind.error;
+            delete error.unwindException;
+            frame.setPC(null);
+          }
+          state.error = error.isGeneratorThrow ? error.value : error;
+          this.accept(node.handler, state);
+          delete state.error;
+        }
+        if (inHandler) this.accept(node.handler, state);
+      } catch (error) {
+        if (error.isUnwindException || error.unwindException) throw error;
+        completion.error = error;
+        completion.hasError = true;
       }
-      if (lively.Config && lively.Config.loadRewrittenCode) {
-        if (e instanceof UnwindException)
-          throw e;
-        else  if (e.unwindException && e.toString() == 'Break')
-          throw e.unwindException;
-      }
-      hasError = true;
-      state.error = err = e;
+      Object.assign(completion, {value: state.result, returning: frame.returnTriggered, breaking: frame.breakTriggered, continuing: frame.continueTriggered});
+      if (node.finalizer) frame.alreadyComputed[key] = completion;
     }
-    if (!hasError && frame.isResuming() && (node.handler !== null)  && !frame.isAlreadyComputed(node.handler))
-      hasError = true;
-
-    try {
-      if (hasError && (node.handler !== null)) {
-        hasError = false;
-        this.accept(node.handler, state);
-        delete state.error;
-      }
-    } catch (e) {
-      if (e.isUnwindException || e.unwindException) throw e;
-      hasError = true;
-      err = e;
+    if (node.finalizer) {
+      frame.returnTriggered = false;
+      frame.breakTriggered = null;
+      frame.continueTriggered = null;
+      this.accept(node.finalizer, state);
+      delete frame.alreadyComputed[key];
+      if (frame.returnTriggered || frame.breakTriggered || frame.continueTriggered) return;
     }
-    if (node.finalizer !== null) this.accept(node.finalizer, state);
-
-    if (hasError)
-      throw err;
+    frame.returnTriggered = completion.returning;
+    frame.breakTriggered = completion.breaking;
+    frame.continueTriggered = completion.continuing;
+    if (completion.returning) state.result = completion.value;
+    if (completion.hasError) throw completion.error;
   }
 
   visitCatchClause(node, state) {
@@ -545,7 +560,11 @@ export class Interpreter {
       catchScope.set(node.param.name, state.error);
       frame.setScope(catchScope);
     }
-    this.accept(node.body, state);
+    try { this.accept(node.body, state); }
+    catch (error) {
+      if (error.isGeneratorReturn || error.isGeneratorThrow) frame.setScope(frame.getScope().getParentScope());
+      throw error;
+    }
     state.currentFrame.setScope(frame.getScope().getParentScope()); // restore original scope
   }
 
@@ -722,56 +741,98 @@ export class Interpreter {
 
   visitForOfStatement(node, state) {
     const frame = state.currentFrame, key = '__forOf_' + node.astIndex;
+    const resuming = frame.isResuming() || state.resumingIterator === node.astIndex;
+    delete state.resumingIterator;
     let iterator = frame.alreadyComputed[key];
-    const resuming = frame.isResuming();
     if (!resuming || !iterator) {
       this.accept(node.right, state);
-      iterator = __forOf(state.result, frame.alreadyComputed, node.astIndex);
-      iterator.next();
+      iterator = __forOf(state.result, frame.alreadyComputed, node.astIndex, !!node.await);
+    } else if (frame.getPC() && node.body.start <= frame.getPC().start && frame.getPC().end <= node.body.end) iterator.entered = true;
+    if (frame.awaitRejection) {
+      const error = frame.awaitRejection;
+      delete frame.awaitRejection;
+      throw iterator.completion?.hasError ? iterator.completion.error : error;
     }
     const declaration = node.left.type === 'VariableDeclaration' ? node.left : null;
     const left = declaration ? declaration.declarations[0].id : node.left;
     const lexical = declaration && declaration.kind !== 'var';
-    let loopScope;
-    if (lexical && resuming) {
-      loopScope = frame.getScope();
-      while (loopScope && loopScope.lexicalNodeIndex !== node.astIndex) loopScope = loopScope.getParentScope();
-      if (!loopScope) throw new Error('Missing recorded iteration scope');
-    }
-    let first = true;
-    while (!iterator.done) {
-      if (!(resuming && first)) {
+    while (iterator.phase !== 'done') {
+      if (iterator.phase === 'next' || iterator.phase === 'close') {
+        const operation = iterator.phase === 'next' ? 'next' : 'close';
+        const receiver = iterator.iterator || iterator;
+        const method = operation === 'next' ? receiver.next : receiver.return;
+        let result;
+        if (iterator.hasResult) { result = iterator.result; delete iterator.result; delete iterator.hasResult; }
+        else if (method) {
+          frame.pendingIterator = {key, operation};
+          if (operation === 'close') iterator.suspended = false;
+          result = receiver === iterator ? method.call(receiver) : this.invoke(receiver, method, [], frame, false);
+          delete frame.pendingIterator;
+        } else result = {done: true};
+        if (node.await) {
+          if (iterator.fromSync) result = Promise.resolve(result).then(async step => {
+            if (step === null || typeof step !== 'object') throw new TypeError('Iterator result is not an object');
+            return {value: await step.value, done: step.done};
+          });
+          __awaitValue(result, node.astIndex, {iteratorKey: key, operation});
+        }
+        if (operation === 'next') iterator.acceptStep(result);
+        else {
+          if (result === null || typeof result !== 'object') throw new TypeError('Iterator result is not an object');
+          iterator.done = true;
+          iterator.phase = 'done';
+        }
+      }
+      if (iterator.phase === 'done') break;
+      if (!iterator.entered) {
         if (lexical) {
           const mapping = __createLexicalScope(null, frame.alreadyComputed, node.astIndex, [[left.name, declaration.kind]])[1];
           __initializeBinding(mapping, left.name, iterator.value);
-          loopScope = new Scope(mapping, frame.getScope());
-          loopScope.lexicalNodeIndex = node.astIndex;
-          frame.setScope(loopScope);
+          const scope = new Scope(mapping, frame.getScope());
+          scope.lexicalNodeIndex = node.astIndex;
+          frame.setScope(scope);
         } else {
+          if (declaration) this.accept(declaration, state);
           state.result = iterator.value;
           if (left.type === 'Identifier') this.setVariable(left.name, state);
           else this.setSlot(left, state);
         }
+        iterator.entered = true;
       }
+      let failure;
       try { this.accept(node.body, state); }
       catch (error) {
-        if (error.isUnwindException) (error.iteratorsToClose || (error.iteratorsToClose = [])).push(iterator);
-        else iterator.return();
-        throw error;
+        const unwind = error.isUnwindException ? error : error.unwindException;
+        if (unwind && (!(unwind.error instanceof Error) || !frame.canCatchAt(node))) {
+          (unwind.iteratorsToClose || (unwind.iteratorsToClose = [])).push(iterator);
+          throw unwind;
+        }
+        failure = unwind ? unwind.error : error;
+        if (unwind) { delete failure.unwindException; frame.setPC(null); }
       }
-      if (lexical) frame.setScope(loopScope.getParentScope());
-      if (frame.breakTriggered || frame.returnTriggered) {
-        frame.stopBreak();
-        iterator.suspended = false;
-        iterator.return();
-        break;
+      iterator.entered = false;
+      if (lexical) {
+        let scope = frame.getScope();
+        while (scope && scope.lexicalNodeIndex !== node.astIndex) scope = scope.getParentScope();
+        frame.setScope(scope.getParentScope());
       }
-      if (frame.continueTriggered) {
-        frame.stopContinue(this.findNodeLabel(node, state));
-        if (frame.continueTriggered) { iterator.return(); break; }
-      }
-      first = false;
-      iterator.next();
+      if (frame.continueTriggered) frame.stopContinue(this.findNodeLabel(node, state));
+      if (failure || frame.breakTriggered || frame.returnTriggered || frame.continueTriggered) {
+        iterator.completion = {value: state.result, returning: frame.returnTriggered, breaking: frame.breakTriggered,
+          continuing: frame.continueTriggered, error: failure, hasError: !!failure};
+        frame.returnTriggered = false;
+        frame.breakTriggered = null;
+        frame.continueTriggered = null;
+        iterator.phase = 'close';
+      } else iterator.phase = 'next';
+    }
+    if (iterator.completion) {
+      state.result = iterator.completion.value;
+      frame.returnTriggered = iterator.completion.returning;
+      frame.breakTriggered = iterator.completion.breaking;
+      frame.continueTriggered = iterator.completion.continuing;
+      frame.stopBreak();
+      if (iterator.completion.hasError) throw iterator.completion.error;
     }
   }
 
@@ -1165,6 +1226,71 @@ export class Interpreter {
     __awaitValue(state.result, node.astIndex);
   }
 
+  visitYieldExpression(node, state) {
+    const frame = state.currentFrame;
+    if (frame.awaitRejection) {
+      const error = frame.awaitRejection;
+      delete frame.awaitRejection;
+      throw error;
+    }
+    const request = frame.generatorRequest;
+    delete frame.generatorRequest;
+    if (node.delegate) return this.visitDelegatedYield(node, state, request);
+    if (request && request.method !== 'next') {
+      if (request.method === 'throw') throw new GeneratorThrow(request.value);
+      throw new GeneratorReturn(request.value);
+    }
+    if (node.argument) this.accept(node.argument, state);
+    else state.result = undefined;
+    if (frame.func.node.async) {
+      const key = '__yieldValue_' + node.astIndex;
+      if (Object.prototype.hasOwnProperty.call(frame.alreadyComputed, key)) {
+        state.result = frame.alreadyComputed[key];
+        delete frame.alreadyComputed[key];
+      } else __awaitValue(state.result, node.astIndex, {valueKey: key});
+    }
+    throw new UnwindException({reason: 'yield', value: state.result, astIndex: node.astIndex, toString() { return 'Yield'; }});
+  }
+
+  visitDelegatedYield(node, state, request = {method: 'next', value: undefined}) {
+    const frame = state.currentFrame, key = '__delegate_' + node.astIndex;
+    let iterator = frame.alreadyComputed[key];
+    if (!iterator) {
+      this.accept(node.argument, state);
+      iterator = frame.alreadyComputed[key] = __forOf(state.result, {}, node.astIndex, !!frame.func.node.async);
+    }
+    if (!iterator.hasResult) iterator.request = request;
+    else request = iterator.request;
+    let step;
+    if (iterator.hasResult) { step = iterator.result; delete iterator.hasResult; delete iterator.result; }
+    else {
+      const method = request.method;
+      const receiver = iterator.iterator || iterator;
+      const operation = receiver[method];
+      if (iterator.indexed && method === 'return') throw new GeneratorReturn(request.value);
+      if (!operation) {
+        if (method === 'return') throw new GeneratorReturn(request.value);
+        if (receiver.return) this.invoke(receiver, receiver.return, [], frame, false);
+        throw new TypeError('Delegated iterator has no throw method');
+      }
+      frame.pendingDelegate = {key};
+      step = receiver === iterator ? operation.call(receiver, request.value) : this.invoke(receiver, operation, [request.value], frame, false);
+      delete frame.pendingDelegate;
+      if (frame.func.node.async) {
+        if (iterator.fromSync) step = Promise.resolve(step).then(async result => ({value: await result.value, done: result.done}));
+        __awaitValue(step, node.astIndex, {delegateKey: key});
+      }
+    }
+    if (step === null || typeof step !== 'object') throw new TypeError('Iterator result is not an object');
+    if (step.done) {
+      delete frame.alreadyComputed[key];
+      if (request.method === 'return') throw new GeneratorReturn(step.value);
+      state.result = step.value;
+      return;
+    }
+    throw new UnwindException({reason: 'yield', value: step.value, astIndex: node.astIndex, toString() { return 'Yield'; }});
+  }
+
   static stripInterpreterFrames(topFrame) {
     var allFrames = [topFrame];
     while (arr.last(allFrames).getParentFrame())
@@ -1182,9 +1308,115 @@ export class Interpreter {
 
 };
 
+export class GeneratorReturn {
+  constructor(value) { this.value = value; }
+  get isGeneratorReturn() { return true; }
+}
+
+export class GeneratorThrow {
+  constructor(value) { this.value = value; }
+  get isGeneratorThrow() { return true; }
+}
+
+export class ManagedGenerator {
+  constructor(frame) {
+    this.frame = frame;
+    this.state = 'start';
+    this.async = !!frame.func.node.async;
+    frame.generator = this;
+    frame.setParentFrame(null);
+    this.__after_deserialize__();
+  }
+
+  get isManagedGenerator() { return true; }
+  get __dont_serialize__() { return ['queue']; }
+  __after_deserialize__() {
+    Object.defineProperty(this, this.async ? Symbol.iterator : Symbol.asyncIterator, {value: undefined, configurable: true});
+  }
+  [Symbol.iterator]() { return this; }
+  [Symbol.asyncIterator]() { return this; }
+  next(value) { return this.request('next', value); }
+  throw(value) { return this.request('throw', value); }
+  return(value) { return this.request('return', value); }
+
+  request(method, value) {
+    const execute = () => {
+      try { return this.advance(method, value); }
+      catch (error) {
+        if (error.isUnwindException && error.error.reason === 'await') return Continuation.fromUnwindException(error).resume();
+        if (error.isUnwindException && error.error instanceof Error) { this.state = 'done'; throw error.error; }
+        throw error;
+      }
+    };
+    if (!this.async) return execute();
+    const result = (this.queue || Promise.resolve()).then(async () => {
+      if (method === 'return') value = await value;
+      const result = await execute();
+      return result?.isContinuation ? result : {value: await result.value, done: result.done};
+    });
+    this.queue = result.catch(() => {});
+    return result;
+  }
+
+  advance(method, value, parentFrame = null, interpreter = new Interpreter({captureErrors: true})) {
+    if (this.state === 'executing') throw new TypeError('Generator is already running');
+    if (this.state === 'done' || this.state === 'start' && method !== 'next') {
+      this.state = 'done';
+      if (method === 'throw') throw value;
+      return {value: method === 'return' ? value : undefined, done: true};
+    }
+    if (this.state === 'yield') {
+      const pc = this.frame.getPC();
+      if (method === 'next' && !pc.delegate) this.frame.alreadyComputed[pc.astIndex] = value;
+      else {
+        delete this.frame.alreadyComputed[pc.astIndex];
+        this.frame.generatorRequest = {method, value};
+      }
+    }
+    this.frame.setParentFrame(parentFrame);
+    return this.resume(interpreter);
+  }
+
+  resume(interpreter) {
+    const frame = this.frame;
+    this.state = 'executing';
+    try {
+      const value = frame.isResuming() ? interpreter.runFromPC(frame) : interpreter.runWithFrame(frame.func.node, frame);
+      this.state = 'done';
+      frame.setParentFrame(null);
+      return {value, done: true};
+    } catch (error) {
+      if (error.isGeneratorReturn) {
+        this.state = 'done';
+        frame.setParentFrame(null);
+        return {value: error.value, done: true};
+      }
+      if (error.isGeneratorThrow) { this.state = 'done'; frame.setParentFrame(null); throw error.value; }
+      if (error.isUnwindException && error.error.reason === 'yield') {
+        this.state = 'yield';
+        frame.setParentFrame(null);
+        return {value: error.error.value, done: false};
+      }
+      this.state = 'debugger';
+      throw error;
+    }
+  }
+}
+
 export class Function {
 
-  get __dont_serialize__() { return ['_cachedFunction', 'originalFunction']; }
+  get __dont_serialize__() { return ['_cachedFunction', 'originalFunction', 'capturedFrameState', '_restoredFunction']; }
+
+  __after_deserialize__() {
+    if (this._restoredFunction) {
+      this._restoredFunction.__after_deserialize__();
+      delete this._restoredFunction;
+    }
+  }
+
+  __additionally_serialize__(snapshot, ref, pool, addFn) {
+    if (this.capturedFrameState) addFn('lexicalScope', Scope.recreateFromFrameState(this.capturedFrameState));
+  }
 
   get isInterpretableFunction() { return true }
 
@@ -1296,6 +1528,10 @@ export class Function {
   }
 
   apply(thisObj, argValues, interpreter) {
+    if (this.capturedFrameState) {
+      this.lexicalScope = Scope.recreateFromFrameState(this.capturedFrameState);
+      delete this.capturedFrameState;
+    }
     var // mapping = obj.extend({}, this.getVarMapping()),
         argNames = this.argNames();
     // work-around for $super
@@ -1304,10 +1540,12 @@ export class Function {
 
     var parentFrame = this.parentFrame ? this.parentFrame : Frame.global(),
         frame = parentFrame.newFrame(this, this.lexicalScope);
+    if (!parentFrame.func) frame.setParentFrame(null);
     // FIXME: add mapping to the new frame.getScope()
     if (this.node.type === 'ArrowFunctionExpression') frame.setThis(this.lexicalThis);
     else if (thisObj !== undefined) frame.setThis(thisObj);
     frame.setArguments(argValues);
+    if (this.node.generator) return new ManagedGenerator(frame);
     // TODO: reactivate when necessary
     // frame.setCaller(lively.ast.Interpreter.Frame.top);
     return this.basicApply(frame, interpreter);
@@ -1372,6 +1610,7 @@ export class Frame {
   }
 
   __after_deserialize__() {
+    if (!this.func?.node) return;
     this.pc = this.serializedPC == null ? null : acorn.walk.findNodeByAstIndex(this.func.node, this.serializedPC);
     this.pcStatement = this.serializedPCStatement == null ? null : acorn.walk.findNodeByAstIndex(this.func.node, this.serializedPCStatement);
     delete this.serializedPC;
@@ -1485,6 +1724,14 @@ export class Frame {
 
   getException() { return this.exception; }
 
+  canCatchAt(pc) {
+    let handled = false;
+    acorn.walk.simple(this.func.node.body, {TryStatement(node) {
+      if (node.handler && node.block.start <= pc.start && pc.end <= node.block.end) handled = true;
+    }}, acorn.walk.visitors.stopAtFunctions);
+    return handled;
+  }
+
  // control flow
 
   triggerReturn() { this.returnTriggered = true; }
@@ -1512,6 +1759,17 @@ export class Frame {
     return this.alreadyComputed = mapping;
   }
 
+  supplyCallResult(value) {
+    const pending = this.pendingIterator || this.pendingDelegate;
+    if (pending) {
+      const iterator = this.alreadyComputed[pending.key];
+      iterator.result = value;
+      iterator.hasResult = true;
+      delete this.pendingIterator;
+      delete this.pendingDelegate;
+    } else this.alreadyComputed[this.pc.astIndex] = value;
+  }
+
   isAlreadyComputed(nodeOrAstIndex) {
     var astIndex = typeof nodeOrAstIndex === "number" ?
         nodeOrAstIndex : nodeOrAstIndex.astIndex;
@@ -1530,9 +1788,12 @@ export class Frame {
     }
   }
 
-  getPC(node) { return this.pc; }
+  getPC(node) {
+    if (Object.prototype.hasOwnProperty.call(this, 'serializedPC')) this.__after_deserialize__();
+    return this.pc;
+  }
 
-  isResuming() { return this.pc !== null; }
+  isResuming() { return this.getPC() !== null; }
 
   resumesAt(node) { return node === this.pc; }
 
@@ -1587,7 +1848,7 @@ obj.extend(Frame, {
 
 export class Scope {
 
-  get __dont_serialize__() { return ['mapping']; }
+  get __dont_serialize__() { return ['mapping', 'computationState']; }
 
   __additionally_serialize__(snapshot, ref, pool, addFn) {
     const cells = bindingCells(this.mapping);

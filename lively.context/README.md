@@ -74,6 +74,31 @@ Record the action, selected statement, expected count, actual count, and status 
 The debugger source pane displays the original module, saves it, and retains unsaved
 drafts while changing frames. The Object Editor remains available through Edit Method.
 
+### Generators and async iteration
+
+Open the generator exercise from a workspace:
+
+```js
+const {openGeneratorWorkflow} = await System.import('lively.ide/js/debugger/examples/generator-workflow.js');
+await openGeneratorWorkflow();
+```
+
+The debugger stops in `GeneratorLesson.lineTotals`, after its first await, while
+`checkout` waits for the next async iterator result. Its source pane shows the
+original class module. Evaluate `this.rate = 2; amount = this.rate * quantity` to
+repair the first line, then Proceed. Repair `amount` again at the second stop and
+Proceed to get `10`, with two visits and one cleanup. To evolve the implementation,
+save future `yield` edits in the debugger and use Apply Saved Method; changes to
+already executed statements require Restart Frame or a new checkout.
+
+Generators retain an ordinary interpreter `Frame` between iterator requests.
+`next(value)`, `throw(error)`, `return(value)`, `yield*`, async generators, and
+`for await` use the existing continuation and await machinery. Suspension keeps
+catch/finally and iterator cleanup dormant; completion, break, and errors execute
+the appropriate cleanup. Managed generator frames and recorded array/string
+cursors can be saved through the existing serializer. A pending external promise
+still restores as an await checkpoint requiring its result.
+
 ### Order desk: a longer implementation session
 
 Open the completed exercise in a JavaScript workspace:
@@ -257,8 +282,9 @@ handles. Instrument their factory before creating a new closure.
 
 This is not a claim of full current ECMAScript/ESM evaluation conformance. Module
 loading stays with Lively's module system. The continuation interpreter supports
-the constructs exercised above; generators, async iteration and arbitrary native
-stack reconstruction require additional execution state. Restart Frame intentionally
+the constructs exercised above, including generators and async iteration. Native
+stacks and OS handles are primitives; the debugger does not step into them or recreate
+them when loading a saved world. Restart Frame intentionally
 repeats earlier effects when edits change code that already executed.
 
 Run `lively.context/tests/tutorial-test.js` with mocha-es6 for the executable core

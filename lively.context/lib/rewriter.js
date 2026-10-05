@@ -33,6 +33,17 @@ export {
   getCurrentASTRegistry, _currentASTRegistry, setCurrentASTRegistry, rewrite, rewriteFunction
 }
 
+const iteratorFrameVisitor = {ForOfStatement(_node, state) { state.found = true; }};
+
+export function requiresIteratorFrame(node) {
+    if (!node) return false;
+    if (node.generator) return true;
+    const state = {found: false};
+    // Iterator.next() can itself suspend in a managed generator.
+    walk.simple(node.body, iteratorFrameVisitor, walk.visitors.stopAtFunctions, state);
+    return state.found;
+}
+
 export class Rewriter {
 
   constructor(astRegistry, namespace)  {
@@ -387,6 +398,11 @@ export class Rewriter {
       });
   }
 
+  wrapIteratorClosure(node) {
+      node.iteratorFrame = true;
+      return this.wrapClosure({type: 'FunctionExpression', id: node.id, params: [], body: {type: 'BlockStatement', body: []}}, this.namespace, node.registryId);
+  }
+
   simpleStoreComputationResult(node, astIndex) {
       return this.newNode('AssignmentExpression', {
           operator: '=',
@@ -497,6 +513,7 @@ export class Rewriter {
       // FIXME: make astRegistry automatically use right namespace
       node.registryId = this.astRegistry[this.namespace].push(node) - 1;
       node._parentEntry = originalRegistryIndex;
+      if (requiresIteratorFrame(node)) return this.wrapIteratorClosure(node);
       if (node.id.name.substr(0, 12) == '_NO_REWRITE_') {
           var astCopy = walk.copy(node);
           astCopy.type = 'FunctionExpression';
@@ -1850,6 +1867,10 @@ export class RewriteVisitor extends BaseVisitor {
       n.registryId = rewriter.astRegistry[rewriter.namespace].push(n) - 1;
       n._parentEntry = this.registryIndex;
 
+      if (requiresIteratorFrame(n)) return rewriter.newNode('ExpressionStatement', {
+          expression: rewriter.simpleStoreComputationResult(rewriter.wrapIteratorClosure(n), n.astIndex), id: n.id
+      });
+
       var start = n.start, end = n.end, astIndex = n.astIndex;
       if (n.id && n.id.name.substr(0, 12) == '_NO_REWRITE_') {
           return rewriter.newNode('ExpressionStatement', {
@@ -2094,6 +2115,14 @@ export class RewriteVisitor extends BaseVisitor {
               // patch astIndex to calls astIndex
               lastArg.expressions[1] = rewriter.lastNodeExpression(astIndex);
           }
+      }
+
+      if (lastArg === undefined && n.callee.type === 'MemberExpression' &&
+          !['Identifier', 'ThisExpression'].includes(n.callee.object.type)) {
+          // Evaluate a receiver such as values() before recording the pending next() call.
+          const receiver = rewriter.storeComputationResult(callee.object, n.callee.object.start, n.callee.object.end, n.callee.object.astIndex, true);
+          receiver.expressions[1] = rewriter.lastNodeExpression(astIndex);
+          callee.object = receiver;
       }
 
       if (!thisIsBound && rewriter.isWrappedVar(callee)) {

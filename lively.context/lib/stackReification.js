@@ -371,7 +371,7 @@ export class Continuation {
       // attaching the program node would possibly be right (otherwise the pc's context is missing)
       if (!this.currentFrame.getOriginalAst())
           throw new Error('Cannot resume because frame has no AST!');
-      if (!this.currentFrame.pc)
+      if (!this.currentFrame.getPC())
           throw new Error('Cannot resume because frame has no pc!');
 
       var interpreter = new Interpreter({captureErrors: true});
@@ -388,10 +388,10 @@ export class Continuation {
           frame.parentFrame = null;
 
           if (result.hasOwnProperty('val'))
-              frame.alreadyComputed[frame.pc.astIndex] = result.val;
+              frame.supplyCallResult(result.val);
 
           try {
-              return { val: interpreter.runFromPC(frame, result.val) };
+              return { val: frame.generator ? frame.generator.resume(interpreter) : interpreter.runFromPC(frame, result.val) };
           } catch (ex) {
               if (ex.unwindException) ex = ex.unwindException;
               if (!ex.isUnwindException)
@@ -421,6 +421,10 @@ export class Continuation {
           this.reason = 'exception';
           this.error = this.exception = frame.exception = frame.awaitRejection = exception;
           delete frame.pendingAwait;
+          if (frame.canCatchAt(frame.getPC())) {
+              this.reason = 'debugger';
+              this.exception = frame.exception = undefined;
+          }
       }
       return this;
   }
@@ -428,7 +432,21 @@ export class Continuation {
   supplyAwaitResult(value) {
       const frame = this.currentFrame;
       if (!frame.pendingAwait) throw new Error('No pending await in this frame');
-      frame.alreadyComputed[frame.pendingAwait.astIndex] = value;
+      const pending = frame.pendingAwait;
+      if (pending.iteratorKey) {
+          const iterator = frame.alreadyComputed[pending.iteratorKey];
+          if (pending.operation === 'next') iterator.acceptStep(value);
+          else {
+              if (value === null || typeof value !== 'object') throw new TypeError('Iterator result is not an object');
+              iterator.done = true;
+              iterator.phase = 'done';
+          }
+      } else if (pending.valueKey) frame.alreadyComputed[pending.valueKey] = value;
+      else if (pending.delegateKey) {
+          const iterator = frame.alreadyComputed[pending.delegateKey];
+          iterator.hasResult = true;
+          iterator.result = value;
+      } else frame.alreadyComputed[pending.astIndex] = value;
       delete frame.pendingAwait;
       this.reason = 'debugger';
       this.error = undefined;

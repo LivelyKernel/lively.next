@@ -12,6 +12,41 @@ import * as modules from 'lively.modules';
 import { LivelyWorld } from '../../world.js';
 
 describe('runtime closure bindings', function () {
+  it('shows an async generator in its class module and applies saved future edits', async function () {
+    this.timeout(10000);
+    const file = resource('local://debugger-generator/lesson.js');
+    const source = 'export class Lesson {\n constructor() { this.rate = "2"; this.visits = 0; this.cleanups = 0; }\n async *values() {\n  try {\n   for (const quantity of [2, 3]) {\n    this.visits++;\n    let amount = this.rate + quantity;\n    await Promise.resolve();\n    debugger;\n    yield amount;\n   }\n  } finally { this.cleanups++; }\n }\n async checkout() { let total = 0; for await (const value of this.values()) total += value; return total; }\n}';
+    await file.write(source);
+    const mod = module(file.url);
+    let view;
+    try {
+      const {Lesson} = await mod.load();
+      const lesson = new Lesson();
+      const stopped = await runWithCapturedBindings(lesson.checkout, null, [], {this: lesson});
+      expect(stopped.exception).equals(undefined);
+      expect(stopped.currentFrame.func.name()).contains('values');
+      view = openForContinuation(stopped, $world);
+      const model = view.viewModel;
+      await model.selectFrame(stopped.currentFrame);
+      expect(model.ui.sourcePane.textString).equals(source);
+      expect(lineRangeForFrame(stopped.currentFrame, source).start.row).equals(8);
+      expect((await model.evaluateWorkspaceSource('this.rate = 2; amount = this.rate * quantity')).value).equals(4);
+      model.ui.sourcePane.textString = source.replace('yield amount;', 'yield amount * 2;');
+      expect(await model.saveModule()).equals(true);
+      expect((await model.applySavedMethod()).isContinuation).equals(true);
+      expect((await model.proceed()).isContinuation).equals(true);
+      expect(lesson.visits).equals(2);
+      expect(lesson.cleanups).equals(0);
+      await model.evaluateWorkspaceSource('amount = this.rate * quantity');
+      expect(await model.proceed()).equals(20);
+      expect(lesson.visits).equals(2);
+      expect(lesson.cleanups).equals(1);
+    } finally {
+      if (view) { view.viewModel.sourceBuffers.clear(); await view.viewModel.closeDebugger(); }
+      await mod.unload(); await file.remove();
+    }
+  });
+
   it('keeps a restored world name when no creation or project prompt is requested', async function () {
     const world = {name: 'restored-debugger-world', initializeTopBar: async () => {}, initializeStudioUI: async () => {}};
     const push = history.pushState;
