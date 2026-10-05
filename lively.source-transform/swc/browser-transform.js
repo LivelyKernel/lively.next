@@ -127,7 +127,7 @@ export async function initWasm (baseURL) {
       const cacheBust = bootstrapScript
         ? bootstrapScript.src.replace(/.*bootstrap-([^.]+)\.js.*/, '$1')
         : '1';
-      const wasmCacheBust = `${cacheBust}-swc6`;
+      const wasmCacheBust = `${cacheBust}-swc7`;
       const wasmUrl = (baseURL || '').replace(/\/$/, '') +
         `/lively.freezer/swc-browser-wasm/lively_swc_browser_bg.wasm?v=${wasmCacheBust}`;
       console.log('[lively.swc] loading WASM from', wasmUrl);
