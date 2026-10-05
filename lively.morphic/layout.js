@@ -735,7 +735,7 @@ export class TilingLayout extends Layout {
   }
 
   setResizePolicyFor (aLayoutableSubmorph, policy) {
-    // policy : width = fixed/fill, height = fixed/fill
+    // policy : width = fixed/fill/shrink (Text), height = fixed/fill
     if (Array.isArray(this._resizePolicies)) {
       let entry = this._resizePolicies.find(([name]) => aLayoutableSubmorph.name === name);
       if (entry) { entry[1] = policy; } else this._resizePolicies.push([aLayoutableSubmorph.name, policy]);
@@ -748,7 +748,7 @@ export class TilingLayout extends Layout {
   }
 
   resizesMorphHorizontally (aMorph) {
-    return this.getResizeWidthPolicyFor(aMorph) === 'fill';
+    return ['fill', 'shrink'].includes(this.getResizeWidthPolicyFor(aMorph));
   }
 
   resizesMorphVertically (aMorph) {
@@ -915,7 +915,7 @@ export class TilingLayout extends Layout {
       morph.withMetaDo({ isLayoutAction: true, skipRender: true }, () => morph.position = pt(newPosX, newPosY));
     }
 
-    if (!isPreliminary && widthPolicy === 'fill' && String(newWidth) !== 'NaN' && newWidth !== morph.width) {
+    if (!isPreliminary && (widthPolicy === 'fill' || widthPolicy === 'shrink') && String(newWidth) !== 'NaN' && newWidth !== morph.width) {
       morph.withMetaDo({ isLayoutAction: true, skipRender: false, metaInteraction: true }, () => morph.width = newWidth);
       if (morph.isText && !morph.fixedHeight) {
         if (!morph.canBeMeasuredViaCanvas) {
@@ -995,6 +995,10 @@ export class TilingLayout extends Layout {
         style['flex-grow'] = 1;
         style['flex-shrink'] = 1;
       }
+    } else if (morph.isText && this.getResizeWidthPolicyFor(morph) === 'shrink') {
+      style.width = `${morph.intrinsicWidth()}px`;
+      style['max-width'] = '100%';
+      style['flex-shrink'] = 1;
     }
     if (this.getResizeHeightPolicyFor(morph) === 'fill') {
       if (isVertical) {
@@ -1023,7 +1027,7 @@ export class TilingLayout extends Layout {
     if (this.axis !== 'column' || hasNextSibling || this.hugContentsVertically || !scrollbarVisible.vertical) { style['margin-bottom'] = `${margin.bottom}px`; }
     if (this.axis !== 'row' || hasPrevSibling || this.hugContentsHorizontally || !scrollbarVisible.horizontal) style['margin-left'] = `${margin.left}px`;
     if (this.axis !== 'row' || hasNextSibling || this.hugContentsHorizontally || !scrollbarVisible.horizontal) { style['margin-right'] = `${margin.right}px`; }
-    if (Number.parseInt(style['flex-grow']) !== 1) style['flex-shrink'] = 0;
+    if (Number.parseInt(style['flex-grow']) !== 1 && this.getResizeWidthPolicyFor(morph) !== 'shrink') style['flex-shrink'] = 0;
   }
 
   adjustMargin (margin) {
@@ -1337,7 +1341,7 @@ export class TilingLayout extends Layout {
       yogaNode.setMargin(Yoga.EDGE_LEFT, -margin.offsetLeft);
       yogaNode.setMargin(Yoga.EDGE_RIGHT, -margin.offsetRight);
     }
-    if (yogaNode.getFlexGrow() !== 1) yogaNode.setFlexShrink(0);
+    if (yogaNode.getFlexGrow() !== 1 && this.getResizeWidthPolicyFor(submorph) !== 'shrink') yogaNode.setFlexShrink(0);
     yogaNode._computedMargin = margin;
   }
 
@@ -1356,7 +1360,15 @@ export class TilingLayout extends Layout {
 
     yogaNode.setOverflow(submorph.isClip() ? Yoga.OVERFLOW_HIDDEN : Yoga.OVERFLOW_VISIBLE);
 
-    if (this.getResizeWidthPolicyFor(submorph) === 'fill') {
+    yogaNode.setMaxWidth(NaN);
+    if (submorph.isText && this.getResizeWidthPolicyFor(submorph) === 'shrink') {
+      yogaNode.setWidth(submorph.intrinsicWidth());
+      yogaNode.setMaxWidth('100%');
+      if (isHorizontal) {
+        yogaNode.setFlexGrow(0);
+        yogaNode.setFlexShrink(1);
+      }
+    } else if (this.getResizeWidthPolicyFor(submorph) === 'fill') {
       if (isVertical) {
         yogaNode.setWidth('100%');
       } else {
