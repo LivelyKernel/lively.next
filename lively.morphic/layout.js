@@ -647,12 +647,8 @@ export class TilingLayout extends Layout {
    */
   get hugContentsVertically () {
     if (this.wrapSubmorphs && this.axis === 'column') return false;
-    for (let m of this.layoutableSubmorphs) {
-      if (!m.visible) continue;
-      const h = this._resizePolicies.get(m)?.height;
-      if (!h) continue;
-      if (h === 'fill') return false;
-    }
+    const visible = this.layoutableSubmorphs.filter(m => m.visible);
+    if (visible.length && visible.every(m => this._resizePolicies.get(m)?.height === 'fill')) return false;
     return this._hugContentsVertically;
   }
 
@@ -677,12 +673,8 @@ export class TilingLayout extends Layout {
    */
   get hugContentsHorizontally () {
     if (this.wrapSubmorphs && this.axis === 'row') return false;
-    for (let m of this.layoutableSubmorphs) {
-      if (!m.visible) continue;
-      const w = this._resizePolicies.get(m)?.width;
-      if (!w) continue;
-      if (w === 'fill') return false;
-    }
+    const visible = this.layoutableSubmorphs.filter(m => m.visible);
+    if (visible.length && visible.every(m => this._resizePolicies.get(m)?.width === 'fill')) return false;
     return this._hugContentsHorizontally;
   }
 
@@ -985,7 +977,8 @@ export class TilingLayout extends Layout {
 
     if (this.getResizeWidthPolicyFor(morph) === 'fill') {
       if (isVertical) {
-        style.width = '100%';
+        style.width = this.hugContentsHorizontally ? 'auto' : '100%';
+        if (this.hugContentsHorizontally) style['align-self'] = 'stretch';
       } else {
         let paddingOffset = 0;
         if (nestedLayout?.padding) {
@@ -1006,7 +999,8 @@ export class TilingLayout extends Layout {
         style['flex-grow'] = 1; // let flex handle that
         style['flex-shrink'] = 1;
       } else {
-        style.height = '100%';
+        style.height = this.hugContentsVertically ? 'auto' : '100%';
+        if (this.hugContentsVertically) style['align-self'] = 'stretch';
       }
     }
     style.position = 'relative';
@@ -1355,10 +1349,14 @@ export class TilingLayout extends Layout {
     const isHorizontal = !isVertical;
 
     yogaNode.setOverflow(submorph.isClip() ? Yoga.OVERFLOW_HIDDEN : Yoga.OVERFLOW_VISIBLE);
+    yogaNode.setAlignSelf(Yoga.ALIGN_AUTO);
 
     if (this.getResizeWidthPolicyFor(submorph) === 'fill') {
       if (isVertical) {
-        yogaNode.setWidth('100%');
+        if (this.hugContentsHorizontally) {
+          yogaNode.setWidthAuto();
+          yogaNode.setAlignSelf(Yoga.ALIGN_STRETCH);
+        } else yogaNode.setWidth('100%');
       } else {
         yogaNode.setWidth('100%');
         yogaNode.setFlexShrink(1);
@@ -1380,7 +1378,10 @@ export class TilingLayout extends Layout {
         yogaNode.setFlexGrow(1);
         yogaNode.setFlexShrink(1);
       } else {
-        yogaNode.setHeight('100%');
+        if (this.hugContentsVertically) {
+          yogaNode.setHeightAuto();
+          yogaNode.setAlignSelf(Yoga.ALIGN_STRETCH);
+        } else yogaNode.setHeight('100%');
       }
     } else {
       if (isVertical) {
