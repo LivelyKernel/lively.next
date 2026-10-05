@@ -116,6 +116,7 @@ jobs:
           node --experimental-import-meta-resolve lively.modules/tests/native-system-live-test.mjs
           node --experimental-import-meta-resolve lively.freezer/tests/package-resolution-test.cjs
           node --experimental-import-meta-resolve lively.freezer/tests/dynamic-system-import-test.mjs
+          node --experimental-import-meta-resolve lively.freezer/tests/swc-state-test.mjs
           node --experimental-import-meta-resolve lively.freezer/tests/minify-test.cjs
           node --experimental-import-meta-resolve lively.freezer/tests/project-bundle-test.mjs
           node --experimental-import-meta-resolve lively.server/tests/browser-import-map-cache-test.mjs
