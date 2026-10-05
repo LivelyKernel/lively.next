@@ -5,6 +5,38 @@ import { Morph } from './morph.js';
 import { addOrChangeCSSDeclaration } from './rendering/dom-helper.js';
 import css from 'css';
 
+const sharedCssMorphs = new WeakMap();
+const cssDocuments = new WeakMap();
+const sharedCssId = 'css-for-shared-html-morphs';
+
+function scopedCss (source, ids) {
+  const parsed = css.parse(source);
+  function scope (rules) {
+    for (const rule of rules) {
+      if (rule.selectors) rule.selectors = ids.flatMap(id => rule.selectors.map(selector => `#${id} ${selector}`));
+      if (rule.rules) scope(rule.rules);
+    }
+  }
+  scope(parsed.stylesheet.rules);
+  return css.stringify(parsed);
+}
+
+function updateSharedCss (doc) {
+  const groups = new Map();
+  for (const morph of sharedCssMorphs.get(doc) || []) {
+    if (!groups.has(morph.cssDeclaration)) groups.set(morph.cssDeclaration, []);
+    groups.get(morph.cssDeclaration).push(morph.id);
+  }
+  if (!groups.size) return doc.getElementById(sharedCssId)?.remove();
+  const declarations = [];
+  for (const [source, ids] of groups) {
+    try { declarations.push(scopedCss(source, ids)); } catch (err) {
+      console.error(`Error setting shared cssDeclaration: ${err}`); // eslint-disable-line no-console
+    }
+  }
+  addOrChangeCSSDeclaration(sharedCssId, declarations.join('\n'), doc);
+}
+
 // Usage:
 // var htmlMorph = $world.addMorph(new HTMLMorph({position: pt(10,10)}));
 // You can set either the html content directly
@@ -86,18 +118,20 @@ export class HTMLMorph extends Morph {
         isStyleProp: true,
         defaultValue: true
       },
+      shareCss: {
+        defaultValue: false,
+        set (val) {
+          this.setProperty('shareCss', val);
+          this.installCssDeclaration(this.document);
+        }
+      },
       cssDeclaration: {
+        after: ['shareCss'],
         isStyleProp: true,
         set (val) {
           this.setProperty('cssDeclaration', val);
-          const doc = this.document;
-          if (!val) {
-            const style = doc.getElementById('css-for-' + this.id);
-            if (style) style.remove();
-          } else {
-            this.installCssDeclaration(doc);
-            this.makeDirty();
-          }
+          this.installCssDeclaration(this.document);
+          this.makeDirty();
         }
       }
     };
@@ -159,22 +193,37 @@ export class HTMLMorph extends Morph {
   }
 
   installCssDeclaration (doc) {
+    const previousDocument = cssDocuments.get(this);
+    if (previousDocument && (previousDocument !== doc || !this.cssDeclaration)) this.uninstallCssDeclaration();
     if (!this.cssDeclaration) return;
+    cssDocuments.set(this, doc);
+    let members = sharedCssMorphs.get(doc);
+    if (this.shareCss) {
+      doc.getElementById('css-for-' + this.id)?.remove();
+      if (!members) sharedCssMorphs.set(doc, members = new Set());
+      members.add(this);
+      updateSharedCss(doc);
+      return;
+    }
+    if (members?.delete(this)) updateSharedCss(doc);
     try {
-      const parsed = css.parse(this.cssDeclaration);
-      // prepend morph id to each rule so that css is scoped to morph
-      parsed.stylesheet.rules.forEach(r => {
-        if (r.selectors) r.selectors = r.selectors.map(ea => `#${this.id} ${ea}`);
-      });
-      addOrChangeCSSDeclaration('css-for-' + this.id, css.stringify(parsed), this.document);
+      addOrChangeCSSDeclaration('css-for-' + this.id, scopedCss(this.cssDeclaration, [this.id]), doc);
     } catch (err) {
       console.error(`Error setting cssDeclaration of ${this}: ${err}`); // eslint-disable-line no-console
     }
   }
 
+  uninstallCssDeclaration () {
+    const doc = cssDocuments.get(this);
+    if (!doc) return;
+    doc.getElementById('css-for-' + this.id)?.remove();
+    if (sharedCssMorphs.get(doc)?.delete(this)) updateSharedCss(doc);
+    cssDocuments.delete(this);
+  }
+
   onOwnerChanged (newOwner) {
     super.onOwnerChanged(newOwner);
-    if (newOwner === null) this.document.getElementById('css-for-' + this.id)?.remove();
+    if (newOwner === null) this.uninstallCssDeclaration();
     else this.installCssDeclaration(this.document);
   }
 
