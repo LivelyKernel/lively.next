@@ -145,6 +145,30 @@ describe('l2l', function () {
       expect(tracker.clients.get(client1.id).socketId).equals(client1.socketId);
     });
 
+    it('updates browser metadata without interrupting message delivery', async () => {
+      const previousDefault = L2LClient.default;
+      const info = { world: 'renamed world' };
+      let routableDuringUpdate;
+      tracker.addService('register', (tracker, msg, ackFn, socket) => {
+        routableDuringUpdate = tracker.getSocketForClientId(msg.sender) === socket;
+        tracker.registerClient(msg, ackFn, socket);
+      });
+      client1.addService('metadata-probe', (_, { data }, ackFn) => ackFn(data));
+      expect((await tracker.sendToAndWait(client1.id, 'metadata-probe', 'before')).data).equals('before');
+      const registered = promise.deferred();
+      client1.once('registered', registered.resolve);
+      try {
+        L2LClient.default = () => client1;
+        expect(L2LClient.forLivelyInBrowser(info)).equals(client1);
+        await promise.timeout(1000, registered.promise);
+        expect(routableDuringUpdate).equals(true, 'metadata update removed the route for in-flight commands');
+        expect(tracker.clients.get(client1.id).info).containSubset(info);
+        expect((await tracker.sendToAndWait(client1.id, 'metadata-probe', 'after')).data).equals('after');
+      } finally {
+        L2LClient.default = previousDefault;
+      }
+    });
+
     it('client unregisters', async () => {
       expect(client1.isRegistered()).equals(true, 1);
       await client1.unregister();

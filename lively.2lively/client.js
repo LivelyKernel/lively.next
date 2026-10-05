@@ -82,7 +82,8 @@ export default class L2LClient extends L2LConnection {
 
     if (hasInfo && !obj.equals(def.info, info) && def.isRegistered()) {
       def.info = info;
-      def.unregister().then(() => def.register())
+      // Keep the route for commands that finish while world metadata changes.
+      def.register(true)
         .catch(err => console.error('l2l re-register on info change errored: ' + err));
     }
 
@@ -292,8 +293,8 @@ export default class L2LClient extends L2LConnection {
     return this.close();
   }
 
-  async register () {
-    if (this.isRegistered()) return this;
+  async register (force = false) {
+    if (this.isRegistered() && !force) return this;
 
     const state = this._reconnectState;
     if (state.closed) {
@@ -340,8 +341,10 @@ export default class L2LClient extends L2LConnection {
         if (state.registerRetry) clearTimeout(state.registerRetry);
         state.registerRetry = null;
         const { data: { trackerId, messageNumber } } = answer;
+        if (this.trackerId !== trackerId) {
+          this._incomingOrderNumberingBySenders.set(trackerId, messageNumber || 0);
+        }
         this.trackerId = trackerId;
-        this._incomingOrderNumberingBySenders.set(trackerId, messageNumber || 0);
         this.emit('registered', { trackerId });
         if (this.onReconnect && typeof (this.onReconnect) === 'function') {
           this.onReconnect();
