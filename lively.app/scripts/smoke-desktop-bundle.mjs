@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createServer } from 'node:http';
+import { once } from 'node:events';
 import { spawn, spawnSync } from 'node:child_process';
 
 const CDP_PORT = Number(process.env.LIVELY_APP_SMOKE_CDP_PORT || 9222);
@@ -379,6 +380,7 @@ async function reopenSmokeWorld (client, url, timeoutMs) {
         if (!morph) { if (name === 'desktop-legacy-image') continue; throw new Error('Saved image missing'); }
         const image = document.createElement('img');
         image.src = morph.getURLForImgNode();
+        if (!image.src.startsWith(System.baseURL)) throw new Error(name + ' retained its old runtime URL: ' + image.src);
         await image.decode();
       }
       return true;
@@ -1003,8 +1005,21 @@ async function main () {
   const logFile = devRoot
     ? path.join(devRoot, 'lively.app', 'boot.log')
     : path.join(dataDir, 'boot.log');
+  let previousPort, portGuard;
   for (const reopened of devRoot || checkSavedWorld ? [false] : [false, true]) {
     appExitStatus = null;
+    if (reopened && cacheProbe) {
+      // The HTTP port can change after relaunch; saved assets must follow it.
+      portGuard = createServer((_req, res) => { res.writeHead(410); res.end(); });
+      portGuard.unref();
+      await waitFor('reserve previous HTTP port', async () => {
+        const listening = once(portGuard, 'listening');
+        portGuard.listen(previousPort, '127.0.0.1');
+        await listening;
+        return true;
+      }, 10000);
+      console.log('Desktop app smoke: reserved previous HTTP port ' + previousPort);
+    }
     try { fs.rmSync(logFile, { force: true }); } catch (_) {}
     console.log(`Smoke data: ${dataDir}`);
     console.log(`Launching ${command}${devRoot ? ` in dev mode from ${devRoot}` : ''}`);
@@ -1034,6 +1049,8 @@ async function main () {
 
       const launchStarted = Date.now();
       const port = await waitForBootLogReady(logFile, timeoutMs, native);
+      if (reopened && cacheProbe && port === previousPort) throw new Error('HTTP relaunch did not change its port');
+      if (!reopened) previousPort = port;
       const rootURL = pathToFileURL(path.join(dataDir, 'runtime-root') + path.sep).href;
       const routeURL = route => {
         if (!native) return `http://127.0.0.1:${port}${route}`;
@@ -1306,6 +1323,7 @@ async function main () {
     }
   }
   cacheProbe?.close();
+  portGuard?.close();
 }
 
 main().catch(err => {

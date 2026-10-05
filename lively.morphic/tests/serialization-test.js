@@ -53,22 +53,28 @@ describe('morph serialization', function () {
     expect(copy.extent).equals(m.extent);
   });
 
-  it('reopens native image URLs against the current runtime base', () => {
+  it('reopens desktop image URLs against the current runtime base', () => {
     const previousNative = globalThis.livelyNative;
+    const previousDesktop = globalThis.__LIVELY_DESKTOP_APP__;
     const previousBase = System.baseURL;
     try {
-      globalThis.livelyNative = { assetURL: url => url };
-      System.config({ baseURL: 'file:///desktop/runtime-root/' });
-      const image = morph({ type: 'image', imageUrl: System.baseURL + 'assets/image.svg' });
-      const snapshot = serializeMorph(image);
-      globalThis.livelyNative = undefined;
-      System.config({ baseURL: previousBase });
-      const copy = deserializeMorph(snapshot);
-      expect(copy.imageUrl).equals(previousBase + 'assets/image.svg');
-      expect(image.imageUrl).equals('file:///desktop/runtime-root/assets/image.svg');
+      globalThis.__LIVELY_DESKTOP_APP__ = true;
+      for (const baseURL of ['file:///desktop/runtime-root/', 'http://127.0.0.1:9011/']) {
+        globalThis.livelyNative = baseURL.startsWith('file:') ? { assetURL: url => url } : undefined;
+        System.config({ baseURL });
+        const image = morph({ type: 'image', imageUrl: baseURL + 'assets/image.svg' });
+        const snapshot = serializeMorph(image);
+        globalThis.livelyNative = undefined;
+        System.config({ baseURL: previousBase });
+        expect(deserializeMorph(snapshot).imageUrl).equals(previousBase + 'assets/image.svg');
+        expect(image.imageUrl).equals(baseURL + 'assets/image.svg');
+        const remote = morph({ type: 'image', imageUrl: 'https://remote.example/image.svg' });
+        expect(deserializeMorph(serializeMorph(remote)).imageUrl).equals(remote.imageUrl);
+      }
     } finally {
       System.config({ baseURL: previousBase });
       globalThis.livelyNative = previousNative;
+      globalThis.__LIVELY_DESKTOP_APP__ = previousDesktop;
     }
   });
 
