@@ -1074,6 +1074,9 @@ export default class Renderer {
         if (fontWeight) chunkNodeStyle['font-weight'] = fontWeight;
         if (fontStyle) chunkNodeStyle['font-style'] = fontStyle;
         if (textDecoration) chunkNodeStyle['text-decoration'] = textDecoration;
+        if (attributes.textDecorationColor) chunkNodeStyle['text-decoration-color'] = attributes.textDecorationColor.isColor
+          ? attributes.textDecorationColor.toP3ColorString()
+          : String(attributes.textDecorationColor);
         if (fontColor) chunkNodeStyle.color = fontColor.isColor ? fontColor.toP3ColorString() : String(fontColor);
         if (backgroundColor) chunkNodeStyle['background-color'] = backgroundColor.isColor ? backgroundColor.toP3ColorString() : String(backgroundColor);
         if (nativeCursor) chunkNodeStyle.cursor = nativeCursor;

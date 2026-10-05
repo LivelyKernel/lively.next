@@ -236,10 +236,17 @@ input:placeholder {
   line-height: inherit;
   color: inherit;
   position: relative;
-  overflow: visible;
+  overflow: var(--text-line-overflow, visible);
+  text-overflow: var(--text-overflow, clip);
   -webkit-tap-highlight-color: transparent;
   -webkit-font-variant-ligatures: contextual;
   font-variant-ligatures: contextual;
+}
+
+.newtext-text-layer .line > span,
+.newtext-text-layer .line > a {
+  text-decoration: var(--text-decoration, none);
+  text-decoration-color: var(--text-decoration-color, currentColor);
 }
 
 .line > .Morph {
