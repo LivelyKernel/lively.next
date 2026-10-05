@@ -6,9 +6,9 @@ import { pt } from 'lively.graphics';
 import { promise } from 'lively.lang';
 
 describe('iframe state during morph moves', () => {
+  const itWithNativeMoves = document.body.moveBefore ? it : it.skip;
   for (const html of [false, true]) {
-    it(`preserves iframe state through real hand grab and drop (HTMLMorph: ${html})`, async function () {
-      if (!document.body.moveBefore) this.skip();
+    itWithNativeMoves(`preserves iframe state through real hand grab and drop (HTMLMorph: ${html})`, async () => {
       const holder = html ? new HTMLMorph({ html: '<iframe srcdoc="<input value=initial>"></iframe>' }) : new IFrameMorph({ srcDoc: '<input value=initial>' });
       const container = new Morph({ extent: pt(600, 400), submorphs: [holder] }).openInWorld();
       const destination = new Morph({ extent: pt(600, 400), position: pt(650, 0), layout: new TilingLayout() }).openInWorld();
@@ -43,8 +43,7 @@ describe('iframe state during morph moves', () => {
     });
   }
 
-  it('preserves iframe state when siblings are reordered', async function () {
-    if (!document.body.moveBefore) this.skip();
+  itWithNativeMoves('preserves iframe state when siblings are reordered', async () => {
     const holder = new HTMLMorph({ html: '<iframe srcdoc="<input>"></iframe>' });
     const container = new Morph({ submorphs: [holder, new Morph(), new Morph()] }).openInWorld();
     try {
