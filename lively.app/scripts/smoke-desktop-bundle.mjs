@@ -143,6 +143,40 @@ async function waitForBootLogReady (logFile, timeoutMs) {
   }, timeoutMs);
 }
 
+/** Require a real SWC translation after frozen bootstrap chunks have replayed. */
+async function assertBrowserSwc (client) {
+  const result = await client.send('Runtime.evaluate', {
+    awaitPromise: true,
+    returnByValue: true,
+    expression: `(async () => {
+      const compiler = await System.import('lively.source-transform/swc/browser-transform.js');
+      if (System.transpiler !== 'lively.transpiler.swc' || !compiler.isAvailable()) {
+        throw new Error('Desktop bootstrap lost the initialized SWC compiler');
+      }
+      const modules = await System.import('lively.modules');
+      const id = new URL('lively.lang/desktop-swc-probe.js', System.baseURL).href;
+      let usedSwc = false;
+      const log = console.log;
+      console.log = (message, ...args) => {
+        if (String(message).startsWith('[swc] ' + id + ' ')) usedSwc = true;
+        log.call(console, message, ...args);
+      };
+      try {
+        const code = await System.translate({
+          name: id, source: 'export const answer = 42;', metadata: { module: modules.module(id) }
+        });
+        if (!usedSwc || !code.includes('System.register')) throw new Error('Desktop module translation fell back from SWC');
+        new Function(code);
+        return true;
+      } finally { console.log = log; }
+    })()`
+  });
+  if (result.exceptionDetails || result.result?.value !== true) {
+    throw new Error('Desktop SWC compiler failed: ' + JSON.stringify(result.exceptionDetails || result.result));
+  }
+  console.log('Desktop app smoke passed: initialized SWC compiles a module without Babel fallback');
+}
+
 /** Select and edit a genuinely frozen module through the system browser. */
 async function assertFrozenModuleResurrection (client) {
   const result = await client.send('Runtime.evaluate', {
@@ -939,6 +973,7 @@ async function main () {
           }, timeoutMs);
           client.assertNoRendererErrors();
           console.log('Desktop app smoke passed: upgraded legacy project opens from the cold dashboard');
+          await assertBrowserSwc(client);
           await client.send('Page.navigate', { url: `http://127.0.0.1:${port}/dashboard/` });
           await openDashboardProject(client, 'smoke--programming');
           await waitFor('saved programming project after relaunch', async () => {
@@ -949,6 +984,7 @@ async function main () {
             return result.result?.value === true;
           }, timeoutMs);
           await assertProjectProgramming(client, port, true);
+          await assertBrowserSwc(client);
           if (fs.readFileSync(path.join(dataDir, 'runtime-root', 'local_projects', 'smoke--programming', 'bun.lock'), 'utf8') !== programmingLock) {
             throw new Error('Restarting the programming project changed its Bun lock');
           }
@@ -965,8 +1001,10 @@ async function main () {
             return result.result?.value === true;
           }, timeoutMs);
           console.log('Desktop app smoke passed: dashboard tile opens a project in the same document');
+          await assertBrowserSwc(client);
           await assertComponentModuleURLs(client);
           await assertFrozenModuleResurrection(client);
+          await assertBrowserSwc(client);
         }
         const worldUrl = `http://127.0.0.1:${port}${WORLD_PATH}`;
         console.log(`Navigating app window to ${worldUrl}`);
@@ -982,6 +1020,7 @@ async function main () {
           await assertRendererUsesHttpSystemURLs(client, port, timeoutMs);
           console.log('Desktop app smoke passed: renderer System uses HTTP module URLs');
           await assertBrowserEnvironmentSwitching(client, port);
+          await assertBrowserSwc(client);
 
           const projectUrl = `http://127.0.0.1:${port}${devRoot ? PROJECT_PATH : EXISTING_PROJECT_PATH}`;
           console.log(`Navigating app window to ${projectUrl}`);
@@ -1030,6 +1069,7 @@ async function main () {
           console.log('Desktop app smoke passed: project route keeps System URLs on HTTP');
           if (!devRoot) {
             await assertProjectProgramming(client, port);
+            await assertBrowserSwc(client);
             programmingLock = fs.readFileSync(path.join(dataDir, 'runtime-root', 'local_projects', 'smoke--programming', 'bun.lock'), 'utf8');
           }
         }

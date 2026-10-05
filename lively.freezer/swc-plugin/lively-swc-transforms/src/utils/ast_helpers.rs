@@ -1,6 +1,36 @@
 use swc_common::{SyntaxContext, DUMMY_SP};
 use swc_ecma_ast::*;
 
+/// Exported aliases whose names belong to a different local binding.
+/// Lively definition callbacks use this to avoid overwriting those exports.
+pub fn renamed_exports(module: &Module) -> std::collections::HashMap<String, String> {
+    let mut names = std::collections::HashMap::new();
+    for item in &module.body {
+        let ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(export)) = item else {
+            continue;
+        };
+        if export.src.is_some() {
+            continue;
+        }
+        for specifier in &export.specifiers {
+            if let ExportSpecifier::Named(specifier) = specifier {
+                if let (ModuleExportName::Ident(local), Some(exported)) =
+                    (&specifier.orig, &specifier.exported)
+                {
+                    let exported = match exported {
+                        ModuleExportName::Ident(id) => id.sym.to_string(),
+                        ModuleExportName::Str(name) => name.value.to_string(),
+                    };
+                    if exported.as_str() != local.sym.as_ref() {
+                        names.insert(exported, local.sym.to_string());
+                    }
+                }
+            }
+        }
+    }
+    names
+}
+
 /// Create a member expression: obj.prop
 pub fn create_member_expr(obj: Expr, prop: &str) -> Expr {
     Expr::Member(MemberExpr {
