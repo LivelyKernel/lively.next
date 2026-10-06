@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { generateImportMapForPackage, installDeps } from '../plugins/lib-lookup.js';
+import { setFetch } from '@jspm/generator';
 
 const root = await fs.mkdtemp(path.join(os.tmpdir(), 'lively-browser-cache-'));
 try {
@@ -29,7 +30,24 @@ try {
   // Legacy hidden maps have no manifest or module-closure metadata.
   await fs.writeFile(cacheFile, JSON.stringify({ imports: {} }));
   assert.deepEqual(await generateImportMapForPackage(root), refreshed);
-  console.log('Hidden browser map generation, cache reuse, manifest refresh, and cache removal passed.');
+  const mappedUrl = 'https://ga.jspm.io/npm:map-fixture@1.0.0/load.js';
+  const dependencyUrl = new URL('./dependency.js', mappedUrl).href;
+  setFetch(async url => {
+    if (String(url) === mappedUrl) return new Response('export { value } from "./dependency.js";');
+    if (String(url) === dependencyUrl) return new Response('export const value = 42;');
+    throw new Error('Unexpected generator request: ' + url);
+  });
+  try {
+    await fs.writeFile(manifest, JSON.stringify({ name: 'fixture', dependencies,
+      systemjs: { map: { loader: { node: 'map-fixture/load', '~node': mappedUrl.replace(/^https:/, 'esm:') } } } }));
+    const mapped = await generateImportMapForPackage(root);
+    assert(mapped._modules.includes(mappedUrl));
+    assert(mapped._modules.includes(dependencyUrl));
+    assert(mapped.integrity[mappedUrl.replace(/^https:/, 'esm:')]);
+    setFetch(() => { throw new Error('A mapped module cache must not access the network'); });
+    assert.deepEqual(await generateImportMapForPackage(root), mapped);
+  } finally { setFetch(globalThis.fetch); }
+  console.log('Hidden browser map generation, cache reuse, manifest refresh, and mapped module closure passed.');
 } finally { await fs.rm(root, { recursive: true, force: true }); }
 
 const installs = [];
