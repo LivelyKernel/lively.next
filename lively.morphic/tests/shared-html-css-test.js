@@ -1,8 +1,35 @@
 /* global describe, it */
 import { expect } from 'mocha-es6';
 import { HTMLMorph } from '../html-morph.js';
+import { addOrChangeCSSDeclaration } from '../rendering/dom-helper.js';
 
 describe('shared HTML morph CSS', () => {
+  it('preserves external stylesheet ordering when sharing and toggling declarations', async () => {
+    for (const shareCss of [false, true]) {
+      const outer = new HTMLMorph({ shareCss, html: '<span class="content">outer</span>', cssDeclaration: '.content { color: red; }' });
+      const external = addOrChangeCSSDeclaration('external-cascade-test', `#${outer.id} .content { color: blue; }`, outer.document);
+      const inner = new HTMLMorph({ shareCss, html: '<span class="content">inner</span>', cssDeclaration: '.content { color: red; }' });
+      outer.addMorph(inner);
+      outer.openInWorld();
+      try {
+        await inner.whenRendered();
+        const check = () => {
+          expect(getComputedStyle(outer.domNode.firstChild).color).equals('rgb(0, 0, 255)');
+          expect(getComputedStyle(inner.domNode.firstChild).color).equals('rgb(255, 0, 0)');
+        };
+        check();
+        outer.shareCss = !outer.shareCss;
+        check();
+        inner.shareCss = !inner.shareCss;
+        check();
+        external.remove();
+        inner.cssDeclaration = '.content { color: green; }';
+        expect(getComputedStyle(outer.domNode.firstChild).color).equals('rgb(255, 0, 0)');
+        expect(getComputedStyle(inner.domNode.firstChild).color).equals('rgb(0, 128, 0)');
+      } finally { inner.remove(); outer.remove(); external.remove(); }
+    }
+  });
+
   it('preserves nested cascade order for every shared/private combination and toggles', async () => {
     for (let flags = 0; flags < 8; flags++) {
       const morphs = ['red', 'blue', 'red'].map((color, index) => new HTMLMorph({
