@@ -9,12 +9,13 @@
 
   // A script in node-main also runs in every Node-enabled worker and resolves
   // against process.cwd(). Keep only Node flags there; start the app here once.
-  const desktopRequire = require('module').createRequire(nw.App.startPath + '/desktop/background-menu.js');
+  const path = require('path');
+  const desktopDir = path.join(__dirname, 'desktop');
+  const desktopRequire = require('module').createRequire(path.join(desktopDir, 'background-menu.js'));
   desktopRequire('./start-server.cjs').setBackgroundWindow(window);
 
   const fs = require('fs');
   const os = require('os');
-  const path = require('path');
   const { createUpdateService } = desktopRequire('./updates.cjs');
 
   function uniquePaths (paths) {
@@ -47,7 +48,7 @@
   function findRootDir (logFn) {
     const appStartPath = typeof nw !== 'undefined' && nw.App && nw.App.startPath;
     const candidates = uniquePaths([
-      ...candidateRootsFrom(__dirname),
+      ...candidateRootsFrom(desktopDir),
       ...candidateRootsFrom(process.cwd && process.cwd()),
       ...candidateRootsFrom(process.execPath),
       ...candidateRootsFrom(process.argv && process.argv[0]),
@@ -88,14 +89,14 @@
   }
 
   const rootDir = findRootDir(log);
-  const bundled = !rootDir || !__dirname.startsWith(rootDir + path.sep);
+  const bundled = !rootDir || !desktopDir.startsWith(rootDir + path.sep);
   logFile = bundled
     ? fallbackLogFile
     : path.join(rootDir, 'lively.app', 'boot.log');
   log('background menu rootDir=' + (rootDir || '(unavailable)') + ', bundled=' + bundled);
 
   const updateService = rootDir
-    ? createUpdateService({ rootDir, desktopDir: __dirname, log })
+    ? createUpdateService({ rootDir, desktopDir, log })
     : null;
 
   function withMainWindow (fn, onMissing) {
