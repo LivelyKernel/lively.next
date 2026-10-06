@@ -528,6 +528,8 @@ class InnerTreeNode extends TreeNode {
           thisOrParent.size = thisOrParent.size - mySize;
           thisOrParent.stringSize = thisOrParent.stringSize - myStringSize;
         });
+      mergeTarget.resize(0, 0, 0);
+      this.resize(0, 0, 0);
     } else {
       // if this node can't be merged with a sibling than at least try to
       // steal nodes from a sibling to fill me up!
@@ -584,6 +586,8 @@ class InnerTreeNode extends TreeNode {
         newChildren.forEach(ea => ea.parent = this);
         if (stealLeft) this.children.unshift(...newChildren);
         else this.children.push(...newChildren);
+        stealTarget.resize(0, 0, 0);
+        this.resize(0, 0, 0);
       }
     }
 
@@ -657,6 +661,7 @@ class InnerTreeNode extends TreeNode {
     if (otherNode.children.length > maxChildren) { otherNode.balanceAfterGrowth(); }
     if (this.children.length > maxChildren) { this.balanceAfterGrowth(); }
 
+    this.parent.resize(0, 0, 0);
     this.parent.balanceAfterGrowth();
   }
 
