@@ -13,8 +13,16 @@ export function freeFunctionReferences(ast) {
 }
 const lexicalBindings = new WeakMap();
 const capturedScopes = new WeakMap();
+let executingDebugModule;
+
+export function withDebugModule(module, invoke) {
+  const previous = executingDebugModule;
+  executingDebugModule = module;
+  try { return invoke(); } finally { executingDebugModule = previous; }
+}
 
 export function runtimeFunctionSource(func) {
+  if (func[Symbol.for('lively-debug-function-source')]) return func[Symbol.for('lively-debug-function-source')];
   const meta = func[Symbol.for('lively-object-meta')];
   return func[Symbol.for('lively-debug-bindings')] && meta
     ? meta.moduleSource.slice(meta.start, meta.end) : func.toString();
@@ -23,7 +31,7 @@ export function runtimeFunctionSource(func) {
 export function removeRuntimeClosureAnnotations(ast) {
   const cells = new Set();
   const isCapture = node => node?.type === 'CallExpression' && node.callee.type === 'MemberExpression' &&
-    node.callee.property.name === 'recordDebugClosure' &&
+    ['recordDebugClosure', 'recordDebugMethod'].includes(node.callee.property.name) &&
     (node.callee.object.type === 'CallExpression' && node.callee.object.callee.property?.name === 'moduleEnv' ||
       node.callee.object.type === 'MemberExpression' && node.callee.object.property.name === '__currentLivelyModule') &&
     node.arguments[1]?.type === 'ObjectExpression' &&
@@ -240,6 +248,22 @@ export function __createClosure(namespace, idx, parentFrameState, f, lexical) {
     f._lexicalArguments = lexical.arguments;
     if (!originalFunctions.has(f._cachedAst)) originalFunctions.set(f._cachedAst, f);
   }
+  let state = parentFrameState, module;
+  while (Array.isArray(state)) {
+    module = state[1]?.[Symbol.for('lively-debug-module')];
+    if (module) break;
+    state = state[2];
+  }
+  module = module || executingDebugModule;
+  if (module) {
+    const original = originalFunctions.get(registry[namespace][f._cachedAst._parentEntry]);
+    const meta = original?.[Symbol.for('lively-object-meta')];
+    if (meta) Object.defineProperties(f, {
+      [Symbol.for('lively-object-meta')]: {value: {...meta, start: meta.start + f._cachedAst.start, end: meta.start + f._cachedAst.end}, configurable: true},
+      [Symbol.for('lively-module-meta')]: {value: original[Symbol.for('lively-module-meta')], configurable: true}
+    });
+    return module.System.get('@lively-env').moduleDebugger.wrapFunction(f, module);
+  }
   return f;
 }
 
@@ -271,7 +295,8 @@ export class UnwindException {
 
     recreateFrames() {
         this.frameInfo.forEach(function(frameInfo) {
-            this.createAndShiftFrame.apply(this, arr.from(frameInfo));
+            const frame = this.createAndShiftFrame.apply(this, arr.from(frameInfo));
+            if (frameInfo.newTarget) frame.newTarget = frameInfo.newTarget;
         }, this);
         this.frameInfo = [];
         return this;
@@ -294,6 +319,7 @@ export class UnwindException {
             if (functionScope.has('arguments')) func.lexicalArguments = functionScope.get('arguments');
         }
         frame = Frame.create(func /*, varMapping */);
+        frame.constructorInvocation = !!originalFunctions.get(ast)?.[Symbol.for('lively-debug-constructor')];
         frame.setThis(thiz);
         if (frame.func.node && frame.func.node.type != 'Program')
             frame.setArguments(args);

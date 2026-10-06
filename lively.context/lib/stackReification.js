@@ -158,6 +158,8 @@ export const debugReplacements = {
 let debugOption = Path('lively.Config.enableDebuggerStatements');
 let configOption, debugSupportDepth = 0;
 
+export function debugSupportEnabled() { return debugSupportDepth > 0; }
+
 export function enableDebugSupport(astRegistry) {
   // FIXME currently only takes care of Array
   try {

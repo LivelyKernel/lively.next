@@ -117,6 +117,7 @@ class SwcBrowserTranspiler {
   transpileModule (source, options) {
     const { module } = options;
     if (!module || !isAvailable()) return null;
+    if (module.debuggingEnabled) return null;
 
     // ponytail: SWC lacks retained closure cells. Reuse Babel until WASM
     // supplies the same binding cells and original source locations.

@@ -120,6 +120,7 @@ function splitExportDefaultWithClass (node, classHolder, options) {
 }
 
 function replaceSuper (node, state, path, options) {
+  if (!state.currentMethod) return node;
   // just super
   console.assert(node.type === 'Super');
   const n = options.nodes;
@@ -140,6 +141,7 @@ function replaceSuper (node, state, path, options) {
 }
 
 function replaceSuperMethodCall (node, state, path, options) {
+  if (!state.currentMethod) return node;
   // like super.foo()
   console.assert(node.type === 'CallExpression');
   console.assert(node.callee.object.type === 'Super');
@@ -156,6 +158,7 @@ function replaceSuperMethodCall (node, state, path, options) {
 }
 
 function replaceDirectSuperCall (node, state, path, options) {
+  if (!state.currentMethod) return node;
   // like super()
   console.assert(node.type === 'CallExpression');
   console.assert(node.callee.type === 'Super');
@@ -173,6 +176,7 @@ function replaceDirectSuperCall (node, state, path, options) {
 }
 
 function replaceSuperGetter (node, state, path, options) {
+  if (!state.currentMethod) return node;
   console.assert(node.type === 'MemberExpression');
   console.assert(node.object.type === 'Super');
   const n = options.nodes;
@@ -184,6 +188,7 @@ function replaceSuperGetter (node, state, path, options) {
 }
 
 function replaceSuperSetter (node, state, path, options) {
+  if (!state.currentMethod) return node;
   console.assert(node.type === 'AssignmentExpression');
   console.assert(node.left.object.type === 'Super');
   const n = options.nodes;
@@ -455,7 +460,7 @@ export function classToFunctionTransformBabel (path, state, options) {
   function handleFunctionDefinition (path, state) {
     const { nodes: n } = options;
     const { classHolder, currentMethodStack, currentMethod } = state;
-    currentMethodStack.push(path.node[methodKindSymbol] ? path.node : currentMethod);
+    currentMethodStack.push(path.isObjectMethod() ? null : path.node[methodKindSymbol] ? path.node : currentMethod);
     state.currentMethod = arr.last(currentMethodStack);
   }
 
@@ -475,7 +480,7 @@ export function classToFunctionTransformBabel (path, state, options) {
   });
 
   path.traverse({
-    'ArrowFunctionExpression|FunctionDeclaration|FunctionExpression': {
+    'ArrowFunctionExpression|FunctionDeclaration|FunctionExpression|ObjectMethod': {
       enter: handleFunctionDefinition,
       exit (path, state) {
         state.currentMethodStack.pop();

@@ -2656,6 +2656,7 @@ export class BrowserModel extends ViewModel {
     return [
       p && { command: 'open browse snippet', target: this, showKeyShortcuts: false },
       m && { command: 'open selected module in text editor', target: this, showKeyShortcuts: false },
+      m && { command: 'toggle module debugger interception', target: this, showKeyShortcuts: false },
       (m || p) && { isDivider: true },
       [[...(td.showDependencyPackages ? checked : unchecked), ' ' + 'Display Dependency Packages', { float: 'none' }],
         () => { this.showDependencyPackages(!td.showDependencyPackages); }],

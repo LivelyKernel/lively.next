@@ -39,6 +39,39 @@ this experiment. There is no replacement continuation or stepping engine.
 
 ## Live tutorial: evolve the same counter
 
+### Ordinary execution
+
+In a live client world, loading or saving a JavaScript module containing an actual
+`debugger;` statement automatically enables interception for that module. Call its
+functions and methods normally, including through buttons and callbacks. A reached
+stop opens Lively Debugger and suspends the instrumented callers while the world
+continues running. No tutorial helper or explicit `run()` call is required.
+Interception applies to function bodies; bare statements in module initialization
+are not captured. Enable interception before creating callback references: native
+function references retained elsewhere before enabling cannot be replaced in place.
+Computed class member keys are not yet intercepted.
+Object-literal methods using `super` retain native execution until their home-object
+binding is supplied; class `super` methods use the existing class-system lowering.
+
+The System Browser's menu includes **Toggle module debugger interception**. This
+temporarily enables or disables interception for the selected module. Enabling it
+wraps current definitions without rerunning module initialization or saving source;
+existing class instances keep their identity. Future source edits honor the setting.
+You can also use `await module('your/package/file.js').setDebuggingEnabled(true)`
+after importing `module` from `lively.modules`.
+
+Only selected modules pay the rewriting cost. Functions are rewritten on first use
+and their rewritten version is cached. Closure cells, original module locations,
+the existing continuation/interpreter, awaits and managed generators are reused.
+No native breakpoint or exception-pause service is involved.
+
+Uninstrumented native callers are execution boundaries. An ordinary synchronous
+call keeps its synchronous return value when it completes; a suspended call returns
+a promise that resolves when the debugger completes the computation. Native code
+that needs the eventual value must await it, or have its own module interception
+enabled so its JavaScript callers are captured too. Closing a debugger abandons its
+invocation and resolves that pending result to `undefined`.
+
 Build the SDK desktop app on this branch. Open a local project through the dashboard,
 open a JavaScript workspace, and evaluate:
 

@@ -969,6 +969,19 @@ function captureRuntimeClosures(program, options) {
     ? t.MemberExpression(t.Identifier(recorderName), t.Identifier('__currentLivelyModule'))
     : options.currentModuleAccessor;
   const cells = new Map(), insertions = new Map(), functions = [];
+  if (options.module?.debuggingEnabled) program.traverse({ ObjectMethod(path) {
+    let usesSuper = false;
+    path.traverse({Super() { usesSuper = true; }});
+    // ponytail: retain home-object methods until object-super lowering supplies
+    // their home binding; moving super into a function expression is invalid.
+    if (usesSuper) return;
+    const method = path.node;
+    const func = t.FunctionExpression(null, method.params, method.body, method.generator, method.async);
+    func.start = method.start; func.end = method.end;
+    func.extra = {...method.extra, livelyDebugMethod: true, livelyDebugName: method.computed ? '' : method.key.name || method.key.value};
+    if (method.kind === 'method') path.replaceWith(t.ObjectProperty(method.key, func, method.computed));
+    else path.get('body').replaceWith(t.BlockStatement([t.ReturnStatement(t.CallExpression(t.MemberExpression(func, t.Identifier('apply')), [t.ThisExpression(), t.Identifier('arguments')]))]));
+  }});
   program.traverse({Function(path) { if (!path.isMethod()) functions.push(path); }});
   const insert = (block, statement) => {
     const statements = insertions.get(block) || [];
@@ -995,8 +1008,8 @@ function captureRuntimeClosures(program, options) {
       captures.set(ref.node.name, cell);
     }});
     const parent = path.parentPath;
-    const name = fn.id?.name || (parent.isVariableDeclarator() ? parent.node.id.name : parent.isObjectProperty() && !parent.node.computed ? parent.node.key.name || parent.node.key.value : '');
-    const call = t.CallExpression(t.MemberExpression(t.cloneNode(module, true), t.Identifier('recordDebugClosure')), [
+    const name = fn.extra?.livelyDebugName || fn.id?.name || (parent.isVariableDeclarator() ? parent.node.id.name : parent.isObjectProperty() && !parent.node.computed ? parent.node.key.name || parent.node.key.value : '');
+    const call = t.CallExpression(t.MemberExpression(t.cloneNode(module, true), t.Identifier(fn.extra?.livelyDebugMethod ? 'recordDebugMethod' : 'recordDebugClosure')), [
       path.isFunctionDeclaration() ? t.cloneNode(fn.id) : fn,
       t.ObjectExpression([...captures].map(([name, cell]) => t.ObjectProperty(t.StringLiteral(name), t.cloneNode(cell)))),
       t.NumericLiteral(fn.start), t.NumericLiteral(fn.end), t.Identifier(options.sourceAccessorName), t.StringLiteral(name || '')
@@ -1007,7 +1020,7 @@ function captureRuntimeClosures(program, options) {
       call.arguments.push(t.ConditionalExpression(t.BinaryExpression('===', t.UnaryExpression('typeof', t.Identifier('arguments')), t.StringLiteral('undefined')), t.Identifier('undefined'), t.Identifier('arguments')));
     }
     if (path.isFunctionDeclaration()) {
-      if (parent.isBlockStatement()) insert(parent, t.ExpressionStatement(call));
+      if (parent.isBlockStatement()) insert(parent, t.ExpressionStatement(t.AssignmentExpression('=', t.cloneNode(fn.id), call)));
     } else path.replaceWith(call);
   }
   // Babel keeps directive prologues separately from the body.

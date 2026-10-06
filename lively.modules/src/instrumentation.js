@@ -1,5 +1,5 @@
 /* global System */
-import { nodes, isValidIdentifier } from 'lively.ast';
+import { nodes, isValidIdentifier, parse, acorn } from 'lively.ast';
 const { funcCall, member, literal } = nodes;
 import { evalCodeTransform, evalCodeTransformOfSystemRegisterSetters } from 'lively.vm';
 import { string, obj, properties } from 'lively.lang';
@@ -276,13 +276,23 @@ export async function customTranslate (load) {
 
   mod.setSource(load.source);
 
+  // Instrument only modules with an actual stop, or modules explicitly enabled
+  // by the user. Strings/comments mentioning debugger do not activate it.
+  const automatic = System.debuggerInterception ?? !!System.global.$world;
+  if (isEsm && automatic && /\bdebugger\b/.test(load.source)) {
+    let found = false;
+    acorn.walk.simple(parse(load.source), { DebuggerStatement () { found = true; } });
+    mod._automaticDebugging = found;
+  } else mod._automaticDebugging = false;
+  if (mod.debuggingEnabled) await mod.ensureModuleDebugger();
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // cache experiment part 1
   let useCache, indexdb, hashForCache;
   try {
     useCache = System.useModuleTranslationCache;
     indexdb = System.global.indexedDB;
-    hashForCache = meta.hashForCache = useCache && String(string.hashCode(load.source));
+    hashForCache = meta.hashForCache = useCache && String(string.hashCode('module-debugger-v2:' + mod.debuggingEnabled + ':' + load.source));
     if (useCache && indexdb && isEsm) {
       let cache = System._livelyModulesTranslationCache ||
                (System._livelyModulesTranslationCache = new BrowserModuleTranslationCache());
