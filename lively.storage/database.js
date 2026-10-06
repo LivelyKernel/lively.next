@@ -88,7 +88,10 @@ function nodejs_attemptToLoadProperPouchDB () {
       PouchDB = System._nodeRequire(pouchDBNodeMain);
       PouchDB.plugin(pouchdbAdapterMem);
       return true;
-    } catch (e) { return false; }
+    } catch (e) {
+      console.warn('Cannot load persistent PouchDB from ' + pouchDBNodeMain + ': ' + (e.stack || e));
+      return false;
+    }
   }
 
   try {
