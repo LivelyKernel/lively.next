@@ -243,7 +243,7 @@ try {
     child.stdout.on('data', data => { output += data; });
     child.stderr.on('data', data => { output += data; });
     const timeout = setTimeout(() => child.kill('SIGTERM'), 60000);
-    const code = await new Promise((resolve, reject) => { child.once('error', reject); child.once('exit', resolve); });
+    const code = await new Promise((resolve, reject) => { child.once('error', reject); child.once('close', resolve); });
     clearTimeout(timeout);
     if (fs.existsSync(result + '.log')) output = fs.readFileSync(result + '.log', 'utf8') + output;
     assert.equal(code, 0, output);
@@ -259,5 +259,5 @@ try {
   }
 } finally {
   await new Promise(resolve => remoteServer.close(resolve));
-  fs.rmSync(fixture, { recursive: true, force: true });
+  await fs.promises.rm(fixture, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
 }
