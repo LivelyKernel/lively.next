@@ -10,7 +10,7 @@ import { createRequire } from 'node:module';
 import { runInNewContext } from 'node:vm';
 import { createServer } from 'node:http';
 
-const executable = process.argv[2];
+const executable = process.argv[2] && path.resolve(process.argv[2]);
 if (!executable) throw new Error('Pass an NW.js executable with no adjacent app manifest');
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'lively native backend '));
