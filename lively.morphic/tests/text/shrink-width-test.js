@@ -74,6 +74,33 @@ describe('text shrink width', () => {
           expect(text.brokenDocument).equals(undefined);
         } finally { container.remove(); }
       });
+
+      it(`measures spacing and tabs in ${axis} shrink width (CSS: ${renderViaCSS})`, async () => {
+        let lineHeight;
+        for (const props of [
+          {}, { letterSpacing: 6 }, { wordSpacing: 15 },
+          { textAndAttributes: ['a\tb', null], tabWidth: 2 },
+          { textAndAttributes: ['a\tb', null], tabWidth: 8 },
+          { textAndAttributes: ['one two ', { letterSpacing: 6 }, 'three', null] }
+        ]) {
+          const text = new Text({ name: 'label', readOnly: true, textAndAttributes: ['one two three', null], fontSize: 20, fixedHeight: false, ...props });
+          const container = new Morph({ extent: pt(1000, 400), submorphs: [text], layout: new TilingLayout({
+            axis, renderViaCSS, resizePolicies: [['label', { width: 'shrink', height: 'fixed' }]]
+          }) }).openInWorld();
+          try {
+            await text.whenFontLoaded();
+            container.env.forceUpdate();
+            if (lineHeight === undefined) lineHeight = text.height;
+            const range = text.env.domEnv.document.createRange();
+            range.selectNodeContents(text.renderingState.textLayer.querySelector('.line'));
+            const actualWidth = range.getBoundingClientRect().width;
+            // DOM ranges and rounded layout edges can differ by less than a pixel.
+            expect(text.intrinsicWidth()).closeTo(actualWidth, 1);
+            expect(text.width).closeTo(actualWidth, 2);
+            expect(text.height).closeTo(lineHeight, 1);
+          } finally { container.remove(); }
+        }
+      });
     }
   }
 });
