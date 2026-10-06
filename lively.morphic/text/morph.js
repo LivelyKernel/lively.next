@@ -2357,11 +2357,13 @@ export class Text extends Morph {
   }
 
   removePlainTextAttribute (attr, value = null) {
-    this.textAndAttributes.forEach(ta => {
-      if (value) ta && ta[attr] === value && delete ta[attr];
-      else ta && delete ta[attr];
+    let changed = false;
+    this.textAndAttributes.forEach((ta, i) => {
+      if (i % 2 === 0 || !ta || !Object.prototype.hasOwnProperty.call(ta, attr) || value && ta[attr] !== value) return;
+      delete ta[attr];
+      changed = true;
     });
-    this.onAttributesChanged(this.documentRange);
+    if (changed) this.onAttributesChanged(this.documentRange);
   }
 
   removeTextAttribute (attr, range = this.selection) {
@@ -2427,6 +2429,7 @@ export class Text extends Morph {
 
   onAttributesChanged (range, resetLayout = true) {
     delete this.renderingState.cachedStaticLines;
+    if (!this.document) this.renderingState.renderedTextAndAttributes = null;
     if (resetLayout) this.invalidateTextLayout(false, false);
     if (this.document) {
       for (let i of arr.range(range.start.row, range.end.row, 1)) {
