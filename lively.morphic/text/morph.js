@@ -3026,6 +3026,7 @@ export class Text extends Morph {
     if (_fontStyleToRender) style['font-style'] = _fontStyleToRender;
     // Decorate individual runs so their color/decoration can override the defaults.
     style['--text-decoration'] = textDecoration || 'none';
+    style['--link-text-decoration'] = textDecoration && textDecoration !== 'none' ? textDecoration : 'underline';
     style['--text-decoration-color'] = textDecorationColor
       ? (textDecorationColor.isColor ? textDecorationColor.toP3ColorString() : String(textDecorationColor))
       : 'currentColor';

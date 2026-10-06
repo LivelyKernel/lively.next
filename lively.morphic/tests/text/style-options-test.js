@@ -8,6 +8,20 @@ describe('text styling and display options', () => {
   afterEach(() => text && text.remove());
 
   for (const readOnly of [true, false]) {
+    it(`preserves link underlines and explicit decoration overrides (${readOnly ? 'static' : 'editable'})`, async () => {
+      const link = 'https://example.invalid/';
+      text = new Text({ readOnly, textAndAttributes: ['default', { link }, ' plain ', null, 'override', { link, textDecoration: 'none' }] }).openInWorld();
+      await text.whenRendered();
+      const styles = () => [...text.renderingState.textLayer.querySelectorAll('.line > a, .line > span')].map(node => getComputedStyle(node).textDecorationLine);
+      expect(styles()).deep.equals(['underline', 'none', 'none']);
+      text.textDecoration = 'line-through';
+      text.env.forceUpdate();
+      expect(styles()).deep.equals(['line-through', 'line-through', 'none']);
+      text.textDecoration = 'none';
+      text.env.forceUpdate();
+      expect(styles()).deep.equals(['underline', 'none', 'none']);
+    });
+
     it(`renders whole-text and per-run decoration colors (${readOnly ? 'static' : 'editable'})`, async () => {
       text = new Text({
         readOnly, fixedWidth: true, extent: pt(250, 60),

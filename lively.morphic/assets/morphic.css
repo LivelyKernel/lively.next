@@ -249,6 +249,10 @@ input:placeholder {
   text-decoration-color: var(--text-decoration-color, currentColor);
 }
 
+.newtext-text-layer .line > a {
+  text-decoration: var(--link-text-decoration, underline);
+}
+
 .line > .Morph {
   display: inline-block !important;
   vertical-align: top !important;
