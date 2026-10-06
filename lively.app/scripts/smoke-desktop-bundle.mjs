@@ -545,7 +545,8 @@ async function assertProjectProgramming (client, port, reopened = false) {
             '(async () => { const { installProjectDependencies } = await System.nativeImport(new URL("lively.project/package-install.mjs", System.baseURL).href); await installProjectDependencies(' + JSON.stringify(cwd) + ', { update: true }); return true; })()',
             { promiseTimeout: 120000 });
           const build = runCommand('bash tools/build.sh', { cwd, env: { NODE_OPTIONS: '--max-old-space-size=2048' }, l2lClient: ShellClientResource.defaultL2lClient });
-          try { await promise.timeout(300000, build.whenDone()); }
+          // The full project bundle approaches five minutes on the macOS runner.
+          try { await promise.timeout(600000, build.whenDone()); }
           catch (error) { throw new Error('Project build failed: ' + error.message + '; pid=' + build.pid + '\\n' + build.output.slice(0, 5000) + build.output.slice(-3000)); }
           check(build.exitCode === 0, 'Project build failed: ' + build.output.slice(0, 5000) + build.output.slice(-3000));
           check(await resource(System.baseURL).join('local_projects/' + fullName + '/build/index.html').exists(), 'Project build did not produce index.html');
