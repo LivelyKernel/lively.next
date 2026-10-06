@@ -1180,14 +1180,6 @@ export class Text extends Morph {
     return !this.document;
   }
 
-  get submorphs () {
-    if (!this.document) {
-      const embeddedMorphs = this.textAndAttributes.filter(m => m?.isMorph);
-      if (embeddedMorphs.length > 0) return [...super.submorphs, ...embeddedMorphs];
-    }
-    return super.submorphs;
-  }
-
   makeDirty () {
     if (this._positioningSubmorph) return;
     this.renderingState.needsRemeasure = true;
