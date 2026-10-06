@@ -5,7 +5,7 @@ import { Rectangle, pt, Transform } from 'lively.graphics';
 import { objectReplacementChar } from 'lively.morphic/text/document.js';
 import { splitTextAndAttributesIntoLines } from 'lively.morphic/text/attributes.js';
 
-import { keyed, noOpUpdate } from './keyed.js';
+import { keyed, noOpUpdate, insertNodeBefore } from './keyed.js';
 import { applyStylingToNode } from './morphic-default.js';
 
 const svgNs = 'http://www.w3.org/2000/svg';
@@ -138,7 +138,7 @@ export default class Renderer {
       const morphsToHandle = [];
       tree.prewalk(this.worldMorph, m => morphsToHandle.push(m), m => m.submorphs);
 
-      this.renderFixedMorphs();
+      this.renderFixedMorphs(morphsToHandle);
 
       for (let morph of morphsToHandle) {
         if (morph.isLabel) morph.fitIfNeeded();
@@ -179,6 +179,20 @@ export default class Renderer {
         this.renderStylingChanges(morph);
       }
 
+      // Keep reparented nodes connected until their new owner's reconciliation.
+      // The existing fixed layer holds them only for this synchronous render pass.
+      if (this.fixedMorphNode.moveBefore) {
+        for (const owner of this.morphsWithStructuralChanges) {
+          for (const child of owner.submorphs) {
+            if (owner.isText && owner.embeddedMorphMap.has(child)) continue;
+            const node = this.getNodeForMorph(child);
+            const parent = owner.isWorld && child.hasFixedPosition
+              ? this.fixedMorphNode
+              : owner.layout?.renderViaCSS ? this.getNodeForMorph(owner) : owner.renderingState.submorphNode;
+            if (node?.isConnected && node.ownerDocument === this.doc && node.parentNode !== parent) insertNodeBefore(this.fixedMorphNode, node);
+          }
+        }
+      }
       for (let morph of this.morphsWithStructuralChanges) {
         this.renderStructuralChanges(morph);
       }
@@ -244,11 +258,24 @@ export default class Renderer {
     morph.renderingState.animationAdded = false;
   }
 
-  renderFixedMorphs () {
+  renderFixedMorphs (morphsToHandle) {
     const fixedSubmorphs = this.worldMorph.submorphs.filter(s => s.hasFixedPosition);
+    const previouslyFixed = this.worldMorph.renderingState.renderedFixedMorphs;
+    if (this.fixedMorphNode.moveBefore) {
+      const outgoingNodes = previouslyFixed.filter(morph => !fixedSubmorphs.includes(morph))
+        .map(morph => this.getNodeForMorph(morph)).filter(node => node?.parentNode === this.fixedMorphNode);
+      // Preserve current model nodes, including children of removed fixed ancestors.
+      // ponytail: scan outgoing roots; index old DOM owners if profiling warrants it.
+      for (const morph of outgoingNodes.length ? morphsToHandle : []) {
+        const node = this.getNodeForMorph(morph);
+        if (node?.isConnected && outgoingNodes.some(parent => parent.contains(node))) {
+          insertNodeBefore(this.bodyNode, node);
+        }
+      }
+    }
     keyed('id',
       this.fixedMorphNode,
-      this.worldMorph.renderingState.renderedFixedMorphs,
+      previouslyFixed.filter(m => this.getNodeForMorph(m)?.parentNode === this.fixedMorphNode),
       fixedSubmorphs,
       item => this.renderAsFixed(item),
       noOpUpdate,
@@ -351,7 +378,7 @@ export default class Renderer {
         const childNodes = Array.from(node.childNodes);
         if (morph.isPath) { childNodes.shift(); childNodes.pop(); } else if (morph.isImage || morph.isCanvas || morph.isHTMLMorph) childNodes.shift();
         childNodes.forEach((n) => {
-          if (n !== wrapperNode && n !== wrapperNode.parentElement) { wrapperNode.appendChild(n); }
+          if (n !== wrapperNode && n !== wrapperNode.parentElement) { insertNodeBefore(wrapperNode, n); }
         });
       }
     } else {
@@ -377,12 +404,12 @@ export default class Renderer {
     const wrapperNode = morph.renderingState.submorphNode;
     if (wrapperNode) {
       if (!morph.isPath) {
-        node.append(...node.lastChild.childNodes);
+        Array.from(wrapperNode.childNodes).forEach(n => insertNodeBefore(node, n));
         wrapperNode.remove();
         delete morph.renderingState.submorphNode;
       } else {
         let children = Array.from(wrapperNode.children);
-        children.forEach((n) => node.insertBefore(n, node.lastChild));
+        children.forEach((n) => insertNodeBefore(node, n, node.lastChild));
         wrapperNode.remove();
         delete morph.renderingState.submorphNode;
       }
