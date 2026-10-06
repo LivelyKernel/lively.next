@@ -79,6 +79,7 @@ function seedPackagedPartsbin (sourceRoot, runtimeRoot) {
   const source = path.join(sourceRoot, 'local_projects', 'LivelyKernel--partsbin');
   const links = [];
   try {
+    const canonicalRoot = fs.realpathSync(sourceRoot);
     // fs.cp copies junctions as symlinks, requiring Windows symlink privileges
     // and retaining absolute targets in the application payload.
     fs.cpSync(source, staging, { recursive: true, filter: (from, to) => {
@@ -93,7 +94,7 @@ function seedPackagedPartsbin (sourceRoot, runtimeRoot) {
         fs.chmodSync(to, stat.mode & 0o777);
         continue;
       }
-      const relative = path.relative(sourceRoot, fs.realpathSync(from));
+      const relative = path.relative(canonicalRoot, fs.realpathSync(from));
       if (relative === '..' || relative.startsWith('..' + path.sep) || path.isAbsolute(relative)) {
         throw new Error('Packaged PartsBin dependency escapes source root: ' + from);
       }

@@ -480,13 +480,28 @@ jobs:
           $env:BUN_PATH = $packagedBun
           Push-Location $app
           try {
+            # Leveldown uses only Node-API; route imports to NW.js's node.dll or the Node executable.
+            $leveldown = (& $packagedNode -p "require('path').dirname(require('module').createRequire(require('path').resolve('lively.storage/package.json')).resolve('leveldown/package.json'))").Trim()
+            $nodeGyp = Join-Path (& npm root -g).Trim() "npm/node_modules/node-gyp/bin/node-gyp.js"
+            $hook = Join-Path (Split-Path (Split-Path $nodeGyp)) "src/win_delay_load_hook.cc"
+            $originalHook = [IO.File]::ReadAllText($hook)
+            $patchedHook = $originalHook.Replace('GetModuleHandle(NULL)', '(GetModuleHandleA("node.dll") ? GetModuleHandleA("node.dll") : GetModuleHandle(NULL))')
+            if ($patchedHook -eq $originalHook) { throw "Unrecognized node-gyp Windows delay-load hook" }
+            [IO.File]::WriteAllText($hook, $patchedHook)
+            try {
+              $nodeVersion = (& $packagedNode -p "process.versions.node").Trim()
+              & $packagedNode $nodeGyp rebuild "--directory=$leveldown" "--target=$nodeVersion"
+              if ($LASTEXITCODE -ne 0) { throw "Windows NW.js LevelDB rebuild failed" }
+            } finally {
+              [IO.File]::WriteAllText($hook, $originalHook)
+            }
             & $packagedNode lively.project/package-install.mjs local_projects/LivelyKernel--partsbin
             if ($LASTEXITCODE -ne 0) { throw "Windows PartsBin dependency install failed" }
             & $packagedNode lively.modules/tests/native-resolver-test.mjs
             if ($LASTEXITCODE -ne 0) { throw "Windows native resolver fixture failed" }
             & $packagedNode lively.modules/tests/native-system-live-test.mjs
             if ($LASTEXITCODE -ne 0) { throw "Windows live SystemJS fixture failed" }
-            & $packagedNode --input-type=module -e "import {createRequire} from 'node:module'; import path from 'node:path'; import {pathToFileURL} from 'node:url'; for (const [owner,name] of [['lively.freezer','@swc/core'],['lively.morphic','yoga-layout'],['lively.modules','brotli']]) { const r=createRequire(path.resolve(owner,'package.json')); await import(pathToFileURL(r.resolve(name)).href); console.log(owner+' -> '+name+' native load passed'); }"
+            & $packagedNode --input-type=module -e "import {createRequire} from 'node:module'; import path from 'node:path'; import {pathToFileURL} from 'node:url'; for (const [owner,name] of [['lively.freezer','@swc/core'],['lively.morphic','yoga-layout'],['lively.modules','brotli'],['lively.storage','pouchdb']]) { const r=createRequire(path.resolve(owner,'package.json')); await import(pathToFileURL(r.resolve(name)).href); console.log(owner+' -> '+name+' native load passed'); }"
             if ($LASTEXITCODE -ne 0) { throw "Windows native dependency load failed" }
             & $packagedNode lively.server/scripts/build-package-registry-cache.cjs
             if ($LASTEXITCODE -ne 0) { throw "Windows package registry seed build failed" }

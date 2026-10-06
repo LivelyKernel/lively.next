@@ -76,6 +76,8 @@ module.exports = function createNativeBackend (rootDir, { log = () => {}, onErro
 
   function initializeStorage (system) {
     return storageReady ||= (async () => {
+      // Fail with the native loader's error before storage can fall back to memory.
+      createRequire(pathToFileURL(rootDir + '/lively.storage/package.json'))('pouchdb');
       const storage = await system.import('lively.storage');
       databases = storage.Database.databases;
       // Never accept the generic storage layer's in-memory fallback here.
