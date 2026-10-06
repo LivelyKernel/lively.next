@@ -2012,6 +2012,8 @@ export default class Renderer {
 
     morph.renderingState.lineWrapping = morph.lineWrapping;
     morph.renderingState.fixedWidth = morph.fixedWidth;
+    morph.renderingState.needsRemeasure = true;
+    morph.invalidateTextLayout(true, true);
   }
 
   /**
