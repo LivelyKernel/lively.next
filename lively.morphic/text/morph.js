@@ -2361,6 +2361,7 @@ export class Text extends Morph {
       if (value) ta && ta[attr] === value && delete ta[attr];
       else ta && delete ta[attr];
     });
+    this.onAttributesChanged(this.documentRange);
   }
 
   removeTextAttribute (attr, range = this.selection) {
