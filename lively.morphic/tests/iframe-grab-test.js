@@ -7,6 +7,38 @@ import { promise } from 'lively.lang';
 
 describe('iframe state during morph moves', () => {
   const itWithNativeMoves = document.body.moveBefore ? it : it.skip;
+  itWithNativeMoves('preserves fixed iframe state through reparenting and layout wrapper changes', async () => {
+    const holder = new HTMLMorph({ hasFixedPosition: true, html: '<iframe srcdoc="<input value=initial>"></iframe>' }).openInWorld();
+    const container = new Morph({ extent: pt(600, 400) }).openInWorld();
+    try {
+      await holder.whenRendered();
+      const iframe = holder.domNode.querySelector('iframe');
+      await promise.waitFor(3000, () => iframe.contentDocument?.querySelector('input'));
+      const originalDocument = iframe.contentDocument;
+      originalDocument.querySelector('input').value = 'retained';
+      iframe.contentWindow.retainedValue = 42;
+      let loads = 0;
+      iframe.addEventListener('load', () => loads++);
+      const hand = holder.world().firstHand;
+      for (const move of [
+        () => hand.grab(holder),
+        () => hand.dropMorphsOn(container),
+        () => { container.layout = new TilingLayout(); },
+        () => { container.layout = null; },
+        () => { holder.hasFixedPosition = true; holder.openInWorld(); },
+        () => { holder.hasFixedPosition = false; }
+      ]) {
+        move();
+        holder.env.forceUpdate();
+        await promise.delay(50);
+        expect(iframe.contentDocument === originalDocument).equals(true);
+        expect(iframe.contentWindow.retainedValue).equals(42);
+        expect(originalDocument.querySelector('input').value).equals('retained');
+        expect(loads).equals(0);
+      }
+    } finally { holder.remove(); container.remove(); }
+  });
+
   for (const html of [false, true]) {
     itWithNativeMoves(`preserves iframe state through real hand grab and drop (HTMLMorph: ${html})`, async () => {
       const holder = html ? new HTMLMorph({ html: '<iframe srcdoc="<input value=initial>"></iframe>' }) : new IFrameMorph({ srcDoc: '<input value=initial>' });

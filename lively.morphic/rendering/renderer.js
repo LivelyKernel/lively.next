@@ -260,9 +260,19 @@ export default class Renderer {
 
   renderFixedMorphs () {
     const fixedSubmorphs = this.worldMorph.submorphs.filter(s => s.hasFixedPosition);
+    const previouslyFixed = this.worldMorph.renderingState.renderedFixedMorphs;
+    if (this.fixedMorphNode.moveBefore) {
+      // Move outgoing fixed nodes aside before keyed reconciliation removes them.
+      for (const morph of previouslyFixed) {
+        const node = this.getNodeForMorph(morph);
+        if (node?.parentNode === this.fixedMorphNode && morph.world() === this.worldMorph && !fixedSubmorphs.includes(morph)) {
+          insertNodeBefore(this.bodyNode, node);
+        }
+      }
+    }
     keyed('id',
       this.fixedMorphNode,
-      this.worldMorph.renderingState.renderedFixedMorphs,
+      previouslyFixed.filter(m => this.getNodeForMorph(m)?.parentNode === this.fixedMorphNode),
       fixedSubmorphs,
       item => this.renderAsFixed(item),
       noOpUpdate,
@@ -365,7 +375,7 @@ export default class Renderer {
         const childNodes = Array.from(node.childNodes);
         if (morph.isPath) { childNodes.shift(); childNodes.pop(); } else if (morph.isImage || morph.isCanvas || morph.isHTMLMorph) childNodes.shift();
         childNodes.forEach((n) => {
-          if (n !== wrapperNode && n !== wrapperNode.parentElement) { wrapperNode.appendChild(n); }
+          if (n !== wrapperNode && n !== wrapperNode.parentElement) { insertNodeBefore(wrapperNode, n); }
         });
       }
     } else {
@@ -391,12 +401,12 @@ export default class Renderer {
     const wrapperNode = morph.renderingState.submorphNode;
     if (wrapperNode) {
       if (!morph.isPath) {
-        node.append(...node.lastChild.childNodes);
+        Array.from(wrapperNode.childNodes).forEach(n => insertNodeBefore(node, n));
         wrapperNode.remove();
         delete morph.renderingState.submorphNode;
       } else {
         let children = Array.from(wrapperNode.children);
-        children.forEach((n) => node.insertBefore(n, node.lastChild));
+        children.forEach((n) => insertNodeBefore(node, n, node.lastChild));
         wrapperNode.remove();
         delete morph.renderingState.submorphNode;
       }
