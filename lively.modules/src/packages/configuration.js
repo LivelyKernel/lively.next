@@ -56,7 +56,8 @@ export default class PackageConfiguration {
     // non-existing package.json
     System.CONFIG.packages[packageURL].configured = true;
 
-    let packageInSystem = System.getConfig().packages[packageURL] || {};
+    // getConfig() copies every installed package; only this package is needed.
+    let packageInSystem = obj.deepCopy(System.CONFIG.packages[packageURL] || {});
     if (!packageInSystem.map) packageInSystem.map = {};
 
     if (sysConfig) {
@@ -138,7 +139,7 @@ export default class PackageConfiguration {
 
   applyLivelyConfigMeta (livelyConfig) {
     if (!livelyConfig.meta) return;
-    let pConf = this.System.getConfig().packages[this.packageURL] || {};
+    let pConf = obj.deepCopy(this.System.CONFIG.packages[this.packageURL] || {});
     let c = { meta: {}, packages: { [this.packageURL]: pConf } };
     Object.keys(livelyConfig.meta).forEach(key => {
       let val = livelyConfig.meta[key];

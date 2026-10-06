@@ -31,7 +31,24 @@ const registry = system.get('@lively-env').packageRegistry;
 const serialized = registry.toJSON();
 assert.equal(serialized.schema, 2);
 assert.ok(Object.values(serialized.packageMap).some(entry => Object.keys(entry.instances || {}).length > Object.keys(entry.versions).length));
-const roundTripped = new instrumentedModules.PackageRegistry(system).fromJSON(serialized);
+const getConfig = system.getConfig;
+const mapping = system['__lively.modules__modulePackageMapCache'];
+const ensureCache = mapping.ensureCache;
+let roundTripped;
+system.getConfig = name => {
+  assert.ok(name && name !== 'packages', 'Restoring packages must not copy the whole loader configuration');
+  return getConfig.call(system, name);
+};
+mapping.ensureCache = function () {
+  assert.ok(this._cacheInitialized, 'A single-module lookup must not rebuild every module-to-package mapping');
+  return ensureCache.call(this);
+};
+try {
+  roundTripped = new instrumentedModules.PackageRegistry(system).fromJSON(serialized);
+} finally {
+  system.getConfig = getConfig;
+  mapping.ensureCache = ensureCache;
+}
 assert.equal(roundTripped.allPackages().length, registry.allPackages().length);
 const duplicated = Object.values(roundTripped.packageMap).find(entry =>
   Object.values(entry.versions).some(pkg => Object.values(entry.instances)
