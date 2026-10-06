@@ -138,7 +138,7 @@ export default class Renderer {
       const morphsToHandle = [];
       tree.prewalk(this.worldMorph, m => morphsToHandle.push(m), m => m.submorphs);
 
-      this.renderFixedMorphs();
+      this.renderFixedMorphs(morphsToHandle);
 
       for (let morph of morphsToHandle) {
         if (morph.isLabel) morph.fitIfNeeded();
@@ -258,14 +258,17 @@ export default class Renderer {
     morph.renderingState.animationAdded = false;
   }
 
-  renderFixedMorphs () {
+  renderFixedMorphs (morphsToHandle) {
     const fixedSubmorphs = this.worldMorph.submorphs.filter(s => s.hasFixedPosition);
     const previouslyFixed = this.worldMorph.renderingState.renderedFixedMorphs;
     if (this.fixedMorphNode.moveBefore) {
-      // Move outgoing fixed nodes aside before keyed reconciliation removes them.
-      for (const morph of previouslyFixed) {
+      const outgoingNodes = previouslyFixed.filter(morph => !fixedSubmorphs.includes(morph))
+        .map(morph => this.getNodeForMorph(morph)).filter(node => node?.parentNode === this.fixedMorphNode);
+      // Preserve current model nodes, including children of removed fixed ancestors.
+      // ponytail: scan outgoing roots; index old DOM owners if profiling warrants it.
+      for (const morph of outgoingNodes.length ? morphsToHandle : []) {
         const node = this.getNodeForMorph(morph);
-        if (node?.parentNode === this.fixedMorphNode && morph.world() === this.worldMorph && !fixedSubmorphs.includes(morph)) {
+        if (node?.isConnected && outgoingNodes.some(parent => parent.contains(node))) {
           insertNodeBefore(this.bodyNode, node);
         }
       }

@@ -7,6 +7,30 @@ import { promise } from 'lively.lang';
 
 describe('iframe state during morph moves', () => {
   const itWithNativeMoves = document.body.moveBefore ? it : it.skip;
+  itWithNativeMoves('preserves iframe descendants when their previous fixed ancestor is removed', async () => {
+    const holder = new HTMLMorph({ html: '<iframe srcdoc="<input value=initial>"></iframe>' });
+    const outgoing = new Morph({ hasFixedPosition: true, submorphs: [new Morph({ submorphs: [holder] })] }).openInWorld();
+    const destination = new Morph({ extent: pt(600, 400) }).openInWorld();
+    try {
+      await holder.whenRendered();
+      const iframe = holder.domNode.querySelector('iframe');
+      await promise.waitFor(3000, () => iframe.contentDocument?.querySelector('input'));
+      const originalDocument = iframe.contentDocument;
+      originalDocument.querySelector('input').value = 'retained';
+      iframe.contentWindow.retainedValue = 42;
+      let loads = 0;
+      iframe.addEventListener('load', () => loads++);
+      destination.addMorph(holder);
+      outgoing.remove();
+      holder.env.forceUpdate();
+      await promise.delay(50);
+      expect(iframe.contentDocument === originalDocument).equals(true);
+      expect(iframe.contentWindow.retainedValue).equals(42);
+      expect(originalDocument.querySelector('input').value).equals('retained');
+      expect(loads).equals(0);
+    } finally { holder.remove(); outgoing.remove(); destination.remove(); }
+  });
+
   itWithNativeMoves('preserves fixed iframe state through reparenting and layout wrapper changes', async () => {
     const holder = new HTMLMorph({ hasFixedPosition: true, html: '<iframe srcdoc="<input value=initial>"></iframe>' }).openInWorld();
     const container = new Morph({ extent: pt(600, 400) }).openInWorld();
