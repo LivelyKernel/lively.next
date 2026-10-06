@@ -1,10 +1,21 @@
-// Loaded only by NW.js's Node context. Initialization starts with the first
-// service request, while Chromium can already render the packaged dashboard.
+// Loaded in the background page's Node-enabled worker. Initialization starts
+// with the first service request, while Chromium renders the dashboard.
 const { createRequire } = require('node:module');
 const { pathToFileURL } = require('node:url');
 
 module.exports = function createNativeBackend (rootDir, { log = () => {}, onError = () => {} } = {}) {
-  let ready, closing, files, shell, databases, storageReady;
+  if (process.env.LIVELY_APP_SMOKE === '1') {
+    const net = require('node:net');
+    const path = require('node:path');
+    const listen = net.Server.prototype.listen;
+    net.Server.prototype.listen = function (endpoint, ...args) {
+      if (typeof endpoint !== 'string' || !path.isAbsolute(endpoint) && !endpoint.startsWith('\\\\.\\pipe\\')) {
+        throw new Error('Native desktop opened a TCP/HTTP listener');
+      }
+      return listen.call(this, endpoint, ...args);
+    };
+  }
+  let ready, closing, shell, databases, storageReady;
   const pending = new Set();
   const clients = new Map();
   const sockets = new Set();
@@ -85,38 +96,25 @@ module.exports = function createNativeBackend (rootDir, { log = () => {}, onErro
 
   const backend = {
     initialize,
-    fileExtension () {
-      return files ||= (async () => {
-        const { resourceExtension } = await import(pathToFileURL(rootDir + '/lively.resources/src/fs-resource.js').href);
-        const baseURL = pathToFileURL(rootDir + '/').href;
-        class DesktopFileResource extends resourceExtension.resourceClass {
-          newResource (url) { return new this.constructor(url, this); }
-          async exists () {
-            if (['package-registry.json', '__JS_FILE_HASHES__', 'compressed-sources'].some(name => this.url === baseURL + name)) return true;
-            return super.exists();
-          }
-          async read () {
-            if (this.url.split('?')[0] === baseURL + 'import-map.json') {
-              await initialize();
-              const { generateImportMap } = await import(pathToFileURL(rootDir + '/lively.server/plugins/lib-lookup.js').href);
-              return JSON.stringify(await generateImportMap(new URL(this.url).searchParams.get('projectName')));
-            }
-            if (this.url === baseURL + 'package-registry.json') {
-              const { system } = await initialize();
-              return JSON.stringify(system.get('@lively-env').packageRegistry.toJSON());
-            }
-            if (this.url === baseURL + '__JS_FILE_HASHES__') {
-              const { computeSourceHashes } = await import(pathToFileURL(rootDir + '/lively.server/source-hashes.js').href);
-              return JSON.stringify(await computeSourceHashes(baseURL));
-            }
-            if (this.url === baseURL + 'compressed-sources') {
-              return require('node:fs/promises').readFile(process.env.LIVELY_PREBUILT_LIBRARY_SNAPSHOT || rootDir + '/lively.server/.library-snapshot.tar.gz');
-            }
-            return super.read();
-          }
-        }
-        return { ...resourceExtension, resourceClass: DesktopFileResource };
-      })();
+    async readFile (url) {
+      const baseURL = pathToFileURL(rootDir + '/').href;
+      if (url.split('?')[0] === baseURL + 'import-map.json') {
+        await initialize();
+        const { generateImportMap } = await import(pathToFileURL(rootDir + '/lively.server/plugins/lib-lookup.js').href);
+        return JSON.stringify(await generateImportMap(new URL(url).searchParams.get('projectName')));
+      }
+      if (url === baseURL + 'package-registry.json') {
+        const { system } = await initialize();
+        return JSON.stringify(system.get('@lively-env').packageRegistry.toJSON());
+      }
+      if (url === baseURL + '__JS_FILE_HASHES__') {
+        const { computeSourceHashes } = await import(pathToFileURL(rootDir + '/lively.server/source-hashes.js').href);
+        return JSON.stringify(await computeSourceHashes(baseURL));
+      }
+      if (url === baseURL + 'compressed-sources') {
+        return require('node:fs/promises').readFile(process.env.LIVELY_PREBUILT_LIBRARY_SNAPSHOT || rootDir + '/lively.server/.library-snapshot.tar.gz');
+      }
+      throw new Error('Unsupported native virtual file: ' + url);
     },
     evaluate (source) {
       return run(async () => {
