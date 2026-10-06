@@ -777,6 +777,7 @@ function emitError (msg) {
   emitStatus('Server ready, loading lively...');
 
   const dashboardUrl = 'http://127.0.0.1:' + port + '/dashboard/';
+  module.exports.desktopOrigin = new URL(dashboardUrl).origin;
   if (typeof nw === 'undefined') {
     log('NW.js global not available; server is ready for direct smoke mode.');
     return;
@@ -792,7 +793,7 @@ function emitError (msg) {
     }
   }
 
-  const win = nw.Window.get();
+  const win = (await new Promise(resolve => nw.Window.getAll(resolve)))[0];
 
   const b = livelyBoot();
   if (b && b.setDashboardUrl) b.setDashboardUrl(dashboardUrl);
