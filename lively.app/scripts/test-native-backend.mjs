@@ -145,6 +145,9 @@ const request = async (method, action, args) => {
     return;
   }
   if (config.mode === 'eval-storage') {
+    // Exercise the native binding directly as well as the shared storage loader.
+    const state = await evaluate('(async()=>{const {Database}=await System.import("lively.storage");const r=require("node:module").createRequire(System.normalizeSync("lively.storage/index.js"));const PouchDB=r("pouchdb");return {environment:System.get("@system-env"),nativeAdapters:Object.keys(PouchDB.adapters),storageAdapters:Object.keys(Database.PouchDB.adapters)};})()');
+    fs.appendFileSync(config.result + '.log', 'Storage loader: ' + JSON.stringify(state) + '\\n');
     assert.equal(await evaluate('(async()=>{const {Database}=await System.import("lively.storage");return Database.ensureDB(' + JSON.stringify(config.fixture + '/eval-only database') + ').pouchdb.adapter;})()'), 'leveldb');
     // Closing drains work already in flight before releasing the database lock.
     const write = evaluate('(async()=>{await new Promise(r=>setTimeout(r,100));const {Database}=await System.import("lively.storage");await Database.ensureDB(' + JSON.stringify(config.fixture + '/eval-only database') + ').pouchdb.put({_id:"pending-write",value:42});return 42;})()');
@@ -246,6 +249,7 @@ try {
     assert.equal(code, 0, output);
     assert.ok(fs.existsSync(result), `No probe result: ${output}`);
     const state = JSON.parse(fs.readFileSync(result));
+    if (state.error) console.error(output);
     assert.equal(state.error, undefined, state.error);
     if (mode === 'registry') assert.deepEqual(remoteState, {
       page: { require: 'undefined', process: 'undefined' },
