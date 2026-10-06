@@ -16,7 +16,7 @@ import KeyHandler from '../events/KeyHandler.js';
 import { UndoManager } from '../undo.js';
 import Layout from './layout.js';
 import textCommands from './commands.js';
-import { textAndAttributesWithSubRanges, splitTextAndAttributesIntoLines } from './attributes.js';
+import { textAndAttributesWithSubRanges } from './attributes.js';
 import { serializeMorph, deserializeMorph } from '../serialization.js';
 import { getSvgVertices } from '../rendering/property-dom-mapping.js';
 import { getClassName } from 'lively.serializer2';
@@ -2792,25 +2792,7 @@ export class Text extends Morph {
   }
 
   intrinsicWidth () {
-    const lines = splitTextAndAttributesIntoLines(this.textAndAttributes);
-    const widths = lines.map(line => {
-      let width = 0;
-      // These attributes apply to the whole line in Renderer.nodeForLine.
-      const spacing = { letterSpacing: this.letterSpacing, wordSpacing: this.wordSpacing, tabWidth: this.tabWidth };
-      for (let i = 1; i < line.length; i += 2) {
-        if (line[i]?.letterSpacing) spacing.letterSpacing = line[i].letterSpacing;
-        if (line[i]?.wordSpacing) spacing.wordSpacing = line[i].wordSpacing;
-      }
-      for (let i = 0; i < line.length; i += 2) {
-        const content = line[i], attrs = line[i + 1] || {};
-        const style = { ...this.defaultTextStyle, ...attrs, ...spacing };
-        if (typeof style.fontSize === 'string' && style.fontSize.endsWith('%')) style.fontSize = parseFloat(style.fontSize) / 100 * this.fontSize;
-        width += content.isMorph ? content.width : this.fontMetric.sizeFor(style, content, true).width;
-        width += (parseFloat(attrs.paddingLeft) || 0) + (parseFloat(attrs.paddingRight) || 0);
-      }
-      return width;
-    });
-    return widths.reduce((max, width) => Math.max(max, width), 0) + this.padding.left() + this.padding.right() + this.borderWidthLeft + this.borderWidthRight;
+    return this.env.renderer.measureIntrinsicTextWidth(this);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

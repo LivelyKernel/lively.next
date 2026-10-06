@@ -70,7 +70,7 @@ export default class FontMetric {
   }
 
   constructor () {
-    this.charMap = {};
+    this.charMap = Object.create(null);
     this.cachedBoundsInfo = {};
     this.supportedFontCache = new Set();
     this.element = null;
@@ -84,7 +84,7 @@ export default class FontMetric {
       doc = this.element.getRootNode();
     }
     this.uninstall();
-    this.charMap = {};
+    this.charMap = Object.create(null);
     this.cachedBoundsInfo = {};
     if (doc && parentNode) { this.install(doc, parentNode, debug); }
   }
@@ -249,7 +249,7 @@ export default class FontMetric {
     const styleKey = this._domMeasure.generateStyleKey(relevantStyle);
     const string = typeof stringOrTextAndAttr === 'string' ? stringOrTextAndAttr : stringOrTextAndAttr[0];
 
-    if (!this.charMap[styleKey]) { this.charMap[styleKey] = {}; }
+    if (!this.charMap[styleKey]) { this.charMap[styleKey] = Object.create(null); }
     if (!this.charMap[styleKey][string]) { this.charMap[styleKey][string] = this.measure(relevantStyle, stringOrTextAndAttr); }
 
     return this.charMap[styleKey][string];
