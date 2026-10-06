@@ -1,10 +1,34 @@
 /* global describe, it */
 import { expect } from 'mocha-es6';
-import { Morph, Text } from '../index.js';
+import { Morph, Text, HTMLMorph } from '../index.js';
 import { pt, Color } from 'lively.graphics';
 import { promise } from 'lively.lang';
 
 describe('minimal inline morph CSS', () => {
+  it('keeps fixed HTML content relative to its morph at the default transform', async () => {
+    const morph = new HTMLMorph({ html: '<div style="position:fixed;left:10px;top:20px;width:30px;height:40px"></div>' }).openInWorld();
+    try {
+      await morph.whenRendered();
+      const node = morph.env.renderer.getNodeForMorph(morph);
+      const child = morph.domNode.firstChild;
+      const check = () => {
+        morph.env.forceUpdate();
+        const ownerBounds = node.getBoundingClientRect();
+        const bounds = child.getBoundingClientRect();
+        expect(bounds.left).closeTo(ownerBounds.left + 10 * morph.scale, 0.2);
+        expect(bounds.top).closeTo(ownerBounds.top + 20 * morph.scale, 0.2);
+      };
+      check();
+      morph.moveBy(pt(50, 30));
+      check();
+      morph.scale = 1.01;
+      check();
+      morph.scale = 1;
+      check();
+      expect(node.style.transform).equals('');
+    } finally { morph.remove(); }
+  });
+
   it('uses CSS defaults and removes declarations when values return to defaults', async () => {
     const parent = new Morph({ nativeCursor: 'pointer', reactsToPointer: false }).openInWorld();
     const morph = parent.addMorph(new Morph());
