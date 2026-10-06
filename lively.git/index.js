@@ -97,7 +97,6 @@ export class GitHubAPIWrapper {
   }
 
   static async deleteDeployKey (repoOwner, repoName, title) {
-  // TODO: If this is called with a non-existing key bad things happen!
     const resKeyList = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/keys`, {
       method: 'GET',
       headers: {
@@ -106,9 +105,13 @@ export class GitHubAPIWrapper {
       }
     });
     const deployKeys = await resKeyList.json();
+    
+    // Should allow us to catch all cases where no keys are found in which case we do not have to delete anythings
+    if (!deployKeys.find) return;
+    
     const keyIdToRemove = deployKeys.find(key => key.title === title).id;
 
-    const resKeyDeletion = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/keys/${keyIdToRemove}`, {
+    await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/keys/${keyIdToRemove}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${currentUserToken()}`,
