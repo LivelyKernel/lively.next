@@ -578,6 +578,38 @@ async function waitForPageTarget (dashboardUrl, timeoutMs) {
   }, timeoutMs);
 }
 
+/** Keep both entry pages painted even before the bootstrap bundle loads. */
+async function assertStartupBackground (client, urls, dataDir) {
+  await client.send('Network.enable');
+  await client.send('Network.setBlockedURLs', { urls: ['*deps.js'] });
+  try {
+    for (const [index, url] of urls.entries()) {
+      await client.send('Page.navigate', { url });
+      await waitFor('static startup triangle background', async () => {
+        const result = await client.send('Runtime.evaluate', {
+          returnByValue: true,
+          expression: `(() => {
+            if (location.href !== ${JSON.stringify(url)} || document.readyState === 'loading') return false;
+            const background = document.getElementById('loading-screen');
+            if (!background || background.querySelectorAll('svg polygon').length !== 3) return false;
+            const bounds = background.getBoundingClientRect();
+            const style = getComputedStyle(background);
+            return bounds.width === innerWidth && bounds.height === innerHeight &&
+              style.backgroundImage.includes('linear-gradient') && style.pointerEvents === 'none' && !globalThis.$world;
+          })()`
+        });
+        return result.result?.value === true;
+      }, 10000);
+      const screenshot = await client.send('Page.captureScreenshot', { format: 'png' });
+      fs.writeFileSync(path.join(dataDir, `startup-background-${index}.png`), Buffer.from(screenshot.data, 'base64'));
+    }
+  } finally {
+    await client.send('Network.setBlockedURLs', { urls: [] });
+    await client.send('Page.navigate', { url: urls[0] });
+  }
+  console.log('Desktop app smoke passed: dashboard and loading page show orange triangles before the bootstrap bundle loads');
+}
+
 /** Open a dashboard tile without replacing the frozen renderer's document. */
 async function openDashboardProject (client, fullName) {
   const result = await waitFor('dashboard project tile', async () => {
@@ -1078,6 +1110,7 @@ async function main () {
       }
       await client.open();
       try {
+        if (!reopened) await assertStartupBackground(client, [dashboardURL, routeURL(WORLD_PATH)], dataDir);
         await client.send('Runtime.enable');
         await client.send('Page.enable');
         await client.send('Log.enable').catch(() => {});

@@ -23,9 +23,25 @@ const commonExcludedModules = [
   'babel-plugin-transform-es2015-modules-systemjs'
 ];
 
+// Paint the existing desktop triangles while the frozen module graph loads.
+const bootHtml = await fs.readFile(new URL('../../lively.app/desktop/boot.html', import.meta.url), 'utf8');
+const loadingBackground = bootHtml.match(/<svg class="triangles"[\s\S]*?<\/svg>/)?.[0];
+if (!loadingBackground) throw new Error('Desktop boot triangle background is missing');
+
 const commonAutoRunConfig = {
   title: 'lively.next',
+  load: loadingBackground,
   head: `
+  <style>
+    #loading-screen {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background: linear-gradient(135deg, #F1C40F, #F39C12);
+    }
+    #loading-screen svg { width: 100%; height: 100%; }
+  </style>
   <script>
     if (!window.livelyNative) {
       for (const [id, href] of [['compressed', '/compressed-sources'], ['registry', '/package-registry.json']]) {
