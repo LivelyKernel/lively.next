@@ -169,7 +169,8 @@ const request = async (method, action, args) => {
   assert.equal(JSON.parse(await backend.evaluate('40 + 2')), 42);
   const nodeEnv = JSON.parse(await backend.evaluate('System.get("@system-env").node'));
   assert.equal(nodeEnv, true);
-  if (config.mode === 'write') {
+  if (config.mode === 'write' && process.platform !== 'win32') {
+    // These shell fixtures use Unix commands; Windows also runs the storage probes.
     const output = [], exits = new Map();
     const receive = (text, reply) => {
       const message = JSON.parse(text);
