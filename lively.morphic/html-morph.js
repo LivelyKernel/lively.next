@@ -53,7 +53,7 @@ function updateSharedCss (doc) {
       else groups.push([morph.cssDeclaration, [morph.id]]);
       lastMarker = node;
     } else if (morph || !previousNodes.has(node) &&
-        (node.tagName === 'STYLE' || node.tagName === 'LINK' && node.relList.contains('stylesheet'))) {
+        (node.tagName === 'STYLE' || node.tagName === 'LINK' && /(^|\s)stylesheet(\s|$)/i.test(node.rel))) {
       flush();
     }
   }
