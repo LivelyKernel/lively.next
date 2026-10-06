@@ -1090,7 +1090,7 @@ async function main () {
       }
       if (reopened && cacheProbe && port === previousPort) throw new Error('HTTP relaunch did not change its port');
       if (!reopened) previousPort = port;
-      const rootURL = pathToFileURL(path.join(dataDir, 'runtime-root') + path.sep).href;
+      const rootURL = pathToFileURL(fs.realpathSync(path.join(dataDir, 'runtime-root')) + path.sep).href;
       const routeURL = route => {
         if (!native) return `http://127.0.0.1:${port}${route}`;
         if (route === '/dashboard/') return rootURL + 'lively.freezer/landing-page/index.html';
