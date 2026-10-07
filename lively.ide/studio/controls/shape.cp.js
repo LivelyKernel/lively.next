@@ -7,6 +7,7 @@ import { disconnect, epiConnect } from 'lively.bindings';
 const FILL_ICON = '\ue5d7';
 const HUG_ICON = '\ue5d6';
 const FIXED_ICON = '\uea16';
+const FIELD_WIDTH = 84;
 
 export class ShapeControlModel extends ViewModel {
   static get properties () {
@@ -506,10 +507,11 @@ const ShapeControl = component({
     spacing: 16
   }),
   fill: Color.transparent,
-  extent: pt(250, 215.4),
+  extent: pt(274, 215.4),
   submorphs: [
     part(DarkNumberIconWidget, {
       name: 'x input',
+      width: FIELD_WIDTH,
       tooltip: 'X Position',
       viewModel: {
         min: -Infinity,
@@ -526,6 +528,7 @@ const ShapeControl = component({
       }]
     }), part(DarkNumberIconWidget, {
       name: 'y input',
+      width: FIELD_WIDTH,
       tooltip: 'Y Position',
       viewModel: {
         min: -Infinity,
@@ -543,6 +546,7 @@ const ShapeControl = component({
     }), { opacity: 0, name: 'buffer after position', width: 25 },
     part(DarkNumberIconWidget, {
       name: 'width input',
+      width: FIELD_WIDTH,
       tooltip: 'Width',
       viewModel: {
         min: -Infinity,
@@ -562,6 +566,7 @@ const ShapeControl = component({
     }),
     part(DarkNumberIconWidget, {
       name: 'height input',
+      width: FIELD_WIDTH,
       viewModel: {
         min: -Infinity,
         max: Infinity,
@@ -586,7 +591,7 @@ const ShapeControl = component({
     part(EnumSelector, {
       name: 'width mode selector',
       tooltip: 'Horizontal Resizing',
-      extent: pt(72, 22),
+      extent: pt(FIELD_WIDTH, 22),
       layout: new TilingLayout({
         align: 'center',
         axisAlign: 'center',
@@ -628,7 +633,7 @@ const ShapeControl = component({
     part(EnumSelector, {
       name: 'height mode selector',
       tooltip: 'Vertical Resizing',
-      extent: pt(72, 22),
+      extent: pt(FIELD_WIDTH, 22),
       layout: new TilingLayout({
         align: 'center',
         axisAlign: 'center',
@@ -668,6 +673,7 @@ const ShapeControl = component({
     }), { opacity: 0, name: 'buffer', width: 25 },
     part(DarkNumberIconWidget, {
       name: 'rotation input',
+      width: FIELD_WIDTH,
       tooltip: 'Rotation',
       viewModel: {
         unit: '°',
@@ -687,6 +693,7 @@ const ShapeControl = component({
     }),
     part(DarkNumberIconWidget, {
       name: 'radius input',
+      width: FIELD_WIDTH,
       tooltip: 'Border Radius',
       viewModel: {
         min: 0,
@@ -792,7 +799,7 @@ const ShapeControl = component({
     part(EnumSelector, {
       name: 'clip mode selector',
       tooltip: 'Clip Mode',
-      extent: pt(165, 23.3),
+      extent: pt(2 * FIELD_WIDTH + 21, 23.3),
       viewModel: {
         listMaster: DarkThemeList,
         openListInWorld: true,

@@ -329,7 +329,7 @@ const BackgroundControl = component(PropertySection, {
   }))]
 });
 
-export const defaultPropertiesPanelWidth = 250;
+export const defaultPropertiesPanelWidth = 274;
 
 const PropertiesPanel = component({
   defaultViewModel: PropertiesPanelModel,
