@@ -8,7 +8,7 @@ export {
 } from './lib/mozilla-ast-visitor-interface.js';
 export { ReplaceManyVisitor, ReplaceVisitor, AllNodesVisitor } from './lib/visitors.js';
 
-export { parse, parseFunction, fuzzyParse } from './lib/parser.js';
+export { parse, parseFunction, fuzzyParse, addSource } from './lib/parser.js';
 
 import { acorn, walk, custom } from './lib/acorn-extension.js';
 import stringify, { escodegen } from './lib/stringify.js';

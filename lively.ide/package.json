@@ -47,7 +47,8 @@
     "lively.user": "workspace:*",
     "lively.git": "workspace:*",
     "lively.collab": "workspace:*",
-    "lively.installer": "workspace:*"
+    "lively.installer": "workspace:*",
+    "lively.context": "workspace:*"
   },
   "devDependencies": {
     "mocha-es6": "workspace:*"

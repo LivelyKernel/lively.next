@@ -74,15 +74,20 @@ function hostPlatform () {
   return process.platform;
 }
 
-function appCommand (bundleDir, platform) {
+function headlessArgs (headless) {
+  return headless ? ['--headless=new', '--disable-gpu'] : [];
+}
+
+function appCommand (bundleDir, platform, headless = false) {
+  const chromiumArgs = headlessArgs(headless);
   if (platform === 'linux') {
-    return { command: path.join(bundleDir, 'nw'), args: [bundleDir] };
+    return { command: path.join(bundleDir, 'nw'), args: chromiumArgs.concat(bundleDir) };
   }
   if (platform === 'osx') {
-    return { command: path.join(bundleDir, 'lively.next.app', 'Contents', 'MacOS', 'nwjs'), args: [] };
+    return { command: path.join(bundleDir, 'lively.next.app', 'Contents', 'MacOS', 'nwjs'), args: chromiumArgs };
   }
   if (platform === 'win') {
-    return { command: path.join(bundleDir, 'lively.next.exe'), args: [bundleDir] };
+    return { command: path.join(bundleDir, 'lively.next.exe'), args: chromiumArgs.concat(bundleDir) };
   }
   throw new Error(`Unsupported smoke platform: ${platform}`);
 }
@@ -468,16 +473,21 @@ async function openDashboardProject (client, fullName) {
   const result = await waitFor('dashboard project tile', async () => {
     const result = await client.send('Runtime.evaluate', {
       returnByValue: true,
-      expression: `(() => {
+      awaitPromise: true,
+      expression: `(async () => {
         localStorage.removeItem('LIVELY_OFFLINE_MODE');
         const preview = globalThis.$world?.get('a project browser')?.viewModel?.previews?.find(p => p._project._name === ${JSON.stringify(fullName)});
         const button = preview?.get('open button');
         const node = button && document.getElementById(button.id);
         if (!node) return null;
+        node.scrollIntoView({ block: 'nearest' });
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         const bounds = node.getBoundingClientRect();
         if (!bounds.width || !bounds.height) return null;
+        const x = bounds.x + bounds.width / 2, y = bounds.y + bounds.height / 2;
+        if (!node.contains(document.elementFromPoint(x, y))) return null;
         globalThis.__desktopDashboardDocument = document;
-        return { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
+        return { x, y };
       })()`
     });
     if (result.exceptionDetails) throw new Error('Dashboard project tile unavailable: ' + JSON.stringify(result.exceptionDetails));
@@ -505,6 +515,10 @@ class CDPClient {
       this.ws.addEventListener('error', event => reject(new Error(`CDP websocket error: ${event.message || 'unknown'}`)), { once: true });
     });
     this.ws.addEventListener('message', event => this._onMessage(event.data));
+    this.ws.addEventListener('close', () => {
+      for (const { reject } of this.pending.values()) reject(new Error('Desktop CDP connection closed'));
+      this.pending.clear();
+    });
   }
 
   _onMessage (data) {
@@ -532,12 +546,33 @@ class CDPClient {
     }
   }
 
-  send (method, params = {}) {
+  send (method, params = {}, options = {}) {
     const id = this.nextId++;
     const payload = JSON.stringify({ id, method, params });
+    const timeoutMs = Number(options.timeoutMs || options.timeout || 0);
     return new Promise((resolve, reject) => {
-      this.pending.set(id, { resolve, reject });
-      this.ws.send(payload);
+      let timer = null;
+      const finish = fn => value => {
+        if (timer) clearTimeout(timer);
+        fn(value);
+      };
+      if (timeoutMs > 0) {
+        timer = setTimeout(() => {
+          this.pending.delete(id);
+          reject(new Error(`${method} timed out after ${timeoutMs}ms`));
+        }, timeoutMs);
+      }
+      this.pending.set(id, {
+        resolve: finish(resolve),
+        reject: finish(reject)
+      });
+      try {
+        this.ws.send(payload);
+      } catch (err) {
+        if (timer) clearTimeout(timer);
+        this.pending.delete(id);
+        reject(err);
+      }
     });
   }
 
@@ -835,18 +870,149 @@ function seedProject (dataDir) {
   }
 }
 
+async function assertDesktopDebuggerSmoke (client, timeoutMs) {
+  const result = await client.send('Runtime.evaluate', {
+    expression: `(async () => {
+      const { run, runWithCapturedBindings } = await System.import('lively.context/lib/stackReification.js');
+      const { openForContinuation } = await System.import('lively.ide/js/debugger/ui.cp.js');
+      const marker = { count: 0 };
+      function smokeOuter() {
+        function smokeInner() {
+          var amount = '1';
+          debugger;
+          this.count += amount;
+          return this;
+        }
+        return smokeInner.call(this);
+      }
+      const continuation = run(smokeOuter, null, [], { this: marker });
+      if (!continuation.isContinuation || continuation.frames().length !== 2) throw new Error('Missing rewriter frames');
+      if (continuation.currentFrame.getThis() !== marker) throw new Error('Lost receiver identity');
+      const view = openForContinuation(continuation, $world);
+      const model = view.viewModel;
+      await model.selectFrame(continuation.currentFrame);
+      if (!model.ui.sourcePane.textString.includes('debugger;')) throw new Error('Missing original frame source');
+      if (!model.ui.sourcePane.markers.some(marker => marker.id === 'lively-debugger-current-line')) throw new Error('Missing current statement marker');
+      let ticked = false;
+      await new Promise(resolve => setTimeout(() => { ticked = true; resolve(); }, 30));
+      model.ui.workspaceInput.textString = 'this';
+      if (await model.evaluateWorkspace() !== marker) throw new Error('Workspace lost receiver');
+      model.ui.workspaceInput.textString = 'amount = Number(amount)';
+      if (await model.evaluateWorkspace() !== 1) throw new Error('Workspace failed to repair local');
+      const stepped = await model.stepOver();
+      if (!stepped || !stepped.isContinuation) throw new Error('Step Over failed to suspend');
+      const resumed = await model.proceed();
+      if (resumed !== marker || marker.count !== 1) throw new Error('Resume lost state or identity');
+      if ($world.getWindows().some(win => win.targetMorph === view)) throw new Error('Proceed did not close debugger');
+      const counter = { count: 0, step: '1', pause: true };
+      counter.increment = globalThis.Function('return function old_increment() { let amount = this.step; if (this.pause) debugger; this.count += Number(amount); return this.count; }')();
+      counter.increment.displayName = 'increment';
+      const counterView = openForContinuation(run(counter.increment, null, [], { this: counter }), $world);
+      const counterModel = counterView.viewModel;
+      await counterModel.selectFrame(counterModel.continuation.currentFrame);
+      if (!(await counterModel.stepOver())?.isContinuation || counter.count !== 0) throw new Error('Conditional Step Over completed the function');
+      counter.increment = globalThis.Function('return function new_increment() { let amount = Number(this.step) * 2; if (this.pause) debugger; this.count += amount; return this.count; }')();
+      counter.increment.displayName = 'increment';
+      if (!(await counterModel.restartFrame())?.isContinuation) throw new Error('Restart failed');
+      await counterModel.selectFrame(counterModel.continuation.currentFrame);
+      if (counterModel.continuation.currentFrame.pc?.type !== 'VariableDeclaration') throw new Error('Restart lost its pc');
+      if (!counterModel.ui.sourcePane.textString.includes('* 2')) throw new Error('Restart retained the old method');
+      if (!(await counterModel.proceed())?.isContinuation) throw new Error('Restart did not reach debugger');
+      await counterModel.selectFrame(counterModel.continuation.currentFrame);
+      if (counterModel.continuation.currentFrame.lookup('amount') !== 2) throw new Error('Restart lost lexical local');
+      counter.pause = false;
+      if (!(await counterModel.stepOver())?.isContinuation || counter.count !== 0) throw new Error('Restart lost its captured branch decision');
+      await counterModel.selectFrame(counterModel.continuation.currentFrame);
+      if (await counterModel.proceed() !== 2 || counter.count !== 2) throw new Error('Restart lost receiver');
+      const retained = { count: 0 };
+      let incrementStep = '1';
+      function retainedIncrement() { var amount = incrementStep; debugger; retained.count += amount; return retained.count; }
+      const capture = () => livelyDesktop.debugger.captureFunctionBindings(retainedIncrement, ['retained', 'incrementStep']);
+      const [values, repeated] = await Promise.all([capture(), capture()]);
+      if (values.retained !== retained || repeated.retained !== retained) throw new Error('Scope reader lost object identity');
+      values.incrementStep = 7;
+      if (incrementStep !== '1') throw new Error('Snapshot changed the original binding');
+      values.incrementStep = '1';
+      const retainedContinuation = run(retainedIncrement, null, [], values);
+      retainedContinuation.currentFrame.getScope().set('amount', 1);
+      if (retainedContinuation.resume() !== 1 || retained.count !== 1) throw new Error('Retained closure resume failed');
+      const autoCaptured = await runWithCapturedBindings(retainedIncrement);
+      if (autoCaptured.currentFrame.lookup('retained') !== retained) throw new Error('Automatic capture lost identity');
+      autoCaptured.currentFrame.getScope().set('amount', 1);
+      if (await autoCaptured.resume() !== 2) throw new Error('Automatic binding capture failed');
+      let externalAmount = 4;
+      const closureReceiver = {argReads: 0, child: function child(value) { let local = externalAmount + value; return local; }};
+      const closureTask = globalThis.Function('return function task() { debugger; return this.child(++this.argReads); }')();
+      const closureView = openForContinuation(run(closureTask, null, [], {this: closureReceiver}), $world);
+      const closureModel = closureView.viewModel;
+      await closureModel.selectFrame(closureModel.continuation.currentFrame);
+      await closureModel.stepOver();
+      if (!(await closureModel.stepInto())?.isContinuation || closureModel.continuation.frames().length !== 2) throw new Error('Retained method Step Into failed');
+      if (closureReceiver.argReads !== 1) throw new Error('Binding capture repeated argument side effects');
+      if (await closureModel.proceed() !== 5) throw new Error('Retained method resume failed');
+      externalAmount = 8;
+      const freshClosureView = openForContinuation(run(closureTask, null, [], {this: closureReceiver}), $world);
+      const freshClosureModel = freshClosureView.viewModel;
+      await freshClosureModel.stepOver();
+      await freshClosureModel.stepInto();
+      if (await freshClosureModel.proceed() !== 10 || closureReceiver.argReads !== 2) throw new Error('Retained bindings were not refreshed for the next call');
+      const { openLiveCounter } = await System.import('lively.ide/js/debugger/examples/live-counter.js');
+      const tutorial = openLiveCounter($world);
+      const scopeView = await tutorial.debugLesson('scopeLesson'), scopeModel = scopeView.viewModel;
+      await scopeModel.selectFrame(scopeModel.continuation.currentFrame);
+      scopeModel.ui.workspaceInput.textString = 'let scratch = amount * 2; scratch';
+      if (await scopeModel.evaluateWorkspace() !== 4) throw new Error('Workspace declaration failed');
+      scopeModel.ui.workspaceInput.textString = 'scratch += 1';
+      if (await scopeModel.evaluateWorkspace() !== 5) throw new Error('Workspace temporary was lost');
+      scopeModel.ui.workspaceInput.textString = 'amount = 4';
+      if (await scopeModel.evaluateWorkspace() !== 4) throw new Error('Block repair failed');
+      scopeModel.ui.workspaceInput.textString = 'read()';
+      if (await scopeModel.evaluateWorkspace() !== 4) throw new Error('Closure did not share the block binding');
+      scopeModel.ui.workspaceInput.textString = 'self.call({}) === this';
+      if (await scopeModel.evaluateWorkspace() !== true) throw new Error('Block lost lexical self');
+      const constantResult = await scopeModel.evaluateWorkspaceSource('receiver = {}');
+      if (!constantResult.isError || !String(constantResult.value).includes('constant')) throw new Error('Workspace bypassed const enforcement');
+      const scopedResult = await scopeModel.proceed();
+      if (scopedResult.outer !== 1 || scopedResult.inner !== 4 || scopedResult.receiver !== tutorial) throw new Error('Block scope or receiver lost');
+      const loopView = await tutorial.debugLesson('loopLesson');
+      const loopModel = loopView.viewModel;
+      await loopModel.selectFrame(loopModel.continuation.currentFrame);
+      if (loopModel.continuation.currentFrame.lookup('i') !== 1) throw new Error('Loop scope was not captured');
+      if (JSON.stringify(await loopModel.proceed()) !== '[0,1,2]' || tutorial.count !== 3) throw new Error('Per-iteration closure state failed');
+      const asyncView = await tutorial.debugLesson('awaitLesson');
+      const asyncModel = asyncView.viewModel;
+      await asyncModel.selectFrame(asyncModel.continuation.currentFrame);
+      if (asyncModel.continuation.currentFrame.lookup('amount') !== 1) throw new Error('Await lost its frame local');
+      if (await asyncModel.proceed() !== 4 || tutorial.count !== 4) throw new Error('Await resume failed');
+      tutorial.getWindow().close(false);
+      const { runTestFiles } = await System.import('mocha-es6');
+      if (await runTestFiles(['lively.ide/tests/js/debugger-ui-test.js', 'lively.ide/tests/js/debugger-runtime-closure-test.js', 'lively.ide/tests/js/debugger-order-desk-test.js', 'lively.context/tests/tutorial-test.js', 'lively.context/tests/persistence-test.js', 'lively.context/tests/generator-test.js'])) throw new Error('Renderer tutorial regressions failed');
+      return { frames: 2, count: marker.count, worldTimerWhileSuspended: ticked, nativeService: livelyDesktop.debugger.isAvailable() };
+    })()`,
+    awaitPromise: true,
+    returnByValue: true
+  }, { timeoutMs });
+  if (result.exceptionDetails) throw new Error('Nonpausing debugger smoke failed: ' + JSON.stringify(result.exceptionDetails));
+  if (!result.result.value?.worldTimerWhileSuspended || result.result.value.nativeService) {
+    throw new Error('Expected a responsive world with the native pause service disabled: ' + JSON.stringify(result.result));
+  }
+  console.log('Desktop debugger smoke passed: live edits, lexical closures, await, persistent workspace, renderer regressions, and Runtime-only binding capture');
+}
+
 async function main () {
   const args = parseArgs();
   const devRoot = args.devRoot ? path.resolve(args.devRoot) : null;
   const bundleDir = devRoot ? null : path.resolve(args.bundleDir || '');
   const platform = args.platform || hostPlatform();
   const timeoutMs = Number(args.timeout || process.env.LIVELY_APP_SMOKE_TIMEOUT || DEFAULT_TIMEOUT);
+  const debuggerSmoke = args.debuggerSmoke === '1' || args.debuggerSmoke === 'true';
+  const headless = args.headless === '1' || args.headless === 'true';
   if (!devRoot && (!bundleDir || bundleDir === process.cwd())) throw new Error('Pass --bundleDir=<desktop bundle dir> or --devRoot=<repo root>');
   if (devRoot && !fs.existsSync(path.join(devRoot, 'lively.app', 'start.sh'))) {
     throw new Error(`Dev root does not look like lively.next: ${devRoot}`);
   }
 
-  const { command, args: commandArgs } = devRoot ? devAppCommand(devRoot) : appCommand(bundleDir, platform);
+  const { command, args: commandArgs } = devRoot ? devAppCommand(devRoot) : appCommand(bundleDir, platform, headless);
   assertExecutableExists(command);
 
   // Exercise URL decoding, including Windows' RUNNER~1 temporary paths.
@@ -879,7 +1045,9 @@ async function main () {
         ...process.env,
         LIVELY_APP_DATA_DIR: dataDir,
         LIVELY_APP_CACHE_DIR: cacheDir,
-        LIVELY_APP_SMOKE: '1'
+        LIVELY_APP_SMOKE: '1',
+        LIVELY_APP_FUNCTION_SCOPES: debuggerSmoke ? '1' : process.env.LIVELY_APP_FUNCTION_SCOPES,
+        LIVELY_APP_HEADLESS: headless ? '1' : ''
       },
       stdio: ['ignore', 'pipe', 'pipe']
     });
@@ -936,8 +1104,10 @@ async function main () {
             if (cached.result?.value !== 'previous build') throw new Error('Upgrade regression did not prime the browser HTTP cache');
           } else console.log('Desktop app smoke passed: app upgrade invalidates cached HTTP responses');
         }
-        const registryResponse = await fetch(`http://127.0.0.1:${port}/package-registry.json`);
-        const { packageMap } = await registryResponse.json();
+        const { packageMap } = await waitFor('desktop package registry', async () => {
+          const response = await fetch(`http://127.0.0.1:${port}/package-registry.json`);
+          return response.ok ? response.json() : null;
+        }, 60000);
         for (const name of ['lively.modules', 'lively.morphic', 'lively.server', 'lively.shell', 'lively.freezer']) {
           const entry = packageMap[name];
           const pkg = entry.versions[entry.latest];
@@ -1021,6 +1191,7 @@ async function main () {
           console.log('Desktop app smoke passed: renderer System uses HTTP module URLs');
           await assertBrowserEnvironmentSwitching(client, port);
           await assertBrowserSwc(client);
+          if (debuggerSmoke) await assertDesktopDebuggerSmoke(client, timeoutMs);
 
           const projectUrl = `http://127.0.0.1:${port}${devRoot ? PROJECT_PATH : EXISTING_PROJECT_PATH}`;
           console.log(`Navigating app window to ${projectUrl}`);
@@ -1106,6 +1277,7 @@ async function main () {
     }
   }
   cacheProbe?.close();
+  console.log('Desktop app smoke complete');
 }
 
 main().catch(err => {

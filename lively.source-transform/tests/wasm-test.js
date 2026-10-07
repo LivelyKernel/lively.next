@@ -1,8 +1,9 @@
 /* global before, describe, it, System */
 import { expect } from 'mocha-es6';
 import { parse } from 'lively.ast';
+import { initializeClass } from 'lively.classes/runtime.js';
 import { initWasm, isAvailable, swcTransform } from '../swc/browser-transform.js';
-import { setupSwcTranspiler } from '../swc/transpiler-setup.js';
+import { setupSwcTranspiler, SwcBrowserTranspiler } from '../swc/transpiler-setup.js';
 
 const moduleId = 'lively.source-transform/tests/wasm-test-input.js';
 
@@ -43,6 +44,20 @@ function expectIncludes (code, expected) {
 }
 
 describe('wasm transform', function () {
+  it('preserves a class body self binding after the outer declaration changes', async () => {
+    const source = 'class Example { create() { return new Example(); } } const original = new Example(); Example = null; export const result = original.create() instanceof original.constructor;';
+    const code = transformWithWasm(source, {enableScopeCapture: false, classToFunction: {
+      classHolder: '_rec', functionNode: 'initializeES6ClassForLively', currentModuleAccessor: 'undefined'
+    }});
+    let declaration, result;
+    const testSystem = { register (dependencies, factory) {
+      declaration = factory((name, value) => { result = value; return value; }, { id: moduleId });
+    } };
+    new Function('System', 'initializeES6ClassForLively', '_rec', code)(testSystem, initializeClass, {});
+    await declaration.execute();
+    expect(result).equals(true);
+  });
+
   before(async function () {
     if (
       typeof WebAssembly === 'undefined' ||
@@ -75,7 +90,7 @@ describe('wasm transform', function () {
 
     await setupSwcTranspiler(testSystem);
     expect(testSystem.transpiler).equals('lively.transpiler.swc');
-    expect(modules.get('lively.transpiler.swc').default.name).equals('SwcBrowserTranspiler');
+    expect(modules.get('lively.transpiler.swc').default).equals(SwcBrowserTranspiler);
   });
 
   it('captures top-level var declarations and references', function () {
@@ -83,6 +98,13 @@ describe('wasm transform', function () {
     expectIncludes(code, '_rec.y = Object.prototype.hasOwnProperty.call(_rec, "y") ? _rec.y : undefined;');
     expectIncludes(code, '_rec.z = _rec.foo + _rec.bar;');
     expectIncludes(code, '_rec.baz.foo(_rec.z, 3);');
+  });
+
+  it('uses the Babel fallback for retained runtime closures', function () {
+    const transpiler = new SwcBrowserTranspiler(System, moduleId, {});
+    const module = {id: moduleId, recorderName: '_rec', sourceAccessorName: '_source'};
+    expect(transpiler.transpileModule('export function make(value) { return () => value; }', {module})).equals(null);
+    expect(!!transpiler.transpileModule('export const value = 2;', {module})).equals(true);
   });
 
   it('captures iterable references inside generator yield delegation', function () {

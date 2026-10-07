@@ -85,13 +85,13 @@ describe('properties', function () {
       let obj = new classA();
       prepareInstanceForProperties(obj, { valueStoreProperty: '_store' }, { test: {} });
       expect(obj).has.property('_store');
-      expect(obj).has.nested.property('_store.test', undefined);
+      expect(obj._store.test).equals(undefined);
     });
 
     it('sets default values', () => {
       let obj = new classA();
       prepareInstanceForProperties(obj, { valueStoreProperty: '_store' }, { test: { defaultValue: 23 } });
-      expect(obj).has.nested.property('_store.test', 23);
+      expect(obj._store.test).equals(23);
     });
 
     it('sets default value with initializer for derived value', () => {
@@ -140,7 +140,7 @@ describe('properties', function () {
       let x = 3; let obj = new classA();
       prepareInstanceForProperties(obj, { valueStoreProperty: '_store' }, { test: { initialize: () => x += 2 } });
       expect(x).equals(5);
-      expect(obj).has.nested.property('_store.test', undefined);
+      expect(obj._store.test).equals(undefined);
     });
 
     it('initialize uses values from outside', () => {

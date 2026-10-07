@@ -34,6 +34,7 @@
   },
   "scripts": {
     "start": "bash start.sh",
-    "setup": "bash setup.sh"
+    "setup": "bash setup.sh",
+    "smoke:debugger": "node scripts/smoke-desktop-bundle.mjs --devRoot=.. --debuggerSmoke=1 --headless=1"
   }
 }

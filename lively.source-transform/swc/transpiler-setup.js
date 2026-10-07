@@ -3,6 +3,7 @@
 
 import { initWasm, swcTransform, isAvailable } from './browser-transform.js';
 import { setupBabelTranspiler } from '../babel/plugin.js';
+import { parse, acorn } from 'lively.ast';
 
 const swcTranspilerId = 'lively.transpiler.swc';
 
@@ -116,6 +117,20 @@ class SwcBrowserTranspiler {
   transpileModule (source, options) {
     const { module } = options;
     if (!module || !isAvailable()) return null;
+    if (module.debuggingEnabled) return null;
+
+    // ponytail: SWC lacks retained closure cells. Reuse Babel until WASM
+    // supplies the same binding cells and original source locations.
+    if (module.sourceAccessorName && module.embedOriginalCode !== false) {
+      let nestedFunction = false;
+      const isFunction = node => ['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'].includes(node.type);
+      try {
+        acorn.walk.fullAncestor(parse(source), (node, ancestors) => {
+          if (isFunction(node) && ancestors.filter(isFunction).length > 1) nestedFunction = true;
+        });
+      } catch (error) { return null; }
+      if (nestedFunction) return null;
+    }
 
     const config = buildSwcConfig(module, options, source);
     const result = swcTransform(source, config);

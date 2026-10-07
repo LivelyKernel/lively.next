@@ -220,9 +220,18 @@ export function installSystemInstantiateHook () {
   if (modules.isHookInstalled('instantiate', name)) return;
   modules.installHook('instantiate', async function mochaEs6TestInstantiater (proceed, load) {
     await proceed(load);
-    System.REGISTER_INTERNAL.records[load.name].linkRecord.instantiatePromise.then(async (link) => {
-      if (await isMochaTestLoad(load, link.linkRecord)) {
-        installMochaEs6ModuleExecute(load, link.linkRecord);
+    let records = System.REGISTER_INTERNAL && System.REGISTER_INTERNAL.records;
+    let record = records && records[load.name];
+    let instantiatePromise = record && record.linkRecord && record.linkRecord.instantiatePromise;
+    if (!instantiatePromise) return;
+    instantiatePromise.then(async link => {
+      let linkRecord = link && link.linkRecord;
+      if (await isMochaTestLoad(load, linkRecord)) {
+        // Test callbacks contain intentional stops handled by their own fixtures.
+        // Keep the harness native; subject modules retain their debugger setting.
+        const testModule = modules.module(load.name);
+        if (testModule._debuggingEnabled === undefined) await testModule.setDebuggingEnabled(false);
+        installMochaEs6ModuleExecute(load, linkRecord);
       }
     });
   });

@@ -60,7 +60,7 @@ function classTemplate (className, superClassName, methodString, classMethodStri
       {} else {
       return this[Symbol.for("lively-instance-initialize")].apply(this, arguments);
     }
-  };${useClassHolder ? '' : '\nvar __lively_class__ = Foo;'}
+  };${useClassHolder ? `\nconst ${className} = __lively_class__;` : '\nvar __lively_class__ = Foo;'}
   if (Object.isFrozen(__lively_classholder__) || Object.isFrozen(__lively_class__.prototype)) {
     return __lively_class__;
   }

@@ -46,6 +46,12 @@ function acornNamespace (imported, expectedProperty, requireName) {
   return namespace;
 }
 
+function mutableNamespace (namespace) {
+  const copy = Object.create(Object.getPrototypeOf(namespace));
+  Object.defineProperties(copy, Object.getOwnPropertyDescriptors(namespace));
+  return copy;
+}
+
 if (isNode) {
   // we need to utilize the native require here to bypass the source transform of the class
   // we can not use the native import, since that is asynchronous.
@@ -60,7 +66,7 @@ if (isNode) {
 }
 
 const acornDefault = acornNamespace(_acornDefault, 'Parser', 'acorn');
-const walk = acornNamespace(_walk, 'make', 'acorn-walk');
+const walk = mutableNamespace(acornNamespace(_walk, 'make', 'acorn-walk'));
 const loose = acornNamespace(_loose, 'parse', 'acorn-loose');
 const custom = {};
 
@@ -679,6 +685,9 @@ custom.visitors = {
   }, walk.base)
 };
 
+Object.assign(walk, custom);
+acorn.walk = walk;
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-
 // from lively.ast.AstHelper
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -716,7 +725,7 @@ function findStatementOfNode (options, parsed, target) {
     'EmptyStatement', 'BlockStatement', 'ExpressionStatement', 'IfStatement',
     'LabeledStatement', 'BreakStatement', 'ContinueStatement', 'WithStatement', 'SwitchStatement',
     'ReturnStatement', 'ThrowStatement', 'TryStatement', 'WhileStatement', 'DoWhileStatement',
-    'ForStatement', 'ForInStatement', 'DebuggerStatement', 'FunctionDeclaration',
+    'ForStatement', 'ForInStatement', 'ForOfStatement', 'DebuggerStatement', 'FunctionDeclaration',
     'VariableDeclaration',
     // ES2015:
     'ClassDeclaration'

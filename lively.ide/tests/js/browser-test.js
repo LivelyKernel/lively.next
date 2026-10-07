@@ -4,12 +4,29 @@ import { resource } from 'lively.resources';
 import { promise } from 'lively.lang';
 import { localInterface, serverInterfaceFor } from 'lively-system-interface';
 import { browse } from '../../js/browser/ui.cp.js';
+import { PackageTreeData } from '../../js/browser/index.js';
 
 describe('system browser client/server switching', function () {
   // Source-world tree refreshes also list files and render the browser columns.
   this.timeout(240000);
   let browser;
   afterEach(() => browser?.view.getWindow().remove());
+
+  it('lists the selected project without loading its code in the current runtime', async () => {
+    const selectedPackage = { name: 'selected', url: System.baseURL + 'local_projects/selected', modules: [] };
+    const unopened = { name: 'unopened', url: System.baseURL + 'local_projects/unopened', modules: [] };
+    const tree = new PackageTreeData({ browser: {
+      selectedPackage,
+      systemInterface: {
+        getPackages: async () => [selectedPackage, unopened],
+        getConfig: async () => ({ baseURL: System.baseURL })
+      }
+    } });
+    for (const modules of [[], [{ name: selectedPackage.url + '/package.json' }]]) {
+      selectedPackage.modules = modules;
+      expect((await tree.listAllPackages()).map(node => node.name)).deep.equals(['selected']);
+    }
+  });
 
   it('keeps the source package and module context across backend switches', async () => {
     browser = (await browse({ packageName: 'lively.lang', moduleName: 'index.js' })).viewModel;

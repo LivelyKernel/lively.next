@@ -49,13 +49,24 @@ describe('fun', function () {
     });
 
     it('can extract a function body a string', function () {
-      let f = function (arg1, arg2, arg4) { let x = { n: 33 }; return x.n + arg2 + arg4; };
-      const normalized = fun.extractBody(f)
-        .replace(/\n[ ]{4}/g, '\n  ')
-        .replace(/\{ n: 33 \}/g, '{\n  n: 33\n}');
-      expect(normalized).to.equal('let x = {\n  n: 33\n};\nreturn x.n + arg2 + arg4;');
+      let f = function (arg1, arg2, arg4) {
+        let x = {
+          n: 33
+        };
+        return x.n + arg2 + arg4;
+      };
+      expect(fun.extractBody(f)).to.equal('let x = {\n  n: 33\n};\nreturn x.n + arg2 + arg4;');
       expect(fun.extractBody(function () {})).to.equal('');
       expect(fun.extractBody(function () { 123; })).to.equal('123;');
+    });
+
+    it('extracts the retained source body of an instrumented function', function () {
+      const rewritten = function () { return 'generated'; };
+      const moduleSource = '/* prefix */function () { return "original"; }';
+      Object.defineProperty(rewritten, Symbol.for('lively-object-meta'), {
+        value: {moduleSource, start: 12, end: moduleSource.length}, configurable: true
+      });
+      expect(fun.extractBody(rewritten)).equals('return "original";');
     });
   });
 

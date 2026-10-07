@@ -1,5 +1,5 @@
 import { arr, obj, graph, string } from 'lively.lang';
-import { parse, fuzzyParse, query } from 'lively.ast';
+import { parse, parseFunction, escodegen, fuzzyParse, query } from 'lively.ast';
 import { computeRequireMap } from './dependencies.js';
 import { moduleSourceChange } from './change.js';
 import { scheduleModuleExportsChange, runScheduledExportChanges } from './import-export.js';
@@ -12,6 +12,7 @@ import { ImportInjector, GlobalInjector, ImportRemover } from './import-modifica
 import { _require, _resolve } from './nodejs.js';
 import { classHolder } from './cycle-breaker.js';
 import { regExpEscape } from 'lively.lang/string.js';
+import { installModuleDebugger } from '../../lively.context/lib/module-debugger.js';
 
 // Used by the recorder Proxy to detect native browser functions that need
 // to be bound to the global object when stored in local variable slots.
@@ -691,6 +692,117 @@ class ModuleInterface {
 
   get varDefinitionCallbackName () { return 'defVar_' + this.id; }
 
+  get debuggingEnabled () { return this._debuggingEnabled ?? this._automaticDebugging ?? false; }
+
+  get embedOriginalCode () {
+    return this._embedOriginalCode ?? (this.debuggingEnabled || !/^esm:.*@jspm\/core@[^/]+\/nodelibs\//.test(this.id));
+  }
+
+  set embedOriginalCode (enabled) { this._embedOriginalCode = enabled; }
+
+  async ensureModuleDebugger () {
+    installModuleDebugger(this.System);
+  }
+
+  async setDebuggingEnabled (enabled) {
+    if (typeof enabled !== 'boolean') throw new TypeError('Expected a boolean debugger interception setting');
+    this._debuggingEnabled = enabled;
+    if (enabled) {
+      await this.ensureModuleDebugger();
+      const source = await this.source();
+      for (const [name, value] of Object.entries(this.recorder)) {
+        if (typeof value !== 'function') continue;
+        const meta = value[Symbol.for('lively-object-meta')];
+        if (!meta || meta.moduleSource !== source) continue;
+        if (meta.kind === 'class' || value[Symbol.for('__LivelyClassName__')]) this.recordDebugClass(value, meta);
+        else {
+          const bindings = value[Symbol.for('lively-debug-bindings')];
+          if (bindings && !bindings[Symbol.for('lively-debug-module')]) Object.defineProperty(bindings, Symbol.for('lively-debug-module'), {value: this});
+          const wrapped = this.System.get('@lively-env').moduleDebugger.wrapFunction(value, this);
+          this.define(name, wrapped, true, {...meta, kind: 'var'});
+        }
+      }
+    }
+    return this.debuggingEnabled;
+  }
+
+  recordDebugClass (klass, meta) {
+    if (!meta?.moduleSource) return;
+    const source = meta.moduleSource;
+    const ast = parse(source.slice(meta.start, meta.end));
+    const declaration = ast.body[0];
+    for (const method of declaration.body?.body || []) {
+      if (method.type !== 'MethodDefinition' || method.computed) continue;
+      const holder = method.static ? klass : klass.prototype;
+      const key = method.kind === 'constructor' ? Symbol.for('lively-instance-initialize') : method.key.name || method.key.value;
+      const descriptor = Object.getOwnPropertyDescriptor(holder, key);
+      if (!descriptor) continue;
+      const kind = method.kind === 'get' || method.kind === 'set' ? method.kind : 'value';
+      const func = descriptor[kind];
+      if (typeof func !== 'function') continue;
+      if (method.kind === 'constructor') Object.defineProperty(func, Symbol.for('lively-debug-constructor'), {value: klass, configurable: true});
+      let functionSource = func.toString();
+      const cells = {__lively_class__: {kind: 'const', initialized: true, value: klass}};
+      // The class system already lowers super to a declaring-class parameter.
+      // Keep that implementation, supplying the class through its binding map.
+      if (func.originalFunction || /\(\s*_declaring_class_\b/.test(functionSource)) {
+        const ast = parseFunction(functionSource);
+        if (ast.params[0]?.name === '_declaring_class_') {
+          const parameter = ast.params.shift();
+          cells[parameter.name] = {kind: 'const', initialized: true, value: klass};
+          functionSource = escodegen.generate(ast);
+        }
+      }
+      Object.defineProperty(func, Symbol.for('lively-debug-function-source'), {value: functionSource, configurable: true});
+      descriptor[kind] = this.recordDebugClosure(func, cells, meta.start + method.start, meta.start + method.end, source, String(key));
+      Object.defineProperty(holder, key, descriptor);
+    }
+  }
+
+  recordDebugMethod(...args) {
+    Object.defineProperty(args[0], Symbol.for('lively-debug-function-source'), {value: args[0].toString(), configurable: true});
+    return this.recordDebugClosure(...args);
+  }
+
+  recordDebugClosure(func, cells, start, end, moduleSource, name, lexicalThis, lexicalArguments) {
+    if (!func.name && name) Object.defineProperty(func, 'name', {value: name, configurable: true});
+    const mod = this;
+    Object.defineProperties(func, {
+      [Symbol.for('lively-debug-bindings')]: {configurable: true, get() {
+        const bindings = {};
+        for (const [name, cell] of Object.entries(cells)) Object.defineProperty(bindings, name, {
+          enumerable: true, configurable: true, get() { return cell.value; }, set(value) { cell.value = value; }
+        });
+        Object.defineProperty(bindings, Symbol.for('lively-debug-binding-cells'), {value: cells, configurable: true});
+        Object.defineProperty(bindings, '__lvVarRecorder', {value: mod.recorder});
+        if (mod.debuggingEnabled) Object.defineProperty(bindings, Symbol.for('lively-debug-module'), {value: mod});
+        Object.defineProperty(func, Symbol.for('lively-debug-bindings'), {value: bindings, configurable: true});
+        return bindings;
+      }},
+      [Symbol.for('lively-object-meta')]: {value: {start, end, moduleSource}, configurable: true},
+      [Symbol.for('lively-module-meta')]: {configurable: true, get() {
+        const pkg = mod.package();
+        const meta = {package: pkg ? {name: pkg.name, version: pkg.version} : {}, pathInPackage: mod.pathInPackage()};
+        Object.defineProperty(func, Symbol.for('lively-module-meta'), {value: meta, configurable: true});
+        return meta;
+      }}
+    });
+    if (arguments.length > 6) {
+      func._lexicalThis = lexicalThis;
+      func._lexicalArguments = lexicalArguments;
+    }
+    if (Object.keys(cells).length) Object.defineProperty(func, '__serialize__', {
+      configurable: true,
+      value(pool, snapshots, path) {
+        const serialize = System.global.__serializeDebugClosure;
+        if (!serialize) throw new Error('Load lively.context before saving a retained runtime closure');
+        return serialize(func, pool, snapshots, path);
+      }
+    });
+    return this.debuggingEnabled && this.System.get('@lively-env').moduleDebugger
+      ? this.System.get('@lively-env').moduleDebugger.wrapFunction(func, this) : func;
+  }
+
   define (varName, value, exportImmediately = true, meta) {
     // attaching source info to runtime objects
 
@@ -714,6 +826,13 @@ class ModuleInterface {
         pathInPackage
       };
     }
+
+    if (this.debuggingEnabled && typeof value === 'function' && meta?.kind === 'function') {
+      // Top-level functions use the same binding/source annotations as retained
+      // closures; module references remain live through the existing recorder.
+      value = this.recordDebugClosure(value, {}, meta.start, meta.end, meta.moduleSource, varName);
+    }
+    if (this.debuggingEnabled && typeof value === 'function' && meta?.kind === 'class') this.recordDebugClass(value, meta);
 
     // storing local module state
     recorder[varName] = value;
