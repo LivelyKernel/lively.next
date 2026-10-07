@@ -1314,7 +1314,8 @@ export class Text extends Morph {
     const isGeometricTransform = prop === 'position' ||
                                prop === 'extent' ||
                                prop === 'scale' ||
-                               prop === 'rotation';
+                               prop === 'rotation' ||
+                               prop === 'origin';
 
     // update the displacement shape if the bounds of a displacing morph changed
     if (this.displacingMorphMap.get(submorph) &&
@@ -1328,25 +1329,28 @@ export class Text extends Morph {
     }
 
     const { anchor: submorphAnchor } = this.embeddedMorphMap.get(submorph) || {};
-    if (submorphAnchor &&
+    if (this.embeddedMorphMap.has(submorph) &&
         isGeometricTransform) {
       if (prop === 'position') {
         // embedded morphs are fixed, so we just revert the position and are done
-        this._positioningSubmorph = submorph;
-        submorph.position = change.prevValue;
-        this._positioningSubmorph = null;
+        if (submorphAnchor) {
+          this._positioningSubmorph = submorph;
+          submorph.position = change.prevValue;
+          this._positioningSubmorph = null;
+        }
         return;
       }
-      const currentBounds = submorph.bounds();
-      const lastBounds = submorph._lastBounds; // infer last bounds from the actual change
-      const row = submorphAnchor.position.row;
-      const line = this.document.getLine(row);
-      if (!lastBounds ||
-          lastBounds.height !== currentBounds.height ||
-          lastBounds.bottom() !== currentBounds.bottom()) {
+      if (submorphAnchor) {
+        const line = this.document.getLine(submorphAnchor.position.row);
+        this.textLayout.resetLineCharBoundsCacheOfLine(line);
         line.hasEstimatedExtent = true;
-        submorph._lastBounds = currentBounds;
+        line.lineNeedsRerender = true;
+      } else {
+        this.renderingState.needsRemeasure = true;
+        delete this._cachedBounds;
       }
+      this.renderingState.renderedTextAndAttributes = null;
+      this.makeDirty();
     }
   }
 

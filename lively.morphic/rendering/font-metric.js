@@ -654,11 +654,13 @@ class DOMTextMeasure {
         let lineNode, nodeForMorph, actualTextNode;
 
         nodeForMorph = $world.env.renderer.getNodeForMorph(morph);
-        actualTextNode = nodeForMorph && morph.renderingState.fontMeasureNode;
+        const hasInlineMorphs = line.textAndAttributes.some(part => part?.isMorph);
+        const useLiveLine = hasInlineMorphs && morph.renderingState.textLayer?.isConnected;
+        actualTextNode = nodeForMorph && (useLiveLine ? morph.renderingState.textLayer : morph.renderingState.fontMeasureNode);
         const dataRowId = String(line.row);
         lineNode = actualTextNode && Array.from(actualTextNode.children).find(n => n.getAttribute('data-row') === dataRowId);
 
-        const needsToCreateNode = !lineNode || line.lineNeedsRerender;
+        const needsToCreateNode = !lineNode || (line.lineNeedsRerender && !useLiveLine);
         let nodeToReplace;
         if (needsToCreateNode) {
           nodeToReplace = lineNode;
@@ -801,14 +803,27 @@ export function charBoundsOfLineViaCanvas (line, textMorph, fontMetric, measure)
     const textOrMorph = textAndAttributes[i];
     let attrs = textAndAttributes[i + 1] || {};
     if (textOrMorph.isMorph) {
-      const morphWidth = textOrMorph.width + Number.parseFloat(attrs.paddingLeft || '0') + Number.parseFloat(attrs.paddingRight || '0');
-      if (isWrapping && measuringState.emptySpace < morphWidth) {
-        measuringState.emptySpace = measure.getEmptySpaceOfMorph(textMorph);
+      const bounds = textOrMorph.getTransform().transformRectToRect(textOrMorph.innerBounds());
+      const paddingLeft = Number.parseFloat(attrs.paddingLeft || '0');
+      const paddingRight = Number.parseFloat(attrs.paddingRight || '0');
+      const paddingTop = Number.parseFloat(attrs.paddingTop || '0');
+      const paddingBottom = Number.parseFloat(attrs.paddingBottom || '0');
+      const morphWidth = bounds.width + paddingLeft + paddingRight;
+      const availableWidth = measure.getEmptySpaceOfMorph(textMorph);
+      if (isWrapping && measuringState.emptySpace < morphWidth && measuringState.emptySpace < availableWidth) {
+        measuringState.emptySpace = availableWidth;
         measuringState.virtualRow += 1;
-      } else {
-        measuringState.emptySpace -= morphWidth;
       }
-      characterBounds.push([textOrMorph.height, [morphWidth, measuringState.virtualRow]]);
+      measuringState.emptySpace -= morphWidth;
+      measuringState.currentWord = [];
+      measuringState.wordLength = 0;
+      measuringState.trailingWhitespaces = [];
+      measuringState.emptySpaceForWord = measuringState.emptySpace;
+      characterBounds.push([
+        bounds.height + paddingTop + paddingBottom,
+        [morphWidth, measuringState.virtualRow],
+        rect(paddingLeft, paddingTop, bounds.width, bounds.height)
+      ]);
     } else if (typeof textOrMorph === 'string') {
       if (obj.isString(attrs.fontSize) && attrs.fontSize.endsWith('%')) {
         attrs.fontSize = Number.parseInt(attrs.fontSize) / 100 * textMorph.fontSize;
@@ -854,7 +869,9 @@ export function charBoundsOfLineViaCanvas (line, textMorph, fontMetric, measure)
         currentOffset = 0;
     }
     result.push(...rowBounds.map(b => {
-      const charBounds = pt(currentOffset, innerLineOffset).extent(pt(b[1][0], heightOfRow));
+      const charBounds = b[2]
+        ? b[2].translatedBy(pt(currentOffset, innerLineOffset))
+        : pt(currentOffset, innerLineOffset).extent(pt(b[1][0], heightOfRow));
       currentOffset += b[1][0];
       if (b[1].isOffset) return false; // skip since it is not a char bound but just a padding
       return charBounds;
