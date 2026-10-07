@@ -70,7 +70,7 @@ export default class FontMetric {
   }
 
   constructor () {
-    this.charMap = {};
+    this.charMap = Object.create(null);
     this.cachedBoundsInfo = {};
     this.supportedFontCache = new Set();
     this.element = null;
@@ -84,7 +84,7 @@ export default class FontMetric {
       doc = this.element.getRootNode();
     }
     this.uninstall();
-    this.charMap = {};
+    this.charMap = Object.create(null);
     this.cachedBoundsInfo = {};
     if (doc && parentNode) { this.install(doc, parentNode, debug); }
   }
@@ -126,7 +126,8 @@ export default class FontMetric {
     let {
       fontFamily, fontSize, fontWeight,
       fontStyle, textDecoration,
-      textStyleClasses, transform, lineHeight
+      textStyleClasses, transform, lineHeight,
+      letterSpacing = 0, wordSpacing = 0, tabWidth = 8
     } = style;
     let { element: el } = this;
     const doc = this._domMeasure.doc;
@@ -138,6 +139,9 @@ export default class FontMetric {
       fontStyle,
       textDecoration,
       lineHeight,
+      letterSpacing: letterSpacing + 'px',
+      wordSpacing: wordSpacing + 'px',
+      tabSize: tabWidth,
       transform: transform,
       fontSize: fontSize + 'px'
     });
@@ -220,7 +224,8 @@ export default class FontMetric {
     // Select style properties relevant to individual character size
     const {
       fontFamily, fontSize, lineHeight,
-      fontWeight, fontStyle, textDecoration, textStyleClasses
+      fontWeight, fontStyle, textDecoration, textStyleClasses,
+      letterSpacing = 0, wordSpacing = 0, tabWidth = 8
     } = style;
     const relevantStyle = {
       lineHeight,
@@ -229,7 +234,10 @@ export default class FontMetric {
       fontWeight,
       fontStyle,
       textDecoration,
-      textStyleClasses
+      textStyleClasses,
+      letterSpacing,
+      wordSpacing,
+      tabWidth
     };
 
     if (Array.isArray(stringOrTextAndAttr) && stringOrTextAndAttr[1]?.fontFamily) {
@@ -241,7 +249,7 @@ export default class FontMetric {
     const styleKey = this._domMeasure.generateStyleKey(relevantStyle);
     const string = typeof stringOrTextAndAttr === 'string' ? stringOrTextAndAttr : stringOrTextAndAttr[0];
 
-    if (!this.charMap[styleKey]) { this.charMap[styleKey] = {}; }
+    if (!this.charMap[styleKey]) { this.charMap[styleKey] = Object.create(null); }
     if (!this.charMap[styleKey][string]) { this.charMap[styleKey][string] = this.measure(relevantStyle, stringOrTextAndAttr); }
 
     return this.charMap[styleKey][string];
@@ -410,6 +418,7 @@ class DOMTextMeasure {
         textDecoration,
         textStyleClasses,
         lineHeight,
+        letterSpacing, wordSpacing, tabWidth,
 
         paddingLeft, paddingRight, paddingTop, paddingBottom,
         width, height, clipMode, lineWrapping, textAlign
@@ -422,6 +431,7 @@ class DOMTextMeasure {
         textDecoration,
         textStyleClasses,
         lineHeight,
+        letterSpacing, wordSpacing, tabWidth,
         paddingLeft, paddingRight, paddingTop, paddingBottom,
         width, height, clipMode, lineWrapping, textAlign
       ].join('-');
@@ -436,6 +446,7 @@ class DOMTextMeasure {
           textStyleClasses
         },
         lineHeight,
+        letterSpacing, wordSpacing, tabWidth,
         paddingLeft, paddingRight, paddingTop, paddingBottom,
         width, height, clipMode, lineWrapping, textAlign
       } = styleOpts;
@@ -447,6 +458,7 @@ class DOMTextMeasure {
         textDecoration,
         textStyleClasses,
         lineHeight,
+        letterSpacing, wordSpacing, tabWidth,
         paddingLeft, paddingRight, paddingTop, paddingBottom,
         width, height, clipMode, lineWrapping, textAlign
       ].join('-');

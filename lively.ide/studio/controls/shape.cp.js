@@ -7,6 +7,7 @@ import { disconnect, epiConnect } from 'lively.bindings';
 const FILL_ICON = '\ue5d7';
 const HUG_ICON = '\ue5d6';
 const FIXED_ICON = '\uea16';
+const FIELD_WIDTH = 84;
 
 export class ShapeControlModel extends ViewModel {
   static get properties () {
@@ -110,6 +111,7 @@ export class ShapeControlModel extends ViewModel {
           if (fixed || text) items.push({ string: 'Fixed', value: 'fixed', isListItem: true });
           if (fill) items.push({ string: 'Fill', value: 'fill', isListItem: true });
           if (hug || text) items.push({ string: 'Hug', value: 'hug', isListItem: true });
+          if (fill && text) items.push({ string: 'Shrink', value: 'shrink', isListItem: true });
           break;
         case 'height':
           if (fixed || text) items.push({ string: 'Fixed', value: 'fixed', isListItem: true });
@@ -155,7 +157,7 @@ export class ShapeControlModel extends ViewModel {
 
       const widthMode = parent.layout.getResizeWidthPolicyFor(target);
       widthModeSelector.selection = widthMode;
-      if (widthMode === 'fill') widthInput.disable();
+      if (widthMode === 'fill' || widthMode === 'shrink') widthInput.disable();
       else if (target.layout.hugContentsHorizontally) {
         widthModeSelector.selection = 'hug';
         widthInput.disable();
@@ -215,7 +217,7 @@ export class ShapeControlModel extends ViewModel {
       let widthMode = parent.layout.getResizeWidthPolicyFor(target);
       if (targetIsText && !target.fixedWidth) widthMode = 'hug';
       widthModeSelector.selection = widthMode;
-      if (widthMode === 'fill' || widthMode === 'hug') widthInput.disable();
+      if (widthMode === 'fill' || widthMode === 'hug' || widthMode === 'shrink') widthInput.disable();
       else widthInput.enable();
     }
 
@@ -317,6 +319,18 @@ export class ShapeControlModel extends ViewModel {
 
     let heightMode;
     switch (newMode) {
+      case ('shrink'):
+        symbol.textAndAttributes = [HUG_ICON, { fontFamily: 'Material Icons', fontSize: 18 }];
+        parent.layout.wrapSubmorphs = false;
+        parent.layout.setResizePolicyFor(target, {
+          width: 'shrink', height: parent.layout.getResizeHeightPolicyFor(target)
+        });
+        target.withMetaDo({ reconcileChanges: true }, () => {
+          target.fixedWidth = true;
+          target.lineWrapping = 'by-words';
+        });
+        this.ui.widthInput.disable();
+        break;
       case ('fixed'):
         symbol.textAndAttributes = [FIXED_ICON, { fontFamily: 'Material Icons', fontSize: 18 }];
         if (parentIsTiling) {
@@ -493,10 +507,11 @@ const ShapeControl = component({
     spacing: 16
   }),
   fill: Color.transparent,
-  extent: pt(250, 215.4),
+  extent: pt(274, 215.4),
   submorphs: [
     part(DarkNumberIconWidget, {
       name: 'x input',
+      width: FIELD_WIDTH,
       tooltip: 'X Position',
       viewModel: {
         min: -Infinity,
@@ -513,6 +528,7 @@ const ShapeControl = component({
       }]
     }), part(DarkNumberIconWidget, {
       name: 'y input',
+      width: FIELD_WIDTH,
       tooltip: 'Y Position',
       viewModel: {
         min: -Infinity,
@@ -530,6 +546,7 @@ const ShapeControl = component({
     }), { opacity: 0, name: 'buffer after position', width: 25 },
     part(DarkNumberIconWidget, {
       name: 'width input',
+      width: FIELD_WIDTH,
       tooltip: 'Width',
       viewModel: {
         min: -Infinity,
@@ -549,6 +566,7 @@ const ShapeControl = component({
     }),
     part(DarkNumberIconWidget, {
       name: 'height input',
+      width: FIELD_WIDTH,
       viewModel: {
         min: -Infinity,
         max: Infinity,
@@ -573,7 +591,7 @@ const ShapeControl = component({
     part(EnumSelector, {
       name: 'width mode selector',
       tooltip: 'Horizontal Resizing',
-      extent: pt(72, 22),
+      extent: pt(FIELD_WIDTH, 22),
       layout: new TilingLayout({
         align: 'center',
         axisAlign: 'center',
@@ -615,7 +633,7 @@ const ShapeControl = component({
     part(EnumSelector, {
       name: 'height mode selector',
       tooltip: 'Vertical Resizing',
-      extent: pt(72, 22),
+      extent: pt(FIELD_WIDTH, 22),
       layout: new TilingLayout({
         align: 'center',
         axisAlign: 'center',
@@ -655,6 +673,7 @@ const ShapeControl = component({
     }), { opacity: 0, name: 'buffer', width: 25 },
     part(DarkNumberIconWidget, {
       name: 'rotation input',
+      width: FIELD_WIDTH,
       tooltip: 'Rotation',
       viewModel: {
         unit: '°',
@@ -674,6 +693,7 @@ const ShapeControl = component({
     }),
     part(DarkNumberIconWidget, {
       name: 'radius input',
+      width: FIELD_WIDTH,
       tooltip: 'Border Radius',
       viewModel: {
         min: 0,
@@ -779,7 +799,7 @@ const ShapeControl = component({
     part(EnumSelector, {
       name: 'clip mode selector',
       tooltip: 'Clip Mode',
-      extent: pt(165, 23.3),
+      extent: pt(2 * FIELD_WIDTH + 21, 23.3),
       viewModel: {
         listMaster: DarkThemeList,
         openListInWorld: true,

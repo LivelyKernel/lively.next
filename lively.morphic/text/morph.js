@@ -841,6 +841,7 @@ export class Text extends Morph {
         after: ['document', 'renderingState'],
         get () {
           if (!this.fixedWidth) return 'no-wrap';
+          if (this.owner?.layout?.getResizeWidthPolicyFor?.(this) === 'shrink' && this.getProperty('lineWrapping') === 'no-wrap') return 'by-words';
           return this.getProperty('lineWrapping');
         }
       },
@@ -2788,6 +2789,10 @@ export class Text extends Morph {
 
   get canBeMeasuredViaCanvas () {
     return this.env.fontMetric?._domMeasure.canBeMeasuredViaCanvas(this);
+  }
+
+  intrinsicWidth () {
+    return this.env.renderer.measureIntrinsicTextWidth(this);
   }
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
