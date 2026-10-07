@@ -224,6 +224,10 @@ export default class Renderer {
         }
       }
 
+      for (const morph of morphsToHandle) {
+        if (morph.isText) this.updateEmbeddedMorphPositions(morph);
+      }
+
       // Inspect the current tree: layout/master application can add morphs after collection.
       return !!tree.find(this.worldMorph, morph => {
         const rs = morph.renderingState;
@@ -1772,7 +1776,14 @@ export default class Renderer {
     }
 
     if (!morph.document) {
-      textNode.replaceChildren(...this.renderWholeText(morph));
+      if (!obj.equals(morph.renderingState.renderedTextAndAttributes, morph.textAndAttributes)) {
+        textNode.replaceChildren(...this.renderWholeText(morph));
+      } else {
+        // Update inline styling without disconnecting unchanged line contents.
+        morph.textAndAttributes.forEach((content, i, text) => {
+          if (content?.isMorph) this.renderMorphInLine(content, text[i + 1]);
+        });
+      }
     } else {
       if (morph.renderingState.needsLinesToBeCleared) {
         // As we use `keyed` to patch these nodes, handling references to the currently mounted ones would probably cause more trouble than benefit.
@@ -1836,6 +1847,21 @@ export default class Renderer {
         morph.scroll = pt(0, scrollOffset + morph.padding.top());
         delete morph.renderingState.adaptScrollAfterDocumentRemoval;
       });
+    }
+  }
+
+  updateEmbeddedMorphPositions (morph) {
+    if (morph.document || !morph.embeddedMorphMap.size) return;
+    const inverseTransform = morph.getGlobalTransform().inverse();
+    for (const embedded of morph.embeddedMorphs) {
+      const node = this.getNodeForMorph(embedded);
+      if (!node?.isConnected) continue;
+      const { x, y } = node.getBoundingClientRect();
+      const delta = inverseTransform.transformDirection(pt(x, y).subPt(embedded.globalBounds().topLeft()));
+      if (delta.r() < 1e-7) continue;
+      morph._positioningSubmorph = embedded;
+      try { embedded.position = embedded.position.addPt(delta); }
+      finally { morph._positioningSubmorph = false; }
     }
   }
 
@@ -2098,9 +2124,20 @@ export default class Renderer {
     let node = this.getNodeForMorph(morph);
     if (!node) node = this.renderMorph(morph);
     else this.renderStylingChanges(morph);
-    const textNode = morph.renderingState.textLayer;
-    const prevParent = textNode.parentNode;
-    textNode.remove();
+    const liveTextNode = morph.renderingState.textLayer;
+    const prevParent = liveTextNode.parentNode;
+    const textNode = morph.embeddedMorphMap.size ? liveTextNode.cloneNode(true) : liveTextNode;
+    if (textNode !== liveTextNode) {
+      // Measure inline boxes without disconnecting or mounting their live contents.
+      const boxes = new Map(Array.from(textNode.querySelectorAll('.Morph'), node => [node.id, node]));
+      for (const embedded of morph.embeddedMorphs) {
+        const box = boxes.get(embedded.id);
+        if (!box) continue;
+        box.replaceChildren();
+        box.style.width = embedded.width + 'px';
+        box.style.height = embedded.height + 'px';
+      }
+    } else textNode.remove();
     this.ensurePlaceholder();
     this.placeholder.className = 'Text';
     textNode.style.width = 'max-content';
@@ -2125,15 +2162,8 @@ export default class Renderer {
     textNode.style.removeProperty('position');
     const bounds = new Rectangle(domMeasure.x, domMeasure.y, Math.ceil(domMeasure.width), Math.ceil(domMeasure.height));
 
-    const embeddedMorphs = morph.textAndAttributes.filter(m => m?.isMorph);
-    for (let m of embeddedMorphs) {
-      const node = this.getNodeForMorph(m);
-      const domMeasure = node.getBoundingClientRect();
-      m._owner = morph;
-      m.setProperty('position', pt(domMeasure.x, domMeasure.y));
-    }
-
-    prevParent.appendChild(textNode);
+    if (textNode === liveTextNode) prevParent.appendChild(textNode);
+    else textNode.remove();
     this.updateNodeScrollFromMorph(morph);
 
     if (morph.allFontsLoaded() && document.fonts.status !== 'loading') {

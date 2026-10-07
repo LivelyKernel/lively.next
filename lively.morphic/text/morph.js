@@ -429,7 +429,7 @@ export class Text extends Morph {
         after: ['document', 'textAndAttributes'],
         derived: true,
         get () {
-          return this.document ? this.document.textString : this.textAndAttributes.map((text, i) => i % 2 === 0 ? text : '').join('');
+          return this.document ? this.document.textString : this.textAndAttributes.map((text, i) => i % 2 === 0 ? (text?.isMorph ? objectReplacementChar : text) : '').join('');
         },
         set (value) {
           if (this.document) {
@@ -477,7 +477,7 @@ export class Text extends Morph {
         },
         set (textAndAttributes) {
           if (obj.isArray(textAndAttributes) && textAndAttributes.find(m => m?.doit)) { this.needsDocument = true; }
-          if (obj.isArray(textAndAttributes) && textAndAttributes.find(m => m?.isMorph)) { this.needsDocument = true; }
+          const previousTextAndAttributes = !this.document && this.textAndAttributes;
           if (this.document) {
             this.replace(
               { start: { row: 0, column: 0 }, end: this.documentEndPosition },
@@ -490,6 +490,11 @@ export class Text extends Morph {
             this.renderingState.needsFit = true;
           }
           this.setProperty('textAndAttributes', textAndAttributes);
+          if (!this.document) {
+            this._updateEmbeddedMorphsDuringReplace(
+              textAndAttributes.filter((part, i) => i % 2 === 0 && part?.isMorph),
+              { start: { row: 0, column: 0 } }, textAndAttributes, previousTextAndAttributes);
+          }
           if (this.world()) this.whenFontLoaded().then(() => this.fit());
         }
       },
@@ -1175,14 +1180,6 @@ export class Text extends Morph {
     return !this.document;
   }
 
-  get submorphs () {
-    if (!this.document) {
-      const embeddedMorphs = this.textAndAttributes.filter(m => m?.isMorph);
-      if (embeddedMorphs.length > 0) return [...super.submorphs, ...embeddedMorphs];
-    }
-    return super.submorphs;
-  }
-
   makeDirty () {
     if (this._positioningSubmorph) return;
     this.renderingState.needsRemeasure = true;
@@ -1190,7 +1187,8 @@ export class Text extends Morph {
   }
 
   requestTextLayoutMeasuring () {
-    this.renderingState.renderedTextAndAttributes = null;
+    this.renderingState.needsRemeasure = true;
+    if (this.document || this.renderingState.needsScrollLayerRemoved) this.renderingState.renderedTextAndAttributes = null;
   }
 
   static icon (iconName, props = { prefix: '', suffix: '' }) {
@@ -2067,11 +2065,17 @@ export class Text extends Morph {
         // to infer the movement). We therefore need to replace these anchor at all times
 
         if (embeddedMorphMap) {
+          if (!this.document) {
+            embeddedMorphMap.set(morph, { anchor: null });
+            continue;
+          }
           let anchor;
           if (embeddedMorphMap.has(morph)) {
             ({ anchor } = embeddedMorphMap.get(morph));
-            if (anchor) anchor.position = start;
-            continue;
+            if (anchor) {
+              anchor.position = start;
+              continue;
+            }
           }
           anchor = this.addAnchor({ id: 'embedded-' + morph.id, ...start });
           embeddedMorphMap.set(morph, { anchor });
@@ -2281,6 +2285,10 @@ export class Text extends Morph {
     this.renderingState.needsScrollLayerAdded = true;
     this.renderingState.needsLinesToBeCleared = true;
     this._isUpgrading = false;
+    const textAndAttributes = this.document.textAndAttributes;
+    this._updateEmbeddedMorphsDuringReplace(
+      textAndAttributes.filter((part, i) => i % 2 === 0 && part?.isMorph),
+      { start: { row: 0, column: 0 } }, textAndAttributes, []);
     if (this.env.renderer) {
       this.env.forceUpdate(this);
     } else {
@@ -2972,7 +2980,8 @@ export class Text extends Morph {
          !obj.equals(this.renderingState.letterSpacing, this.letterSpacing)) {
         renderer.patchLineHeightAndLetterSpacing(node, this);
       }
-      if (!obj.equals(this.renderingState.renderedTextAndAttributes, this.textAndAttributes)) {
+      if (!obj.equals(this.renderingState.renderedTextAndAttributes, this.textAndAttributes) ||
+          this.textAndAttributes.some(part => part?.isMorph && part.renderingState.needsRerender)) {
         renderer.renderTextAndAttributes(node, this);
       }
       if (!obj.equals(this.renderingState.scroll, this.scroll)) {
