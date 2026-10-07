@@ -26,6 +26,49 @@ describe('lines', () => {
 });
 
 describe('document as text tree', () => {
+  it('keeps fractional heights consistent through large tree construction and rebalancing', () => {
+    const specs = count => Array.from({ length: count }, () => ({ text: 'line', width: 100, height: 14.1 }));
+    const doc = new Document(specs(50000), {
+      maxLeafSize: 50, minLeafSize: 25, maxNodeSize: 35, minNodeSize: 7
+    });
+    doc.consistencyCheck();
+    for (let i = 0; i < 8; i++) {
+      doc.removeLines(42, 342);
+      doc.consistencyCheck();
+      doc.insertLines(specs(301), 42);
+      doc.consistencyCheck();
+    }
+    expect(doc.rowCount).equals(50000);
+    expect(doc.getLine(42).height).equals(14.1);
+  });
+
+  it('keeps large document heights consistent through repeated measurements', () => {
+    const doc = new Document(Array.from({ length: 5000 }, () => ({ text: 'line', width: 100, height: 14.1 * 1.3 })), {
+      maxLeafSize: 50, minLeafSize: 25, maxNodeSize: 35, minNodeSize: 7
+    });
+    const lines = doc.lines;
+    for (let cycle = 0; cycle < 16; cycle++) {
+      const height = [14.1 * 1.3, 13.75 * 1.125, 19.3 * 1.7, 11.125 * 1.3][cycle % 4];
+      lines.forEach(line => line.changeExtent(100, height));
+      doc.consistencyCheck();
+      expect(lines[42].height).equals(height, 'stored measurements must remain unrounded');
+    }
+  });
+
+  it('accepts floating-point height drift at a rounding boundary', () => {
+    const doc = new Document([{ text: 'a', width: 100, height: 249.5 }]);
+    doc.root.height = 249.49999999999997;
+    expect(() => doc.consistencyCheck()).not.to.throw();
+  });
+
+  it('still rejects incorrect or non-finite cached heights', () => {
+    const doc = new Document([{ text: 'a', width: 100, height: 249.5 }]);
+    for (const height of [249.51, NaN, Infinity]) {
+      doc.root.height = height;
+      expect(() => doc.consistencyCheck()).to.throw(/Sum of child Height/);
+    }
+  });
+
   it('finds lines by row', () => {
     const doc = new Document([{ text: 'a', height: 10 }, { text: 'b', height: 20 }, { text: 'c', height: 5 }, { text: 'd', height: 15 }]);
     doc.consistencyCheck();
