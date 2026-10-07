@@ -2186,7 +2186,7 @@ export default class Renderer {
         if (document.fonts.status === 'loaded') {
           morph.textLayout.lineCharBoundsCache.set(docLine, charBounds); // override
           docLine.changeExtent(lineWidth, lineHeight, false);
-          morph.renderingState.needsFit = true;
+          morph.renderingState.needsFit = !morph.fixedWidth || !morph.fixedHeight;
         } else {
           morph.textLayout.resetLineCharBoundsCacheOfLine(docLine);
           morph.makeDirty();
@@ -2204,7 +2204,7 @@ export default class Renderer {
         morph.fontMetric.isFontSupported(morph._fontFamilyToRender, morph._fontWeightToRender)) {
         docLine.changeExtent(nodeWidth, nodeHeight, false);
         morph.textLayout.resetLineCharBoundsCacheOfLine(docLine);
-        morph.renderingState.needsFit = true;
+        morph.renderingState.needsFit = !morph.fixedWidth || !morph.fixedHeight;
       }
 
       return nodeHeight;

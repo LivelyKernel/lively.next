@@ -48,6 +48,7 @@ describe('embedded morph transforms', () => {
         expect(updated).greaterThan(0);
         expect(offscreen).equals(0, 'offscreen anchors must not re-enter rendering');
         expect(charMeasurements).equals(0, 'rendered inline placement must not remeasure character bounds');
+        expect(text.renderingState.needsFit).equals(false, 'fixed dimensions must not schedule unused fitting');
         expect(updated).lessThan(embeds.length, 'anchor work is limited to visible lines');
         text.document.consistencyCheck();
         const row = text.renderingState.firstVisibleRow;
@@ -55,6 +56,11 @@ describe('embedded morph transforms', () => {
         const actual = text.env.renderer.getNodeForMorph(embedded).getBoundingClientRect();
         const model = embedded.globalBounds();
         for (const key of ['x', 'y', 'width', 'height']) expect(actual[key]).closeTo(model[key], 0.2, key);
+        if (!canvas) {
+          const position = text.embeddedMorphMap.get(embedded).anchor.position;
+          const measured = text.charBoundsFromTextPosition(position).translatedBy(text.position.subPt(text.scroll));
+          for (const key of ['x', 'y', 'width', 'height']) expect(actual[key]).closeTo(measured[key], 0.2, 'measured ' + key);
+        }
       }
     });
   }
