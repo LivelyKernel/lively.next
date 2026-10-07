@@ -6,19 +6,19 @@ import { acorn, query, escodegen, parseFunction, ReplaceVisitor, withMozillaAstD
 import { addRecorderBindings } from './stackReification.js';
 
 let Global = typeof window !== "undefined" ? window : globalThis;
-export const originalFunctions = new WeakMap();
-export const capturedBindingMappings = new WeakSet();
+const debuggerState = Global[Symbol.for('lively-debugger-state')] ||= {};
+export const originalFunctions = debuggerState.originalFunctions ||= new WeakMap();
+export const capturedBindingMappings = debuggerState.capturedBindingMappings ||= new WeakSet();
 export function freeFunctionReferences(ast) {
   return query.findGlobalVarRefs('(' + escodegen.generate(ast) + ')');
 }
-const lexicalBindings = new WeakMap();
-const capturedScopes = new WeakMap();
-let executingDebugModule;
+const lexicalBindings = debuggerState.lexicalBindings ||= new WeakMap();
+const capturedScopes = debuggerState.capturedScopes ||= new WeakMap();
 
 export function withDebugModule(module, invoke) {
-  const previous = executingDebugModule;
-  executingDebugModule = module;
-  try { return invoke(); } finally { executingDebugModule = previous; }
+  const previous = debuggerState.executingDebugModule;
+  debuggerState.executingDebugModule = module;
+  try { return invoke(); } finally { debuggerState.executingDebugModule = previous; }
 }
 
 export function runtimeFunctionSource(func) {
@@ -125,6 +125,10 @@ export function __initializeBinding(mapping, name, value) {
   return value;
 }
 
+export function __initializationTarget(mapping) {
+  return new Proxy(mapping, {set(target, name, value) { __initializeBinding(target, name, value); return true; }});
+}
+
 export function __cloneLexicalScope(scope) {
   const cells = lexicalBindings.get(scope[1]);
   const copy = __createLexicalScope(scope[2], scope[0], scope[3], Object.entries(cells).map(([name, cell]) => [name, cell.kind]));
@@ -226,7 +230,7 @@ export function __closeIteratorsAfterCatch(error) {
   delete error.iteratorsToClose;
 }
 
-Object.assign(Global, { __createLexicalScope, __initializeBinding, __cloneLexicalScope, __captureLexicalScope, __scopeForUnwind, __awaitValue, __forOf, __closeIteratorsAfterCatch });
+Object.assign(Global, { __createLexicalScope, __initializeBinding, __initializationTarget, __cloneLexicalScope, __captureLexicalScope, __scopeForUnwind, __awaitValue, __forOf, __closeIteratorsAfterCatch });
 
 export function __createClosure(namespace, idx, parentFrameState, f, lexical) {
   // FIXME: Either save idx and use __getClosure later or attach the AST here and now (code dup.)?
@@ -254,7 +258,7 @@ export function __createClosure(namespace, idx, parentFrameState, f, lexical) {
     if (module) break;
     state = state[2];
   }
-  module = module || executingDebugModule;
+  module = module || debuggerState.executingDebugModule;
   if (module) {
     const original = originalFunctions.get(registry[namespace][f._cachedAst._parentEntry]);
     const meta = original?.[Symbol.for('lively-object-meta')];
@@ -290,6 +294,7 @@ export class UnwindException {
     }
 
     storeFrameInfo(/*...*/) {
+        if (arguments[6]) arguments.newTarget = arguments[6];
         this.frameInfo.push(arguments);
     }
 
@@ -322,7 +327,7 @@ export class UnwindException {
         frame.constructorInvocation = !!originalFunctions.get(ast)?.[Symbol.for('lively-debug-constructor')];
         frame.setThis(thiz);
         if (frame.func.node && frame.func.node.type != 'Program')
-            frame.setArguments(args);
+            frame.arguments = args;
         frame.setAlreadyComputed(alreadyComputed);
         if (!this.top) {
             pc = this.error && acorn.walk.findNodeByAstIndex(frame.getOriginalAst(),

@@ -219,6 +219,7 @@ function livelySystemEnv (System) {
     options: System['__lively.modules__options'] || (System['__lively.modules__options'] = obj.deepCopy(defaultOptions)),
     onLoadCallbacks: System['__lively.modules__onLoadCallbacks'] || (System['__lively.modules__onLoadCallbacks'] = []),
     modulePackageMapCache: System['__lively.modules__modulePackageMapCache'],
+    ...(System['__lively.modules__moduleDebugger'] ? { moduleDebugger: System['__lively.modules__moduleDebugger'] } : {}),
     nodeRequirePackages: System['__lively.modules__nodeRequirePackages'] || (System['__lively.modules__nodeRequirePackages'] = new Set())
   };
 }

@@ -292,7 +292,7 @@ export async function customTranslate (load) {
   try {
     useCache = System.useModuleTranslationCache;
     indexdb = System.global.indexedDB;
-    hashForCache = meta.hashForCache = useCache && String(string.hashCode('module-debugger-v2:' + mod.debuggingEnabled + ':' + load.source));
+    hashForCache = meta.hashForCache = useCache && String(string.hashCode('module-debugger-v3:' + mod.debuggingEnabled + ':' + mod.embedOriginalCode + ':' + load.source));
     if (useCache && indexdb && isEsm) {
       let cache = System._livelyModulesTranslationCache ||
                (System._livelyModulesTranslationCache = new BrowserModuleTranslationCache());

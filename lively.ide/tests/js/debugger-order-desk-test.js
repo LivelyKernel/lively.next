@@ -2,7 +2,7 @@
 import { expect } from 'mocha-es6';
 import { OrderDesk } from '../../js/debugger/examples/order-desk.js';
 import { run } from 'lively.context/lib/stackReification.js';
-import { resumeInspectorContinuation } from 'lively.context/lib/inspector-interpreter.js';
+import { resumeInspectorContinuation, restartInspectorFrame } from 'lively.context/lib/inspector-interpreter.js';
 
 describe('debugger order desk', function () {
   it('checks pricing, live repair, atomic stock updates and undo through continuations', async function () {
@@ -27,9 +27,10 @@ describe('debugger order desk', function () {
     desk.reset(); desk.badCart();
     let failed = await resume(await start('checkout'));
     expect(failed.exception.message).equals('Invalid quantity for cake');
-    expect(failed.currentFrame.lookup('subtotal')).equals(2500);
+    const checkout = failed.frames().find(frame => frame.getScope().hasInChain('subtotal'));
+    expect(checkout.lookup('subtotal')).equals(2500);
     failed.currentFrame.lookup('line').quantity = '3';
-    preview = await resume(failed);
+    preview = await resume(restartInspectorFrame(failed));
     expect((await resume(preview)).total).equals(4658);
     expect([desk.attempts, desk.quoteCalls]).deep.equals([1, 1]);
 

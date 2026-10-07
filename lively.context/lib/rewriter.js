@@ -1,20 +1,21 @@
 /*global global, module, Global,LivelyDebuggingASTRegistry*/
-import { acorn, parse, walk } from "lively.ast";
+import { acorn, parse, walk, query } from "lively.ast";
 import { obj, arr } from "lively.lang";
 
-export let LivelyDebuggingASTRegistry = {};
+const debuggerState = globalThis[Symbol.for('lively-debugger-state')] ||= {};
+export let LivelyDebuggingASTRegistry = debuggerState.astRegistry ||= {};
 
 let _currentASTRegistry = (function() {
     return typeof LivelyDebuggingASTRegistry !== 'undefined' ? LivelyDebuggingASTRegistry : {};
 })()
 
 function getCurrentASTRegistry() {
-    if (_currentASTRegistry) return _currentASTRegistry;
+    if (debuggerState.astRegistry) return debuggerState.astRegistry;
     return {};
 }
 
 function setCurrentASTRegistry(astRegistry) {
-    return _currentASTRegistry = astRegistry;
+    return _currentASTRegistry = debuggerState.astRegistry = astRegistry;
 }
 
 function rewrite(node, astRegistry, namespace) {
@@ -150,7 +151,7 @@ export class Rewriter {
       if (!this.scopes.length) return undefined;
       var scope = arr.last(this.scopes),
           that = this;
-      return varIdentifiers.reduce(function(res, varIdentifier) {
+      return query.helpers.declIds(varIdentifiers.map(node => node.type ? node : {...node, type: 'Identifier'})).reduce(function(res, varIdentifier) {
           var varName = varIdentifier.name;
           if (scope.localVars.indexOf(varName) == -1) {
               scope.localVars.push(varName);
@@ -167,23 +168,23 @@ export class Rewriter {
       scope.functionBody = body;
       const directDeclarations = new Set(body.body);
       const lexicalDeclarations = body.body.filter(n => n.type === 'VariableDeclaration' && n.kind !== 'var')
-          .flatMap(n => n.declarations.map(d => [d.id.name, n.kind]));
+          .flatMap(n => query.helpers.declIds(n.declarations.map(d => d.id)).map(id => [id.name, n.kind]));
       this.registerVars(lexicalDeclarations.map(([name]) => ({ name })));
       let hasLexicalScopes = lexicalDeclarations.length > 0;
       walk.matchNodes(ast, {
           'VariableDeclaration': function(node, state, depth, type) {
               if (node.type != type) return; // skip Expression, Statement, etc.
               if (node.kind !== 'var') { hasLexicalScopes = true; return; }
-              node.declarations.forEach(function(n) {
+              query.helpers.declIds(node.declarations.map(n => n.id)).forEach(function(id) {
                   // only if it has not been defined before (as variable or argument!)
-                  if ((scope.localVars.indexOf(n.id.name) == -1) && (n.id.name != 'arguments')) {
-                      state[n.id.name] = {
-                          key: that.newNode('Literal', {value: n.id.name}),
+                  if ((scope.localVars.indexOf(id.name) == -1) && (id.name != 'arguments')) {
+                      state[id.name] = {
+                          key: that.newNode('Literal', {value: id.name}),
                           type: "Property",
                           kind: 'init',
                           value: that.newNode('Identifier', {name: 'undefined'})
                       };
-                      scope.localVars.push(n.id.name);
+                      scope.localVars.push(id.name);
                   }
               });
           },
@@ -210,6 +211,7 @@ export class Rewriter {
       });
       result.lexicalDeclarations = lexicalDeclarations;
       result.hasLexicalScopes = hasLexicalScopes;
+      result.hasBindingPatterns = body.body.some(node => node.type === 'VariableDeclaration' && node.kind !== 'var' && node.declarations.some(decl => decl.id.type !== 'Identifier'));
       return result;
   }
 
@@ -235,6 +237,10 @@ export class Rewriter {
                   this.newVariable('debugging', this.newNode('Literal', {value: false})),
                   this.newVariable('__' + level, []),
                   this.newVariable('_' + level, mapping),
+                  ...(decls?.hasBindingPatterns ? [this.newVariable('_initialize_' + level, this.newNode('CallExpression', {
+                      callee: this.newNode('Identifier', {name: '__initializationTarget'}),
+                      arguments: [this.newNode('Identifier', {name: '_' + level})]
+                  }))] : []),
               ]
           }),
           this.newNode('ExpressionStatement', {
@@ -281,7 +287,9 @@ export class Rewriter {
                               this.newNode('Identifier', {name: '__' + level}),
                               this.newNode('Identifier', {name: "lastNode"}),
                               this.newNode('Literal', {value: this.namespace}),
-                              this.newNode('Literal', {value: originalFunctionIdx})]
+                              this.newNode('Literal', {value: originalFunctionIdx}),
+                              ...(['FunctionDeclaration', 'FunctionExpression'].includes(this.astRegistry[this.namespace][originalFunctionIdx].type)
+                                  ? [this.newNode('MetaProperty', {meta: this.newNode('Identifier', {name: 'new'}), property: this.newNode('Identifier', {name: 'target'})})] : [])]
                       })
                   }),
                   this.newNode('ThrowStatement', {argument: this.newNode('Identifier', {name: 'ex'})})
@@ -530,7 +538,7 @@ export class Rewriter {
           start: node.start, end: node.end, type: 'FunctionExpression',
           body: this.newNode('BlockStatement', {
               body: [this.wrapSequence(rewritten, args, decls, node.registryId)]}),
-          id: node.id || null, params: args
+          id: node.id || null, params: structuredClone(node.params)
       }, this.namespace, node.registryId);
       return wrapped;
   }
@@ -663,7 +671,7 @@ export class RecordingRewriter extends Rewriter {
       var wrapped = this.wrapClosure({
           start: node.start, end: node.end, type: 'FunctionExpression',
           body: this.wrapSequence(rewritten, args, decls, node.registryId),
-          id: node.id || null, params: args
+          id: node.id || null, params: structuredClone(node.params)
       }, this.namespace, node.registryId);
       return wrapped;
   }
@@ -1421,6 +1429,43 @@ export class RewriteVisitor extends BaseVisitor {
       return {...n, argument: value.type === 'ExpressionStatement' ? value.expression : value};
   }
 
+  visitChainExpression(n, rewriter) {
+      const sequence = expressions => rewriter.newNode('SequenceExpression', {expressions});
+      const missing = rewriter.newNode('UnaryExpression', {operator: 'void', prefix: true, argument: rewriter.newNode('Literal', {value: 0})});
+      const optional = (node, ref, result) => node.optional ? rewriter.newNode('ConditionalExpression', {
+          test: rewriter.newNode('LogicalExpression', {operator: '||',
+              left: rewriter.newNode('BinaryExpression', {operator: '===', left: ref, right: rewriter.newNode('Literal', {value: null})}),
+              right: rewriter.newNode('BinaryExpression', {operator: '===', left: ref, right: missing})}),
+          consequent: missing, alternate: result
+      }) : result;
+      // Lower each link around the rest of the chain so a skipped link skips keys,
+      // arguments and later links. Keep original node indices for continuation resume.
+      const chain = (node, next) => {
+          if (node.type === 'MemberExpression') return chain(node.object, value => {
+              const ref = rewriter.computationReference(node.object.astIndex);
+              const member = rewriter.storeComputationResult({...node, optional: false, object: ref,
+                  property: node.computed ? this.patternExpression(node.property, rewriter) : node.property}, node.start, node.end, node.astIndex);
+              return sequence([rewriter.storeComputationResult(value, node.object.start, node.object.end, node.object.astIndex, true),
+                  optional(node, ref, next(member, ref))]);
+          });
+          if (node.type === 'CallExpression') return chain(node.callee, (value, receiver) => {
+              const ref = rewriter.computationReference(node.callee.astIndex);
+              const call = this.visitCallExpression({...node, optional: false,
+                  callee: rewriter.newNode('MemberExpression', {object: ref, computed: false, property: rewriter.newNode('Identifier', {name: 'call'})}),
+                  arguments: [receiver || rewriter.newNode('Identifier', {name: typeof window !== 'undefined' ? 'window' : 'global'}), ...node.arguments]
+              }, rewriter);
+              return sequence([rewriter.storeComputationResult(value, node.callee.start, node.callee.end, node.callee.astIndex, true),
+                  optional(node, ref, next(call))]);
+          });
+          return next(this.patternExpression(node, rewriter));
+      };
+      return chain(n.expression, result => result);
+  }
+
+  visitTemplateLiteral(n, rewriter) {
+      return {...n, expressions: n.expressions.map(expr => this.patternExpression(expr, rewriter))};
+  }
+
   visitForOfStatement(n, rewriter) {
       if (n.await) throw new Error('Async iteration requires an async iterator continuation');
       const declaration = n.left.type === 'VariableDeclaration' ? n.left : null;
@@ -1482,7 +1527,7 @@ export class RewriteVisitor extends BaseVisitor {
       const scope = arr.last(rewriter.scopes);
       const declarations = scope.functionBody === n ? [] : n.body
           .filter(node => node.type === 'VariableDeclaration' && node.kind !== 'var')
-          .flatMap(node => node.declarations.map(decl => [decl.id.name, node.kind]));
+          .flatMap(node => query.helpers.declIds(node.declarations.map(decl => decl.id)).map(id => [id.name, node.kind]));
       const functions = scope.functionBody === n ? [] : n.body.filter(node => node.type === 'FunctionDeclaration');
       const lexical = declarations.length || functions.length;
       const root = rewriter.lastFunctionScopeId();
@@ -1505,6 +1550,8 @@ export class RewriteVisitor extends BaseVisitor {
       const parentScope = rewriter.scopes[level - 1];
       const parentRef = parentScope.isCatchScope || parentScope.isWithScope ? '__' + root : parent;
       const preamble = parse('let __' + level + ' = __createLexicalScope(' + parentRef + ', _, ' + n.astIndex + ', ' + JSON.stringify(declarations) + '); let _' + level + ' = __' + level + '[1];').body;
+      if (n.body.some(node => node.type === 'VariableDeclaration' && node.kind !== 'var' && node.declarations.some(decl => decl.id.type !== 'Identifier')))
+          preamble.push(...parse('let _initialize_' + level + ' = __initializationTarget(_' + level + ');').body);
       const initializers = functions.map(node => rewriter.newNode('ExpressionStatement', {
           expression: rewriter.newNode('AssignmentExpression', {operator: '=', left: rewriter.wrapVar(node.id.name),
               right: rewriter.rewriteFunctionDeclaration(node, this.registryIndex)})
@@ -1555,14 +1602,16 @@ export class RewriteVisitor extends BaseVisitor {
           const root = rewriter.lastFunctionScopeId(), parentLevel = rewriter.scopes.length - 1;
           const parent = rewriter.scopes[parentLevel].isBlockScope ? parentLevel : root;
           const level = rewriter.enterScope({isBlockScope: true}) - 1;
-          const declarations = n.init.declarations.map(decl => [decl.id.name, n.init.kind]);
+          const declarations = query.helpers.declIds(n.init.declarations.map(decl => decl.id)).map(id => [id.name, n.init.kind]);
           rewriter.registerVars(n.init.declarations.map(decl => decl.id));
           const init = this.accept(n.init, rewriter).expression;
           const test = n.test ? this.accept(n.test, rewriter) : rewriter.newNode('Literal', {value: true});
           const update = n.update && this.accept(n.update, rewriter);
           const body = this.accept(n.body, rewriter);
           const loop = parse('for (let __' + level + ' = __createLexicalScope(__' + parent + ', _, ' + n.astIndex + ', ' + JSON.stringify(declarations) + '), _' + level + ' = __' + level + '[1], __initialized = 0; true; __' + level + ' = __cloneLexicalScope(__' + level + '), _' + level + ' = __' + level + '[1]) {}').body[0];
-          loop.init.declarations[2].init = init;
+          if (n.init.declarations.some(decl => decl.id.type !== 'Identifier')) loop.init.declarations.splice(2, 0,
+              rewriter.newVariable('_initialize_' + level, parse('__initializationTarget(_' + level + ')').body[0].expression));
+          loop.init.declarations[loop.init.declarations.length - 1].init = init;
           loop.test = test;
           if (update) loop.update.expressions.push(update);
           loop.body = parse('try {} catch (__scopeError) { throw __captureLexicalScope(__scopeError, __' + root + ', __' + level + '); }').body[0];
@@ -1595,10 +1644,16 @@ export class RewriteVisitor extends BaseVisitor {
       // right is a node of type Expression
       // body is a node of type Statement
       // n.each has a specific type that is boolean
-      var left, right = this.accept(n.right, rewriter),
-          body = this.accept(n.body, rewriter),
+      const lexical = n.left.type === 'VariableDeclaration' && n.left.kind !== 'var';
+      const root = rewriter.lastFunctionScopeId(), parent = rewriter.scopes.length - 1;
+      const right = this.accept(n.right, rewriter);
+      if (lexical) { rewriter.enterScope({isBlockScope: true}); rewriter.registerVars(n.left.declarations.map(decl => decl.id)); }
+      const level = rewriter.scopes.length - 1;
+      const keyName = '__forKey_' + n.astIndex;
+      var left, body = this.accept(n.body, rewriter),
           start = n.start, end = n.end, astIndex = n.right.astIndex;
-      if (n.left.type == 'VariableDeclaration') {
+      if (lexical) left = parse('var ' + keyName).body[0];
+      else if (n.left.type == 'VariableDeclaration') {
           left = this.accept(n.left.declarations[0].id, rewriter);
           // fake astIndex for source mapping
           left.astIndex = n.left.astIndex;
@@ -1652,6 +1707,14 @@ export class RewriteVisitor extends BaseVisitor {
               arguments: [ ]
           }
       });
+      if (lexical) {
+          const declarations = query.helpers.declIds(n.left.declarations.map(decl => decl.id)).map(id => [id.name, n.left.kind]);
+          const setup = parse('let __' + level + ' = __createLexicalScope(__' + parent + ', _, ' + n.astIndex + ', ' + JSON.stringify(declarations) + '); let _' + level + ' = __' + level + '[1]; __initializeBinding(_' + level + ', ' + JSON.stringify(declarations[0][0]) + ', ' + keyName + ');').body;
+          const guarded = parse('try {} catch (__forError) { throw __captureLexicalScope(__forError, __' + root + ', __' + level + '); }').body[0];
+          guarded.block = body;
+          body = {type: 'BlockStatement', body: [...setup, guarded]};
+          rewriter.exitScope();
+      }
       return {
           start: n.start, end: n.end, type: 'ForInStatement',
           left: left, right: right, body: body,
@@ -1849,7 +1912,7 @@ export class RewriteVisitor extends BaseVisitor {
     func.expression = false;
     delete func.id;
     const call = func.body.body[0].handler.body.body[1].expression;
-    call.arguments[1] = rewriter.newNode('ArrayExpression', {elements: n.params});
+    call.arguments[1] = rewriter.newNode('ArrayExpression', {elements: query.helpers.declIds(n.params)});
     if (!n.params.some(param => param.name === 'arguments')) {
         const scopeName = func.body.body[0].block.body[0].declarations[4].id.name;
         func.body.body[0].block.body.splice(2, 0, ...parse(scopeName + '.arguments = typeof arguments === "undefined" ? undefined : arguments;').body);
@@ -1895,7 +1958,7 @@ export class RewriteVisitor extends BaseVisitor {
           start: n.start, end: n.end, type: 'FunctionExpression',
           body: rewriter.newNode('BlockStatement', {
               body: [rewriter.wrapSequence(rewritten, args, decls, n.registryId)]}),
-          id: n.id || null, params: args, astIndex: n.astIndex
+          id: n.id || null, params: structuredClone(n.params), astIndex: n.astIndex
       }, rewriter.namespace, n.registryId);
       wrapped.astIndex = n.astIndex;
       wrapped = rewriter.newNode('ExpressionStatement', {
@@ -1910,6 +1973,16 @@ export class RewriteVisitor extends BaseVisitor {
       // n.kind is "var" or "let" or "const"
       var start = n.start, end = n.end, astIndex = n.astIndex;
       var decls = n.declarations.map(function(decl) {
+          if (decl.id.type !== 'Identifier') {
+              const previous = this.initializingPattern;
+              this.initializingPattern = n.kind !== 'var';
+              let target;
+              try { target = this.accept(decl.id, rewriter); }
+              finally { this.initializingPattern = previous; }
+              const value = this.accept(decl.init, rewriter);
+              return rewriter.storeComputationResult({type: 'AssignmentExpression', operator: '=', left: target,
+                  right: value.type === 'ExpressionStatement' ? value.expression : value}, start, end, decl.astIndex, true);
+          }
           if (n.kind !== 'var') {
               const target = this.accept(decl.id, rewriter);
               const value = decl.init ? this.accept(decl.init, rewriter) : rewriter.newNode('Identifier', {name: 'undefined'});
@@ -1950,12 +2023,7 @@ export class RewriteVisitor extends BaseVisitor {
       // each of n.elements can be of type Expression
       return {
           start: n.start, end: n.end, type: 'ArrayExpression', astIndex: n.astIndex,
-          elements: n.elements.map(function(element) {
-              var elem = this.accept(element, rewriter);
-              if (elem.type == 'ExpressionStatement')
-                  elem = elem.expression; // unwrap
-              return elem;
-          }, this)
+          elements: this.rewriteExpressionList(n.elements, rewriter)
       };
   }
 
@@ -2081,6 +2149,21 @@ export class RewriteVisitor extends BaseVisitor {
       };
   }
 
+  rewriteExpressionList(nodes, rewriter) {
+      return nodes.map(node => {
+          if (!node) return null;
+          let rewritten = this.accept(node, rewriter);
+          if (rewritten.type === 'ExpressionStatement') rewritten = rewritten.expression;
+          if (node.type === 'SpreadElement') {
+              // Retain the expanded values, including for one-shot iterators, when a callee suspends.
+              rewritten = {...rewritten, argument: rewriter.storeComputationResult({
+                  type: 'ArrayExpression', elements: [rewritten]
+              }, node.start, node.end, node.astIndex, true)};
+          }
+          return rewritten;
+      });
+  }
+
   visitNewExpression(n, rewriter) {
       // callee is a node of type Expression
       // each of n.arguments is of type Expression
@@ -2088,12 +2171,7 @@ export class RewriteVisitor extends BaseVisitor {
       return rewriter.storeComputationResult({
           type: 'NewExpression',
           callee: this.accept(n.callee, rewriter),
-          arguments: n.arguments.map(function(n) {
-              var n = this.accept(n, rewriter);
-              return (n.type == 'ExpressionStatement') ?
-                  n.expression : // unwrap
-                  n;
-          }, this)
+          arguments: this.rewriteExpressionList(n.arguments, rewriter)
       }, start, end, astIndex);
   }
 
@@ -2105,20 +2183,25 @@ export class RewriteVisitor extends BaseVisitor {
           callee = this.accept(n.callee, rewriter);
 
       if (callee.type == 'ExpressionStatement') callee = callee.expression; // unwrap
-      var args = n.arguments.map(function(n) {
-              var n = this.accept(n, rewriter);
-              return n.type == 'ExpressionStatement' ? n.expression : /*unwrap*/ n;
-          }, this),
-          lastArg = arr.last(args);
+      var args = this.rewriteExpressionList(n.arguments, rewriter),
+          lastArg = arr.last(args),
+          lastSpread = lastArg?.type === 'SpreadElement' ? lastArg : null;
+      if (lastSpread) lastArg = lastSpread.argument;
 
       if (lastArg !== undefined) {
           if (rewriter.isPrefixStored(lastArg))
               lastArg = lastArg.right; // unwrap
           if (!rewriter.isPostfixStored(lastArg)) {
-              lastArg = args[args.length - 1] = rewriter.storeComputationResult(lastArg, lastArg.start, lastArg.end, arr.last(n.arguments).astIndex, true);
-              // patch astIndex to calls astIndex
-              lastArg.expressions[1] = rewriter.lastNodeExpression(astIndex);
+              const argumentIndex = arr.last(n.arguments).astIndex;
+              if (argumentIndex === undefined) lastArg = rewriter.inlineAdvancePC(lastArg, astIndex);
+              else {
+                  lastArg = rewriter.storeComputationResult(lastArg, lastArg.start, lastArg.end, argumentIndex, true);
+                  // patch astIndex to calls astIndex
+                  lastArg.expressions[1] = rewriter.lastNodeExpression(astIndex);
+              }
           }
+          if (lastSpread) lastSpread.argument = lastArg;
+          else args[args.length - 1] = lastArg;
       }
 
       if (lastArg === undefined && n.callee.type === 'MemberExpression' &&
@@ -2338,8 +2421,27 @@ export class RewriteVisitor extends BaseVisitor {
   visitIdentifier(n, rewriter) {
       // n.name has a specific type that is string
       var node = rewriter.wrapVar(n.name);
+      if (this.initializingPattern) node.object = rewriter.newNode('Identifier', {name: '_initialize' + node.object.name});
       node.astIndex = n.astIndex;
       return node;
+  }
+
+  visitObjectPattern(n, rewriter) {
+      return {...n, properties: n.properties.map(prop => prop.type === 'RestElement' ? this.accept(prop, rewriter) :
+          {...prop, shorthand: false, key: prop.computed ? this.patternExpression(prop.key, rewriter) : walk.copy(prop.key), value: this.accept(prop.value, rewriter)})};
+  }
+
+  visitArrayPattern(n, rewriter) { return {...n, elements: n.elements.map(node => node && this.accept(node, rewriter))}; }
+
+  visitRestElement(n, rewriter) { return {...n, argument: this.accept(n.argument, rewriter)}; }
+
+  visitAssignmentPattern(n, rewriter) { return {...n, left: this.accept(n.left, rewriter), right: this.patternExpression(n.right, rewriter)}; }
+
+  patternExpression(n, rewriter) {
+      const previous = this.initializingPattern;
+      this.initializingPattern = false;
+      try { const result = this.accept(n, rewriter); return result.type === 'ExpressionStatement' ? result.expression : result; }
+      finally { this.initializingPattern = previous; }
   }
 
   visitWithStatement(n, rewriter) {

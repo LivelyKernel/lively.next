@@ -57,6 +57,9 @@ The System Browser's menu includes **Toggle module debugger interception**. This
 temporarily enables or disables interception for the selected module. Enabling it
 wraps current definitions without rerunning module initialization or saving source;
 existing class instances keep their identity. Future source edits honor the setting.
+Enabling also opens the debugger on uncaught exceptions while the selected module
+is in the captured stack. Automatic statement interception alone preserves normal
+exception propagation.
 You can also use `await module('your/package/file.js').setDebuggingEnabled(true)`
 after importing `module` from `lively.modules`.
 

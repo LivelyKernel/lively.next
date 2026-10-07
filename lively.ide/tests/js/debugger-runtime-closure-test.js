@@ -81,6 +81,7 @@ describe('runtime closure bindings', function () {
     const mod = module(file.url);
     let view, restoredWindow;
     try {
+      await mod.setDebuggingEnabled(false); // Exercise native retained cells through explicit capture.
       const {make} = await mod.load();
       const account = make('2');
       const bindings = account.charge[Symbol.for('lively-debug-bindings')];

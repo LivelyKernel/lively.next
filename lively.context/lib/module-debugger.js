@@ -10,13 +10,18 @@ export function installModuleDebugger (System, { open } = {}) {
     if (open) env.moduleDebugger.open = open;
     return env.moduleDebugger;
   }
-  const runtime = env.moduleDebugger = {
+  let preparing = false;
+  const runtime = env.moduleDebugger = System['__lively.modules__moduleDebugger'] = {
     open: open || (async (continuation, callbacks) => {
-      const { openForContinuation } = await System.import('lively.ide/js/debugger/ui.cp.js');
+      const debuggerModule = 'lively.ide/js/debugger/ui.cp.js';
+      const { openForContinuation } = await System.import(debuggerModule);
       return openForContinuation(continuation, System.global.$world, callbacks);
     }),
     deliver (result) {
       if (!result?.isContinuation) return result;
+      // A debugger statement enables stops automatically; exception stops need
+      // an explicitly enabled module anywhere in the captured computation.
+      if (result.reason === 'exception' && !result.frames().some(frame => frame.getScope().debugModule()?._debuggingEnabled)) throw result.exception;
       let complete;
       const promise = new Promise(resolve => { complete = resolve; });
       Promise.resolve(runtime.open(result, { onComplete: complete, onCancel: () => complete(undefined) }))
@@ -32,10 +37,20 @@ export function installModuleDebugger (System, { open } = {}) {
     },
     wrapFunction (func, module) {
       if (func[Symbol.for('lively-debug-interception')]) return func;
-      let rewritten;
-      const prepare = () => rewritten || (rewritten = func.isInterpretableFunction || func.livelyDebuggingEnabled ? func : stackCaptureMode(func, null, getCurrentASTRegistry()));
+      let rewritten, registry;
+      const prepare = () => {
+        const currentRegistry = getCurrentASTRegistry();
+        if (rewritten && registry === currentRegistry) return rewritten;
+        preparing = true;
+        try {
+          rewritten = func.isInterpretableFunction || func.livelyDebuggingEnabled ? func : stackCaptureMode(func, null, currentRegistry);
+          registry = currentRegistry;
+          return rewritten;
+        }
+        finally { preparing = false; }
+      };
       const call = (receiver, args, newTarget) => {
-        if (!module.debuggingEnabled) return newTarget ? Reflect.construct(func, args, newTarget) : Reflect.apply(func, receiver, args);
+        if (preparing || !module.debuggingEnabled) return newTarget ? Reflect.construct(func, args, newTarget) : Reflect.apply(func, receiver, args);
         const compiled = prepare();
         const invoke = () => withDebugModule(module, () => {
           try {
@@ -61,7 +76,7 @@ export function installModuleDebugger (System, { open } = {}) {
         get (target, key, receiver) {
           if (key === Symbol.for('lively-debug-interception')) return true;
           if (key === 'toString') return target.toString.bind(target);
-          if (module.debuggingEnabled && ['livelyDebuggingEnabled', '_cachedAst', '_cachedScopeObject'].includes(key)) return prepare()[key];
+          if (!preparing && module.debuggingEnabled && ['livelyDebuggingEnabled', '_cachedAst', '_cachedScopeObject'].includes(key)) return prepare()[key];
           return Reflect.get(target, key, receiver);
         },
         apply (target, receiver, args) {

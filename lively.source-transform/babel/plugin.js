@@ -1012,7 +1012,7 @@ function captureRuntimeClosures(program, options) {
     const call = t.CallExpression(t.MemberExpression(t.cloneNode(module, true), t.Identifier(fn.extra?.livelyDebugMethod ? 'recordDebugMethod' : 'recordDebugClosure')), [
       path.isFunctionDeclaration() ? t.cloneNode(fn.id) : fn,
       t.ObjectExpression([...captures].map(([name, cell]) => t.ObjectProperty(t.StringLiteral(name), t.cloneNode(cell)))),
-      t.NumericLiteral(fn.start), t.NumericLiteral(fn.end), t.Identifier(options.sourceAccessorName), t.StringLiteral(name || '')
+      t.NumericLiteral(fn.start), t.NumericLiteral(fn.end), t.Identifier(options.sourceAccessorName), t.StringLiteral(String(name ?? ''))
     ]);
     if (path.isArrowFunctionExpression()) {
       call.arguments.push(t.ThisExpression());

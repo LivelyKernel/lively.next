@@ -12,6 +12,7 @@ import { ImportInjector, GlobalInjector, ImportRemover } from './import-modifica
 import { _require, _resolve } from './nodejs.js';
 import { classHolder } from './cycle-breaker.js';
 import { regExpEscape } from 'lively.lang/string.js';
+import { installModuleDebugger } from '../../lively.context/lib/module-debugger.js';
 
 // Used by the recorder Proxy to detect native browser functions that need
 // to be bound to the global object when stored in local variable slots.
@@ -693,12 +694,14 @@ class ModuleInterface {
 
   get debuggingEnabled () { return this._debuggingEnabled ?? this._automaticDebugging ?? false; }
 
+  get embedOriginalCode () {
+    return this._embedOriginalCode ?? (this.debuggingEnabled || !/^esm:.*@jspm\/core@[^/]+\/nodelibs\//.test(this.id));
+  }
+
+  set embedOriginalCode (enabled) { this._embedOriginalCode = enabled; }
+
   async ensureModuleDebugger () {
-    if (!this.System.get('@lively-env').moduleDebugger) {
-      const runtimeModule = 'lively.context/lib/module-debugger.js';
-      const { installModuleDebugger } = await this.System.import(runtimeModule);
-      installModuleDebugger(this.System);
-    }
+    installModuleDebugger(this.System);
   }
 
   async setDebuggingEnabled (enabled) {
@@ -711,7 +714,7 @@ class ModuleInterface {
         if (typeof value !== 'function') continue;
         const meta = value[Symbol.for('lively-object-meta')];
         if (!meta || meta.moduleSource !== source) continue;
-        if (meta.kind === 'class') this.recordDebugClass(value, meta);
+        if (meta.kind === 'class' || value[Symbol.for('__LivelyClassName__')]) this.recordDebugClass(value, meta);
         else {
           const bindings = value[Symbol.for('lively-debug-bindings')];
           if (bindings && !bindings[Symbol.for('lively-debug-module')]) Object.defineProperty(bindings, Symbol.for('lively-debug-module'), {value: this});
@@ -763,18 +766,26 @@ class ModuleInterface {
 
   recordDebugClosure(func, cells, start, end, moduleSource, name, lexicalThis, lexicalArguments) {
     if (!func.name && name) Object.defineProperty(func, 'name', {value: name, configurable: true});
-    const bindings = {};
-    for (const [name, cell] of Object.entries(cells)) Object.defineProperty(bindings, name, {
-      enumerable: true, configurable: true, get() { return cell.value; }, set(value) { cell.value = value; }
-    });
-    Object.defineProperty(bindings, Symbol.for('lively-debug-binding-cells'), {value: cells, configurable: true});
-    Object.defineProperty(bindings, '__lvVarRecorder', {value: this.recorder});
-    if (this.debuggingEnabled) Object.defineProperty(bindings, Symbol.for('lively-debug-module'), {value: this});
-    const pkg = this.package();
+    const mod = this;
     Object.defineProperties(func, {
-      [Symbol.for('lively-debug-bindings')]: {value: bindings, configurable: true},
+      [Symbol.for('lively-debug-bindings')]: {configurable: true, get() {
+        const bindings = {};
+        for (const [name, cell] of Object.entries(cells)) Object.defineProperty(bindings, name, {
+          enumerable: true, configurable: true, get() { return cell.value; }, set(value) { cell.value = value; }
+        });
+        Object.defineProperty(bindings, Symbol.for('lively-debug-binding-cells'), {value: cells, configurable: true});
+        Object.defineProperty(bindings, '__lvVarRecorder', {value: mod.recorder});
+        if (mod.debuggingEnabled) Object.defineProperty(bindings, Symbol.for('lively-debug-module'), {value: mod});
+        Object.defineProperty(func, Symbol.for('lively-debug-bindings'), {value: bindings, configurable: true});
+        return bindings;
+      }},
       [Symbol.for('lively-object-meta')]: {value: {start, end, moduleSource}, configurable: true},
-      [Symbol.for('lively-module-meta')]: {value: {package: pkg ? {name: pkg.name, version: pkg.version} : {}, pathInPackage: this.pathInPackage()}, configurable: true}
+      [Symbol.for('lively-module-meta')]: {configurable: true, get() {
+        const pkg = mod.package();
+        const meta = {package: pkg ? {name: pkg.name, version: pkg.version} : {}, pathInPackage: mod.pathInPackage()};
+        Object.defineProperty(func, Symbol.for('lively-module-meta'), {value: meta, configurable: true});
+        return meta;
+      }}
     });
     if (arguments.length > 6) {
       func._lexicalThis = lexicalThis;

@@ -1,6 +1,7 @@
 /* global before, describe, it, System */
 import { expect } from 'mocha-es6';
 import { parse } from 'lively.ast';
+import { initializeClass } from 'lively.classes/runtime.js';
 import { initWasm, isAvailable, swcTransform } from '../swc/browser-transform.js';
 import { setupSwcTranspiler, SwcBrowserTranspiler } from '../swc/transpiler-setup.js';
 
@@ -43,6 +44,20 @@ function expectIncludes (code, expected) {
 }
 
 describe('wasm transform', function () {
+  it('preserves a class body self binding after the outer declaration changes', async () => {
+    const source = 'class Example { create() { return new Example(); } } const original = new Example(); Example = null; export const result = original.create() instanceof original.constructor;';
+    const code = transformWithWasm(source, {enableScopeCapture: false, classToFunction: {
+      classHolder: '_rec', functionNode: 'initializeES6ClassForLively', currentModuleAccessor: 'undefined'
+    }});
+    let declaration, result;
+    const testSystem = { register (dependencies, factory) {
+      declaration = factory((name, value) => { result = value; return value; }, { id: moduleId });
+    } };
+    new Function('System', 'initializeES6ClassForLively', '_rec', code)(testSystem, initializeClass, {});
+    await declaration.execute();
+    expect(result).equals(true);
+  });
+
   before(async function () {
     if (
       typeof WebAssembly === 'undefined' ||

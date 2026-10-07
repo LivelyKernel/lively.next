@@ -420,10 +420,10 @@ export class PackageRegistry {
   }
 
   findPackageWithURL (url) {
+    if (this.byURL[url]) return this.byURL[url];
     const lookupURL = packageLookupURL(url);
-    const canonicalURL = canonicalPackageLookupURL(this.System, url);
     return this.byURL[lookupURL] || this.byLookupURL[lookupURL] ||
-      this.byCanonicalLookupURL[canonicalURL];
+      this.byCanonicalLookupURL[canonicalPackageLookupURL(this.System, url)];
   }
 
   findPackageHavingURL (url) {

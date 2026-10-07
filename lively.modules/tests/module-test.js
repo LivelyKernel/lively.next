@@ -34,6 +34,20 @@ describe('module loading', () => {
     expect(exports).to.have.property('x', 3);
   });
 
+  it('keeps Node polyfills primitive until debugging or source capture is enabled', async () => {
+    const primitive = module(S, 'esm://ga.jspm.io/npm:@jspm/core@2.1.0/nodelibs/browser/crypto.js');
+    expect(primitive.embedOriginalCode).equals(false);
+    primitive.setSource('export const value = 3;');
+    await primitive.setDebuggingEnabled(true);
+    expect(primitive.embedOriginalCode).equals(true);
+    primitive.embedOriginalCode = false;
+    expect(primitive.embedOriginalCode).equals(false);
+    const ordinary = module(S, module1);
+    expect(ordinary.embedOriginalCode).equals(true);
+    ordinary.embedOriginalCode = false;
+    expect(ordinary.embedOriginalCode).equals(false);
+  });
+
   it('records runtime closure source and shared native bindings without changing function identity', async () => {
     const source = 'export function make(value) { "use strict"; const ledger = {}; function charge(amount) { return value + amount; } return {charge, read: () => value, ledger}; }';
     await resource(module1).write(source);
@@ -61,6 +75,14 @@ describe('module loading', () => {
     S.set(module1, S.newModule({ x: 3 }));
     S.get('@lively-env').loadedModules[module1] = { exports: { x: 3 }, recorder: {} };
     expect(await S.import(module1)).to.have.property('x', 3);
+  });
+
+  it('preserves declaring-class super references in property descriptors', async () => {
+    await resource(module1).write('export class Parent { get value() { return 3; } } export class Child extends Parent { static get properties() { return {value: {get() { return super.prototype.value + 1; }}}; } }');
+    const {Child} = await S.import(module1);
+    expect(Child.properties.value.get.call(new Child())).equals(4);
+    await module(S, module1).setDebuggingEnabled(true);
+    expect(Child.properties.value.get.call(new Child())).equals(4);
   });
 
   it('has module interface objects', async () => {

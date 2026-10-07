@@ -2,6 +2,7 @@
 import { expect } from 'mocha-es6';
 import Document, { Line } from '../../text/document.js';
 import { arr } from 'lively.lang';
+import { module } from 'lively.modules';
 
 const opts = { maxLeafSize: 3, minLeafSize: 2, maxNodeSize: 5, minNodeSize: 2 };
 
@@ -305,9 +306,15 @@ describe('document as text tree', () => {
     });
   });
 
-  it('survives fuzzy testing', function () {
+  it('survives fuzzy testing', async function () {
     this.timeout(6000);
-    const { doc, actions, error } = Document.fuzzyTest();
+    // The replay helper has a breakpoint; run this 10,000-edit stress test at native speed.
+    const mod = module('lively.morphic/text/document.js'), setting = mod._debuggingEnabled;
+    let result;
+    await mod.setDebuggingEnabled(false);
+    try { result = Document.fuzzyTest(); }
+    finally { mod._debuggingEnabled = setting; }
+    const { doc, actions, error } = result;
     if (error) {
       System.global.lastDocumentFuzzyTest = { doc, actions, error };
       expect().assert(false, `Document fuzzy test failed: ${error}. Results are stored in global.lastDocumentFuzzyTest`);

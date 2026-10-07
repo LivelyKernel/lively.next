@@ -1,5 +1,5 @@
 import { obj, arr } from "lively.lang";
-import { acorn, escodegen, parseFunction } from "lively.ast";
+import { acorn, escodegen, parseFunction, query } from "lively.ast";
 import { UnwindException, __getClosure, __createLexicalScope, __declareLexicalBindings, __initializeBinding, __cloneLexicalScope, __awaitValue, __forOf, __closeIteratorsAfterCatch, bindingCells, restoreBindingCells, capturedBindingMappings, freeFunctionReferences, runtimeFunctionSource, removeRuntimeClosureAnnotations, originalFunctions } from "./exception.js";
 import { getGlobal } from "lively.vm/lib/util.js";
 import { Continuation, debugSupportEnabled } from './stackReification.js';
@@ -131,8 +131,8 @@ export class Interpreter {
       VariableDeclaration: (node, state, depth, type)  =>{
         if (type != 'VariableDeclaration') return;
         if (node.kind !== 'var') return;
-        node.declarations.forEach(function(decl) {
-          frame.getScope().addToMapping(decl.id.name);
+        query.helpers.declIds(node.declarations.map(decl => decl.id)).forEach(function(id) {
+          frame.getScope().addToMapping(id.name);
         });
       },
       FunctionDeclaration: (node, state, depth, type) => {
@@ -371,7 +371,7 @@ export class Interpreter {
   visitBlockStatement(node, state) {
     var frame = state.currentFrame;
     const declarations = node.body.filter(n => n.type === 'VariableDeclaration' && n.kind !== 'var')
-        .flatMap(n => n.declarations.map(d => [d.id.name, n.kind]));
+        .flatMap(n => query.helpers.declIds(n.declarations.map(d => d.id)).map(id => [id.name, n.kind]));
     const previousScope = frame.getScope();
     let blockScope = previousScope;
     if (declarations.length) {
@@ -641,7 +641,7 @@ export class Interpreter {
         if (!loopScope) throw new Error('Missing recorded loop scope');
       } else {
         const mapping = __createLexicalScope(null, frame.alreadyComputed, node.astIndex,
-          node.init.declarations.map(d => [d.id.name, node.init.kind]))[1];
+          query.helpers.declIds(node.init.declarations.map(d => d.id)).map(id => [id.name, node.init.kind]))[1];
         loopScope = new Scope(mapping, frame.getScope());
         loopScope.lexicalNodeIndex = node.astIndex;
         frame.setScope(loopScope);
@@ -704,8 +704,10 @@ export class Interpreter {
       this.accept(node.right, state);
       keys = Object.keys(state.result); // collect enumerable properties (like for-in)
     }
-    if (node.left.type == 'VariableDeclaration') {
-      this.accept(node.left, state);
+    const declaration = node.left.type === 'VariableDeclaration' ? node.left : null;
+    const lexical = declaration && declaration.kind !== 'var';
+    if (declaration) {
+      if (!lexical) this.accept(node.left, state);
       left = node.left.declarations[0].id;
     } else
       left = node.left;
@@ -713,7 +715,21 @@ export class Interpreter {
 
     for (var i = 0; i < keys.length; i++) {
       state.result = keys[i];
-      if (left.type == 'Identifier') {
+      let loopScope;
+      if (lexical) {
+        if (frame.isResuming()) {
+          loopScope = frame.getScope();
+          while (loopScope && loopScope.lexicalNodeIndex !== node.astIndex) loopScope = loopScope.getParentScope();
+          if (!loopScope) throw new Error('Missing recorded for-in scope');
+          if (loopScope.get(left.name) !== keys[i]) continue;
+        } else {
+          const mapping = __createLexicalScope(null, frame.alreadyComputed, node.astIndex, [[left.name, declaration.kind]])[1];
+          __initializeBinding(mapping, left.name, keys[i]);
+          loopScope = new Scope(mapping, frame.getScope());
+          loopScope.lexicalNodeIndex = node.astIndex;
+        }
+        frame.setScope(loopScope);
+      } else if (left.type == 'Identifier') {
         if (frame.isResuming() && frame.lookup(left.name) !== state.result)
           continue;
         this.setVariable(left.name, state);
@@ -722,6 +738,7 @@ export class Interpreter {
       }
 
       this.accept(node.body, state);
+      if (lexical) frame.setScope(loopScope.getParentScope());
 
       if (frame.breakTriggered) {
         frame.stopBreak(); // only non-labled break
@@ -786,16 +803,15 @@ export class Interpreter {
       if (iterator.phase === 'done') break;
       if (!iterator.entered) {
         if (lexical) {
-          const mapping = __createLexicalScope(null, frame.alreadyComputed, node.astIndex, [[left.name, declaration.kind]])[1];
-          __initializeBinding(mapping, left.name, iterator.value);
+          const mapping = __createLexicalScope(null, frame.alreadyComputed, node.astIndex, query.helpers.declIds([left]).map(id => [id.name, declaration.kind]))[1];
           const scope = new Scope(mapping, frame.getScope());
           scope.lexicalNodeIndex = node.astIndex;
           frame.setScope(scope);
+          this.bindPattern(left, iterator.value, state, (id, value) => __initializeBinding(mapping, id.name, value));
         } else {
           if (declaration) this.accept(declaration, state);
           state.result = iterator.value;
-          if (left.type === 'Identifier') this.setVariable(left.name, state);
-          else this.setSlot(left, state);
+          this.bindPattern(left, iterator.value, state, (id, value) => { state.result = value; this.setVariable(id.name, state); });
         }
         iterator.entered = true;
       }
@@ -870,29 +886,86 @@ export class Interpreter {
       if (node.init) this.accept(node.init, state);
       else state.result = undefined;
       // addToMapping is done in evaluateDeclarations()
-      if (state.declarationKind === 'var') this.setVariable(node.id.name, state);
-      else {
-        let scope = state.currentFrame.getScope();
-        while (scope && !scope.has(node.id.name)) scope = scope.getParentScope();
-        if (!scope) throw new ReferenceError(node.id.name + ' has no lexical scope');
-        __initializeBinding(scope.getMapping(), node.id.name, state.result);
-      }
+      this.bindPattern(node.id, state.result, state, (id, value) => {
+        if (state.declarationKind === 'var') { state.result = value; this.setVariable(id.name, state); }
+        else {
+          let scope = state.currentFrame.getScope();
+          while (scope && !scope.has(id.name)) scope = scope.getParentScope();
+          if (!scope) throw new ReferenceError(id.name + ' has no lexical scope');
+          __initializeBinding(scope.getMapping(), id.name, value);
+        }
+      });
     }
     state.result = oldResult;
+  }
+
+  bindPattern(node, value, state, bind) {
+    if (node.type === 'Identifier') return bind(node, value);
+    if (node.type === 'MemberExpression') { state.result = value; return this.setSlot(node, state); }
+    if (node.type === 'RestElement') return this.bindPattern(node.argument, value, state, bind);
+    if (node.type === 'AssignmentPattern') {
+      if (value === undefined) { this.accept(node.right, state); value = state.result; }
+      return this.bindPattern(node.left, value, state, bind);
+    }
+    if (node.type === 'ObjectPattern') {
+      if (value == null) throw new TypeError('Cannot destructure ' + value);
+      const object = Object(value), keys = new Set();
+      for (const prop of node.properties) {
+        if (prop.type === 'RestElement') {
+          const rest = {};
+          for (const key of Reflect.ownKeys(object)) if (!keys.has(key) && Object.prototype.propertyIsEnumerable.call(object, key)) {
+            Object.defineProperty(rest, key, {value: object[key], enumerable: true, writable: true, configurable: true});
+          }
+          this.bindPattern(prop.argument, rest, state, bind);
+        } else {
+          let key = prop.key.name ?? prop.key.value;
+          if (prop.computed) { this.accept(prop.key, state); key = state.result; }
+          key = Reflect.ownKeys({[key]: undefined})[0];
+          keys.add(key);
+          this.bindPattern(prop.value, object[key], state, bind);
+        }
+      }
+      return;
+    }
+    if (node.type === 'ArrayPattern') {
+      const iterator = __forOf(value, state.currentFrame.alreadyComputed, node.astIndex);
+      let done = false;
+      try {
+        for (const element of node.elements) {
+          if (element?.type === 'RestElement') {
+            const rest = [];
+            while (!done) { const step = iterator.next(); done = !!step.done; if (!done) rest.push(step.value); }
+            this.bindPattern(element.argument, rest, state, bind);
+          } else {
+            const step = done ? {done: true} : iterator.next();
+            done = !!step.done;
+            if (element) this.bindPattern(element, done ? undefined : step.value, state, bind);
+          }
+        }
+      } finally { if (!done && iterator.return) iterator.return(); }
+      return;
+    }
+    throw new Error('Cannot bind pattern ' + node.type);
   }
 
   visitThisExpression(node, state) {
     state.result = state.currentFrame.getThis();
   }
 
+  visitSpreadElement(node, state) {
+    this.accept(node.argument, state);
+    state.result = [...state.result];
+    state.currentFrame.alreadyComputed[node.astIndex] = state.result;
+  }
+
   visitArrayExpression(node, state) {
-    var result = new Array(node.elements.length);
-    node.elements.forEach(function(elem, idx) {
-      if (elem) {
-        this.accept(elem, state);
-        result[idx] = state.result;
-      }
-    }, this);
+    const result = [];
+    for (const element of node.elements) {
+      if (!element) { result.length++; continue; }
+      this.accept(element, state);
+      if (element.type === 'SpreadElement') result.push(...state.result);
+      else result.push(state.result);
+    }
     state.result = result;
   }
 
@@ -980,6 +1053,15 @@ export class Interpreter {
     node.expressions.forEach(function(expr) {
       this.accept(expr, state);
     }, this);
+  }
+
+  visitTemplateLiteral(node, state) {
+    let result = node.quasis[0].value.cooked;
+    node.expressions.forEach((expression, index) => {
+      this.accept(expression, state);
+      result += `${state.result}` + node.quasis[index + 1].value.cooked;
+    });
+    state.result = result;
   }
 
   visitUnaryExpression(node, state) {
@@ -1121,12 +1203,29 @@ export class Interpreter {
     this.accept(node.left, state);
     var left = state.result;
     if ((node.operator == '||' && !left)
-     || (node.operator == '&&' && left))
+     || (node.operator == '&&' && left)
+     || (node.operator == '??' && (left === null || left === undefined)))
      this.accept(node.right, state);
   }
 
   visitConditionalExpression(node, state) {
     this.visitIfStatement(node, state);
+  }
+
+  visitChainExpression(node, state) {
+    const previous = state.optionalChain;
+    state.optionalChain = {shortCircuited: false};
+    try { this.accept(node.expression, state); }
+    finally { state.optionalChain = previous; }
+  }
+
+  shortCircuitChain(node, value, state) {
+    if (state.optionalChain?.shortCircuited || node.optional && (value === null || value === undefined)) {
+      state.optionalChain.shortCircuited = true;
+      state.result = undefined;
+      return true;
+    }
+    return false;
   }
 
   visitNewExpression(node, state) {
@@ -1146,6 +1245,7 @@ export class Interpreter {
       // send
       this.accept(node.callee.object, state);
       recv = state.result;
+      if (this.shortCircuitChain(node.callee, recv, state)) return;
 
       if ((node.callee.property.type == 'Identifier') && !node.callee.computed)
         prop = node.callee.property.name;
@@ -1153,15 +1253,17 @@ export class Interpreter {
         this.accept(node.callee.property, state);
         prop = state.result;
       }
-      fn = recv[prop];
+      fn = frame.isResuming() && frame.isAlreadyComputed(node.callee.astIndex) ? frame.alreadyComputed[node.callee.astIndex] : recv[prop];
     } else {
       // simple call
       this.accept(node.callee, state);
       fn = state.result;
     }
+    if (this.shortCircuitChain(node, fn, state)) return;
     node.arguments.forEach(function(arg) {
       this.accept(arg, state);
-      args.push(state.result);
+      if (arg.type === 'SpreadElement') args.push(...state.result);
+      else args.push(state.result);
     }, this);
     }
     try {
@@ -1184,6 +1286,7 @@ export class Interpreter {
     this.accept(node.object, state);
     var object = state.result,
         property;
+    if (this.shortCircuitChain(node, object, state)) return;
     if ((node.property.type == 'Identifier') && !node.computed)
       property = node.property.name;
     else {
@@ -1502,10 +1605,7 @@ export class Function {
   }
 
   argNames() {
-    return this.node.params.map(function(param) {
-      // params are supposed to be of type Identifier
-      return param.name;
-    });
+    return query.helpers.declIds(this.node.params).map(param => param.name);
   }
 
   name() {
@@ -1720,11 +1820,15 @@ export class Frame {
   }
 
   setArguments(argValues) {
-    var argNames = this.func.argNames();
-    argNames.forEach(function(arg, idx) {
-      this.scope.set(arg, argValues[idx]);
-    }, this);
-    return this.arguments = argValues;
+    this.arguments = argValues;
+    const interpreter = new Interpreter(), state = {currentFrame: this};
+    const complex = this.func.node.params.some(param => param.type !== 'Identifier');
+    if (complex) __declareLexicalBindings(this.scope.getMapping(), this.func.argNames().map(name => [name, 'let']));
+    else for (const name of this.func.argNames()) this.scope.addToMapping(name);
+    this.func.node.params.forEach((param, idx) => interpreter.bindPattern(param,
+      param.type === 'RestElement' ? Array.from(argValues).slice(idx) : argValues[idx], state,
+      (id, value) => complex ? __initializeBinding(this.scope.getMapping(), id.name, value) : this.scope.set(id.name, value)));
+    return argValues;
   }
 
   getArguments() {
