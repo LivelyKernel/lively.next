@@ -52,7 +52,8 @@ export function stylepropsToNode (styleProps, node) {
   }
   for (let prop in styleProps) {
     if (previousStyleProps[prop] === styleProps[prop]) continue;
-    node.style[prop] = styleProps[prop];
+    if (prop.startsWith('--')) node.style.setProperty(prop, styleProps[prop]);
+    else node.style[prop] = styleProps[prop];
   }
   node._previousStyleProps = styleProps;
   return node;

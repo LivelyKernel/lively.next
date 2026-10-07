@@ -119,7 +119,8 @@ describe('text rendering', () => {
         let fontSize = parseInt(jsStyle.getPropertyValue('font-size').slice(0, -2));
         let fontWeight = jsStyle.getPropertyValue('font-weight');
         let fontStyle = jsStyle.getPropertyValue('font-style');
-        let textDecoration = jsStyle.getPropertyValue('text-decoration');
+        let textDecoration = ['text-decoration-line', 'text-decoration-style', 'text-decoration-color']
+          .map(prop => jsStyle.getPropertyValue(prop)).join(' ');
         // note: when running the tests on Firefox "fontWeight" is differently
         // reported than on Chrome
         if (fontWeight === '400') fontWeight = 'normal';

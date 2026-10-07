@@ -780,6 +780,22 @@ export class Text extends Morph {
         isDefaultTextStyleProp: true,
         after: ['defaultTextStyle']
       },
+      textDecorationColor: {
+        group: 'text styling',
+        type: 'Color',
+        defaultValue: null,
+        isStyleProp: true,
+        isDefaultTextStyleProp: true,
+        after: ['defaultTextStyle']
+      },
+      textOverflow: {
+        group: 'text',
+        type: 'Enum',
+        values: ['clip', 'ellipsis'],
+        defaultValue: 'clip',
+        isStyleProp: true,
+        doc: 'Displays ellipsis for overflowing lines in statically rendered, fixed-width text.'
+      },
       textStyleClasses: {
         group: 'text styling',
         isStyleProp: true,
@@ -2428,7 +2444,7 @@ export class Text extends Morph {
         all[key] = val;
       }
       return all;
-    }, compareWithBaseProps ? { ...obj.select(this, ['fontSize', 'lineHeight', 'letterSpacing', 'fontColor', 'fontFamily', 'fontWeight', 'textAlign', 'textDecoration', 'fontStyle']) } : {});
+    }, compareWithBaseProps ? { ...obj.select(this, ['fontSize', 'lineHeight', 'letterSpacing', 'fontColor', 'fontFamily', 'fontWeight', 'textAlign', 'textDecoration', 'textDecorationColor', 'fontStyle']) } : {});
   }
 
   setStyleInRange (attr, range = this.selection) {
@@ -2985,6 +3001,7 @@ export class Text extends Morph {
       textAlign,
       fontSize,
       textDecoration,
+      textDecorationColor,
       backgroundColor,
       lineHeight,
       wordSpacing,
@@ -3007,7 +3024,16 @@ export class Text extends Morph {
     if (_fontFamilyToRender) style['font-family'] = _fontFamilyToRender;
     if (_fontWeightToRender) style['font-weight'] = _fontWeightToRender;
     if (_fontStyleToRender) style['font-style'] = _fontStyleToRender;
-    if (textDecoration) style['text-decoration'] = textDecoration;
+    // Decorate individual runs so their color/decoration can override the defaults.
+    style['--text-decoration'] = textDecoration || 'none';
+    style['--link-text-decoration'] = textDecoration && textDecoration !== 'none' ? textDecoration : 'underline';
+    style['--text-decoration-color'] = textDecorationColor
+      ? (textDecorationColor.isColor ? textDecorationColor.toP3ColorString() : String(textDecorationColor))
+      : 'currentColor';
+    const ellipsis = !this.document && this.fixedWidth && this.textOverflow === 'ellipsis';
+    style['--text-overflow'] = ellipsis ? 'ellipsis' : 'clip';
+    style['--text-line-overflow'] = ellipsis ? 'hidden' : 'visible';
+    if (ellipsis) style.width = '100%';
     if (fontSize) style['font-size'] = fontSize + 'px';
     if (textAlign) style['text-align'] = textAlign;
     if (fontColor) style.color = fontColor.isColor ? fontColor.toP3ColorString() : String(fontColor);
@@ -3615,6 +3641,7 @@ export class Text extends Morph {
         const attrs = lvData.textAndAttributes;
         for (let i = 0; i < attrs.length; i = i + 2) {
           if (attrs[i + 1]?.fontColor) attrs[i + 1].fontColor = Color.fromLiteral(attrs[i + 1].fontColor);
+          if (attrs[i + 1]?.textDecorationColor) attrs[i + 1].textDecorationColor = Color.fromLiteral(attrs[i + 1].textDecorationColor);
           if (typeof attrs[i] === 'string') continue;
           attrs[i] = deserializeMorph(attrs[i], { reinitializeIds: true });
         }
