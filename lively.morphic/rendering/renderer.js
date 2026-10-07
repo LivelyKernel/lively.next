@@ -1798,7 +1798,7 @@ export default class Renderer {
       for (const line of morph.renderingState.visibleLines) {
         if (!morph.isLineVisible(line.row)) continue;
         for (const part of line.textAndAttributes) {
-          if (part?.isMorph) morph.embeddedMorphMap.get(part)?.anchor?.updateEmbeddedMorph();
+          if (part?.isMorph) morph.embeddedMorphMap.get(part)?.anchor?.updateEmbeddedMorph(this.getNodeForMorph(part).getBoundingClientRect());
         }
       }
     }
