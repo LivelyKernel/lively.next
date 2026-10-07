@@ -476,6 +476,14 @@ export class Text extends Morph {
           }
         },
         set (textAndAttributes) {
+          if (!this._isDowngrading) {
+            delete this.renderingState.cachedStaticLines;
+            if (!this.document && this._documentBackup) {
+              const range = { start: { row: 0, column: 0 }, end: this._documentBackup.endPosition };
+              this.anchors.forEach(anchor => anchor.onDelete(range));
+              delete this._documentBackup;
+            }
+          }
           if (obj.isArray(textAndAttributes) && textAndAttributes.find(m => m?.doit)) { this.needsDocument = true; }
           const previousTextAndAttributes = !this.document && this.textAndAttributes;
           if (this.document) {
@@ -1207,6 +1215,7 @@ export class Text extends Morph {
 
     if (selector) {
       textChange = selector === 'replace';
+      if (textChange) delete this.renderingState.cachedStaticLines;
       if (textChange && (!this.fixedHeight || !this.fixedWidth)) { enforceFit = true; }
       hardLayoutChange = selector === 'addTextAttribute';
       if (textChange || hardLayoutChange) delete this._allFontsLoaded;
@@ -2248,7 +2257,15 @@ export class Text extends Morph {
 
     this._isDowngrading = true;
     const textAndAttributes = this.document.textAndAttributes;
-    this.textString = '';
+    this._documentBackup = this.document;
+    this.getProperty('selection')?.uninstall();
+    for (const [embedded, entry] of this.embeddedMorphMap) {
+      if (!entry.anchor) continue;
+      this.removeAnchor(entry.anchor);
+      disconnect(entry.anchor, 'position', embedded, 'position');
+      entry.anchor.embeddedMorph = null;
+      entry.anchor = null;
+    }
     this.document = null;
     delete this.renderingState.needsScrollLayerAdded;
     this.renderingState.needsScrollLayerRemoved = true;
@@ -2269,17 +2286,21 @@ export class Text extends Morph {
     if (this.document) return;
 
     this._isUpgrading = true;
-    this.document = Document.fromString('', {
-      maxLeafSize: 50,
-      minLeafSize: 25,
-      maxNodeSize: 35,
-      minNodeSize: 7
-    });
-
-    this.document.insertTextAndAttributes(this.textAndAttributes, { row: 0, column: 0 });
+    if (this._documentBackup) {
+      this.document = this._documentBackup;
+      delete this._documentBackup;
+    } else {
+      this.document = Document.fromString('', {
+        maxLeafSize: 50,
+        minLeafSize: 25,
+        maxNodeSize: 35,
+        minNodeSize: 7
+      });
+      this.document.insertTextAndAttributes(this.textAndAttributes, { row: 0, column: 0 });
+    }
 
     this.textLayout = new Layout();
-    this.textLayout.estimateLineExtents(this);
+    this.textLayout.estimateLineExtents(this, true);
 
     delete this.renderingState.needsScrollLayerRemoved;
     this.renderingState.needsScrollLayerAdded = true;
@@ -2336,10 +2357,13 @@ export class Text extends Morph {
   }
 
   removePlainTextAttribute (attr, value = null) {
-    this.textAndAttributes.forEach(ta => {
-      if (value) ta && ta[attr] === value && delete ta[attr];
-      else ta && delete ta[attr];
+    let changed = false;
+    this.textAndAttributes.forEach((ta, i) => {
+      if (i % 2 === 0 || !ta || !Object.prototype.hasOwnProperty.call(ta, attr) || value && ta[attr] !== value) return;
+      delete ta[attr];
+      changed = true;
     });
+    if (changed) this.onAttributesChanged(this.documentRange);
   }
 
   removeTextAttribute (attr, range = this.selection) {
@@ -2404,6 +2428,8 @@ export class Text extends Morph {
   }
 
   onAttributesChanged (range, resetLayout = true) {
+    delete this.renderingState.cachedStaticLines;
+    if (!this.document) this.renderingState.renderedTextAndAttributes = null;
     if (resetLayout) this.invalidateTextLayout(false, false);
     if (this.document) {
       for (let i of arr.range(range.start.row, range.end.row, 1)) {
