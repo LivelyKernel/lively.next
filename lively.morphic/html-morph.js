@@ -5,6 +5,63 @@ import { Morph } from './morph.js';
 import { addOrChangeCSSDeclaration } from './rendering/dom-helper.js';
 import css from 'css';
 
+const cssMorphs = new WeakMap();
+const sharedCssNodes = new WeakMap();
+const cssDocuments = new WeakMap();
+const cssMarkers = new WeakMap();
+const sharedCssId = 'css-for-shared-html-morphs';
+
+function scopedCss (source, ids) {
+  const parsed = css.parse(source);
+  function scope (rules) {
+    for (const rule of rules) {
+      if (rule.selectors) rule.selectors = ids.flatMap(id => rule.selectors.map(selector => `#${id} ${selector}`));
+      if (rule.rules) scope(rule.rules);
+    }
+  }
+  scope(parsed.stylesheet.rules);
+  return css.stringify(parsed);
+}
+
+function updateSharedCss (doc) {
+  let groups = [];
+  let lastMarker;
+  const nodes = [];
+  const flush = () => {
+    if (!groups.length) return;
+    const declarations = [];
+    for (const [source, ids] of groups) {
+      try { declarations.push(scopedCss(source, ids)); } catch (err) {
+        console.error(`Error setting shared cssDeclaration: ${err}`); // eslint-disable-line no-console
+      }
+    }
+    const id = sharedCssId + (nodes.length ? `-${nodes.length}` : '');
+    const node = addOrChangeCSSDeclaration(id, declarations.join('\n'), doc);
+    if (node.previousSibling !== lastMarker) doc.head.insertBefore(node, lastMarker.nextSibling);
+    nodes.push(node);
+    groups = [];
+  };
+  const members = Array.from(cssMorphs.get(doc) || []);
+  const markers = new Map(members.map(morph => [cssMarkers.get(morph), morph]));
+  const previousNodes = new Set(sharedCssNodes.get(doc) || []);
+  // ponytail: scan sheet positions on updates; track dirty segments if this gets slow.
+  for (const node of Array.from(doc.head.childNodes)) {
+    const morph = markers.get(node);
+    if (morph?.shareCss) {
+      const previous = groups[groups.length - 1];
+      if (previous && previous[0] === morph.cssDeclaration) previous[1].push(morph.id);
+      else groups.push([morph.cssDeclaration, [morph.id]]);
+      lastMarker = node;
+    } else if (morph || !previousNodes.has(node) &&
+        (node.tagName === 'STYLE' || node.tagName === 'LINK' && /(^|\s)stylesheet(\s|$)/i.test(node.rel))) {
+      flush();
+    }
+  }
+  flush();
+  for (const node of sharedCssNodes.get(doc) || []) if (!nodes.includes(node)) node.remove();
+  sharedCssNodes.set(doc, nodes);
+}
+
 // Usage:
 // var htmlMorph = $world.addMorph(new HTMLMorph({position: pt(10,10)}));
 // You can set either the html content directly
@@ -86,18 +143,20 @@ export class HTMLMorph extends Morph {
         isStyleProp: true,
         defaultValue: true
       },
+      shareCss: {
+        defaultValue: false,
+        set (val) {
+          this.setProperty('shareCss', val);
+          this.installCssDeclaration(this.document);
+        }
+      },
       cssDeclaration: {
+        after: ['shareCss'],
         isStyleProp: true,
         set (val) {
           this.setProperty('cssDeclaration', val);
-          const doc = this.document;
-          if (!val) {
-            const style = doc.getElementById('css-for-' + this.id);
-            if (style) style.remove();
-          } else {
-            this.installCssDeclaration(doc);
-            this.makeDirty();
-          }
+          this.installCssDeclaration(this.document);
+          this.makeDirty();
         }
       }
     };
@@ -159,22 +218,47 @@ export class HTMLMorph extends Morph {
   }
 
   installCssDeclaration (doc) {
+    const previousDocument = cssDocuments.get(this);
+    if (previousDocument && (previousDocument !== doc || !this.cssDeclaration)) this.uninstallCssDeclaration();
     if (!this.cssDeclaration) return;
+    cssDocuments.set(this, doc);
+    let members = cssMorphs.get(doc);
+    if (!members) cssMorphs.set(doc, members = new Set());
+    members.add(this);
+    let marker = cssMarkers.get(this);
+    if (!marker) {
+      marker = doc.createComment('css-for-' + this.id);
+      doc.head.appendChild(marker);
+      cssMarkers.set(this, marker);
+    }
+    if (this.shareCss) {
+      doc.getElementById('css-for-' + this.id)?.remove();
+      updateSharedCss(doc);
+      return;
+    }
     try {
-      const parsed = css.parse(this.cssDeclaration);
-      // prepend morph id to each rule so that css is scoped to morph
-      parsed.stylesheet.rules.forEach(r => {
-        if (r.selectors) r.selectors = r.selectors.map(ea => `#${this.id} ${ea}`);
-      });
-      addOrChangeCSSDeclaration('css-for-' + this.id, css.stringify(parsed), this.document);
+      const id = 'css-for-' + this.id;
+      const node = addOrChangeCSSDeclaration(id, scopedCss(this.cssDeclaration, [this.id]), doc);
+      if (node.previousSibling !== marker) doc.head.insertBefore(node, marker.nextSibling);
     } catch (err) {
       console.error(`Error setting cssDeclaration of ${this}: ${err}`); // eslint-disable-line no-console
     }
+    updateSharedCss(doc);
+  }
+
+  uninstallCssDeclaration () {
+    const doc = cssDocuments.get(this);
+    if (!doc) return;
+    doc.getElementById('css-for-' + this.id)?.remove();
+    cssMarkers.get(this)?.remove();
+    cssMarkers.delete(this);
+    if (cssMorphs.get(doc)?.delete(this)) updateSharedCss(doc);
+    cssDocuments.delete(this);
   }
 
   onOwnerChanged (newOwner) {
     super.onOwnerChanged(newOwner);
-    if (newOwner === null) this.document.getElementById('css-for-' + this.id)?.remove();
+    if (newOwner === null) this.uninstallCssDeclaration();
     else this.installCssDeclaration(this.document);
   }
 
