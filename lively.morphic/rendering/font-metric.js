@@ -673,6 +673,12 @@ class DOMTextMeasure {
             actualTextNode.style.transform = tfm.toString();
           }
           ({ top: textNodeOffsetTop, left: textNodeOffsetLeft } = actualTextNode.getBoundingClientRect());
+          if (useLiveLine) {
+            // offsetTop/offsetLeft round to whole pixels; retain the live line's fractional origin.
+            const bounds = lineNode.getBoundingClientRect();
+            textNodeOffsetLeft = bounds.left - lineNode.offsetLeft;
+            textNodeOffsetTop = bounds.top - lineNode.offsetTop;
+          }
         }
 
         let result;

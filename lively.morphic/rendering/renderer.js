@@ -1793,8 +1793,14 @@ export default class Renderer {
       }
     });
     if (inlineMorphUpdated) morph.invalidateTextLayout(true, false);
-    if (textNode.isConnected) {
-      for (const { anchor } of morph.embeddedMorphMap.values()) anchor?.updateEmbeddedMorph();
+    if (textNode.isConnected && morph.document && morph.embeddedMorphMap.size) {
+      // Offscreen anchors may force a render while this render is still running.
+      for (const line of morph.renderingState.visibleLines) {
+        if (!morph.isLineVisible(line.row)) continue;
+        for (const part of line.textAndAttributes) {
+          if (part?.isMorph) morph.embeddedMorphMap.get(part)?.anchor?.updateEmbeddedMorph();
+        }
+      }
     }
     morph.renderingState.renderedTextAndAttributes = morph.textAndAttributes;
     morph.renderingState.extent = morph.getProperty('extent');
