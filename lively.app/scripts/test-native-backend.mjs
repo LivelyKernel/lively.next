@@ -13,6 +13,28 @@ import { createServer } from 'node:http';
 const executable = process.argv[2] && path.resolve(process.argv[2]);
 if (!executable) throw new Error('Pass an NW.js executable with no adjacent app manifest');
 const root = fileURLToPath(new URL('../../', import.meta.url));
+// A fast backend must not navigate away or expose the initial blank window
+// while the boot page is still waiting for its first paint.
+assert.equal(JSON.parse(fs.readFileSync(path.join(root, 'lively.app/package.json'))).window.show, false);
+const paintFrames = [];
+const bootPage = { location: { href: 'boot.html' } };
+let shown = false;
+const bootScript = fs.readFileSync(path.join(root, 'lively.app/desktop/boot.html'), 'utf8').match(/<script>([\s\S]*?)<\/script>/)[1];
+runInNewContext(bootScript, {
+  window: bootPage,
+  requestAnimationFrame: callback => paintFrames.push(callback),
+  nw: { Window: { get: () => ({ show: () => { shown = true; } }) } }
+});
+const navigation = bootPage.livelyBoot.navigate('dashboard.html');
+paintFrames.shift()();
+await Promise.resolve();
+assert.equal(shown, false);
+assert.equal(bootPage.location.href, 'boot.html');
+paintFrames.shift()();
+await navigation;
+assert.equal(shown, true);
+assert.equal(bootPage.location.href, 'dashboard.html');
+console.log('Desktop boot: window reveal and early navigation wait for paint');
 const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'lively native backend '));
 const app = path.join(fixture, 'app with spaces');
 const runtimeRoot = path.join(fixture, 'runtime with spaces');

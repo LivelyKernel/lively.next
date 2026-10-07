@@ -107,6 +107,14 @@
   </div>
 
   <script>
+    // The native window starts hidden: package preparation can block before
+    // this document exists. Reveal it only after the orange screen has painted.
+    const painted = new Promise(resolve => {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        nw.Window.get().show();
+        resolve();
+      }));
+    });
     // node-main → DOM communication: expose helpers on window that node-main
     // calls directly. Events via nw.Window.emit don't cross the node↔DOM
     // boundary reliably.
@@ -127,7 +135,7 @@
         document.querySelector('.progress-bar').style.display = 'none';
       },
       navigate: function (url) {
-        window.location.href = url;
+        return painted.then(() => { window.location.href = url; });
       }
     };
   </script>
