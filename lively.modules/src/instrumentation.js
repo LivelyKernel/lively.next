@@ -408,7 +408,9 @@ async function instrumentSourceOfEsmModuleLoad (System, load) {
   let declareSource = await System.translate(load, { depNames: localDeps, esmLoad: true });
   declareSource += `//# sourceURL=${load.name}!transpiled`;
   if (load.metadata.sourceMap) declareSource += inlineSourceMap(JSON.stringify(load.metadata.sourceMap));
-  return { declare: eval(declareSource), localDeps };
+  // Bundlers can rename the local System parameter; generated code still uses System.
+  const declare = new Function('System', 'source', 'return eval(source);')(System, declareSource);
+  return { declare, localDeps };
 }
 
 function instrumentSourceOfGlobalModuleLoad (System, load) {

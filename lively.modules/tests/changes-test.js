@@ -61,6 +61,19 @@ describe('code changes of esm format module', function () {
     expect(m2).to.equal(m2_reimported, 'module2 identity changed');
   });
 
+  it('evaluates source changes in the target system', async () => {
+    const otherSystem = prepareSystem('test-source-change-isolation', testProjectDir);
+    try {
+      await S.import(file2m);
+      await otherSystem.import(file2m);
+      await changeModule2Source();
+      expect(module2.recorder.internal).to.equal(2);
+      expect(module(otherSystem, file2m).recorder.internal).to.equal(1);
+    } finally {
+      removeSystem('test-source-change-isolation');
+    }
+  });
+
   it('modifies module declaration', async () => {
     let m = await S.import(file1m);
     expect(module2.record().importers[0]).equals(module1.record());
