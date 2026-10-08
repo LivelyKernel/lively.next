@@ -69,14 +69,18 @@
         background: transparent; color: #292929; font: 13px system-ui, sans-serif;
         user-select: none; -webkit-app-region: drag;
       }
+      #lively-desktop-titlebar .window-title {
+        position: absolute; inset: 0 128px; line-height: ${height}px; text-align: center;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;
+      }
       #lively-desktop-titlebar .window-controls { display: flex; margin-left: auto; }
       #lively-desktop-titlebar button {
         -webkit-app-region: no-drag; border: 0; background: transparent; color: inherit;
         font: inherit; width: 36px; height: 28px; border-radius: 4px; padding: 0;
       }
-      #lively-desktop-titlebar button:hover { background: rgba(0,0,0,.12); }
+      #lively-desktop-titlebar:not(.mac) button:hover { background: rgba(0,0,0,.12); }
       #lively-desktop-titlebar button:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
-      #lively-desktop-titlebar button[data-action=close]:hover { background: #c42b1c; color: white; }
+      #lively-desktop-titlebar:not(.mac) button[data-action=close]:hover { background: #c42b1c; color: white; }
       #lively-desktop-titlebar[data-inactive] { color: #484848; }
       #lively-desktop-titlebar.mac .window-controls { order: -1; margin: 0 auto 0 0; }
       #lively-desktop-titlebar.mac button {
@@ -92,13 +96,23 @@
       #lively-desktop-titlebar.mac button[data-action=maximize]::before { background: #28c840; }
       #lively-desktop-titlebar.mac[data-inactive] button::before { background: #b8b8b8; }
       #lively-desktop-titlebar.mac button span { position: relative; opacity: 0; }
-      #lively-desktop-titlebar.mac .window-controls:hover button span,
+      #lively-desktop-titlebar.mac .window-controls:hover button span { opacity: .55; }
       #lively-desktop-titlebar.mac button:focus-visible span { opacity: 1; }
     `;
     document.head.appendChild(style);
     const titlebar = document.createElement('header');
     titlebar.id = 'lively-desktop-titlebar';
     if (mac) titlebar.className = 'mac';
+    const title = document.createElement('span');
+    title.className = 'window-title';
+    titlebar.appendChild(title);
+    window.livelyDesktop.setTitle = text => {
+      title.textContent = text;
+      // NW.js 0.111.1 draws a clipped native caption even with frame: false
+      // on macOS (nwjs/nw.js#8364). Empty titles fall back to the manifest title.
+      document.title = mac ? '\u200b' : text;
+    };
+    window.livelyDesktop.setTitle(document.title || 'lively.next');
     const controls = document.createElement('div');
     controls.className = 'window-controls';
     function button (parent, action, label, symbol, callback) {

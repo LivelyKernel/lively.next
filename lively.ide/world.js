@@ -78,7 +78,9 @@ export class LivelyWorld extends World {
       name: {
         set (name) {
           this.setProperty('name', name);
-          document.title = `lively.next - ${name}`;
+          const title = `lively.next - ${name}`;
+          if (globalThis.livelyDesktop?.setTitle) livelyDesktop.setTitle(title);
+          else document.title = title;
         }
       },
 
