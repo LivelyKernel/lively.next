@@ -773,6 +773,18 @@ async function assertDesktopTitlebar (client, dataDir, world = false) {
     }
     return true;
   }, 15000);
+  if (world) {
+    const entrance = await client.send('Runtime.evaluate', {
+      returnByValue: true,
+      expression: `(() => {
+        if (globalThis.__desktopDashboardDocument !== document) return true;
+        const entrance = globalThis.__desktopToolbarEntrance;
+        return Boolean(entrance && entrance.from < entrance.to && entrance.to === 0 &&
+          entrance.from + entrance.height >= livelyDesktop.titlebarHeight - .1);
+      })()`
+    });
+    if (entrance.result?.value !== true) throw new Error('World toolbar must enter downward and keep the desktop header painted');
+  }
   const lights = await client.send('Runtime.evaluate', {
     returnByValue: true,
     expression: `navigator.platform.startsWith('Mac') && [...document.querySelectorAll('#lively-desktop-titlebar button')].map(button => {
@@ -854,6 +866,24 @@ async function openDashboardProject (client, fullName) {
     return result.result?.value ? result : null;
   }, 60000);
   const { x, y } = result.result.value;
+  await client.send('Runtime.evaluate', {
+    expression: `(() => {
+      globalThis.__desktopToolbarEntrance = null;
+      const animate = Element.prototype.animate;
+      Element.prototype.animate = function (...args) {
+        const animation = animate.apply(this, args);
+        if (this.id === globalThis.$world?.get('lively top bar')?.id) {
+          const frames = animation.effect.getKeyframes();
+          globalThis.__desktopToolbarEntrance = {
+            from: parseFloat(frames[0].top), to: parseFloat(frames.at(-1).top),
+            height: this.getBoundingClientRect().height
+          };
+          Element.prototype.animate = animate;
+        }
+        return animation;
+      };
+    })()`
+  });
   await client.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 });
   await client.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 });
 }
