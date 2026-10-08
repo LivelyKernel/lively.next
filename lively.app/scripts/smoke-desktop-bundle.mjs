@@ -666,6 +666,62 @@ async function assertStartupBackground (client, urls, dataDir) {
   console.log('Desktop app smoke passed: dashboard and loading page show orange triangles before the bootstrap bundle loads');
 }
 
+/** Compare startup artwork with the actual dashboard after ShapeMorpher.fit. */
+async function assertDashboardBackground (client) {
+  try {
+    for (const viewport of [null, { width: 960, height: 600 }, { width: 600, height: 960 }]) {
+      if (viewport) await client.send('Emulation.setDeviceMetricsOverride', { ...viewport, deviceScaleFactor: 1, mobile: false });
+      await waitFor('startup artwork matching dashboard layout', async () => {
+        const result = await client.send('Runtime.evaluate', {
+          returnByValue: true,
+          expression: `(() => {
+            const background = $world.get('background');
+            if (background.owner.width !== innerWidth || background.owner.height !== innerHeight) return false;
+            const scene = document.querySelector('#loading-screen svg');
+            const matrix = scene.getScreenCTM();
+            const polygons = [...scene.querySelectorAll('polygon')];
+            for (const [index, triangle] of background.submorphs.entries()) {
+              for (const [vertex, { position }] of triangle.vertices.entries()) {
+                const actual = triangle.getGlobalTransform().transformPoint(position);
+                const initial = polygons[index].points.getItem(vertex).matrixTransform(matrix);
+                if (Math.hypot(actual.x - initial.x, actual.y - initial.y) > 0.15) {
+                  throw new Error('Startup triangle ' + index + ' shifts at ' + innerWidth + 'x' + innerHeight);
+                }
+              }
+              const path = document.getElementById(triangle.id).querySelector('path');
+              if (getComputedStyle(polygons[index]).fill !== getComputedStyle(path).fill ||
+                  Number(getComputedStyle(polygons[index]).opacity) !== triangle.opacity) {
+                throw new Error('Startup triangle color differs from dashboard');
+              }
+            }
+            const gradient = scene.querySelector('foreignObject div');
+            if (!gradient || getComputedStyle(gradient).backgroundImage !==
+                getComputedStyle(document.getElementById(background.id)).backgroundImage) {
+              throw new Error('Startup gradient differs from dashboard');
+            }
+            return true;
+          })()`
+        });
+        if (result.exceptionDetails) throw new Error(JSON.stringify(result.exceptionDetails));
+        return result.result?.value === true;
+      }, 10000, 100);
+    }
+  } finally {
+    await client.send('Emulation.clearDeviceMetricsOverride');
+    // Start the Open workflow with a fresh dashboard at the original size.
+    await client.send('Runtime.evaluate', { expression: 'globalThis.__desktopViewportDocument = document' });
+    await client.send('Page.reload');
+    await waitFor('dashboard after viewport checks', async () => {
+      const result = await client.send('Runtime.evaluate', {
+        expression: `Boolean(!globalThis.__desktopViewportDocument && globalThis.$world?.get('a project browser')?.opacity > 0.9 && !globalThis.__loadError__)`,
+        returnByValue: true
+      });
+      return result.result?.value === true;
+    });
+  }
+  console.log('Desktop app smoke passed: startup triangles and gradient match the rendered dashboard in landscape and portrait');
+}
+
 /** Exercise the frame used by both the dashboard and same-document worlds. */
 async function assertDesktopTitlebar (client, dataDir, world = false) {
   await waitFor('transparent desktop title bar', async () => {
@@ -785,10 +841,13 @@ async function openDashboardProject (client, fullName) {
         const button = preview?.get('open button');
         const node = button && document.getElementById(button.id);
         if (!node) return null;
+        node.scrollIntoView({ block: 'center', inline: 'nearest' });
         const bounds = node.getBoundingClientRect();
         if (!bounds.width || !bounds.height) return null;
+        const x = bounds.x + bounds.width / 2, y = bounds.y + bounds.height / 2;
+        if (!node.contains(document.elementFromPoint(x, y))) return null;
         globalThis.__desktopDashboardDocument = document;
-        return { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
+        return { x, y };
       })()`
     });
     if (result.exceptionDetails) throw new Error('Dashboard project tile unavailable: ' + JSON.stringify(result.exceptionDetails));
@@ -1155,8 +1214,12 @@ function seedProject (dataDir) {
   const dormant = path.join(runtimeRoot, 'local_projects', 'smoke--dormant');
   fs.mkdirSync(dormant, { recursive: true });
   fs.writeFileSync(path.join(dormant, 'package.json'), JSON.stringify({
-    name: 'smoke--dormant', version: '0.1.0', author: { name: 'smoke' }, lively: { projectDependencies: [] }
+    name: 'upstream--dormant', version: '0.1.0', author: { name: 'smoke' }, lively: { projectDependencies: [] }
   }));
+  fs.writeFileSync(path.join(dormant, '.livelyForkInformation'), JSON.stringify({ owner: 'smoke', name: 'dormant' }));
+  const invalid = path.join(runtimeRoot, 'local_projects', 'smoke--invalid');
+  fs.mkdirSync(invalid, { recursive: true });
+  fs.writeFileSync(path.join(invalid, 'package.json'), JSON.stringify({ name: 'smoke--invalid', version: '0.0.0' }));
   let legacyParent = dormant;
   for (const name of ['lively.freezer', 'lively-system-interface', 'lively.ast', 'lively.lang', 'lively.morphic', 'lively.modules']) {
     legacyParent = path.join(legacyParent, 'node_modules', name);
@@ -1303,7 +1366,8 @@ async function main () {
           });
           return result.result && result.result.value === true;
         }, timeoutMs);
-        console.log(JSON.stringify({ mode: native ? 'native' : 'http', reopened, dashboardMs: Date.now() - launchStarted }));
+        const dashboardReady = Date.now();
+        console.log(JSON.stringify({ mode: native ? 'native' : 'http', reopened, dashboardMs: dashboardReady - launchStarted }));
         if (cacheProbe) {
           const expression = `fetch('http://127.0.0.1:${cacheProbe.address().port}/').then(r => r.text())`;
           const result = await client.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
@@ -1316,6 +1380,53 @@ async function main () {
             if (cached.result?.value !== 'previous build') throw new Error('Upgrade regression did not prime the browser HTTP cache');
           } else console.log('Desktop app smoke passed: app upgrade invalidates cached HTTP responses');
         }
+        if (!devRoot && !checkSavedWorld) {
+          const projects = await waitFor('visible dashboard project entries', async () => {
+            const result = await client.send('Runtime.evaluate', {
+              expression: `(() => {
+                const previews = $world.get('a project browser').viewModel.previews;
+                if (!previews?.length || !previews.every(p => {
+                  const node = document.getElementById(p.get('open button')?.id);
+                  return node && node.getBoundingClientRect().width > 0;
+                })) return null;
+                return previews.map(p => p._project._name).sort();
+              })()`, returnByValue: true
+            });
+            return result.result?.value;
+          }, timeoutMs, 100);
+          if (JSON.stringify(projects) !== JSON.stringify(reopened && !componentsOnly && !startupOnly
+            ? ['smoke--dormant', 'smoke--programming', 'smoke--project'] : ['smoke--dormant', 'smoke--project'])) {
+            throw new Error('Dashboard lists dependencies as projects: ' + JSON.stringify(projects));
+          }
+          console.log(JSON.stringify({ mode: native ? 'native' : 'http', reopened,
+            projectTilesMs: Date.now() - launchStarted, projectListWaitMs: Date.now() - dashboardReady,
+            ...(native ? { backendReady: readTextFile(logFile).includes('Native backend ready') } : {}) }));
+          if (native) {
+            const result = await client.send('Runtime.evaluate', {
+              awaitPromise: true, returnByValue: true,
+              expression: `(async () => {
+                const { resourceClass } = await livelyNative.fileExtension();
+                const read = resourceClass.prototype.read;
+                resourceClass.prototype.read = function (...args) {
+                  if (this.url === livelyNative.baseURL + 'package-registry.json') {
+                    throw new Error('Project listing waited for the backend package registry');
+                  }
+                  return read.apply(this, args);
+                };
+                try {
+                  const { Project } = lively.FreezerRuntime.exportsOf('lively.project/project.js');
+                  return (await Project.listAvailableProjects(true)).map(p => p._name).sort();
+                } finally { resourceClass.prototype.read = read; }
+              })()`
+            });
+            if (result.exceptionDetails || JSON.stringify(result.result?.value) !== JSON.stringify(projects)) {
+              throw new Error('Native project listing depends on the backend registry: ' + JSON.stringify(result));
+            }
+          }
+          console.log('Desktop app smoke passed: dashboard preserves fork names and hides invalid projects and installed dependencies' +
+            (native ? ', without waiting for the backend registry' : ''));
+        }
+        await assertDashboardBackground(client);
         const registryResult = native && await client.send('Runtime.evaluate', {
           expression: 'livelyNative.fileExtension().then(({resourceClass}) => new resourceClass(livelyNative.baseURL + \'package-registry.json\').readJson())', awaitPromise: true, returnByValue: true
         });
@@ -1356,20 +1467,6 @@ async function main () {
           await assertDesktopTitlebar(client, dataDir, true);
           client.assertNoRendererErrors();
           continue;
-        }
-        if (!devRoot) {
-          const projects = await waitFor('dashboard project entries', async () => {
-            const result = await client.send('Runtime.evaluate', {
-              expression: "globalThis.$world.get('a project browser').viewModel.previews?.map(p => p._project._name).sort()",
-              returnByValue: true
-            });
-            const names = result.result && result.result.value;
-            return names && names.length ? names : null;
-          }, timeoutMs);
-          if (JSON.stringify(projects) !== JSON.stringify(reopened && !componentsOnly ? ['smoke--dormant', 'smoke--programming', 'smoke--project'] : ['smoke--dormant', 'smoke--project'])) {
-            throw new Error('Dashboard lists dependencies as projects: ' + JSON.stringify(projects));
-          }
-          console.log('Desktop app smoke passed: dashboard lists local projects without installed dependencies');
         }
         if (componentsOnly) {
           await openDashboardProject(client, 'smoke--project');
