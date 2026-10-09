@@ -1168,18 +1168,18 @@ export default class Renderer {
    */
   renderMorphInLine (morph, attr) {
     attr = attr || {};
+    morph.renderingState.inlineTextAttributes = attr;
     const rendered = this.renderMorph(morph);
+    if (!morph.renderingState.inlineTextAttributes) {
+      // Initial rendering resets renderingState when the node is created.
+      morph.renderingState.inlineTextAttributes = attr;
+      applyStylingToNode(morph, rendered);
+    }
     rendered.style.position = 'sticky';
-    rendered.style.transform = '';
     rendered.style.textAlign = 'initial';
     rendered.style.removeProperty('top');
     rendered.style.removeProperty('left');
 
-    // FIXME:  this addition screws up the bounds computation of the embedded submorph
-    if (attr.paddingTop) rendered.style.marginTop = attr.paddingTop;
-    if (attr.paddingLeft) rendered.style.marginLeft = attr.paddingLeft;
-    if (attr.paddingRight) rendered.style.marginRight = attr.paddingRight;
-    if (attr.paddingBottom) rendered.style.marginBottom = attr.paddingBottom;
     morph.renderingState.needsRerender = false;
     return rendered;
   }
@@ -1820,6 +1820,15 @@ export default class Renderer {
       }
     });
     if (inlineMorphUpdated) morph.invalidateTextLayout(true, false);
+    if (textNode.isConnected && morph.document && morph.embeddedMorphMap.size) {
+      // Offscreen anchors may force a render while this render is still running.
+      for (const line of morph.renderingState.visibleLines) {
+        if (!morph.isLineVisible(line.row)) continue;
+        for (const part of line.textAndAttributes) {
+          if (part?.isMorph) morph.embeddedMorphMap.get(part)?.anchor?.updateEmbeddedMorph(this.getNodeForMorph(part).getBoundingClientRect());
+        }
+      }
+    }
     morph.renderingState.renderedTextAndAttributes = morph.textAndAttributes;
     morph.renderingState.extent = morph.getProperty('extent');
 
@@ -2204,7 +2213,7 @@ export default class Renderer {
         if (document.fonts.status === 'loaded') {
           morph.textLayout.lineCharBoundsCache.set(docLine, charBounds); // override
           docLine.changeExtent(lineWidth, lineHeight, false);
-          morph.renderingState.needsFit = true;
+          morph.renderingState.needsFit = !morph.fixedWidth || !morph.fixedHeight;
         } else {
           morph.textLayout.resetLineCharBoundsCacheOfLine(docLine);
           morph.makeDirty();
@@ -2222,7 +2231,7 @@ export default class Renderer {
         morph.fontMetric.isFontSupported(morph._fontFamilyToRender, morph._fontWeightToRender)) {
         docLine.changeExtent(nodeWidth, nodeHeight, false);
         morph.textLayout.resetLineCharBoundsCacheOfLine(docLine);
-        morph.renderingState.needsFit = true;
+        morph.renderingState.needsFit = !morph.fixedWidth || !morph.fixedHeight;
       }
 
       return nodeHeight;

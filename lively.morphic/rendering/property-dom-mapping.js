@@ -120,6 +120,7 @@ export function canBePromotedToCompositionLayer (morph) {
 
 export function addTransform (morph, style) {
   const { position, origin, scale, rotation, flipped, tilted, perspective, owner } = morph;
+  const embeddedInText = owner?.isText && owner.embeddedMorphMap.has(morph);
   let x = (position.x - origin.x - (morph._skipWrapping && owner ? owner.borderWidthLeft : 0));
   let y = (position.y - origin.y - (morph._skipWrapping && owner ? owner.borderWidthTop : 0));
   const promoteToCompositionLayer = canBePromotedToCompositionLayer(morph);
@@ -128,7 +129,10 @@ export function addTransform (morph, style) {
   if (promoteToCompositionLayer) {
     style['will-change'] = 'transform';
   }
-  if ((owner && owner.isText && !owner.layout?.renderViaCSS) || promoteToCompositionLayer) {
+  if (embeddedInText) {
+    // The text flow supplies the position; retain the morph's visual transforms.
+    style.transform = `translate(${-origin.x}px, ${-origin.y}px)`;
+  } else if ((owner && owner.isText && !owner.layout?.renderViaCSS) || promoteToCompositionLayer) {
     style.transform = (promoteToCompositionLayer ? `translate(${x}px, ${y}px)` : `translate(${x}px, ${y}px)`);
     style.top = owner?.layout?.renderViaCSS ? '0px' : '';
     style.left = owner?.layout?.renderViaCSS ? '0px' : '';
@@ -137,7 +141,9 @@ export function addTransform (morph, style) {
     style.top = `${y}px`;
     style.left = `${x}px`;
   }
-  style.transform += ` rotate(${rotation.toFixed(3)}rad) scale(${scale.toFixed(5)},${scale.toFixed(5)})`;
+  const cssRotation = embeddedInText ? rotation : rotation.toFixed(3);
+  const cssScale = embeddedInText ? scale : scale.toFixed(5);
+  style.transform += ` rotate(${cssRotation}rad) scale(${cssScale},${cssScale})`;
   if (perspective) style.perspective = `${perspective}px`;
   if (flipped) style.transform += ` rotateY(${flipped * 180}deg)`;
   if (tilted) style.transform += ` rotateX(${tilted * 180}deg)`;
