@@ -78,7 +78,9 @@ export class LivelyWorld extends World {
       name: {
         set (name) {
           this.setProperty('name', name);
-          document.title = `lively.next - ${name}`;
+          const title = `lively.next - ${name}`;
+          if (globalThis.livelyDesktop?.setTitle) livelyDesktop.setTitle(title);
+          else document.title = title;
         }
       },
 
@@ -434,13 +436,19 @@ export class LivelyWorld extends World {
 
   async initializeTopBar () {
     const topBar = part(TopBar);
+    const titlebarHeight = globalThis.livelyDesktop?.titlebarHeight || 0;
+    if (titlebarHeight) {
+      const padding = topBar.layout.padding;
+      topBar.height += titlebarHeight;
+      topBar.layout.padding = Rectangle.inset(padding.left(), padding.top() + titlebarHeight, padding.right(), padding.bottom());
+    }
     topBar.epiMorph = true;
     topBar.name = 'lively top bar';
     topBar.hasFixedPosition = true;
     topBar.respondsToVisibleWindow = true;
     this.addMorph(topBar);
     topBar.relayout();
-    topBar.top = -topBar.height; // tell top bar to hide
+    topBar.position = pt(0, titlebarHeight - topBar.height); // slide down while keeping the desktop frame painted
     const dropShadow = topBar.dropShadow;
     topBar.dropShadow = null;
     topBar.attachToTarget(this);

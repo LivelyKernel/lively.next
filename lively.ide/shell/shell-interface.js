@@ -7,9 +7,9 @@ import {
 import { string } from 'lively.lang';
 
 // FIXME put this in either config or have it provided by server
-// var defaultConnection = {url: `${document.location.origin}/lively-socket.io`, namespace: "l2l"};
+// var defaultConnection = {url: `${window.SERVER_URL || document.location.origin}/lively-socket.io`, namespace: "l2l"};
 
-const defaultConnection = () => ({ url: `${document.location.origin}/lively-socket.io`, namespace: 'l2l' });
+const defaultConnection = () => ({ url: `${window.SERVER_URL || document.location.origin}/lively-socket.io`, namespace: 'l2l' });
 
 // var cmd = runCommand("ls"); await cmd.whenDone(); cmd.output;
 export function runCommand (commandString, opts = {}) {

@@ -1,6 +1,6 @@
-// NW.js node-main script
-// Runs in Node context BEFORE any window opens.
-// Boots lively.server, then navigates the window to it.
+// NW.js desktop bootstrap, required once by the persistent background page.
+// Runs in Node context before the main window loads.
+// Loads packaged pages directly in native mode, or boots the HTTP deployment.
 //
 // Works in two modes:
 //   - Dev mode: lively.app/ inside the monorepo at <root>/lively.app/
@@ -8,8 +8,11 @@
 //     <bundle>/app/ next to the NW.js binary. The server runs from a
 //     per-user runtime root so caches/projects/uploads stay outside the app.
 //
-// The server runs under the packaged Node executable in a managed child process.
-// Launch the app, lively starts, close the window, and the server stops with it.
+// Local services use NW.js's Node-enabled worker by default.
+// LIVELY_DESKTOP_MODE=http runs the HTTP backend under the packaged Node executable.
+
+// Trusted pages use the existing process.mainModule.exports bridge.
+process.mainModule = module;
 
 const path = require('path');
 const fs = require('fs');
@@ -18,7 +21,10 @@ const os = require('os');
 const { createHash } = require('crypto');
 const { spawn, execSync } = require('child_process');
 const { runVelopackStartup } = require('./updates.cjs');
-const { desktopCacheDir, manifestName, preparePackagedSources } = require('./package-payload.cjs');
+const { desktopCacheDir, manifestName, preparePackagedSources, seedPackagedPartsbin } = require('./package-payload.cjs');
+
+// bg-script supplies its persistent window after requiring this module.
+const backgroundWindow = new Promise(resolve => { module.exports.setBackgroundWindow = resolve; });
 
 // ---------------------------------------------------------------------------
 // 0. Detect mode: dev (monorepo) vs bundled (standalone distribution)
@@ -292,6 +298,13 @@ function prepareDesktopRuntimeRoot (sourceRoot, dataDir, logFn) {
     if (fs.existsSync(source)) copyFileWithMode(source, path.join(runtimeRoot, name));
   }
 
+  logFn('seeding packaged PartsBin');
+  try {
+    seedPackagedPartsbin(sourceRoot, runtimeRoot);
+  } catch (err) {
+    logFn('Cannot seed packaged PartsBin: ' + (err.stack || err));
+    throw err;
+  }
   logFn('desktop runtime root ready: ' + runtimeRoot);
   return runtimeRoot;
 }
@@ -534,6 +547,12 @@ function emitError (msg) {
   log('ERROR: ' + msg);
   const b = livelyBoot();
   if (b && b.error) b.error(msg);
+  else nw.Window.getAll(windows => {
+    for (const { window } of windows) {
+      if (window.livelyBoot) window.livelyBoot.error(msg);
+      else window.$world?.showError(msg);
+    }
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -561,10 +580,6 @@ function emitError (msg) {
       }
     }
   }
-
-  emitStatus('Finding free port...');
-  const port = await findFreePort(9011);
-
   let configFile = path.join(desktopDir, 'server-config.js');
   if (!fs.existsSync(configFile)) configFile = path.join(rootDir, 'config.js');
   if (!fs.existsSync(configFile)) configFile = path.join(rootDir, 'lively.installer/assets/config.js');
@@ -639,6 +654,51 @@ function emitError (msg) {
       ? { LIVELY_PREBUILT_LIBRARY_SNAPSHOT: prebuiltSnapshot }
       : {})
   }, commandPath);
+
+  if (process.env.LIVELY_DESKTOP_MODE && !['native', 'http'].includes(process.env.LIVELY_DESKTOP_MODE)) {
+    throw new Error('Unknown desktop mode: ' + process.env.LIVELY_DESKTOP_MODE);
+  }
+  if (process.env.LIVELY_DESKTOP_MODE !== 'http') {
+    Object.assign(process.env, childEnv);
+    process.chdir(path.join(rootDir, 'lively.server'));
+    const { pathToFileURL } = require('node:url');
+    const backend = require('./native-backend-client.cjs')(rootDir, {
+      createWorker: async () => new (await backgroundWindow).Worker('desktop/native-backend-worker.js'),
+      log, onError: err => emitError('Native backend initialization failed: ' + err.stack)
+    });
+    const baseURL = pathToFileURL(rootDir + path.sep).href;
+    const endpointFile = path.join(desktopDataDir(), 'local-endpoint.json');
+    let legacyOrigin = 'http://127.0.0.1:9011';
+    if (fs.existsSync(endpointFile)) legacyOrigin = JSON.parse(fs.readFileSync(endpointFile, 'utf8')).origin;
+    const dashboardURL = baseURL + 'lively.freezer/landing-page/index.html';
+    module.exports.livelyNative = Object.freeze({
+      baseURL, dashboardURL, legacyOrigin,
+      request: backend.request,
+      fileExtension: backend.fileExtension,
+      evaluate: backend.evaluate,
+      send: backend.send,
+      disconnect: backend.disconnect
+    });
+    emitStatus('Native interface ready, loading lively...');
+    const win = await new Promise(resolve => {
+      const findWindow = () => nw.Window.getAll(windows => {
+        if (windows[0]) resolve(windows[0]);
+        else setTimeout(findWindow, 25);
+      });
+      findWindow();
+    });
+    const navigate = () => win.window.livelyBoot.navigate(dashboardURL);
+    if (win.window.livelyBoot) navigate();
+    else win.once('loaded', navigate);
+    win.on('close', function () {
+      backend.close().then(() => this.close(true), err => emitError('Native shutdown failed: ' + err.stack));
+    });
+    return;
+  }
+
+  emitStatus('Finding free port...');
+  const port = await findFreePort(9011);
+  fs.writeFileSync(path.join(desktopDataDir(), 'local-endpoint.json'), JSON.stringify({ origin: 'http://127.0.0.1:' + port }));
 
   let currentChild = null;
   let closing = false;
@@ -724,6 +784,7 @@ function emitError (msg) {
   emitStatus('Server ready, loading lively...');
 
   const dashboardUrl = 'http://127.0.0.1:' + port + '/dashboard/';
+  module.exports.desktopOrigin = new URL(dashboardUrl).origin;
   if (typeof nw === 'undefined') {
     log('NW.js global not available; server is ready for direct smoke mode.');
     return;
@@ -739,19 +800,14 @@ function emitError (msg) {
     }
   }
 
-  const win = nw.Window.get();
+  const win = (await new Promise(resolve => nw.Window.getAll(resolve)))[0];
 
-  const b = livelyBoot();
-  if (b && b.setDashboardUrl) b.setDashboardUrl(dashboardUrl);
-  if (b && b.navigate) b.navigate(dashboardUrl);
-  else {
-    // boot.html's script hasn't run yet — fall back and hope the direct
-    // assignment works on this platform. Shouldn't happen in practice
-    // since server boot takes many seconds by which point boot.html is
-    // long loaded, but be defensive.
-    log('livelyBoot helper missing, using direct location.href assignment');
-    win.window.location.href = dashboardUrl;
-  }
+  const navigate = () => {
+    win.window.livelyBoot.setDashboardUrl(dashboardUrl);
+    win.window.livelyBoot.navigate(dashboardUrl);
+  };
+  if (win.window.livelyBoot) navigate();
+  else win.once('loaded', navigate);
 
   win.on('close', function () {
     log('Window closing, killing server...');

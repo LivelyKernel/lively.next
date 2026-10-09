@@ -20,7 +20,7 @@ import _events from 'events';
  * log // => is still ["listener1","listener2","listener1"]
  */
 
-const isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
+const isNode = typeof window === 'undefined' && typeof process !== 'undefined' && process.versions && process.versions.node;
 
 const makeEmitter = isNode
   ? function (obj, options) {

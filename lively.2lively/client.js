@@ -106,6 +106,11 @@ export default class L2LClient extends L2LConnection {
     } = options;
 
     if (!url) throw new Error('L2LClient needs server url!');
+    if (globalThis.livelyNative?.isLocal(url, 'lively-socket.io')) {
+      const key = 'native-desktop';
+      if (!this.clients.has(key)) this.clients.set(key, new NativeL2LClient(options));
+      return this.clients.get(key);
+    }
 
     const origin = urlHelper.root(url).replace(/\/+$/, '');
     const path = urlHelper.path(url);
@@ -122,6 +127,11 @@ export default class L2LClient extends L2LConnection {
     const { url, namespace } = options;
 
     if (!url) throw new Error('L2LClient needs server url!');
+    if (globalThis.livelyNative?.isLocal(url, 'lively-socket.io')) {
+      const key = 'native-desktop';
+      if (!this.clients.has(key)) this.clients.set(key, new NativeL2LClient(options));
+      return this.clients.get(key);
+    }
 
     const origin = urlHelper.root(url).replace(/\/+$/, '');
     const path = urlHelper.path(url);
@@ -463,5 +473,36 @@ export default class L2LClient extends L2LConnection {
       : !this.isRegistered() ? 'unregistered' : 'registered';
     const shortId = (id || '').slice(0, 5);
     return `L2LClient(${shortId} ${origin}${path} - ${namespace} ${state})`;
+  }
+}
+
+
+class NativeL2LClient extends L2LClient {
+  constructor ({ info = {} }) {
+    super(livelyNative.legacyOrigin, '/lively-socket.io', 'l2l', info);
+    this.trackerId = 'native-desktop';
+    this._closed = false;
+    window.addEventListener('beforeunload', () => this.close(), { once: true });
+  }
+
+  isOnline () { return !this._closed; }
+  isRegistered () { return this.isOnline(); }
+  async whenRegistered () { return this; }
+  async listPeers () { return []; }
+  async register () { this._closed = false; this.emit('registered'); return this; }
+  async unregister () { return this; }
+  async open () { return this.register(); }
+  async close () { this._closed = true; livelyNative.disconnect(this.id); }
+  async remove () { await this.close(); L2LClient.clients.delete('native-desktop'); }
+  sendAndWait (msg) { return super.sendAndWait({ ackTimeout: 0, ...msg }); }
+
+  send (msg, ackFn) {
+    livelyNative.send(JSON.stringify({ ...msg, sender: this.id }), (message, answer) => {
+      const incoming = JSON.parse(message);
+      const handler = this.actions[incoming.action];
+      if (!handler) { answer?.(JSON.stringify({ error: 'Unsupported frontend service: ' + incoming.action })); return; }
+      Promise.resolve(handler(this, incoming, data => answer?.(JSON.stringify({ data }))))
+        .catch(err => answer?.(JSON.stringify({ error: String(err) })));
+    }).then(answer => ackFn?.(JSON.parse(answer)), err => ackFn?.({ data: { error: String(err) } }));
   }
 }

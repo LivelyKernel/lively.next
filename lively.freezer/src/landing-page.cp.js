@@ -1,4 +1,5 @@
-import { Morph, component, config, part } from 'lively.morphic';
+import { registerDesktopResources } from 'lively.app/resources.js';
+import { Morph, component, config, easings, part } from 'lively.morphic';
 import { Color, pt } from 'lively.graphics';
 import { LivelyWorld } from 'lively.ide/world.js';
 import { PropertyLabel } from 'lively.ide/studio/shared.cp.js';
@@ -10,7 +11,7 @@ import { ViewModel } from 'lively.morphic/components/core.js';
 import { TilingLayout } from 'lively.morphic/layout.js';
 import { OfflineToggleLight } from 'lively.ide/offline-mode-toggle.cp.js';
 import { LinearGradient } from 'lively.graphics/color.js';
-import { rect } from 'lively.graphics/geometry-2d.js';
+import { rect, Transform } from 'lively.graphics/geometry-2d.js';
 import { Polygon } from 'lively.morphic/morph.js';
 import { connect } from 'lively.bindings';
 import { ProgressIndicator } from './progress-indicator.cp.js';
@@ -49,7 +50,7 @@ class WorldLandingPage extends Morph {
     const maxWidth = 1100;
     if (worldList) {
       worldList.width = Math.min(this.world().visibleBounds().width - 2 * padding, maxWidth);
-      worldList.center = this.extent.scaleBy(0.5);
+      worldList.center = this.extent.scaleBy(0.5).addPt(pt(0, (globalThis.livelyDesktop?.titlebarHeight || 0) / 2));
     }
   }
 
@@ -58,6 +59,7 @@ class WorldLandingPage extends Morph {
     if (!lively.FreezerRuntime) return;
     $world.fill = Color.black;
     document.body.style.background = Color.black;
+    await registerDesktopResources();
     this.showWorldList();
   }
 
@@ -71,8 +73,9 @@ class WorldLandingPage extends Morph {
           }));
     this.reset();
     dashboard.showCloseButton = false;
-    dashboard.extent = pt(1110, 800).minPt(this.extent.subPt(pt(50, 150)));
-    dashboard.center = this.innerBounds().center();
+    const titlebarHeight = globalThis.livelyDesktop?.titlebarHeight || 0;
+    dashboard.extent = pt(1110, 800).minPt(this.extent.subPt(pt(50, 150 + titlebarHeight)));
+    dashboard.center = this.innerBounds().center().addPt(pt(0, titlebarHeight / 2));
 
     await dashboard.allFontsLoaded();
     dashboard.animate({
@@ -138,9 +141,34 @@ export class ShapeMorpher extends ViewModel {
   }
 
   update () {
-    if (!this.view) return;
-    this.view.master.setState(this.step);
-    this.view.master.applyAnimated();
+    const { view } = this;
+    if (!view) return;
+    const { renderer } = view.env;
+    const before = view.submorphs.filter(m => m.isPolygon).flatMap(triangle => {
+      const node = renderer.getNodeForMorph(triangle);
+      if (!node) return [];
+      const transform = new Transform(new DOMMatrix(getComputedStyle(node).transform));
+      const vertices = triangle.vertices.map(v => transform.transformPoint(v.position));
+      node.getAnimations().forEach(animation => animation.cancel());
+      return [{ triangle, vertices }];
+    });
+    view.master.setState(this.step);
+    view.master.applyIfNeeded(true);
+    if (!before.length) return;
+    renderer.renderStep();
+
+    // Affine transforms can morph triangles entirely on the compositor while bootstrap occupies JS.
+    const basis = ([p, q, r]) => new Transform({
+      a: q.x - p.x, b: q.y - p.y, c: r.x - p.x, d: r.y - p.y, e: p.x, f: p.y
+    });
+    for (const { triangle, vertices } of before) {
+      const node = renderer.getNodeForMorph(triangle);
+      const from = basis(triangle.vertices.map(v => v.position)).inverse().preConcatenate(basis(vertices));
+      node.animate([
+        { transform: `matrix(${[from.a, from.b, from.c, from.d, from.e, from.f].join(',')})` },
+        { transform: node.style.transform }
+      ], { duration: 1000, easing: easings.inOutQuad });
+    }
   }
 }
 
@@ -153,6 +181,7 @@ const Step1 = component({
   submorphs: [{
     type: Polygon,
     name: 'triangle 1',
+    renderOnGPU: true,
     vertices: [({ position: pt(310.1325, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(728.6366, 867.3553), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(0, 869.1404), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })],
     borderColor: Color.rgb(204, 0, 0),
     extent: pt(728.6, 869.1),
@@ -162,6 +191,7 @@ const Step1 = component({
   }, {
     type: Polygon,
     name: 'triangle 2',
+    renderOnGPU: true,
     vertices: [({ position: pt(75.729, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(868.2498, 709.1216), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(0, 708.8307), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })],
     borderColor: Color.rgb(204, 0, 0),
     extent: pt(868.2, 709.1),
@@ -171,6 +201,7 @@ const Step1 = component({
   }, {
     type: Polygon,
     name: 'triangle 3',
+    renderOnGPU: true,
     vertices: [({ position: pt(115.663, 0), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(868.2498, 642.4119), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } }), ({ position: pt(0, 642.121), isSmooth: false, controlPoints: { next: pt(0, 0), previous: pt(0, 0) } })],
     borderColor: Color.rgb(204, 0, 0),
     extent: pt(868.2, 642.4),
@@ -271,6 +302,7 @@ class WorldAligningLandigPageUIElements extends ViewModel {
     $world._cachedWindowBounds = null;
     document.body.style.overflowY = 'hidden';
     this.ui.topSide.topRight = $world.visibleBounds().insetBy(10).topRight();
+    this.ui.topSide.top += globalThis.livelyDesktop?.titlebarHeight || 0;
     this.ui.fastLoadTogglerWrapper.bottomRight = $world.visibleBounds().bottomRight();
     return this.view;
   }

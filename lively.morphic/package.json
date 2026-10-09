@@ -56,7 +56,7 @@
     "map": {
       "yoga-layout/load": {
         "node": "yoga-layout/load",
-        "~node": "https://ga.jspm.io/npm:yoga-layout@3.2.0/dist/src/load.js"
+        "~node": "esm://ga.jspm.io/npm:yoga-layout@3.2.0/dist/src/load.js"
       }
     }
   },

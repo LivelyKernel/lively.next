@@ -319,12 +319,12 @@ function writePackageRegistryCache (registry) {
   }
 }
 
-export async function setupSystem(baseURL) {
-  if (!/^[a-z][a-z0-9+.-]*:/i.test(baseURL)) baseURL = pathToFileURL(baseURL).href;
+export async function setupSystem(baseURL, { name = 'lively', environment } = {}) {
+  if (/^[a-z]:[\\/]/i.test(baseURL) || !/^[a-z][a-z0-9+.-]*:/i.test(baseURL)) baseURL = pathToFileURL(baseURL).href;
   if (!baseURL.endsWith('/')) baseURL += '/';
   ({ default: global.babel } = await import("@babel/core"));
   modules = await import("lively.modules");
-  let livelySystem = modules.getSystem("lively", {baseURL, _nodeRequire: System._nodeRequire || require });
+  let livelySystem = modules.getSystem(name, {baseURL, environment, _nodeRequire: System._nodeRequire || require });
   Object.assign(livelySystem, await import("lively.modules/src/node-resolver.js"));
   modules.changeSystem(livelySystem, true);
   var registry = livelySystem["__lively.modules__packageRegistry"] = new modules.PackageRegistry(livelySystem);

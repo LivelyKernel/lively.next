@@ -29,12 +29,34 @@ jobs:
           bun-version: 1.4.2
       - name: Install frozen dependencies
         run: bun install --frozen-lockfile
+      - name: Check freezer package resolution
+        run: node lively.freezer/tests/package-resolution-test.cjs
+      - name: Check dynamic import paths
+        run: node lively.freezer/tests/dynamic-system-import-test.mjs
+      - name: Check project bundles
+        run: node lively.freezer/tests/project-bundle-test.mjs
       - name: Check native resolver
         run: node lively.modules/tests/native-resolver-test.mjs
       - name: Check live SystemJS resolution
         run: node --trace-uncaught lively.modules/tests/native-system-live-test.mjs
       - name: Check desktop downloads
         run: node lively.app/scripts/test-downloads.mjs
+      - name: Check desktop dependency junctions
+        run: node lively.app/scripts/test-windows-dependency-layout.mjs
+      - name: Rebuild Windows LevelDB for NW.js
+        if: runner.os == 'Windows'
+        run: node lively.app/scripts/rebuild-windows-leveldown.mjs
+      - name: Check Windows native worker and persistence
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP "lively-nw-worker.zip"
+          $runtime = Join-Path $env:RUNNER_TEMP "lively nw worker runtime"
+          Invoke-WebRequest "https://dl.nwjs.io/live-build/v0.111.1-04292210-39517e80d/nwjs-sdk-v0.111.1-win-x64.zip" -OutFile $archive
+          Expand-Archive $archive -DestinationPath $runtime
+          $nw = Get-ChildItem $runtime -Recurse -File -Filter nw.exe | Select-Object -First 1
+          if (-not $nw) { throw "NW.js worker probe executable missing" }
+          node lively.app/scripts/test-native-backend.mjs "$($nw.FullName)"
       - name: Check packaged Unix payload
         if: runner.os == 'macOS'
         run: node lively.app/scripts/test-package-payload.mjs

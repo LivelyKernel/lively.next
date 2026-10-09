@@ -69,4 +69,45 @@ function preparePackagedSources (sourceRoot, log = () => {}) {
   }
 }
 
-module.exports = { desktopCacheDir, manifestName, preparePackagedSources, stagePackagedSources };
+function seedPackagedPartsbin (sourceRoot, runtimeRoot) {
+  const projects = path.join(runtimeRoot, 'local_projects');
+  const target = path.join(projects, 'LivelyKernel--partsbin');
+  // Existing checkouts, including local edits, belong to the user.
+  if (fs.existsSync(target)) return;
+  fs.mkdirSync(projects, { recursive: true });
+  const staging = fs.mkdtempSync(path.join(projects, '.partsbin-'));
+  const source = path.join(sourceRoot, 'local_projects', 'LivelyKernel--partsbin');
+  const links = [];
+  try {
+    const canonicalRoot = fs.realpathSync(sourceRoot);
+    // fs.cp copies junctions as symlinks, requiring Windows symlink privileges
+    // and retaining absolute targets in the application payload.
+    fs.cpSync(source, staging, { recursive: true, filter: (from, to) => {
+      if (!fs.lstatSync(from).isSymbolicLink()) return true;
+      links.push({ from, to });
+      return false;
+    } });
+    for (const { from, to } of links) {
+      const stat = fs.statSync(from);
+      if (!stat.isDirectory()) {
+        fs.copyFileSync(from, to);
+        fs.chmodSync(to, stat.mode & 0o777);
+        continue;
+      }
+      const relative = path.relative(canonicalRoot, fs.realpathSync(from));
+      if (relative === '..' || relative.startsWith('..' + path.sep) || path.isAbsolute(relative)) {
+        throw new Error('Packaged PartsBin dependency escapes source root: ' + from);
+      }
+      const runtimeTarget = path.join(runtimeRoot, relative);
+      const runtimeLink = path.join(target, path.relative(source, from));
+      fs.symlinkSync(process.platform === 'win32' ? runtimeTarget
+        : path.relative(path.dirname(runtimeLink), runtimeTarget), to,
+        process.platform === 'win32' ? 'junction' : 'dir');
+    }
+    fs.renameSync(staging, target);
+  } finally {
+    fs.rmSync(staging, { recursive: true, force: true });
+  }
+}
+
+module.exports = { desktopCacheDir, manifestName, preparePackagedSources, stagePackagedSources, seedPackagedPartsbin };

@@ -127,7 +127,7 @@ export async function initWasm (baseURL) {
       const cacheBust = bootstrapScript
         ? bootstrapScript.src.replace(/.*bootstrap-([^.]+)\.js.*/, '$1')
         : '1';
-      const wasmCacheBust = `${cacheBust}-swc6`;
+      const wasmCacheBust = `${cacheBust}-swc7`;
       const wasmUrl = (baseURL || '').replace(/\/$/, '') +
         `/lively.freezer/swc-browser-wasm/lively_swc_browser_bg.wasm?v=${wasmCacheBust}`;
       console.log('[lively.swc] loading WASM from', wasmUrl);
@@ -147,14 +147,19 @@ export async function initWasm (baseURL) {
         }
       };
 
-      const response = await fetch(wasmUrl);
       let instance;
-      if (response.headers.get('content-type')?.includes('application/wasm')) {
-        ({ instance } = await WebAssembly.instantiateStreaming(response, imports));
-      } else {
-        // Fallback when server doesn't send correct MIME type
-        const bytes = await response.arrayBuffer();
+      if (globalThis.livelyNative && wasmUrl.startsWith(livelyNative.baseURL)) {
+        const { resourceClass } = await livelyNative.fileExtension();
+        const bytes = await new resourceClass(wasmUrl.replace(/\?.*$/, '')).beBinary(true).read();
         ({ instance } = await WebAssembly.instantiate(bytes, imports));
+      } else {
+        const response = await fetch(wasmUrl);
+        if (response.headers.get('content-type')?.includes('application/wasm')) {
+          ({ instance } = await WebAssembly.instantiateStreaming(response, imports));
+        } else {
+          const bytes = await response.arrayBuffer();
+          ({ instance } = await WebAssembly.instantiate(bytes, imports));
+        }
       }
       wasmState.exports = instance.exports;
       cachedUint8ArrayMemory0 = null;

@@ -48,6 +48,7 @@ function createGenerator (inputMap, providers, baseUrl) {
 
 function moduleUrlsIn (value, urls = new Set()) {
   if (typeof value === 'string') {
+    value = value.replace(/^esm:/, 'https:');
     if (value.startsWith('https://ga.jspm.io/npm:') && !value.endsWith('/')) urls.add(value);
   } else if (value && typeof value === 'object') {
     for (const nested of Object.values(value)) moduleUrlsIn(nested, urls);
@@ -214,11 +215,12 @@ export async function installDeps (
 export async function generateImportMapForPackage (packageDir, { update = false } = {}) {
   const config = JSON.parse(await fs.promises.readFile(join(packageDir, 'package.json'), 'utf8'));
   const dependencies = Object.fromEntries(Object.entries(config.dependencies || {}).sort(([a], [b]) => a.localeCompare(b)));
+  const mappedModules = [...moduleUrlsIn(config.systemjs?.map)];
   const cacheFile = join(packageDir, '.cachedImportMap.json');
   let cached;
   try { cached = JSON.parse(await fs.promises.readFile(cacheFile, 'utf8')); }
   catch (err) { if (err.code !== 'ENOENT') throw err; }
-  if (!update && cached && JSON.stringify(cached._dependencies) === JSON.stringify(dependencies) && Array.isArray(cached._modules)) {
+  if (!update && cached && JSON.stringify(cached._dependencies) === JSON.stringify(dependencies) && Array.isArray(cached._modules) && mappedModules.every(url => cached._modules.includes(url))) {
     return cached;
   }
   if (!Generator) ({ Generator } = await import('@jspm/generator'));
@@ -242,7 +244,9 @@ export async function generateImportMapForPackage (packageDir, { update = false 
   if (Object.keys(failed).length) {
     throw new Error(`Cannot generate browser import map for ${config.name}: ${Object.keys(failed).join(', ')}`);
   }
-  const { map: generatedMap, staticDeps, dynamicDeps } = await generator.extractMap(Object.keys(generator.map.imports), undefined, undefined, true);
+  // Explicit package maps can select subpaths outside the dependency entry points.
+  if (mappedModules.length) await generator.link(mappedModules);
+  const { map: generatedMap, staticDeps, dynamicDeps } = await generator.extractMap([...Object.keys(generator.map.imports), ...mappedModules], undefined, undefined, true);
   const usedEsmShPackages = esmShPackagesIn(generatedMap);
   for (const [name, provider] of Object.entries(providers)) {
     if (provider === 'esm.sh' && !usedEsmShPackages.has(name)) delete providers[name];

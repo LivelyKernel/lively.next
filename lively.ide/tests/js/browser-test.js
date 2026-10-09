@@ -4,12 +4,35 @@ import { resource } from 'lively.resources';
 import { promise } from 'lively.lang';
 import { localInterface, serverInterfaceFor } from 'lively-system-interface';
 import { browse } from '../../js/browser/ui.cp.js';
+import { BrowserModel } from '../../js/browser/index.js';
 
 describe('system browser client/server switching', function () {
   // Source-world tree refreshes also list files and render the browser columns.
   this.timeout(240000);
   let browser;
   afterEach(() => browser?.view.getWindow().remove());
+
+  it('keeps the environment control disabled until its selection is refreshed', async () => {
+    const environment = promise.deferred();
+    const control = {
+      deactivated: false,
+      enable () { this.deactivated = false; },
+      disable () { this.deactivated = true; }
+    };
+    const state = {};
+    const context = { ui: { moduleEnvironment: control }, state,
+      systemInterface: { moduleEnvironment: () => environment.promise } };
+    const update = BrowserModel.prototype.updateModuleEnvironmentControl.call(context, { url: 'file:///test.js' });
+    try {
+      expect(control.deactivated).equals(true);
+    } finally { environment.resolve({ environments: ['server'] }); }
+    await update;
+    expect(control.selection).equals('server');
+    expect(control.deactivated).equals(false);
+    state.isChangingModuleEnvironment = true;
+    await BrowserModel.prototype.updateModuleEnvironmentControl.call(context, { url: 'file:///test.js' }, { environments: ['client'] });
+    expect(control.deactivated).equals(true);
+  });
 
   it('keeps the source package and module context across backend switches', async () => {
     browser = (await browse({ packageName: 'lively.lang', moduleName: 'index.js' })).viewModel;
