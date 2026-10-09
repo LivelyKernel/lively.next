@@ -402,12 +402,13 @@
       }
 
       let maximized = false, minimized = false;
-      const updateState = () => pageHelper(win)?.setWindowState?.(maximized, win.window.document.hasFocus());
+      let focused = win.window.document.hasFocus();
+      const updateState = () => pageHelper(win)?.setWindowState?.(maximized, focused);
       win.on('maximize', () => { maximized = true; updateState(); });
       win.on('minimize', () => { minimized = true; });
       win.on('restore', () => { if (!minimized) maximized = false; minimized = false; updateState(); });
-      win.on('focus', updateState);
-      win.on('blur', updateState);
+      win.on('focus', () => { focused = true; updateState(); });
+      win.on('blur', () => { focused = false; updateState(); });
       win.on('closed', () => nw.App.quit());
       win.on('document-start', frame => {
         if (!frame) win.window.addEventListener('DOMContentLoaded', () => attachMenu(win, 'document ready', updateState), { once: true });
