@@ -1694,6 +1694,7 @@ export class Text extends Morph {
 
   invalidateTextLayout (resetCharBoundsCache = false, resetLineHeights = false) {
     const rs = this.renderingState;
+    rs.markers = null;
     if (!this.fixedWidth || !this.fixedHeight) rs.needsFit = true;
     const tl = this.textLayout;
     if (tl) {

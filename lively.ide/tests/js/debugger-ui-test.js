@@ -27,6 +27,35 @@ function frame (spec = {}) {
 }
 
 describe('lively debugger ui', function () {
+  it('aligns the current statement with captured source at different font sizes', async function () {
+    const { run } = await System.import('lively.context/lib/stackReification.js');
+    const { LiveCounter } = await System.import('lively.ide/js/debugger/examples/live-counter.js');
+    const { openForContinuation } = await System.import('lively.ide/js/debugger/ui.cp.js');
+    const counter = new LiveCounter();
+    const continuation = run(counter.increment, null, [], {this: counter});
+    const view = openForContinuation(continuation, $world);
+    try {
+      const model = view.viewModel, pane = model.ui.sourcePane;
+      await model.selectFrame(continuation.currentFrame);
+      for (const fontSize of [13, 16, 22]) {
+        pane.fontSize = fontSize;
+        await pane.whenFontLoaded();
+        pane.env.forceUpdate();
+        const row = pane.selection.range.start.row;
+        expect(pane.getLine(row).trim()).equals('debugger;');
+        const node = pane.env.renderer.getNodeForMorph(pane);
+        const line = Array.from(node.querySelectorAll('.newtext-text-layer.actual .line'))
+          .find(line => line.textContent.trim() === 'debugger;').getBoundingClientRect();
+        const selection = pane.renderingState.selectionNodes[0].getBoundingClientRect();
+        expect(selection.top).closeTo(line.top, 0.5);
+        expect(selection.height).closeTo(line.height, 0.5);
+        const marker = node.querySelector('.newtext-marker-layer').getBoundingClientRect();
+        expect(marker.top).closeTo(line.top, 0.5);
+        expect(marker.height).closeTo(line.height, 1);
+      }
+    } finally { view.viewModel.closeDebugger(); }
+  });
+
   it('renders an editable workspace below the scope inspector', async function () {
     const { run } = await System.import('lively.context/lib/stackReification.js');
     const { openForContinuation } = await System.import('lively.ide/js/debugger/ui.cp.js');
