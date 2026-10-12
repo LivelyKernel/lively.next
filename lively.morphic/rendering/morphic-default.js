@@ -43,6 +43,20 @@ export function applyStylingToNode (morph, node) {
     styleProps.textAlign = 'initial';
     delete styleProps.top;
     delete styleProps.left;
+    // CSS transforms do not affect flow. Reserve the transformed rectangle
+    // and shift its painted top-left corner into that space with margins.
+    const bounds = morph.getTransform().transformRectToRect(morph.innerBounds()).translatedBy(morph.position.negated());
+    const margins = { Left: -bounds.x, Top: -bounds.y, Right: bounds.right() - morph.width, Bottom: bounds.bottom() - morph.height };
+    const attributes = morph.renderingState.inlineTextAttributes || {};
+    for (const side in margins) {
+      const padding = attributes['padding' + side] || 0;
+      styleProps['margin-' + side.toLowerCase()] = typeof padding === 'number'
+        ? `${margins[side] + padding}px`
+        : `calc(${margins[side]}px + ${padding})`;
+    }
+  } else if (morph.renderingState.inlineTextAttributes) {
+    delete morph.renderingState.inlineTextAttributes;
+    for (const side of ['left', 'top', 'right', 'bottom']) styleProps['margin-' + side] = '';
   }
 
   stylepropsToNode(styleProps, node); // eslint-disable-line no-use-before-define
