@@ -11,6 +11,7 @@
   window.__LIVELY_DESKTOP_APP__ = true;
 
   function resolveDashboardUrl () {
+    if (window.livelyNative) return livelyNative.dashboardURL;
     if ((window.location.protocol === 'http:' || window.location.protocol === 'https:') &&
         window.location.origin && window.location.origin !== 'null') {
       return window.location.origin + '/dashboard/';

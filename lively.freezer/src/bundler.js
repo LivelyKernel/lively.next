@@ -302,7 +302,7 @@ export default class LivelyRollup {
     this.resolved = {};
     this.projectAssets = [];
     this.customFontFiles = [];
-    this.projectsInBundle = new Set();
+    this.projectsInBundle = new Map();
     this.moduleToPkg = new Map();
     this.moduleSources = {};
     this.entryPaths = null; // for multi-entry builds, stores the original entry paths
@@ -878,9 +878,10 @@ export default class LivelyRollup {
     // We use the string 'projectAsset' there in regular code to enable correct reconciliation.
     if (!id.includes('lively.ide/components/helpers.js')) {
       const projectAssetRegex = /projectAsset\('(?<assetName>.*)'\)/g;
-      const currentlyTransformedProject = id.match(/local_projects\/([^\/]*)\//)?.[1];
+      const projectPath = id.match(/^(.*\/local_projects\/([^/]+)\/)/);
+      const currentlyTransformedProject = projectPath?.[2];
 
-      if (currentlyTransformedProject) this.projectsInBundle.add(currentlyTransformedProject);
+      if (projectPath) this.projectsInBundle.set(currentlyTransformedProject, this.resolver.ensureFileFormat(projectPath[1]));
 
       const assetNameRewriter = (match, assetName) => {
         const newName = currentlyTransformedProject + '__' + assetName;
@@ -962,6 +963,10 @@ export default class LivelyRollup {
     if (id === ROOT_ID) return id;
     // Handle synthetic root modules for multi-entry builds
     if (id.startsWith('__rootModule__:')) return id;
+    // Class instrumentation injects this dependency. Resolve it from the
+    // freezer's installation rather than requiring every source package to
+    // declare the compiler's runtime dependency.
+    if (id === 'lively.classes/runtime.js') return this.resolver.resolveModuleId(id, undefined, this.getResolutionContext());
     // handle standalone
     if (!importer) return this.resolver.resolveModuleId(id, importer, this.getResolutionContext());
 
@@ -1610,16 +1615,15 @@ export default class LivelyRollup {
       allAssets.forEach(asset => plugin.emitFile(asset));
     }
 
-    const livelyDir = resource(morphicUrl).join('..').withRelativePartsResolved();
-    const projectsDir = resource(livelyDir).join('local_projects');
     let bundledProjectCSS = '';
     let bundledProjectFontCSS = '';
     // In contrast to `assets`, we cannot tell which CSS and font files are actually used. We need to collect them for the project to be bundled and all its dependencies.
 
     // Process all projects in parallel
-    const projectPromises = Array.from(this.projectsInBundle.entries()).map(async ([project]) => {
-      const indexCSSFile = projectsDir.join(project).join('index.css');
-      const fontCSSFile = projectsDir.join(project).join('fonts.css');
+    const projectPromises = Array.from(this.projectsInBundle.values()).map(async (projectURL) => {
+      const projectDir = resource(projectURL);
+      const indexCSSFile = projectDir.join('index.css');
+      const fontCSSFile = projectDir.join('fonts.css');
 
       // Load both CSS files in parallel
       const [indexCSSContents, fontCSSContents] = await Promise.all([
@@ -1627,7 +1631,7 @@ export default class LivelyRollup {
         fontCSSFile.read().then(content => content.replaceAll(/\.\/assets\//g, './'))
       ]);
 
-      const assetDir = projectsDir.join(project).join('assets');
+      const assetDir = projectDir.join('assets');
       let fontAssets = [];
 
       // Check if asset directory exists and load font files
@@ -1675,7 +1679,7 @@ export default class LivelyRollup {
 
     // Parallelize project asset loading
     const assetPromises = this.projectAssets.map(async (asset) => {
-      const file = resource(projectsDir).join(asset.project).join('assets').join(`${asset.oldName}`);
+      const file = resource(this.projectsInBundle.get(asset.project)).join('assets').join(`${asset.oldName}`);
       if (file.isDirectory()) return null;
       file.beBinary();
       let source = await file.read();

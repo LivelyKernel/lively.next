@@ -100,7 +100,7 @@ export default class ClientCommand extends CommandInterface {
     this.lastSignal = signal;
     let { pid, l2lClient } = this;
     let { data: { status, error } } = await l2lClient.sendToAndWait(
-      l2lClient.trackerId, 'lively.shell.kill', { pid });
+      l2lClient.trackerId, 'lively.shell.kill', { pid, signal });
     debug && console.log(`${this} kill send: ${error || status}`);
     if (error) throw new Error(error);
     return this.whenDone();

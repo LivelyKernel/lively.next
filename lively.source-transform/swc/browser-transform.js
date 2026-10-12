@@ -147,14 +147,19 @@ export async function initWasm (baseURL) {
         }
       };
 
-      const response = await fetch(wasmUrl);
       let instance;
-      if (response.headers.get('content-type')?.includes('application/wasm')) {
-        ({ instance } = await WebAssembly.instantiateStreaming(response, imports));
-      } else {
-        // Fallback when server doesn't send correct MIME type
-        const bytes = await response.arrayBuffer();
+      if (globalThis.livelyNative && wasmUrl.startsWith(livelyNative.baseURL)) {
+        const { resourceClass } = await livelyNative.fileExtension();
+        const bytes = await new resourceClass(wasmUrl.replace(/\?.*$/, '')).beBinary(true).read();
         ({ instance } = await WebAssembly.instantiate(bytes, imports));
+      } else {
+        const response = await fetch(wasmUrl);
+        if (response.headers.get('content-type')?.includes('application/wasm')) {
+          ({ instance } = await WebAssembly.instantiateStreaming(response, imports));
+        } else {
+          const bytes = await response.arrayBuffer();
+          ({ instance } = await WebAssembly.instantiate(bytes, imports));
+        }
       }
       wasmState.exports = instance.exports;
       cachedUint8ArrayMemory0 = null;

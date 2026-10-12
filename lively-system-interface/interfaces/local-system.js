@@ -60,7 +60,8 @@ export class LocalCoreInterface extends AbstractCoreInterface {
   }
 
   getConfig () {
-    return System.getConfig();
+    const config = System.getConfig();
+    return globalThis.livelyNative ? { ...config, baseURL: livelyNative.baseURL } : config;
   }
 
   setConfig (conf) {

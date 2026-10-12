@@ -1,3 +1,4 @@
+import { registerDesktopResources } from 'lively.app/resources.js';
 import { Morph, World, MorphicDB, TilingLayout, part, Icon, Label, component } from 'lively.morphic';
 import { pt, rect, Color } from 'lively.graphics';
 import { resource } from 'lively.resources';
@@ -23,6 +24,7 @@ export class WorldLoadingScreen extends Morph {
   }
 
   async activate () {
+    await registerDesktopResources();
     if (lively.FreezerRuntime) {
       const projectName = this.getProjectName();
       const worldName = this.getWorldName();
@@ -63,7 +65,7 @@ export class WorldLoadingScreen extends Morph {
       return this.indicateMissing(false);
     }
 
-    if (filePath && !await resource(document.location.origin).join(filePath).exists()) { return this.indicateMissing(false); }
+    if (filePath && !await resource(window.SYSTEM_BASE_URL || document.location.origin).join(filePath).exists()) { return this.indicateMissing(false); }
 
     await bootstrap({ worldName, filePath, loadingIndicator: new Morph(), progress, snapshot, projectName });
   }
@@ -78,7 +80,7 @@ export class WorldLoadingScreen extends Morph {
   }
 
   getWorldName () {
-    if (!document.location.href.includes('worlds/')) return false;
+    if (!document.location.href.includes('worlds/') && new URLSearchParams(document.location.search).get('route') !== 'worlds') return false;
     const loc = document.location;
     const query = resource(loc.href).query();
     const worldNameMatch = query.name || window.WORLD_NAME;

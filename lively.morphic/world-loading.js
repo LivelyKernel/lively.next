@@ -10,6 +10,7 @@ import { pathForBrowserHistory } from './helpers.js';
 import { part } from './components/core.js';
 
 async function reportWorldLoad (world, user) {
+  if (globalThis.livelyNative) return;
   const { currentUsername } = await System.import('lively.user');
   fetch(string.joinPath(System.baseURL, '/report-world-load'), {
     method: 'POST',

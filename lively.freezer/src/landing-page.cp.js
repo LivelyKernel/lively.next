@@ -1,3 +1,4 @@
+import { registerDesktopResources } from 'lively.app/resources.js';
 import { Morph, component, config, part } from 'lively.morphic';
 import { Color, pt } from 'lively.graphics';
 import { LivelyWorld } from 'lively.ide/world.js';
@@ -58,6 +59,7 @@ class WorldLandingPage extends Morph {
     if (!lively.FreezerRuntime) return;
     $world.fill = Color.black;
     document.body.style.background = Color.black;
+    await registerDesktopResources();
     this.showWorldList();
   }
 

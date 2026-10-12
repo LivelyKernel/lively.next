@@ -142,6 +142,7 @@ class HttpEvalStrategy extends RemoteEvalStrategy {
 
   async basicRemoteEval (source, options) {
     options = this.normalizeOptions(options);
+    if (globalThis.livelyNative?.isLocal(options.serverEvalURL, 'eval')) return livelyNative.evaluate(source);
     let method = 'basicRemoteEval_' + (System.get('@system-env').node ? 'node' : 'web');
     return await this[method]({ method: 'POST', body: source }, options.serverEvalURL);
   }
@@ -158,7 +159,7 @@ class HttpEvalStrategy extends RemoteEvalStrategy {
 
     crossDomain = loc.origin !== domain;
 
-    if (crossDomain) { // use lively.server proxy plugin
+    if (crossDomain && !globalThis.livelyNative) { // use lively.server proxy plugin
       payload.headers = {
         ...payload.headers,
         pragma: 'no-cache',

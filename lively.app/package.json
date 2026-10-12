@@ -8,7 +8,8 @@
     "main": "index.js"
   },
   "bg-script": "desktop/background-menu.js",
-  "node-main": "desktop/start-server.cjs",
+  "node-main": "--experimental-import-meta-resolve desktop/start-server.cjs",
+  "inject_js_start": "desktop/inject-start.js",
   "inject_js_end": "desktop/inject.js",
   "single-instance": true,
   "window": {
@@ -22,18 +23,25 @@
     "frame": true,
     "resizable": true
   },
-  "chromium-args": "--disable-raf-throttling --remote-debugging-port=9222",
+  "chromium-args": "--enable-features=NWESM --disable-raf-throttling --remote-debugging-port=9222",
   "exports": {
-    ".": "./index.js"
+    ".": "./index.js",
+    "./resources.js": "./resources.js"
   },
   "dependencies": {
     "lively.server": "workspace:*",
     "lively.installer": "workspace:*",
     "nw": "0.111.1-sdk",
-    "velopack": "0.0.1444-gc245055"
+    "velopack": "0.0.1444-gc245055",
+    "lively.resources": "workspace:*",
+    "lively.storage": "workspace:*"
   },
   "scripts": {
     "start": "bash start.sh",
     "setup": "bash setup.sh"
-  }
+  },
+  "node-remote": [
+    "file:///*/lively.freezer/landing-page/index.html",
+    "file:///*/lively.freezer/loading-screen/index.html"
+  ]
 }

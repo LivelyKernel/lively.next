@@ -645,7 +645,7 @@ export class WorldBrowserModel extends ViewModel {
 
   async viewDidLoad () {
     if (lively.FreezerRuntime) {
-      const localconfigContent = await resource(SERVER_URL + '/localconfig.js').read();
+      const localconfigContent = await resource((window.SYSTEM_BASE_URL || SERVER_URL) + '/localconfig.js').read();
       if (localconfigContent.replaceAll(' = ', '=').includes('config.hideScrollbarsInWorldBrowser=true')) config.hideScrollbarsInWorldBrowser = true;
     }
     await this.displayItems();
@@ -756,8 +756,8 @@ export class WorldBrowserModel extends ViewModel {
   }
 
   async createNewProject () {
-    if (this.playgroundsMode) document.location = '/worlds/load?name=__newWorld__';
-    else document.location = '/projects/load?name=__newProject__';
+    const route = this.playgroundsMode ? '/worlds/load?name=__newWorld__' : '/projects/load?name=__newProject__';
+    document.location = globalThis.livelyNative ? livelyNative.route(route) : route;
   }
 
   allFontsLoaded () {

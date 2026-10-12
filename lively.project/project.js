@@ -200,7 +200,7 @@ export class Project {
     const baseURL = (await Project.systemInterface.getConfig()).baseURL;
 
     const packageCache = lively.FreezerRuntime
-      ? await resource(baseURL).join('../package-registry.json').withRelativePartsResolved().readJson()
+      ? await resource(baseURL).join(globalThis.livelyNative ? 'package-registry.json' : '../package-registry.json').withRelativePartsResolved().readJson()
       : PackageRegistry.ofSystem(System);
 
     let projectsCandidates = [];
@@ -762,9 +762,8 @@ export class Project {
     let content = buildScript;
     content = content.replaceAll('%PROJECT_NAME%', this.fullName);
     await (await resource(mjsBuildScript).ensureExistance()).write(content);
-    const shellBuildScriptOrigin = new URL(shellBuildScript).origin;
-    const scriptDir = shellBuildScript.replace(shellBuildScriptOrigin + '/', '').replace('/build.sh', '');
-    const cmd = runCommand(`cd ../${scriptDir} && chmod a+x build.sh`, { l2lClient: ShellClientResource.defaultL2lClient });
+    const scriptDir = resolveShellDirectory(await defaultDirectory(), '..', 'local_projects', this.fullName, 'tools');
+    const cmd = runCommand('chmod a+x build.sh', { cwd: scriptDir, l2lClient: ShellClientResource.defaultL2lClient });
     await cmd.whenDone();
     return cmd.exitCode;
   }

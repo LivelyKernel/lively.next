@@ -8,6 +8,7 @@
  */
 
 import io from 'socket.io-client';
+import { connect as connectIPC } from 'node:net';
 let debug = false;
 let debugOut = debug && require('fs').createWriteStream(process.env.HOME + '/.commandline2lively-debug.log');
 let env = typeof process !== 'undefined' ? process.env : {};
@@ -69,6 +70,26 @@ export default function queryLively (msg, thenDo, connect = io) {
   if (!msg.sender) msg.sender = 'OS shell';
   if (!msg.action) {
     thenDo(new Error('Cannot send an L2L message without an action'));
+    return;
+  }
+
+  if (env.LIVELY_NATIVE_PROMPT_ENDPOINT) {
+    const socket = connectIPC(env.LIVELY_NATIVE_PROMPT_ENDPOINT);
+    let response = '', finished = false;
+    const finish = (err, answer) => {
+      if (finished) return;
+      finished = true;
+      socket.destroy();
+      thenDo(err, answer);
+    };
+    socket.once('connect', () => socket.write(JSON.stringify({ token: env.LIVELY_NATIVE_PROMPT_TOKEN, message: msg }) + '\n'));
+    socket.on('data', chunk => {
+      response += chunk;
+      if (!response.includes('\n')) return;
+      try { const answer = JSON.parse(response); finish(answer.error, answer); } catch (err) { finish(err); }
+    });
+    socket.once('error', finish);
+    socket.once('close', () => { if (!finished) finish(new Error('Native prompt disconnected before answering')); });
     return;
   }
 
