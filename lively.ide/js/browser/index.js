@@ -1481,13 +1481,13 @@ export class BrowserModel extends ViewModel {
   async updateModuleEnvironmentControl (mod, environment) {
     const control = this.ui.moduleEnvironment;
     const editable = mod && ['js', 'mjs', 'cjs', 'jsx'].includes(resource(mod.url).ext());
-    if (editable && !this.state.isChangingModuleEnvironment) control.enable();
-    else control.disable();
+    control.disable();
     if (!editable) return;
     const { environments } = environment || await this.systemInterface.moduleEnvironment(mod.url);
     noUpdate({ sourceObj: control, sourceAttribute: 'selection' }, () => {
       control.selection = environments.length === 1 ? environments[0] : 'shared';
     });
+    if (!this.state.isChangingModuleEnvironment) control.enable();
   }
 
   async setModuleEnvironment (mode) {
