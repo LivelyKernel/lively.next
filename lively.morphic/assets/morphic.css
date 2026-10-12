@@ -24,6 +24,13 @@ textarea.lively-text-input.debug {
 /*-=- generic morphic -=-*/
 .Morph {
   outline: none;
+  position: absolute;
+  background: white;
+  border: 0 solid white;
+  border-radius: 0;
+  transform-origin: 0 0;
+  pointer-events: auto;
+  cursor: auto;
   /*for aliasing issue in chrome: http://stackoverflow.com/questions/6492027/css-transform-jagged-edges-in-chrome*/
   /* -webkit-backface-visibility: hidden; */
 

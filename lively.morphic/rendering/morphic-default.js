@@ -205,9 +205,24 @@ function defaultStyle (morph) {
     domStyle['overflow-anchor'] = 'none';
   }
 
-  domStyle.position = 'absolute';
-  domStyle['pointer-events'] = reactsToPointer ? 'auto' : 'none';
-  domStyle.cursor = nativeCursor;
+  // Keep animation snapshots complete; omit defaults only when rendering nodes.
+  for (const side of ['left', 'right', 'top', 'bottom']) {
+    if (domStyle[`border-${side}-width`] === '0px') {
+      delete domStyle[`border-${side}-width`];
+      delete domStyle[`border-${side}-style`];
+      delete domStyle[`border-${side}-color`];
+    } else if (domStyle[`border-${side}-style`] === 'solid') delete domStyle[`border-${side}-style`];
+  }
+  if (domStyle['border-radius'] === '0px 0px 0px 0px') delete domStyle['border-radius'];
+  if (domStyle['transform-origin'] === '0px 0px') delete domStyle['transform-origin'];
+  if (domStyle.opacity === 1) delete domStyle.opacity;
+  if (!domStyle.display) delete domStyle.display;
+  if (!domStyle['box-shadow']) delete domStyle['box-shadow'];
+  if (!domStyle.filter) delete domStyle.filter;
+  if (domStyle.background === Color.white.toP3ColorString()) delete domStyle.background;
+  if (domStyle.transform.trim() === 'rotate(0.000rad) scale(1.00000,1.00000)') delete domStyle.transform;
+  if (!reactsToPointer) domStyle['pointer-events'] = 'none';
+  if (nativeCursor !== 'auto') domStyle.cursor = nativeCursor;
 
   Object.assign(domStyle, layoutStyle);
 
