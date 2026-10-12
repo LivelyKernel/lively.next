@@ -37,9 +37,8 @@ const actions = {
 // Strings cross the context boundary in both directions, just as JSON does over
 // HTTP. Mutating an argument or result cannot mutate the other context's objects.
 export async function handleObjectDBRequest (method, url, body) {
-  const parsed = new URL(url);
-  const action = parsed.pathname.slice(1);
-  if (parsed.protocol !== 'lively.objectdb:' || parsed.host !== 'local' ||
+  const action = url.slice(nativeObjectDBURL.length).split('?')[0];
+  if (!url.startsWith(nativeObjectDBURL) ||
       !Object.prototype.hasOwnProperty.call(actions, method) ||
       !Object.prototype.hasOwnProperty.call(actions[method], action)) {
     throw new Error(`method/action not supported ${method}/${action}`);

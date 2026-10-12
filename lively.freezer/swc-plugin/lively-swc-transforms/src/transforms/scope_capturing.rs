@@ -95,10 +95,8 @@ pub struct ScopeCapturingTransform {
     /// Used for resurrection namespace transforms (exportsOf calls).
     resolved_imports: HashMap<String, String>,
 
-    /// Names declared by the currently visited variable declaration chain.
-    /// Needed for parity with legacy transform behavior: references inside a
-    /// var-declarator initializer must resolve to local bindings declared in
-    /// the same declaration list, not the recorder member.
+    /// Other bindings in the current declaration list stay local in initializers.
+    /// Self-references use the recorder so module state survives re-execution.
     current_var_decl_stack: Vec<HashSet<String>>,
 }
 
@@ -373,8 +371,8 @@ impl ScopeCapturingTransform {
             return false;
         }
 
-        // While walking a variable declaration initializer, do not rewrite
-        // references to bindings declared by the same declaration statement.
+        // Keep references to other bindings in this declaration list local.
+        // Self-references must read the existing recorder value on re-execution.
         // Example:
         //   var xe = ..., Ue = get(xe)
         // must keep `xe` local here, matching legacy JS transform output.
@@ -401,6 +399,12 @@ impl ScopeCapturingTransform {
         // `arguments` is a function-local special binding. In particular, the
         // class-to-function transform generates it in constructor dispatch.
         if id.0.as_ref() == "arguments" {
+            return false;
+        }
+
+        // A recorder property call would turn direct eval into indirect eval,
+        // losing the caller's lexical bindings (including its System loader).
+        if id.0.as_ref() == "eval" {
             return false;
         }
 
@@ -2811,8 +2815,6 @@ impl VisitMut for ScopeCapturingTransform {
                 current_names.insert(sym.to_string());
             }
         }
-        self.current_var_decl_stack.push(current_names);
-
         if self.depth > 0 {
             for decl in &var_decl.decls {
                 if matches!(var_decl.kind, VarDeclKind::Var) {
@@ -2824,8 +2826,15 @@ impl VisitMut for ScopeCapturingTransform {
                 }
             }
         }
-        var_decl.visit_mut_children_with(self);
-        self.current_var_decl_stack.pop();
+        for decl in &mut var_decl.decls {
+            let mut other_names = current_names.clone();
+            for (sym, _) in extract_idents_from_pat(&decl.name) {
+                other_names.remove(sym.as_ref());
+            }
+            self.current_var_decl_stack.push(other_names);
+            decl.visit_mut_children_with(self);
+            self.current_var_decl_stack.pop();
+        }
     }
 
     fn visit_mut_fn_expr(&mut self, fn_expr: &mut FnExpr) {
@@ -3150,6 +3159,16 @@ mod tests {
         assert!(
             !output.contains("__varRecorder__.module"),
             "excluded destructured binding should not be captured: {}",
+            output
+        );
+    }
+
+    #[test]
+    fn test_self_initializer_reads_existing_recorder() {
+        let output = transform_code("export var extensions = extensions || [];");
+        assert!(
+            output.contains("__varRecorder__.extensions || []"),
+            "self-initializer must preserve recorder state: {}",
             output
         );
     }

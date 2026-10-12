@@ -13,13 +13,13 @@ const bundled = new LivelySwcTransform().transform(source, {
 });
 const code = transformSync(bundled.code, { module: { type: 'systemjs' }, jsc: { target: 'es2022' } }).code;
 
-function fixture (fetch) {
+function fixture (fetch, compiled = code) {
   const context = createContext({ console, WebAssembly, TextDecoder, TextEncoder, Uint8Array, fetch,
     document: { location: { href: 'http://fixture.test/' }, querySelector () { return null; } }, __contextModule__: { id: 'bootstrap.js' } });
   context.window = context;
   runInContext(`(${runtimeDefinition.toString()})()`, context);
   let exports;
-  context.System = { register (deps, factory) {
+  context.System = { get () { return { evaluationStart () {}, evaluationEnd () {} }; }, register (deps, factory) {
     exports = {};
     const module = factory((name, value) => {
       if (typeof name === 'object') Object.assign(exports, name);
@@ -28,7 +28,7 @@ function fixture (fetch) {
     }, context.__contextModule__);
     module.execute();
   } };
-  return () => { runInContext(code, context); return exports; };
+  return () => { runInContext(compiled, context); return exports; };
 }
 function checkTransform (module) {
   assert.equal(module.isAvailable(), true, 'Bundle re-execution cleared initialized SWC');
@@ -71,3 +71,28 @@ failed = false;
 await module.initWasm('http://fixture.test');
 checkTransform(module);
 console.log('SWC survives bundle re-execution and pending initialization; real load failures remain recoverable.');
+
+// Resource registrations must survive replay of the bundle and live translation.
+const helpersSource = await readFile(new URL('../../lively.resources/src/helpers.js', import.meta.url), 'utf8') +
+  '\nexport function scopedEval(System) { return eval("System.answer"); }';
+const helpersOptions = { filename: 'helpers.js', moduleId: 'lively.resources/src/helpers.js', resurrection: true };
+const frozenHelpers = new LivelySwcTransform().transform(helpersSource, helpersOptions);
+const frozenHelpersCode = transformSync(frozenHelpers.code, { module: { type: 'systemjs' }, jsc: { target: 'es2022' } }).code;
+function checkResourceReplay (compiled) {
+  const execute = fixture(async () => response(), compiled);
+  let helpers = execute();
+  assert.equal(helpers.scopedEval({ answer: 42 }), 42, 'Direct eval must retain the caller’s lexical loader');
+  class NativeResource { constructor (url) { this.url = url; } }
+  helpers.registerExtension({ name: 'fixture.native', matches: url => url.startsWith('file:'), resourceClass: NativeResource });
+  const registrations = helpers.extensions;
+  helpers = execute();
+  assert.equal(helpers.extensions, registrations, 'Re-execution cleared resource registrations');
+  assert.ok(helpers.resource('file:///fixture.js') instanceof NativeResource);
+}
+checkResourceReplay(frozenHelpersCode);
+const liveHelpers = module.swcTransform(helpersSource, {
+  captureObj: '_rec', moduleId: helpersOptions.moduleId, enableScopeCapture: true, enableExportSplit: true,
+  exclude: ['System', 'lively', '__contextModule__', 'undefined', 'String', 'Array', 'Object', 'RegExp', 'JSON']
+});
+checkResourceReplay(liveHelpers.code);
+console.log('Frozen and live SWC resource registrations survive module re-execution.');
