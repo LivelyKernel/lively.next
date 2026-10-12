@@ -181,7 +181,7 @@ export class RichTextControlModel extends ViewModel {
         underlineStyle.master.setState(text.textDecoration === 'underline' ? 'active' : null);
         if (quote) quote.master.setState(text.quote === 1 ? 'active' : null);
         if (inlineLink) inlineLink.master.setState(text.link ? 'active' : null);
-        if (paddingControls) paddingControls.startPadding(text.padding);
+        if (paddingControls) paddingControls.startPadding(this.targetMorph.padding);
       });
     });
   }

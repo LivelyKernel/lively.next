@@ -1,7 +1,7 @@
 /* global describe, it, afterEach */
 import { expect } from 'mocha-es6';
 import { Text, part } from 'lively.morphic';
-import { Color } from 'lively.graphics';
+import { Color, Rectangle } from 'lively.graphics';
 import { Range } from 'lively.morphic/text/range.js';
 import { RichTextControl } from '../../studio/controls/text.cp.js';
 
@@ -30,12 +30,13 @@ describe('text styling controls', function () {
   });
 
   it('applies decoration color to the selected text without changing the default', async () => {
-    text = new Text({ readOnly: false, textString: 'hello', textDecorationColor: Color.blue }).openInWorld();
+    text = new Text({ readOnly: false, textString: 'hello', textDecorationColor: Color.blue, padding: Rectangle.inset(7) }).openInWorld();
     text.selection = Range.create(0, 1, 0, 3);
     control = part(RichTextControl).openInWorld();
     control.viewModel.focusOn(text);
     await control.whenRendered();
     expect(control.viewModel.ui.selectionControls.visible).equals(false);
+    expect(control.viewModel.ui.paddingControls.viewModel.ui.paddingAll.number).equals(7);
     control.viewModel.ui.decorationColorInput.setColor(Color.red);
     expect(text.textDecorationColor).equals(Color.blue);
     expect(text.getStyleInRange(Range.create(0, 1, 0, 3)).textDecorationColor).equals(Color.red);
