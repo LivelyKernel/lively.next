@@ -2118,7 +2118,7 @@ export class RewriteVisitor extends BaseVisitor {
       }
 
       if (lastArg === undefined && n.callee.type === 'MemberExpression' &&
-          !['Identifier', 'ThisExpression'].includes(n.callee.object.type)) {
+          ['CallExpression', 'NewExpression'].includes(n.callee.object.type)) {
           // Evaluate a receiver such as values() before recording the pending next() call.
           const receiver = rewriter.storeComputationResult(callee.object, n.callee.object.start, n.callee.object.end, n.callee.object.astIndex, true);
           receiver.expressions[1] = rewriter.lastNodeExpression(astIndex);

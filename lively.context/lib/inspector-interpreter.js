@@ -473,6 +473,20 @@ export function applySavedInspectorMethod (continuation, {startFrame = null} = {
     }
     computed[newNode.astIndex] = frame.alreadyComputed[oldNode.astIndex];
   }
+  const remapKey = key => key.replace(/^(__forOf_|__delegate_|__yieldValue_|__finally_)(\d+)$/, (key, prefix, index) =>
+    indices.has(Number(index)) ? prefix + indices.get(Number(index)) : key);
+  for (const [key, value] of Object.entries(frame.alreadyComputed)) {
+    if (!/^\d+$/.test(key)) computed[remapKey(key)] = value;
+  }
+  if (frame.pendingAwait) {
+    frame.pendingAwait.astIndex = indices.get(frame.pendingAwait.astIndex);
+    for (const key of ['iteratorKey', 'delegateKey', 'valueKey']) {
+      if (frame.pendingAwait[key]) frame.pendingAwait[key] = remapKey(frame.pendingAwait[key]);
+    }
+  }
+  for (const pending of [frame.pendingIterator, frame.pendingDelegate]) {
+    if (pending) pending.key = remapKey(pending.key);
+  }
   frame.func = new AcornFunction(newAst, frame.func.lexicalScope, current);
   frame.alreadyComputed = computed;
   frame.setPC(pc);
