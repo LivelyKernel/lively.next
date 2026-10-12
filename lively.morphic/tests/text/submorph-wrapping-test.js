@@ -10,6 +10,7 @@ describe('scrolling ordinary text submorphs', () => {
       fixedWidth: true, fixedHeight: true, extent: pt(160, 100), clipMode: 'auto'
     }).openInWorld();
     try {
+      await text.whenFontLoaded();
       await text.whenRendered();
       text.env.forceUpdate();
       const bounds = text.textBounds();
