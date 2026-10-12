@@ -4,9 +4,34 @@ import { HTMLMorph } from '../html-morph.js';
 import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from '../rendering/dom-helper.js';
 
 describe('shared HTML morph CSS', () => {
+  it('does not install CSS or markers for unopened copies', async () => {
+    const morph = new HTMLMorph({ shareCss: true, cssDeclaration: '.content { color: red; }' }).openInWorld();
+    let copy;
+    try {
+      await morph.whenRendered();
+      copy = morph.copy();
+      const doc = morph.document;
+      expect([...doc.head.querySelectorAll('style')].some(node => node.textContent.includes(copy.id))).equals(false);
+      expect([...doc.head.childNodes].some(node => node.nodeType === 8 && node.data === 'css-for-' + copy.id)).equals(false);
+      copy.openInWorld();
+      expect([...doc.head.querySelectorAll('style')].some(node => node.textContent.includes(copy.id))).equals(true);
+    } finally { copy?.remove(); morph.remove(); }
+  });
+
+  it('keeps imports at the beginning of each shared source stylesheet', async () => {
+    const first = new HTMLMorph({ shareCss: true, cssDeclaration: '.content { color: red; }' }).openInWorld();
+    const second = new HTMLMorph({ shareCss: true, cssDeclaration: '@import url("data:text/css,.imported%20%7B%20color%3A%20blue%3B%20%7D"); .content { color: green; }' }).openInWorld();
+    try {
+      await second.whenRendered();
+      const node = [...second.document.head.querySelectorAll('style')].find(node => node.textContent.includes(second.id));
+      expect(node.textContent.trim().startsWith('@import')).equals(true);
+      expect(node.sheet.cssRules[0].type).equals(CSSRule.IMPORT_RULE);
+    } finally { first.remove(); second.remove(); }
+  });
+
   it('preserves external stylesheet ordering when sharing and toggling declarations', async () => {
     for (const linked of [false, true]) for (const shareCss of [false, true]) {
-      const outer = new HTMLMorph({ shareCss, html: '<span class="content">outer</span>', cssDeclaration: '.content { color: red; }' });
+      const outer = new HTMLMorph({ shareCss, html: '<span class="content">outer</span>', cssDeclaration: '.content { color: red; }' }).openInWorld();
       const source = `#${outer.id} .content { color: blue; }`;
       const external = linked
         ? await addOrChangeLinkedCSS('external-cascade-test', 'data:text/css,' + encodeURIComponent(source), outer.document)
@@ -115,7 +140,7 @@ describe('shared HTML morph CSS', () => {
   });
 
   it('removes membership from the previous document when moving CSS', () => {
-    const morph = new HTMLMorph({ shareCss: true, cssDeclaration: '.content { color: red; }' });
+    const morph = new HTMLMorph({ shareCss: true, cssDeclaration: '.content { color: red; }' }).openInWorld();
     const firstDoc = morph.document;
     const otherDoc = firstDoc.implementation.createHTMLDocument('other');
     try {
