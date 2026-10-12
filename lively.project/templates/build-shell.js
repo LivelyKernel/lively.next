@@ -7,5 +7,5 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 node ../../lively.project/package-install.mjs "$(pwd)" || exit 1
-node --no-warnings --experimental-import-meta-resolve ./tools/build.mjs $verbose
+node --max-old-space-size=4096 --no-warnings --experimental-import-meta-resolve ./tools/build.mjs $verbose
 `
