@@ -26,6 +26,22 @@ describe('lines', () => {
 });
 
 describe('document as text tree', () => {
+  it('keeps fractional heights consistent through large tree construction and rebalancing', () => {
+    const specs = count => Array.from({ length: count }, () => ({ text: 'line', width: 100, height: 14.1 }));
+    const doc = new Document(specs(50000), {
+      maxLeafSize: 50, minLeafSize: 25, maxNodeSize: 35, minNodeSize: 7
+    });
+    doc.consistencyCheck();
+    for (let i = 0; i < 8; i++) {
+      doc.removeLines(42, 342);
+      doc.consistencyCheck();
+      doc.insertLines(specs(301), 42);
+      doc.consistencyCheck();
+    }
+    expect(doc.rowCount).equals(50000);
+    expect(doc.getLine(42).height).equals(14.1);
+  });
+
   it('keeps large document heights consistent through repeated measurements', () => {
     const doc = new Document(Array.from({ length: 5000 }, () => ({ text: 'line', width: 100, height: 14.1 * 1.3 })), {
       maxLeafSize: 50, minLeafSize: 25, maxNodeSize: 35, minNodeSize: 7
