@@ -7,8 +7,8 @@ import { escodegen, parse } from "lively.ast";
 import { string, arr, obj } from "lively.lang";
 import { getCurrentASTRegistry, RecordingRewriter, setCurrentASTRegistry } from "lively.context";
 import { stackCaptureMode, asRewrittenClosure } from "../lib/stackReification.js";
-import shallow from 'chai-shallow-deep-equal';
-shallow(chai);
+import { installShallowDeepEqual } from './helpers.js';
+installShallowDeepEqual(chai);
 
 chai.use(function(chai, utils) {
   chai.ast = chai.ast || {};
