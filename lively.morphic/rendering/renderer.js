@@ -1178,6 +1178,8 @@ export default class Renderer {
     if (inert) {
       rendered.className = 'Morph';
       applyStylingToNode(morph, rendered);
+      rendered.style.width = morph.width + 'px';
+      rendered.style.height = morph.height + 'px';
     }
     rendered.style.position = 'sticky';
     rendered.style.transform = '';
@@ -2073,9 +2075,14 @@ export default class Renderer {
     this.ensurePlaceholder();
     this.placeholder.className = 'Text';
     const parent = this.getNodeForMorph(morph);
-    (parent?.isConnected && parent.getClientRects().length ? parent : this.placeholder).appendChild(textNode);
+    (parent?.isConnected ? parent : this.placeholder).appendChild(textNode);
     try {
-      const width = parseFloat(this.doc.defaultView.getComputedStyle(textNode).width) + morph.borderWidthLeft + morph.borderWidthRight;
+      let width = parseFloat(this.doc.defaultView.getComputedStyle(textNode).width);
+      if (!Number.isFinite(width) && textNode.parentNode !== this.placeholder) {
+        this.placeholder.appendChild(textNode);
+        width = parseFloat(this.doc.defaultView.getComputedStyle(textNode).width);
+      }
+      width += morph.borderWidthLeft + morph.borderWidthRight;
       if (!Number.isFinite(width)) return morph.width;
       this._intrinsicTextWidths?.set(morph, width);
       return width;

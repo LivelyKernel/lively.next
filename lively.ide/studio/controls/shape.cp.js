@@ -327,7 +327,6 @@ export class ShapeControlModel extends ViewModel {
         });
         target.withMetaDo({ reconcileChanges: true }, () => {
           target.fixedWidth = true;
-          target.lineWrapping = 'by-words';
         });
         this.ui.widthInput.disable();
         break;

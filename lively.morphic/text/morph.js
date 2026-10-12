@@ -1307,7 +1307,7 @@ export class Text extends Morph {
   }
 
   async onSubmorphChange (change, submorph) {
-    if (change.prop === 'extent') this.env.renderer?._intrinsicTextWidths?.delete(this);
+    if (change.prop !== 'position' && this.embeddedMorphMap.has(submorph)) this.env.renderer?._intrinsicTextWidths?.delete(this);
     if (change.meta && change.meta.styleSheetChange) return;
     super.onSubmorphChange(change, submorph);
     if (change.meta.animation) {

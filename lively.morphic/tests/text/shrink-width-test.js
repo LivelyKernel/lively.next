@@ -6,6 +6,100 @@ import { promise } from 'lively.lang';
 
 describe('text shrink width', () => {
   for (const renderViaCSS of [false, true]) {
+    it(`measures horizontally hugging inline containers at their rendered extent (CSS: ${renderViaCSS})`, async () => {
+      const embedded = new Morph({ layout: new TilingLayout({ hugContentsHorizontally: true, hugContentsVertically: true }),
+        submorphs: [new Morph({ extent: pt(100, 20) })] });
+      const text = new Text({ name: 'label', readOnly: true, textAndAttributes: ['before ', null, embedded, null, ' after', null], fontSize: 20, fixedHeight: false });
+      const container = new Morph({ extent: pt(1000, 100), submorphs: [text], layout: new TilingLayout({
+        renderViaCSS, resizePolicies: [['label', { width: 'shrink', height: 'fixed' }]]
+      }) }).openInWorld();
+      try {
+        await text.whenFontLoaded();
+        container.env.forceUpdate();
+        const line = text.renderingState.textLayer.querySelector('.line');
+        const range = document.createRange();
+        range.selectNodeContents(line);
+        expect(embedded.width).closeTo(100, 1);
+        expect(text.intrinsicWidth()).closeTo(range.getBoundingClientRect().width, 1);
+        expect(text.height).closeTo(parseFloat(getComputedStyle(line).lineHeight), 1, 'one unwrapped line');
+      } finally { container.remove(); }
+    });
+
+    it(`remeasures inline box size and visibility changes within a render pass (CSS: ${renderViaCSS})`, async () => {
+      const embedded = new Morph({ extent: pt(100, 20) });
+      const text = new Text({ name: 'label', readOnly: true, textAndAttributes: ['before ', null, embedded, null, ' after', null], fontSize: 20, fixedHeight: true });
+      const container = new Morph({ extent: pt(1000, 100), submorphs: [text], layout: new TilingLayout({
+        renderViaCSS, resizePolicies: [['label', { width: 'shrink', height: 'fixed' }]]
+      }) }).openInWorld();
+      let checked = false;
+      try {
+        await text.whenFontLoaded();
+        container.env.forceUpdate();
+        text.renderStyles = style => {
+          if (checked) return style;
+          checked = true;
+          const initialWidth = text.intrinsicWidth();
+          embedded.width = 160;
+          const resizedWidth = text.intrinsicWidth();
+          expect(resizedWidth).closeTo(initialWidth + 60, 1, 'embedded extent invalidates the measurement');
+          embedded.visible = false;
+          text.env.renderer.renderStylingChanges(embedded);
+          expect(getComputedStyle(text.env.renderer.getNodeForMorph(embedded)).display).equals('none');
+          expect(text.intrinsicWidth()).closeTo(resizedWidth - 160, 1, 'hidden inline boxes consume no width');
+          embedded.visible = true;
+          text.env.renderer.renderStylingChanges(embedded);
+          expect(text.intrinsicWidth()).closeTo(resizedWidth, 1, 'shown inline boxes regain their width');
+          return style;
+        };
+        text.makeDirty();
+        container.env.forceUpdate();
+        expect(checked).equals(true);
+      } finally {
+        delete text.renderStyles;
+        container.remove();
+      }
+    });
+
+    it(`measures visible labels without a preflight geometry read (CSS: ${renderViaCSS})`, async () => {
+      const text = new Text({ name: 'label', readOnly: true, textString: 'visible label', fontSize: 20, fixedHeight: true });
+      const container = new Morph({ extent: pt(500, 100), submorphs: [text], layout: new TilingLayout({
+        renderViaCSS, resizePolicies: [['label', { width: 'shrink', height: 'fixed' }]]
+      }) }).openInWorld();
+      let node, getClientRects;
+      try {
+        await text.whenFontLoaded();
+        container.env.forceUpdate();
+        node = container.env.renderer.getNodeForMorph(text);
+        getClientRects = node.getClientRects;
+        let reads = 0;
+        node.getClientRects = function () { reads++; return getClientRects.call(this); };
+        expect(text.intrinsicWidth()).closeTo(text.width, 2);
+        expect(reads).equals(0, 'the intrinsic measurement only reads geometry after appending');
+      } finally {
+        if (node) node.getClientRects = getClientRects;
+        container.remove();
+      }
+    });
+
+    it(`restores shrink width when a hidden ancestor becomes visible (CSS: ${renderViaCSS})`, async () => {
+      const text = new Text({ name: 'label', readOnly: true, textString: 'short label', fontSize: 20 });
+      const container = new Morph({ extent: pt(500, 100), submorphs: [text], layout: new TilingLayout({
+        renderViaCSS, resizePolicies: [['label', { width: 'shrink', height: 'fixed' }]]
+      }) });
+      const ancestor = new Morph({ submorphs: [container] }).openInWorld();
+      try {
+        await text.whenFontLoaded();
+        ancestor.env.forceUpdate();
+        ancestor.visible = false;
+        ancestor.env.forceUpdate();
+        expect(Number.isFinite(text.intrinsicWidth())).equals(true);
+        ancestor.visible = true;
+        ancestor.env.forceUpdate();
+        expect(text.width).closeTo(text.intrinsicWidth(), 2);
+        expect(text.width).below(200);
+      } finally { ancestor.remove(); }
+    });
+
     it(`shares an intrinsic measurement between Yoga and CSS within a render pass (CSS: ${renderViaCSS})`, async () => {
       const text = new Text({ name: 'label', readOnly: true, textString: 'measure once', fontSize: 20, fixedHeight: true });
       const container = new Morph({ extent: pt(500, 100), submorphs: [text], layout: new TilingLayout({

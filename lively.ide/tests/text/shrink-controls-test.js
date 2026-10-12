@@ -5,6 +5,25 @@ import { ShapeControl } from '../../studio/controls/shape.cp.js';
 import { pt } from 'lively.graphics';
 
 describe('text shrink inspector control', () => {
+  for (const wrapping of ['no-wrap', 'by-chars', 'only-by-words']) {
+    it(`preserves ${wrapping} when choosing Shrink and returning to Fixed`, async () => {
+      const text = new Text({ name: 'label', textString: 'A label', fixedWidth: true, lineWrapping: wrapping });
+      const container = new Morph({ extent: pt(300, 100), submorphs: [text], layout: new TilingLayout() }).openInWorld();
+      const control = part(ShapeControl).openInWorld();
+      try {
+        await control.whenRendered();
+        control.viewModel.focusOn(text);
+        const selector = control.get('width mode selector');
+        selector.selection = 'shrink';
+        container.env.forceUpdate();
+        expect(text.lineWrapping).equals(wrapping === 'no-wrap' ? 'by-words' : wrapping);
+        selector.selection = 'fixed';
+        container.env.forceUpdate();
+        expect(text.lineWrapping).equals(wrapping);
+      } finally { control.remove(); container.remove(); }
+    });
+  }
+
   it('leaves room after the Shrink caret and keeps shape fields aligned', async () => {
     const text = new Text({ name: 'label', textString: 'A label' });
     const container = new Morph({ extent: pt(300, 100), submorphs: [text], layout: new TilingLayout() }).openInWorld();

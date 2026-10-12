@@ -49,6 +49,8 @@ export function applyStylingToNode (morph, node) {
   stylepropsToNode(styleProps, node); // eslint-disable-line no-use-before-define
   if (morph.renderingState.inlineGridImportant && styleProps.display !== 'none') node.style.setProperty('display', 'inline-grid', 'important');
   if (morph.renderingState.inlineFlexImportant && styleProps.display !== 'none') node.style.setProperty('display', 'inline-flex', 'important');
+  // Hidden inline nodes must override the stylesheet's inline-block rule.
+  if (styleProps.display === 'none' && morph.owner?.isText && morph.owner.embeddedMorphMap.has(morph)) node.style.setProperty('display', 'none', 'important');
 
   return node;
 }
