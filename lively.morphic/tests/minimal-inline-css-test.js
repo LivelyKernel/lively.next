@@ -1,10 +1,51 @@
 /* global describe, it */
 import { expect } from 'mocha-es6';
-import { Morph, Text, HTMLMorph } from '../index.js';
+import { Morph, Text, HTMLMorph, Path, Polygon } from '../index.js';
 import { pt, Color } from 'lively.graphics';
 import { promise } from 'lively.lang';
 
 describe('minimal inline morph CSS', () => {
+  for (const type of [Path, Polygon]) {
+    it(`keeps ${type.name} backgrounds transparent`, async () => {
+      const morph = new type({ vertices: [pt(0, 0), pt(30, 0), pt(30, 30)], fill: Color.red }).openInWorld();
+      try {
+        await morph.whenRendered();
+        expect(getComputedStyle(morph.env.renderer.getNodeForMorph(morph)).backgroundColor).equals('rgba(0, 0, 0, 0)');
+      } finally { morph.remove(); }
+    });
+  }
+
+  it('preserves defaults in previews without marking them as live morphs', async () => {
+    const morph = new Morph({ extent: pt(200, 200), submorphs: [new Morph({
+      position: pt(10, 10), extent: pt(50, 50), borderWidth: 3
+    })] }).openInWorld();
+    let preview;
+    try {
+      await morph.whenRendered();
+      preview = morph.env.renderer.renderPreview(morph, { asNode: true, width: 200, height: 200, center: false });
+      document.body.appendChild(preview);
+      const child = preview.querySelector('.morph-preview');
+      const style = getComputedStyle(child);
+      expect(preview.querySelector('.Morph')).equals(null);
+      expect(style.position).equals('absolute');
+      expect(style.left).equals('10px');
+      expect(style.top).equals('10px');
+      expect(style.backgroundColor).equals('rgb(255, 255, 255)');
+      expect(style.borderLeftStyle).equals('solid');
+      expect(style.borderLeftWidth).equals('3px');
+      expect(style.transformOrigin).equals('0px 0px');
+    } finally { preview?.remove(); morph.remove(); }
+  });
+
+  it('keeps morph positioning when scoped HTML CSS uses relative divs', async () => {
+    const child = new Morph({ position: pt(10, 20) });
+    const morph = new HTMLMorph({ cssDeclaration: 'div { position: relative; }', submorphs: [child] }).openInWorld();
+    try {
+      await morph.whenRendered();
+      expect(getComputedStyle(morph.env.renderer.getNodeForMorph(child)).position).equals('absolute');
+    } finally { morph.remove(); }
+  });
+
   it('keeps fixed HTML content relative to its morph at the default transform', async () => {
     const morph = new HTMLMorph({ html: '<div style="position:fixed;left:10px;top:20px;width:30px;height:40px"></div>' }).openInWorld();
     try {

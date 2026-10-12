@@ -22,7 +22,8 @@ textarea.lively-text-input.debug {
 }
 
 /*-=- generic morphic -=-*/
-.Morph {
+.Morph,
+.morph-preview {
   outline: none;
   position: absolute;
   background: white;
@@ -45,6 +46,11 @@ textarea.lively-text-input.debug {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+}
+
+.Morph.Path,
+.morph-preview.Path {
+  background: none;
 }
 
 .Morph img {
