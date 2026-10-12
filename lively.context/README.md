@@ -43,17 +43,20 @@ openLiveCounter();
    computation and opens Lively Debugger. Move a window while it is suspended.
 2. Evaluate `this.count`, `amount`, and `typeof amount` in the debugger workspace.
    Expect `0`, `'1'`, and `'string'`. The string step is an intentional bug.
-3. Evaluate `amount = Number(amount)`, **Step Over**, then **Proceed**. Expect `1`.
+3. Evaluate `amount = Number(amount)`, then **Proceed**. Expect `1`.
    The repaired local belongs to the existing continuation's recorded scope.
+   Also try **Step Over**: in this conditional-debugger example it currently
+   completes the function rather than stopping at the next statement.
 4. Click **Edit source**. Change `var amount = this.step;` to
    `var amount = Number(this.step);` in the Object Editor and save. Wait until the
    save finishes, then click **Increment** again. The existing object uses the new
    method; proceed to reach `2`.
-5. While suspended, change `this.step` to `2`. **Restart Frame** reuses the captured
-   AST and reinitializes its locals. Proceed and inspect the result. A saved method
-   replacement affects the next invocation; restarting an existing frame currently
-   keeps that frame's captured AST. This is a limitation to reproduce, not a claim
-   that arbitrary edited source can already replace an active frame.
+5. While suspended, replace the saved increment with `Number(this.step) * 2`.
+   **Restart Frame** still displays the captured AST. In the packaged tutorial,
+   restart then loses the program counter and **Proceed** reports
+   `Cannot resume because frame has no pc!`. Close that debugger and invoke the
+   counter again: the next invocation uses the saved method. Active-frame source
+   replacement and reliable restart remain broken.
 6. Add `decrement() { this.count -= 1; this.updateCount(); }` in the Object Editor.
    Evaluate `this.decrement()` in the suspended debugger workspace. Continue
    changing methods and state on the same counter, without recreating it.
@@ -62,6 +65,13 @@ openLiveCounter();
 
 Record the action, selected statement, expected count, actual count, and status error.
 The debugger source pane displays captured source; the Object Editor saves methods.
+
+The packaged NW.js 0.111.1 tutorial verified local repair, receiver identity,
+numeric conversion saved onto the same object, and adding/calling `decrement()`
+while suspended. Saved methods affect subsequent invocations. The separate retained
+environment experiment recovered exactly `step` and `marker`, preserved the marker's
+identity, kept a renderer timer running during suspension, and resumed to `3` after
+repairing `amount`. These results use the original continuation machinery.
 
 ## NW.js retained-environment experiment
 
