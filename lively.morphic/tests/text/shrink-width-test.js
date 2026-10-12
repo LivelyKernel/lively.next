@@ -6,6 +6,104 @@ import { promise } from 'lively.lang';
 
 describe('text shrink width', () => {
   for (const renderViaCSS of [false, true]) {
+    it(`shares an intrinsic measurement between Yoga and CSS within a render pass (CSS: ${renderViaCSS})`, async () => {
+      const text = new Text({ name: 'label', readOnly: true, textString: 'measure once', fontSize: 20, fixedHeight: true });
+      const container = new Morph({ extent: pt(500, 100), submorphs: [text], layout: new TilingLayout({
+        renderViaCSS, resizePolicies: [['label', { width: 'shrink', height: 'fixed' }]]
+      }) }).openInWorld();
+      const renderer = container.env.renderer;
+      const nodeForLine = renderer.nodeForLine;
+      let measurements = 0;
+      let checked = 0;
+      try {
+        await text.whenFontLoaded();
+        container.env.forceUpdate();
+        renderer.nodeForLine = function (line, morph, real, inert) {
+          if (morph === text && inert) measurements++;
+          return nodeForLine.call(this, line, morph, real, inert);
+        };
+        text.renderStyles = style => {
+          container.layout.updateSubmorphNode(text);
+          const afterYoga = measurements;
+          const css = {};
+          container.layout.addSubmorphCSS(text, css);
+          expect(measurements).equals(afterYoga, 'CSS reuses the Yoga measurement');
+          expect(css.width).equals(`${text.intrinsicWidth()}px`);
+          expect(measurements).equals(afterYoga, 'further reads reuse the measurement');
+          checked++;
+          return style;
+        };
+        text.makeDirty();
+        container.env.forceUpdate();
+        expect(checked).greaterThan(0);
+        const afterRender = measurements;
+        text.intrinsicWidth();
+        expect(measurements).equals(afterRender + 1, 'measurements expire after rendering');
+      } finally {
+        delete text.renderStyles;
+        renderer.nodeForLine = nodeForLine;
+        container.remove();
+      }
+    });
+
+    it(`remeasures content and font changes within a render pass (CSS: ${renderViaCSS})`, async () => {
+      const text = new Text({ name: 'label', readOnly: true, textString: 'W', fontSize: 20, fixedHeight: true });
+      const container = new Morph({ extent: pt(500, 100), submorphs: [text], layout: new TilingLayout({
+        renderViaCSS, resizePolicies: [['label', { width: 'shrink', height: 'fixed' }]]
+      }) }).openInWorld();
+      let checked = false;
+      try {
+        await text.whenFontLoaded();
+        container.env.forceUpdate();
+        text.renderStyles = style => {
+          if (checked) return style;
+          checked = true;
+          const initialWidth = text.intrinsicWidth();
+          text.textString = 'WWWW';
+          const contentWidth = text.intrinsicWidth();
+          expect(contentWidth).greaterThan(initialWidth * 3);
+          text.fontSize = 40;
+          expect(text.intrinsicWidth()).greaterThan(contentWidth * 1.8);
+          return style;
+        };
+        text.makeDirty();
+        container.env.forceUpdate();
+        expect(checked).equals(true);
+        delete text.renderStyles;
+        text.makeDirty();
+        container.layout.scheduleApply();
+        container.env.forceUpdate();
+        expect(text.width).closeTo(text.intrinsicWidth(), 2);
+      } finally {
+        delete text.renderStyles;
+        container.remove();
+      }
+    });
+
+    it(`remeasures changed external CSS between render passes (CSS: ${renderViaCSS})`, async () => {
+      const style = document.createElement('style');
+      style.textContent = '.newtext-text-layer .shrink-changing-font { font-size: 20px; }';
+      document.head.appendChild(style);
+      const text = new Text({ name: 'label', readOnly: true, textAndAttributes: ['WWW', { textStyleClasses: ['shrink-changing-font'] }], fixedHeight: true });
+      const container = new Morph({ extent: pt(500, 100), submorphs: [text], layout: new TilingLayout({
+        renderViaCSS, resizePolicies: [['label', { width: 'shrink', height: 'fixed' }]]
+      }) }).openInWorld();
+      try {
+        await text.whenFontLoaded();
+        container.env.forceUpdate();
+        const initialWidth = text.intrinsicWidth();
+        style.textContent = '.newtext-text-layer .shrink-changing-font { font-size: 40px; }';
+        text.makeDirty();
+        container.layout.scheduleApply();
+        container.env.forceUpdate();
+        expect(text.intrinsicWidth()).greaterThan(initialWidth * 1.8);
+        expect(text.width).closeTo(text.intrinsicWidth(), 2);
+      } finally {
+        style.remove();
+        container.remove();
+      }
+    });
+
     it(`keeps fixed child heights in an overflowing column (CSS: ${renderViaCSS})`, async () => {
       const text = new Text({ name: 'label', readOnly: true, textString: 'short', extent: pt(80, 40), fixedHeight: true });
       const sibling = new Morph({ extent: pt(80, 80) });

@@ -131,6 +131,8 @@ export default class Renderer {
    */
   renderStep () {
     this._layoutCSSOrder = new WeakMap();
+    // Share measurements only within a synchronous layout/render phase.
+    this._intrinsicTextWidths = new WeakMap();
     try {
       this.emptyRenderQueues();
       this.worldMorph.applyLayoutIfNeeded(); // cascades through all submorphs and applies the javascript layouts
@@ -212,6 +214,7 @@ export default class Renderer {
         }
       }
       this._layoutCSSOrder = new WeakMap();
+      this._intrinsicTextWidths = new WeakMap();
       for (let morph of this.morphsToRevisit) {
         this.renderStylingChanges(morph);
       }
@@ -235,6 +238,7 @@ export default class Renderer {
       }, morph => morph.submorphs);
     } finally {
       this._layoutCSSOrder = null;
+      this._intrinsicTextWidths = null;
     }
   }
 
@@ -633,6 +637,8 @@ export default class Renderer {
     const styleClasses = morph.styleClasses.join(' ');
     morph.renderingState.styleClasses = [...morph.styleClasses];
     node.setAttribute('class', styleClasses);
+    // Ancestor classes can change the styles of measured text spans.
+    if (this._intrinsicTextWidths) this._intrinsicTextWidths = new WeakMap();
   }
 
   // -=-=-=-=-=-=-=-=-
@@ -2052,6 +2058,8 @@ export default class Renderer {
   }
 
   measureIntrinsicTextWidth (morph) {
+    const cachedWidth = this._intrinsicTextWidths?.get(morph);
+    if (cachedWidth !== undefined) return cachedWidth;
     const textNode = this.textLayerNodeFor(morph);
     textNode.className = 'newtext-text-layer actual';
     Object.assign(textNode.style, {
@@ -2065,11 +2073,12 @@ export default class Renderer {
     this.ensurePlaceholder();
     this.placeholder.className = 'Text';
     const parent = this.getNodeForMorph(morph);
-    // shortcut: measure on demand, cache by rendered styles if profiling warrants it.
     (parent?.isConnected && parent.getClientRects().length ? parent : this.placeholder).appendChild(textNode);
     try {
       const width = parseFloat(this.doc.defaultView.getComputedStyle(textNode).width) + morph.borderWidthLeft + morph.borderWidthRight;
-      return Number.isFinite(width) ? width : morph.width;
+      if (!Number.isFinite(width)) return morph.width;
+      this._intrinsicTextWidths?.set(morph, width);
+      return width;
     } finally { textNode.remove(); }
   }
 

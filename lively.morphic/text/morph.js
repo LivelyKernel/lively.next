@@ -1199,6 +1199,10 @@ export class Text extends Morph {
 
   onChange (change) {
     const { prop, selector, meta } = change;
+    // Layout changes the text's extent and position, not its unwrapped width.
+    if (!['extent', 'position', 'scroll'].includes(prop)) {
+      this.env.renderer?._intrinsicTextWidths?.delete(this);
+    }
     const wraps = this.lineWrapping !== 'no-wrap';
     let textChange = false;
     let viewChange = false;
@@ -1303,6 +1307,7 @@ export class Text extends Morph {
   }
 
   async onSubmorphChange (change, submorph) {
+    if (change.prop === 'extent') this.env.renderer?._intrinsicTextWidths?.delete(this);
     if (change.meta && change.meta.styleSheetChange) return;
     super.onSubmorphChange(change, submorph);
     if (change.meta.animation) {
