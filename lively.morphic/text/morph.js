@@ -541,6 +541,7 @@ export class Text extends Morph {
         set (val) {
           const maxScroll = this.scrollExtent.subXY(this.width, this.height);
           this.setProperty('scroll', val.minPt(maxScroll).maxPt(pt(0, 0)));
+          this.makeDirty();
         }
       },
 
@@ -2267,6 +2268,7 @@ export class Text extends Morph {
     const textAndAttributes = this.document.textAndAttributes;
     this.textString = '';
     this.document = null;
+    delete this.renderingState.needsScrollLayerAdded;
     this.renderingState.needsScrollLayerRemoved = true;
     this.requestTextLayoutMeasuring();
     this.textLayout = null;
@@ -2297,6 +2299,7 @@ export class Text extends Morph {
     this.textLayout = new Layout();
     this.textLayout.estimateLineExtents(this);
 
+    delete this.renderingState.needsScrollLayerRemoved;
     this.renderingState.needsScrollLayerAdded = true;
     this.renderingState.needsLinesToBeCleared = true;
     this._isUpgrading = false;
@@ -2997,6 +3000,10 @@ export class Text extends Morph {
       }
       if (!obj.equals(this.renderingState.renderedTextAndAttributes, this.textAndAttributes)) {
         renderer.renderTextAndAttributes(node, this);
+      }
+      if (!obj.equals(this.renderingState.scroll, this.scroll)) {
+        renderer.updateNodeScrollFromMorph(this);
+        this.renderingState.scroll = this.scroll;
       }
     }
   }
