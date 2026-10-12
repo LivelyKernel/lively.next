@@ -7,10 +7,15 @@
 (function () {
   'use strict';
 
+  // A script in node-main also runs in every Node-enabled worker and resolves
+  // against process.cwd(). Keep only Node flags there; start the app here once.
+  const desktopRequire = require('module').createRequire(nw.App.startPath + '/desktop/background-menu.js');
+  desktopRequire('./start-server.cjs').setBackgroundWindow(window);
+
   const fs = require('fs');
   const os = require('os');
   const path = require('path');
-  const { createUpdateService } = require('./updates.cjs');
+  const { createUpdateService } = desktopRequire('./updates.cjs');
 
   function uniquePaths (paths) {
     return Array.from(new Set(paths.filter(Boolean).map(p => path.resolve(p))));

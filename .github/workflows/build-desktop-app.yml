@@ -285,6 +285,11 @@ jobs:
         if: ${{ matrix.target_platform == 'linux' }}
         timeout-minutes: 15
         run: |
+          nw_version="$(node -p "require('./dist/${{ matrix.bundle }}/desktop/build-info.json').nwVersion")"
+          nw_executable="$(find dist/.cache/nw -path "*/nwjs-sdk-v${nw_version}-linux-x64/nw" -type f -print -quit)"
+          test -x "$nw_executable"
+          xvfb-run -a --server-args="-screen 0 1440x900x24" \
+            node ./lively.app/scripts/test-native-backend.mjs "$nw_executable"
           xvfb-run -a --server-args="-screen 0 1440x900x24" \
             node ./lively.app/scripts/smoke-desktop-bundle.mjs \
               --bundleDir="dist/${{ matrix.bundle }}" --platform=linux --mode=native \

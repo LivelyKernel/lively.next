@@ -1,5 +1,5 @@
-// NW.js node-main script
-// Runs in Node context BEFORE any window opens.
+// NW.js desktop bootstrap, required once by the persistent background page.
+// Runs in Node context before the main window loads.
 // Loads packaged pages directly in native mode, or boots the HTTP deployment.
 //
 // Works in two modes:
@@ -8,8 +8,11 @@
 //     <bundle>/app/ next to the NW.js binary. The server runs from a
 //     per-user runtime root so caches/projects/uploads stay outside the app.
 //
-// LIVELY_DESKTOP_MODE=native uses NW.js's Node context. HTTP is the default
+// LIVELY_DESKTOP_MODE=native uses NW.js's Node-enabled worker. HTTP is the default
 // during rollout and runs under the packaged Node executable.
+
+// Trusted pages use the existing process.mainModule.exports bridge.
+process.mainModule = module;
 
 const path = require('path');
 const fs = require('fs');
@@ -19,6 +22,9 @@ const { createHash } = require('crypto');
 const { spawn, execSync } = require('child_process');
 const { runVelopackStartup } = require('./updates.cjs');
 const { desktopCacheDir, manifestName, preparePackagedSources } = require('./package-payload.cjs');
+
+// bg-script supplies its persistent window after requiring this module.
+const backgroundWindow = new Promise(resolve => { module.exports.setBackgroundWindow = resolve; });
 
 // ---------------------------------------------------------------------------
 // 0. Detect mode: dev (monorepo) vs bundled (standalone distribution)
@@ -646,19 +652,11 @@ function emitError (msg) {
     throw new Error('Unknown desktop mode: ' + process.env.LIVELY_DESKTOP_MODE);
   }
   if (process.env.LIVELY_DESKTOP_MODE === 'native') {
-    if (process.env.LIVELY_APP_SMOKE === '1') {
-      const listen = net.Server.prototype.listen;
-      net.Server.prototype.listen = function (endpoint, ...args) {
-        if (typeof endpoint !== 'string' || !path.isAbsolute(endpoint) && !endpoint.startsWith('\\\\.\\pipe\\')) {
-          throw new Error('Native desktop opened a TCP/HTTP listener');
-        }
-        return listen.call(this, endpoint, ...args);
-      };
-    }
     Object.assign(process.env, childEnv);
     process.chdir(path.join(rootDir, 'lively.server'));
     const { pathToFileURL } = require('node:url');
-    const backend = require('./native-backend.cjs')(rootDir, {
+    const backend = require('./native-backend-client.cjs')(rootDir, {
+      createWorker: async () => new (await backgroundWindow).Worker('desktop/native-backend-worker.js'),
       log, onError: err => emitError('Native backend initialization failed: ' + err.stack)
     });
     const baseURL = pathToFileURL(rootDir + path.sep).href;

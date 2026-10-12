@@ -1,11 +1,12 @@
 # Embedded NW.js backend verification
 
-The backend can run in NW.js's Node context with the merged Bun dependency layout. A separate Node backend process is unnecessary. Enabling Node-context ESM and passing the resolver flag through the app manifest resolves the bootstrap hurdle:
+The backend runs in a Node-enabled NW.js browser worker with the merged Bun dependency layout. It stays in the NW.js renderer process and has its own thread, Node context and backend loader. The app manifest enables Node-context ESM, Node workers and parent-aware resolution:
 
 ```json
 {
-  "node-main": "--experimental-import-meta-resolve desktop/start-server.cjs",
-  "chromium-args": "--enable-features=NWESM --disable-raf-throttling --remote-debugging-port=9222"
+  "node-main": "--experimental-import-meta-resolve",
+  "bg-script": "desktop/background-menu.js",
+  "chromium-args": "--enable-features=NWESM --enable-node-worker --disable-raf-throttling --remote-debugging-port=9222"
 }
 ```
 
@@ -32,6 +33,18 @@ Use an NW.js executable without an adjacent application manifest, so it loads th
 
 The probe exposed three Lively compatibility issues, addressed in the implementation: parser dependencies suppressed by legacy Node `@empty` mappings, runtime decisions cached across different loaders, and filesystem URLs treated as undecoded paths. ObjectDB creation also now awaits its metadata write, and database closure returns its completion promise.
 
+### Worker isolation
+
+Verified on Linux on 2026-10-06 with both NW.js 0.111.1 and 0.117.0. Node's `worker_threads` can run static ESM but rejects dynamic `import()` with `Not supported` in both tested versions. NW.js's Node-enabled browser worker runs the actual Bun backend loader and LevelDB instead. Its Node global needs the worker's web primitives plus Node's URL and text encoder/decoder constructors before loading Node builtins.
+
+The persistent background page creates the worker, so dashboard/world navigation and reloads retain the backend and database handles. Startup is required once by `background-menu.js`: NW.js otherwise reruns a `node-main` script in each worker and resolves it relative to the process's current directory. Keeping only Node flags in `node-main` avoids duplicate startup and permits the backend's existing working directory.
+
+NW.js does not reliably wake an idle browser worker for Node I/O. A browser-task timer runs while requests or active Node resources need libuv, then stops when neither remains. In an isolated probe, the first asynchronous file read never completed within 60 seconds without browser tasks; with a 10 ms browser timer, twenty sequential reads completed in about 0.2 seconds. Active backend requests use immediate browser tasks; background Node handles use a 10 ms delay. This workaround can be removed when upstream provides reliable Node wake delivery. Listening command-helper sockets count as active Node resources.
+
+The bridge forwards only the existing backend operations, virtual file reads and shell events/replies. Ordinary file operations retain the existing asynchronous filesystem resource. Closing rejects new backend requests, drains in-flight work, closes databases and shell services, and terminates the worker after its close acknowledgement. Unexpected worker errors reject pending requests and disable further calls; writes are not automatically retried.
+
+The runtime check confirms matching parent/worker process IDs and an absent backend loader on the UI thread. During a 1.5-second backend CPU loop, the UI timer ran 74 times with longest gaps of 23 ms on 0.111.1 and 26 ms on 0.117.0, including page navigation. It also verifies binary replies, worker error propagation, pending-write persistence across shutdown/relaunch, shell streaming/stdin/cancellation/askpass and the backend TCP-listener guard. An actual untrusted HTTP page and its blob worker receive neither `require` nor `process` with Node workers enabled. These checks run in Linux desktop CI before the full packaged workflow.
+
 ## Desktop integration
 
 `LIVELY_DESKTOP_MODE=native` selects the embedded backend. HTTP remains the default, and `LIVELY_DESKTOP_MODE=http` explicitly selects rollback. Both modes use the same writable runtime root, ObjectDB directories and snapshots. Native initialization errors reject requests and appear in the interface and boot log; they never select memory storage or start an HTTP fallback automatically.
@@ -50,7 +63,7 @@ The saved HTTP origin in `local-endpoint.json`, plus the canonical desktop alias
 | --- | --- |
 | Dashboard/world/project HTTP routes | Packaged entry pages plus route query parameters; browser history and desktop navigation use the same helper. |
 | ObjectDB `fetch` calls | `lively.resources` read/post operations; the native storage resource calls the existing `ObjectDBInterface`. |
-| WebDAV source reads, writes and binary files | Existing backend filesystem resource, registered before bootstrap and retained when editing reloads default extensions. |
+| WebDAV source reads, writes and binary files | Existing asynchronous filesystem resource, registered before bootstrap and retained when editing reloads default extensions. |
 | Registry, import maps, source hashes, compressed sources | Virtual file resources reuse existing registry, import-map and hash generators and the packaged library snapshot. |
 | SystemJS XHR for frozen scripts | Browser script loading for frozen chunks; a scoped filesystem loader for the CommonJS class runtime. |
 | SWC WebAssembly `fetch` | Binary filesystem resource for local native assets; existing fetch/streaming path for browser deployments. |
@@ -99,7 +112,7 @@ Use `--startupOnly=true` to measure launch to visible dashboard, backend readine
 
 The default-mode gate is at least 25% lower median dashboard time, no more than 10% regression in usable-world time, acceptable responsiveness during backend initialization, and matching persistence/workflow checks on Linux, macOS and Windows.
 
-Linux x64 results on 2026-10-05, in seconds: median (minimum–maximum), three samples per row. HTTP and native measurements use the same SDK package built at `440f281d3` (based on `318685694`), before the subsequent saved-image compatibility fix, with the CI freezer configuration, NW.js 0.111.1, Bun 1.4.2 and identical seeded project contents. HTTP uses packaged Node 24.20.0; native uses NW.js's embedded Node 25.9.0. The separately packaged Bun-merge reference `d62a66be8` was measured earlier and is retained for context; acceptance comparisons use the current HTTP/native pair. Runs are serialized with mode order alternated. Fresh rows use empty profiles/data/cache directories; relaunch rows reuse those directories. The OS file cache is warm. These are Xvfb measurements on a shared development host with concurrent work, not release hardware.
+Historical Linux x64 results on 2026-10-05, before worker isolation, in seconds: median (minimum–maximum), three samples per row. HTTP and native measurements use the same SDK package built at `440f281d3` (based on `318685694`), before the subsequent saved-image compatibility fix, with the CI freezer configuration, NW.js 0.111.1, Bun 1.4.2 and identical seeded project contents. HTTP uses packaged Node 24.20.0; native uses NW.js's embedded Node 25.9.0. The separately packaged Bun-merge reference `d62a66be8` was measured earlier and is retained for context; acceptance comparisons use the current HTTP/native pair. Runs are serialized with mode order alternated. Fresh rows use empty profiles/data/cache directories; relaunch rows reuse those directories. The OS file cache is warm. These are Xvfb measurements on a shared development host with concurrent work, not release hardware.
 
 | Package/mode | Profile/cache | Visible dashboard | Backend ready | Usable world | Longest dashboard frame |
 | --- | --- | --- | --- | --- | --- |
@@ -112,7 +125,20 @@ Linux x64 results on 2026-10-05, in seconds: median (minimum–maximum), three s
 
 Against HTTP in the same package, median dashboard visibility improves by 78.2% fresh and 40.8% on relaunch; usable-world time improves by 16.6% and 14.0%. Backend initialization itself remains substantial. On relaunch, median boot-log times from Node-main entry are 0.39 seconds for runtime-root preparation, 2.64 seconds for registry readiness and 6.10 seconds for the complete module runtime. Initial package/module loading and later storage initialization remain the dominant work. Registry-only checks open no databases.
 
-The timing thresholds pass for visibility and world readiness in this sample. The responsiveness gate remains open: two-second animation-frame gaps mean an early visible dashboard cannot be described as continuously interactive throughout initialization. Further isolation or reduction of synchronous module work needs validation before enabling native mode by default.
+The timing thresholds pass for visibility and world readiness in this historical sample. Its two-second animation-frame gaps motivated moving the backend into a worker.
+
+### Worker startup comparison
+
+Linux x64 measurements on 2026-10-06 compare the inline package at `9347874bf` with the worker implementation based on that same commit, using the same prebuilt frontend, NW.js 0.111.1 SDK and Bun 1.4.2. The worker package was stamped `9347874bf-worker`. Three fresh launches and three relaunches per implementation were measured serially, with order alternated and the same fixture contents. The OS file cache was warm; each fresh launch used new profiles, data and runtime caches. Xvfb and the shared development host impose the same limits as above.
+
+| Backend | Profile/cache | Visible dashboard | Backend ready | Usable world | Longest dashboard frame |
+| --- | --- | --- | --- | --- | --- |
+| Inline backend | Fresh | 3.62 (3.50–3.94) | 17.06 (16.72–17.36) | 24.88 (24.12–25.22) | 2.22 (2.20–2.27) |
+| Inline backend | Relaunch | 3.98 (3.92–4.03) | 6.08 (6.00–6.15) | 13.38 (13.34–13.74) | 2.25 (2.22–2.25) |
+| Worker backend | Fresh | 3.79 (3.21–4.31) | 15.46 (14.69–15.80) | 22.66 (21.77–23.14) | 1.30 (1.28–1.33) |
+| Worker backend | Relaunch | 2.90 (2.90–3.33) | 5.76 (5.72–6.14) | 13.10 (13.09–13.21) | 1.28 (1.28–1.30) |
+
+Median longest dashboard frames fall by 41.4% fresh and 43.0% on relaunch. Usable-world time improves by 8.9% and 2.1%; backend readiness improves by 9.4% and 5.2%. Fresh dashboard visibility varies within overlapping ranges; relaunch visibility improves by 27.0%. The isolated CPU-loop check demonstrates that backend execution no longer blocks the UI event loop. Actual startup still has approximately 1.3-second dashboard gaps, so the responsiveness gate remains open; this comparison does not attribute the remaining gaps to a specific function.
 
 HTTP remains the default until the remaining platform and responsiveness gates pass. macOS and Windows packages have not been executed in this Linux environment. Browser storage moves from the HTTP origin to file pages in native mode: existing browser-local preferences and login selections are not migrated, while worlds and project files remain in the shared persistent backend. Validate that identity transition before changing the default.
 
@@ -120,5 +146,6 @@ HTTP remains the default until the remaining platform and responsiveness gates p
 
 - [NW.js 0.98.2: Node-context ESM feature flags](https://nwjs.io/blog/v0.98.2/)
 - [NW.js manifest: Node command-line arguments in `node-main`](https://docs.nwjs.io/References/Manifest%20Format/#node-main)
+- [NW.js command-line options: Node integration in Web Workers](https://docs.nwjs.io/References/Command%20Line%20Options/#enable-node-worker)
 - [NW.js 0.117.0 release](https://nwjs.io/blog/v0.117.0/)
 - [Node: the experimental parent argument to `import.meta.resolve`](https://nodejs.org/api/esm.html#importmetaresolvespecifier)

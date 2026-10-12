@@ -8,7 +8,7 @@
     "main": "index.js"
   },
   "bg-script": "desktop/background-menu.js",
-  "node-main": "--experimental-import-meta-resolve desktop/start-server.cjs",
+  "node-main": "--experimental-import-meta-resolve",
   "inject_js_start": "desktop/inject-start.js",
   "inject_js_end": "desktop/inject.js",
   "single-instance": true,
@@ -23,7 +23,7 @@
     "frame": true,
     "resizable": true
   },
-  "chromium-args": "--enable-features=NWESM --disable-raf-throttling --remote-debugging-port=9222",
+  "chromium-args": "--enable-features=NWESM --enable-node-worker --disable-raf-throttling --remote-debugging-port=9222",
   "exports": {
     ".": "./index.js",
     "./resources.js": "./resources.js"
