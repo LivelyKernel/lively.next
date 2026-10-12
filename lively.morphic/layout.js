@@ -642,13 +642,14 @@ export class TilingLayout extends Layout {
 
   /**
    * If set to true, the container auto adjusts its height to fit the content.
-   * Warning: This property is inactive when wrapping is enabled AND the axis are columns. It also is inactive when none of the layoutable submorphs are set for their height to be fixed. The reason is that then there is no way for the layout to determine what height to hug to.
+   * Inactive for wrapping columns, any filling child on the main axis, or only filling children on the cross axis.
    * @type {Boolean}
    */
   get hugContentsVertically () {
     if (this.wrapSubmorphs && this.axis === 'column') return false;
     const visible = this.layoutableSubmorphs.filter(m => m.visible);
-    if (visible.length && visible.every(m => this._resizePolicies.get(m)?.height === 'fill')) return false;
+    const fillsHeight = m => this._resizePolicies.get(m)?.height === 'fill';
+    if (this.axis === 'column' ? visible.some(fillsHeight) : visible.length && visible.every(fillsHeight)) return false;
     return this._hugContentsVertically;
   }
 
@@ -668,13 +669,14 @@ export class TilingLayout extends Layout {
 
   /**
    * If set to true, the container auto adjusts its width to fit the content.
-   * Warning: This property is inactive when wrapping is enabled AND the axis are rows. It also is inactive when none of the layoutable submorphs are set for their width to be fixed. The reason is that then there is no way for the layout to determine what width to hug to.
+   * Inactive for wrapping rows, any filling child on the main axis, or only filling children on the cross axis.
    * @type {Boolean}
    */
   get hugContentsHorizontally () {
     if (this.wrapSubmorphs && this.axis === 'row') return false;
     const visible = this.layoutableSubmorphs.filter(m => m.visible);
-    if (visible.length && visible.every(m => this._resizePolicies.get(m)?.width === 'fill')) return false;
+    const fillsWidth = m => this._resizePolicies.get(m)?.width === 'fill';
+    if (this.axis === 'row' ? visible.some(fillsWidth) : visible.length && visible.every(fillsWidth)) return false;
     return this._hugContentsHorizontally;
   }
 

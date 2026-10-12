@@ -6,6 +6,28 @@ import { pt } from 'lively.graphics';
 describe('hugging containers with filling children', () => {
   for (const axis of ['row', 'column']) {
     for (const renderViaCSS of [false, true]) {
+      it(`keeps the ${axis} main-axis size when a child fills it (CSS: ${renderViaCSS})`, async () => {
+        const dimension = axis === 'row' ? 'width' : 'height';
+        const hugging = axis === 'row' ? 'hugContentsHorizontally' : 'hugContentsVertically';
+        const fixed = new Morph({ extent: pt(80, 30) });
+        const filling = new Morph({ name: 'filling', extent: pt(70, 70) });
+        const container = new Morph({ extent: pt(500, 500), submorphs: [fixed, filling], layout: new TilingLayout({
+          axis, renderViaCSS, padding: 10, spacing: 5, [hugging]: true,
+          resizePolicies: [['filling', { width: dimension === 'width' ? 'fill' : 'fixed', height: dimension === 'height' ? 'fill' : 'fixed' }]]
+        }) }).openInWorld();
+        try {
+          await container.whenRendered();
+          container.env.forceUpdate();
+          expect(container.layout[hugging]).equals(false);
+          expect(container[dimension]).closeTo(500, 0.1);
+          expect(filling[dimension]).closeTo(475 - fixed[dimension], 0.1);
+          fixed[dimension] += 20;
+          container.env.forceUpdate();
+          expect(container[dimension]).closeTo(500, 0.1);
+          expect(filling[dimension]).closeTo(475 - fixed[dimension], 0.1);
+        } finally { container.remove(); }
+      });
+
       it(`uses a fixed sibling to determine the ${axis} cross-axis size (CSS: ${renderViaCSS})`, async () => {
         const dimension = axis === 'column' ? 'width' : 'height';
         const hugging = axis === 'column' ? 'hugContentsHorizontally' : 'hugContentsVertically';
