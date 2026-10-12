@@ -616,8 +616,8 @@ const RichTextControl = component(PropertySection, {
     textAndAttributes: ['Text color', null],
     fontSize: 12,
     fixedWidth: true,
-    extent: pt(202, 16),
-    padding: rect(0, 0, 0, 0)
+    extent: pt(250, 16),
+    padding: rect(20, 0, -20, 0)
   })), add(part(ColorInput, {
     name: 'font color input',
     viewModel: {
@@ -651,8 +651,8 @@ const RichTextControl = component(PropertySection, {
     textAndAttributes: ['Decoration color', null],
     fontSize: 12,
     fixedWidth: true,
-    extent: pt(202, 16),
-    padding: rect(0, 0, 0, 0)
+    extent: pt(250, 16),
+    padding: rect(20, 0, -20, 0)
   })),
   add(part(ColorInput, {
     name: 'decoration color input',
@@ -663,21 +663,27 @@ const RichTextControl = component(PropertySection, {
     name: 'selection controls',
     fill: Color.transparent,
     extent: pt(250, 60),
-    layout: new TilingLayout({ axis: 'column', axisAlign: 'center', hugContentsVertically: true, orderByIndex: true, spacing: 10 }),
-    submorphs: [part(EnumSelector, {
-      name: 'selection mode selector',
-      tooltip: 'Selection Mode',
-      extent: pt(202, 23),
-      viewModel: {
-        listAlign: 'bottom', openListInWorld: true, listMaster: DarkThemeList,
-        items: [
-          { isListItem: true, string: 'Native Selection', value: 'native' },
-          { isListItem: true, string: 'Lively Selection', value: 'lively' },
-          { isListItem: true, string: 'No Selection', value: 'none' }
-        ]
-      },
-      submorphs: [{ name: 'label', fontSize: 12 }]
-    }), part(ColorInput, {
+    layout: new TilingLayout({ axis: 'column', hugContentsVertically: true, orderByIndex: true, spacing: 10 }),
+    submorphs: [{
+      name: 'selection mode row',
+      fill: Color.transparent,
+      extent: pt(250, 23),
+      layout: new TilingLayout({ padding: rect(20, 0, -20, 0), orderByIndex: true }),
+      submorphs: [part(EnumSelector, {
+        name: 'selection mode selector',
+        tooltip: 'Selection Mode',
+        extent: pt(202, 23),
+        viewModel: {
+          listAlign: 'bottom', openListInWorld: true, listMaster: DarkThemeList,
+          items: [
+            { isListItem: true, string: 'Native Selection', value: 'native' },
+            { isListItem: true, string: 'Lively Selection', value: 'lively' },
+            { isListItem: true, string: 'No Selection', value: 'none' }
+          ]
+        },
+        submorphs: [{ name: 'label', fontSize: 12 }]
+      })]
+    }, part(ColorInput, {
       name: 'selection color input',
       tooltip: 'Selection Color',
       viewModel: { colorPickerComponent: DarkColorPicker }
@@ -751,20 +757,20 @@ const RichTextControl = component(PropertySection, {
         name: 'label',
         fontSize: 12
       }]
+    }), part(EnumSelector, {
+      name: 'text overflow selector',
+      tooltip: 'Text Overflow',
+      extent: pt(202, 23),
+      viewModel: {
+        listAlign: 'bottom', openListInWorld: true, listMaster: DarkThemeList,
+        items: [
+          { isListItem: true, string: 'Clip Overflow', value: 'clip' },
+          { isListItem: true, string: 'Show Ellipsis', value: 'ellipsis' }
+        ]
+      },
+      submorphs: [{ name: 'label', fontSize: 12 }]
     })]
-  }), add(part(EnumSelector, {
-    name: 'text overflow selector',
-    tooltip: 'Text Overflow',
-    extent: pt(202, 23),
-    viewModel: {
-      listAlign: 'bottom', openListInWorld: true, listMaster: DarkThemeList,
-      items: [
-        { isListItem: true, string: 'Clip Overflow', value: 'clip' },
-        { isListItem: true, string: 'Show Ellipsis', value: 'ellipsis' }
-      ]
-    },
-    submorphs: [{ name: 'label', fontSize: 12 }]
-  })), add(part(PaddingControlsDark, { name: 'padding controls' }))
+  }), add(part(PaddingControlsDark, { name: 'padding controls' }))
   ]
 });
 
