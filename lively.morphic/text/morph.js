@@ -477,7 +477,7 @@ export class Text extends Morph {
         },
         set (textAndAttributes) {
           if (obj.isArray(textAndAttributes) && textAndAttributes.find(m => m?.doit)) { this.needsDocument = true; }
-          const previousTextAndAttributes = !this.document && this.textAndAttributes;
+          const previousTextAndAttributes = this._isDowngrading ? [] : !this.document && this.textAndAttributes;
           if (this.document) {
             this.replace(
               { start: { row: 0, column: 0 }, end: this.documentEndPosition },
@@ -1380,8 +1380,9 @@ export class Text extends Morph {
       const idx = textAndAttributes.findIndex(m => m === morph);
       if (idx !== -1) {
         const removeCount = idx !== textAndAttributes.length - 1 ? 2 : 1;
-        textAndAttributes.splice(idx, removeCount);
-        this.textAndAttributes = textAndAttributes;
+        const next = textAndAttributes.slice();
+        next.splice(idx, removeCount);
+        this.textAndAttributes = next;
       }
     }
     if (embeddedMorphMap && embeddedMorphMap.has(morph)) {
@@ -2085,9 +2086,9 @@ export class Text extends Morph {
             this.removeAnchor(existing.anchor);
             disconnect(existing.anchor, 'position', content, 'position');
           }
-          embeddedMorphMap.set(content, { ...existing, anchor: null });
+          embeddedMorphMap.delete(content);
         }
-        content.remove();
+        if (content.owner === this) content.remove();
       }
     }
     if (morphsInAddedText.length) {
