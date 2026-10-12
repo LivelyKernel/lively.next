@@ -27,6 +27,30 @@ function frame (spec = {}) {
 }
 
 describe('lively debugger ui', function () {
+  it('uses transparent window controls and grouped browser buttons without a duplicate title', async function () {
+    const { run } = await System.import('lively.context/lib/stackReification.js');
+    const { openForContinuation } = await System.import('lively.ide/js/debugger/ui.cp.js');
+    const view = openForContinuation(run(function toolbarLayout () { debugger; }), $world);
+    try {
+      await view.whenRendered();
+      view.env.forceUpdate();
+      expect(view.fill.a).equals(0);
+      expect(view.get('toolbar').fill.a).equals(0);
+      expect(view.get('toolbar').submorphs.some(morph => morph.name === 'title')).equals(false);
+      const bounds = name => document.getElementById(view.get(name).id).getBoundingClientRect();
+      expect(bounds('retry button').left).closeTo(bounds('proceed button').right, 0.5);
+      expect(bounds('step into button').left - bounds('retry button').right).at.least(12);
+      expect(bounds('step over button').left).closeTo(bounds('step into button').right, 0.5);
+      expect(bounds('apply method button').left).closeTo(bounds('edit method button').right, 0.5);
+      const { pt } = await System.import('lively.graphics');
+      for (const name of ['step over button', 'workspace do button']) {
+        const button = view.get(name), box = bounds(name);
+        const position = pt(box.left + box.width / 2, box.top + box.height / 2);
+        expect(button.viewModel.considerPress({ positionIn: morph => morph.localize(position) })).equals(true);
+      }
+    } finally { view.viewModel.closeDebugger(); }
+  });
+
   it('shows the original module with syntax colors and an accurate statement highlight', async function () {
     const { run } = await System.import('lively.context/lib/stackReification.js');
     const { LiveCounter } = await System.import('lively.ide/js/debugger/examples/live-counter.js');
@@ -99,7 +123,7 @@ describe('lively debugger ui', function () {
     }
   });
 
-  it('renders an editable workspace below the scope inspector', async function () {
+  it('renders a syntax highlighted workspace whose editor commands evaluate in the suspended scope', async function () {
     const { run } = await System.import('lively.context/lib/stackReification.js');
     const { openForContinuation } = await System.import('lively.ide/js/debugger/ui.cp.js');
     const view = openForContinuation(run(function workspaceLayout () {
@@ -109,12 +133,31 @@ describe('lively debugger ui', function () {
     }), $world);
     try {
       const model = view.viewModel, input = model.ui.workspaceInput;
-      input.textString = 'amount = 3';
+      await model.selectFrame(model.continuation.currentFrame);
+      input.textString = 'let scratch = amount * 2; scratch';
       await new Promise(resolve => setTimeout(resolve, 100));
+      const plugin = input.pluginFind(p => p.isJSEditorPlugin);
+      expect(!!plugin).equals(true);
+      plugin.highlight();
+      input.env.forceUpdate();
       const node = document.getElementById(input.id);
       expect(node.getBoundingClientRect().width).above(100);
       expect(node.getBoundingClientRect().height).above(50);
       expect(node.textContent).contains('amount');
+      expect(new Set(Array.from(node.querySelectorAll('.newtext-text-layer.actual span')).map(span => span.style.color)).size).above(1);
+      input.selectAll();
+      expect((await input.execCommand('doit')).value).equals(4);
+      expect(model.workspaceBindings.scratch).equals(4);
+      input.textString = 'amount = scratch - 1';
+      input.selectAll();
+      expect((await input.execCommand('doit')).value).equals(3);
+      expect(model.selectedFrame.getScope().get('amount')).equals(3);
+      input.textString = 'false';
+      input.selectAll();
+      const result = await input.doEval();
+      expect(result.isError).equals(false);
+      expect(result.value).equals(false);
+      input.textString = 'amount';
       expect(await model.evaluateWorkspace()).equals(3);
     } finally { view.viewModel.closeDebugger(); }
   });
