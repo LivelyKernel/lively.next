@@ -3,6 +3,8 @@ import { Color, pt, rect } from 'lively.graphics';
 import { SystemButton } from 'lively.components/buttons.cp.js';
 import { SystemList } from '../../styling/shared.cp.js';
 import { signal } from 'lively.bindings';
+import { parse } from 'lively.ast';
+import { localInterface } from 'lively-system-interface';
 import { InspectionTree, PropertyTree, printValue } from '../inspector/context.js';
 import {
   restartInspectorFrame,
@@ -19,6 +21,7 @@ import {
   interpreterLineForSourcePosition,
   sourceNameForFrame,
   sourceUrlForFrame,
+  moduleUrlForFrame,
   lineRangeForFrame,
   locationStringForFrame,
   readFrameSource
@@ -122,9 +125,12 @@ export class LivelyDebuggerModel extends ViewModel {
       workspaceBindings: {
         initialize () { this.workspaceBindings = {}; }
       },
+      sourceBuffers: {
+        initialize () { this.sourceBuffers = new Map(); }
+      },
 
       expose: {
-        get () { return ['continuation', 'onWindowClose', 'closeDebugger', 'proceed']; }
+        get () { return ['continuation', 'onWindowClose', 'closeDebugger', 'proceed', 'commands', 'keybindings']; }
       },
 
       bindings: {
@@ -140,6 +146,8 @@ export class LivelyDebuggerModel extends ViewModel {
             { target: 'restart frame button', signal: 'fire', handler: 'restartFrame' },
             { target: 'return button', signal: 'fire', handler: 'returnFromFrame' },
             { target: 'edit method button', signal: 'fire', handler: 'editMethod' },
+            { target: 'save module button', signal: 'fire', handler: 'saveModule' },
+            { target: 'source pane', signal: 'textChange', handler: 'rememberSourceEdits' },
             { target: 'apply method button', signal: 'fire', handler: 'applySavedMethod' },
             { target: 'run to cursor button', signal: 'fire', handler: 'runToCursor' },
             { target: 'workspace do button', signal: 'fire', handler: 'evaluateWorkspace' }
@@ -150,9 +158,57 @@ export class LivelyDebuggerModel extends ViewModel {
   }
 
   viewDidLoad () {
+    this.ui.sourcePane.addCommands(this.commands);
     this.rememberReleasableContinuation(this.continuation);
     this.refreshFromContinuation();
     this.refreshWorkspaceEditor();
+  }
+
+  get commands () {
+    return [{ name: 'save debugger module', exec: () => this.saveModule() }];
+  }
+
+  get keybindings () {
+    return [{ keys: { mac: 'Command-S', win: 'Ctrl-S' }, command: 'save debugger module' }];
+  }
+
+  rememberSourceEdits () {
+    const buffer = this.sourceBuffers.get(this.currentModuleUrl);
+    if (buffer) buffer.source = this.ui.sourcePane.textString;
+    this.ui.sourcePane.borderColor = buffer && buffer.source !== buffer.savedSource
+      ? Color.red : Color.rgb(204, 204, 204);
+    if (this.ui.sourcePane.textString !== this.currentSourceText) {
+      this.ui.sourcePane.removeMarker(CURRENT_LINE_MARKER_ID);
+      this.ui.locationLabel.textString = locationStringForFrame(this.selectedFrame) + ' (edited source; Apply or Restart Frame)';
+    }
+  }
+
+  hasUnsavedChanges () {
+    this.rememberSourceEdits();
+    return Array.from(this.sourceBuffers.values()).some(buffer => buffer.source !== buffer.savedSource);
+  }
+
+  async saveModule () {
+    if (this.isSaving) return false;
+    this.rememberSourceEdits();
+    const url = this.currentModuleUrl, buffer = this.sourceBuffers.get(url);
+    if (!buffer) return this.interpreterActionFailed('Save Module', new Error('This frame has no editable module source.'));
+    const source = buffer.source;
+    this.isSaving = true;
+    try {
+      // changeSource saves and evaluates concurrently, so validate before writing.
+      parse(source);
+      const savedSource = await localInterface.coreInterface.resourceRead(url);
+      if (savedSource !== buffer.savedSource && savedSource !== source &&
+          !await this.view.world().confirm('This module changed outside the debugger. Overwrite those changes?', {requester: this.view})) return false;
+      await localInterface.interactivelyChangeModule(url, source, {doSave: true, doEval: true});
+      buffer.savedSource = source;
+      this.rememberSourceEdits();
+      this.ui.status.textString = 'Module saved. Apply Saved Method or Restart Frame to use it in the suspended computation.';
+      return true;
+    } catch (err) {
+      return this.interpreterActionFailed('Save Module', err);
+    } finally { this.isSaving = false; }
   }
 
   renderDraggableTreeLabel (args) {
@@ -163,7 +219,7 @@ export class LivelyDebuggerModel extends ViewModel {
     return keyString + ': ' + valueString;
   }
 
-  refreshSelectedLine (sourceText = this.currentSourceText || '') {
+  refreshSelectedLine (sourceText = this.ui.sourcePane.textString) {
     const sourcePane = this.ui.sourcePane;
     if (!sourcePane) return null;
     if (!sourcePane.document && sourcePane.backWithDocument) sourcePane.backWithDocument();
@@ -171,6 +227,10 @@ export class LivelyDebuggerModel extends ViewModel {
 
     const range = lineRangeForFrame(this.selectedFrame, sourceText);
     this.ui.locationLabel.textString = locationStringForFrame(this.selectedFrame);
+    if (sourceText !== this.currentSourceText) {
+      this.rememberSourceEdits();
+      return null;
+    }
     if (!range) return null;
 
     const row = range.start.row;
@@ -220,18 +280,33 @@ export class LivelyDebuggerModel extends ViewModel {
   }
 
   async selectFrame (frame) {
+    this.rememberSourceEdits();
     this.selectedFrame = frame;
     const source = await readFrameSource(frame);
     if (this.selectedFrame !== frame) return;
+    const url = moduleUrlForFrame(frame);
+    let buffer = this.sourceBuffers.get(url);
+    if (url && (!buffer || buffer.source === buffer.savedSource)) {
+      const savedSource = await localInterface.moduleRead(url);
+      if (this.selectedFrame !== frame) return;
+      buffer = {source: savedSource, savedSource};
+      this.sourceBuffers.set(url, buffer);
+    }
     this.currentSourceText = source;
+    this.currentModuleUrl = url;
     const pane = this.ui.sourcePane;
     const plugin = pane.pluginFind(p => p.isJSEditorPlugin) || pane.addPlugin(new JavaScriptEditorPlugin());
     plugin.evalEnvironment = {...plugin.evalEnvironment, targetModule: sourceUrlForFrame(frame)};
-    pane.textString = source;
-    this.refreshSelectedLine(source);
+    pane.readOnly = !url;
+    this.view.get('save module button').viewModel[url ? 'enable' : 'disable']();
+    const displayedSource = buffer ? buffer.source : source;
+    if (pane.textString !== displayedSource) pane.textString = displayedSource;
+    this.rememberSourceEdits();
     await pane.whenRendered();
     if (this.selectedFrame !== frame) return;
     plugin.highlight();
+    pane.env.forceUpdate();
+    this.refreshSelectedLine(displayedSource);
     const scopes = visibleScopesForFrame(frame);
     this.ui.scopeList.items = scopes.map(scope => ({
       isListItem: true,
@@ -304,7 +379,8 @@ export class LivelyDebuggerModel extends ViewModel {
         this.refreshFromContinuation();
         this.updateStatus();
       } else {
-        this.closeDebugger();
+        this.continuation = null;
+        await this.closeDebugger();
       }
       return result;
     } catch (err) {
@@ -322,7 +398,7 @@ export class LivelyDebuggerModel extends ViewModel {
     try {
       const value = evaluateInDebuggerScopes(source, this.evaluationScopes());
       const result = returnFromInspectorFrame(this.continuation, value, {startFrame: this.selectedFrame});
-      if (!result || !result.isContinuation) { this.closeDebugger(); return result; }
+      if (!result || !result.isContinuation) { this.continuation = null; await this.closeDebugger(); return result; }
       return this.updateAfterInterpreterResult('Return', result);
     } catch (error) { return this.interpreterActionFailed('Return', error); }
   }
@@ -343,6 +419,7 @@ export class LivelyDebuggerModel extends ViewModel {
 
   runToCursor () {
     try {
+      if (this.ui.sourcePane.textString !== this.currentSourceText) throw new Error('Apply Saved Method or Restart Frame before running to a line in edited source.');
       const position = this.ui.sourcePane.cursorPosition;
       const result = runToInspectorPosition(this.continuation, interpreterLineForSourcePosition(this.selectedFrame, position), {startFrame: this.selectedFrame});
       return this.updateAfterInterpreterResult('Run to Cursor', result);
@@ -399,7 +476,8 @@ export class LivelyDebuggerModel extends ViewModel {
       return result;
     }
     this.ui.status.textString = label + ' completed: ' + printValue(result);
-    this.closeDebugger();
+    this.continuation = null;
+    await this.closeDebugger();
     return result;
   }
 
@@ -416,18 +494,18 @@ export class LivelyDebuggerModel extends ViewModel {
     }
   }
 
-  onWindowClose () {
+  async onWindowClose () {
+    if (this.hasUnsavedChanges() && !await this.view.world().confirm('Discard unsaved debugger module changes?', {requester: this.view})) return false;
     const continuation = this.inspectorContinuation || this.continuation;
     if (continuation && continuation.release) continuation.release();
     this.inspectorContinuation = null;
     this.continuation = null;
   }
 
-  closeDebugger () {
-    this.onWindowClose();
+  async closeDebugger () {
     const win = this.view.getWindow && this.view.getWindow();
-    if (win) win.close(false);
-    else this.view.remove();
+    if (win) await win.close(false);
+    else if (await this.onWindowClose() !== false) this.view.remove();
   }
 }
 
@@ -537,6 +615,8 @@ export const LivelyDebugger = component({
         borderRadius: { topLeft: 5, bottomLeft: 5, topRight: 0, bottomRight: 0 },
         borderWidth: 1,
         submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('pencil-alt') }] }),
+      part(ToolbarButton, { name: 'save module button', tooltip: 'Save module (Ctrl-S / Command-S)',
+        submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('save') }] }),
       part(ToolbarButton, { name: 'apply method button', tooltip: 'Apply saved changes after the current execution position',
         borderRadius: { topLeft: 0, bottomLeft: 0, topRight: 5, bottomRight: 5 },
         submorphs: [{ name: 'label', textAndAttributes: Icon.textAttribute('check') }] })
