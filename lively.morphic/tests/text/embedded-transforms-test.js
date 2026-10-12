@@ -7,6 +7,43 @@ describe('embedded morph transforms', () => {
   let text;
   afterEach(() => text && text.remove());
 
+  it('places inline anchors using their own box in an offset scaled world', async () => {
+    const embedded = new Morph({ extent: pt(40, 20), submorphs: [new Morph({ position: pt(-10, -10), extent: pt(15, 15) })] });
+    text = new Text({ readOnly: false, textAndAttributes: ['before ', null, embedded, null, ' after', null] }).openInWorld();
+    const world = text.world();
+    const worldNode = text.env.renderer.getNodeForMorph(world);
+    const scale = world.scale;
+    const translate = worldNode.style.translate;
+    try {
+      await text.whenRendered();
+      worldNode.style.translate = '37px 29px';
+      world.scale = 1.25;
+      for (let i = 0; i < 3; i++) {
+        text.makeDirty();
+        text.env.forceUpdate();
+        const client = text.env.renderer.getNodeForMorph(embedded).getBoundingClientRect();
+        const root = worldNode.getBoundingClientRect();
+        const own = embedded.getGlobalTransform().transformRectToRect(embedded.origin.negated().extent(embedded.extent));
+        expect((client.x - root.x) / world.scale + world.scroll.x).closeTo(own.x, 0.2);
+        expect((client.y - root.y) / world.scale + world.scroll.y).closeTo(own.y, 0.2);
+      }
+    } finally { world.scale = scale; worldNode.style.translate = translate; text.env.forceUpdate(); }
+  });
+
+  it('remeasures changed live inline lines after rendering instead of caching stale characters', async () => {
+    const embedded = new Morph({ extent: pt(40, 20) });
+    text = new Text({ readOnly: false, fixedWidth: true, extent: pt(300, 100), textAndAttributes: ['a', null, embedded, null, 'b', null] }).openInWorld();
+    Object.defineProperty(text, 'canBeMeasuredViaCanvas', { get: () => false });
+    await text.whenRendered();
+    text.textLayout.charBoundsOfRow(text, 0);
+    text.insertText('c', { row: 0, column: 3 });
+    text.textLayout.charBoundsOfRow(text, 0);
+    text.env.forceUpdate();
+    const bounds = text.textLayout.charBoundsOfRow(text, 0);
+    expect(bounds).length(text.document.getLine(0).text.length);
+    expect(bounds[3].x).at.least(bounds[2].x + bounds[2].width - 0.2);
+  });
+
   for (const canvas of [true, false]) {
     it(`updates only visible inline anchors after reflow and scrolling (canvas=${canvas})`, async () => {
       const content = [], embeds = [];
