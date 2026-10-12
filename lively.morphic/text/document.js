@@ -99,7 +99,10 @@ class TreeNode {
     if (sumChildrenStringSize != stringSize) { report.push({ error: `Sum of child stringSize is not stringSIze of ${this}: ${sumChildrenStringSize} != ${stringSize}` }); }
 
     const sumChildrenHeight = arr.sum(arr.pluck(children, 'height'));
-    if (num.roundTo(sumChildrenHeight, 1) != num.roundTo(height, 1)) { report.push({ error: `Sum of child Height is not Height of ${this}: ${sumChildrenHeight} != ${num.roundTo(height, 1)}` }); }
+    const heightTolerance = Math.max(1e-7, Number.EPSILON * Math.max(Math.abs(height), Math.abs(sumChildrenHeight)) * children.length);
+    if (!Number.isFinite(height) || !Number.isFinite(sumChildrenHeight) || Math.abs(sumChildrenHeight - height) > heightTolerance) {
+      report.push({ error: `Sum of child Height is not Height of ${this}: ${sumChildrenHeight} != ${height}` });
+    }
 
     const maxWidth = children.length ? Math.max.apply(null, arr.pluck(children, 'width')) : 0;
     const hasEstimatedLine = children.find(child => child.isLine && child.hasEstimatedExtent);
