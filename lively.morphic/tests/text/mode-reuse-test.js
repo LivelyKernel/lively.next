@@ -48,6 +48,34 @@ describe('text mode reuse', () => {
     } finally { text.remove(); }
   });
 
+  it('does not restore removed inline attributes from a multiline document backup', async () => {
+    const text = new Text({ readOnly: false, textString: 'first\nsecond' }).openInWorld();
+    try {
+      await text.whenRendered();
+      text.addTextAttribute({ fontColor: Color.red }, text.documentRange);
+      const originalDocument = text.document;
+      const anchor = text.addAnchor({ id: 'formatting-anchor', row: 1, column: 3 });
+      text.readOnly = true;
+      text.removePlainTextAttribute('fontColor');
+      expect(anchor.position).deep.equals({ row: 0, column: 0 });
+      text.readOnly = false;
+      text.env.forceUpdate();
+      expect(text.textString).equals('first\nsecond');
+      for (const line of text.document.lines) {
+        line.textAndAttributes.forEach((attributes, i) => {
+          if (i % 2) expect(attributes?.fontColor).equals(undefined);
+        });
+      }
+      expect(text.document).not.equals(originalDocument);
+      text.document.consistencyCheck();
+      text.readOnly = true;
+      text.env.forceUpdate();
+      text.textAndAttributes.forEach((attributes, i) => {
+        if (i % 2) expect(attributes?.fontColor).equals(undefined);
+      });
+    } finally { text.remove(); }
+  });
+
   it('restores marker and cursor nodes without accumulating selection anchors', async () => {
     const text = new Text({ readOnly: false, textString: 'first\nsecond' }).openInWorld();
     try {
