@@ -13,6 +13,7 @@ import { _require, _resolve } from './nodejs.js';
 import { classHolder } from './cycle-breaker.js';
 import { regExpEscape } from 'lively.lang/string.js';
 import { installModuleDebugger } from '../../lively.context/lib/module-debugger.js';
+import { declaringClassCell } from '../../lively.context/lib/exception.js';
 
 // Used by the recorder Proxy to detect native browser functions that need
 // to be bound to the global object when stored in local variable slots.
@@ -311,6 +312,8 @@ class ModuleInterface {
     let toBeReloaded = [this];
     if (opts.reloadDeps) toBeReloaded = this.dependents().concat(toBeReloaded);
     await this.unload({ forgetDeps: opts.reloadDeps, forgetEnv: opts.resetEnv });
+    for (const ea of toBeReloaded) Object.assign(module(ea.System, ea.id),
+      obj.select(ea, ['_debuggingEnabled', '_retainRuntimeClosures', '_embedOriginalCode']));
     await Promise.all(toBeReloaded.map(ea => ea.id !== this.id && ea.load()));
     await this.load();
   }
@@ -694,6 +697,10 @@ class ModuleInterface {
 
   get debuggingEnabled () { return this._debuggingEnabled ?? this._automaticDebugging ?? false; }
 
+  get retainRuntimeClosures () { return this._retainRuntimeClosures ?? this.debuggingEnabled; }
+
+  set retainRuntimeClosures (enabled) { this._retainRuntimeClosures = enabled; }
+
   get embedOriginalCode () {
     return this._embedOriginalCode ?? (this.debuggingEnabled || !/^esm:.*@jspm\/core@[^/]+\/nodelibs\//.test(this.id));
   }
@@ -742,14 +749,14 @@ class ModuleInterface {
       if (typeof func !== 'function') continue;
       if (method.kind === 'constructor') Object.defineProperty(func, Symbol.for('lively-debug-constructor'), {value: klass, configurable: true});
       let functionSource = func.toString();
-      const cells = {__lively_class__: {kind: 'const', initialized: true, value: klass}};
+      const cells = {__lively_class__: declaringClassCell(klass)};
       // The class system already lowers super to a declaring-class parameter.
       // Keep that implementation, supplying the class through its binding map.
       if (func.originalFunction || /\(\s*_declaring_class_\b/.test(functionSource)) {
         const ast = parseFunction(functionSource);
         if (ast.params[0]?.name === '_declaring_class_') {
           const parameter = ast.params.shift();
-          cells[parameter.name] = {kind: 'const', initialized: true, value: klass};
+          cells[parameter.name] = declaringClassCell(klass);
           functionSource = escodegen.generate(ast);
         }
       }
@@ -768,13 +775,7 @@ class ModuleInterface {
     if (!func.name && name) Object.defineProperty(func, 'name', {value: name, configurable: true});
     if (declaringClass) {
       Object.defineProperty(func, Symbol.for('lively-debug-function-source'), {value: func.toString(), configurable: true});
-      cells.__lively_class__ = {
-        kind: 'const', initialized: true, value: declaringClass,
-        __serialize__(pool) {
-          const expression = pool.expressionSerializer.exprStringDecode(pool.expressionSerializer.getExpressionForFunction(declaringClass));
-          return {...expression, __expr__: '({kind: "const", initialized: true, value: ' + expression.__expr__ + '})'};
-        }
-      };
+      cells.__lively_class__ = declaringClassCell(declaringClass);
     }
     const mod = this;
     Object.defineProperties(func, {

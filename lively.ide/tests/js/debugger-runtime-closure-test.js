@@ -134,6 +134,7 @@ describe('runtime closure bindings', function () {
     let view, restoredWindow;
     try {
       await mod.setDebuggingEnabled(false); // Exercise native retained cells through explicit capture.
+      mod.retainRuntimeClosures = true;
       const {make} = await mod.load();
       const account = make('2');
       const bindings = account.charge[Symbol.for('lively-debug-bindings')];

@@ -3,6 +3,8 @@ import { expect, chai } from 'mocha-es6';
 
 import { obj } from 'lively.lang';
 import ExpressionSerializer from '../plugins/expression-serializer.js';
+import { connect } from 'lively.bindings';
+import { serialize } from '../index.js';
 
 let sut = new ExpressionSerializer({ prefix: '_prefix' });
 
@@ -96,6 +98,41 @@ describe('expression serializer deserialize', () => {
       expect(sut.requiredModulesOf__expr__(encoded)).deep.equals([id]);
       expect(sut.deserializeExpr(encoded)).equals(foo);
       expect(sut.deserializeExpr(encoded)()).equals(23);
+    } finally { System.delete(id); }
+  });
+
+  it('rejects local varMapping functions even when a top-level binding has the same name', () => {
+    const id = 'local://expression-local-function-test.js';
+    const topLevel = function double(value) { return value * 2; };
+    const local = function double(value) { return value * 3; };
+    Object.defineProperty(local, Symbol.for('lively-module-meta'), {value: {package: {}, pathInPackage: id}});
+    System.set(id, System.newModule({double: topLevel}));
+    try {
+      expect(() => sut.getExpressionForFunction(local)).throws(/no matching binding/);
+      const source = {x: 1}, target = {y: 0};
+      connect(source, 'x', target, 'y', {converter: 'value => double(value)', varMapping: {double: local}});
+      source.x = 2;
+      expect(target.y).equals(6);
+      expect(() => serialize({source, target})).throws(/Cannot be serialized due to lack of module information/);
+    } finally { System.delete(id); }
+  });
+
+  it('preserves exported aliases and classes as identity-checked module references', () => {
+    const id = 'local://expression-alias-function-test.js';
+    function original(value) { return value * 2; }
+    class Original {}
+    const defaultCallback = () => 3;
+    Object.defineProperty(defaultCallback, 'name', {value: 'default'});
+    const functions = [original, Original, defaultCallback];
+    for (const func of functions) {
+      Object.defineProperty(func, Symbol.for('lively-module-meta'), {value: {package: {}, pathInPackage: id}});
+    }
+    System.set(id, System.newModule({renamed: original, Renamed: Original, default: defaultCallback}));
+    try {
+      for (const func of functions) {
+        const encoded = sut.getExpressionForFunction(func);
+        expect(sut.deserializeExpr(encoded)).equals(func);
+      }
     } finally { System.delete(id); }
   });
 

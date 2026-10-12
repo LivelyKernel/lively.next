@@ -5,9 +5,13 @@ import { getGlobal } from "lively.vm/lib/util.js";
 import { Continuation, debugSupportEnabled } from './stackReification.js';
 
 let Global = getGlobal();
+const serializedModuleSources = new WeakMap();
 
 export function RestoredFunction() {
   const fn = function() { return fn.interpretedFunction.asFunction().apply(this, arguments); };
+  Object.defineProperty(fn, Symbol.for('lively-serialize-closure'), {configurable: true, value(pool, snapshots, path) {
+    return serializeManagedFunction(this, this.interpretedFunction, pool, snapshots, path);
+  }});
   fn.__after_deserialize__ = function() {
     if (!fn.interpretedFunction.node) { fn.interpretedFunction._restoredFunction = fn; return; }
     Object.assign(fn, fn.interpretedFunction.asFunction());
@@ -1515,9 +1519,13 @@ export class ManagedGenerator {
 
 export class Function {
 
-  get __dont_serialize__() { return ['_cachedFunction', 'originalFunction', 'capturedFrameState', '_restoredFunction']; }
+  get __dont_serialize__() { return ['_cachedFunction', 'originalFunction', 'capturedFrameState', '_restoredFunction', 'runtimeObjectMeta', 'lexicalArguments']; }
 
   __after_deserialize__() {
+    if (this.serializedModuleSource) {
+      this.runtimeObjectMeta.moduleSource = this.serializedModuleSource.moduleSource;
+      delete this.serializedModuleSource;
+    }
     if (this._restoredFunction) {
       this._restoredFunction.__after_deserialize__();
       delete this._restoredFunction;
@@ -1525,6 +1533,16 @@ export class Function {
   }
 
   __additionally_serialize__(snapshot, ref, pool, addFn) {
+    if (this.lexicalArguments && freeFunctionReferences(this.node).some(ref => ref.name === 'arguments'))
+      addFn('lexicalArguments', this.lexicalArguments);
+    if (this.runtimeObjectMeta) {
+      const {moduleSource, ...meta} = this.runtimeObjectMeta;
+      let sources = serializedModuleSources.get(pool);
+      if (!sources) serializedModuleSources.set(pool, sources = new Map());
+      if (!sources.has(moduleSource)) sources.set(moduleSource, {moduleSource});
+      addFn('runtimeObjectMeta', meta);
+      addFn('serializedModuleSource', sources.get(moduleSource));
+    }
     if (this.capturedFrameState) addFn('lexicalScope', Scope.recreateFromFrameState(this.capturedFrameState));
     if (typeof this.lexicalThis === 'function' && this.lexicalThis.hasOwnProperty(Symbol.for('lively-instance-superclass')))
       addFn('lexicalThis', pool.expressionSerializer.getExpressionForFunction(this.lexicalThis));

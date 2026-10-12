@@ -76,6 +76,7 @@ describe('module loading', () => {
     for (const [index, declaration] of ['function', 'async function', 'function*'].entries()) {
       const id = testDir + `anonymous-default-${index}.js`;
       await resource(id).write(`export default ${declaration} () { return [1].map(value => value)[0]; }`);
+      module(S, id).retainRuntimeClosures = true;
       const {default: func} = await S.import(id);
       const result = func();
       expect(declaration === 'function*' ? result.next().value : await result).equals(1);
@@ -113,6 +114,7 @@ describe('module loading', () => {
   it('records runtime closure source and shared native bindings without changing function identity', async () => {
     const source = 'export function make(value) { "use strict"; const ledger = {}; function charge(amount) { return value + amount; } return {charge, read: () => value, ledger}; }';
     await resource(module1).write(source);
+    module(S, module1).retainRuntimeClosures = true;
     const {make} = await S.import(module1);
     const decanonicalize = S.decanonicalize;
     let account;
@@ -130,6 +132,34 @@ describe('module loading', () => {
     expect(source.slice(meta.start, meta.end)).equals('function charge(amount) { return value + amount; }');
     expect(account.read[Symbol.for('lively-debug-bindings')][Symbol.for('lively-debug-binding-cells')].value)
       .equals(bindings[Symbol.for('lively-debug-binding-cells')].value);
+  });
+
+  it('keeps ordinary and dependency closures native until retention is selected', async () => {
+    await resource(module1).write('export function make(value) { return () => ++value; }');
+    const mod = module(S, module1);
+    for (const id of [module1, testDir + 'node_modules/dependency/index.js', 'esm://example.test/dependency.js']) {
+      expect(module(S, id).retainRuntimeClosures).equals(false);
+    }
+    const {make} = await S.import(module1);
+    const callback = make(1);
+    expect(callback[Symbol.for('lively-debug-bindings')]).equals(undefined);
+    expect(callback[Symbol.for('lively-serialize-closure')]).equals(undefined);
+    expect(callback()).equals(2);
+    mod.retainRuntimeClosures = true;
+    await mod.reload({reloadDeps: false});
+    const retained = S.get(module1).make(1);
+    expect(retained[Symbol.for('lively-debug-bindings')].value).equals(1);
+    expect(retained()).equals(2);
+    expect(mod.debuggingEnabled).equals(false);
+  });
+
+  it('does not automatically intercept debugger statements in dependencies', async () => {
+    const id = testDir + 'node_modules/dependency/index.js';
+    await resource(id).write('export function make(value) { return () => value; } export function stop() { debugger; }');
+    S.debuggerInterception = true;
+    const {make} = await S.import(id);
+    expect(module(S, id).debuggingEnabled).equals(false);
+    expect(make(3)[Symbol.for('lively-debug-bindings')]).equals(undefined);
   });
 
   it('imports cached frozen records before the live transpiler is installed', async () => {

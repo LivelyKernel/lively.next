@@ -1,14 +1,11 @@
-/* global System, describe, it */
+/* global describe, it */
 import { expect } from 'mocha-es6';
 import { Text } from '../../text/morph.js';
 import { Morph } from '../../morph.js';
 import { Color } from 'lively.graphics';
 import { ObjectPool, ExpressionSerializer } from 'lively.serializer2';
+import { module } from 'lively.modules';
 import { serializeMorph, deserializeMorph } from '../../serialization.js';
-
-function inspectorToggle(target, keyString, node) {
-  return () => { target[keyString] = !target[keyString]; node.rerender(); };
-}
 
 describe('rich-text native callback serialization', () => {
   it('keeps embedded morph references and color expressions in the custom text snapshot', async () => {
@@ -31,23 +28,31 @@ describe('rich-text native callback serialization', () => {
   });
 
   it('copies and saves inspector toggle attributes without serializing their captured environment', async () => {
+    const fixture = module('lively.morphic/tests/text/fixtures/retained-callback.js');
+    fixture.retainRuntimeClosures = true;
+    const {inspectorToggle} = await fixture.load();
     const target = {enabled: false};
     const keyString = 'enabled';
     const node = {rerenders: 0, rerender() { this.rerenders++; }};
     const onMouseDown = inspectorToggle(target, keyString, node);
+    const hook = Symbol.for('lively-serialize-closure');
+    expect(typeof onMouseDown[hook]).equals('function');
+    const cells = onMouseDown[Symbol.for('lively-debug-bindings')][Symbol.for('lively-debug-binding-cells')];
+    expect(cells.target.value).equals(target);
+    expect(cells.keyString.value).equals(keyString);
+    expect(cells.node.value).equals(node);
+    Object.defineProperty(onMouseDown, hook, {configurable: true, value() {
+      throw new Error('Rich-text serialization must discard this callback before traversing its environment');
+    }});
     const attributes = {fontColor: Color.red, doit: {onMouseDown}};
     const text = new Text({readOnly: true, textAndAttributes: ['toggle', attributes]}).openInWorld();
     let copied, restored;
     try {
       await text.whenRendered();
       const pool = ObjectPool.withDefaultPlugins();
-      const serializeClosure = System.global.__serializeDebugClosure;
-      try {
-        delete System.global.__serializeDebugClosure;
-        const snapshot = serializeMorph(text, {objPool: pool});
-        restored = deserializeMorph(JSON.parse(JSON.stringify(snapshot)));
-        copied = text.copy();
-      } finally { System.global.__serializeDebugClosure = serializeClosure; }
+      const snapshot = serializeMorph(text, {objPool: pool});
+      restored = deserializeMorph(JSON.parse(JSON.stringify(snapshot)));
+      copied = text.copy();
       for (const result of [restored, copied]) {
         expect(result.textString).equals('toggle');
         expect(result.textAndAttributes[1].fontColor).equals(Color.red);

@@ -992,6 +992,21 @@ function captureRuntimeClosures(program, options) {
     const parent = path.parentPath;
     if (path.isFunctionDeclaration() && (!fn.id || !parent.isBlockStatement())) continue;
     if (!Number.isFinite(fn.start) || !Number.isFinite(fn.end)) continue;
+    let usesClassSuper = false;
+    if (path.isArrowFunctionExpression()) {
+      let usesSuper = false;
+      path.traverse({
+        Function(inner) { if (!inner.isArrowFunctionExpression()) inner.skip(); },
+        Class(inner) { inner.skip(); },
+        Super() { usesSuper = true; }
+      });
+      if (usesSuper) {
+        const home = path.findParent(parent => parent.isFunction() && !parent.isArrowFunctionExpression() || parent.isClassProperty() || parent.isClassPrivateProperty());
+        usesClassSuper = home?.isClassMethod() || home?.isClassProperty() || home?.isClassPrivateProperty();
+        // Native object-super arrows need their home object, which capture does not retain.
+        if (!usesClassSuper) continue;
+      }
+    }
     path.traverse({ReferencedIdentifier(ref) {
       const binding = ref.scope.getBinding(ref.node.name);
       if (!binding || binding.scope === program.scope || binding.identifier.start >= fn.start && binding.identifier.end <= fn.end) return;
@@ -1019,14 +1034,7 @@ function captureRuntimeClosures(program, options) {
       call.arguments.push(t.ThisExpression());
       // Resolve arguments at creation, before a caller can rebind the block.
       call.arguments.push(t.ConditionalExpression(t.BinaryExpression('===', t.UnaryExpression('typeof', t.Identifier('arguments')), t.StringLiteral('undefined')), t.Identifier('undefined'), t.Identifier('arguments')));
-      let usesSuper = false;
-      path.traverse({
-        Function(inner) { if (!inner.isArrowFunctionExpression()) inner.skip(); },
-        Class(inner) { inner.skip(); },
-        Super() { usesSuper = true; }
-      });
-      const home = path.findParent(parent => parent.isFunction() && !parent.isArrowFunctionExpression() || parent.isClassProperty() || parent.isClassPrivateProperty());
-      if (usesSuper && options.topLevelVarRecorder && options.transformES6Classes !== false && (home?.isClassMethod() || home?.isClassProperty() || home?.isClassPrivateProperty()))
+      if (usesClassSuper && options.topLevelVarRecorder && options.transformES6Classes !== false)
         call.arguments.push(t.Identifier('__lively_class__'));
     }
     if (path.isFunctionDeclaration()) {
@@ -1079,7 +1087,7 @@ function evalCodeTransform (path, state, options) {
       }));
   }
 
-  captureRuntimeClosures(path, options);
+  if (options.module?.retainRuntimeClosures) captureRuntimeClosures(path, options);
 
   // 3. capture top level vars into topLevelVarRecorder "environment"
 

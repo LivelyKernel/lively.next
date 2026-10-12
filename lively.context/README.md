@@ -17,8 +17,11 @@ closure bindings** that source recreation cannot recover. Supply those values in
 scopes; `mapping.this` supplies the receiver. Nested rewritten functions continue
 to use the existing closure/frame-state chain.
 
-Newly compiled Lively modules record retained binding cells and original source spans
-for runtime function literals. Closures created by the same factory share their cells.
+Modules selected for debugging record retained binding cells and original source spans
+for runtime function literals. Ordinary modules, including Node server modules and
+dependencies, keep native closures without capture overhead. To retain native cells
+without enabling interception, set `module.retainRuntimeClosures = true` before loading
+or reloading that module. Closures created by the same factory share their cells.
 Debugger assignments update the original native binding and sibling closures;
 `const` and declaration timing retain JavaScript semantics. The source pane displays
 the complete original module, with the selected closure highlighted in its factory.
@@ -51,9 +54,12 @@ Interception applies to function bodies; bare statements in module initializatio
 are not captured. Enable interception before creating callback references: native
 function references retained elsewhere before enabling cannot be replaced in place.
 Computed class member keys are not yet intercepted.
+Functions containing syntax unsupported by the debugger rewriter execute natively
+and warn once with the function, module and compilation error. Stops inside that
+native boundary are not intercepted.
 Object-literal methods using `super` retain native execution until their home-object
-binding is supplied; retained arrows using that native object `super` boundary cannot
-be saved in ObjectPool snapshots yet. Module-declared class `super` methods and their
+binding is supplied; their arrows also stay native and are omitted from ObjectPool
+snapshots. Module-declared class `super` methods and their
 retained arrows use the existing class-system lowering and declaring-class metadata.
 
 The System Browser's menu includes **Toggle module debugger interception**. This
@@ -66,8 +72,11 @@ exception propagation.
 You can also use `await module('your/package/file.js').setDebuggingEnabled(true)`
 after importing `module` from `lively.modules`.
 
-Retaining native closure cells adds compilation and closure-creation overhead to
-source modules, including the temporary Babel fallback for nested functions.
+Retaining native closure cells adds compilation, closure-creation and memory overhead
+to selected modules, including the temporary Babel fallback for nested functions.
+Saved closures include their binding graph and share one copy of each source version
+within a snapshot. Enabling retention later affects newly compiled factories;
+existing native callbacks require reloading their module and recreating the callbacks.
 Only selected modules pay the interpreter rewriting cost. Functions are rewritten on first use
 and their rewritten version is cached. Closure cells, original module locations,
 the existing continuation/interpreter, awaits and managed generators are reused.

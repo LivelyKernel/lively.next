@@ -37,14 +37,20 @@ export function installModuleDebugger (System, { open } = {}) {
     },
     wrapFunction (func, module) {
       if (func[Symbol.for('lively-debug-interception')]) return func;
-      let rewritten, registry;
+      let rewritten, registry, nativeFallback = false;
       const prepare = () => {
         const currentRegistry = getCurrentASTRegistry();
-        if (rewritten && registry === currentRegistry) return rewritten;
+        if (nativeFallback || rewritten && registry === currentRegistry) return rewritten;
         preparing = true;
         try {
           rewritten = func.isInterpretableFunction || func.livelyDebuggingEnabled ? func : stackCaptureMode(func, null, currentRegistry);
           registry = currentRegistry;
+          return rewritten;
+        }
+        catch (error) {
+          nativeFallback = true;
+          rewritten = func;
+          console.warn(`Could not enable Lively debugger for ${func.name || '<anonymous>'} in ${module.id}; running natively`, error);
           return rewritten;
         }
         finally { preparing = false; }

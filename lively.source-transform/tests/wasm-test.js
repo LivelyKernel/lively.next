@@ -103,7 +103,10 @@ describe('wasm transform', function () {
   it('uses the Babel fallback for retained runtime closures', function () {
     const transpiler = new SwcBrowserTranspiler(System, moduleId, {});
     const module = {id: moduleId, recorderName: '_rec', sourceAccessorName: '_source'};
-    expect(transpiler.transpileModule('export function make(value) { return () => value; }', {module})).equals(null);
+    const source = 'export function make(value) { return () => value; }';
+    expect(!!transpiler.transpileModule(source, {module})).equals(true);
+    module.retainRuntimeClosures = true;
+    expect(transpiler.transpileModule(source, {module})).equals(null);
     expect(!!transpiler.transpileModule('export const value = 2;', {module})).equals(true);
   });
 

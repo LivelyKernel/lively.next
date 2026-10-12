@@ -277,7 +277,7 @@ export async function customTranslate (load) {
 
   // Instrument only modules with an actual stop, or modules explicitly enabled
   // by the user. Strings/comments mentioning debugger do not activate it.
-  const automatic = System.debuggerInterception;
+  const automatic = System.debuggerInterception && !/^esm:|\/node_modules\//.test(load.name);
   if (isEsm && automatic && /\bdebugger\b/.test(load.source)) {
     let found = false;
     acorn.walk.simple(parse(load.source), { DebuggerStatement () { found = true; } });
@@ -291,7 +291,7 @@ export async function customTranslate (load) {
   try {
     useCache = System.useModuleTranslationCache;
     indexdb = System.global.indexedDB;
-    hashForCache = meta.hashForCache = useCache && String(string.hashCode('module-debugger-v3:' + mod.debuggingEnabled + ':' + mod.embedOriginalCode + ':' + load.source));
+    hashForCache = meta.hashForCache = useCache && String(string.hashCode('module-debugger-v4:' + mod.debuggingEnabled + ':' + mod.retainRuntimeClosures + ':' + mod.embedOriginalCode + ':' + load.source));
     if (useCache && indexdb && isEsm) {
       let cache = System._livelyModulesTranslationCache ||
                (System._livelyModulesTranslationCache = new BrowserModuleTranslationCache());

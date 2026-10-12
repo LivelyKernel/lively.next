@@ -121,7 +121,7 @@ class SwcBrowserTranspiler {
 
     // ponytail: SWC lacks retained closure cells. Reuse Babel until WASM
     // supplies the same binding cells and original source locations.
-    if (module.sourceAccessorName && module.embedOriginalCode !== false) {
+    if (module.retainRuntimeClosures && module.sourceAccessorName && module.embedOriginalCode !== false) {
       let nestedFunction = false;
       const isFunction = node => ['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'].includes(node.type);
       try {

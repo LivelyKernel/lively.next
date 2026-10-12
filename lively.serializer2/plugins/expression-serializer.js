@@ -86,11 +86,17 @@ export default class ExpressionSerializer {
 
   getExpressionForFunction (func) {
     const { package: pkg, pathInPackage } = func[Symbol.for('lively-module-meta')];
-
+    const moduleId = pkg?.name ? joinPath(pkg.name, pathInPackage) : pathInPackage;
+    const recorder = this.getModuleRecorder(moduleId);
+    const exports = System.get(this.resolveModule(moduleId)) || this.getModuleExports(moduleId);
+    const binding = recorder[func.name] === func ? func.name
+      : Object.keys(exports || {}).find(name => exports[name] === func);
+    if (!binding) throw new Error(`Cannot serialize ${func.name || 'anonymous function'} as a module reference: no matching binding in ${moduleId}`);
+    const name = binding === func.name && binding !== 'default' ? func.name : '__function__';
     return this.exprStringEncode({
-      __expr__: func.name,
+      __expr__: name,
       bindings: {
-        [pkg?.name ? joinPath(pkg.name, pathInPackage) : pathInPackage]: [func.name]
+        [moduleId]: [binding === name ? name : {exported: binding, local: name}]
       }
     });
   }
