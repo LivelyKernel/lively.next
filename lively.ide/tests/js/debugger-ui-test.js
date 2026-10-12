@@ -331,6 +331,51 @@ describe('lively debugger ui', function () {
     } finally { view.viewModel.closeDebugger(); }
   });
 
+  it('shows scope bindings directly and keeps object expansion and navigation working', async function () {
+    this.timeout(10000);
+    const { run } = await System.import('lively.context/lib/stackReification.js');
+    const { openForContinuation } = await System.import('lively.ide/js/debugger/ui.cp.js');
+    const receiver = {name: 'receiver'};
+    const view = openForContinuation(run(function variableTree () {
+      let amount = 2;
+      const item = {nested: {answer: 42}, inspectee: 'a real property'};
+      debugger;
+      return item;
+    }, null, [], {this: receiver}), $world);
+    try {
+      const model = view.viewModel, tree = model.ui.valueTree;
+      await model.selectFrame(model.continuation.currentFrame);
+      const scope = model.ui.scopeList.items.find(item => item.value.bindingNames().includes('item')).value;
+      await model.selectScope(scope);
+      view.env.forceUpdate();
+      expect(tree.textString).not.contains('inspectee:');
+      expect(tree.textString).contains('amount: 2');
+      expect(tree.treeData.getContextFor(tree.treeData.root)).equals(scope.bindings);
+      const item = tree.treeData.root.children.find(node => node.key === 'item');
+      expect(item.value).equals(model.selectedFrame.lookup('item'));
+      expect(tree.treeData.parentNode(item)).equals(tree.treeData.root);
+      await tree.onNodeCollapseChanged({node: item, isCollapsed: false});
+      expect(tree.textString).contains('inspectee:');
+      expect(tree.textString).contains('a real property');
+      const nested = item.children.find(node => node.key === 'nested');
+      await tree.onNodeCollapseChanged({node: nested, isCollapsed: false});
+      expect(tree.textString).contains('answer: 42');
+      tree.selectedNode = nested;
+      await tree.execCommand('goto parent');
+      expect(tree.selectedNode).equals(item);
+      await tree.onNodeCollapseChanged({node: item, isCollapsed: true});
+      expect(tree.textString).not.contains('answer:');
+      const receiverScope = model.ui.scopeList.items.find(item => item.value.type === 'receiver').value;
+      await model.selectScope(receiverScope);
+      expect(tree.textString).not.contains('inspectee:');
+      expect(tree.treeData.root.children[0].key).equals('this');
+      expect(tree.treeData.root.children[0].value).equals(receiver);
+      await model.selectScope(null);
+      expect(tree.textString.trim()).equals('');
+      expect(tree.selectedNode).equals(null);
+    } finally { await view.viewModel.closeDebugger(); }
+  });
+
   it('shows the source and current statement of a rewriter continuation', async function () {
     const originalFrame = {
       func: { getSource: () => 'function increment() {\n  debugger;\n}' },
