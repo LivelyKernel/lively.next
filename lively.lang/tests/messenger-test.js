@@ -1,4 +1,4 @@
-/* global beforeEach, afterEach, describe, it, setInterval, clearInterval, setTimeout */
+/* global beforeEach, afterEach, describe, it, setInterval, clearInterval, setTimeout, Promise */
 
 import { expect } from 'mocha-es6';
 import { remove, pluck } from '../array.js';
@@ -235,32 +235,21 @@ describe('messengers', function () {
       });
     });
 
-    it('can send heartbeat messages', function (done) {
-      let sendData = []; let heartbeats = [];
-      var messengerB = createMessenger(messengers, {
-        id: 'messengerB',
-        sendDelay: 10,
-        listenDelay: 10,
-        sendData: sendData,
-        heartbeatInterval: 30,
-        sendHeartbeat: function (thenDo) {
-          let msg = { target: 'someone', action: 'heartbeat', data: { time: Date.now } };
-          heartbeats.push(msg);
-          messengerB.send(msg, thenDo);
-        }
+    it('can send heartbeat messages', async function () {
+      const heartbeat = { target: 'someone', action: 'heartbeat', data: { time: Date.now } };
+      const delivered = new Promise(resolve => {
+        const messengerB = createMessenger(messengers, {
+          id: 'messengerB',
+          listenDelay: 10,
+          heartbeatInterval: 30,
+          send: function (msg, onSendDone) {
+            setTimeout(() => { onSendDone(); resolve(msg); }, 10);
+          },
+          sendHeartbeat: function (thenDo) { this.send(heartbeat, thenDo); }
+        });
+        messengerB.listen();
       });
-
-      composeAsync(
-        function (next) {
-          waitForAll({ timeout: 200 }, [messengerB.whenOnline], next);
-          messengerB.listen();
-        },
-        function (_, next) { setTimeout(next, 70); },
-        function (next) {
-          expect(sendData).to.eql(heartbeats);
-          next();
-        }
-      )(function (err) { expect(err).to.equal(null); done(); });
+      expect(await delivered).to.equal(heartbeat);
     });
   });
 
