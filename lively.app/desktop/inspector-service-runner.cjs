@@ -1,7 +1,9 @@
 // Runs the CDP-backed inspector service outside NW.js's renderer isolate.
 //
-// The renderer can be paused by `debugger;` while this plain Node process keeps
-// handling CDP events, captures the paused stack, then resumes the renderer.
+// The renderer pauses briefly when lively.context throws its halt unwind
+// exception. This plain Node process handles the CDP event, captures the
+// paused stack, then resumes the renderer so normal exception unwinding can
+// return control to the Lively UI.
 
 const { createInspectorService } = require('./inspector-service.cjs');
 

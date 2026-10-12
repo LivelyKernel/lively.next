@@ -555,6 +555,13 @@ function emitError (msg) {
   });
 }
 
+function bootUrlForPort (port) {
+  const bootUrl = process.env.LIVELY_APP_BOOT_URL || '/dashboard/';
+  if (/^https?:\/\//.test(bootUrl)) return bootUrl;
+  const path = String(bootUrl || '/dashboard/');
+  return 'http://127.0.0.1:' + port + (path.startsWith('/') ? path : '/' + path);
+}
+
 // ---------------------------------------------------------------------------
 // 5. Boot
 // ---------------------------------------------------------------------------
@@ -789,8 +796,8 @@ function emitError (msg) {
 
   emitStatus('Server ready, loading lively...');
 
-  const dashboardUrl = 'http://127.0.0.1:' + port + '/dashboard/';
-  module.exports.desktopOrigin = new URL(dashboardUrl).origin;
+  const dashboardUrl = bootUrlForPort(port);
+  module.exports.desktopOrigin = 'http://127.0.0.1:' + port;
   if (typeof nw === 'undefined') {
     log('NW.js global not available; server is ready for direct smoke mode.');
     return;
