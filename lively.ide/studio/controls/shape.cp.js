@@ -110,6 +110,7 @@ export class ShapeControlModel extends ViewModel {
           if (fixed || text) items.push({ string: 'Fixed', value: 'fixed', isListItem: true });
           if (fill) items.push({ string: 'Fill', value: 'fill', isListItem: true });
           if (hug || text) items.push({ string: 'Hug', value: 'hug', isListItem: true });
+          if (fill && text) items.push({ string: 'Shrink', value: 'shrink', isListItem: true });
           break;
         case 'height':
           if (fixed || text) items.push({ string: 'Fixed', value: 'fixed', isListItem: true });
@@ -155,7 +156,7 @@ export class ShapeControlModel extends ViewModel {
 
       const widthMode = parent.layout.getResizeWidthPolicyFor(target);
       widthModeSelector.selection = widthMode;
-      if (widthMode === 'fill') widthInput.disable();
+      if (widthMode === 'fill' || widthMode === 'shrink') widthInput.disable();
       else if (target.layout.hugContentsHorizontally) {
         widthModeSelector.selection = 'hug';
         widthInput.disable();
@@ -215,7 +216,7 @@ export class ShapeControlModel extends ViewModel {
       let widthMode = parent.layout.getResizeWidthPolicyFor(target);
       if (targetIsText && !target.fixedWidth) widthMode = 'hug';
       widthModeSelector.selection = widthMode;
-      if (widthMode === 'fill' || widthMode === 'hug') widthInput.disable();
+      if (widthMode === 'fill' || widthMode === 'hug' || widthMode === 'shrink') widthInput.disable();
       else widthInput.enable();
     }
 
@@ -317,6 +318,18 @@ export class ShapeControlModel extends ViewModel {
 
     let heightMode;
     switch (newMode) {
+      case ('shrink'):
+        symbol.textAndAttributes = [HUG_ICON, { fontFamily: 'Material Icons', fontSize: 18 }];
+        parent.layout.wrapSubmorphs = false;
+        parent.layout.setResizePolicyFor(target, {
+          width: 'shrink', height: parent.layout.getResizeHeightPolicyFor(target)
+        });
+        target.withMetaDo({ reconcileChanges: true }, () => {
+          target.fixedWidth = true;
+          target.lineWrapping = 'by-words';
+        });
+        this.ui.widthInput.disable();
+        break;
       case ('fixed'):
         symbol.textAndAttributes = [FIXED_ICON, { fontFamily: 'Material Icons', fontSize: 18 }];
         if (parentIsTiling) {

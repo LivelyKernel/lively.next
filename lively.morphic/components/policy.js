@@ -1411,7 +1411,7 @@ export class StylePolicy {
     if (layout?.resizePolicies) {
       if (heightPolicy !== 'hug') heightPolicy = layout.getResizeHeightPolicyFor(aSubmorph);
       if (widthPolicy !== 'hug') widthPolicy = layout.getResizeWidthPolicyFor(aSubmorph);
-      if (heightPolicy === 'fill' || widthPolicy === 'fill') return { widthPolicy, heightPolicy };
+      if (heightPolicy === 'fill' || widthPolicy === 'fill' || widthPolicy === 'shrink') return { widthPolicy, heightPolicy };
     }
 
     layout = aSubmorph.layout;
