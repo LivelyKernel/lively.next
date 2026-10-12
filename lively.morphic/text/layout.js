@@ -88,7 +88,9 @@ export default class Layout {
       for (let j = 0, column = 0; j < textAttributes.length; j += 2) {
         inlineMorph = textAttributes[j];
         if (inlineMorph && inlineMorph.isMorph) {
-          inlineMorph.position = this.pixelPositionFor(morph, { row: line.row, column }).subPt(morph.origin);
+          const bounds = inlineMorph.getTransform().transformRectToRect(inlineMorph.innerBounds());
+          const offset = bounds.topLeft().subPt(inlineMorph.position);
+          inlineMorph.position = this.pixelPositionFor(morph, { row: line.row, column }).addXY(morph.borderWidthLeft, morph.borderWidthTop).subPt(morph.origin).subPt(offset);
           column++;
         } else if (inlineMorph) {
           column += inlineMorph.length;
