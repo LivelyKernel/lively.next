@@ -1724,19 +1724,23 @@ export class Text extends Morph {
   defaultCharExtent () { return this.textLayout.defaultCharExtent(this); }
 
   get scrollExtent () {
+    let domExtent;
     if (!this.document && !this.renderingState.scrollLayer && ['auto', 'scroll'].includes(this.clipMode)) {
       const node = this.env.renderer?.getNodeForMorph(this);
       if (node?.isConnected && node.clientWidth && node.clientHeight) {
-        return this.extent.addXY(node.scrollWidth - node.clientWidth, node.scrollHeight - node.clientHeight);
+        domExtent = this.extent.addXY(node.scrollWidth - node.clientWidth, node.scrollHeight - node.clientHeight);
+        if (!this.renderingState.needsRemeasure &&
+            this.renderingState.renderedTextAndAttributes === this.textAndAttributes) return domExtent;
       }
     }
     // rms: See: morph>>scrollExtent
-    return this.textBounds()
+    const modelExtent = this.textBounds()
       .extent()
       .addPt(this.padding.topLeft())
       .addPt(this.padding.bottomRight())
       .addPt(this.scrollbarOffset)
       .maxPt(super.scrollExtent);
+    return domExtent ? domExtent.maxPt(modelExtent) : modelExtent;
   }
 
   get scrollbarVisible () {
