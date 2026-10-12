@@ -80,12 +80,10 @@ function nodejs_attemptToLoadProperPouchDB () {
   if (!isNode) throw new Error('nodejs_attemptToLoadProperPouchDB called under non-nodejs environment');
 
   if (typeof System !== 'undefined') {
-    let { join } = System._nodeRequire('path');
-    let storageMain = System.normalizeSync('lively.storage/index.js');
-    let pouchDBMain = System._nodeRequire('node:url').fileURLToPath(System.normalizeSync('pouchdb', storageMain));
-    let pouchDBNodeMain = join(pouchDBMain, '../../lib/index.js');
+    let storageRequire = System._nodeRequire('node:module').createRequire(
+      System.normalizeSync('lively.storage/index.js'));
     try {
-      PouchDB = System._nodeRequire(pouchDBNodeMain);
+      PouchDB = storageRequire('pouchdb');
       PouchDB.plugin(pouchdbAdapterMem);
       return true;
     } catch (e) { return false; }
