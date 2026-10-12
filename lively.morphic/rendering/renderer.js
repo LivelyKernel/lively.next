@@ -1870,17 +1870,25 @@ export default class Renderer {
 
   updateEmbeddedMorphPositions (morph) {
     if (morph.document || !morph.embeddedMorphMap.size) return;
-    const inverseTransform = morph.getGlobalTransform().inverse();
     for (const embedded of morph.embeddedMorphs) {
       const node = this.getNodeForMorph(embedded);
       if (!node?.isConnected) continue;
-      const { x, y } = node.getBoundingClientRect();
-      const delta = inverseTransform.transformDirection(pt(x, y).subPt(embedded.globalBounds().topLeft()));
+      const delta = this.getInlineMorphPositionDelta(embedded, node.getBoundingClientRect());
       if (delta.r() < 1e-7) continue;
       morph._positioningSubmorph = embedded;
       try { embedded.position = embedded.position.addPt(delta); }
       finally { morph._positioningSubmorph = false; }
     }
+  }
+
+  getInlineMorphPositionDelta (morph, clientBounds) {
+    const world = morph.world();
+    const worldNode = this.getNodeForMorph(world);
+    const worldBounds = worldNode.getBoundingClientRect();
+    const renderedPosition = pt(clientBounds.x - worldBounds.x, clientBounds.y - worldBounds.y)
+      .scaleBy(1 / world.scale).addPt(world.scroll);
+    const ownBounds = morph.getGlobalTransform().transformRectToRect(morph.origin.negated().extent(morph.extent));
+    return morph.owner.getGlobalTransform().inverse().transformDirection(renderedPosition.subPt(ownBounds.topLeft()));
   }
 
   /**

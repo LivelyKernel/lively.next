@@ -5,6 +5,47 @@ import { pt } from 'lively.graphics';
 import { promise } from 'lively.lang';
 
 describe('embedded morphs in static text', () => {
+  it('keeps inline positions in world coordinates when the root is offset and scaled', async () => {
+    const embedded = new Morph({ extent: pt(40, 20), submorphs: [new Morph({ position: pt(-10, -10), extent: pt(15, 15) })] });
+    const text = new Text({ readOnly: true, textAndAttributes: ['before ', null, embedded, null, ' after', null] }).openInWorld();
+    const world = text.world();
+    const worldNode = text.env.renderer.getNodeForMorph(world);
+    const scale = world.scale;
+    const translate = worldNode.style.translate;
+    try {
+      await text.whenRendered();
+      worldNode.style.translate = '37px 29px';
+      world.scale = 1.25;
+      for (let i = 0; i < 3; i++) {
+        text.makeDirty();
+        text.env.forceUpdate();
+        const client = text.env.renderer.getNodeForMorph(embedded).getBoundingClientRect();
+        const root = worldNode.getBoundingClientRect();
+        const own = embedded.getGlobalTransform().transformRectToRect(embedded.origin.negated().extent(embedded.extent));
+        expect((client.x - root.x) / world.scale + world.scroll.x).closeTo(own.x, 0.2);
+        expect((client.y - root.y) / world.scale + world.scroll.y).closeTo(own.y, 0.2);
+      }
+    } finally { world.scale = scale; worldNode.style.translate = translate; text.remove(); world.env.forceUpdate(); }
+  });
+
+  it('keeps a previously removed embedded morph with its new owner when switching to static text', async () => {
+    const embedded = new Morph({ extent: pt(25, 15) });
+    const text = new Text({ readOnly: false, textAndAttributes: ['a', null, embedded, null] }).openInWorld();
+    try {
+      await text.whenRendered();
+      text.deleteText({ start: { row: 0, column: 1 }, end: { row: 0, column: 2 } });
+      const world = text.world();
+      world.addMorph(embedded);
+      text.readOnly = true;
+      text.env.forceUpdate();
+      expect(embedded.owner).equals(world);
+      expect(text.embeddedMorphMap.has(embedded)).equals(false);
+      text.readOnly = false;
+      expect(embedded.owner).equals(world);
+      expect(text.embeddedMorphMap.has(embedded)).equals(false);
+    } finally { embedded.remove(); text.remove(); }
+  });
+
   it('preserves embedded iframe state through static text measurements', async () => {
     const embedded = new HTMLMorph({ extent: pt(160, 80), html: '<iframe srcdoc="<input value=initial>"></iframe>' });
     const text = new Text({
@@ -81,8 +122,10 @@ describe('embedded morphs in static text', () => {
       ordinary.forEach(morph => text.addMorph(morph));
       expect(text.submorphs).deep.equals([embedded, ...ordinary]);
       expect(text.withAllSubmorphsSelect(morph => morph === embedded)).length(1);
+      const embeddedNode = text.env.renderer.getNodeForMorph(embedded);
       embedded.remove();
       text.env.forceUpdate();
+      expect(text.renderingState.textLayer.contains(embeddedNode)).equals(false);
       expect(text.textString).equals('before  after');
       expect(text.submorphs).deep.equals(ordinary);
       expect(text.embeddedMorphMap.has(embedded)).equals(false);
