@@ -1822,7 +1822,10 @@ async function main () {
         });
         if (registryResult?.exceptionDetails) throw new Error('Native registry failed: ' + JSON.stringify(registryResult));
         const registry = native ? registryResult.result.value
-          : await (await fetch(`http://127.0.0.1:${port}/package-registry.json`)).json();
+          : await waitFor('desktop package registry', async () => {
+            const response = await fetch(`http://127.0.0.1:${port}/package-registry.json`);
+            return response.ok ? response.json() : null;
+          }, 60000);
         const { packageMap } = registry;
         for (const name of ['lively.modules', 'lively.morphic', 'lively.server', 'lively.shell', 'lively.freezer']) {
           const entry = packageMap[name];
