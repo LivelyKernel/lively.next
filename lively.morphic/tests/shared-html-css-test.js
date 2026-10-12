@@ -1,13 +1,17 @@
 /* global describe, it */
 import { expect } from 'mocha-es6';
 import { HTMLMorph } from '../html-morph.js';
-import { addOrChangeCSSDeclaration } from '../rendering/dom-helper.js';
+import { addOrChangeCSSDeclaration, addOrChangeLinkedCSS } from '../rendering/dom-helper.js';
 
 describe('shared HTML morph CSS', () => {
   it('preserves external stylesheet ordering when sharing and toggling declarations', async () => {
-    for (const shareCss of [false, true]) {
+    for (const linked of [false, true]) for (const shareCss of [false, true]) {
       const outer = new HTMLMorph({ shareCss, html: '<span class="content">outer</span>', cssDeclaration: '.content { color: red; }' });
-      const external = addOrChangeCSSDeclaration('external-cascade-test', `#${outer.id} .content { color: blue; }`, outer.document);
+      const source = `#${outer.id} .content { color: blue; }`;
+      const external = linked
+        ? await addOrChangeLinkedCSS('external-cascade-test', 'data:text/css,' + encodeURIComponent(source), outer.document)
+        : addOrChangeCSSDeclaration('external-cascade-test', source, outer.document);
+      if (linked) external.rel = 'StyleSheet';
       const inner = new HTMLMorph({ shareCss, html: '<span class="content">inner</span>', cssDeclaration: '.content { color: red; }' });
       outer.addMorph(inner);
       outer.openInWorld();
