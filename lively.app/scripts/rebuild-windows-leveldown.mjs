@@ -10,7 +10,10 @@ assert.equal(process.platform, 'win32', 'Leveldown rebuild is specific to Window
 const root = path.resolve(process.argv[2] || '.');
 const node = path.resolve(process.argv[3] || process.execPath);
 const require = createRequire(path.join(root, 'lively.storage/package.json'));
-const leveldown = path.dirname(createRequire(require.resolve('pouchdb')).resolve('leveldown/package.json'));
+const pouchdb = createRequire(require.resolve('pouchdb'));
+// PouchDB loads Leveldown directly and through level's legacy migration adapter.
+const leveldown = new Set([pouchdb, createRequire(pouchdb.resolve('level'))]
+  .map(owner => path.dirname(owner.resolve('leveldown/package.json'))));
 const gyp = path.join(path.dirname(process.execPath), 'node_modules/npm/node_modules/node-gyp');
 const hook = path.join(gyp, 'src/win_delay_load_hook.cc');
 const original = fs.readFileSync(hook, 'utf8');
@@ -22,8 +25,10 @@ assert.notEqual(patched, original, 'Unrecognized node-gyp Windows delay-load hoo
 fs.writeFileSync(hook, patched);
 try {
   const version = execFileSync(node, ['-p', 'process.versions.node'], { encoding: 'utf8' }).trim();
-  execFileSync(node, [path.join(gyp, 'bin/node-gyp.js'), 'rebuild',
-    '--directory=' + leveldown, '--target=' + version], { stdio: 'inherit' });
+  for (const directory of leveldown) {
+    execFileSync(node, [path.join(gyp, 'bin/node-gyp.js'), 'rebuild',
+      '--directory=' + directory, '--target=' + version], { stdio: 'inherit' });
+  }
 } finally {
   fs.writeFileSync(hook, original);
 }
