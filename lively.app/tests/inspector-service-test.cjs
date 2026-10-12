@@ -24,6 +24,9 @@ class FakeCDPClient {
       return { result: this.properties[params.objectId] || [] };
     }
     if (method === 'Runtime.callFunctionOn') {
+      if (params.functionDeclaration.includes('IsHaltUnwind')) {
+        return { result: { value: params.objectId === 'halt-unwind' } };
+      }
       return { result: { value: true } };
     }
     if (method === 'Runtime.evaluate') {
@@ -135,6 +138,24 @@ async function testExceptionCaptureStoresExceptionObject () {
   assert(exceptionStoreIndex > frameStoreIndex);
 }
 
+async function testTaggedHaltUnwindIsIgnored () {
+  const client = new FakeCDPClient({ armed: null });
+  const service = new InspectorService({ client });
+  const descriptor = await service.capturePaused(pausedPayload({
+    reason: 'exception',
+    data: { type: 'object', objectId: 'halt-unwind', description: '[LivelyInspectorHalt halt]' }
+  }));
+
+  assert.strictEqual(descriptor, null);
+  const unwindCheck = client.calls.find(call =>
+    call.method === 'Runtime.callFunctionOn' &&
+    call.params.objectId === 'halt-unwind');
+  assert.doesNotThrow(() => new Function('return (' + unwindCheck.params.functionDeclaration + ')')());
+  assert(!client.calls.some(call =>
+    call.method === 'Runtime.getProperties' ||
+    (call.method === 'Runtime.callFunctionOn' && call.params.objectId === 'scope-local')));
+}
+
 async function testHandlePausedResumesAndDeliversDescriptor () {
   const client = new FakeCDPClient({
     properties: { 'scope-local': [], 'scope-closure': [] }
@@ -153,6 +174,7 @@ async function run () {
   await testTargetSelection();
   await testCaptureStoresValuesInRenderer();
   await testExceptionCaptureStoresExceptionObject();
+  await testTaggedHaltUnwindIsIgnored();
   await testHandlePausedResumesAndDeliversDescriptor();
   console.log('inspector service tests ok');
 }

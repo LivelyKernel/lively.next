@@ -58,6 +58,81 @@ function frameIdsFromContext (context) {
   return context.frameOrder.slice();
 }
 
+function importDebuggerUI () {
+  const system = systemObject();
+  if (system && typeof system.import === 'function') {
+    return system.import('lively.ide/js/debugger/ui.cp.js');
+  }
+  return import('lively.ide/js/debugger/ui.cp.js');
+}
+
+function openContinuationForRuntime (runtime, continuation) {
+  if (!runtime.autoOpen || !continuation) return Promise.resolve(null);
+  if (runtime.openedCaptureIds.has(continuation.id)) return Promise.resolve(null);
+  runtime.openedCaptureIds.add(continuation.id);
+
+  const open = runtime.openForContinuation || (async continuation => {
+    const mod = await importDebuggerUI();
+    return mod.openForContinuation(continuation);
+  });
+
+  return Promise.resolve().then(() => open(continuation)).catch(err => {
+    runtime.openedCaptureIds.delete(continuation.id);
+    if (typeof console !== 'undefined' && console.warn) {
+      console.warn('Could not open lively.context debugger', err);
+    }
+    return null;
+  });
+}
+
+function installCaptureListener (runtime) {
+  const Global = globalObject();
+  Global.__LIVELY_INSPECTOR_CAPTURE_RUNTIME__ = runtime;
+  if (Global.__LIVELY_INSPECTOR_CAPTURE_LISTENER__) {
+    drainPendingCaptures(runtime);
+    return;
+  }
+  runtime.captureListenerInstalled = true;
+  Global.__LIVELY_INSPECTOR_CAPTURE_LISTENER__ = true;
+
+  if (typeof Global.addEventListener === 'function') {
+    Global.addEventListener('lively-desktop-debugger-capture', evt => {
+      const activeRuntime = Global.__LIVELY_INSPECTOR_CAPTURE_RUNTIME__;
+      if (activeRuntime && evt && evt.detail) activeRuntime.deliverCapture(evt.detail);
+    });
+  }
+
+  drainPendingCaptures(runtime);
+}
+
+function installHaltUnwindSuppression () {
+  const Global = globalObject();
+  if (Global.__LIVELY_INSPECTOR_HALT_SUPPRESSION__) return;
+  Global.__LIVELY_INSPECTOR_HALT_SUPPRESSION__ = true;
+
+  if (typeof Global.addEventListener !== 'function') return;
+
+  Global.addEventListener('error', evt => {
+    if (evt && isInspectorHaltUnwind(evt.error) && typeof evt.preventDefault === 'function') {
+      evt.preventDefault();
+    }
+  }, true);
+
+  Global.addEventListener('unhandledrejection', evt => {
+    if (evt && isInspectorHaltUnwind(evt.reason) && typeof evt.preventDefault === 'function') {
+      evt.preventDefault();
+    }
+  }, true);
+}
+
+function drainPendingCaptures (runtime) {
+  const Global = globalObject();
+  const pending = Global.__LIVELY_PENDING_DEBUGGER_CAPTURES__;
+  if (Array.isArray(pending) && pending.length) {
+    pending.splice(0).forEach(descriptor => runtime.deliverCapture(descriptor));
+  }
+}
+
 export class InspectorRegistry {
   constructor ({ bridge } = {}) {
     this.bridge = bridge || null;
@@ -385,7 +460,7 @@ export function isInspectorHaltUnwind (err) {
   return !!err && (err.isLivelyInspectorHaltUnwind || err.tag === HALT_UNWIND_TAG);
 }
 
-export function installInspectorRuntime ({ bridge, env } = {}) {
+export function installInspectorRuntime ({ bridge, env, autoOpen = true, openForContinuation = null } = {}) {
   const livelyEnv = env || getLivelyEnv();
   let registry = livelyEnv.debuggerContexts;
 
@@ -399,8 +474,14 @@ export function installInspectorRuntime ({ bridge, env } = {}) {
   runtime = {
     registry,
     bridge: bridge || registry.bridge || null,
+    autoOpen,
+    openForContinuation,
+    openedCaptureIds: new Set(),
+    captureListenerInstalled: false,
     deliverCapture (descriptor) {
-      return registry.deliverCapture(descriptor);
+      const continuation = registry.deliverCapture(descriptor);
+      openContinuationForRuntime(this, continuation);
+      return continuation;
     }
   };
 
@@ -408,6 +489,8 @@ export function installInspectorRuntime ({ bridge, env } = {}) {
   if (!runtime.bridge && desktopBridge && typeof desktopBridge.armHalt === 'function') {
     runtime.bridge = desktopBridge;
   }
+  installCaptureListener(runtime);
+  installHaltUnwindSuppression();
 
   return runtime;
 }

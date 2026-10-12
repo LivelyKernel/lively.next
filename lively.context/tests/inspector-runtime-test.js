@@ -1,5 +1,5 @@
 "format esm";
-/*global describe, it, beforeEach*/
+/*global describe, it, beforeEach, afterEach, globalThis*/
 import { expect } from 'mocha-es6';
 import {
   InspectorRegistry,
@@ -16,6 +16,10 @@ describe('inspector runtime', function () {
 
   beforeEach(function () {
     registry = new InspectorRegistry();
+  });
+
+  afterEach(function () {
+    delete globalThis.__LIVELY_PENDING_DEBUGGER_CAPTURES__;
   });
 
   function createContext (spec = {}) {
@@ -159,6 +163,57 @@ describe('inspector runtime', function () {
 
     expect(env.debuggerContexts).equals(runtime.registry);
     expect(runtime.registry).to.be.instanceof(InspectorRegistry);
+  });
+
+  it('auto-opens delivered captures once', async function () {
+    const opened = [];
+    const runtime = installInspectorRuntime({
+      env: {},
+      openForContinuation: continuation => opened.push(continuation)
+    });
+
+    runtime.deliverCapture({ captureId: 'capture-open', frames: [] });
+    runtime.deliverCapture({ captureId: 'capture-open', frames: [] });
+    await Promise.resolve();
+
+    expect(opened).to.have.length(1);
+    expect(opened[0].id).equals('capture-open');
+  });
+
+  it('drains pending desktop captures when installed', async function () {
+    const opened = [];
+    globalThis.__LIVELY_PENDING_DEBUGGER_CAPTURES__ = [
+      { captureId: 'capture-pending', frames: [] }
+    ];
+
+    installInspectorRuntime({
+      env: {},
+      openForContinuation: continuation => opened.push(continuation)
+    });
+    await Promise.resolve();
+
+    expect(opened).to.have.length(1);
+    expect(opened[0].id).equals('capture-pending');
+  });
+
+  it('suppresses tagged halt unwind boundary events', function () {
+    const oldAddEventListener = globalThis.addEventListener;
+    const handlers = {};
+    delete globalThis.__LIVELY_INSPECTOR_HALT_SUPPRESSION__;
+    globalThis.addEventListener = (type, handler) => { handlers[type] = handler; };
+
+    try {
+      installInspectorRuntime({ env: {}, autoOpen: false });
+      let prevented = false;
+      handlers.error({
+        error: { tag: 'lively.context.inspector.halt' },
+        preventDefault () { prevented = true; }
+      });
+      expect(prevented).equals(true);
+    } finally {
+      globalThis.addEventListener = oldAddEventListener;
+      delete globalThis.__LIVELY_INSPECTOR_HALT_SUPPRESSION__;
+    }
   });
 
   it('arms the bridge and throws a tagged halt unwind', function () {
