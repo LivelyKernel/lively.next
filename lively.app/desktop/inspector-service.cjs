@@ -221,6 +221,17 @@ function serviceAttachedExpression (attached) {
   })()`;
 }
 
+const BREAKPOINT_TRAP_EXPRESSION = `(() => {
+  const desktop = globalThis.livelyDesktop || (globalThis.livelyDesktop = {});
+  const debuggerBridge = desktop.debugger || (desktop.debugger = {});
+  if (typeof debuggerBridge.breakpointTrap !== 'function') {
+    debuggerBridge.breakpointTrap = function livelyInspectorBreakpointTrap() {
+      return true;
+    };
+  }
+  return debuggerBridge.breakpointTrap;
+})()`;
+
 const STORE_ARGUMENTS_FUNCTION = `(payload => {
   ${RENDERER_HELPERS}
   const registry = livelyInspectorRegistryForCapture(payload);
@@ -307,6 +318,7 @@ class InspectorService {
     this.captureCount = 0;
     this.started = false;
     this.handlingPause = false;
+    this.functionCallBreakpointId = null;
   }
 
   async start () {
@@ -320,8 +332,9 @@ class InspectorService {
       this.client.onEvent((method, params) => {
         if (method === 'Debugger.paused') this.handlePaused(params);
         if (method === 'Runtime.executionContextCreated' || method === 'Page.loadEventFired') {
-          this.markRendererServiceAttached(true).catch(err => {
-            this.log('inspector service status refresh failed: ' + (err.stack || err));
+          this.installBreakpointTrap().then(() =>
+            this.markRendererServiceAttached(true)).catch(err => {
+              this.log('inspector service status refresh failed: ' + (err.stack || err));
           });
         }
       });
@@ -331,6 +344,7 @@ class InspectorService {
     await this.client.send('Debugger.enable');
     await this.client.send('Debugger.setPauseOnExceptions', { state: 'uncaught' });
     this.started = true;
+    await this.installBreakpointTrap();
     await this.markRendererServiceAttached(true);
     this.log('inspector service attached to renderer target');
     return this;
@@ -355,6 +369,32 @@ class InspectorService {
       this.log('inspector service status update failed: ' + (err.stack || err));
       return false;
     }
+  }
+
+  async installBreakpointTrap () {
+    if (!this.client) return null;
+    if (this.functionCallBreakpointId) {
+      try {
+        await this.client.send('Debugger.removeBreakpoint', {
+          breakpointId: this.functionCallBreakpointId
+        });
+      } catch (_) {}
+      this.functionCallBreakpointId = null;
+    }
+
+    const trap = await this.client.send('Runtime.evaluate', {
+      expression: BREAKPOINT_TRAP_EXPRESSION,
+      returnByValue: false,
+      silent: true
+    });
+    const objectId = trap && trap.result && trap.result.objectId;
+    if (!objectId) throw new Error('Could not install inspector breakpoint trap');
+
+    const breakpoint = await this.client.send('Debugger.setBreakpointOnFunctionCall', {
+      objectId
+    });
+    this.functionCallBreakpointId = breakpoint && breakpoint.breakpointId || null;
+    return this.functionCallBreakpointId;
   }
 
   async waitForPageTarget () {
