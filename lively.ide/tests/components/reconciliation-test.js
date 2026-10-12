@@ -154,7 +154,13 @@ describe('component -> source reconciliation', function () {
     text.withMetaDo({ reconcileChanges: true }, () => { text.selectionMode = 'native'; });
     await ComponentA._changeTracker.onceChangesProcessed();
     expect(await getSource()).includes("selectionMode: 'native'");
-    expect(part(A).getSubmorphNamed('some submorph').selectionMode).equals('native');
+    const instance = part(A).openInWorld();
+    try {
+      await instance.whenRendered();
+      instance.master.applyIfNeeded(true);
+      instance.env.forceUpdate();
+      expect(instance.getSubmorphNamed('some submorph').selectionMode).equals('native');
+    } finally { instance.remove(); }
     text.withMetaDo({ reconcileChanges: true }, () => { text.selectionMode = 'none'; });
     await ComponentA._changeTracker.onceChangesProcessed();
     expect(part(A).getSubmorphNamed('some submorph').selectionMode).equals('none');

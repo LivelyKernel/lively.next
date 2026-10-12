@@ -2,7 +2,7 @@
 /* global describe, it, afterEach */
 import { expect } from 'mocha-es6';
 import { Color, pt } from 'lively.graphics';
-import { tree, grid } from 'lively.lang';
+import { tree, grid, obj } from 'lively.lang';
 import { serialize } from 'lively.serializer2';
 import { ComponentDescriptor, TilingLayout, Text, Morph, morph } from 'lively.morphic';
 import { component, ViewModel, without, part, add } from '../components/core.js';
@@ -439,7 +439,7 @@ describe('spec based components', () => {
     p2.__wasAddedToDerived__ = true;
     expect(JSON.parse(JSON.stringify(e2.stylePolicy.synthesizeSubSpec('foo')))).to.eql(JSON.parse(JSON.stringify(p2)));
     expect(sanitizeSpec(e3.stylePolicy.synthesizeSubSpec('alice'))).to.eql({
-      ...sanitizeSpec(getDefaultValuesFor('text')),
+      ...obj.dissoc(sanitizeSpec(getDefaultValuesFor('text')), ['selectionMode']),
       fill: Color.black,
       type: 'text',
       textAndAttributes: ['hello', { fontWeight: 'bold' }, 'world', { fontStyle: 'italic' }]
@@ -519,7 +519,7 @@ describe('spec based components', () => {
       fill: Color.red
     });
     expect(sanitizeSpec(d.stylePolicy.synthesizeSubSpec('molly').synthesizeSubSpec('alice'))).to.eql({
-      ...sanitizeSpec(getDefaultValuesFor(Text)),
+      ...obj.dissoc(sanitizeSpec(getDefaultValuesFor(Text)), ['selectionMode']),
       fill: Color.blue,
       type: 'text',
       textAndAttributes: ['hello', { fontWeight: 'bold' }, 'world', { fontStyle: 'italic' }]

@@ -1526,6 +1526,8 @@ export class PolicyApplicator extends StylePolicy {
     if (synthesized.isPolicy && !synthesized.isPolicyApplicator) {
       return new PolicyApplicator({}, synthesized);
     }
+    // Text derives its selection mode from readOnly unless a component specifies it.
+    if (synthesized.selectionMode?.isDefaultValue) delete synthesized.selectionMode;
     synthesized = sanitizeSpec(synthesized);
     if ('width' in synthesized && synthesized.extent?.isPoint) {
       synthesized.extent = synthesized.extent.withX(synthesized.width);

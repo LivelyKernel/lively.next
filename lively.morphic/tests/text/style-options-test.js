@@ -2,10 +2,42 @@
 import { expect } from 'mocha-es6';
 import { Text } from '../../text/morph.js';
 import { Color, Rectangle, pt } from 'lively.graphics';
+import { component, part } from '../../components/core.js';
 
 describe('text styling and display options', () => {
   let text;
   afterEach(() => text && text.remove());
+
+  for (const readOnly of [true, false]) {
+    it(`preserves editable selection under component defaults (${readOnly ? 'static' : 'editable'} base)`, async () => {
+      const base = component({ type: Text, readOnly, textString: 'editor' });
+      text = part(base, { readOnly: false }).openInWorld();
+      await text.whenRendered();
+      text.master.applyIfNeeded(true);
+      text.env.forceUpdate();
+      expect(text.selectionMode).equals('lively');
+      expect(text.selectable).to.be.true;
+      text.cursorPosition = { row: 0, column: 3 };
+      expect(text.cursorPosition).deep.equals({ row: 0, column: 3 });
+      text.readOnly = true;
+      text.master.applyIfNeeded(true);
+      expect(text.selectionMode).equals('none');
+      text.readOnly = false;
+      text.master.applyIfNeeded(true);
+      expect(text.selectionMode).equals('lively');
+    });
+  }
+
+  it('preserves explicit native selection through component application and readOnly changes', async () => {
+    text = part(component({ type: Text, selectionMode: 'native', textString: 'selectable' })).openInWorld();
+    await text.whenRendered();
+    text.master.applyIfNeeded(true);
+    expect(text.selectionMode).equals('native');
+    text.readOnly = false;
+    expect(text.selectionMode).equals('lively');
+    text.readOnly = true;
+    expect(text.selectionMode).equals('native');
+  });
 
   for (const readOnly of [true, false]) {
     it(`keeps whole-text decoration colors on underlined and link runs (${readOnly ? 'static' : 'editable'})`, async () => {
