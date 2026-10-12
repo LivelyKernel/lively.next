@@ -88,9 +88,10 @@ export default class ExpressionSerializer {
     const { package: pkg, pathInPackage } = func[Symbol.for('lively-module-meta')];
     const moduleId = pkg?.name ? joinPath(pkg.name, pathInPackage) : pathInPackage;
     const recorder = this.getModuleRecorder(moduleId);
-    const exports = System.get(this.resolveModule(moduleId)) || this.getModuleExports(moduleId);
+    const exports = this.getModuleExports(moduleId);
     const binding = recorder[func.name] === func ? func.name
-      : Object.keys(exports || {}).find(name => exports[name] === func);
+      : Object.keys(exports || {}).find(name => exports[name] === func) ||
+        (!func[Symbol.for('lively-local-closure')] && func.name);
     if (!binding) throw new Error(`Cannot serialize ${func.name || 'anonymous function'} as a module reference: no matching binding in ${moduleId}`);
     const name = binding === func.name && binding !== 'default' ? func.name : '__function__';
     return this.exprStringEncode({
@@ -130,13 +131,22 @@ export default class ExpressionSerializer {
   }
 
   getModuleRecorder (modName) {
+    if (lively.FreezerRuntime) {
+      const runtime = lively.FreezerRuntime;
+      return runtime.get(runtime.decanonicalize(modName)) || runtime.fetchStandaloneFor(modName)?.exports || {};
+    }
     const m = System.get('@lively-env').loadedModules[this.resolveModule(modName)];
     return m ? m.recorder : {};
   }
 
   getModuleExports (modName) {
+    if (lively.FreezerRuntime) {
+      const runtime = lively.FreezerRuntime;
+      const m = runtime.get(runtime.decanonicalize(modName), false) || runtime.fetchStandaloneFor(modName);
+      return m?.exports || {};
+    }
     const m = System.get('@lively-env').loadedModules[this.resolveModule(modName)];
-    return m ? m.record().exports : {};
+    return System.get(this.resolveModule(modName)) || (m ? m.record().exports : {});
   }
 
   async ensureAllBindingsLoaded (exprObj) {

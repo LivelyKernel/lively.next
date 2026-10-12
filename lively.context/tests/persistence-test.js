@@ -1,10 +1,11 @@
 /* global System, describe, before, after, it */
 import { expect } from 'mocha-es6';
+import { parseFunction } from 'lively.ast';
 import { resource } from '../../lively.resources/index.js';
 import { serialize, deserialize, ObjectPool, ExpressionSerializer } from '../../lively.serializer2/index.js';
 import { run, Continuation } from '../lib/stackReification.js';
 import { resumeInspectorContinuation } from '../lib/inspector-interpreter.js';
-import { Interpreter } from '../lib/interpreter.js';
+import { Interpreter, Function as InterpretedFunction, Scope } from '../lib/interpreter.js';
 import { declaringClassCell } from '../lib/exception.js';
 
 const fn = source => globalThis.Function('return (' + source + ')')();
@@ -56,6 +57,92 @@ describe('suspended continuation persistence', function () {
       expect(state.receiver.value).equals(generation);
     }
     expect(receiver.value).equals(0);
+  });
+
+  it('keeps referenced lexical arguments through three save/load generations, including nested arrows', function () {
+    for (const source of ['() => arguments[0]', '() => () => arguments[0]', '(value = arguments[0]) => value']) {
+      const value = {amount: 7};
+      const interpreted = new InterpretedFunction(parseFunction(source, {sourceType: 'script', locations: true, addSource: true, addAstIndex: true}), new Scope({}));
+      interpreted.lexicalArguments = [value];
+      let state = {value, callback: interpreted.asFunction()};
+      for (let generation = 1; generation <= 3; generation++) {
+        state = roundTrip(state);
+        const result = state.callback();
+        expect(typeof result === 'function' ? result() : result).equals(state.value);
+        state.value.amount++;
+      }
+      expect(state.value.amount).equals(10);
+      expect(value.amount).equals(7);
+    }
+  });
+
+  it('omits arguments captured only by local bindings or regular nested functions', function () {
+    const captured = fn('function captured() { "use strict"; return arguments; }')(1000);
+    const cases = [
+      ['arguments => arguments[0]', [[9]], 9],
+      ['({arguments}) => arguments[0]', [{arguments: [9]}], 9],
+      ['() => (arguments => arguments[0])([9])', [], 9],
+      ['() => (function() { return arguments[0]; })(9)', [], 9],
+      ['() => (function() { return (() => arguments[0])(); })(9)', [], 9],
+      ['() => ({arguments: 9}).arguments', [], 9],
+      ['() => { /* arguments */ return "arguments"; }', [], 'arguments']
+    ];
+    for (const [source, args, expected] of cases) {
+      const interpreted = new InterpretedFunction(parseFunction(source, {sourceType: 'script', locations: true, addSource: true, addAstIndex: true}), new Scope({}));
+      interpreted.lexicalArguments = captured;
+      let callback = interpreted.asFunction();
+      for (let generation = 1; generation <= 3; generation++) {
+        const snapshot = serialize(callback);
+        expect(Object.values(snapshot.snapshot).some(entry => entry.props.lexicalArguments || entry.props.serializedLexicalArguments)).equals(false);
+        callback = deserialize(JSON.parse(JSON.stringify(snapshot)));
+        expect(callback(...args)).equals(expected);
+      }
+    }
+  });
+
+  it('normalizes strict native arguments while keeping shared argument values and receivers', function () {
+    const receiver = new SnapshotChild();
+    const value = {amount: 7};
+    const callbacks = receiver.argumentCallbacks(value);
+    expect(() => callbacks.read._lexicalArguments.callee).to.throw(TypeError);
+    let state = {receiver, value, ...callbacks};
+    receiver.state = value.state = state;
+    for (let generation = 1; generation <= 3; generation++) {
+      state = roundTrip(state);
+      expect(state.value.state).equals(state);
+      expect(state.receiver.state).equals(state);
+      for (const result of [state.read.call({}), state.nested()()]) {
+        expect(result[0]).equals(state.receiver);
+        expect(result[1]).equals(state.value);
+      }
+      expect(state.args()).equals(state.argsAlias());
+      expect(state.args()[0]).equals(state.value);
+      const replacement = {amount: generation};
+      state.args()[0] = replacement;
+      expect(state.read()[1]).equals(replacement);
+      expect(state.nested()()[1]).equals(replacement);
+      state.argsAlias()[0] = state.value;
+      state.value.amount++;
+    }
+    expect(state.value.amount).equals(10);
+    expect(value.amount).equals(7);
+  });
+
+  it('refreshes native argument captures when saving again with the same object pool', function () {
+    const receiver = new SnapshotChild();
+    const callbacks = receiver.argumentCallbacks({amount: 7});
+    const pool = ObjectPool.withDefaultPlugins();
+    const state = {receiver, ...callbacks};
+    const first = deserialize(JSON.parse(JSON.stringify(serialize(state, {objPool: pool}))));
+    expect(first.read()[1].amount).equals(7);
+    state.value = {amount: 8};
+    callbacks.args()[0] = state.value;
+    state._rev = 1;
+    const second = deserialize(JSON.parse(JSON.stringify(serialize(state, {objPool: pool}))));
+    expect(second.read()[1]).equals(second.value);
+    expect(second.args()).equals(second.argsAlias());
+    expect(second.nested()()[1]).equals(second.value);
+    expect(second.value.amount).equals(8);
   });
 
   it('restores a class super callback with its declaring class and lexical receiver', function () {
@@ -125,8 +212,12 @@ describe('suspended continuation persistence', function () {
     try {
       await file.write(original);
       const {make} = await System.import(id);
-      const ten = JSON.stringify(serialize(Array.from({length: 10}, () => make(1))));
-      const fifty = JSON.stringify(serialize(Array.from({length: 50}, () => make(1))));
+      const tenSnapshot = serialize({callbacks: Array.from({length: 10}, (_, index) => make(index))});
+      const fiftySnapshot = serialize({callbacks: Array.from({length: 50}, (_, index) => make(index))});
+      const ten = JSON.stringify(tenSnapshot);
+      const fifty = JSON.stringify(fiftySnapshot);
+      expect(deserialize(JSON.parse(ten)).callbacks.map(callback => callback())).deep.equals(Array.from({length: 10}, (_, index) => index + 1));
+      expect(deserialize(JSON.parse(fifty)).callbacks.map(callback => callback())).deep.equals(Array.from({length: 50}, (_, index) => index + 1));
       expect((fifty.length - ten.length) / 40).lessThan(original.length / 4);
       const old = make(1);
       await mod.changeSource(edited, {doSave: false});

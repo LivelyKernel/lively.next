@@ -4,7 +4,9 @@ import { expect, chai } from 'mocha-es6';
 import { obj } from 'lively.lang';
 import ExpressionSerializer from '../plugins/expression-serializer.js';
 import { connect } from 'lively.bindings';
-import { serialize } from '../index.js';
+import { resource } from 'lively.resources';
+import module from '../../lively.modules/src/module.js';
+import { serialize, deserialize } from '../index.js';
 
 let sut = new ExpressionSerializer({ prefix: '_prefix' });
 
@@ -104,8 +106,7 @@ describe('expression serializer deserialize', () => {
   it('rejects local varMapping functions even when a top-level binding has the same name', () => {
     const id = 'local://expression-local-function-test.js';
     const topLevel = function double(value) { return value * 2; };
-    const local = function double(value) { return value * 3; };
-    Object.defineProperty(local, Symbol.for('lively-module-meta'), {value: {package: {}, pathInPackage: id}});
+    const local = module(System, id).recordDebugClosure(function double(value) { return value * 3; }, {}, 0, 0, '', 'double');
     System.set(id, System.newModule({double: topLevel}));
     try {
       expect(() => sut.getExpressionForFunction(local)).throws(/no matching binding/);
@@ -173,6 +174,78 @@ describe('expression serializer deserialize', () => {
       let map = System.getConfig().map;
       delete map['foo-package'];
       System.config({ map });
+    }
+  });
+});
+
+describe('expression serializer live module references', () => {
+  const id = 'local://expression-live-reference-test/task.js';
+  const source = factor => `export function double(value) { return value * ${factor}; }
+    export const arrow = value => value * ${factor};
+    export function make(factor) { return function double(value) { return value * factor; }; }
+    export class Foo {}`;
+  let mod, exports;
+  beforeEach(async () => {
+    await resource(id).write(source(2));
+    mod = module(System, id);
+    mod.retainRuntimeClosures = true;
+    exports = await mod.load();
+  });
+  afterEach(async () => {
+    mod.unload();
+    await resource(id).remove();
+  });
+
+  it('keeps saved connection functions live after editing a retained module', async () => {
+    const original = exports.double;
+    const originalArrow = exports.arrow;
+    const sourceObject = {x: 1}, target = {y: 0};
+    connect(sourceObject, 'x', target, 'y', {converter: 'value => double(value)', varMapping: {double: original}});
+    await mod.changeSource(source(3));
+    expect(mod.recorder.double).not.equals(original);
+    expect(sut.deserializeExpr(sut.getExpressionForFunction(original))).equals(mod.recorder.double);
+    expect(sut.deserializeExpr(sut.getExpressionForFunction(originalArrow))).equals(mod.recorder.arrow);
+    const restored = deserialize(JSON.parse(JSON.stringify(serialize({source: sourceObject, target}))));
+    restored.source.x = 2;
+    expect(restored.target.y).equals(6);
+    expect(() => sut.getExpressionForFunction(exports.make(4))).throws(/no matching binding/);
+  });
+
+  it('resolves a class reference to the current class after a module reload', async () => {
+    const original = exports.Foo;
+    await mod.reload({reloadDeps: false});
+    const current = (await mod.load()).Foo;
+    expect(current).not.equals(original);
+    expect(sut.deserializeExpr(sut.getExpressionForFunction(original))).equals(current);
+  });
+
+  it('uses frozen module recorders without a loadedModules registry', () => {
+    const frozenId = 'lively.test/frozen-reference.js';
+    const old = function double(value) { return value * 2; };
+    const current = function double(value) { return value * 3; };
+    Object.defineProperty(old, Symbol.for('lively-module-meta'), {value: {package: {name: 'lively.test'}, pathInPackage: 'frozen-reference.js'}});
+    const recorder = {double: current};
+    const entry = {recorder, exports: {double: current}};
+    const previousSystem = globalThis.System;
+    const previousRuntime = globalThis.lively.FreezerRuntime;
+    const environment = System.get('@lively-env');
+    const previousRegistry = environment.loadedModules;
+    const runtime = {
+      decanonicalize: name => name,
+      get: (name, useRecorder = true) => name === '@lively-env' ? {} : name === frozenId ? useRecorder ? recorder : entry : undefined,
+      fetchStandaloneFor: () => undefined
+    };
+    try {
+      delete environment.loadedModules;
+      globalThis.lively.FreezerRuntime = globalThis.System = runtime;
+      const serializer = new ExpressionSerializer();
+      expect(serializer.getModuleRecorder(frozenId)).equals(recorder);
+      expect(serializer.getModuleExports(frozenId)).equals(entry.exports);
+      expect(serializer.deserializeExpr(serializer.getExpressionForFunction(old))).equals(current);
+    } finally {
+      environment.loadedModules = previousRegistry;
+      globalThis.System = previousSystem;
+      globalThis.lively.FreezerRuntime = previousRuntime;
     }
   });
 });

@@ -1037,6 +1037,9 @@ function captureRuntimeClosures(program, options) {
       if (usesClassSuper && options.topLevelVarRecorder && options.transformES6Classes !== false)
         call.arguments.push(t.Identifier('__lively_class__'));
     }
+    while (call.arguments.length < 9) call.arguments.push(t.Identifier('undefined'));
+    call.arguments.push(t.BooleanLiteral(parent.isExportDefaultDeclaration() ||
+      parent.isVariableDeclarator() && parent.scope === program.scope));
     if (path.isFunctionDeclaration()) {
       insert(parent, t.ExpressionStatement(t.AssignmentExpression('=', t.cloneNode(fn.id), call)));
     } else path.replaceWith(call);

@@ -771,7 +771,7 @@ class ModuleInterface {
     return this.recordDebugClosure(...args);
   }
 
-  recordDebugClosure(func, cells, start, end, moduleSource, name, lexicalThis, lexicalArguments, declaringClass) {
+  recordDebugClosure(func, cells, start, end, moduleSource, name, lexicalThis, lexicalArguments, declaringClass, moduleBinding = false) {
     if (!func.name && name) Object.defineProperty(func, 'name', {value: name, configurable: true});
     if (declaringClass) {
       Object.defineProperty(func, Symbol.for('lively-debug-function-source'), {value: func.toString(), configurable: true});
@@ -779,6 +779,7 @@ class ModuleInterface {
     }
     const mod = this;
     Object.defineProperties(func, {
+      [Symbol.for('lively-local-closure')]: {value: !moduleBinding, configurable: true},
       [Symbol.for('lively-debug-bindings')]: {configurable: true, get() {
         const bindings = {};
         for (const [name, cell] of Object.entries(cells)) Object.defineProperty(bindings, name, {
@@ -844,6 +845,8 @@ class ModuleInterface {
       value = this.recordDebugClosure(value, {}, meta.start, meta.end, meta.moduleSource, varName);
     }
     if (this.debuggingEnabled && typeof value === 'function' && meta?.kind === 'class') this.recordDebugClass(value, meta);
+
+    if (typeof value === 'function') delete value[Symbol.for('lively-local-closure')];
 
     // storing local module state
     recorder[varName] = value;

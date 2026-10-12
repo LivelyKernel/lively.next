@@ -6,6 +6,17 @@ import { Continuation, debugSupportEnabled } from './stackReification.js';
 
 let Global = getGlobal();
 const serializedModuleSources = new WeakMap();
+const serializedLexicalArguments = new WeakMap();
+
+function referencesLexicalArguments(node) {
+  if (node.type !== 'ArrowFunctionExpression') return false;
+  const hasReference = scope => {
+    if (['FunctionDeclaration', 'FunctionExpression'].includes(scope.node.type) ||
+        query.declarationsOfScope(scope, true).some(id => id.name === 'arguments')) return false;
+    return scope.refs.some(ref => ref.name === 'arguments') || scope.subScopes.some(hasReference);
+  };
+  return hasReference(query.scopes(parseFunction(escodegen.generate(node), {sourceType: 'script'})));
+}
 
 export function RestoredFunction() {
   const fn = function() { return fn.interpretedFunction.asFunction().apply(this, arguments); };
@@ -1522,6 +1533,10 @@ export class Function {
   get __dont_serialize__() { return ['_cachedFunction', 'originalFunction', 'capturedFrameState', '_restoredFunction', 'runtimeObjectMeta', 'lexicalArguments']; }
 
   __after_deserialize__() {
+    if (this.serializedLexicalArguments) {
+      this.lexicalArguments = this.serializedLexicalArguments.values;
+      delete this.serializedLexicalArguments;
+    }
     if (this.serializedModuleSource) {
       this.runtimeObjectMeta.moduleSource = this.serializedModuleSource.moduleSource;
       delete this.serializedModuleSource;
@@ -1533,8 +1548,22 @@ export class Function {
   }
 
   __additionally_serialize__(snapshot, ref, pool, addFn) {
-    if (this.lexicalArguments && freeFunctionReferences(this.node).some(ref => ref.name === 'arguments'))
-      addFn('lexicalArguments', this.lexicalArguments);
+    if (this.lexicalArguments !== undefined && referencesLexicalArguments(this.node)) {
+      const args = this.lexicalArguments;
+      if (Array.isArray(args) || Object.prototype.toString.call(args) === '[object Arguments]') {
+        let saved = serializedLexicalArguments.get(pool);
+        if (!saved) serializedLexicalArguments.set(pool, saved = new WeakMap());
+        // The interpreter uses argument arrays; intern their wrapper to keep sibling captures shared.
+        const values = arr.from(args);
+        let wrapper = saved.get(args);
+        if (!wrapper) saved.set(args, wrapper = {values});
+        else if (wrapper.values.length !== values.length || values.some((value, index) => value !== wrapper.values[index])) {
+          wrapper.values = values;
+          wrapper._rev = (wrapper._rev || 0) + 1;
+        }
+        addFn('serializedLexicalArguments', wrapper);
+      } else addFn('lexicalArguments', args);
+    }
     if (this.runtimeObjectMeta) {
       const {moduleSource, ...meta} = this.runtimeObjectMeta;
       let sources = serializedModuleSources.get(pool);

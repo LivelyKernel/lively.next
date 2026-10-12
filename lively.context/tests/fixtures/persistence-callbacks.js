@@ -11,6 +11,12 @@ export class SnapshotBase {
 
 export class SnapshotChild extends SnapshotBase {
   create(offset) { return () => super.value() + offset; }
+  argumentCallbacks(value) {
+    'use strict';
+    const receiver = this;
+    return {read: () => [receiver, arguments[0]], nested: () => () => [receiver, arguments[0]],
+      args: () => (receiver, arguments), argsAlias: () => (receiver, arguments)};
+  }
   callback = () => super.doubled;
   static create(offset) { return () => super.value() + offset; }
 }
