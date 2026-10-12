@@ -993,7 +993,7 @@ export class TilingLayout extends Layout {
     } else if (morph.isText && this.getResizeWidthPolicyFor(morph) === 'shrink') {
       style.width = `${morph.intrinsicWidth()}px`;
       style['max-width'] = '100%';
-      style['flex-shrink'] = 1;
+      style['flex-shrink'] = isVertical ? 0 : 1;
     }
     if (this.getResizeHeightPolicyFor(morph) === 'fill') {
       if (isVertical) {
@@ -1023,7 +1023,7 @@ export class TilingLayout extends Layout {
     if (this.axis !== 'column' || hasNextSibling || this.hugContentsVertically || !scrollbarVisible.vertical) { style['margin-bottom'] = `${margin.bottom}px`; }
     if (this.axis !== 'row' || hasPrevSibling || this.hugContentsHorizontally || !scrollbarVisible.horizontal) style['margin-left'] = `${margin.left}px`;
     if (this.axis !== 'row' || hasNextSibling || this.hugContentsHorizontally || !scrollbarVisible.horizontal) { style['margin-right'] = `${margin.right}px`; }
-    if (Number.parseInt(style['flex-grow']) !== 1 && this.getResizeWidthPolicyFor(morph) !== 'shrink') style['flex-shrink'] = 0;
+    if (Number.parseInt(style['flex-grow']) !== 1 && (isVertical || this.getResizeWidthPolicyFor(morph) !== 'shrink')) style['flex-shrink'] = 0;
   }
 
   adjustMargin (margin) {

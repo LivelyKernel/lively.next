@@ -2065,10 +2065,11 @@ export default class Renderer {
     this.ensurePlaceholder();
     this.placeholder.className = 'Text';
     const parent = this.getNodeForMorph(morph);
-    // ponytail: measure on demand; cache by rendered styles if profiling warrants it.
-    (parent?.isConnected ? parent : this.placeholder).appendChild(textNode);
+    // shortcut: measure on demand, cache by rendered styles if profiling warrants it.
+    (parent?.isConnected && parent.getClientRects().length ? parent : this.placeholder).appendChild(textNode);
     try {
-      return parseFloat(this.doc.defaultView.getComputedStyle(textNode).width) + morph.borderWidthLeft + morph.borderWidthRight;
+      const width = parseFloat(this.doc.defaultView.getComputedStyle(textNode).width) + morph.borderWidthLeft + morph.borderWidthRight;
+      return Number.isFinite(width) ? width : morph.width;
     } finally { textNode.remove(); }
   }
 

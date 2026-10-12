@@ -345,6 +345,9 @@ const PropertiesPanel = component({
     resizePolicies: [['shape control', {
       height: 'fixed',
       width: 'fill'
+    }], ['background control', {
+      height: 'fixed',
+      width: 'fill'
     }], ['text control', {
       height: 'fixed',
       width: 'fill'

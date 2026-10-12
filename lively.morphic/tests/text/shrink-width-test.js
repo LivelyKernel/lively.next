@@ -5,6 +5,41 @@ import { pt, Color } from 'lively.graphics';
 import { promise } from 'lively.lang';
 
 describe('text shrink width', () => {
+  for (const renderViaCSS of [false, true]) {
+    it(`keeps fixed child heights in an overflowing column (CSS: ${renderViaCSS})`, async () => {
+      const text = new Text({ name: 'label', readOnly: true, textString: 'short', extent: pt(80, 40), fixedHeight: true });
+      const sibling = new Morph({ extent: pt(80, 80) });
+      const container = new Morph({ extent: pt(100, 100), clipMode: 'auto', submorphs: [text, sibling], layout: new TilingLayout({
+        axis: 'column', renderViaCSS, resizePolicies: [['label', { width: 'shrink', height: 'fixed' }]]
+      }) }).openInWorld();
+      try {
+        await text.whenFontLoaded();
+        container.env.forceUpdate();
+        const textNode = container.env.renderer.getNodeForMorph(text);
+        const siblingNode = container.env.renderer.getNodeForMorph(sibling);
+        expect(text.height).equals(40);
+        expect(textNode.getBoundingClientRect().height).closeTo(text.height, 0.1);
+        expect(siblingNode.offsetTop).closeTo(sibling.top, 0.1);
+      } finally { container.remove(); }
+    });
+
+    it(`restores the intrinsic width when a hidden label becomes visible (CSS: ${renderViaCSS})`, async () => {
+      const text = new Text({ name: 'label', readOnly: true, visible: false, textString: 'short', fontSize: 20 });
+      const container = new Morph({ extent: pt(500, 100), submorphs: [text], layout: new TilingLayout({
+        renderViaCSS, resizePolicies: [['label', { width: 'shrink', height: 'fixed' }]]
+      }) }).openInWorld();
+      try {
+        await text.whenFontLoaded();
+        container.env.forceUpdate();
+        expect(Number.isFinite(text.intrinsicWidth())).equals(true);
+        text.visible = true;
+        container.env.forceUpdate();
+        expect(text.width).closeTo(text.intrinsicWidth(), 2);
+        expect(text.width).below(200);
+      } finally { container.remove(); }
+    });
+  }
+
   it('measures inline boxes without moving or loading embedded iframe contents', async () => {
     const embedded = new HTMLMorph({ extent: pt(160, 80), html: '<iframe srcdoc="<input value=initial>"></iframe>' });
     const text = new Text({ name: 'label', readOnly: true, fixedHeight: false, fontSize: 20,
