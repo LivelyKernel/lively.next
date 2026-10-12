@@ -9,11 +9,13 @@ const fn = source => globalThis.Function('return (' + source + ')')();
 
 describe('Smalltalk debugger tutorial', function () {
   it('rewrites method closure bindings after removing native compiler annotations', function () {
-    const source = 'function task() { const _debugCell = {get value() { return value; }}; let value = 2; const read = __lvVarRecorder.System.get("@lively-env").moduleEnv("example.js").recordDebugClosure(() => value, {value: _debugCell}, 0, 1, __lvOriginalCode, "read"); debugger; value = 4; return read(); }';
-    const stopped = run(fn(source));
-    expect(stopped.exception).equals(undefined);
-    expect(stopped.currentFrame.lookup('read')()).equals(2);
-    expect(resumeInspectorContinuation(stopped)).equals(4);
+    for (const module of ['__lvVarRecorder.System.get("@lively-env").moduleEnv("example.js")', '__lvVarRecorder.__currentLivelyModule']) {
+      const source = 'function task() { const _debugCell = {get value() { return value; }}; let value = 2; const read = ' + module + '.recordDebugClosure(() => value, {value: _debugCell}, 0, 1, __lvOriginalCode, "read"); debugger; value = 4; return read(); }';
+      const stopped = run(fn(source));
+      expect(stopped.exception).equals(undefined);
+      expect(stopped.currentFrame.lookup('read')()).equals(2);
+      expect(resumeInspectorContinuation(stopped)).equals(4);
+    }
   });
   it('reports a missing callee without replacing the error with inspector internals', function () {
     const stopped = run(fn('function task() { debugger; return this.convert(2); }'), null, [], {this: {}});

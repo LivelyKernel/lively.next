@@ -962,6 +962,12 @@ export function getScopeFromPath (path) {
 
 function captureRuntimeClosures(program, options) {
   if (!options.currentModuleAccessor || !options.sourceAccessorName) return;
+  // The recorder already owns its Module. Resolving it from inside a resolver
+  // hook would recursively invoke that same hook while creating a closure.
+  const recorderName = options.varRecorderName || options.topLevelVarRecorderName;
+  const module = recorderName
+    ? t.MemberExpression(t.Identifier(recorderName), t.Identifier('__currentLivelyModule'))
+    : options.currentModuleAccessor;
   const cells = new Map(), insertions = new Map(), functions = [];
   program.traverse({Function(path) { if (!path.isMethod()) functions.push(path); }});
   const insert = (block, statement) => {
@@ -990,7 +996,7 @@ function captureRuntimeClosures(program, options) {
     }});
     const parent = path.parentPath;
     const name = fn.id?.name || (parent.isVariableDeclarator() ? parent.node.id.name : parent.isObjectProperty() && !parent.node.computed ? parent.node.key.name || parent.node.key.value : '');
-    const call = t.CallExpression(t.MemberExpression(t.cloneNode(options.currentModuleAccessor, true), t.Identifier('recordDebugClosure')), [
+    const call = t.CallExpression(t.MemberExpression(t.cloneNode(module, true), t.Identifier('recordDebugClosure')), [
       path.isFunctionDeclaration() ? t.cloneNode(fn.id) : fn,
       t.ObjectExpression([...captures].map(([name, cell]) => t.ObjectProperty(t.StringLiteral(name), t.cloneNode(cell)))),
       t.NumericLiteral(fn.start), t.NumericLiteral(fn.end), t.Identifier(options.sourceAccessorName), t.StringLiteral(name || '')
