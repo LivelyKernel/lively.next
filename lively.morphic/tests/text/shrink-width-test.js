@@ -1,9 +1,38 @@
 /* global describe, it */
 import { expect } from 'mocha-es6';
-import { Morph, Text, TilingLayout } from '../../index.js';
-import { pt } from 'lively.graphics';
+import { Morph, Text, HTMLMorph, TilingLayout } from '../../index.js';
+import { pt, Color } from 'lively.graphics';
+import { promise } from 'lively.lang';
 
 describe('text shrink width', () => {
+  it('measures inline boxes without moving or loading embedded iframe contents', async () => {
+    const embedded = new HTMLMorph({ extent: pt(160, 80), html: '<iframe srcdoc="<input value=initial>"></iframe>' });
+    const text = new Text({ name: 'label', readOnly: true, fixedHeight: false, fontSize: 20,
+      textAndAttributes: ['before ', null, embedded, null, ' after', null] });
+    const container = new Morph({ extent: pt(1000, 400), submorphs: [text], layout: new TilingLayout({
+      resizePolicies: [['label', { width: 'shrink', height: 'fixed' }]]
+    }) }).openInWorld();
+    try {
+      await text.whenFontLoaded();
+      container.env.forceUpdate();
+      const iframe = embedded.domNode.querySelector('iframe');
+      await promise.waitFor(3000, () => iframe.contentDocument?.querySelector('input'));
+      const originalDocument = iframe.contentDocument;
+      originalDocument.querySelector('input').value = 'retained';
+      let loads = 0;
+      iframe.addEventListener('load', () => loads++);
+      for (let i = 0; i < 3; i++) {
+        const range = document.createRange();
+        range.selectNodeContents(text.renderingState.textLayer.querySelector('.line'));
+        expect(text.intrinsicWidth()).closeTo(range.getBoundingClientRect().width, 1);
+      }
+      await promise.delay(50);
+      expect(iframe.contentDocument).equals(originalDocument);
+      expect(originalDocument.querySelector('input').value).equals('retained');
+      expect(loads).equals(0);
+    } finally { container.remove(); }
+  });
+
   for (const axis of ['row', 'column']) {
     for (const renderViaCSS of [false, true]) {
       it(`refits static text when switching ${axis} fill and shrink at the same width (CSS: ${renderViaCSS})`, async () => {
@@ -43,7 +72,8 @@ describe('text shrink width', () => {
           expect(text.fixedWidth).equals(true);
           expect(text.lineWrapping).equals('by-words');
           const naturalWidth = text.intrinsicWidth();
-          expect(text.width).closeTo(naturalWidth, 1, 'initial width');
+          // Yoga rounds text edges outwards at fractional positions.
+          expect(text.width).closeTo(naturalWidth, 2, 'initial width');
           const initialHeight = text.height;
           container.width = 100;
           container.env.forceUpdate();
@@ -75,13 +105,43 @@ describe('text shrink width', () => {
         } finally { container.remove(); }
       });
 
+      it(`measures relative padding and CSS font classes in ${axis} shrink width (CSS: ${renderViaCSS})`, async () => {
+        const style = document.createElement('style');
+        style.textContent = '.newtext-text-layer .shrink-large-font { font-size: 40px; }';
+        document.head.appendChild(style);
+        try {
+          for (const textAndAttributes of [
+            ['a', { paddingRight: '2em' }, 'b', null],
+            ['one two three', { textStyleClasses: ['shrink-large-font'] }]
+          ]) {
+            const text = new Text({ name: 'label', readOnly: true, textAndAttributes, fontSize: 20, fixedHeight: false });
+            const container = new Morph({ extent: pt(1000, 400), submorphs: [text], layout: new TilingLayout({
+              axis, renderViaCSS, resizePolicies: [['label', { width: 'shrink', height: 'fixed' }]]
+            }) }).openInWorld();
+            try {
+              await text.whenFontLoaded();
+              container.env.forceUpdate();
+              const line = text.renderingState.textLayer.querySelector('.line');
+              const range = document.createRange();
+              range.selectNodeContents(line);
+              expect(text.width).closeTo(range.getBoundingClientRect().width, 2);
+              expect(text.height).closeTo(line.getBoundingClientRect().height, 1);
+            } finally { container.remove(); }
+          }
+        } finally { style.remove(); }
+      });
+
       it(`measures spacing and tabs in ${axis} shrink width (CSS: ${renderViaCSS})`, async () => {
         let lineHeight;
         for (const props of [
           {}, { letterSpacing: 6 }, { wordSpacing: 15 },
           { textAndAttributes: ['a\tb', null], tabWidth: 2 },
           { textAndAttributes: ['a\tb', null], tabWidth: 8 },
-          { textAndAttributes: ['one two ', { letterSpacing: 6 }, 'three', null] }
+          { textAndAttributes: ['one two ', { letterSpacing: 6 }, 'three', null] },
+          { textAndAttributes: ['a', { fontColor: Color.red }, '\tb', null], tabWidth: 8 },
+          { textAndAttributes: ['abcd', { fontColor: Color.red }, '\tb', null], tabWidth: 8 },
+          { textAndAttributes: ['a', { fontColor: Color.red }, '\tb', { paddingLeft: '20px' }], tabWidth: 8 },
+          ...['constructor', '__proto__', 'toString', 'hasOwnProperty'].map(text => ({ textAndAttributes: [text, null] }))
         ]) {
           const text = new Text({ name: 'label', readOnly: true, textAndAttributes: ['one two three', null], fontSize: 20, fixedHeight: false, ...props });
           const container = new Morph({ extent: pt(1000, 400), submorphs: [text], layout: new TilingLayout({
@@ -96,6 +156,7 @@ describe('text shrink width', () => {
             const actualWidth = range.getBoundingClientRect().width;
             // DOM ranges and rounded layout edges can differ by less than a pixel.
             expect(text.intrinsicWidth()).closeTo(actualWidth, 1);
+            expect(Number.isFinite(text.fontMetric.sizeFor(text.defaultTextStyle, text.textString, true).width)).equals(true);
             expect(text.width).closeTo(actualWidth, 2);
             expect(text.height).closeTo(lineHeight, 1);
           } finally { container.remove(); }

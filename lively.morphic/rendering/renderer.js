@@ -1033,7 +1033,7 @@ export default class Renderer {
    * @param {Boolean} isRealRender - Indicates whether this is an actual render to display the resulting node in the DOM or if it is a render inside of an invisible node to measure the text to be renderer.
    * @returns {Node} The DOM node for the line (`DIV`).
    */
-  nodeForLine (lineObject, morph, isRealRender = false) {
+  nodeForLine (lineObject, morph, isRealRender = false, inertEmbeddedMorphs = false) {
     if (!lineObject) lineObject = '';
     let line = lineObject.isLine ? lineObject.textAndAttributes : lineObject;
 
@@ -1049,7 +1049,7 @@ export default class Renderer {
         if (typeof content !== 'string') {
           renderedChunks.push(
             content.isMorph
-              ? this.renderMorphInLine(content, attributes)
+              ? this.renderMorphInLine(content, attributes, inertEmbeddedMorphs)
               : objectReplacementChar);
           continue;
         }
@@ -1166,9 +1166,13 @@ export default class Renderer {
    * @param {Object} attr - An Object with which some properties of `morph` can be overwritten.
    * @returns {Node} The node of the morph to be added as a child of a node for a line.
    */
-  renderMorphInLine (morph, attr) {
+  renderMorphInLine (morph, attr, inert = false) {
     attr = attr || {};
-    const rendered = this.renderMorph(morph);
+    const rendered = inert ? this.doc.createElement('div') : this.renderMorph(morph);
+    if (inert) {
+      rendered.className = 'Morph';
+      applyStylingToNode(morph, rendered);
+    }
     rendered.style.position = 'sticky';
     rendered.style.transform = '';
     rendered.style.textAlign = 'initial';
@@ -1180,7 +1184,7 @@ export default class Renderer {
     if (attr.paddingLeft) rendered.style.marginLeft = attr.paddingLeft;
     if (attr.paddingRight) rendered.style.marginRight = attr.paddingRight;
     if (attr.paddingBottom) rendered.style.marginBottom = attr.paddingBottom;
-    morph.renderingState.needsRerender = false;
+    if (!inert) morph.renderingState.needsRerender = false;
     return rendered;
   }
 
@@ -2047,7 +2051,30 @@ export default class Renderer {
     if (morph.debug) textNode.append(...this.renderDebugLayer(morph));
   }
 
+  measureIntrinsicTextWidth (morph) {
+    const textNode = this.textLayerNodeFor(morph);
+    textNode.className = 'newtext-text-layer actual';
+    Object.assign(textNode.style, {
+      width: 'max-content', minWidth: '0px', maxWidth: 'none',
+      height: 'auto', visibility: 'hidden', whiteSpace: 'pre',
+      fontKerning: morph.document ? 'none' : 'auto'
+    });
+    for (const line of splitTextAndAttributesIntoLines(morph.textAndAttributes)) {
+      textNode.appendChild(this.nodeForLine(line, morph, false, true));
+    }
+    this.ensurePlaceholder();
+    this.placeholder.className = 'Text';
+    const parent = this.getNodeForMorph(morph);
+    // ponytail: measure on demand; cache by rendered styles if profiling warrants it.
+    (parent?.isConnected ? parent : this.placeholder).appendChild(textNode);
+    try {
+      return parseFloat(this.doc.defaultView.getComputedStyle(textNode).width) + morph.borderWidthLeft + morph.borderWidthRight;
+    } finally { textNode.remove(); }
+  }
+
   tryToMeasureViaCanvas (morph) {
+    // Shrink fits the browser's kerned width; canvas sums individual glyphs.
+    if (morph.owner?.layout?.getResizeWidthPolicyFor?.(morph) === 'shrink') return false;
     if (!morph.allFontsLoaded()) return false;
     const fm = morph.env.fontMetric;
     const lines = splitTextAndAttributesIntoLines(morph.textAndAttributes);
