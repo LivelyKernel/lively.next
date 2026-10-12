@@ -1886,7 +1886,7 @@ export default class Renderer {
     const worldNode = this.getNodeForMorph(world);
     const worldBounds = worldNode.getBoundingClientRect();
     const renderedPosition = pt(clientBounds.x - worldBounds.x, clientBounds.y - worldBounds.y)
-      .scaleBy(1 / world.scale).addPt(world.scroll);
+      .scaleBy(1 / world.scale);
     const ownBounds = morph.getGlobalTransform().transformRectToRect(morph.origin.negated().extent(morph.extent));
     return morph.owner.getGlobalTransform().inverse().transformDirection(renderedPosition.subPt(ownBounds.topLeft()));
   }
