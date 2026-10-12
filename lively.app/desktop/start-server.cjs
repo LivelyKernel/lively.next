@@ -815,17 +815,15 @@ function bootUrlForPort (port) {
 
   const win = (await new Promise(resolve => nw.Window.getAll(resolve)))[0];
   let inspectorChild = null;
+  let inspectorStartScheduled = false;
+  let inspectorStarted = false;
 
-  const navigate = () => {
-    win.window.livelyBoot.setDashboardUrl(dashboardUrl);
-    win.window.livelyBoot.navigate(dashboardUrl);
-  };
-  if (win.window.livelyBoot) navigate();
-  else win.once('loaded', navigate);
-
-  if (process.env.LIVELY_APP_INSPECTOR_SERVICE !== '0') {
+  function startInspectorService (trigger) {
+    if (closing || inspectorStarted || process.env.LIVELY_APP_INSPECTOR_SERVICE === '0') return;
+    inspectorStarted = true;
     const cdpPort = Number(process.env.LIVELY_APP_CDP_PORT || 9222);
     const inspectorPort = Number.isFinite(cdpPort) && cdpPort > 0 ? cdpPort : 9222;
+    log('starting inspector service after ' + trigger + ' on CDP port ' + inspectorPort);
     inspectorChild = spawn(nodeBin, [
       '--no-warnings',
       '-r', path.join(desktopDir, 'watchdog.cjs'),
@@ -853,6 +851,42 @@ function bootUrlForPort (port) {
       } catch (_) {}
     });
   }
+
+  function scheduleInspectorStart (trigger) {
+    if (inspectorStartScheduled || inspectorStarted || process.env.LIVELY_APP_INSPECTOR_SERVICE === '0') return;
+    inspectorStartScheduled = true;
+    const timer = setTimeout(() => {
+      inspectorStartScheduled = false;
+      startInspectorService(trigger);
+    }, Number(process.env.LIVELY_APP_INSPECTOR_START_DELAY || 500));
+    if (timer && typeof timer.unref === 'function') timer.unref();
+  }
+
+  if (process.env.LIVELY_APP_INSPECTOR_SERVICE !== '0') {
+    win.once('loaded', function () {
+      let href = '';
+      try { href = String(win.window.location && win.window.location.href || ''); } catch (_) {}
+      log('window loaded after server boot: ' + (href || '(unknown location)'));
+      if (/^https?:\/\//.test(href)) scheduleInspectorStart('initial page load');
+      else log('inspector service waiting for HTTP page before attaching');
+    });
+    const fallbackTimer = setTimeout(() => {
+      let href = '';
+      try { href = String(win.window.location && win.window.location.href || ''); } catch (_) {}
+      if (/^https?:\/\//.test(href)) {
+        log('inspector service load-event fallback at ' + href);
+        scheduleInspectorStart('load-event fallback');
+      }
+    }, Number(process.env.LIVELY_APP_INSPECTOR_FALLBACK_DELAY || 15000));
+    if (fallbackTimer && typeof fallbackTimer.unref === 'function') fallbackTimer.unref();
+  }
+
+  const navigate = () => {
+    win.window.livelyBoot.setDashboardUrl(dashboardUrl);
+    win.window.livelyBoot.navigate(dashboardUrl);
+  };
+  if (win.window.livelyBoot) navigate();
+  else win.once('loaded', navigate);
 
   win.on('close', function () {
     log('Window closing, killing server...');
