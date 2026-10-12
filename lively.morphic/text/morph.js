@@ -1204,7 +1204,8 @@ export class Text extends Morph {
   }
 
   requestTextLayoutMeasuring () {
-    this.renderingState.renderedTextAndAttributes = null;
+    this.renderingState.needsRemeasure = true;
+    if (this.document || this.renderingState.needsScrollLayerRemoved) this.renderingState.renderedTextAndAttributes = null;
   }
 
   static icon (iconName, props = { prefix: '', suffix: '' }) {

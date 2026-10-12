@@ -1,9 +1,40 @@
 /* global describe, it */
 import { expect } from 'mocha-es6';
-import { Text, Morph } from '../../index.js';
+import { Text, Morph, HTMLMorph } from '../../index.js';
 import { pt } from 'lively.graphics';
+import { promise } from 'lively.lang';
 
 describe('embedded morphs in static text', () => {
+  it('preserves embedded iframe state through static text measurements', async () => {
+    const embedded = new HTMLMorph({ extent: pt(160, 80), html: '<iframe srcdoc="<input value=initial>"></iframe>' });
+    const text = new Text({
+      readOnly: true, fixedWidth: true, fixedHeight: true, extent: pt(500, 200),
+      fontSize: 20, textAndAttributes: ['before ', null, embedded, null, ' after', null]
+    }).openInWorld();
+    try {
+      await text.whenFontLoaded();
+      text.env.forceUpdate();
+      const iframe = embedded.domNode.querySelector('iframe');
+      await promise.waitFor(3000, () => iframe.contentDocument?.querySelector('input'));
+      const originalDocument = iframe.contentDocument;
+      originalDocument.querySelector('input').value = 'retained';
+      iframe.contentWindow.retainedValue = 42;
+      let loads = 0;
+      iframe.addEventListener('load', () => loads++);
+      for (const change of [() => { text.fontSize = 25; }, () => { text.width = 350; }]) {
+        change();
+        text.env.forceUpdate();
+        text.measureStaticTextBounds();
+        await promise.delay(50);
+        expect(iframe.contentDocument).equals(originalDocument);
+        expect(originalDocument.querySelector('input').value).equals('retained');
+        expect(iframe.contentWindow.retainedValue).equals(42);
+        expect(loads).equals(0);
+        expect(text.document).not.to.be.ok;
+      }
+    } finally { text.remove(); }
+  });
+
   it('preserves line boundaries beside embedded morphs through mode changes and removal', async () => {
     for (const boundary of ['morph-string', 'string-morph', 'morph-morph']) {
       const first = new Morph({ extent: pt(30, 20) });
