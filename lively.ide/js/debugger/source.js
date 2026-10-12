@@ -1,11 +1,21 @@
 import { resource } from 'lively.resources';
-import { Path } from 'lively.lang';
+import { Path, obj } from 'lively.lang';
 import { parse, query, escodegen, withMozillaAstDo } from 'lively.ast';
 import { RuntimeSourceDescriptor } from 'lively.classes/source-descriptors.js';
 import { withSuperclasses, objMetaSymbol } from 'lively.classes/util.js';
 
 // Keep the suspended source until Apply Saved Method installs a new frame function.
 const sourceContexts = new WeakMap();
+
+function comparableBody (body) {
+  const ast = obj.deepCopy(body);
+  // Recorder capture expands {value} to {value: value} without changing AST paths.
+  withMozillaAstDo(ast, null, (next, node) => {
+    if (node.type === 'Property' && node.value.type === 'Identifier') node.shorthand = false;
+    next();
+  });
+  return escodegen.generate(ast);
+}
 
 function sourceContextForFrame (frame) {
   const func = frame && frame.func;
@@ -53,7 +63,7 @@ function sourceContextForFrame (frame) {
       const parentContext = sourceContextForFrame(parent);
       if (!parentContext) continue;
       const ast = parentContext.nodes.get(frame.getOriginalAst().astIndex);
-      if (ast && ast.body && escodegen.generate(ast.body) === escodegen.generate(frame.getOriginalAst().body)) {
+      if (ast && ast.body && comparableBody(ast.body) === comparableBody(frame.getOriginalAst().body)) {
         context = {...parentContext, ast, name: original && (original.displayName || original.name) || func.name()};
         break;
       }
@@ -63,7 +73,7 @@ function sourceContextForFrame (frame) {
     const recordedAst = frame.getOriginalAst();
     context.nodes = new Map();
     // Compiler transformations can change the body; never guess a source position.
-    if (escodegen.generate(recordedAst.body) === escodegen.generate(context.ast.body)) {
+    if (comparableBody(recordedAst.body) === comparableBody(context.ast.body)) {
       withMozillaAstDo(recordedAst, null, (next, node, state, path) => {
         if (Number.isFinite(node.astIndex)) {
           const sourceNode = Path(path).get(context.ast);
