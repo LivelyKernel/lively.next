@@ -47,7 +47,8 @@ function sourceContextForFrame (frame) {
     const source = descriptor.moduleSource;
     const moduleAst = parse(source, { locations: true });
     let ast = query.nodesAtIndex(moduleAst, descriptor.sourceLocation.start)
-      .find(node => node.start === descriptor.sourceLocation.start && /^(Class|Function|ArrowFunction)/.test(node.type));
+      .find(node => node.start === descriptor.sourceLocation.start && /^(Class|Function|ArrowFunction|MethodDefinition|Property)/.test(node.type));
+    if (ast?.type === 'MethodDefinition' || ast?.type === 'Property') ast = ast.value;
     if (ast && memberName) {
       const member = ast.body.body.find(node =>
         (node.key.name || node.key.value) === memberName && !!node.static === isStatic &&
@@ -98,7 +99,8 @@ function sourceNodeForFrame (frame, node) {
 export function sourceNameForFrame (frame) {
   const context = sourceContextForFrame(frame);
   const original = frame && frame.func && frame.func.originalFunction;
-  return context && context.name || frame && frame.functionName || original && (original.displayName || original.name) || frame && frame.func && frame.func.name() || '<anonymous>';
+  const constructor = original?.[Symbol.for('lively-debug-constructor')];
+  return constructor ? String(constructor.name) + '.constructor' : String(context && context.name || frame && frame.functionName || original && (original.displayName || original.name) || frame && frame.func && frame.func.name() || '<anonymous>');
 }
 
 export function interpreterLineForSourcePosition (frame, {row, column = 0}) {

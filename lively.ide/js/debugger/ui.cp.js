@@ -122,6 +122,8 @@ export class LivelyDebuggerModel extends ViewModel {
   static get properties () {
     return {
       continuation: {},
+      onComplete: {serialize: false},
+      onCancel: {serialize: false},
       inspectorContinuation: {serialize: false},
       selectedFrame: {serialize: false},
       selectedScope: {serialize: false},
@@ -436,6 +438,7 @@ export class LivelyDebuggerModel extends ViewModel {
         this.continuation = result;
         this.refreshFromContinuation();
       } else {
+        this.onComplete?.(result);
         this.continuation = null;
         await this.closeDebugger();
       }
@@ -455,7 +458,7 @@ export class LivelyDebuggerModel extends ViewModel {
     try {
       const value = evaluateInDebuggerScopes(source, this.evaluationScopes());
       const result = returnFromInspectorFrame(this.continuation, value, {startFrame: this.selectedFrame});
-      if (!result || !result.isContinuation) { this.continuation = null; await this.closeDebugger(); return result; }
+      if (!result || !result.isContinuation) { this.onComplete?.(result); this.continuation = null; await this.closeDebugger(); return result; }
       return this.updateAfterInterpreterResult('Return', result);
     } catch (error) { return this.interpreterActionFailed('Return', error); }
   }
@@ -532,6 +535,7 @@ export class LivelyDebuggerModel extends ViewModel {
       return result;
     }
     this.view.setStatusMessage(label + ' completed: ' + printValue(result));
+    this.onComplete?.(result);
     this.continuation = null;
     await this.closeDebugger();
     return result;
@@ -558,6 +562,7 @@ export class LivelyDebuggerModel extends ViewModel {
     if (this.hasUnsavedChanges() && !await this.view.world().confirm('Discard unsaved debugger module changes?', {requester: this.view})) return false;
     const continuation = this.inspectorContinuation || this.continuation;
     if (continuation && continuation.release) continuation.release();
+    if (continuation) this.onCancel?.();
     this.inspectorContinuation = null;
     this.continuation = null;
   }
@@ -803,8 +808,8 @@ export const LivelyDebugger = component({
   }]
 });
 
-export function openForContinuation (continuation, world = null) {
-  const debuggerMorph = part(LivelyDebugger, { viewModel: { continuation } });
+export function openForContinuation (continuation, world = null, { onComplete, onCancel } = {}) {
+  const debuggerMorph = part(LivelyDebugger, { viewModel: { continuation, onComplete, onCancel } });
   const targetWorld = world || (typeof $world !== 'undefined' && $world);
   const win = debuggerMorph.openInWindow({ title: 'debugger', world: targetWorld });
   if (win && win.activate) win.activate();

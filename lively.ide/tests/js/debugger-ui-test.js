@@ -7,6 +7,7 @@ import {
   moduleUrlForFrame,
   readFrameSource,
   sourceSummary,
+  sourceNameForFrame,
   sourceUrlForFrame
 } from '../../js/debugger/source.js';
 import { evaluateInDebuggerScopes } from '../../js/debugger/evaluation.js';
@@ -28,6 +29,14 @@ function frame (spec = {}) {
 }
 
 describe('lively debugger ui', function () {
+  it('formats symbol frame names and labels Lively constructors', () => {
+    expect(sourceNameForFrame({functionName: Symbol.for('custom')})).equals('Symbol(custom)');
+    const originalFunction = function initialize() {};
+    delete originalFunction[Symbol.for('lively-object-meta')];
+    originalFunction.displayName = Symbol.for('lively-instance-initialize');
+    originalFunction[Symbol.for('lively-debug-constructor')] = {name: 'Example'};
+    expect(sourceNameForFrame({func: {originalFunction, name: () => ''}})).equals('Example.constructor');
+  });
   it('scrolls the current statement into view after a saved module edit moves it', async function () {
     this.timeout(10000);
     const {resource} = await System.import('lively.resources');

@@ -1,8 +1,8 @@
 import { obj, arr } from "lively.lang";
 import { acorn, escodegen, parseFunction } from "lively.ast";
-import { UnwindException, __getClosure, __createLexicalScope, __declareLexicalBindings, __initializeBinding, __cloneLexicalScope, __awaitValue, __forOf, __closeIteratorsAfterCatch, bindingCells, restoreBindingCells, capturedBindingMappings, freeFunctionReferences, runtimeFunctionSource, removeRuntimeClosureAnnotations } from "./exception.js";
+import { UnwindException, __getClosure, __createLexicalScope, __declareLexicalBindings, __initializeBinding, __cloneLexicalScope, __awaitValue, __forOf, __closeIteratorsAfterCatch, bindingCells, restoreBindingCells, capturedBindingMappings, freeFunctionReferences, runtimeFunctionSource, removeRuntimeClosureAnnotations, originalFunctions } from "./exception.js";
 import { getGlobal } from "lively.vm/lib/util.js";
-import { Continuation } from './stackReification.js';
+import { Continuation, debugSupportEnabled } from './stackReification.js';
 
 let Global = getGlobal();
 
@@ -56,18 +56,16 @@ export class Interpreter {
     return this.runWithFrameAndResult(node, frame, undefined);
   }
 
-  runWithFrame(node, frame) {
+  runWithFrame(node, frame, lastResult) {
     var isFunction = node.type == 'FunctionDeclaration' || node.type =='FunctionExpression' || node.type === 'ArrowFunctionExpression',
-        result = this.runWithFrameAndResult(isFunction ? node.body : node, frame, undefined);
+        result = this.runWithFrameAndResult(isFunction ? node.body : node, frame, lastResult);
     if (frame.returnTriggered || !isFunction || node.type === 'ArrowFunctionExpression' && node.body.type !== 'BlockStatement')
-      return result;
+      return frame.completeReturnValue(result);
+    return frame.completeReturnValue(undefined);
   }
 
   runFromPC(frame, lastResult) {
-    var node = frame.getOriginalAst();
-    if (frame.func.isFunction())
-      node = node.body;
-    return this.runWithFrameAndResult(node, frame, lastResult);
+    return this.runWithFrame(frame.getOriginalAst(), frame, lastResult);
   }
 
   runWithFrameAndResult(node, frame, result) {
@@ -162,7 +160,7 @@ export class Interpreter {
     }
     var origFunc = func;
 
-    if (this.shouldHaltAtNextCall() || func && func.livelyDebuggingEnabled || this.functionHasDebugger(func))
+    if (this.shouldHaltAtNextCall() || !this.isNative(func) && func.livelyDebuggingEnabled || this.functionHasDebugger(func))
       func = this.fetchInterpretedFunction(func) || func;
 
     if (this.shouldInterpret(frame, func)) {
@@ -170,9 +168,9 @@ export class Interpreter {
       if (this.shouldHaltAtNextCall()) {
         this.breakAtCall = false;
         this.breakAtStatement = false;
-        func = func.startHalted(this);
+        func = func.startHalted(this, isNew ? origFunc : undefined);
       } else {
-        func = func.forInterpretation(new Interpreter({captureErrors: this.captureErrors}));
+        func = func.forInterpretation(new Interpreter({captureErrors: this.captureErrors}), isNew ? origFunc : undefined);
       }
     }
     if (isNew) {
@@ -181,7 +179,7 @@ export class Interpreter {
     }
 
     var result = func.apply(recv, argValues);
-    if (isNew && !obj.isObject(result))
+    if (isNew && !obj.isObject(result) && typeof result !== 'function')
       return recv;
     return result;
   }
@@ -839,6 +837,7 @@ export class Interpreter {
   }
 
   visitDebuggerStatement(node, state) {
+    if (!debugSupportEnabled() && state.currentFrame.getScope().debugModule()?.debuggingEnabled === false) return;
     // FIXME: might not be in debug session => do nothing?
     //    node.astIndex might be missing
     var e = {
@@ -1212,6 +1211,11 @@ export class Interpreter {
     state.result = state.currentFrame.lookup(node.name);
   }
 
+  visitMetaProperty(node, state) {
+    if (node.meta.name !== 'new' || node.property.name !== 'target') throw new Error('Unsupported meta property');
+    state.result = state.currentFrame.newTarget;
+  }
+
   visitLiteral(node, state) {
     state.result = node.value;
     return;
@@ -1331,7 +1335,7 @@ export class ManagedGenerator {
   }
 
   get isManagedGenerator() { return true; }
-  get __dont_serialize__() { return ['queue']; }
+  get __dont_serialize__() { return ['queue', 'debuggerRuntime']; }
   __after_deserialize__() {
     Object.defineProperty(this, this.async ? Symbol.iterator : Symbol.asyncIterator, {value: undefined, configurable: true});
   }
@@ -1345,6 +1349,7 @@ export class ManagedGenerator {
     const execute = () => {
       try { return this.advance(method, value); }
       catch (error) {
+        if (this.debuggerRuntime && !debugSupportEnabled()) return this.debuggerRuntime.capture(error);
         if (error.isUnwindException && error.error.reason === 'await') return Continuation.fromUnwindException(error).resume();
         if (error.isUnwindException && error.error instanceof Error) { this.state = 'done'; throw error.error; }
         throw error;
@@ -1424,8 +1429,10 @@ export class Function {
 
   constructor(node, scope, optFunc) {
     this.originalFunction = optFunc;
-    this.runtimeObjectMeta = optFunc && optFunc[Symbol.for('lively-object-meta')];
-    this.runtimeModuleMeta = optFunc && optFunc[Symbol.for('lively-module-meta')];
+    const parent = !optFunc && node._parentEntry != null && originalFunctions.get(__getClosure(node.sourceFile || '[runtime]', node._parentEntry));
+    const meta = parent && parent[Symbol.for('lively-object-meta')];
+    this.runtimeObjectMeta = optFunc && optFunc[Symbol.for('lively-object-meta')] || meta && {...meta, start: meta.start + node.start, end: meta.start + node.end};
+    this.runtimeModuleMeta = (optFunc || parent)?.[Symbol.for('lively-module-meta')];
     this.lexicalThis = optFunc && optFunc._lexicalThis;
     this.lexicalArguments = optFunc && optFunc._lexicalArguments;
     this.lexicalScope = scope;
@@ -1446,7 +1453,7 @@ export class Function {
     var self = this,
         forwardFn = function FNAME(/*args*/) {
           'use strict';
-          return self.apply(this, arr.from(arguments));
+          return self.apply(this, arr.from(arguments), undefined, new.target);
         },
         forwardSrc = forwardFn.toStringRewritten ? forwardFn.toStringRewritten() : forwardFn.toString();
     
@@ -1454,14 +1461,14 @@ export class Function {
       // FIXME: this seems to be the only way to get the name attribute right
       eval('(' + forwardSrc.replace('FNAME', this.name() || '') + ')'), {
       isInterpretableFunction: true,
-      forInterpretation: function(interpreter) {
-        return function(/*args*/) { 'use strict'; return self.apply(this, arr.from(arguments), interpreter); }
+      forInterpretation: function(interpreter, newTarget) {
+        return function(/*args*/) { 'use strict'; return self.apply(this, arr.from(arguments), interpreter, newTarget); }
       },
       ast: function() { return self.node; },
       setParentFrame: function(frame) { self.parentFrame = frame; },
-      startHalted: function(interpreter) {
+      startHalted: function(interpreter, newTarget) {
         interpreter.haltAtNextStatement();
-        return function(/*args*/) { 'use strict'; return self.apply(this, arr.from(arguments), interpreter); }
+        return function(/*args*/) { 'use strict'; return self.apply(this, arr.from(arguments), interpreter, newTarget); }
       },
       // TODO: reactivate when necessary
       // evaluatedSource: function() { return ...; }
@@ -1489,6 +1496,8 @@ export class Function {
     }
     if (this.runtimeObjectMeta) Object.defineProperty(fn, Symbol.for('lively-object-meta'), {value: this.runtimeObjectMeta});
     if (this.runtimeModuleMeta) Object.defineProperty(fn, Symbol.for('lively-module-meta'), {value: this.runtimeModuleMeta});
+    const module = this.lexicalScope?.debugModule();
+    if (module) fn = module.System.get('@lively-env').moduleDebugger.wrapFunction(fn, module);
     this._cachedFunction = fn;
   }
 
@@ -1529,7 +1538,7 @@ export class Function {
     return escodegen.generate(this.getAst());
   }
 
-  apply(thisObj, argValues, interpreter) {
+  apply(thisObj, argValues, interpreter, newTarget) {
     if (this.capturedFrameState) {
       this.lexicalScope = Scope.recreateFromFrameState(this.capturedFrameState);
       delete this.capturedFrameState;
@@ -1543,6 +1552,8 @@ export class Function {
     var parentFrame = this.parentFrame ? this.parentFrame : Frame.global(),
         frame = parentFrame.newFrame(this, this.lexicalScope);
     if (!parentFrame.func) frame.setParentFrame(null);
+    frame.newTarget = newTarget;
+    frame.constructorInvocation = !!this.originalFunction?.[Symbol.for('lively-debug-constructor')];
     // FIXME: add mapping to the new frame.getScope()
     if (this.node.type === 'ArrowFunctionExpression') frame.setThis(this.lexicalThis);
     else if (thisObj !== undefined) frame.setThis(thisObj);
@@ -1649,6 +1660,8 @@ export class Frame {
     copy.returnTriggered = this.returnTriggered;
     copy.breakTriggered = this.breakTriggered;
     copy.continueTriggered = this.continueTriggered;
+    copy.newTarget = this.newTarget;
+    copy.constructorInvocation = this.constructorInvocation;
     var parentFrame = this.getParentFrame();
     if (parentFrame) copy.setParentFrame(parentFrame.copy());
     copy.pc = this.pc;
@@ -1673,6 +1686,10 @@ export class Frame {
   }
 
   // accessing
+
+  completeReturnValue(value) {
+    return (this.newTarget || this.constructorInvocation) && (value === null || typeof value !== 'object' && typeof value !== 'function') ? this.getThis() : value;
+  }
 
   setScope(scope) { return this.scope = scope; }
 
@@ -1849,6 +1866,12 @@ obj.extend(Frame, {
 });
 
 export class Scope {
+  debugModule() {
+    for (let scope = this; scope; scope = scope.getParentScope()) {
+      const module = scope.getMapping()[Symbol.for('lively-debug-module')];
+      if (module) return module;
+    }
+  }
 
   get __dont_serialize__() { return ['mapping', 'computationState']; }
 

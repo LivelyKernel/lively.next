@@ -8,6 +8,16 @@ import { restartInspectorFrame, resumeInspectorContinuation, stepInspectorContin
 const fn = source => globalThis.Function('return (' + source + ')')();
 
 describe('Smalltalk debugger tutorial', function () {
+  it('calls native function proxies without probing their private metadata', () => {
+    const callable = new Proxy(value => value + 1, {
+      get(target, key, receiver) {
+        if (['livelyDebuggingEnabled', 'isInterpretableFunction'].includes(key)) throw new Error('Private metadata rejected');
+        return Reflect.get(target, key, receiver);
+      }
+    });
+    const stopped = run(fn('function task() { debugger; return callable(3); }'), null, [], {callable});
+    expect(resumeInspectorContinuation(stopped)).equals(4);
+  });
   it('rewrites method closure bindings after removing native compiler annotations', function () {
     for (const module of ['__lvVarRecorder.System.get("@lively-env").moduleEnv("example.js")', '__lvVarRecorder.__currentLivelyModule']) {
       const source = 'function task() { const _debugCell = {get value() { return value; }}; let value = 2; const read = ' + module + '.recordDebugClosure(() => value, {value: _debugCell}, 0, 1, __lvOriginalCode, "read"); debugger; value = 4; return read(); }';

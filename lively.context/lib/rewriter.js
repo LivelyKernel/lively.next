@@ -988,6 +988,10 @@ export class BaseVisitor {
       return node;
   }
 
+  visitMetaProperty(node, state) {
+      return node;
+  }
+
   visitArrayExpression(node, state) {
       node.elements = node.elements.map(function(ea) {
           if (ea) {

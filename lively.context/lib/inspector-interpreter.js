@@ -533,6 +533,7 @@ export function returnFromInspectorFrame (continuation, value, {startFrame = nul
   const interpreted = asInterpreterContinuation(continuation);
   const frame = startFrame || interpreted.currentFrame;
   if (!interpreted.frames().includes(frame)) throw new InspectorInterpreterError('Selected frame is no longer suspended.');
+  value = frame.completeReturnValue(value);
   const parent = frame.getParentFrame();
   if (frame.generator && !iteratorResult) {
     frame.generator.state = 'done';
