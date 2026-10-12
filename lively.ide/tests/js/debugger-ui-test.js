@@ -229,6 +229,7 @@ describe('lively debugger ui', function () {
     try {
       const model = view.viewModel, input = model.ui.workspaceInput;
       await model.selectFrame(model.continuation.currentFrame);
+      expect(!!view.getSubmorphNamed('status')).equals(false);
       expect(!!view.getSubmorphNamed('workspace do button')).equals(false);
       expect(model.isWorkspaceVisible()).equals(false);
       const scopes = view.get('scope/value pane');
@@ -243,6 +244,7 @@ describe('lively debugger ui', function () {
         expect(toggle.top).at.least(pane.top);
         expect(toggle.bottom).at.most(pane.bottom);
         expect(bounds(model.ui.workspaceControls).bottom).closeTo(pane.bottom, 0.5);
+        expect(pane.bottom).closeTo(bounds(view).bottom, 0.5);
       };
       const collapsedHeight = scopes.height;
       const windowExtent = view.getWindow().extent;
@@ -280,6 +282,7 @@ describe('lively debugger ui', function () {
       expect(collapsedToggle.top).at.least(bounds(scopes).top);
       expect(collapsedToggle.bottom).at.most(bounds(scopes).bottom);
       expect(bounds(model.ui.workspaceControls).bottom).closeTo(bounds(scopes).bottom, 0.5);
+      expect(bounds(scopes).bottom).closeTo(bounds(view).bottom, 0.5);
       model.toggleWorkspace();
       view.env.forceUpdate();
       expect(input.height).closeTo(workspaceHeight, 0.5);
@@ -302,6 +305,18 @@ describe('lively debugger ui', function () {
       input.selectAll();
       await input.execCommand('printit');
       expect(input.textString).contains('3');
+      const errors = [];
+      view.showError = input.showError = error => errors.push(String(error));
+      model.ui.sourcePane.textString += '\n// edited source';
+      expect(model.runToCursor()).equals(false);
+      expect(errors.pop()).contains('Run to Cursor failed');
+      input.textString = 'missingDebuggerWorkspaceValue';
+      input.selectAll();
+      expect((await input.execCommand('doit')).isError).equals(true);
+      expect(errors.pop()).contains('missingDebuggerWorkspaceValue');
+      expect(await model.evaluateWorkspace()).equals(false);
+      expect(errors.pop()).contains('missingDebuggerWorkspaceValue');
+      model.sourceBuffers.clear();
     } finally { view.viewModel.closeDebugger(); }
   });
 
