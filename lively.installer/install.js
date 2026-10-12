@@ -320,7 +320,7 @@ function writePackageRegistryCache (registry) {
 }
 
 export async function setupSystem(baseURL, { name = 'lively', environment } = {}) {
-  if (!/^[a-z][a-z0-9+.-]*:/i.test(baseURL)) baseURL = pathToFileURL(baseURL).href;
+  if (/^[a-z]:[\\/]/i.test(baseURL) || !/^[a-z][a-z0-9+.-]*:/i.test(baseURL)) baseURL = pathToFileURL(baseURL).href;
   if (!baseURL.endsWith('/')) baseURL += '/';
   ({ default: global.babel } = await import("@babel/core"));
   modules = await import("lively.modules");
