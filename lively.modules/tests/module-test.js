@@ -89,6 +89,13 @@ describe('module loading', () => {
     expect([child.valueFromSuper, child.inherited, child.callback()]).deep.equals([3, 6, 4]);
   });
 
+  it('lowers class field super inside native object methods and getters', async () => {
+    await resource(module1).write('class Base { value() { return this.amount; } get doubled() { return this.amount * 2; } } export const factory = {make() { return class extends Base { amount = 3; valueFromSuper = super.value(); inherited = super.doubled; callback = () => super.value() + 1; }; }, get Child() { return class extends Base { amount = 4; valueFromSuper = super.value(); inherited = super.doubled; callback = () => super.value() + 1; }; }};');
+    const {factory} = await S.import(module1);
+    const first = new (factory.make())(), second = new factory.Child();
+    expect([first.valueFromSuper, first.inherited, first.callback(), second.valueFromSuper, second.inherited, second.callback()]).deep.equals([3, 6, 4, 4, 8, 5]);
+  });
+
   it('keeps Node polyfills primitive until debugging or source capture is enabled', async () => {
     const primitive = module(S, 'esm://ga.jspm.io/npm:@jspm/core@2.1.0/nodelibs/browser/crypto.js');
     expect(primitive.embedOriginalCode).equals(false);

@@ -7,6 +7,7 @@ import { removeSystem, prepareSystem as reinitializeSystem } from '../src/system
 import { installModuleDebugger } from '../../lively.context/lib/module-debugger.js';
 import { runWithCapturedBindings } from '../../lively.context/lib/stackReification.js';
 import { getCurrentASTRegistry, setCurrentASTRegistry } from '../../lively.context/lib/rewriter.js';
+import { serialize, deserialize, ObjectPool } from '../../lively.serializer2/index.js';
 
 describe('ordinary module debugger interception', function () {
   this.timeout(10000);
@@ -259,6 +260,21 @@ describe('ordinary module debugger interception', function () {
     expect(account.read()).equals(7);
     expect(await proceed()).equals(5);
     expect(await pending).equals(5);
+  });
+
+  it('restores callback aliases and shared cells from an intercepted module in the existing pool', async () => {
+    await load('export function make() { let value = 2; return {read: () => value, increment: () => ++value}; }');
+    await module(S, id).setDebuggingEnabled(true);
+    const callbacks = S.get(id).make();
+    const pool = ObjectPool.withDefaultPlugins();
+    const snapshot = serialize({...callbacks, alias: callbacks.increment}, {objPool: pool});
+    const restored = deserialize(JSON.parse(JSON.stringify(snapshot)));
+    expect(pool.ref(callbacks.increment).id).equals(snapshot.snapshot[snapshot.id].props.alias.value.id);
+    expect(restored.increment).equals(restored.alias);
+    expect(restored.read()).equals(2);
+    expect(restored.increment()).equals(3);
+    expect(restored.read()).equals(3);
+    expect(stops).length(0);
   });
 
   it('intercepts callbacks created after an await or debugger resume', async () => {

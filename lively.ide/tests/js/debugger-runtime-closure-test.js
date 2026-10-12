@@ -11,9 +11,10 @@ import { serializeMorph, loadMorphFromSnapshot } from 'lively.morphic/serializat
 import * as modules from 'lively.modules';
 import { LivelyWorld } from '../../world.js';
 import { localInterface } from 'lively-system-interface';
+import { Project } from 'lively.project';
 
 describe('runtime closure bindings', function () {
-  it('enables automatic interception when studio is ready and respects an explicit opt-out', async () => {
+  it('enables automatic interception before studio loads and respects an explicit opt-out', async () => {
     const automatic = System.debuggerInterception, settings = [];
     const world = {
       metadata: {},
@@ -27,8 +28,36 @@ describe('runtime closure bindings', function () {
       System.debuggerInterception = false;
       await LivelyWorld.prototype.initializeStudio.call(world);
       expect(System.debuggerInterception).equals(false);
-      expect(settings).deep.equals([undefined, undefined, false, false]);
+      expect(settings).deep.equals([true, true, false, false]);
     } finally { System.debuggerInterception = automatic; }
+  });
+
+  it('intercepts project modules opened during studio initialization and respects an opt-out', async () => {
+    const automatic = System.debuggerInterception;
+    const loadProject = Project.loadProject, pushState = history.pushState;
+    history.pushState = () => {};
+    try {
+      for (const enabled of [undefined, false]) {
+        const file = resource(`local://debugger-project-open/${String(enabled)}.js`);
+        await file.write('export function inspect() { debugger; return 3; }');
+        const mod = module(file.url);
+        const world = {projectToBeOpened: 'debugger-project', initializeTopBar: async () => {}, initializeStudioUI: async () => {}};
+        if (enabled === undefined) delete System.debuggerInterception;
+        else System.debuggerInterception = enabled;
+        Project.loadProject = async name => {
+          expect(name).equals('debugger-project');
+          await mod.load();
+        };
+        try {
+          await LivelyWorld.prototype.initializeStudio.call(world);
+          expect(mod.debuggingEnabled).equals(enabled !== false);
+        } finally { await mod.unload(); await file.remove(); }
+      }
+    } finally {
+      Project.loadProject = loadProject;
+      history.pushState = pushState;
+      System.debuggerInterception = automatic;
+    }
   });
 
   it('keeps core modules native after source-world boot', () => {

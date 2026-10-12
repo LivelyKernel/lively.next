@@ -6,6 +6,8 @@ import ExpressionSerializer from '../plugins/expression-serializer.js';
 
 let sut = new ExpressionSerializer({ prefix: '_prefix' });
 
+function nativeCallback(captured) { return () => captured; }
+
 describe('expression serializer format', () => {
   describe('encode', () => {
     it('just expression', () =>
@@ -78,13 +80,22 @@ describe('expression serializer format', () => {
 });
 
 describe('expression serializer deserialize', () => {
+  it('keeps native callbacks out of the expression serialization protocol', () => {
+    const callback = nativeCallback(23);
+    expect(sut.embedValue(callback)).equals(callback);
+    expect(callback()).equals(23);
+  });
+
   it('resolves a module binding on an HTTP origin with a port', () => {
     const id = 'http://127.0.0.1:9011/expression-test.js';
-    System.set(id, System.newModule({foo: () => 23}));
+    const foo = () => 23;
+    Object.defineProperty(foo, Symbol.for('lively-module-meta'), {value: {package: {}, pathInPackage: id}});
+    System.set(id, System.newModule({foo}));
     try {
-      const encoded = sut.exprStringEncode({__expr__: 'foo()', bindings: {[id]: ['foo']}});
+      const encoded = sut.getExpressionForFunction(foo);
       expect(sut.requiredModulesOf__expr__(encoded)).deep.equals([id]);
-      expect(sut.deserializeExpr(encoded)).equals(23);
+      expect(sut.deserializeExpr(encoded)).equals(foo);
+      expect(sut.deserializeExpr(encoded)()).equals(23);
     } finally { System.delete(id); }
   });
 

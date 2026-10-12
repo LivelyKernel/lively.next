@@ -764,8 +764,18 @@ class ModuleInterface {
     return this.recordDebugClosure(...args);
   }
 
-  recordDebugClosure(func, cells, start, end, moduleSource, name, lexicalThis, lexicalArguments) {
+  recordDebugClosure(func, cells, start, end, moduleSource, name, lexicalThis, lexicalArguments, declaringClass) {
     if (!func.name && name) Object.defineProperty(func, 'name', {value: name, configurable: true});
+    if (declaringClass) {
+      Object.defineProperty(func, Symbol.for('lively-debug-function-source'), {value: func.toString(), configurable: true});
+      cells.__lively_class__ = {
+        kind: 'const', initialized: true, value: declaringClass,
+        __serialize__(pool) {
+          const expression = pool.expressionSerializer.exprStringDecode(pool.expressionSerializer.getExpressionForFunction(declaringClass));
+          return {...expression, __expr__: '({kind: "const", initialized: true, value: ' + expression.__expr__ + '})'};
+        }
+      };
+    }
     const mod = this;
     Object.defineProperties(func, {
       [Symbol.for('lively-debug-bindings')]: {configurable: true, get() {
@@ -791,12 +801,12 @@ class ModuleInterface {
       func._lexicalThis = lexicalThis;
       func._lexicalArguments = lexicalArguments;
     }
-    if (Object.keys(cells).length) Object.defineProperty(func, '__serialize__', {
+    if (Object.keys(cells).length) Object.defineProperty(func, Symbol.for('lively-serialize-closure'), {
       configurable: true,
       value(pool, snapshots, path) {
         const serialize = System.global.__serializeDebugClosure;
         if (!serialize) throw new Error('Load lively.context before saving a retained runtime closure');
-        return serialize(func, pool, snapshots, path);
+        return serialize(this, pool, snapshots, path);
       }
     });
     return this.debuggingEnabled && this.System.get('@lively-env').moduleDebugger

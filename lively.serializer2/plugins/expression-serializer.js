@@ -90,7 +90,7 @@ export default class ExpressionSerializer {
     return this.exprStringEncode({
       __expr__: func.name,
       bindings: {
-        [joinPath(pkg.name, pathInPackage)]: [func.name]
+        [pkg?.name ? joinPath(pkg.name, pathInPackage) : pathInPackage]: [func.name]
       }
     });
   }

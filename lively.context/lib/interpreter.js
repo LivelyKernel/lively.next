@@ -1526,6 +1526,8 @@ export class Function {
 
   __additionally_serialize__(snapshot, ref, pool, addFn) {
     if (this.capturedFrameState) addFn('lexicalScope', Scope.recreateFromFrameState(this.capturedFrameState));
+    if (typeof this.lexicalThis === 'function' && this.lexicalThis.hasOwnProperty(Symbol.for('lively-instance-superclass')))
+      addFn('lexicalThis', pool.expressionSerializer.getExpressionForFunction(this.lexicalThis));
   }
 
   get isInterpretableFunction() { return true }
@@ -1584,9 +1586,11 @@ export class Function {
       },
       toString: function() {
         return self.getSource();
-      },
-      __serialize__: function(pool, snapshots, path) { return serializeManagedFunction(fn, self, pool, snapshots, path); }
+      }
     });
+    Object.defineProperty(fn, Symbol.for('lively-serialize-closure'), {configurable: true, value(pool, snapshots, path) {
+      return serializeManagedFunction(fn, self, pool, snapshots, path);
+    }});
     if (fn.methodName && fn.declaredClass)
       fn.displayName = fn.declaredClass + '$' + fn.methodName;
     else if (optFunc && optFunc.displayName)

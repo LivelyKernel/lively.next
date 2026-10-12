@@ -244,8 +244,8 @@ export function __createClosure(namespace, idx, parentFrameState, f, lexical) {
     return interpreted.asFunction();
   }
   f.livelyDebuggingEnabled = true;
-  Object.defineProperty(f, '__serialize__', {configurable: true, value(pool, snapshots, path) {
-    return serializeManagedFunction(f, new AcornFunction(f._cachedAst, Scope.recreateFromFrameState(f._cachedScopeObject), f), pool, snapshots, path);
+  Object.defineProperty(f, Symbol.for('lively-serialize-closure'), {configurable: true, value(pool, snapshots, path) {
+    return serializeManagedFunction(this, new AcornFunction(f._cachedAst, Scope.recreateFromFrameState(f._cachedScopeObject), f), pool, snapshots, path);
   }});
   if (lexical) {
     f._lexicalThis = lexical.this;

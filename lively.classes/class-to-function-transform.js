@@ -89,7 +89,7 @@ function classFieldsInitialization (nodes, options) {
 
 function constructorTemplate (name, fields, options) {
   const n = options.nodes;
-  return n.funcExpr(name ? n.id(name) : null, [n.id('__first_arg__')],
+  const constructor = n.funcExpr(name ? n.id(name) : null, [n.id('__first_arg__')],
     n.block([n.ifStmt(
       n.logicalExpr(
         '&&',
@@ -103,6 +103,8 @@ function constructorTemplate (name, fields, options) {
               n.member(
                 n.member(n.id('this'), n.funcCall(n.member(n.id('Symbol'), n.id('for')), [n.literal('lively-instance-initialize')]), true),
                 n.id('apply')), [n.id('this'), n.id('arguments')]))]))]));
+  constructor[methodKindSymbol] = 'proto';
+  return constructor;
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

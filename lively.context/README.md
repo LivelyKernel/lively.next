@@ -41,8 +41,9 @@ this experiment. There is no replacement continuation or stepping engine.
 
 ### Ordinary execution
 
-Once the IDE studio is initialized, loading or saving a JavaScript module containing an actual
-`debugger;` statement automatically enables interception for that module. Call its
+During IDE studio initialization, including opening an existing project, loading or
+saving a JavaScript module containing an actual `debugger;` statement automatically
+enables interception for that module. Call its
 functions and methods normally, including through buttons and callbacks. A reached
 stop opens Lively Debugger and suspends the instrumented callers while the world
 continues running. No tutorial helper or explicit `run()` call is required.
@@ -51,7 +52,9 @@ are not captured. Enable interception before creating callback references: nativ
 function references retained elsewhere before enabling cannot be replaced in place.
 Computed class member keys are not yet intercepted.
 Object-literal methods using `super` retain native execution until their home-object
-binding is supplied; class `super` methods use the existing class-system lowering.
+binding is supplied; retained arrows using that native object `super` boundary cannot
+be saved in ObjectPool snapshots yet. Module-declared class `super` methods and their
+retained arrows use the existing class-system lowering and declaring-class metadata.
 
 The System Browser's menu includes **Toggle module debugger interception**. This
 temporarily enables or disables interception for the selected module. Enabling it

@@ -66,6 +66,13 @@ describe('class transform', () => {
     expect(eval(transformed)).deep.equals([3, 6, 4]);
   });
 
+  it('lowers class field super inside native object methods and getters', () => {
+    const source = 'class Base { value() { return this.amount; } get doubled() { return this.amount * 2; } } var factory = {make() { return class extends Base { amount = 3; valueFromSuper = super.value(); inherited = super.doubled; callback = () => super.value() + 1; }; }, get Child() { return class extends Base { amount = 4; valueFromSuper = super.value(); inherited = super.doubled; callback = () => super.value() + 1; }; }}; var first = new (factory.make())(), second = new factory.Child(); [first.valueFromSuper, first.inherited, first.callback(), second.valueFromSuper, second.inherited, second.callback()];';
+    const transformed = stringify(classToFunctionTransform(source, opts));
+    const _rec = {};
+    expect(eval(transformed)).deep.equals([3, 6, 4, 4, 8, 5]);
+  });
+
   it('retains the class body self binding when the outer declaration changes', () => {
     const source = 'class Example { create() { return new Example(); } } var original = new Example(); Example = null; original.create() instanceof original.constructor;';
     const transformed = stringify(classToFunctionTransform(source, opts));

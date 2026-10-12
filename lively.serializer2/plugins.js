@@ -57,7 +57,12 @@ export class Plugin {
 class CustomSerializePlugin {
   // can realObj be manually serialized, e.g. into an expression?
   serializeObject (realObj, isProperty, pool, serializedObjMap, path) {
-    if (typeof realObj.__serialize__ !== 'function') return null;
+    if (typeof realObj.__serialize__ !== 'function') {
+      const serializeClosure = realObj[Symbol.for('lively-serialize-closure')];
+      if (typeof serializeClosure !== 'function') return null;
+      const ref = serializeClosure.call(realObj, pool, serializedObjMap, path);
+      return isProperty ? ref : serializedObjMap[ref.id];
+    }
     let serialized = realObj.__serialize__(pool, serializedObjMap, path);
     if (serialized && serialized.hasOwnProperty('__expr__')) {
       const expr = pool.expressionSerializer.exprStringEncode(serialized);

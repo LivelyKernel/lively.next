@@ -1019,6 +1019,15 @@ function captureRuntimeClosures(program, options) {
       call.arguments.push(t.ThisExpression());
       // Resolve arguments at creation, before a caller can rebind the block.
       call.arguments.push(t.ConditionalExpression(t.BinaryExpression('===', t.UnaryExpression('typeof', t.Identifier('arguments')), t.StringLiteral('undefined')), t.Identifier('undefined'), t.Identifier('arguments')));
+      let usesSuper = false;
+      path.traverse({
+        Function(inner) { if (!inner.isArrowFunctionExpression()) inner.skip(); },
+        Class(inner) { inner.skip(); },
+        Super() { usesSuper = true; }
+      });
+      const home = path.findParent(parent => parent.isFunction() && !parent.isArrowFunctionExpression() || parent.isClassProperty() || parent.isClassPrivateProperty());
+      if (usesSuper && options.topLevelVarRecorder && options.transformES6Classes !== false && (home?.isClassMethod() || home?.isClassProperty() || home?.isClassPrivateProperty()))
+        call.arguments.push(t.Identifier('__lively_class__'));
     }
     if (path.isFunctionDeclaration()) {
       insert(parent, t.ExpressionStatement(t.AssignmentExpression('=', t.cloneNode(fn.id), call)));

@@ -491,6 +491,7 @@ export class LivelyWorld extends World {
 
   async initializeStudio () {
     let { openNewProjectPrompt, openNewWorldPrompt, projectToBeOpened } = this;
+    System.debuggerInterception ??= true;
 
     let anonymousMode;
     const { askForWorldName } = resource(document.location.href).query();
@@ -529,7 +530,6 @@ export class LivelyWorld extends World {
 
     await this.initializeTopBar();
     await this.initializeStudioUI();
-    System.debuggerInterception ??= true;
   }
 
   async isNotUnique (worldName) {
