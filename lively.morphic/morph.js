@@ -2820,8 +2820,8 @@ export class Image extends Morph {
 
   __additionally_serialize__ (snapshot, ref, pool, addFn) {
     super.__additionally_serialize__(snapshot, ref, pool, addFn);
-    // Native worlds must also reopen through HTTP, where file URLs cannot load.
-    if (globalThis.livelyNative && this.imageUrl.startsWith(System.baseURL)) {
+    // Desktop image URLs must survive HTTP port changes and native/HTTP switches.
+    if ((globalThis.livelyNative || globalThis.__LIVELY_DESKTOP_APP__) && this.imageUrl.startsWith(System.baseURL)) {
       addFn('imageUrl', pool.expressionSerializer.exprStringEncode({
         __expr__: `System.baseURL + ${JSON.stringify(this.imageUrl.slice(System.baseURL.length))}`
       }));
