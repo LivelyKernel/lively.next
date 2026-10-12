@@ -10,6 +10,7 @@ import { readFrameSource, moduleUrlForFrame, lineRangeForFrame, sourceNameForFra
 import { serializeMorph, loadMorphFromSnapshot } from 'lively.morphic/serialization.js';
 import * as modules from 'lively.modules';
 import { LivelyWorld } from '../../world.js';
+import { localInterface } from 'lively-system-interface';
 
 describe('runtime closure bindings', function () {
   it('shows an async generator in its class module and applies saved future edits', async function () {
@@ -34,6 +35,22 @@ describe('runtime closure bindings', function () {
       model.ui.sourcePane.textString = source.replace('yield amount;', 'yield amount * 2;');
       expect(await model.saveModule()).equals(true);
       expect((await model.applySavedMethod()).isContinuation).equals(true);
+      await model.selectFrame(model.continuation.currentFrame);
+      const saved = model.ui.sourcePane.textString, originalRead = localInterface.moduleRead;
+      let entered, release;
+      const started = new Promise(resolve => { entered = resolve; });
+      const pending = new Promise(resolve => { release = resolve; });
+      localInterface.moduleRead = () => { entered(); return pending; };
+      try {
+        const selection = model.selectFrame(model.continuation.currentFrame);
+        await started;
+        model.ui.sourcePane.textString = saved + '\n// next repair draft';
+        model.rememberSourceEdits();
+        release(saved);
+        await selection;
+        expect(model.ui.sourcePane.textString).equals(saved + '\n// next repair draft');
+      } finally { localInterface.moduleRead = originalRead; release(saved); }
+      model.sourceBuffers.clear();
       expect((await model.proceed()).isContinuation).equals(true);
       expect(lesson.visits).equals(2);
       expect(lesson.cleanups).equals(0);
