@@ -72,6 +72,10 @@ const fixtureUrl = 'https://ga.jspm.io/npm:template-import-fixture@1.0.0/';
 const katexUrl = 'https://ga.jspm.io/npm:katex@1.0.0/';
 const source = [
   'export { value } from "./static.js";',
+  'export * from "./assertions.js";',
+  'export * from "./decorators.js";',
+  'export * from "./source-phase.js";',
+  'export * from "./unsupported-syntax.js";',
   'export const bare = () => import(`ka\\u0074ex`);',
   'export const duplicate = () => import(`katex`);',
   'export const relative = () => import(/* constant */ `./relative.js`);',
@@ -93,6 +97,15 @@ const files = new Map([
   [fixtureUrl + 'quoted.js', 'export default 2;'],
   [fixtureUrl + 'relative.js', 'export const nested = () => import(`./relative-leaf.js`);'],
   [fixtureUrl + 'relative-leaf.js', 'export default 3;'],
+  [fixtureUrl + 'assertions.js', 'import data from "./asserted.json" assert { type: "json" }; export const assertionValue = data.value; export const assertionLoad = () => import(`./assertion-leaf.js`);'],
+  [fixtureUrl + 'asserted.json', '{"value":5}'],
+  [fixtureUrl + 'decorators.js', 'const sealed = value => value; @sealed export class Decorated {} export const decoratorLoad = () => import(`./decorator-leaf.js`);'],
+  [fixtureUrl + 'source-phase.js', 'import source bytes from "./static.js"; export const sourceValue = bytes; export const sourceLoad = () => import(`./source-phase-leaf.js`);'],
+  [fixtureUrl + 'unsupported-syntax.js', 'import "./static.js"; export const pipeline = 1 |> double; export const marker = `import`; export const quotedLoad = () => import("./unsupported-leaf.js");'],
+  [fixtureUrl + 'assertion-leaf.js', 'export default 6;'],
+  [fixtureUrl + 'decorator-leaf.js', 'export default 7;'],
+  [fixtureUrl + 'source-phase-leaf.js', 'export default 8;'],
+  [fixtureUrl + 'unsupported-leaf.js', 'export default 9;'],
   [katexUrl.slice(0, -1), '1.0.0'],
   ['https://ga.jspm.io/npm:katex', '1.0.0'],
   [katexUrl + 'package.json', JSON.stringify({ name: 'katex', version: '1.0.0', type: 'module', exports: './index.js' })],
@@ -121,11 +134,39 @@ try {
   assert.deepEqual(map._modules, [
     fixtureUrl + 'index.js', fixtureUrl + 'static.js', fixtureUrl + 'quoted.js',
     fixtureUrl + 'relative.js', fixtureUrl + 'relative-leaf.js',
+    fixtureUrl + 'assertions.js', fixtureUrl + 'asserted.json', fixtureUrl + 'decorators.js',
+    fixtureUrl + 'source-phase.js', fixtureUrl + 'assertion-leaf.js',
+    fixtureUrl + 'decorator-leaf.js', fixtureUrl + 'source-phase-leaf.js',
+    fixtureUrl + 'unsupported-syntax.js', fixtureUrl + 'unsupported-leaf.js',
     katexUrl + 'index.js', katexUrl + 'leaf.js'
   ].sort());
   assert.equal(map.integrity[clientUrl(fixtureUrl + 'index.js')],
     'sha384-' + createHash('sha384').update(source).digest('base64'));
+  for (const name of ['assertions.js', 'decorators.js', 'source-phase.js', 'unsupported-syntax.js']) {
+    assert.equal(map.integrity[clientUrl(fixtureUrl + name)],
+      'sha384-' + createHash('sha384').update(files.get(fixtureUrl + name)).digest('base64'));
+  }
   console.log('Constant template import scopes, recursive closure, cooked escapes, source integrity, and ignored expressions passed offline.');
+  console.log('Import assertions, decorators, source-phase imports, and unrecognized Babel syntax preserve successful JSPM graphs.');
+  const cacheFile = path.join(templateRoot, '.cachedImportMap.json');
+  const successfulCache = await fs.readFile(cacheFile, 'utf8');
+  for (const [name, invalidSource] of [
+    ['broken-analysis-fixture', 'export const broken = import('],
+    ['broken-fetch-fixture', 'import "./missing.js"; export const marker = `import`;']
+  ]) {
+    const url = `https://ga.jspm.io/npm:${name}@1.0.0/`;
+    files.set(url.slice(0, -1), '1.0.0');
+    files.set(url + 'package.json', JSON.stringify({ name, version: '1.0.0', type: 'module', exports: './index.js' }));
+    files.set(url + 'index.js', invalidSource);
+    await fs.writeFile(path.join(templateRoot, 'package.json'), JSON.stringify({
+      name: 'template-import-test', dependencies: { [name]: '1.0.0' }
+    }));
+    await assert.rejects(generateImportMapForPackage(templateRoot, { update: true }), {
+      message: `Cannot generate browser import map for template-import-test: ${name}`
+    });
+    assert.equal(await fs.readFile(cacheFile, 'utf8'), successfulCache);
+  }
+  console.log('Original JSPM analysis and fetch failures still reject generation and preserve the previous cache.');
 } finally {
   setFetch(nativeFetch);
   globalThis.fetch = nativeFetch;

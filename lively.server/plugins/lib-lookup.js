@@ -55,10 +55,19 @@ function createGenerator (inputMap, providers, baseUrl) {
       if (analysis?.format !== 'esm') return analysis;
       const source = await (await fetchModule(url, resolver.fetchOpts)).text();
       if (!source.includes('`') || !source.includes('import')) return analysis;
-      const ast = babel.parseSync(source, {
-        babelrc: false, configFile: false, sourceType: 'module',
-        parserOpts: { createImportExpressions: true }
-      });
+      let ast;
+      try {
+        ast = babel.parseSync(source, {
+          babelrc: false, configFile: false, sourceType: 'module',
+          parserOpts: {
+            createImportExpressions: true,
+            plugins: [['importAttributes', { deprecatedAssertSyntax: true }], 'decorators-legacy', 'sourcePhaseImports']
+          }
+        });
+      } catch {
+        // shortcut: keep JSPM's graph for unsupported syntax; add parser plugins when its templates need tracing.
+        return analysis;
+      }
       babel.traverse(ast, {
         ImportExpression ({ node: { source } }) {
           if (source.type !== 'TemplateLiteral' || source.expressions.length) return;
