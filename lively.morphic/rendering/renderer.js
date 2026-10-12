@@ -1203,7 +1203,6 @@ export default class Renderer {
       rendered.style.height = morph.height + 'px';
     }
     rendered.style.position = 'sticky';
-    rendered.style.transform = '';
     rendered.style.textAlign = 'initial';
     rendered.style.removeProperty('top');
     rendered.style.removeProperty('left');
