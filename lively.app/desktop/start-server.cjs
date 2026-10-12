@@ -298,7 +298,13 @@ function prepareDesktopRuntimeRoot (sourceRoot, dataDir, logFn) {
     if (fs.existsSync(source)) copyFileWithMode(source, path.join(runtimeRoot, name));
   }
 
-  seedPackagedPartsbin(sourceRoot, runtimeRoot);
+  logFn('seeding packaged PartsBin');
+  try {
+    seedPackagedPartsbin(sourceRoot, runtimeRoot);
+  } catch (err) {
+    logFn('Cannot seed packaged PartsBin: ' + (err.stack || err));
+    throw err;
+  }
   logFn('desktop runtime root ready: ' + runtimeRoot);
   return runtimeRoot;
 }

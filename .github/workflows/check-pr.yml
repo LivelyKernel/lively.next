@@ -41,6 +41,8 @@ jobs:
         run: node --trace-uncaught lively.modules/tests/native-system-live-test.mjs
       - name: Check desktop downloads
         run: node lively.app/scripts/test-downloads.mjs
+      - name: Check desktop dependency junctions
+        run: node lively.app/scripts/test-windows-dependency-layout.mjs
       - name: Check packaged Unix payload
         if: runner.os == 'macOS'
         run: node lively.app/scripts/test-package-payload.mjs
