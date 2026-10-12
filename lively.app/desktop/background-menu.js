@@ -382,9 +382,9 @@
         };
         updateState();
       }
-      if (process.platform === 'darwin') win.menu = menu;
-      else {
-        win.menu = null;
+      if (process.platform === 'darwin') {
+        if (win.menu !== menu) win.menu = menu;
+      } else {
         if (helper && trusted) helper.menu = goMenu;
       }
       log('desktop menu attached (' + reason + ')');

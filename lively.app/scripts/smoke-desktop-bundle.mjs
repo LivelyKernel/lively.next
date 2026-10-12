@@ -612,34 +612,69 @@ async function assertStartupBackground (client, urls, dataDir) {
 
 /** Exercise the frame used by both the dashboard and same-document worlds. */
 async function assertDesktopTitlebar (client, dataDir, world = false) {
-  const state = await client.send('Runtime.evaluate', {
-    returnByValue: true,
-    expression: `(() => {
-      const frame = document.getElementById('lively-desktop-titlebar');
-      const style = frame && getComputedStyle(frame);
-      const controls = frame && [...frame.querySelectorAll('button')];
-      const bar = globalThis.$world?.get('lively top bar');
-      const node = bar && document.getElementById(bar.id);
-      const dashboardControls = globalThis.$world?.get('top side');
-      return Boolean(frame && typeof livelyDesktop.windowAction === 'function' &&
-        (!globalThis.nw || nw.App.manifest.window.frame === false) &&
-        style.backgroundColor === 'rgba(0, 0, 0, 0)' && style.webkitAppRegion === 'drag' &&
-        frame.getBoundingClientRect().height === livelyDesktop.titlebarHeight &&
-        controls.every(button => button.getAttribute('aria-label') && getComputedStyle(button).webkitAppRegion === 'no-drag') &&
-        (navigator.platform.startsWith('Mac') || livelyDesktop.menu?.items?.length === 5) &&
-        (${world} || dashboardControls?.globalBounds().top() >= livelyDesktop.titlebarHeight) &&
-        (!${world} || (node && node.getBoundingClientRect().top === 0 &&
-          bar.layout.padding.top() === livelyDesktop.titlebarHeight &&
-          getComputedStyle(node).backgroundImage.includes('linear-gradient') &&
-          bar.submorphs.filter(m => m.isLayoutable).every(m => m.top >= livelyDesktop.titlebarHeight))));
-    })()`
-  });
-  if (state.exceptionDetails || state.result?.value !== true) {
-    throw new Error('Transparent desktop title bar failed: ' + JSON.stringify(state));
-  }
+  await waitFor('transparent desktop title bar', async () => {
+    const state = await client.send('Runtime.evaluate', {
+      returnByValue: true,
+      expression: `(() => {
+        const frame = document.getElementById('lively-desktop-titlebar');
+        const style = frame && getComputedStyle(frame);
+        const controls = frame && [...frame.querySelectorAll('button')];
+        const bar = globalThis.$world?.get('lively top bar');
+        const node = bar && document.getElementById(bar.id);
+        const dashboardControls = globalThis.$world?.get('top side');
+        return Boolean(frame && typeof livelyDesktop.windowAction === 'function' &&
+          (!globalThis.nw || nw.App.manifest.window.frame === false) &&
+          style.backgroundColor === 'rgba(0, 0, 0, 0)' && style.webkitAppRegion === 'drag' &&
+          frame.getBoundingClientRect().height === livelyDesktop.titlebarHeight &&
+          controls.every(button => button.getAttribute('aria-label') && getComputedStyle(button).webkitAppRegion === 'no-drag') &&
+          (navigator.platform.startsWith('Mac') || livelyDesktop.menu?.items?.length === 5) &&
+          (${world} || dashboardControls?.globalBounds().top() >= livelyDesktop.titlebarHeight) &&
+          (!${world} || (node && node.getBoundingClientRect().top === 0 &&
+            bar.layout.padding.top() === livelyDesktop.titlebarHeight &&
+            getComputedStyle(node).backgroundImage.includes('linear-gradient') &&
+            bar.submorphs.filter(m => m.isLayoutable).every(m => m.top >= livelyDesktop.titlebarHeight))));
+      })()`
+    });
+    if (state.exceptionDetails || state.result?.value !== true) {
+      throw new Error('Transparent desktop title bar failed: ' + JSON.stringify(state));
+    }
+    return true;
+  }, 15000);
   const screenshot = await client.send('Page.captureScreenshot', { format: 'png' });
   fs.writeFileSync(path.join(dataDir, world ? 'world-titlebar.png' : 'dashboard-titlebar.png'), Buffer.from(screenshot.data, 'base64'));
   console.log('Desktop app smoke passed: transparent ' + (world ? 'world title bar shares the toolbar gradient' : 'dashboard title bar preserves window controls and Go menu'));
+}
+
+/** Windows/Linux check requiring a window manager; plain Xvfb cannot maximize. */
+async function assertDesktopWindowControls (client) {
+  const action = name => client.send('Runtime.evaluate', {
+    expression: `livelyDesktop.windowAction(${JSON.stringify(name)})`
+  });
+  const state = (expected, label) => waitFor('desktop window ' + expected, async () => {
+    const result = await client.send('Runtime.evaluate', {
+      awaitPromise: true, returnByValue: true,
+      expression: `new Promise(resolve => chrome.windows.getCurrent(win => resolve(
+        win.state === ${JSON.stringify(expected)} &&
+        document.querySelector('#lively-desktop-titlebar [data-action=maximize]')?.title === ${JSON.stringify(label)} &&
+        typeof livelyDesktop.windowAction === 'function')))`
+    });
+    return result.result?.value === true;
+  }, 30000);
+  await action('restore');
+  await state('normal', 'Maximize window');
+  await action('maximize');
+  await state('maximized', 'Restore window');
+  await client.send('Page.reload');
+  await state('maximized', 'Restore window');
+  await waitFor('dashboard after window-control checks', async () => {
+    const result = await client.send('Runtime.evaluate', {
+      expression: `Boolean(globalThis.$world?.get('a project browser')?.opacity > 0.9)`, returnByValue: true
+    });
+    return result.result?.value === true;
+  });
+  await action('restore');
+  await state('normal', 'Maximize window');
+  console.log('Desktop app smoke passed: maximize survives reload and restore returns the original window');
 }
 
 /** Open a dashboard tile without replacing the frozen renderer's document. */
@@ -1206,6 +1241,7 @@ async function main () {
           const frames = await client.send('Runtime.evaluate', { expression: '__desktopFrames.longest', returnByValue: true });
           console.log(JSON.stringify({ mode: native ? 'native' : 'http', reopened, longestDashboardFrameMs: Math.round(frames.result.value) }));
         }
+        if (native && platform !== 'osx' && args.windowControls === 'true') await assertDesktopWindowControls(client);
         if (startupOnly || checkSavedWorld) {
           if (checkSavedWorld) await reopenSmokeWorld(client, routeURL('/worlds/load?name=' + SAVED_WORLD + '&fastLoad=true'), timeoutMs);
           else {
