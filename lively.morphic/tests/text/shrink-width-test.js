@@ -44,11 +44,11 @@ describe('text shrink width', () => {
           expect(resizedWidth).closeTo(initialWidth + 60, 1, 'embedded extent invalidates the measurement');
           embedded.visible = false;
           text.env.renderer.renderStylingChanges(embedded);
-          expect(getComputedStyle(text.env.renderer.getNodeForMorph(embedded)).display).equals('none');
-          expect(text.intrinsicWidth()).closeTo(resizedWidth - 160, 1, 'hidden inline boxes consume no width');
+          expect(getComputedStyle(text.env.renderer.getNodeForMorph(embedded)).display).equals('inline-block');
+          expect(text.intrinsicWidth()).closeTo(resizedWidth, 1, 'hidden inline boxes retain their canvas layout width');
           embedded.visible = true;
           text.env.renderer.renderStylingChanges(embedded);
-          expect(text.intrinsicWidth()).closeTo(resizedWidth, 1, 'shown inline boxes regain their width');
+          expect(text.intrinsicWidth()).closeTo(resizedWidth, 1, 'shown inline boxes retain their width');
           return style;
         };
         text.makeDirty();
