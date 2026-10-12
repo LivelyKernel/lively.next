@@ -121,7 +121,7 @@ function closureWrapper(level, name, args, innerVarDecl, inner, optInnerLevel) {
 
 function catchIntro(level, catchVar, storeResult) {
   storeResult = storeResult == null ? true : !!storeResult;
-  return string.format("var _%s = { '%s': %s.isUnwindException ? %s.error : %s };\n"
+  return (storeResult ? '__closeIteratorsAfterCatch(' + catchVar + ');\n' : '') + string.format("var _%s = { '%s': %s.isUnwindException ? %s.error : %s };\n"
     + "if (_%s['%s'].toString() == 'Debugger' && !(lively.Config && lively.Config.loadRewrittenCode))\n"
     + "    throw %s;\n"
     + (storeResult ? pcAdvance() + ";\n"

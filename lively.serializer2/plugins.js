@@ -139,7 +139,7 @@ class LivelyClassPropertiesPlugin {
   propertiesToSerialize (pool, ref, snapshot, keysSoFar) {
     // serialize class properties as indicated by realObj.constructor.properties
     const { realObj } = ref;
-    const classProperties = realObj.constructor[Symbol.for('lively.classes-properties-and-settings')];
+    const classProperties = realObj.constructor?.[Symbol.for('lively.classes-properties-and-settings')];
 
     if (!classProperties) return null;
 
@@ -185,7 +185,7 @@ class LivelyClassPropertiesPlugin {
 
   additionallyDeserializeBeforeProperties (pool, ref, newObj, props, snapshot, serializedObjMap, path) {
     // deserialize class properties as indicated by realObj.constructor.properties
-    const classProperties = newObj.constructor[Symbol.for('lively.classes-properties-and-settings')];
+    const classProperties = newObj.constructor?.[Symbol.for('lively.classes-properties-and-settings')];
 
     if (!classProperties) return props;
 

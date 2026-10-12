@@ -691,6 +691,35 @@ class ModuleInterface {
 
   get varDefinitionCallbackName () { return 'defVar_' + this.id; }
 
+  recordDebugClosure(func, cells, start, end, moduleSource, name, lexicalThis, lexicalArguments) {
+    if (!func.name && name) Object.defineProperty(func, 'name', {value: name, configurable: true});
+    const bindings = {};
+    for (const [name, cell] of Object.entries(cells)) Object.defineProperty(bindings, name, {
+      enumerable: true, configurable: true, get() { return cell.value; }, set(value) { cell.value = value; }
+    });
+    Object.defineProperty(bindings, Symbol.for('lively-debug-binding-cells'), {value: cells, configurable: true});
+    Object.defineProperty(bindings, '__lvVarRecorder', {value: this.recorder});
+    const pkg = this.package();
+    Object.defineProperties(func, {
+      [Symbol.for('lively-debug-bindings')]: {value: bindings, configurable: true},
+      [Symbol.for('lively-object-meta')]: {value: {start, end, moduleSource}, configurable: true},
+      [Symbol.for('lively-module-meta')]: {value: {package: pkg ? {name: pkg.name, version: pkg.version} : {}, pathInPackage: this.pathInPackage()}, configurable: true}
+    });
+    if (arguments.length > 6) {
+      func._lexicalThis = lexicalThis;
+      func._lexicalArguments = lexicalArguments;
+    }
+    if (Object.keys(cells).length) Object.defineProperty(func, '__serialize__', {
+      configurable: true,
+      value(pool, snapshots, path) {
+        const serialize = System.global.__serializeDebugClosure;
+        if (!serialize) throw new Error('Load lively.context before saving a retained runtime closure');
+        return serialize(func, pool, snapshots, path);
+      }
+    });
+    return func;
+  }
+
   define (varName, value, exportImmediately = true, meta) {
     // attaching source info to runtime objects
 

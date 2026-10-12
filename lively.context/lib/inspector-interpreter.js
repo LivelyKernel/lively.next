@@ -17,6 +17,7 @@ const STATEMENT_TYPES = new Set([
   'DoWhileStatement',
   'ForStatement',
   'ForInStatement',
+  'ForOfStatement',
   'DebuggerStatement',
   'VariableDeclaration',
   'FunctionDeclaration',
@@ -321,11 +322,15 @@ export function asInterpreterContinuation (continuation, options = {}) {
   return materializeInspectorContinuation(continuation, options);
 }
 
-function continuationFromStepResult (result) {
+function continuationFromStepResult (result, previous) {
   const unwind = result && result.isUnwindException
     ? result
     : result && result.unwindException;
-  if (unwind) return Continuation.fromUnwindException(unwind);
+  if (unwind) {
+    const continuation = Continuation.fromUnwindException(unwind);
+    continuation.onSuspend = previous && previous.onSuspend;
+    return continuation;
+  }
   return result;
 }
 
@@ -346,7 +351,7 @@ export function stepInspectorContinuation (continuation, {
   const result = action === 'stepInto'
     ? interpreter.stepToNextCallOrStatement(frame)
     : interpreter.stepToNextStatement(frame);
-  const next = continuationFromStepResult(result);
+  const next = continuationFromStepResult(result, interpreterContinuation);
   if (!next || !next.isContinuation) return returnFromInspectorFrame(interpreterContinuation, next, {startFrame: frame});
   if (next && next.reason === 'bindings') return next.settleBindings().then(stopped => stepInspectorContinuation(stopped, {action}));
   return next && next.reason === 'await'
@@ -366,8 +371,8 @@ export function stepOutInspectorContinuation (continuation, {
   const parentFrame = frame && frame.getParentFrame && frame.getParentFrame();
   let result;
   try { result = new Interpreter({captureErrors: true}).runFromPC(frame); }
-  catch (error) { result = continuationFromStepResult(error); if (!result || !result.isContinuation) throw error; }
-  result = continuationFromStepResult(result);
+  catch (error) { result = continuationFromStepResult(error, interpreterContinuation); if (!result || !result.isContinuation) throw error; }
+  result = continuationFromStepResult(result, interpreterContinuation);
   if (result && result.reason === 'await') return result.settleAwait().then(stopped =>
     stopped.reason === 'exception' ? stopped : stepOutInspectorContinuation(stopped));
   if (result && result.isContinuation) return result;
@@ -399,7 +404,7 @@ export function restartInspectorFrame (continuation, { startFrame = null } = {})
 }
 
 function savedMethodForFrame (frame) {
-  const original = frame.func.originalFunction;
+  const original = frame.func.originalFunction || frame.func.asFunction();
   const name = original && (original.methodName || original.displayName || original.name);
   let owner = frame.getThis();
   while (owner && name) {
@@ -487,7 +492,11 @@ export function runToInspectorPosition (continuation, line, {startFrame = null} 
   interpreter.shouldHaltAtNextStatement = node => targets.has(node);
   try { return returnFromInspectorFrame(interpreted, interpreter.runFromPC(frame), {startFrame: frame}); }
   catch (error) {
-    const result = continuationFromStepResult(error);
+    const result = continuationFromStepResult(error, interpreted);
+    if (result && result.reason === 'await') return result.settleAwait().then(stopped =>
+      stopped.reason === 'exception' ? stopped : runToInspectorPosition(stopped, line));
+    if (result && result.reason === 'bindings') return result.settleBindings().then(stopped =>
+      runToInspectorPosition(stopped, line));
     if (result && result.isContinuation) return result;
     throw error;
   }

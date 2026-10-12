@@ -8,6 +8,72 @@ import { restartInspectorFrame, resumeInspectorContinuation, stepInspectorContin
 const fn = source => globalThis.Function('return (' + source + ')')();
 
 describe('Smalltalk debugger tutorial', function () {
+  it('rewrites method closure bindings after removing native compiler annotations', function () {
+    const source = 'function task() { const _debugCell = {get value() { return value; }}; let value = 2; const read = __lvVarRecorder.System.get("@lively-env").moduleEnv("example.js").recordDebugClosure(() => value, {value: _debugCell}, 0, 1, __lvOriginalCode, "read"); debugger; value = 4; return read(); }';
+    const stopped = run(fn(source));
+    expect(stopped.exception).equals(undefined);
+    expect(stopped.currentFrame.lookup('read')()).equals(2);
+    expect(resumeInspectorContinuation(stopped)).equals(4);
+  });
+  it('reports a missing callee without replacing the error with inspector internals', function () {
+    const stopped = run(fn('function task() { debugger; return this.convert(2); }'), null, [], {this: {}});
+    const failed = resumeInspectorContinuation(stopped);
+    expect(failed.isContinuation).equals(true);
+    expect(failed.exception).instanceOf(TypeError);
+    expect(failed.exception.message).not.contains('toString');
+    failed.currentFrame.getThis().convert = value => value * 3;
+    expect(resumeInspectorContinuation(failed)).equals(6);
+  });
+
+  it('resumes for of without replaying iterator advancement and retains each iteration binding', function () {
+    const log = [];
+    const stopped = run(fn('function task() { let reads = []; for (const value of [1, 2, 3]) { log.push(value); reads.push(() => value); if (value === 2) debugger; } return reads.map(read => read()); }'), null, [], {log});
+    expect(stopped.isContinuation).equals(true);
+    expect(stopped.exception).equals(undefined);
+    expect(stopped.currentFrame.lookup('value')).equals(2);
+    expect(log).deep.equals([1, 2]);
+    expect(resumeInspectorContinuation(stopped)).deep.equals([1, 2, 3]);
+    expect(log).deep.equals([1, 2, 3]);
+  });
+
+  it('closes an iterator on a caught exception but keeps it open while suspended', function () {
+    const source = {closes: 0, [Symbol.iterator]() {
+      return {next: () => ({value: 1, done: false}), return: () => { this.closes++; return {}; }};
+    }};
+    for (const body of ['throw new Error("stop")', 'function fail() { throw new Error("stop"); } fail()']) {
+      source.closes = 0;
+      const result = run(fn('function task() { try { for (const value of source) { ' + body + '; } } catch (error) {} return source.closes; }'), null, [], {source});
+      expect(result.returnValue).equals(1);
+    }
+    source.closes = 0;
+    const stopped = run(fn('function task() { for (const value of source) { debugger; break; } return source.closes; }'), null, [], {source});
+    expect(source.closes).equals(0);
+    expect(resumeInspectorContinuation(stopped)).equals(1);
+    source.closes = 0;
+    const caught = run(fn('function task() { try { for (const value of source) { debugger; throw new Error("stop"); } } catch (error) {} return source.closes; }'), null, [], {source});
+    expect(resumeInspectorContinuation(caught)).equals(1);
+  });
+
+  it('steps through object spread while retaining computed keys and copied values', function () {
+    let reads = 0;
+    const source = {get amount() { reads++; return 2; }};
+    const stopped = run(fn('function task() { debugger; const result = {before: 1, ...source, ["after"]: 3}; return result; }'), null, [], {source});
+    const next = stepInspectorContinuation(stopped);
+    expect(resumeInspectorContinuation(next)).deep.equals({before: 1, amount: 2, after: 3});
+    expect(reads).equals(1);
+  });
+
+  it('runs to an await statement without starting its operation', async function () {
+    let calls = 0;
+    const stopped = run(fn('async function task() {\n debugger;\n let first = await later();\n let second = await later();\n return first + second;\n}'), null, [], {later: () => { calls++; return Promise.resolve(3); }});
+    const target = await runToInspectorPosition(stopped, 4);
+    expect(target.isContinuation).equals(true);
+    expect(target.currentFrame.getPC().loc.start.line).equals(4);
+    expect(calls).equals(1);
+    expect(await resumeInspectorContinuation(target)).equals(6);
+    expect(calls).equals(2);
+  });
+
   it('repairs an uncaught missing method and retries without repeating completed effects', function () {
     const receiver = { visits: 0 };
     const stopped = run(fn('function task() { this.visits++; return this.missing(2); }'), null, [], { this: receiver });

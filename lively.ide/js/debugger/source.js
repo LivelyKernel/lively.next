@@ -3,6 +3,7 @@ import { Path, obj } from 'lively.lang';
 import { parse, query, escodegen, withMozillaAstDo } from 'lively.ast';
 import { RuntimeSourceDescriptor } from 'lively.classes/source-descriptors.js';
 import { withSuperclasses, objMetaSymbol } from 'lively.classes/util.js';
+import { module } from 'lively.modules';
 
 // Keep the suspended source until Apply Saved Method installs a new frame function.
 const sourceContexts = new WeakMap();
@@ -21,7 +22,7 @@ function sourceContextForFrame (frame) {
   const func = frame && frame.func;
   if (!func) return null;
   if (sourceContexts.has(func)) return sourceContexts.get(func);
-  const original = func.originalFunction;
+  const original = func.originalFunction || func.asFunction?.();
   let owner = original && Object.prototype.hasOwnProperty.call(original, objMetaSymbol) ? original : null;
   let memberName, memberKind, isStatic;
   if (!owner && original && frame.getThis) {
@@ -40,20 +41,20 @@ function sourceContextForFrame (frame) {
       if (owner) break;
     }
   }
-  let context = null;
-  if (owner && Object.prototype.hasOwnProperty.call(owner, objMetaSymbol)) {
+  let context = func.debuggerSource ? {...func.debuggerSource, url: module(func.debuggerSource.moduleName).id} : null;
+  if (!context && owner && Object.prototype.hasOwnProperty.call(owner, objMetaSymbol)) {
     const descriptor = RuntimeSourceDescriptor.for(owner);
     const source = descriptor.moduleSource;
     const moduleAst = parse(source, { locations: true });
     let ast = query.nodesAtIndex(moduleAst, descriptor.sourceLocation.start)
-      .find(node => node.start === descriptor.sourceLocation.start && /^(Class|Function)/.test(node.type));
+      .find(node => node.start === descriptor.sourceLocation.start && /^(Class|Function|ArrowFunction)/.test(node.type));
     if (ast && memberName) {
       const member = ast.body.body.find(node =>
         (node.key.name || node.key.value) === memberName && !!node.static === isStatic &&
         (memberKind === 'value' ? node.kind === 'method' : node.kind === memberKind));
       ast = member && member.value;
     }
-    if (ast && ast.body && ast.body.type === 'BlockStatement') {
+    if (ast && ast.body) {
       context = {source, ast, url: descriptor.module.id, moduleName: descriptor.module.shortName(), name: memberName ? owner.name + '.' + memberName : original.displayName || original.name};
     }
   }
@@ -70,6 +71,7 @@ function sourceContextForFrame (frame) {
     }
   }
   if (context) {
+    func.debuggerSource = {source: context.source, ast: context.ast, url: context.url, moduleName: context.moduleName, name: context.name};
     const recordedAst = frame.getOriginalAst();
     context.nodes = new Map();
     // Compiler transformations can change the body; never guess a source position.

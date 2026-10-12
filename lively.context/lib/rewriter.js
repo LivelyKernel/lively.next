@@ -1395,6 +1395,48 @@ export class RewriteVisitor extends BaseVisitor {
       this.registryIndex = registryIndex;
   }
 
+  visitSpreadElement(n, rewriter) {
+      const value = this.accept(n.argument, rewriter);
+      return {...n, argument: value.type === 'ExpressionStatement' ? value.expression : value};
+  }
+
+  visitForOfStatement(n, rewriter) {
+      if (n.await) throw new Error('Async iteration requires an async iterator continuation');
+      const declaration = n.left.type === 'VariableDeclaration' ? n.left : null;
+      const left = declaration ? declaration.declarations[0].id : n.left;
+      const lexical = declaration && declaration.kind !== 'var';
+      const root = rewriter.lastFunctionScopeId(), parent = rewriter.scopes.length - 1;
+      const right = this.accept(n.right, rewriter);
+      if (lexical) {
+          rewriter.enterScope();
+          const scope = rewriter.scopes[rewriter.scopes.length - 1];
+          scope.isBlockScope = true;
+          rewriter.registerVars([left]);
+      }
+      const level = rewriter.scopes.length - 1;
+      const valueName = '__forValue_' + n.astIndex;
+      const target = this.accept(left, rewriter);
+      const body = this.accept(n.body, rewriter);
+      const setup = lexical ? parse('let __' + level + ' = __createLexicalScope(__' + parent + ', _, ' + n.astIndex + ', ' + JSON.stringify([[left.name, declaration.kind]]) + '); let _' + level + ' = __' + level + '[1];').body : [];
+      const initialize = lexical ? rewriter.newNode('CallExpression', {
+          callee: {type: 'Identifier', name: '__initializeBinding'},
+          arguments: [target.object, {type: 'Literal', value: left.name}, {type: 'Identifier', name: valueName}]
+      }) : {type: 'AssignmentExpression', operator: '=', left: target, right: {type: 'Identifier', name: valueName}};
+      const loop = parse('for (var ' + valueName + ' of []) { try {} catch (__forError) { __forError = __forError.isUnwindException ? __forError : new UnwindException(__forError); const __iterator = _[' + JSON.stringify('__forOf_' + n.astIndex) + ']; __iterator.suspended = true; (__forError.iteratorsToClose || (__forError.iteratorsToClose = [])).push(__iterator); throw __forError; } }').body[0];
+      loop.right = rewriter.newNode('CallExpression', {
+          callee: {type: 'Identifier', name: '__forOf'},
+          arguments: [right, {type: 'Identifier', name: '_'}, {type: 'Literal', value: n.astIndex}]
+      });
+      const guarded = loop.body.body[0];
+      guarded.block.body = [{type: 'ExpressionStatement', expression: initialize}, body];
+      if (lexical) {
+          guarded.handler.body.body.splice(1, 0, parse('__captureLexicalScope(__forError, __' + root + ', __' + level + ');').body[0]);
+          rewriter.exitScope();
+      }
+      loop.body.body = [...setup, guarded];
+      return {...loop, astIndex: n.astIndex};
+  }
+
   visitAwaitExpression(n, rewriter) {
       rewriter.scopes[rewriter.lastFunctionScopeId()].hasAwait = true;
       return rewriter.newNode('CallExpression', {
@@ -1899,12 +1941,13 @@ export class RewriteVisitor extends BaseVisitor {
       return {
           start: n.start, end: n.end, type: 'ObjectExpression', astIndex: n.astIndex,
           properties: n.properties.map(function(prop) {
+              if (prop.type === 'SpreadElement') return this.accept(prop, rewriter);
               var value = this.accept(prop.value, rewriter);
               if (prop.kind != 'init') { // set or get
                   // function cannot be replace by a closure directly
                   value = value.expression.right.arguments[3]; // unwrap
               }
-              var key = prop.key.type == 'Identifier' ?
+              var key = prop.key.type == 'Identifier' && !prop.computed ?
                   { // original identifier rule
                       start: prop.key.start, end: prop.key.end, type: 'Identifier',
                       name: prop.key.name, astIndex: prop.key.astIndex
@@ -1916,6 +1959,7 @@ export class RewriteVisitor extends BaseVisitor {
                       value.expression : // unwrap
                       value,
                   kind: prop.kind,
+                  computed: !!prop.computed,
                   astIndex: prop.astIndex
               };
           }, this)
@@ -2118,6 +2162,7 @@ export class RewriteVisitor extends BaseVisitor {
               body: rewriter.newNode('BlockStatement', { body: [] })
           });
       handler = this.accept(handler, rewriter);
+      if (n.handler) handler.body.body.unshift(...parse('__closeIteratorsAfterCatch(' + n.handler.param.name + ');').body);
       if (!n.handler) handler.body.body.push(rewriter.newNode('ThrowStatement', {argument: rewriter.newNode('Identifier', {name: 'e'})}));
 
       if (finalizer) {

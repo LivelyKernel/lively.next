@@ -122,9 +122,9 @@ export class LivelyDebuggerModel extends ViewModel {
   static get properties () {
     return {
       continuation: {},
-      inspectorContinuation: {},
-      selectedFrame: {},
-      selectedScope: {},
+      inspectorContinuation: {serialize: false},
+      selectedFrame: {serialize: false},
+      selectedScope: {serialize: false},
       workspaceBindings: {
         initialize () { this.workspaceBindings = {}; }
       },
@@ -164,6 +164,7 @@ export class LivelyDebuggerModel extends ViewModel {
   }
 
   viewDidLoad () {
+    this.sourceBuffers = new Map([...this.sourceBuffers].map(([url, buffer]) => [buffer.moduleName ? module(buffer.moduleName).id : url, buffer]));
     this.ui.sourcePane.addCommands(this.commands);
     this.rememberReleasableContinuation(this.continuation);
     this.refreshFromContinuation();
@@ -293,7 +294,7 @@ export class LivelyDebuggerModel extends ViewModel {
     if (url && (!buffer || buffer.source === buffer.savedSource)) {
       const savedSource = await localInterface.moduleRead(url);
       if (this.selectedFrame !== frame) return;
-      buffer = {source: savedSource, savedSource};
+      buffer = {source: savedSource, savedSource, moduleName: module(url).shortName()};
       this.sourceBuffers.set(url, buffer);
     }
     this.currentSourceText = source;
@@ -418,6 +419,12 @@ export class LivelyDebuggerModel extends ViewModel {
 
   async proceed () {
     try {
+      if (this.continuation.reason === 'await' && !this.continuation.error?.promise) {
+        const source = await this.view.world().prompt('This await was saved before its operation completed. Supply the awaited result:', {input: 'undefined'});
+        if (source == null) return;
+        const value = await evaluateInDebuggerScopes(source, this.evaluationScopes());
+        this.continuation.supplyAwaitResult(value);
+      }
       this.rememberReleasableContinuation(this.continuation);
       const result = await resumeInspectorContinuation(this.continuation);
       signal(this.view, 'debuggerProceed', this.continuation);
@@ -534,6 +541,10 @@ export class LivelyDebuggerModel extends ViewModel {
   }
 
   rememberReleasableContinuation (continuation) {
+    if (continuation && continuation.currentFrame) continuation.onSuspend = pending => {
+      this.continuation = pending;
+      this.refreshFromContinuation();
+    };
     if (continuation && typeof continuation.release === 'function') {
       this.inspectorContinuation = continuation;
     }

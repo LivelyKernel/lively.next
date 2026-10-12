@@ -28,6 +28,40 @@ function frame (spec = {}) {
 }
 
 describe('lively debugger ui', function () {
+  it('scrolls the current statement into view after a saved module edit moves it', async function () {
+    this.timeout(10000);
+    const {resource} = await System.import('lively.resources');
+    const {module} = await System.import('lively.modules');
+    const {run} = await System.import('lively.context/lib/stackReification.js');
+    const {openForContinuation} = await System.import('lively.ide/js/debugger/ui.cp.js');
+    const file = resource('local://debugger-scroll-test/method.js');
+    const source = 'export class Counter {\n task() {\n  let value = 2;\n  debugger;\n  return value;\n }\n}';
+    await file.write(source);
+    const mod = module(file.url);
+    let view;
+    try {
+      const {Counter} = await mod.load();
+      view = openForContinuation(run(Counter.prototype.task, null, [], {this: new Counter()}), $world);
+      const model = view.viewModel, pane = model.ui.sourcePane;
+      await model.selectFrame(model.continuation.currentFrame);
+      await model.stepOver();
+      pane.textString = '// moved by source edit\n'.repeat(250) + source.replace('return value;', 'return value * 3;');
+      expect(await model.saveModule()).equals(true);
+      await model.applySavedMethod();
+      await model.selectFrame(model.continuation.currentFrame);
+      pane.env.forceUpdate();
+      const row = pane.selection.start.row, node = pane.env.renderer.getNodeForMorph(pane);
+      const line = Array.from(node.querySelectorAll('.newtext-text-layer.actual .line')).find(line => Number(line.dataset.row) === row);
+      const bounds = node.getBoundingClientRect(), box = line.getBoundingClientRect();
+      expect(pane.getLine(row).trim()).equals('return value * 3;');
+      expect(box.top).at.least(bounds.top);
+      expect(box.bottom).at.most(bounds.bottom);
+      expect(await model.proceed()).equals(6);
+    } finally {
+      if (view) { view.viewModel.sourceBuffers.clear(); await view.viewModel.closeDebugger(); }
+      await mod.unload(); await file.remove();
+    }
+  });
   it('saves the whole module in the debugger and applies future edits to the suspended computation', async function () {
     this.timeout(10000);
     const { resource } = await System.import('lively.resources');

@@ -1,9 +1,27 @@
 import { obj, arr } from "lively.lang";
 import { acorn, escodegen, parseFunction } from "lively.ast";
-import { UnwindException, __getClosure, __createLexicalScope, __declareLexicalBindings, __initializeBinding, __cloneLexicalScope, __awaitValue, capturedBindingMappings, freeFunctionReferences } from "./exception.js";
+import { UnwindException, __getClosure, __createLexicalScope, __declareLexicalBindings, __initializeBinding, __cloneLexicalScope, __awaitValue, __forOf, __closeIteratorsAfterCatch, bindingCells, restoreBindingCells, capturedBindingMappings, freeFunctionReferences, runtimeFunctionSource, removeRuntimeClosureAnnotations } from "./exception.js";
 import { getGlobal } from "lively.vm/lib/util.js";
 
 let Global = getGlobal();
+
+export function RestoredFunction() {
+  const fn = function() { return fn.interpretedFunction.asFunction().apply(this, arguments); };
+  fn.__after_deserialize__ = function() {
+    Object.assign(fn, fn.interpretedFunction.asFunction());
+    Object.defineProperty(fn, 'name', {value: fn.interpretedFunction.name(), configurable: true});
+  };
+  return fn;
+}
+
+export function serializeManagedFunction(fn, interpreted, pool, snapshots, path) {
+  const ref = pool.add(fn);
+  if (snapshots[ref.id]) return ref.asRefForSerializedObjMap(ref.currentRev);
+  const snapshot = snapshots[ref.id] = {rev: ref.currentRev, props: {}};
+  pool.classHelper.addClassInfo(ref, {constructor: RestoredFunction}, snapshot);
+  snapshot.props.interpretedFunction = {value: ref.snapshotProperty(ref.id, interpreted, path.concat('interpretedFunction'), snapshots, pool)};
+  return ref.asRefForSerializedObjMap(ref.currentRev);
+}
 
 export class Interpreter {
 
@@ -14,7 +32,7 @@ export class Interpreter {
   }
 
   get statements() { 
-     return ['EmptyStatement', 'ExpressionStatement', 'IfStatement', 'LabeledStatement', 'BreakStatement', 'ContinueStatement', 'WithStatement', 'SwitchStatement', 'ReturnStatement', 'ThrowStatement', 'WhileStatement', 'DoWhileStatement', 'ForStatement', 'ForInStatement', 'DebuggerStatement', 'VariableDeclaration', 'FunctionDeclaration', 'SwitchCase'] // without BlockStatement and TryStatement
+     return ['EmptyStatement', 'ExpressionStatement', 'IfStatement', 'LabeledStatement', 'BreakStatement', 'ContinueStatement', 'WithStatement', 'SwitchStatement', 'ReturnStatement', 'ThrowStatement', 'WhileStatement', 'DoWhileStatement', 'ForStatement', 'ForInStatement', 'ForOfStatement', 'DebuggerStatement', 'VariableDeclaration', 'FunctionDeclaration', 'SwitchCase'] // without BlockStatement and TryStatement
   }
 
   run(node, optMapping) {
@@ -125,6 +143,7 @@ export class Interpreter {
   }
 
   invoke(recv, func, argValues, frame, isNew) {
+    if (typeof func !== 'function') throw new TypeError(String(func) + ' is not a function');
     // if we send apply to a function (recv) we want to interpret it
     // although apply is a native function
     if (recv && obj.isFunction(recv) && (func === globalThis.Function.prototype.apply || func === globalThis.Function.prototype.call)) {
@@ -150,14 +169,7 @@ export class Interpreter {
       }
     }
     if (isNew) {
-      function construct(constructor, args) {
-        function F() {
-          return constructor.apply(this, args);
-        }
-        F.prototype = constructor.prototype;
-        return new F();
-      }
-      if (this.isNative(func)) return construct(func, argValues);
+      if (this.isNative(func)) return Reflect.construct(func, argValues);
       recv = this.newObject(origFunc);
     }
 
@@ -178,7 +190,7 @@ export class Interpreter {
 
   functionHasDebugger(func) {
     if (typeof func !== 'function' || !/\bdebugger\s*;/.test(func.toString())) return false;
-    const ast = parseFunction(func.toString());
+    const ast = removeRuntimeClosureAnnotations(parseFunction(runtimeFunctionSource(func)));
     let found = false;
     acorn.walk.matchNodes(ast.body, {DebuggerStatement() { found = true; }}, null,
       {visitors: acorn.walk.visitors.stopAtFunctions});
@@ -266,7 +278,7 @@ export class Interpreter {
     if (typeof func !== 'function' || this.isNative(func)) return null;
     if (func.isInterpretableFunction !== undefined) return func;
     if (!func.livelyDebuggingEnabled) {
-      const ast = parseFunction(func.toString(), {locations: true, addSource: true, addAstIndex: true});
+      const ast = removeRuntimeClosureAnnotations(parseFunction(runtimeFunctionSource(func), {locations: true, addSource: true, addAstIndex: true}));
       const names = [...new Set(freeFunctionReferences(ast).map(ref => ref.name))].filter(name => !(name in Global));
       if (names.length) throw new UnwindException({reason: 'bindings', func, names, toString() { return 'Function bindings'; }});
       return new Function(ast, new Scope(Global), func).asFunction();
@@ -492,6 +504,7 @@ export class Interpreter {
       if (e.isUnwindException || e.unwindException) {
         const unwind = e.isUnwindException ? e : e.unwindException;
         if (!(unwind.error instanceof Error) || !node.handler) throw unwind;
+        __closeIteratorsAfterCatch(unwind);
         e = unwind.error;
         delete e.unwindException;
         frame.setPC(null);
@@ -707,6 +720,61 @@ export class Interpreter {
     }
   }
 
+  visitForOfStatement(node, state) {
+    const frame = state.currentFrame, key = '__forOf_' + node.astIndex;
+    let iterator = frame.alreadyComputed[key];
+    const resuming = frame.isResuming();
+    if (!resuming || !iterator) {
+      this.accept(node.right, state);
+      iterator = __forOf(state.result, frame.alreadyComputed, node.astIndex);
+      iterator.next();
+    }
+    const declaration = node.left.type === 'VariableDeclaration' ? node.left : null;
+    const left = declaration ? declaration.declarations[0].id : node.left;
+    const lexical = declaration && declaration.kind !== 'var';
+    let loopScope;
+    if (lexical && resuming) {
+      loopScope = frame.getScope();
+      while (loopScope && loopScope.lexicalNodeIndex !== node.astIndex) loopScope = loopScope.getParentScope();
+      if (!loopScope) throw new Error('Missing recorded iteration scope');
+    }
+    let first = true;
+    while (!iterator.done) {
+      if (!(resuming && first)) {
+        if (lexical) {
+          const mapping = __createLexicalScope(null, frame.alreadyComputed, node.astIndex, [[left.name, declaration.kind]])[1];
+          __initializeBinding(mapping, left.name, iterator.value);
+          loopScope = new Scope(mapping, frame.getScope());
+          loopScope.lexicalNodeIndex = node.astIndex;
+          frame.setScope(loopScope);
+        } else {
+          state.result = iterator.value;
+          if (left.type === 'Identifier') this.setVariable(left.name, state);
+          else this.setSlot(left, state);
+        }
+      }
+      try { this.accept(node.body, state); }
+      catch (error) {
+        if (error.isUnwindException) (error.iteratorsToClose || (error.iteratorsToClose = [])).push(iterator);
+        else iterator.return();
+        throw error;
+      }
+      if (lexical) frame.setScope(loopScope.getParentScope());
+      if (frame.breakTriggered || frame.returnTriggered) {
+        frame.stopBreak();
+        iterator.suspended = false;
+        iterator.return();
+        break;
+      }
+      if (frame.continueTriggered) {
+        frame.stopContinue(this.findNodeLabel(node, state));
+        if (frame.continueTriggered) { iterator.return(); break; }
+      }
+      first = false;
+      iterator.next();
+    }
+  }
+
   visitDebuggerStatement(node, state) {
     // FIXME: might not be in debug session => do nothing?
     //    node.astIndex might be missing
@@ -769,8 +837,17 @@ export class Interpreter {
   visitObjectExpression(node, state) {
     var result = {};
     node.properties.forEach(function(prop) {
+      if (prop.type === 'SpreadElement') {
+        this.accept(prop.argument, state);
+        const source = state.result;
+        if (source != null) for (const key of Reflect.ownKeys(Object(source))) {
+          if (Object.prototype.propertyIsEnumerable.call(source, key))
+            Object.defineProperty(result, key, {value: source[key], writable: true, enumerable: true, configurable: true});
+        }
+        return;
+      }
       var propName;
-      if (prop.key.type == 'Identifier')
+      if (prop.key.type == 'Identifier' && !prop.computed)
         propName = prop.key.name;
       else {
         this.accept(prop.key, state);
@@ -779,7 +856,9 @@ export class Interpreter {
       switch (prop.kind) {
       case 'init':
         this.accept(prop.value, state);
-        result[propName] = state.result;
+        if (propName === '__proto__' && !prop.computed && !prop.shorthand && !prop.method) {
+          if (state.result === null || typeof state.result === 'object') Object.setPrototypeOf(result, state.result);
+        } else Object.defineProperty(result, propName, {value: state.result, writable: true, enumerable: true, configurable: true});
         break;
       case 'get':
         this.accept(prop.value, state);
@@ -1105,10 +1184,14 @@ export class Interpreter {
 
 export class Function {
 
+  get __dont_serialize__() { return ['_cachedFunction', 'originalFunction']; }
+
   get isInterpretableFunction() { return true }
 
   constructor(node, scope, optFunc) {
     this.originalFunction = optFunc;
+    this.runtimeObjectMeta = optFunc && optFunc[Symbol.for('lively-object-meta')];
+    this.runtimeModuleMeta = optFunc && optFunc[Symbol.for('lively-module-meta')];
     this.lexicalThis = optFunc && optFunc._lexicalThis;
     this.lexicalArguments = optFunc && optFunc._lexicalArguments;
     this.lexicalScope = scope;
@@ -1157,7 +1240,8 @@ export class Function {
       },
       toString: function() {
         return self.getSource();
-      }
+      },
+      __serialize__: function(pool, snapshots, path) { return serializeManagedFunction(fn, self, pool, snapshots, path); }
     });
     if (fn.methodName && fn.declaredClass)
       fn.displayName = fn.declaredClass + '$' + fn.methodName;
@@ -1169,6 +1253,8 @@ export class Function {
       this.source = optFunc.toString();
       // TODO: prepare more stuff from optFunc
     }
+    if (this.runtimeObjectMeta) Object.defineProperty(fn, Symbol.for('lively-object-meta'), {value: this.runtimeObjectMeta});
+    if (this.runtimeModuleMeta) Object.defineProperty(fn, Symbol.for('lively-module-meta'), {value: this.runtimeModuleMeta});
     this._cachedFunction = fn;
   }
 
@@ -1274,6 +1360,23 @@ export class Function {
 };
 
 export class Frame {
+
+  get __dont_serialize__() { return ['alreadyComputed', 'pc', 'pcStatement']; }
+
+  __additionally_serialize__(snapshot, ref, pool, addFn) {
+    const computed = this.pendingAwait ? Object.fromEntries(Object.entries(this.alreadyComputed)
+      .filter(([, value]) => !value || typeof value.then !== 'function')) : this.alreadyComputed;
+    addFn('alreadyComputed', computed);
+    addFn('serializedPC', this.pc && this.pc.astIndex);
+    addFn('serializedPCStatement', this.pcStatement && this.pcStatement.astIndex);
+  }
+
+  __after_deserialize__() {
+    this.pc = this.serializedPC == null ? null : acorn.walk.findNodeByAstIndex(this.func.node, this.serializedPC);
+    this.pcStatement = this.serializedPCStatement == null ? null : acorn.walk.findNodeByAstIndex(this.func.node, this.serializedPCStatement);
+    delete this.serializedPC;
+    delete this.serializedPCStatement;
+  }
 
   constructor(func, scope) {
     this.func              = func;  // Function object
@@ -1483,6 +1586,47 @@ obj.extend(Frame, {
 });
 
 export class Scope {
+
+  get __dont_serialize__() { return ['mapping']; }
+
+  __additionally_serialize__(snapshot, ref, pool, addFn) {
+    const cells = bindingCells(this.mapping);
+    if (cells) {
+      addFn('serializedBindingCells', cells);
+      const moduleNames = this.mapping[Symbol.for('lively-debug-module-bindings')] || [];
+      const moduleId = this.mapping.__lvVarRecorder?.__currentLivelyModule.shortName();
+      if (moduleId && moduleNames.length) {
+        addFn('serializedModuleId', moduleId);
+        addFn('serializedModuleNames', moduleNames);
+        for (const name of moduleNames) addFn('serializedModuleBinding_' + name, pool.expressionSerializer.exprStringEncode({
+          __expr__: name, bindings: {[moduleId]: [name]}
+        }));
+      }
+      addFn('serializedExtraBindings', Object.fromEntries(Object.keys(this.mapping)
+        .filter(name => !Object.prototype.hasOwnProperty.call(cells, name) && !moduleNames.includes(name)).map(name => [name, this.mapping[name]])));
+    }
+    else addFn('mapping', this.mapping);
+  }
+
+  __after_deserialize__() {
+    if (this.serializedBindingCells) {
+      this.mapping = restoreBindingCells(this.serializedExtraBindings || {}, this.serializedBindingCells);
+      delete this.serializedBindingCells;
+      delete this.serializedExtraBindings;
+      if (this.serializedModuleId) {
+        const recorder = Global.System.get('@lively-env').moduleEnv(Global.System.decanonicalize(this.serializedModuleId)).recorder;
+        for (const name of this.serializedModuleNames) {
+          Object.defineProperty(this.mapping, name, {enumerable: true, configurable: true,
+            get() { return recorder[name]; }, set(value) { recorder[name] = value; }});
+          delete this['serializedModuleBinding_' + name];
+        }
+        Object.defineProperty(this.mapping, '__lvVarRecorder', {value: recorder});
+        Object.defineProperty(this.mapping, Symbol.for('lively-debug-module-bindings'), {value: this.serializedModuleNames});
+        delete this.serializedModuleId;
+        delete this.serializedModuleNames;
+      }
+    }
+  }
 
   constructor(mapping, parentScope) {
     this.mapping     = mapping || {};
