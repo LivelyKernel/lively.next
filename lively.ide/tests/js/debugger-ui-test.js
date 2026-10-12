@@ -381,9 +381,12 @@ describe('lively debugger ui', function () {
       const model = view.viewModel, tree = model.ui.valueTree;
       await model.selectFrame(model.continuation.currentFrame);
       const scope = model.ui.scopeList.items.find(item => item.value.bindingNames().includes('item')).value;
+      Object.defineProperty(scope.bindings, Symbol.for('debugger-internal-metadata'), {value: {}});
+      model.selectedFrame.lookup('item')[Symbol.for('user-field')] = 23;
       await model.selectScope(scope);
       view.env.forceUpdate();
       expect(tree.textString).not.contains('inspectee:');
+      expect(tree.textString).not.contains('debugger-internal-metadata');
       expect(tree.textString).contains('amount: 2');
       expect(tree.treeData.getContextFor(tree.treeData.root)).equals(scope.bindings);
       const item = tree.treeData.root.children.find(node => node.key === 'item');
@@ -392,6 +395,7 @@ describe('lively debugger ui', function () {
       await tree.onNodeCollapseChanged({node: item, isCollapsed: false});
       expect(tree.textString).contains('inspectee:');
       expect(tree.textString).contains('a real property');
+      expect(tree.textString).contains('Symbol.for("user-field")');
       const nested = item.children.find(node => node.key === 'nested');
       await tree.onNodeCollapseChanged({node: nested, isCollapsed: false});
       expect(tree.textString).contains('answer: 42');
