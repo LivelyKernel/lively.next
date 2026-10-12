@@ -10,6 +10,7 @@ import { restorePackageLinks, stripPackageLinks } from './package-windows-depend
 const fixture = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'lively-windows-graph-')));
 const relocated = fixture + ' relocated';
 const runtime = fixture + ' runtime with spaces';
+const sourceAlias = fixture + ' source alias';
 const linkType = process.platform === 'win32' ? 'junction' : 'dir';
 try {
   const store = path.join(fixture, 'node_modules', '.bun', 'fixture@1.0.0', 'node_modules', 'fixture');
@@ -43,7 +44,8 @@ try {
     path.join(relocated, 'lively.fixture'));
   fs.mkdirSync(runtime);
   fs.symlinkSync(path.join(relocated, 'lively.fixture'), path.join(runtime, 'lively.fixture'), linkType);
-  seedPackagedPartsbin(relocated, runtime);
+  fs.symlinkSync(relocated, sourceAlias, linkType);
+  seedPackagedPartsbin(sourceAlias, runtime);
   const installed = path.join(runtime, 'local_projects', 'LivelyKernel--partsbin');
   assert.equal(fs.realpathSync(path.join(installed, 'node_modules', 'LivelyKernel--partsbin')),
     fs.realpathSync(installed));
@@ -60,4 +62,5 @@ try {
   fs.rmSync(fixture, { recursive: true, force: true });
   fs.rmSync(relocated, { recursive: true, force: true });
   fs.rmSync(runtime, { recursive: true, force: true });
+  fs.rmSync(sourceAlias, { recursive: true, force: true });
 }
