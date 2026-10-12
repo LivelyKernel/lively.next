@@ -3,7 +3,7 @@
 const { Session } = require('node:inspector');
 let nextRequest = 0;
 
-async function captureFunctionBindings (func, names) {
+async function captureFunctionBindings (func, names, { globalObject = global, send = null } = {}) {
   if (typeof func !== 'function') throw new TypeError('Expected a function');
   if (!Array.isArray(names) || names.some(name => typeof name !== 'string')) {
     throw new TypeError('Expected binding names');
@@ -11,21 +11,23 @@ async function captureFunctionBindings (func, names) {
   const pending = new Set(names);
   if (!pending.size) return {};
   const key = '__livelyFunctionScopes' + ++nextRequest;
-  const state = global[key] = { func, bindings: {} };
-  const session = new Session();
+  const state = globalObject[key] = { func, bindings: {} };
+  const session = send ? null : new Session();
   const post = (method, params = {}) => new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(method + ' timed out; NW.js requires --nw-node-inspector')), 4000);
-    session.post(method, params, (error, result) => {
+    const timer = setTimeout(() => reject(new Error(method + ' timed out')), 4000);
+    const finish = (error, result) => {
       clearTimeout(timer);
       if (error) return reject(error);
       if (result.exceptionDetails) return reject(new Error(result.exceptionDetails.text));
       resolve(result);
-    });
+    };
+    if (send) send(method, params).then(result => finish(null, result), error => finish(error));
+    else session.post(method, params, finish);
   });
   try {
-    session.connect();
+    if (session) session.connect();
     await post('Runtime.enable');
-    const holder = (await post('Runtime.evaluate', { expression: 'global[' + JSON.stringify(key) + ']' })).result;
+    const holder = (await post('Runtime.evaluate', { expression: 'globalThis[' + JSON.stringify(key) + ']' })).result;
     const holderProperties = await post('Runtime.getProperties', { objectId: holder.objectId, ownProperties: true });
     const fn = holderProperties.result.find(property => property.name === 'func').value;
     const properties = await post('Runtime.getProperties', { objectId: fn.objectId, ownProperties: true });
@@ -54,9 +56,25 @@ async function captureFunctionBindings (func, names) {
     // These are values, not writable handles to the original lexical bindings.
     return state.bindings;
   } finally {
-    session.disconnect();
-    delete global[key];
+    if (session) session.disconnect();
+    delete globalObject[key];
   }
 }
 
-module.exports = { captureFunctionBindings };
+async function captureRendererFunctionBindings (renderer, func, names, cdpPort = 9222) {
+  // Use NW.js's existing Blink inspector. Attaching node:inspector to this same
+  // renderer replaces the DOM inspector and can crash with concurrent DevTools.
+  const { CDPClient, defaultFetchJson } = require('./inspector-service.cjs');
+  const targets = await defaultFetchJson('http://127.0.0.1:' + cdpPort + '/json/list');
+  const target = targets.find(target => target.type === 'page' && target.url === renderer.location.href);
+  if (!target || !target.webSocketDebuggerUrl) throw new Error('No inspector target for this renderer');
+  const client = new CDPClient(target.webSocketDebuggerUrl);
+  try {
+    await client.open();
+    return await captureFunctionBindings(func, names, {
+      globalObject: renderer, send: (method, params) => client.send(method, params)
+    });
+  } finally { client.close(); }
+}
+
+module.exports = { captureFunctionBindings, captureRendererFunctionBindings };

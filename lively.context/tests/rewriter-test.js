@@ -725,7 +725,7 @@ describe('rewriting', function() {
         astCopy = obj.deepCopy(ast),
         result = rewrite(ast),
         expected = tryCatch(0, { },
-          'if (true) {\n' +
+          'if (_[lastNode = 0] = true) {\n' +
           debuggerThrow() +
           '} else\n' +
           '1;\n'
@@ -740,7 +740,7 @@ describe('rewriting', function() {
         astCopy = obj.deepCopy(ast),
         result = rewrite(ast),
         expected = tryCatch(0, { },
-          'if (true)\n' +
+          'if (_[lastNode = 0] = true)\n' +
           '1;\n' +
           'else {\n' +
           debuggerThrow() +

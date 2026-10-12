@@ -1,5 +1,5 @@
 import { parse } from 'lively.ast';
-import { Continuation } from './stackReification.js';
+import { Continuation, asRewrittenClosure } from './stackReification.js';
 import { Frame, Function as AcornFunction, Interpreter, Scope } from './interpreter.js';
 
 const STATEMENT_TYPES = new Set([
@@ -315,7 +315,10 @@ export function materializeInspectorContinuation (continuation, {
 
 export function asInterpreterContinuation (continuation, options = {}) {
   const currentFrame = continuation && continuation.currentFrame;
-  if (currentFrame && currentFrame.getOriginalAst && currentFrame.getOriginalAst()) return continuation;
+  if (currentFrame && currentFrame.getOriginalAst && currentFrame.getOriginalAst()) {
+    return options.startFrame && options.startFrame !== currentFrame
+      ? new Continuation(options.startFrame) : continuation;
+  }
   return materializeInspectorContinuation(continuation, options);
 }
 
@@ -360,6 +363,18 @@ export function restartInspectorFrame (continuation, { startFrame = null } = {})
   let interpreterContinuation;
   const frame = startFrame || continuation.currentFrame;
   if (frame && frame.getOriginalAst && frame.getOriginalAst()) {
+    const original = frame.func.originalFunction;
+    const methodName = original && (original.methodName || original.displayName || original.name);
+    let owner = frame.getThis(), current;
+    while (owner && methodName) {
+      const descriptor = Object.getOwnPropertyDescriptor(owner, methodName);
+      if (descriptor) { current = descriptor.value; break; }
+      owner = Object.getPrototypeOf(owner);
+    }
+    if (typeof current === 'function' && current !== original) {
+      const ast = asRewrittenClosure(current).originalAst;
+      frame.func = new AcornFunction(ast, frame.func.lexicalScope, current);
+    }
     frame.reset();
     interpreterContinuation = new Continuation(frame);
   } else {
