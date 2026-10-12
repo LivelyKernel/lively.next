@@ -180,6 +180,27 @@ describe('inspector runtime', function () {
     expect(opened[0].id).equals('capture-open');
   });
 
+  it('records auto-open failures for diagnostics', async function () {
+    const failure = new Error('open failed');
+    const oldWarn = console.warn;
+    console.warn = () => {};
+    const runtime = installInspectorRuntime({
+      env: {},
+      openForContinuation: () => { throw failure; }
+    });
+
+    try {
+      runtime.deliverCapture({ captureId: 'capture-open-failure', frames: [] });
+      const result = await runtime.lastOpenPromise;
+
+      expect(result).equals(null);
+      expect(runtime.lastOpenError).equals(failure);
+      expect(runtime.openedCaptureIds.has('capture-open-failure')).equals(false);
+    } finally {
+      console.warn = oldWarn;
+    }
+  });
+
   it('drains pending desktop captures when installed', async function () {
     const opened = [];
     globalThis.__LIVELY_PENDING_DEBUGGER_CAPTURES__ = [

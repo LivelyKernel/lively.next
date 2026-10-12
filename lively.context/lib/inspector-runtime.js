@@ -71,23 +71,56 @@ function importDebuggerUI () {
   return Function('moduleId', 'return import(moduleId)')(uiUrl);
 }
 
+function debuggerWorld () {
+  const Global = globalObject();
+  const world = Global.$world;
+  return world &&
+    world.name &&
+    world.name !== 'lively.next' &&
+    typeof world.getWindows === 'function'
+    ? world
+    : null;
+}
+
+function waitForDebuggerWorld ({ timeout = 10000, interval = 50 } = {}) {
+  const world = debuggerWorld();
+  if (world) return Promise.resolve(world);
+
+  return new Promise((resolve, reject) => {
+    const started = Date.now();
+    const tick = () => {
+      const world = debuggerWorld();
+      if (world) return resolve(world);
+      if (Date.now() - started >= timeout) {
+        return reject(new Error('Cannot open lively.context debugger before the Lively world is ready.'));
+      }
+      setTimeout(tick, interval);
+    };
+    tick();
+  });
+}
+
 function openContinuationForRuntime (runtime, continuation) {
   if (!runtime.autoOpen || !continuation) return Promise.resolve(null);
   if (runtime.openedCaptureIds.has(continuation.id)) return Promise.resolve(null);
   runtime.openedCaptureIds.add(continuation.id);
 
   const open = runtime.openForContinuation || (async continuation => {
+    const world = await waitForDebuggerWorld();
     const mod = await importDebuggerUI();
-    return mod.openForContinuation(continuation);
+    return mod.openForContinuation(continuation, world);
   });
 
-  return Promise.resolve().then(() => open(continuation)).catch(err => {
+  const openPromise = Promise.resolve().then(() => open(continuation)).catch(err => {
     runtime.openedCaptureIds.delete(continuation.id);
+    runtime.lastOpenError = err;
     if (typeof console !== 'undefined' && console.warn) {
       console.warn('Could not open lively.context debugger', err);
     }
     return null;
   });
+  runtime.lastOpenPromise = openPromise;
+  return openPromise;
 }
 
 function installCaptureListener (runtime) {
@@ -482,6 +515,8 @@ export function installInspectorRuntime ({ bridge, env, autoOpen = true, openFor
     autoOpen,
     openForContinuation,
     openedCaptureIds: new Set(),
+    lastOpenPromise: null,
+    lastOpenError: null,
     captureListenerInstalled: false,
     deliverCapture (descriptor) {
       const continuation = registry.deliverCapture(descriptor);
