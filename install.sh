@@ -147,8 +147,12 @@ fi
 
 section "Installing Puppeteer browser"
 step "Preparing Chrome for headless tests..."
-node "$(node -p "require.resolve('puppeteer/install.mjs')")" || exit 1
-node <<'NODE' || exit 1
+# Bun installs Puppeteer under its owning workspace.
+(
+  cd "$lv_next_dir/lively.headless" || exit 1
+  puppeteer_installer=$(node -p "require.resolve('puppeteer/install.mjs')") || exit 1
+  node "$puppeteer_installer" || exit 1
+  node <<'NODE' || exit 1
 const fs = require('fs');
 const puppeteer = require('puppeteer');
 const executable = puppeteer.executablePath();
@@ -157,6 +161,7 @@ if (!fs.existsSync(executable)) {
 }
 console.log(`   Puppeteer Chrome ready at ${executable}`);
 NODE
+) || exit 1
 
 section "Building SWC plugin"
 if ! rustup target list --installed | grep -q "^wasm32-wasip1$"; then
