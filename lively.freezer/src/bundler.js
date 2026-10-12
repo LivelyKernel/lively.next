@@ -588,14 +588,14 @@ export default class LivelyRollup {
   async synthesizeMainModule () {
     let mainModuleSource = await resource(this.resolver.ensureFileFormat(this.resolver.normalizeFileName('lively.freezer/src/util/main-module.js'))).read();
     mainModuleSource = mainModuleSource.replaceAll('TRACE', this.isResurrectionBuild ? 'true' : 'false');
-    return mainModuleSource.replace('prepare()', `const { main, WORLD_CLASS = World, TITLE } = await System.import('${this.rootModuleId}')`);
+    return mainModuleSource.replace('prepare()', `const { main, WORLD_CLASS = World, TITLE } = await System.import(${JSON.stringify(this.rootModuleId)})`);
   }
 
   async synthesizeMainModuleForEntry (entryPath) {
     // Generate a synthetic main module for a specific entry point
     let mainModuleSource = await resource(this.resolver.ensureFileFormat(this.resolver.normalizeFileName('lively.freezer/src/util/main-module.js'))).read();
     mainModuleSource = mainModuleSource.replaceAll('TRACE', this.isResurrectionBuild ? 'true' : 'false');
-    return mainModuleSource.replace('prepare()', `const { main, WORLD_CLASS = World, TITLE } = await System.import('${entryPath}')`);
+    return mainModuleSource.replace('prepare()', `const { main, WORLD_CLASS = World, TITLE } = await System.import(${JSON.stringify(entryPath)})`);
   }
 
   /**
@@ -710,7 +710,7 @@ export default class LivelyRollup {
           try {
             const resolvedImport = eval(ast.stringify(node.arguments[0]));
             if (resolvedImport) this.hasDynamicImports = true;
-            return ast.parse(`import("${resolvedImport}")`).body[0].expression;
+            return ast.parse(`import(${JSON.stringify(resolvedImport)})`).body[0].expression;
           } catch (err) {
             return node;
           }
@@ -730,7 +730,7 @@ export default class LivelyRollup {
             try {
               const resolvedImport = eval(path.get('arguments')[0].getSource());
               if (resolvedImport) self.hasDynamicImports = true;
-              path.replaceWith(babel.parse(`import("${resolvedImport}")`).program.body[0].expression);
+              path.replaceWith(babel.parse(`import(${JSON.stringify(resolvedImport)})`).program.body[0].expression);
             } catch (err) {
             }
           }
