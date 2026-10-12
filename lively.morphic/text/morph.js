@@ -591,7 +591,7 @@ export class Text extends Morph {
         values: ['none', 'native', 'lively'],
         defaultValue: 'none',
         after: ['document', 'needsDocument'],
-        styleProp: true,
+        isStyleProp: true,
         set (mode) {
           if (mode === 'native') {
             if (this.document && !this.readOnly === true) {

@@ -251,6 +251,7 @@ input:placeholder {
 
 .newtext-text-layer .line > a {
   text-decoration: var(--link-text-decoration, underline);
+  text-decoration-color: var(--text-decoration-color, currentColor);
 }
 
 .line > .Morph {

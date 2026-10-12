@@ -1106,7 +1106,10 @@ export default class Renderer {
         if (fontFamily) chunkNodeStyle['font-family'] = fontFamily;
         if (fontWeight) chunkNodeStyle['font-weight'] = fontWeight;
         if (fontStyle) chunkNodeStyle['font-style'] = fontStyle;
-        if (textDecoration) chunkNodeStyle['text-decoration'] = textDecoration;
+        if (textDecoration) {
+          chunkNodeStyle['text-decoration'] = textDecoration;
+          chunkNodeStyle['text-decoration-color'] = 'var(--text-decoration-color, currentColor)';
+        }
         if (attributes.textDecorationColor) chunkNodeStyle['text-decoration-color'] = attributes.textDecorationColor.isColor
           ? attributes.textDecorationColor.toP3ColorString()
           : String(attributes.textDecorationColor);

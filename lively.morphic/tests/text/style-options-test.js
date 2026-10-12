@@ -8,6 +8,22 @@ describe('text styling and display options', () => {
   afterEach(() => text && text.remove());
 
   for (const readOnly of [true, false]) {
+    it(`keeps whole-text decoration colors on underlined and link runs (${readOnly ? 'static' : 'editable'})`, async () => {
+      text = new Text({
+        readOnly, textDecorationColor: Color.blue,
+        textAndAttributes: ['underlined', { textDecoration: 'underline' },
+          'link', { link: 'https://example.invalid/' },
+          'override', { textDecoration: 'underline', textDecorationColor: Color.red }]
+      }).openInWorld();
+      await text.whenRendered();
+      const chunks = [...text.renderingState.textLayer.querySelectorAll('.line > span, .line > a')];
+      expect(chunks.map(node => getComputedStyle(node).textDecorationColor)).deep.equals([
+        Color.blue.toP3ColorString().replace(' / 1', ''),
+        Color.blue.toP3ColorString().replace(' / 1', ''),
+        Color.red.toP3ColorString().replace(' / 1', '')
+      ]);
+    });
+
     it(`preserves link underlines and explicit decoration overrides (${readOnly ? 'static' : 'editable'})`, async () => {
       const link = 'https://example.invalid/';
       text = new Text({ readOnly, textAndAttributes: ['default', { link }, ' plain ', null, 'override', { link, textDecoration: 'none' }] }).openInWorld();
