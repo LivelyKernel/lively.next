@@ -26,6 +26,19 @@ describe('lines', () => {
 });
 
 describe('document as text tree', () => {
+  it('keeps large document heights consistent through repeated measurements', () => {
+    const doc = new Document(Array.from({ length: 5000 }, () => ({ text: 'line', width: 100, height: 14.1 * 1.3 })), {
+      maxLeafSize: 50, minLeafSize: 25, maxNodeSize: 35, minNodeSize: 7
+    });
+    const lines = doc.lines;
+    for (let cycle = 0; cycle < 16; cycle++) {
+      const height = [14.1 * 1.3, 13.75 * 1.125, 19.3 * 1.7, 11.125 * 1.3][cycle % 4];
+      lines.forEach(line => line.changeExtent(100, height));
+      doc.consistencyCheck();
+      expect(lines[42].height).equals(height, 'stored measurements must remain unrounded');
+    }
+  });
+
   it('accepts floating-point height drift at a rounding boundary', () => {
     const doc = new Document([{ text: 'a', width: 100, height: 249.5 }]);
     doc.root.height = 249.49999999999997;

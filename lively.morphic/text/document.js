@@ -150,7 +150,7 @@ class InnerTreeNode extends TreeNode {
 
   resize (n, height, stringSize) {
     this.size = this.size + n;
-    this.height = this.height + height;
+    this.height = arr.sum(arr.pluck(this.children, 'height'));
     this.stringSize = this.stringSize + stringSize;
     let maxWidth = 0;
     for (let i = 0; i < this.children.length; i++) {
@@ -864,9 +864,9 @@ export class Line extends TreeNode {
     this.hasEstimatedExtent = isEstimated;
 
     if (width !== newWidth || height !== newHeight) {
-      const heightDelta = newHeight - height;
       while (parent) {
-        parent.height = parent.height + heightDelta;
+        // Sum the bounded child list instead of accumulating measurement drift.
+        parent.height = arr.sum(arr.pluck(parent.children, 'height'));
         if (newWidth >= parent.width) {
           parent.width = newWidth;
         } else if (width === parent.width) {
