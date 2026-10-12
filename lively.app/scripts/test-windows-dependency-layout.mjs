@@ -7,7 +7,7 @@ import path from 'node:path';
 import { seedPackagedPartsbin } from '../desktop/package-payload.cjs';
 import { restorePackageLinks, stripPackageLinks } from './package-windows-dependencies.mjs';
 
-const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'lively-windows-graph-'));
+const fixture = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'lively-windows-graph-')));
 const relocated = fixture + ' relocated';
 const runtime = fixture + ' runtime with spaces';
 const linkType = process.platform === 'win32' ? 'junction' : 'dir';
