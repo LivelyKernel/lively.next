@@ -478,11 +478,7 @@ export class Text extends Morph {
         set (textAndAttributes) {
           if (!this._isDowngrading) {
             delete this.renderingState.cachedStaticLines;
-            if (!this.document && this._documentBackup) {
-              const range = { start: { row: 0, column: 0 }, end: this._documentBackup.endPosition };
-              this.anchors.forEach(anchor => anchor.onDelete(range));
-              delete this._documentBackup;
-            }
+            this.invalidateDocumentBackup();
           }
           if (obj.isArray(textAndAttributes) && textAndAttributes.find(m => m?.doit)) { this.needsDocument = true; }
           const previousTextAndAttributes = this._isDowngrading ? [] : !this.document && this.textAndAttributes;
@@ -2289,6 +2285,13 @@ export class Text extends Morph {
   // TextAttributes
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  invalidateDocumentBackup () {
+    if (this.document || !this._documentBackup) return;
+    const range = { start: { row: 0, column: 0 }, end: this._documentBackup.endPosition };
+    this.anchors.forEach(anchor => anchor.onDelete(range));
+    delete this._documentBackup;
+  }
+
   /**
    * This removes a Document and a TextLayout from a Text.
    * These are necessary for features like interactive editing, but are expensive.
@@ -2472,7 +2475,10 @@ export class Text extends Morph {
 
   onAttributesChanged (range, resetLayout = true) {
     delete this.renderingState.cachedStaticLines;
-    if (!this.document) this.renderingState.renderedTextAndAttributes = null;
+    if (!this.document) {
+      this.invalidateDocumentBackup();
+      this.renderingState.renderedTextAndAttributes = null;
+    }
     if (resetLayout) this.invalidateTextLayout(false, false);
     if (this.document) {
       for (let i of arr.range(range.start.row, range.end.row, 1)) {
