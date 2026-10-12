@@ -22,6 +22,7 @@ const { createHash } = require('crypto');
 const { spawn, execSync } = require('child_process');
 const { runVelopackStartup } = require('./updates.cjs');
 const { desktopCacheDir, manifestName, preparePackagedSources, seedPackagedPartsbin } = require('./package-payload.cjs');
+const { createInspectorService } = require('./inspector-service.cjs');
 
 // bg-script supplies its persistent window after requiring this module.
 const backgroundWindow = new Promise(resolve => { module.exports.setBackgroundWindow = resolve; });
@@ -807,6 +808,7 @@ function emitError (msg) {
   }
 
   const win = (await new Promise(resolve => nw.Window.getAll(resolve)))[0];
+  let inspectorService = null;
 
   const navigate = () => {
     win.window.livelyBoot.setDashboardUrl(dashboardUrl);
@@ -815,10 +817,22 @@ function emitError (msg) {
   if (win.window.livelyBoot) navigate();
   else win.once('loaded', navigate);
 
+  if (process.env.LIVELY_APP_INSPECTOR_SERVICE !== '0') {
+    const cdpPort = Number(process.env.LIVELY_APP_CDP_PORT || 9222);
+    inspectorService = createInspectorService({
+      cdpPort: Number.isFinite(cdpPort) && cdpPort > 0 ? cdpPort : 9222,
+      log: msg => log('inspector: ' + msg)
+    });
+    inspectorService.start().catch(err => {
+      log('inspector: service unavailable: ' + (err.stack || err));
+    });
+  }
+
   win.on('close', function () {
     log('Window closing, killing server...');
     closing = true;
     clearTimeout(restartTimer);
+    if (inspectorService) inspectorService.stop();
     if (currentChild) currentChild.kill('SIGTERM');
     setTimeout(() => this.close(true), 2000);
   });

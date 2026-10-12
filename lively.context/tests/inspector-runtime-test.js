@@ -84,6 +84,38 @@ describe('inspector runtime', function () {
     expect(frame.lookup('missing')).equals(undefined);
   });
 
+  it('updates a frame without dropping captured scopes', function () {
+    const receiver = { first: true };
+    const nextReceiver = { second: true };
+    createContext({
+      thisValue: receiver,
+      scopes: [{ scopeId: 'local', bindings: { value: 3 } }]
+    });
+
+    registry.storeFrame('capture-1', {
+      frameId: 'frame-1',
+      functionName: 'inner renamed',
+      thisValue: nextReceiver
+    });
+
+    const frame = registry.continuationFor('capture-1').currentFrame;
+    expect(frame.functionName).equals('inner renamed');
+    expect(frame.lookup('value')).equals(3);
+    expect(frame.getThis()).equals(nextReceiver);
+  });
+
+  it('stores exception references for contexts and frames', function () {
+    const exception = new Error('boom');
+    createContext();
+
+    registry.storeException('capture-1', exception, 'frame-1');
+
+    const continuation = registry.continuationFor('capture-1');
+    const frame = continuation.currentFrame;
+    expect(continuation.exception).equals(exception);
+    expect(frame.getException()).equals(exception);
+  });
+
   it('wraps continuations, frames, and scopes over registry ids', function () {
     createContext({
       scopes: [{ scopeId: 'scope-1', type: 'local', name: 'Local', bindings: { value: 3 } }]
