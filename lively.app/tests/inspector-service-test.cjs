@@ -12,6 +12,11 @@ class FakeCDPClient {
     this.armed = armed;
     this.properties = properties;
     this.calls = [];
+    this.eventHandler = null;
+  }
+
+  onEvent (handler) {
+    this.eventHandler = handler;
   }
 
   async send (method, params = {}) {
@@ -75,6 +80,18 @@ async function testTargetSelection () {
   ]);
 
   assert.strictEqual(target.webSocketDebuggerUrl, 'ws://target');
+}
+
+async function testStartMarksRendererServiceAttached () {
+  const client = new FakeCDPClient();
+  const service = new InspectorService({ client });
+  await service.start();
+
+  assert(client.calls.some(call => call.method === 'Runtime.enable'));
+  assert(client.calls.some(call => call.method === 'Debugger.enable'));
+  assert(client.calls.some(call =>
+    call.method === 'Runtime.evaluate' &&
+    call.params.expression.includes('inspectorServiceAttached = true')));
 }
 
 async function testCaptureStoresValuesInRenderer () {
@@ -201,11 +218,15 @@ async function testDesktopBuildCopiesNodeMainSiblingRequires () {
   for (const file of siblingRequires) {
     assert(copiedFiles.has(file), `build.mjs must copy desktop/${file} because start-server.cjs requires it`);
   }
+  for (const file of ['inspector-service.cjs', 'inspector-service-runner.cjs']) {
+    assert(copiedFiles.has(file), `build.mjs must copy desktop/${file} for the debugger service`);
+  }
 }
 
 async function run () {
   await testBindingNameFiltering();
   await testTargetSelection();
+  await testStartMarksRendererServiceAttached();
   await testCaptureStoresValuesInRenderer();
   await testExceptionCaptureStoresExceptionObject();
   await testTaggedHaltUnwindIsIgnored();

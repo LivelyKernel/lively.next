@@ -206,6 +206,21 @@ const ENSURE_INSPECTOR_RUNTIME_EXPRESSION = `(() => {
   return false;
 })()`;
 
+function serviceAttachedExpression (attached) {
+  return `(() => {
+    const desktop = globalThis.livelyDesktop || (globalThis.livelyDesktop = {});
+    const debuggerBridge = desktop.debugger || (desktop.debugger = {});
+    debuggerBridge.inspectorServiceAttached = ${attached ? 'true' : 'false'};
+    if (typeof debuggerBridge.setServiceAttached === 'function') {
+      return debuggerBridge.setServiceAttached(${attached ? 'true' : 'false'});
+    }
+    debuggerBridge.isAvailable = function () {
+      return !!debuggerBridge.inspectorServiceAttached;
+    };
+    return debuggerBridge.inspectorServiceAttached;
+  })()`;
+}
+
 const STORE_ARGUMENTS_FUNCTION = `(payload => {
   ${RENDERER_HELPERS}
   const registry = livelyInspectorRegistryForCapture(payload);
@@ -304,19 +319,42 @@ class InspectorService {
     if (typeof this.client.onEvent === 'function') {
       this.client.onEvent((method, params) => {
         if (method === 'Debugger.paused') this.handlePaused(params);
+        if (method === 'Runtime.executionContextCreated' || method === 'Page.loadEventFired') {
+          this.markRendererServiceAttached(true).catch(err => {
+            this.log('inspector service status refresh failed: ' + (err.stack || err));
+          });
+        }
       });
     }
     await this.client.send('Runtime.enable');
+    await this.client.send('Page.enable').catch(() => {});
     await this.client.send('Debugger.enable');
     await this.client.send('Debugger.setPauseOnExceptions', { state: 'uncaught' });
     this.started = true;
+    await this.markRendererServiceAttached(true);
     this.log('inspector service attached to renderer target');
     return this;
   }
 
   stop () {
     this.started = false;
+    this.markRendererServiceAttached(false).catch(() => {});
     if (this.client && typeof this.client.close === 'function') this.client.close();
+  }
+
+  async markRendererServiceAttached (attached) {
+    if (!this.client) return false;
+    try {
+      const result = await this.client.send('Runtime.evaluate', {
+        expression: serviceAttachedExpression(attached),
+        returnByValue: true,
+        silent: true
+      });
+      return !!(result && result.result && result.result.value);
+    } catch (err) {
+      this.log('inspector service status update failed: ' + (err.stack || err));
+      return false;
+    }
   }
 
   async waitForPageTarget () {

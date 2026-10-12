@@ -45,7 +45,7 @@ function installDesktopDebuggerBridge (runtime) {
 
   desktop.debugger = {
     ...existing,
-    isAvailable: existing.isAvailable || function () { return true; },
+    isAvailable: existing.isAvailable || function () { return false; },
     deliverCapture: function (descriptor) {
       return runtime.deliverCapture(descriptor);
     }
@@ -508,8 +508,14 @@ export function halt (reason = 'halt') {
   const captureId = runtime.registry.createCaptureId();
   const bridge = runtime.bridge;
 
-  if (bridge && typeof bridge.armHalt === 'function') {
-    bridge.armHalt({ reason, captureId });
+  if (!bridge || typeof bridge.armHalt !== 'function') {
+    throw new Error('lively.context inspector service is not available; halt would freeze this runtime');
+  }
+  if (typeof bridge.isAvailable === 'function' && !bridge.isAvailable()) {
+    throw new Error('lively.context inspector service is not attached yet; try again after the desktop app finishes booting');
+  }
+  if (bridge.armHalt({ reason, captureId }) === false) {
+    throw new Error('lively.context inspector service rejected the halt request');
   }
 
   debugger;
