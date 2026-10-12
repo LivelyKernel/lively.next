@@ -4,6 +4,37 @@ import { Text, Morph } from '../../index.js';
 import { pt } from 'lively.graphics';
 
 describe('embedded morphs in static text', () => {
+  it('preserves line boundaries beside embedded morphs through mode changes and removal', async () => {
+    for (const boundary of ['morph-string', 'string-morph', 'morph-morph']) {
+      const first = new Morph({ extent: pt(30, 20) });
+      const second = new Morph({ extent: pt(40, 25) });
+      const content = boundary === 'morph-string' ? [first, null, '\nsecond ', null, second, null]
+        : boundary === 'string-morph' ? ['first\n', null, first, null, ' second ', null, second, null]
+          : [first, null, '\n', null, second, null];
+      const text = new Text({ readOnly: false, textAndAttributes: content }).openInWorld();
+      try {
+        await text.whenRendered();
+        const original = text.textString;
+        for (let cycle = 0; cycle < 2; cycle++) {
+          text.readOnly = true;
+          text.env.forceUpdate();
+          expect(text.textString).equals(original, boundary);
+          expect(text.renderingState.textLayer.querySelectorAll('.line')).length(2);
+          text.readOnly = false;
+          text.env.forceUpdate();
+          expect(text.textString).equals(original, boundary);
+          text.document.consistencyCheck();
+        }
+        text.readOnly = true;
+        second.remove();
+        text.readOnly = false;
+        text.env.forceUpdate();
+        expect(text.textString).equals(original.slice(0, -1), boundary);
+        text.document.consistencyCheck();
+      } finally { text.remove(); }
+    }
+  });
+
   it('maintains ownership, text and removal without creating a document', async () => {
     const embedded = new Morph({ extent: pt(25, 15) });
     const text = new Text({ readOnly: true, textAndAttributes: ['before ', null, embedded, null, ' after', null] }).openInWorld();
