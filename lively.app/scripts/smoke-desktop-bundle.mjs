@@ -674,6 +674,13 @@ async function assertDesktopTitlebar (client, dataDir, world = false) {
       expression: `(() => {
         const frame = document.getElementById('lively-desktop-titlebar');
         const style = frame && getComputedStyle(frame);
+        const title = frame?.querySelector('.window-title');
+        const frameBounds = frame?.getBoundingClientRect();
+        const titleBounds = title?.getBoundingClientRect();
+        const titleStyle = title && getComputedStyle(title);
+        const range = document.createRange();
+        if (title) range.selectNodeContents(title);
+        const textBounds = range.getBoundingClientRect();
         const controls = frame && [...frame.querySelectorAll('button')];
         const bar = globalThis.$world?.get('lively top bar');
         const node = bar && document.getElementById(bar.id);
@@ -688,7 +695,11 @@ async function assertDesktopTitlebar (client, dataDir, world = false) {
             return circle.width === '12px' && circle.height === '12px' && circle.borderRadius === '50%' && circle.backgroundColor === colors[index];
           }));
         return Boolean(frame && typeof livelyDesktop.windowAction === 'function' &&
-          !frame.querySelector('.window-title') && trafficLights &&
+          title?.textContent === 'lively.next - ' + globalThis.$world?.name && trafficLights &&
+          titleBounds.left + titleBounds.width / 2 === frameBounds.left + frameBounds.width / 2 &&
+          textBounds.top >= frameBounds.top && textBounds.bottom <= frameBounds.bottom &&
+          titleStyle.textOverflow === 'ellipsis' && titleStyle.overflow === 'hidden' &&
+          (!mac || (document.title === '\u200b' && nw.Window.get().title === '\u200b')) &&
           (!globalThis.nw || nw.App.manifest.window.frame === false) &&
           style.backgroundColor === 'rgba(0, 0, 0, 0)' && style.webkitAppRegion === 'drag' &&
           frame.getBoundingClientRect().height === livelyDesktop.titlebarHeight &&
@@ -706,6 +717,26 @@ async function assertDesktopTitlebar (client, dataDir, world = false) {
     }
     return true;
   }, 15000);
+  const lights = await client.send('Runtime.evaluate', {
+    returnByValue: true,
+    expression: `navigator.platform.startsWith('Mac') && [...document.querySelectorAll('#lively-desktop-titlebar button')].map(button => {
+      const bounds = button.getBoundingClientRect();
+      return { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
+    })`
+  });
+  for (const position of lights.result.value || []) {
+    await client.send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...position });
+    const hover = await client.send('Runtime.evaluate', {
+      returnByValue: true,
+      expression: `(() => {
+        const button = document.querySelector('#lively-desktop-titlebar button:hover');
+        const opacity = button && Number(getComputedStyle(button.firstChild).opacity);
+        return button && getComputedStyle(button).backgroundColor === 'rgba(0, 0, 0, 0)' && opacity > 0 && opacity < .75;
+      })()`
+    });
+    if (hover.result?.value !== true) throw new Error('macOS controls have an opaque or excessive hover effect: ' + JSON.stringify(hover));
+  }
+  if (lights.result.value) await client.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 200, y: 16 });
   const screenshot = await client.send('Page.captureScreenshot', { format: 'png' });
   fs.writeFileSync(path.join(dataDir, world ? 'world-titlebar.png' : 'dashboard-titlebar.png'), Buffer.from(screenshot.data, 'base64'));
   console.log('Desktop app smoke passed: transparent ' + (world ? 'world title bar shares the toolbar gradient' : 'dashboard title bar preserves window controls and Go menu'));
@@ -1349,6 +1380,7 @@ async function main () {
             return result.result?.value === true;
           }, timeoutMs);
           await assertPartsbinComponentBrowser(client, reopened);
+          await assertDesktopTitlebar(client, dataDir, true);
           client.assertNoRendererErrors();
           continue;
         }
