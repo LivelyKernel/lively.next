@@ -193,4 +193,12 @@ describe('generator and async iterator continuations', function () {
     expect(second.currentFrame.lookup('quantity')).equals(3);
     expect(await resumeInspectorContinuation(second)).equals(10);
   });
+
+  it('restores an async generator after a settled await without serializing its native promise', async function () {
+    const stopped = await run(fn('async function task() { async function* values() { for (const quantity of [2, 3]) { await Promise.resolve(); debugger; yield quantity * 2; } } let total = 0; for await (const value of values()) total += value; return total; }'));
+    const restored = deserialize(serialize(stopped));
+    const second = await resumeInspectorContinuation(restored);
+    expect(second.currentFrame.lookup('quantity')).equals(3);
+    expect(await resumeInspectorContinuation(second)).equals(10);
+  });
 });

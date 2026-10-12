@@ -1604,8 +1604,8 @@ export class Frame {
   get __dont_serialize__() { return ['alreadyComputed', 'pc', 'pcStatement']; }
 
   __additionally_serialize__(snapshot, ref, pool, addFn) {
-    const computed = this.pendingAwait ? Object.fromEntries(Object.entries(this.alreadyComputed)
-      .filter(([, value]) => !value || typeof value.then !== 'function')) : this.alreadyComputed;
+    const computed = Object.fromEntries(Object.entries(this.alreadyComputed)
+      .filter(([, value]) => !value || typeof value.then !== 'function'));
     addFn('alreadyComputed', computed);
     addFn('serializedPC', this.pc && this.pc.astIndex);
     addFn('serializedPCStatement', this.pcStatement && this.pcStatement.astIndex);
