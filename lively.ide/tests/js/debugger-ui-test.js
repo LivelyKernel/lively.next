@@ -27,7 +27,7 @@ function frame (spec = {}) {
 }
 
 describe('lively debugger ui', function () {
-  it('aligns the current statement with captured source at different font sizes', async function () {
+  it('shows the original module with syntax colors and an accurate statement highlight', async function () {
     const { run } = await System.import('lively.context/lib/stackReification.js');
     const { LiveCounter } = await System.import('lively.ide/js/debugger/examples/live-counter.js');
     const { openForContinuation } = await System.import('lively.ide/js/debugger/ui.cp.js');
@@ -37,23 +37,66 @@ describe('lively debugger ui', function () {
     try {
       const model = view.viewModel, pane = model.ui.sourcePane;
       await model.selectFrame(continuation.currentFrame);
+      const { RuntimeSourceDescriptor } = await System.import('lively.classes/source-descriptors.js');
+      expect(pane.textString).equals(RuntimeSourceDescriptor.for(LiveCounter).moduleSource);
+      expect(pane.textString).contains('export class LiveCounter extends Morph');
+      expect(pane.textString).contains('  increment () {');
+      expect(pane.textString).not.contains('function LiveCounter_increment_');
+      const plugin = pane.pluginFind(p => p.isJSEditorPlugin);
+      expect(!!plugin).equals(true);
       for (const fontSize of [13, 16, 22]) {
         pane.fontSize = fontSize;
         await pane.whenFontLoaded();
+        model.refreshSelectedLine();
+        pane.env.forceUpdate();
+        plugin.highlight();
         pane.env.forceUpdate();
         const row = pane.selection.range.start.row;
-        expect(pane.getLine(row).trim()).equals('debugger;');
+        expect(pane.getLine(row).trim()).equals('if (this.pause) debugger;');
         const node = pane.env.renderer.getNodeForMorph(pane);
         const line = Array.from(node.querySelectorAll('.newtext-text-layer.actual .line'))
-          .find(line => line.textContent.trim() === 'debugger;').getBoundingClientRect();
+          .find(line => Number(line.dataset.row) === row);
+        expect(new Set(Array.from(line.querySelectorAll('span')).map(span => span.style.color)).size).above(1);
+        const bounds = line.getBoundingClientRect();
         const selection = pane.renderingState.selectionNodes[0].getBoundingClientRect();
-        expect(selection.top).closeTo(line.top, 0.5);
-        expect(selection.height).closeTo(line.height, 0.5);
+        expect(selection.top).closeTo(bounds.top, 0.5);
+        expect(selection.height).closeTo(bounds.height, 0.5);
         const marker = node.querySelector('.newtext-marker-layer').getBoundingClientRect();
-        expect(marker.top).closeTo(line.top, 0.5);
-        expect(marker.height).closeTo(line.height, 1);
+        expect(marker.top).closeTo(bounds.top, 0.5);
+        expect(marker.height).closeTo(bounds.height, 1);
       }
+      const targetRow = pane.textString.split('\n').findIndex(line => line.trim() === 'this.count += amount;');
+      pane.selection.range = {start: {row: targetRow, column: 4}, end: {row: targetRow, column: 4}};
+      const stopped = await model.runToCursor();
+      expect(stopped.isContinuation).equals(true);
+      await model.selectFrame(stopped.currentFrame);
+      expect(pane.selection.range.start.row).equals(targetRow);
+      expect(counter.count).equals(0);
     } finally { view.viewModel.closeDebugger(); }
+  });
+
+  it('keeps original module positions when stepping into a method or nested closure', async function () {
+    const { run } = await System.import('lively.context/lib/stackReification.js');
+    const { stepInspectorContinuation } = await System.import('lively.context/lib/inspector-interpreter.js');
+    const { LiveCounter } = await System.import('lively.ide/js/debugger/examples/live-counter.js');
+    const { RuntimeSourceDescriptor } = await System.import('lively.classes/source-descriptors.js');
+    const counter = new LiveCounter();
+    for (const [method, statement] of [
+      ['nestedLesson', 'let doubled = value * 2;'],
+      ['scopeLesson', 'read = function () { return amount; };']
+    ]) {
+      let stopped = run(counter[method], null, [], {this: counter});
+      stopped = stepInspectorContinuation(stopped);
+      stopped = stepInspectorContinuation(stopped, {action: 'stepInto'});
+      expect(stopped.frames()).length(2);
+      for (const frame of stopped.frames()) {
+        const source = await readFrameSource(frame);
+        expect(source).equals(RuntimeSourceDescriptor.for(LiveCounter).moduleSource);
+        const row = lineRangeForFrame(frame, source).start.row;
+        if (frame === stopped.currentFrame) expect(source.split('\n')[row].trim()).equals(statement);
+        expect(locationStringForFrame(frame)).contains('/live-counter.js:');
+      }
+    }
   });
 
   it('renders an editable workspace below the scope inspector', async function () {
