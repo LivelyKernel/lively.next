@@ -5,7 +5,8 @@ import { Morph } from './morph.js';
 import { addOrChangeCSSDeclaration } from './rendering/dom-helper.js';
 import css from 'css';
 
-const sharedCssMorphs = new WeakMap();
+const cssMorphs = new WeakMap();
+const sharedCssNodes = new WeakMap();
 const cssDocuments = new WeakMap();
 const sharedCssId = 'css-for-shared-html-morphs';
 
@@ -22,21 +23,42 @@ function scopedCss (source, ids) {
 }
 
 function updateSharedCss (doc) {
-  const groups = [];
-  for (const morph of sharedCssMorphs.get(doc) || []) {
+  let groups = [];
+  let previousPrivateNode;
+  const nodes = [];
+  const flush = before => {
+    if (!groups.length) return;
+    const declarations = [];
+    for (const [source, ids] of groups) {
+      try { declarations.push(scopedCss(source, ids)); } catch (err) {
+        console.error(`Error setting shared cssDeclaration: ${err}`); // eslint-disable-line no-console
+      }
+    }
+    const id = sharedCssId + (nodes.length ? `-${nodes.length}` : '');
+    const node = addOrChangeCSSDeclaration(id, declarations.join('\n'), doc);
+    // Keep each shared segment between the same private declarations.
+    // DOCUMENT_POSITION_FOLLOWING = 4; detached HTML documents have no defaultView.
+    if (before && (before.compareDocumentPosition(node) & 4)) doc.head.insertBefore(node, before);
+    else if (previousPrivateNode && (node.compareDocumentPosition(previousPrivateNode) & 4)) doc.head.insertBefore(node, previousPrivateNode.nextSibling);
+    nodes.push(node);
+    groups = [];
+  };
+  // ponytail: private sheets split shared segments; combine only consecutive rules.
+  for (const morph of cssMorphs.get(doc) || []) {
+    if (!morph.shareCss) {
+      const privateNode = doc.getElementById('css-for-' + morph.id);
+      flush(privateNode);
+      previousPrivateNode = privateNode;
+      continue;
+    }
     // Only combine adjacent declarations: nested scopes can overlap in the cascade.
     const previous = groups[groups.length - 1];
     if (previous && previous[0] === morph.cssDeclaration) previous[1].push(morph.id);
     else groups.push([morph.cssDeclaration, [morph.id]]);
   }
-  if (!groups.length) return doc.getElementById(sharedCssId)?.remove();
-  const declarations = [];
-  for (const [source, ids] of groups) {
-    try { declarations.push(scopedCss(source, ids)); } catch (err) {
-      console.error(`Error setting shared cssDeclaration: ${err}`); // eslint-disable-line no-console
-    }
-  }
-  addOrChangeCSSDeclaration(sharedCssId, declarations.join('\n'), doc);
+  flush();
+  for (const node of sharedCssNodes.get(doc) || []) if (!nodes.includes(node)) node.remove();
+  sharedCssNodes.set(doc, nodes);
 }
 
 // Usage:
@@ -199,27 +221,37 @@ export class HTMLMorph extends Morph {
     if (previousDocument && (previousDocument !== doc || !this.cssDeclaration)) this.uninstallCssDeclaration();
     if (!this.cssDeclaration) return;
     cssDocuments.set(this, doc);
-    let members = sharedCssMorphs.get(doc);
+    let members = cssMorphs.get(doc);
+    if (!members) cssMorphs.set(doc, members = new Set());
+    members.add(this);
     if (this.shareCss) {
       doc.getElementById('css-for-' + this.id)?.remove();
-      if (!members) sharedCssMorphs.set(doc, members = new Set());
-      members.add(this);
       updateSharedCss(doc);
       return;
     }
-    if (members?.delete(this)) updateSharedCss(doc);
     try {
-      addOrChangeCSSDeclaration('css-for-' + this.id, scopedCss(this.cssDeclaration, [this.id]), doc);
+      const id = 'css-for-' + this.id;
+      const existing = doc.getElementById(id);
+      const node = addOrChangeCSSDeclaration(id, scopedCss(this.cssDeclaration, [this.id]), doc);
+      if (!existing) {
+        let follows = false;
+        for (const morph of members) {
+          if (morph === this) { follows = true; continue; }
+          const next = follows && !morph.shareCss && doc.getElementById('css-for-' + morph.id);
+          if (next) { doc.head.insertBefore(node, next); break; }
+        }
+      }
     } catch (err) {
       console.error(`Error setting cssDeclaration of ${this}: ${err}`); // eslint-disable-line no-console
     }
+    updateSharedCss(doc);
   }
 
   uninstallCssDeclaration () {
     const doc = cssDocuments.get(this);
     if (!doc) return;
     doc.getElementById('css-for-' + this.id)?.remove();
-    if (sharedCssMorphs.get(doc)?.delete(this)) updateSharedCss(doc);
+    if (cssMorphs.get(doc)?.delete(this)) updateSharedCss(doc);
     cssDocuments.delete(this);
   }
 
