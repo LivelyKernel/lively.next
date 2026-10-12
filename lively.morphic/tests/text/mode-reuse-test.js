@@ -13,6 +13,10 @@ describe('text mode reuse', () => {
       await text.whenRendered();
       text.readOnly = true;
       text.env.forceUpdate();
+      const originalLine = text.renderingState.textLayer.querySelector('.line');
+      text.removePlainTextAttribute('fontSize', 40);
+      text.env.forceUpdate();
+      expect(text.renderingState.textLayer.querySelector('.line')).equals(originalLine);
       text.removePlainTextAttribute('fontColor');
       text.fontColor = Color.blue;
       text.removePlainTextAttribute('fontSize');
