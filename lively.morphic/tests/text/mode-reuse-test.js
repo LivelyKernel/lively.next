@@ -4,6 +4,21 @@ import { Text, Morph } from '../../index.js';
 import { pt, Color } from 'lively.graphics';
 
 describe('text mode reuse', () => {
+  it('keeps quoted line contents through repeated mode switches', async () => {
+    const text = new Text({ readOnly: true, textAndAttributes: ['quoted', { quote: 1 }] }).openInWorld();
+    try {
+      await text.whenRendered();
+      for (let i = 0; i < 2; i++) {
+        text.readOnly = false;
+        text.env.forceUpdate();
+        text.readOnly = true;
+        text.env.forceUpdate();
+        expect(text.renderingState.textLayer.querySelector('blockquote').textContent).equals('quoted');
+        expect(text.renderingState.textLayer.querySelectorAll('.line')).length(1);
+      }
+    } finally { text.remove(); }
+  });
+
   it('refreshes static lines when global formatting removes inline attributes', async () => {
     const text = new Text({
       readOnly: false, fixedWidth: true, fixedHeight: true,
