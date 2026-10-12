@@ -965,6 +965,9 @@ export default class Renderer {
    */
   removeTextSpecialsFromDOMFor (node, morph) {
     delete morph.renderingState.fillerDiv;
+    delete morph.renderingState.renderedMarkers;
+    delete morph.renderingState.markers;
+    delete morph.renderingState.selectionRanges;
 
     morph.renderingState.cursorNodes.forEach(n => n.remove());
     morph.renderingState.cursorNodes = [];
@@ -1220,6 +1223,7 @@ export default class Renderer {
    * @returns {Node[]} An array of Nodes
    */
   renderWholeText (morph, inertEmbeddedMorphs = false) {
+    if (!inertEmbeddedMorphs && morph.renderingState.cachedStaticLines) return morph.renderingState.cachedStaticLines;
     const renderedLines = [];
     let textAndAttributesByLine = splitTextAndAttributesIntoLines(morph.textAndAttributes);
     if (textAndAttributesByLine.length === 0) {
@@ -1231,6 +1235,9 @@ export default class Renderer {
       renderedLines.push(this.nodeForLine({ isLine: true, textAndAttributes: line, row }, morph, !inertEmbeddedMorphs, inertEmbeddedMorphs));
       row++;
     }
+    // ponytail: cache string-only lines; inline nodes move between render layers.
+    // Reinsert inline placeholders before extending this cache to embedded morphs.
+    if (!morph.embeddedMorphMap.size) morph.renderingState.cachedStaticLines = renderedLines;
     return renderedLines;
   }
 
