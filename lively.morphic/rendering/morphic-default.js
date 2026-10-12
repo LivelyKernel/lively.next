@@ -205,6 +205,7 @@ function defaultStyle (morph) {
     domStyle['overflow-anchor'] = 'none';
   }
 
+  domStyle.position = 'absolute';
   // Keep animation snapshots complete; omit defaults only when rendering nodes.
   for (const side of ['left', 'right', 'top', 'bottom']) {
     if (domStyle[`border-${side}-width`] === '0px') {

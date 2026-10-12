@@ -2730,6 +2730,7 @@ ${((height / 2) - (bh / height) * (height / 2)) + (y * height) - (height / 2)})`
       const isMorph = cssClasses.includes('Morph');
       if (!isMorph) return;
       node.className = arr.withoutAll(cssClasses, ['morph', 'Morph']).join(' ');
+      node.classList.add('morph-preview');
       if (ignoreMorphs.find(m => m.id === node.id)) node.remove();
       node.id = '';
     },
