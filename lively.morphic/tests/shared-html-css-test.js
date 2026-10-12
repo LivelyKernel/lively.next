@@ -3,6 +3,24 @@ import { expect } from 'mocha-es6';
 import { HTMLMorph } from '../html-morph.js';
 
 describe('shared HTML morph CSS', () => {
+  it('preserves the private CSS cascade for nested red, blue, red declarations', async () => {
+    for (const shareCss of [false, true]) {
+      const makeMorph = color => new HTMLMorph({ shareCss, html: '<span class="content">text</span>', cssDeclaration: `.content { color: ${color}; }` });
+      const outer = makeMorph('red');
+      const middle = makeMorph('blue');
+      const inner = makeMorph('red');
+      outer.addMorph(middle);
+      middle.addMorph(inner);
+      outer.openInWorld();
+      try {
+        await inner.whenRendered();
+        inner.env.forceUpdate();
+        const colors = [outer, middle, inner].map(m => getComputedStyle(m.domNode.firstChild).color);
+        expect(colors).deep.equals(['rgb(255, 0, 0)', 'rgb(0, 0, 255)', 'rgb(255, 0, 0)']);
+      } finally { outer.remove(); middle.remove(); inner.remove(); }
+    }
+  });
+
   it('shares identical declarations, scopes changes and maintains one style node', async () => {
     const props = { html: '<span class="content">text</span>', cssDeclaration: '.content { color: rgb(255, 0, 0); }' };
     const first = new HTMLMorph({ ...props, shareCss: true }).openInWorld();

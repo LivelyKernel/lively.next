@@ -22,12 +22,14 @@ function scopedCss (source, ids) {
 }
 
 function updateSharedCss (doc) {
-  const groups = new Map();
+  const groups = [];
   for (const morph of sharedCssMorphs.get(doc) || []) {
-    if (!groups.has(morph.cssDeclaration)) groups.set(morph.cssDeclaration, []);
-    groups.get(morph.cssDeclaration).push(morph.id);
+    // Only combine adjacent declarations: nested scopes can overlap in the cascade.
+    const previous = groups[groups.length - 1];
+    if (previous && previous[0] === morph.cssDeclaration) previous[1].push(morph.id);
+    else groups.push([morph.cssDeclaration, [morph.id]]);
   }
-  if (!groups.size) return doc.getElementById(sharedCssId)?.remove();
+  if (!groups.length) return doc.getElementById(sharedCssId)?.remove();
   const declarations = [];
   for (const [source, ids] of groups) {
     try { declarations.push(scopedCss(source, ids)); } catch (err) {
