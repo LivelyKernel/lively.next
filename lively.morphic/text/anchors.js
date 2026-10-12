@@ -42,7 +42,7 @@ export class Anchor {
         if (!tm.isLineVisible(this.position.row)) return;
       } else return;
     }
-    const pos = (tm && tm.isText) ? tm.charBoundsFromTextPosition(this.position).topLeft().subPt(tm.origin) : this.embeddedMorph.position;
+    const pos = (tm && tm.isText) ? tm.charBoundsFromTextPosition(this.position).topLeft().addXY(tm.borderWidthLeft, tm.borderWidthTop).subPt(tm.origin) : this.embeddedMorph.position;
     if (tm) tm._positioningSubmorph = this.embeddedMorph;
     this.embeddedMorph.position = pos;
     if (tm) tm._positioningSubmorph = false;
