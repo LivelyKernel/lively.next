@@ -390,7 +390,7 @@ jobs:
     # The raw Windows bundle is cross-built by one matrix leg. Do not block
     # native Windows packaging/smoke on unrelated Linux/macOS bundle failures;
     # if the Windows artifact is missing, the download step below will fail.
-    if: ${{ always() && needs.metadata.result == 'success' && needs.build.result != 'cancelled' }}
+    if: ${{ !cancelled() && needs.metadata.result == 'success' && needs.build.result != 'cancelled' }}
     runs-on: windows-latest
     defaults:
       run:
