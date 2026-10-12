@@ -448,7 +448,7 @@ export class LivelyWorld extends World {
     topBar.respondsToVisibleWindow = true;
     this.addMorph(topBar);
     topBar.relayout();
-    topBar.top = titlebarHeight ? 0 : -topBar.height; // keep the desktop frame painted during the entrance
+    topBar.position = pt(0, titlebarHeight - topBar.height); // slide down while keeping the desktop frame painted
     const dropShadow = topBar.dropShadow;
     topBar.dropShadow = null;
     topBar.attachToTarget(this);
