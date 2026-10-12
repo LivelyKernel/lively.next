@@ -2,7 +2,7 @@
 import { expect } from 'mocha-es6';
 import { parse } from 'lively.ast';
 import { initWasm, isAvailable, swcTransform } from '../swc/browser-transform.js';
-import { setupSwcTranspiler } from '../swc/transpiler-setup.js';
+import { setupSwcTranspiler, SwcBrowserTranspiler } from '../swc/transpiler-setup.js';
 
 const moduleId = 'lively.source-transform/tests/wasm-test-input.js';
 
@@ -83,6 +83,13 @@ describe('wasm transform', function () {
     expectIncludes(code, '_rec.y = Object.prototype.hasOwnProperty.call(_rec, "y") ? _rec.y : undefined;');
     expectIncludes(code, '_rec.z = _rec.foo + _rec.bar;');
     expectIncludes(code, '_rec.baz.foo(_rec.z, 3);');
+  });
+
+  it('uses the Babel fallback for retained runtime closures', function () {
+    const transpiler = new SwcBrowserTranspiler(System, moduleId, {});
+    const module = {id: moduleId, recorderName: '_rec', sourceAccessorName: '_source'};
+    expect(transpiler.transpileModule('export function make(value) { return () => value; }', {module})).equals(null);
+    expect(!!transpiler.transpileModule('export const value = 2;', {module})).equals(true);
   });
 
   it('captures iterable references inside generator yield delegation', function () {
