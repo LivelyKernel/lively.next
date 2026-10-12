@@ -2,10 +2,56 @@
 import { expect } from 'mocha-es6';
 import { Text, Morph } from '../../index.js';
 import { pt, rect, Color } from 'lively.graphics';
+import { promise } from 'lively.lang';
 
 describe('embedded morph transforms', () => {
   let text;
   afterEach(() => text && text.remove());
+
+  it('keeps inline model positions stable while the document scrolls', async () => {
+    const embedded = new Morph({ extent: pt(40, 20) });
+    const text = new Text({ readOnly: false, textAndAttributes: ['before ', null, embedded, null] }).openInWorld();
+    const world = text.world();
+    const renderer = text.env.renderer;
+    const scroll = world.scroll;
+    const windowScroll = pt(window.scrollX, window.scrollY);
+    const overflow = document.documentElement.style.overflow;
+    const minHeight = document.body.style.minHeight;
+    try {
+      await text.whenRendered();
+      document.documentElement.style.overflow = 'auto';
+      document.body.style.minHeight = '3000px';
+      window.scrollTo(0, 0);
+      await promise.delay(30);
+      world.onWindowScroll();
+      text.makeDirty();
+      text.env.forceUpdate();
+      const position = embedded.position;
+      for (const y of [60, 120]) {
+        window.scrollTo(0, y);
+        await promise.delay(30);
+        world.onWindowScroll();
+        expect(world.scroll.y).equals(y);
+        text.makeDirty();
+        text.env.forceUpdate();
+        expect(embedded.position.x).closeTo(position.x, 0.2);
+        expect(embedded.position.y).closeTo(position.y, 0.2);
+        const client = renderer.getNodeForMorph(embedded).getBoundingClientRect();
+        const root = renderer.getNodeForMorph(world).getBoundingClientRect();
+        const own = embedded.getGlobalTransform().transformRectToRect(embedded.origin.negated().extent(embedded.extent));
+        expect((client.x - root.x) / world.scale).closeTo(own.x, 0.2);
+        expect((client.y - root.y) / world.scale).closeTo(own.y, 0.2);
+      }
+    } finally {
+      text.remove();
+      document.documentElement.style.overflow = overflow;
+      document.body.style.minHeight = minHeight;
+      window.scrollTo(windowScroll.x, windowScroll.y);
+      await promise.delay(30);
+      world.setProperty('scroll', scroll);
+      world.env.forceUpdate();
+    }
+  });
 
   it('places inline anchors using their own box in an offset scaled world', async () => {
     const embedded = new Morph({ extent: pt(40, 20), submorphs: [new Morph({ position: pt(-10, -10), extent: pt(15, 15) })] });
@@ -24,8 +70,8 @@ describe('embedded morph transforms', () => {
         const client = text.env.renderer.getNodeForMorph(embedded).getBoundingClientRect();
         const root = worldNode.getBoundingClientRect();
         const own = embedded.getGlobalTransform().transformRectToRect(embedded.origin.negated().extent(embedded.extent));
-        expect((client.x - root.x) / world.scale + world.scroll.x).closeTo(own.x, 0.2);
-        expect((client.y - root.y) / world.scale + world.scroll.y).closeTo(own.y, 0.2);
+        expect((client.x - root.x) / world.scale).closeTo(own.x, 0.2);
+        expect((client.y - root.y) / world.scale).closeTo(own.y, 0.2);
       }
     } finally { world.scale = scale; worldNode.style.translate = translate; text.env.forceUpdate(); }
   });
