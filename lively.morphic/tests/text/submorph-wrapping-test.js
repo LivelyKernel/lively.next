@@ -1,7 +1,8 @@
 /* global describe, it */
 import { expect } from 'mocha-es6';
 import { Morph, Text } from '../../index.js';
-import { pt } from 'lively.graphics';
+import { pt, Rectangle } from 'lively.graphics';
+import { promise } from 'lively.lang';
 
 describe('scrolling ordinary text submorphs', () => {
   it('keeps static text measurements cached while scrolling', async () => {
@@ -20,6 +21,102 @@ describe('scrolling ordinary text submorphs', () => {
         expect(text.textBounds() === bounds).equals(true);
         expect(text.scroll.y).equals(y);
       }
+    } finally { text.remove(); }
+  });
+
+  for (const clipMode of ['auto', 'scroll']) {
+    it(`reaches the last wrapped line with a native scrollbar (${clipMode})`, async () => {
+      const text = new Text({
+        readOnly: true, fixedWidth: true, fixedHeight: true, extent: pt(160, 100),
+        clipMode, hideScrollbars: false, lineWrapping: 'by-words',
+        fontFamily: 'IBM Plex Mono', fontSize: 14, padding: Rectangle.inset(3), borderWidth: 0,
+        textString: Array(35).fill('alpha beta gamma delta epsilon zeta').join(' ') + ' LAST LINE'
+      }).openInWorld();
+      const scrollbarStyle = document.createElement('style');
+      scrollbarStyle.textContent = `#${text.id}::-webkit-scrollbar { width: 15px; height: 15px; }`;
+      document.head.appendChild(scrollbarStyle);
+      try {
+        await text.whenFontLoaded();
+        await document.fonts.ready;
+        await text.whenRendered();
+        text.env.forceUpdate();
+        const node = text.env.renderer.getNodeForMorph(text);
+        // Reserve the native scrollbar gutter even when headless Chrome hides its paint.
+        node.style.scrollbarGutter = 'stable';
+        expect(node.offsetWidth - node.clientWidth - text.borderWidthLeft - text.borderWidthRight).equals(15);
+        const bounds = text.textBounds();
+        const bottom = node.scrollHeight - node.clientHeight;
+        node.scrollTop = bottom;
+        await promise.delay(500);
+        text.env.forceUpdate();
+        expect(text.scroll.y).closeTo(bottom, 1);
+        expect(node.scrollTop).equals(bottom);
+        expect(text.textBounds() === bounds).equals(true);
+        const lastSpan = text.renderingState.textLayer.querySelector('.line:last-child span:last-child');
+        const range = document.createRange();
+        range.setStart(lastSpan.firstChild, lastSpan.firstChild.length - 1);
+        range.setEnd(lastSpan.firstChild, lastSpan.firstChild.length);
+        const lastChar = range.getBoundingClientRect();
+        const viewport = node.getBoundingClientRect();
+        expect(lastChar.bottom).at.most(viewport.top + node.clientTop + node.clientHeight + 1);
+        expect(lastChar.top).at.least(viewport.top + node.clientTop - 1);
+        text.scroll = pt(0, 0);
+        text.env.forceUpdate();
+        text.scroll = pt(1e6, 1e6);
+        text.env.forceUpdate();
+        expect(text.scroll).equals(pt(node.scrollWidth - node.clientWidth, bottom));
+        expect(node.scrollTop).equals(bottom);
+        expect(node.scrollLeft).equals(text.scroll.x);
+      } finally { scrollbarStyle.remove(); text.remove(); }
+    });
+  }
+
+  it('uses the rendered scroll range on both axes for ordinary children', async () => {
+    const text = new Text({
+      readOnly: true, fixedWidth: true, fixedHeight: true, extent: pt(160, 100), clipMode: 'auto',
+      padding: Rectangle.inset(5), borderWidth: 3,
+      textString: 'short', submorphs: [new Morph({ position: pt(220, 160), extent: pt(25, 15) })]
+    }).openInWorld();
+    try {
+      await text.whenRendered();
+      const node = text.env.renderer.getNodeForMorph(text);
+      const max = pt(node.scrollWidth - node.clientWidth, node.scrollHeight - node.clientHeight);
+      expect(max.x).greaterThan(0);
+      expect(max.y).greaterThan(0);
+      expect(text.scrollExtent.subPt(text.extent)).equals(max);
+      text.scroll = pt(1e6, 1e6);
+      text.env.forceUpdate();
+      expect(text.scroll).equals(max);
+      expect(pt(node.scrollLeft, node.scrollTop)).equals(max);
+    } finally { text.remove(); }
+  });
+
+  it('detects small static overflow from the rendered range', async () => {
+    const text = new Text({
+      readOnly: true, fixedWidth: true, fixedHeight: true, extent: pt(160, 100), clipMode: 'auto',
+      hideScrollbars: false, textString: 'short',
+      submorphs: [new Morph({ position: pt(10, 102), extent: pt(20, 2) })]
+    }).openInWorld();
+    try {
+      await text.whenRendered();
+      const node = text.env.renderer.getNodeForMorph(text);
+      node.style.scrollbarGutter = 'stable';
+      expect(node.scrollHeight - node.clientHeight).within(1, 14);
+      expect(text.scrollbarVisible).deep.equals({ horizontal: false, vertical: true });
+      text.hideScrollbars = true;
+      expect(text.scrollbarVisible).deep.equals({ horizontal: false, vertical: false });
+    } finally { text.remove(); }
+  });
+
+  it('preserves the model scroll extent for unrendered and document-backed text', async () => {
+    const text = new Text({ readOnly: true, fixedWidth: true, fixedHeight: true, extent: pt(160, 100), clipMode: 'auto', textString: 'short' });
+    try {
+      expect(text.scrollExtent).equals(text.extent.addPt(text.scrollbarOffset));
+      text.readOnly = false;
+      text.openInWorld();
+      await text.whenRendered();
+      expect(text.document).not.equals(null);
+      expect(text.scrollExtent).equals(text.extent.addPt(text.scrollbarOffset));
     } finally { text.remove(); }
   });
 

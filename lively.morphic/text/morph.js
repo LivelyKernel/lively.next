@@ -1724,6 +1724,12 @@ export class Text extends Morph {
   defaultCharExtent () { return this.textLayout.defaultCharExtent(this); }
 
   get scrollExtent () {
+    if (!this.document && !this.renderingState.scrollLayer && ['auto', 'scroll'].includes(this.clipMode)) {
+      const node = this.env.renderer?.getNodeForMorph(this);
+      if (node?.isConnected && node.clientWidth && node.clientHeight) {
+        return this.extent.addXY(node.scrollWidth - node.clientWidth, node.scrollHeight - node.clientHeight);
+      }
+    }
     // rms: See: morph>>scrollExtent
     return this.textBounds()
       .extent()
@@ -1731,6 +1737,16 @@ export class Text extends Morph {
       .addPt(this.padding.bottomRight())
       .addPt(this.scrollbarOffset)
       .maxPt(super.scrollExtent);
+  }
+
+  get scrollbarVisible () {
+    if (!this.document && !this.renderingState.scrollLayer && !this.hideScrollbars && this.clipMode === 'auto') {
+      const node = this.env.renderer?.getNodeForMorph(this);
+      if (node?.isConnected && node.clientWidth && node.clientHeight) {
+        return { horizontal: node.scrollWidth > node.clientWidth, vertical: node.scrollHeight > node.clientHeight };
+      }
+    }
+    return super.scrollbarVisible;
   }
 
   get commands () {
