@@ -678,7 +678,17 @@ async function assertDesktopTitlebar (client, dataDir, world = false) {
         const bar = globalThis.$world?.get('lively top bar');
         const node = bar && document.getElementById(bar.id);
         const dashboardControls = globalThis.$world?.get('top side');
+        const mac = navigator.platform.startsWith('Mac');
+        const windowControls = frame && [...frame.querySelectorAll('.window-controls button')];
+        const colors = frame?.hasAttribute('data-inactive')
+          ? Array(3).fill('rgb(184, 184, 184)') : ['rgb(255, 95, 87)', 'rgb(254, 188, 46)', 'rgb(40, 200, 64)'];
+        const trafficLights = !mac || (windowControls.map(button => button.dataset.action).join(',') === 'close,minimize,maximize' &&
+          windowControls.every((button, index) => {
+            const circle = getComputedStyle(button, '::before');
+            return circle.width === '12px' && circle.height === '12px' && circle.borderRadius === '50%' && circle.backgroundColor === colors[index];
+          }));
         return Boolean(frame && typeof livelyDesktop.windowAction === 'function' &&
+          !frame.querySelector('.window-title') && trafficLights &&
           (!globalThis.nw || nw.App.manifest.window.frame === false) &&
           style.backgroundColor === 'rgba(0, 0, 0, 0)' && style.webkitAppRegion === 'drag' &&
           frame.getBoundingClientRect().height === livelyDesktop.titlebarHeight &&

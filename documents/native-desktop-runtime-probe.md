@@ -185,3 +185,21 @@ The direct-load probe at `df255e492` identifies the remaining Windows DLL failur
 At `824c622ad`, Windows passes all four actual NW.js probe phases: registry/isolation, eval-only storage with shutdown draining, persistent ObjectDB writes, and reads after relaunch. The registry phase records 67 UI ticks during the 1.5-second CPU loop, with a longest gap of 35 ms. The job then fails removing its temporary fixture with `EPERM`; the harness now waits for child `close` and uses Node's bounded recursive-removal retries for Windows handles released during shutdown. macOS native-resolution checks also pass at this head. Full packaged validation remains with CI.
 
 At `83501473c`, macOS and Windows native-resolution checks pass, including all four Windows persistence phases and fixture cleanup. Repository CI exposes an intermittent browser environment-control failure: the shared refresh enables the dropdown before the asynchronous metadata read finishes, allowing a subsequent selection to overlap an incomplete refresh. The control now stays disabled until its selection is updated. A delayed-read regression fails against the old method, and all four browser client/server switching checks pass with the correction in an isolated source-loaded browser (`/tmp/native-environment-control-after.log`), without uncaught renderer errors.
+
+## First visible frame and platform controls
+
+The earlier `deps.js`-blocked checks started after navigation and missed NW.js showing its initial document before `boot.html` painted. On 2026-10-07, direct X11 captures of the visible 1440×900 app window reproduced ten white samples in the prior Linux SDK package. The window now starts hidden; the boot page reveals it after a completed animation frame, and both backend modes wait for that paint before navigating. A fresh capture of the rebuilt package recorded 257 visible samples over 32 seconds with zero white samples; its first visible frame contained the orange triangle background. These are sampled frames, not a guarantee for every display compositor.
+
+The custom header no longer duplicates `document.title`. macOS uses close/minimize/zoom traffic lights in that order, with red/yellow/green circles, hover symbols, gray inactive controls and keyboard focus indicators. Windows/Linux retain their existing controls and Go menu. NW.js's documented frameless-window API does not expose native macOS traffic lights over web content; these controls retain the existing window actions. [Apple's window guidance](https://developer.apple.com/design/human-interface-guidelines/windows) prefers system controls; this custom appearance is not a claim of native-control or VoiceOver parity.
+
+Validation uses the existing harnesses:
+
+```sh
+node lively.app/scripts/test-native-backend.mjs /path/to/standalone/nw
+LIVELY_APP_SMOKE_CDP_PORT=9225 node lively.app/scripts/smoke-desktop-bundle.mjs \
+  --bundleDir=/path/to/sdk/bundle --platform=linux --startupOnly=true --windowControls=true
+LIVELY_APP_SMOKE_CDP_PORT=9225 node lively.app/scripts/smoke-desktop-bundle.mjs \
+  --bundleDir=/path/to/sdk/bundle --platform=linux --startupOnly=true --mode=http
+```
+
+The backend harness holds the boot page's first frame and verifies that an early dashboard navigation cannot reveal or replace the blank document. The packaged title-bar check rejects the duplicate title and checks traffic-light order, geometry and active/inactive colors on macOS. Local Linux native startup/relaunch and window controls pass (`/tmp/native-desktop-paint-smoke.log`); explicit HTTP startup/relaunch also passes (`/tmp/native-desktop-paint-http-smoke.log`), and all four actual NW.js backend/persistence phases pass (`/tmp/native-desktop-paint-backend-test.log`). A Chromium render of the macOS branch passes hover, keyboard focus, inactive colors and close/minimize/zoom/restore callbacks (`/tmp/native-mac-chrome-render.mjs`). Actual macOS interactions and VoiceOver remain outside local Linux coverage.

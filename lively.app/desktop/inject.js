@@ -69,10 +69,6 @@
         background: transparent; color: #292929; font: 13px system-ui, sans-serif;
         user-select: none; -webkit-app-region: drag;
       }
-      #lively-desktop-titlebar .window-title {
-        position: absolute; left: 25%; width: 50%; text-align: center;
-        overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none;
-      }
       #lively-desktop-titlebar .window-controls { display: flex; margin-left: auto; }
       #lively-desktop-titlebar button {
         -webkit-app-region: no-drag; border: 0; background: transparent; color: inherit;
@@ -83,14 +79,26 @@
       #lively-desktop-titlebar button[data-action=close]:hover { background: #c42b1c; color: white; }
       #lively-desktop-titlebar[data-inactive] { color: #484848; }
       #lively-desktop-titlebar.mac .window-controls { order: -1; margin: 0 auto 0 0; }
+      #lively-desktop-titlebar.mac button {
+        position: relative; width: 20px; height: 28px; border-radius: 0;
+        background: transparent; color: #292929; font: 12px/12px system-ui, sans-serif;
+      }
+      #lively-desktop-titlebar.mac button::before {
+        content: ''; position: absolute; width: 12px; height: 12px; top: 8px; left: 4px;
+        box-sizing: border-box; border: 1px solid rgba(0,0,0,.15); border-radius: 50%;
+      }
+      #lively-desktop-titlebar.mac button[data-action=close]::before { background: #ff5f57; }
+      #lively-desktop-titlebar.mac button[data-action=minimize]::before { background: #febc2e; }
+      #lively-desktop-titlebar.mac button[data-action=maximize]::before { background: #28c840; }
+      #lively-desktop-titlebar.mac[data-inactive] button::before { background: #b8b8b8; }
+      #lively-desktop-titlebar.mac button span { position: relative; opacity: 0; }
+      #lively-desktop-titlebar.mac .window-controls:hover button span,
+      #lively-desktop-titlebar.mac button:focus-visible span { opacity: 1; }
     `;
     document.head.appendChild(style);
     const titlebar = document.createElement('header');
     titlebar.id = 'lively-desktop-titlebar';
     if (mac) titlebar.className = 'mac';
-    const title = document.createElement('span');
-    title.className = 'window-title';
-    titlebar.appendChild(title);
     const controls = document.createElement('div');
     controls.className = 'window-controls';
     function button (parent, action, label, symbol, callback) {
@@ -99,7 +107,9 @@
       element.dataset.action = action;
       element.title = label;
       element.setAttribute('aria-label', label);
-      element.textContent = symbol;
+      const glyph = document.createElement('span');
+      glyph.textContent = symbol;
+      element.appendChild(glyph);
       element.addEventListener('click', callback);
       parent.appendChild(element);
       return element;
@@ -115,25 +125,19 @@
     const close = () => action('close');
     if (mac) button(controls, 'close', 'Close window', '×', close);
     button(controls, 'minimize', 'Minimize window', '−', () => action('minimize'));
-    const maximize = button(controls, 'maximize', mac ? 'Zoom window' : 'Maximize window', '□', toggleMaximize);
+    const maximize = button(controls, 'maximize', mac ? 'Zoom window' : 'Maximize window', mac ? '↗' : '□', toggleMaximize);
     if (!mac) button(controls, 'close', 'Close window', '×', close);
     titlebar.addEventListener('dblclick', e => { if (!e.target.closest('button')) toggleMaximize(); });
     document.body.appendChild(titlebar);
-    const updateTitle = () => { title.textContent = document.title || 'lively.next'; };
-    const observer = new MutationObserver(updateTitle);
-    observer.observe(document.head, { childList: true, subtree: true, characterData: true });
-    updateTitle();
     window.livelyDesktop.setWindowState = (isMaximized, focused) => {
       maximized = isMaximized;
-      maximize.textContent = maximized ? '❐' : '□';
+      maximize.firstChild.textContent = mac
+        ? (maximized ? '↙' : '↗') : (maximized ? '❐' : '□');
       maximize.title = maximized ? 'Restore window' : mac ? 'Zoom window' : 'Maximize window';
       maximize.setAttribute('aria-label', maximize.title);
       titlebar.toggleAttribute('data-inactive', !focused);
     };
     window.livelyDesktop.setWindowState(false, document.hasFocus());
-    window.addEventListener('pagehide', () => {
-      observer.disconnect();
-    }, { once: true });
   }
   installTitlebar();
 

@@ -687,9 +687,9 @@ function emitError (msg) {
       });
       findWindow();
     });
-    const navigate = () => { win.window.location.href = dashboardURL; };
-    if (win.window.document.readyState === 'loading') win.once('loaded', navigate);
-    else navigate();
+    const navigate = () => win.window.livelyBoot.navigate(dashboardURL);
+    if (win.window.livelyBoot) navigate();
+    else win.once('loaded', navigate);
     win.on('close', function () {
       backend.close().then(() => this.close(true), err => emitError('Native shutdown failed: ' + err.stack));
     });
@@ -802,17 +802,12 @@ function emitError (msg) {
 
   const win = (await new Promise(resolve => nw.Window.getAll(resolve)))[0];
 
-  const b = livelyBoot();
-  if (b && b.setDashboardUrl) b.setDashboardUrl(dashboardUrl);
-  if (b && b.navigate) b.navigate(dashboardUrl);
-  else {
-    // boot.html's script hasn't run yet — fall back and hope the direct
-    // assignment works on this platform. Shouldn't happen in practice
-    // since server boot takes many seconds by which point boot.html is
-    // long loaded, but be defensive.
-    log('livelyBoot helper missing, using direct location.href assignment');
-    win.window.location.href = dashboardUrl;
-  }
+  const navigate = () => {
+    win.window.livelyBoot.setDashboardUrl(dashboardUrl);
+    win.window.livelyBoot.navigate(dashboardUrl);
+  };
+  if (win.window.livelyBoot) navigate();
+  else win.once('loaded', navigate);
 
   win.on('close', function () {
     log('Window closing, killing server...');

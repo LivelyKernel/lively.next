@@ -19,7 +19,7 @@
     "min_width": 800,
     "min_height": 600,
     "position": "center",
-    "show": true,
+    "show": false,
     "frame": false,
     "resizable": true
   },
