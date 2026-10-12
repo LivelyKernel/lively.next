@@ -29,22 +29,26 @@ function updateSharedCss (doc) {
   const nodes = [];
   const flush = () => {
     if (!groups.length) return;
-    const declarations = [];
+    let previousNode = lastMarker;
     for (const [source, ids] of groups) {
-      try { declarations.push(scopedCss(source, ids)); } catch (err) {
+      try {
+        const declaration = scopedCss(source, ids);
+        const id = sharedCssId + (nodes.length ? `-${nodes.length}` : '');
+        const previous = doc.getElementById(id);
+        const node = previous?.textContent === declaration ? previous : addOrChangeCSSDeclaration(id, declaration, doc);
+        if (node.previousSibling !== previousNode) doc.head.insertBefore(node, previousNode.nextSibling);
+        previousNode = node;
+        nodes.push(node);
+      } catch (err) {
         console.error(`Error setting shared cssDeclaration: ${err}`); // eslint-disable-line no-console
       }
     }
-    const id = sharedCssId + (nodes.length ? `-${nodes.length}` : '');
-    const node = addOrChangeCSSDeclaration(id, declarations.join('\n'), doc);
-    if (node.previousSibling !== lastMarker) doc.head.insertBefore(node, lastMarker.nextSibling);
-    nodes.push(node);
     groups = [];
   };
   const members = Array.from(cssMorphs.get(doc) || []);
   const markers = new Map(members.map(morph => [cssMarkers.get(morph), morph]));
   const previousNodes = new Set(sharedCssNodes.get(doc) || []);
-  // ponytail: scan sheet positions on updates; track dirty segments if this gets slow.
+  // shortcut: scan sheet positions on updates, track dirty segments if this gets slow.
   for (const node of Array.from(doc.head.childNodes)) {
     const morph = markers.get(node);
     if (morph?.shareCss) {
@@ -219,8 +223,8 @@ export class HTMLMorph extends Morph {
 
   installCssDeclaration (doc) {
     const previousDocument = cssDocuments.get(this);
-    if (previousDocument && (previousDocument !== doc || !this.cssDeclaration)) this.uninstallCssDeclaration();
-    if (!this.cssDeclaration) return;
+    if (previousDocument && (previousDocument !== doc || !this.cssDeclaration || !this.world())) this.uninstallCssDeclaration();
+    if (!this.cssDeclaration || !this.world()) return;
     cssDocuments.set(this, doc);
     let members = cssMorphs.get(doc);
     if (!members) cssMorphs.set(doc, members = new Set());
