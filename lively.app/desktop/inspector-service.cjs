@@ -362,15 +362,18 @@ class CDPClient {
     this.pending = new Map();
     this.eventHandler = null;
     this.ws = null;
+    this.closedError = null;
   }
 
   async open () {
+    this.closedError = null;
     this.ws = new this.WebSocketImpl(this.url);
     await new Promise((resolve, reject) => {
       const onOpen = () => resolve();
-      const onError = event => reject(new Error(event && event.message || 'CDP websocket error'));
+      const onDisconnect = error => { this._rejectPending(error); reject(error); };
       this.ws.addEventListener('open', onOpen, { once: true });
-      this.ws.addEventListener('error', onError, { once: true });
+      this.ws.addEventListener('error', event => onDisconnect(new Error(event && event.message || 'CDP websocket error')));
+      this.ws.addEventListener('close', () => onDisconnect(new Error('CDP websocket closed')));
     });
     this.ws.addEventListener('message', event => this._onMessage(event.data));
   }
@@ -392,14 +395,23 @@ class CDPClient {
   }
 
   send (method, params = {}) {
+    if (this.closedError) return Promise.reject(this.closedError);
     const id = this.nextId++;
     return new Promise((resolve, reject) => {
       this.pending.set(id, { resolve, reject });
-      this.ws.send(JSON.stringify({ id, method, params }));
+      try { this.ws.send(JSON.stringify({ id, method, params })); }
+      catch (error) { this.pending.delete(id); reject(error); }
     });
   }
 
+  _rejectPending (error) {
+    this.closedError = error;
+    for (const {reject} of this.pending.values()) reject(error);
+    this.pending.clear();
+  }
+
   close () {
+    this._rejectPending(new Error('CDP websocket closed'));
     try { this.ws && this.ws.close(); } catch (_) {}
   }
 }
@@ -498,29 +510,34 @@ class InspectorService {
   }
 
   async handlePaused (params) {
-    if (this.handlingPause) return;
+    if (this.handlingPause) {
+      try { await this.client.send('Debugger.resume'); }
+      catch (err) { this.log('inspector resume failed: ' + (err.stack || err)); }
+      return;
+    }
     this.handlingPause = true;
-    let descriptor = null;
     try {
-      descriptor = await this.capturePaused(params);
-    } catch (err) {
-      this.log('inspector capture failed: ' + (err.stack || err));
-    }
-
-    try {
-      await this.client.send('Debugger.resume');
-    } catch (err) {
-      this.log('inspector resume failed: ' + (err.stack || err));
-    }
-
-    if (descriptor) {
+      let descriptor = null;
       try {
-        await this.deliverCapture(descriptor);
+        descriptor = await this.capturePaused(params);
       } catch (err) {
-        this.log('inspector deliver failed: ' + (err.stack || err));
+        this.log('inspector capture failed: ' + (err.stack || err));
       }
-    }
-    this.handlingPause = false;
+
+      try {
+        await this.client.send('Debugger.resume');
+      } catch (err) {
+        this.log('inspector resume failed: ' + (err.stack || err));
+      }
+
+      if (descriptor) {
+        try {
+          await this.deliverCapture(descriptor);
+        } catch (err) {
+          this.log('inspector deliver failed: ' + (err.stack || err));
+        }
+      }
+    } finally { this.handlingPause = false; }
   }
 
   async capturePaused (params) {

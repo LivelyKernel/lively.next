@@ -34,6 +34,17 @@ describe('ordinary module debugger interception', function () {
     await resource('local://debugger-interception/').remove();
   });
 
+  it('does not enable interception just because a loading-screen world exists', async () => {
+    delete S.debuggerInterception;
+    const world = S.global.$world;
+    S.global.$world = {isWorld: true};
+    try {
+      const {task} = await load('export function task(pause) { if (pause) debugger; return 3; }');
+      expect(module(S, id).debuggingEnabled).equals(false);
+      expect(task(false)).equals(3);
+    } finally { S.global.$world = world; }
+  });
+
   it('initializes interception without importing its dependencies during module translation', async () => {
     delete S.get('@lively-env').moduleDebugger;
     const systemImport = S.import;

@@ -72,6 +72,23 @@ describe('module loading', () => {
     expect(exports).to.have.property('x', 3);
   });
 
+  it('loads anonymous default functions with runtime closure recording enabled', async () => {
+    for (const [index, declaration] of ['function', 'async function', 'function*'].entries()) {
+      const id = testDir + `anonymous-default-${index}.js`;
+      await resource(id).write(`export default ${declaration} () { return [1].map(value => value)[0]; }`);
+      const {default: func} = await S.import(id);
+      const result = func();
+      expect(declaration === 'function*' ? result.next().value : await result).equals(1);
+    }
+  });
+
+  it('lowers super calls and getters in class fields and field arrows', async () => {
+    await resource(module1).write('class Base { value() { return this.amount; } get doubled() { return this.amount * 2; } } export class Child extends Base { amount = 3; valueFromSuper = super.value(); inherited = super.doubled; callback = () => super.value() + 1; }');
+    const {Child} = await S.import(module1);
+    const child = new Child();
+    expect([child.valueFromSuper, child.inherited, child.callback()]).deep.equals([3, 6, 4]);
+  });
+
   it('keeps Node polyfills primitive until debugging or source capture is enabled', async () => {
     const primitive = module(S, 'esm://ga.jspm.io/npm:@jspm/core@2.1.0/nodelibs/browser/crypto.js');
     expect(primitive.embedOriginalCode).equals(false);

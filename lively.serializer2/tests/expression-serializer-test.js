@@ -28,6 +28,29 @@ describe('expression serializer format', () => {
   });
 
   describe('decode', () => {
+    it('keeps URI schemes and authority ports intact, with aliases and multiple bindings', () => {
+      for (const moduleId of [
+        'http://127.0.0.1:9011/project/foo.js',
+        'https://example.test:8443/project/foo.js',
+        'https://example.test/foo.js',
+        'custom://example.test:8123/project/foo.js',
+        'local://project/foo.js',
+        'local://foo.js',
+        'file:///tmp/project/foo.js',
+        'file:///C:/project/foo.js',
+        'file://localhost/D:/project/foo.js',
+        'file://fileserver/share/project/foo.js'
+      ]) {
+        for (const __expr__ of ['foo({label: "ok"})', '1 / 2 + foo()', '1/2 + foo()']) {
+          const expression = {
+            __expr__,
+            bindings: {[moduleId]: [{exported: 'bar', local: 'foo'}], 'package/helper.js': ['helper']}
+          };
+          expect(sut.exprStringDecode(sut.exprStringEncode(expression)), moduleId).deep.equals(expression);
+        }
+      }
+    });
+
     it('just epxression', () =>
       expect(sut.exprStringDecode('_prefix:foo()'))
         .deep.equals({ __expr__: 'foo()', bindings: null }));
@@ -55,6 +78,16 @@ describe('expression serializer format', () => {
 });
 
 describe('expression serializer deserialize', () => {
+  it('resolves a module binding on an HTTP origin with a port', () => {
+    const id = 'http://127.0.0.1:9011/expression-test.js';
+    System.set(id, System.newModule({foo: () => 23}));
+    try {
+      const encoded = sut.exprStringEncode({__expr__: 'foo()', bindings: {[id]: ['foo']}});
+      expect(sut.requiredModulesOf__expr__(encoded)).deep.equals([id]);
+      expect(sut.deserializeExpr(encoded)).equals(23);
+    } finally { System.delete(id); }
+  });
+
   it('evals expression', () => {
     try {
       System.global.foo = () => 23;

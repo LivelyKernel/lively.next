@@ -529,6 +529,7 @@ export class LivelyWorld extends World {
 
     await this.initializeTopBar();
     await this.initializeStudioUI();
+    System.debuggerInterception ??= true;
   }
 
   async isNotUnique (worldName) {

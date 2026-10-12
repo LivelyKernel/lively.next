@@ -52,6 +52,20 @@ let opts = {
 };
 
 describe('class transform', () => {
+  it('preserves native object-method super outside classes and inside ordinary class methods', () => {
+    const source = 'var object = {__proto__: {value: 2}, value() { return super.value + 1; }, get total() { return super.value + 2; }}; class Child { value() { return {__proto__: {value: 4}, value() { return super.value + 1; }}.value(); } } [object.value(), object.total, new Child().value()];';
+    const transformed = stringify(classToFunctionTransform(source, opts));
+    const _rec = {};
+    expect(eval(transformed)).deep.equals([3, 4, 5]);
+  });
+
+  it('lowers super calls and getters in field initializers, including arrows', () => {
+    const source = 'class Base { value() { return this.amount; } get doubled() { return this.amount * 2; } } class Child extends Base { amount = 3; valueFromSuper = super.value(); inherited = super.doubled; callback = () => super.value() + 1; } var child = new Child(); [child.valueFromSuper, child.inherited, child.callback()];';
+    const transformed = stringify(classToFunctionTransform(source, opts));
+    const _rec = {};
+    expect(eval(transformed)).deep.equals([3, 6, 4]);
+  });
+
   it('retains the class body self binding when the outer declaration changes', () => {
     const source = 'class Example { create() { return new Example(); } } var original = new Example(); Example = null; original.create() instanceof original.constructor;';
     const transformed = stringify(classToFunctionTransform(source, opts));

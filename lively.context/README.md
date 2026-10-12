@@ -41,7 +41,7 @@ this experiment. There is no replacement continuation or stepping engine.
 
 ### Ordinary execution
 
-In a live client world, loading or saving a JavaScript module containing an actual
+Once the IDE studio is initialized, loading or saving a JavaScript module containing an actual
 `debugger;` statement automatically enables interception for that module. Call its
 functions and methods normally, including through buttons and callbacks. A reached
 stop opens Lively Debugger and suspends the instrumented callers while the world
@@ -63,7 +63,9 @@ exception propagation.
 You can also use `await module('your/package/file.js').setDebuggingEnabled(true)`
 after importing `module` from `lively.modules`.
 
-Only selected modules pay the rewriting cost. Functions are rewritten on first use
+Retaining native closure cells adds compilation and closure-creation overhead to
+source modules, including the temporary Babel fallback for nested functions.
+Only selected modules pay the interpreter rewriting cost. Functions are rewritten on first use
 and their rewritten version is cached. Closure cells, original module locations,
 the existing continuation/interpreter, awaits and managed generators are reused.
 No native breakpoint or exception-pause service is involved.

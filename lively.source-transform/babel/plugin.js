@@ -989,6 +989,8 @@ function captureRuntimeClosures(program, options) {
   };
   for (const path of functions) {
     const fn = path.node, captures = new Map();
+    const parent = path.parentPath;
+    if (path.isFunctionDeclaration() && (!fn.id || !parent.isBlockStatement())) continue;
     if (!Number.isFinite(fn.start) || !Number.isFinite(fn.end)) continue;
     path.traverse({ReferencedIdentifier(ref) {
       const binding = ref.scope.getBinding(ref.node.name);
@@ -1007,7 +1009,6 @@ function captureRuntimeClosures(program, options) {
       }
       captures.set(ref.node.name, cell);
     }});
-    const parent = path.parentPath;
     const name = fn.extra?.livelyDebugName || fn.id?.name || (parent.isVariableDeclarator() ? parent.node.id.name : parent.isObjectProperty() && !parent.node.computed ? parent.node.key.name || parent.node.key.value : '');
     const call = t.CallExpression(t.MemberExpression(t.cloneNode(module, true), t.Identifier(fn.extra?.livelyDebugMethod ? 'recordDebugMethod' : 'recordDebugClosure')), [
       path.isFunctionDeclaration() ? t.cloneNode(fn.id) : fn,
@@ -1020,7 +1021,7 @@ function captureRuntimeClosures(program, options) {
       call.arguments.push(t.ConditionalExpression(t.BinaryExpression('===', t.UnaryExpression('typeof', t.Identifier('arguments')), t.StringLiteral('undefined')), t.Identifier('undefined'), t.Identifier('arguments')));
     }
     if (path.isFunctionDeclaration()) {
-      if (parent.isBlockStatement()) insert(parent, t.ExpressionStatement(t.AssignmentExpression('=', t.cloneNode(fn.id), call)));
+      insert(parent, t.ExpressionStatement(t.AssignmentExpression('=', t.cloneNode(fn.id), call)));
     } else path.replaceWith(call);
   }
   // Babel keeps directive prologues separately from the body.

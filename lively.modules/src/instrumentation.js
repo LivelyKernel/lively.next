@@ -277,7 +277,7 @@ export async function customTranslate (load) {
 
   // Instrument only modules with an actual stop, or modules explicitly enabled
   // by the user. Strings/comments mentioning debugger do not activate it.
-  const automatic = System.debuggerInterception ?? !!System.global.$world;
+  const automatic = System.debuggerInterception;
   if (isEsm && automatic && /\bdebugger\b/.test(load.source)) {
     let found = false;
     acorn.walk.simple(parse(load.source), { DebuggerStatement () { found = true; } });

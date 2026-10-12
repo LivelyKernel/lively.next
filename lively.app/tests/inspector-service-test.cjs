@@ -2,6 +2,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const {
+  CDPClient,
   InspectorService,
   bindingNamesFromProperties,
   originalSourceForGenerated,
@@ -274,6 +275,51 @@ async function testHandlePausedResumesAndDeliversDescriptor () {
   assert(deliver.params.expression.includes('deliverCapture'));
 }
 
+async function testConcurrentPauseResumesWhileDelivering () {
+  const client = new FakeCDPClient();
+  const service = new InspectorService({ client });
+  let started, release;
+  const delivering = new Promise(resolve => { started = resolve; });
+  const delivered = new Promise(resolve => { release = resolve; });
+  service.capturePaused = async () => ({captureId: 'capture-test'});
+  service.deliverCapture = () => { started(); return delivered; };
+  const first = service.handlePaused(pausedPayload());
+  await delivering;
+  try {
+    await service.handlePaused(pausedPayload({reason: 'exception'}));
+    assert.strictEqual(client.calls.filter(call => call.method === 'Debugger.resume').length, 2);
+  } finally { release(); await first; }
+  assert.strictEqual(service.handlingPause, false);
+}
+
+async function testSocketFailureRejectsPendingCommands () {
+  class FakeWebSocket extends EventTarget {
+    constructor () {
+      super();
+      queueMicrotask(() => this.dispatchEvent(new Event('open')));
+    }
+    send () {}
+    close () { this.dispatchEvent(new Event('close')); }
+  }
+  for (const event of ['close', 'error']) {
+    const client = new CDPClient('ws://test', {WebSocketImpl: FakeWebSocket});
+    await client.open();
+    const failed = assert.rejects(client.send('Runtime.evaluate'), /CDP websocket/);
+    client.ws.dispatchEvent(new Event(event));
+    await failed;
+    assert.strictEqual(client.pending.size, 0);
+    await assert.rejects(client.send('Debugger.resume'), /CDP websocket/);
+  }
+  const client = new CDPClient('ws://test', {WebSocketImpl: FakeWebSocket});
+  await client.open();
+  const service = new InspectorService({client});
+  service.capturePaused = () => client.send('Debugger.evaluateOnCallFrame');
+  const handling = service.handlePaused(pausedPayload());
+  client.close();
+  await handling;
+  assert.strictEqual(service.handlingPause, false);
+}
+
 async function testDesktopBuildCopiesNodeMainSiblingRequires () {
   const startServerSource = fs.readFileSync(path.join(__dirname, '..', 'desktop', 'start-server.cjs'), 'utf8');
   const buildSource = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'build.mjs'), 'utf8');
@@ -302,6 +348,8 @@ async function run () {
   await testExceptionCaptureStoresExceptionObject();
   await testTaggedHaltUnwindIsCaptured();
   await testHandlePausedResumesAndDeliversDescriptor();
+  await testConcurrentPauseResumesWhileDelivering();
+  await testSocketFailureRejectsPendingCommands();
   await testDesktopBuildCopiesNodeMainSiblingRequires();
   console.log('inspector service tests ok');
 }

@@ -13,6 +13,29 @@ import { LivelyWorld } from '../../world.js';
 import { localInterface } from 'lively-system-interface';
 
 describe('runtime closure bindings', function () {
+  it('enables automatic interception when studio is ready and respects an explicit opt-out', async () => {
+    const automatic = System.debuggerInterception, settings = [];
+    const world = {
+      metadata: {},
+      initializeTopBar: async () => { settings.push(System.debuggerInterception); },
+      initializeStudioUI: async () => { settings.push(System.debuggerInterception); }
+    };
+    try {
+      delete System.debuggerInterception;
+      await LivelyWorld.prototype.initializeStudio.call(world);
+      expect(System.debuggerInterception).equals(true);
+      System.debuggerInterception = false;
+      await LivelyWorld.prototype.initializeStudio.call(world);
+      expect(System.debuggerInterception).equals(false);
+      expect(settings).deep.equals([undefined, undefined, false, false]);
+    } finally { System.debuggerInterception = automatic; }
+  });
+
+  it('keeps core modules native after source-world boot', () => {
+    expect(module('lively.morphic/text/document.js').debuggingEnabled).equals(false);
+    expect(module('lively.lang/Path.js').debuggingEnabled).equals(false);
+  });
+
   it('shows an async generator in its class module and applies saved future edits', async function () {
     this.timeout(10000);
     const file = resource('local://debugger-generator/lesson.js');
@@ -85,7 +108,7 @@ describe('runtime closure bindings', function () {
       const {make} = await mod.load();
       const account = make('2');
       const bindings = account.charge[Symbol.for('lively-debug-bindings')];
-      expect(!!bindings).equals(true);
+      expect(!!bindings, 'runtime closure retains its native bindings').equals(true);
       expect(bindings.ledger).equals(account.ledger);
       const meta = account.charge[Symbol.for('lively-object-meta')];
       expect(source.slice(meta.start, meta.end)).contains('function charge(quantity)');
@@ -117,7 +140,7 @@ describe('runtime closure bindings', function () {
       model.sourceBuffers.set('http://old-desktop.invalid/factory.js', buffer);
       stopped.currentFrame.func.debuggerSource.url = 'http://old-desktop.invalid/factory.js';
       restoredWindow = await loadMorphFromSnapshot(serializeMorph(view.getWindow()), {moduleManager: modules});
-      expect(!!restoredWindow.master).equals(true);
+      expect(!!restoredWindow.master, 'restored debugger window retains its master').equals(true);
       $world.addMorph(restoredWindow);
       const restoredModel = restoredWindow.targetMorph.viewModel;
       await restoredModel.selectFrame(restoredModel.continuation.currentFrame);

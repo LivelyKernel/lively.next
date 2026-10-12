@@ -41,7 +41,6 @@ export default class ExpressionSerializer {
     let idx = string.indexOf(':');
     let rest = string.slice(idx + 1);
     const bindings = {};
-    const httpPlaceholder = '__HTTP_PLACEHOLDER__';
     let hasBindings = false;
 
     // 2. bindings?
@@ -49,15 +48,8 @@ export default class ExpressionSerializer {
       hasBindings = true;
       const importedVars = rest.slice(1, idx);
       rest = rest.slice(idx + 2); // skip }:
-      if (rest.includes('https:') && rest.indexOf('https:') < rest.indexOf(':')) {
-        rest = rest.replace('https:', httpPlaceholder);
-        idx = rest.indexOf(':') - httpPlaceholder.length + 'https:'.length;
-        rest = rest.replace(httpPlaceholder, 'https:');
-      } if (rest.includes('local:') && rest.indexOf('local:') < rest.indexOf(':')) {
-        rest = rest.replace('local:', httpPlaceholder);
-        idx = rest.indexOf(':') - httpPlaceholder.length + 'local:'.length;
-        rest = rest.replace(httpPlaceholder, 'local:');
-      } else idx = rest.indexOf(':'); // end of package
+      const uriPrefix = /^(?:local:\/\/|[a-z][a-z\d+.-]*:\/\/[^/]*\/(?:[a-z]:\/)?|[a-z][a-z\d+.-]*:\/\/)/i.exec(rest);
+      idx = rest.indexOf(':', uriPrefix?.[0].length || 0); // end of module, after its scheme, authority and drive
       const from = rest.slice(0, idx);
       const imports = importedVars.split(',')
         .filter(ea => Boolean(ea.trim()))
