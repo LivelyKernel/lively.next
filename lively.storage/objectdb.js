@@ -43,7 +43,10 @@ export default class ObjectDB {
 
   static async find (name) {
     let found = objectDBs.get(name);
-    if (found) return found;
+    if (found) {
+      await found._metaWrite;
+      return found;
+    }
     let metaDB = Database.ensureDB('internal__objectdb-meta');
     let meta = await metaDB.get(name);
     if (!meta) return;
@@ -64,8 +67,8 @@ export default class ObjectDB {
     objectDBs.set(name, db);
 
     let metaDB = Database.ensureDB('internal__objectdb-meta');
-    metaDB.set(name, { ...options, snapshotLocation: options.snapshotLocation.url })
-      .catch(err => console.error('error writing objectdb meta:', err));
+    db._metaWrite = metaDB.set(name, { ...options, snapshotLocation: options.snapshotLocation.url });
+    db._metaWrite.catch(err => console.error('error writing objectdb meta:', err));
 
     return db;
   }
@@ -1494,7 +1497,8 @@ export var ObjectDBInterface = {
       snapshotLocation: 'string|Resource'
     }); let db = await ObjectDB.find(dbName);
     if (db) return false;
-    ObjectDB.named(dbName, { snapshotLocation });
+    db = ObjectDB.named(dbName, { snapshotLocation });
+    await db._metaWrite;
     return true;
   },
 
@@ -1920,18 +1924,18 @@ export var ObjectDBInterface = {
 export class ObjectDBHTTPInterface {
   constructor (serverURL = document.location.origin + '/objectdb/') {
     this.serverURL = serverURL;
+    this.resourceURL = globalThis.livelyNative?.isLocal(serverURL.replace(/\/$/, ''), 'objectdb')
+      ? 'lively.objectdb://local/' : serverURL;
   }
 
-  async _processResponse (res) {
-    let contentType = res.headers.get('content-type');
-    let answer = await res.text(); let json;
-    if (contentType === 'application/json') {
-      try { json = JSON.parse(answer); } catch (err) {}
+  _processResponse (answer, response, parseJSON = false) {
+    if (parseJSON && response?.headers.get('content-type') === 'application/json') {
+      try { answer = JSON.parse(answer); } catch (err) {}
     }
-    if (!res.ok || (json && json.error)) {
-      throw new Error((json && json.error) || answer || res.statusText);
+    if (response && !response.ok || answer && answer.error) {
+      throw new Error(answer?.error || answer || response?.statusText);
     }
-    return json || answer;
+    return answer;
   }
 
   async _GET (action, opts = {}) {
@@ -1940,17 +1944,19 @@ export class ObjectDBHTTPInterface {
       if (typeof val === 'object') val = JSON.stringify(val);
       return `${key}=${encodeURIComponent(val)}`;
     }).join('&');
-    let url = this.serverURL + action + '?' + query;
-    return this._processResponse(await fetch(url));
+    let url = this.resourceURL + action + '?' + query;
+    const res = resource(url, { errorOnHTTPStatusCodes: false });
+    const answer = res.canDealWithJSON ? await res.readJson() : await res.read();
+    return this._processResponse(answer, res.lastResponse, !res.canDealWithJSON);
   }
 
   async _POST (action, opts = {}) {
-    let url = this.serverURL + action;
-    return this._processResponse(await fetch(url, {
-      method: 'POST',
-      body: JSON.stringify(opts),
+    let url = this.resourceURL + action;
+    const res = resource(url, {
+      errorOnHTTPStatusCodes: false,
       headers: { 'content-type': 'application/json' }
-    }));
+    });
+    return this._processResponse(await res.post(opts), res.lastResponse);
   }
 
   async describe (args) {

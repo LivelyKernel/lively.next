@@ -239,6 +239,8 @@ export default class WebDAVResource extends Resource {
 
   async read () {
     const res = await makeRequest(this);
+    // Callers can inspect status and headers after read() consumes the body.
+    this.lastResponse = res;
     if (!res.ok && this.errorOnHTTPStatusCodes) { throw new Error(`Cannot read ${this.url}: ${res.statusText} ${res.status}`); }
     if (!this.binary) return res.text();
     if (this.binary === 'blob') return res.blob();
@@ -323,14 +325,16 @@ export default class WebDAVResource extends Resource {
   async post (body = null) {
     if (typeof body !== 'string') body = JSON.stringify(body);
     const res = await makeRequest(this, 'POST', body, {});
+    this.lastResponse = res;
     let text; let json;
+    let parsed = false;
     try { text = await res.text(); } catch (err) {}
     if (text && res.headers.get('content-type') === 'application/json') {
-      try { json = JSON.parse(text); } catch (err) {}
+      try { json = JSON.parse(text); parsed = true; } catch (err) {}
     }
     if (!res.ok && this.errorOnHTTPStatusCodes) {
       throw new Error(`Error in POST ${this.url}: ${text || res.statusText}`);
-    } else return json || text;
+    } else return parsed ? json : text;
   }
 
   async copyTo (otherResource, ensureParent = true) {
