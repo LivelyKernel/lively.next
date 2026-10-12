@@ -2776,6 +2776,7 @@ export class Image extends Morph {
         defaultValue: config.defaultImage,
 
         set (url) {
+          url = globalThis.livelyNative?.assetURL(url) || url;
           this.isLoaded = false;
           this.setProperty('imageUrl', url);
           this.setProperty('naturalExtent', null);
@@ -2815,6 +2816,16 @@ export class Image extends Morph {
         defaultValue: true
       }
     };
+  }
+
+  __additionally_serialize__ (snapshot, ref, pool, addFn) {
+    super.__additionally_serialize__(snapshot, ref, pool, addFn);
+    // Native worlds must also reopen through HTTP, where file URLs cannot load.
+    if (globalThis.livelyNative && this.imageUrl.startsWith(System.baseURL)) {
+      addFn('imageUrl', pool.expressionSerializer.exprStringEncode({
+        __expr__: `System.baseURL + ${JSON.stringify(this.imageUrl.slice(System.baseURL.length))}`
+      }));
+    }
   }
 
   get isImage () { return true; }

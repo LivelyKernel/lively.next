@@ -341,12 +341,17 @@ async function saveSmokeWorld (client) {
   const result = await client.send('Runtime.evaluate', {
     awaitPromise: true, returnByValue: true,
     expression: `(async () => {
-      const { Morph } = await System.import('lively.morphic');
+      const { Morph, Image } = await System.import('lively.morphic');
       const { interactivelySaveWorld } = await System.import('lively.morphic/world-loading.js');
       $world.name = ${JSON.stringify(SAVED_WORLD)};
       $world.metadata ||= {};
       delete $world.metadata.commit;
       $world.addMorph(new Morph({ name: 'desktop-persistent-marker' }));
+      const asset = 'lively.morphic/assets/lively-web-logo-small.svg';
+      $world.addMorph(new Image({ name: 'desktop-persistent-image', imageUrl: System.baseURL + asset }));
+      if (globalThis.livelyNative) $world.addMorph(new Image({
+        name: 'desktop-legacy-image', imageUrl: livelyNative.legacyOrigin + '/' + asset
+      }));
       const commit = await interactivelySaveWorld($world, {
         showSaveDialog: false, confirmOverwrite: false, moduleManager: await System.import('lively.modules')
       });
@@ -366,7 +371,21 @@ async function reopenSmokeWorld (client, url, timeoutMs) {
     });
     return result.result?.value === true;
   }, timeoutMs);
-  console.log('Desktop app smoke passed: saved world and its contents reopen through ObjectDB');
+  const images = await client.send('Runtime.evaluate', {
+    awaitPromise: true, returnByValue: true,
+    expression: `(async () => {
+      for (const name of ['desktop-persistent-image', 'desktop-legacy-image']) {
+        const morph = $world.get(name);
+        if (!morph) { if (name === 'desktop-legacy-image') continue; throw new Error('Saved image missing'); }
+        const image = document.createElement('img');
+        image.src = morph.getURLForImgNode();
+        await image.decode();
+      }
+      return true;
+    })()`
+  });
+  if (images.exceptionDetails || images.result?.value !== true) throw new Error('Saved image failed: ' + JSON.stringify(images));
+  console.log('Desktop app smoke passed: saved world and its images reopen through ObjectDB');
 }
 
 async function assertNativeAssets (client) {
@@ -382,6 +401,14 @@ async function assertNativeAssets (client) {
         const image = new Image();
         image.src = livelyNative.baseURL + 'lively.morphic/assets/lively-web-logo-small.svg';
         await image.decode();
+        const { Image: MorphicImage } = await System.import('lively.morphic');
+        for (const origin of [livelyNative.legacyOrigin, 'http://localhost:9011']) {
+          const legacy = new MorphicImage({ imageUrl: origin + '/lively.morphic/assets/lively-web-logo-small.svg' });
+          image.src = legacy.getURLForImgNode();
+          await image.decode();
+        }
+        const remote = 'http://localhost:9999/remote.svg';
+        if (livelyNative.assetURL(remote) !== remote) throw new Error('Native mode redirected a remote asset');
         await new FontFace('DesktopAssetProbe', 'url("' + livelyNative.baseURL + 'lively.morphic/assets/fonts/IBMPlexSans-Regular.woff2")').load();
         await new Promise((resolve, reject) => {
           stylesheet.rel = 'stylesheet';

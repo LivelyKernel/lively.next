@@ -53,6 +53,25 @@ describe('morph serialization', function () {
     expect(copy.extent).equals(m.extent);
   });
 
+  it('reopens native image URLs against the current runtime base', () => {
+    const previousNative = globalThis.livelyNative;
+    const previousBase = System.baseURL;
+    try {
+      globalThis.livelyNative = { assetURL: url => url };
+      System.baseURL = 'file:///desktop/runtime-root/';
+      const image = morph({ type: 'image', imageUrl: System.baseURL + 'assets/image.svg' });
+      const snapshot = serializeMorph(image);
+      globalThis.livelyNative = undefined;
+      System.baseURL = previousBase;
+      const copy = deserializeMorph(snapshot);
+      expect(copy.imageUrl).equals(previousBase + 'assets/image.svg');
+      expect(image.imageUrl).equals('file:///desktop/runtime-root/assets/image.svg');
+    } finally {
+      System.baseURL = previousBase;
+      globalThis.livelyNative = previousNative;
+    }
+  });
+
   it('uses onLoad function', () => {
     let m = new OnLoadTestMorph();
     expect(m.onLoadCalled).equals(true, 'onLoad not called on construction');
