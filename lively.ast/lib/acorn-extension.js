@@ -725,7 +725,7 @@ function findStatementOfNode (options, parsed, target) {
     'EmptyStatement', 'BlockStatement', 'ExpressionStatement', 'IfStatement',
     'LabeledStatement', 'BreakStatement', 'ContinueStatement', 'WithStatement', 'SwitchStatement',
     'ReturnStatement', 'ThrowStatement', 'TryStatement', 'WhileStatement', 'DoWhileStatement',
-    'ForStatement', 'ForInStatement', 'DebuggerStatement', 'FunctionDeclaration',
+    'ForStatement', 'ForInStatement', 'ForOfStatement', 'DebuggerStatement', 'FunctionDeclaration',
     'VariableDeclaration',
     // ES2015:
     'ClassDeclaration'

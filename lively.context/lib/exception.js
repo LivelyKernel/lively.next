@@ -144,25 +144,29 @@ export function __scopeForUnwind(error, root) {
   return scope || root;
 }
 
-export function __awaitValue(value, astIndex) {
-  throw new UnwindException({reason: 'await', promise: Promise.resolve(value), astIndex,
+export function __awaitValue(value, astIndex, pending = {}) {
+  throw new UnwindException({reason: 'await', promise: Promise.resolve(value), astIndex, pending,
     toString() { return 'Await'; }});
 }
 
 export class RecordedIterator {
-  constructor(iterable) {
+  constructor(iterable, async = false) {
     this.source = iterable;
     this.index = 0;
     this.done = false;
     this.suspended = false;
+    this.async = async;
+    this.phase = 'next';
+    this.fromSync = async && !iterable?.[Symbol.asyncIterator];
     this.indexed = Array.isArray(iterable) && iterable[Symbol.iterator] === Array.prototype[Symbol.iterator] || typeof iterable === 'string';
-    if (iterable !== undefined && !this.indexed) this.iterator = iterable[Symbol.iterator]();
+    if (iterable !== undefined && (!this.indexed || async && !this.fromSync)) this.iterator = iterable[async && !this.fromSync ? Symbol.asyncIterator : Symbol.iterator]();
   }
 
   get __dont_serialize__() { return ['iterator']; }
 
-  __additionally_serialize__() {
-    if (!this.indexed && !this.done) throw new Error('Cannot save a suspended native iterator. Use an array/string or finish the loop before saving.');
+  __additionally_serialize__(snapshot, ref, pool, addFn) {
+    if (this.iterator?.isManagedGenerator) addFn('iterator', this.iterator);
+    else if (!this.indexed && !this.done) throw new Error('Cannot save a suspended native iterator. Use an array/string or finish the loop before saving.');
   }
 
   next() {
@@ -179,7 +183,15 @@ export class RecordedIterator {
     if (step === null || typeof step !== 'object') throw new TypeError('Iterator result is not an object');
     this.done = !!step.done;
     this.value = this.done ? undefined : step.value;
+    this.phase = this.done ? 'done' : 'body';
     return {value: this.value, done: this.done};
+  }
+
+  acceptStep(step) {
+    if (step === null || typeof step !== 'object') throw new TypeError('Iterator result is not an object');
+    this.done = !!step.done;
+    this.value = step.value;
+    this.phase = this.done ? 'done' : 'body';
   }
 
   return() {
@@ -191,14 +203,14 @@ export class RecordedIterator {
   [Symbol.iterator]() { return this; }
 }
 
-export function __forOf(iterable, computed, astIndex) {
-  const state = new RecordedIterator(iterable);
+export function __forOf(iterable, computed, astIndex, async = false) {
+  const state = new RecordedIterator(iterable, async);
   computed['__forOf_' + astIndex] = state;
   return state;
 }
 
 export function __closeIteratorsAfterCatch(error) {
-  if (!error?.isUnwindException || ['await', 'bindings'].includes(error.error?.reason) || error.error?.toString() === 'Debugger') return;
+  if (!error?.isUnwindException || ['await', 'bindings', 'yield'].includes(error.error?.reason) || ['Debugger', 'Break'].includes(error.error?.toString())) return;
   for (const iterator of error.iteratorsToClose || []) {
     iterator.suspended = false;
     iterator.return();
@@ -214,6 +226,11 @@ export function __createClosure(namespace, idx, parentFrameState, f, lexical) {
   f._cachedAst = registry && registry[namespace] && registry[namespace][idx];
   // parentFrameState = [computedValues, varMapping, parentParentFrameState]
   f._cachedScopeObject = parentFrameState;
+  if (f._cachedAst?.iteratorFrame) {
+    const interpreted = new AcornFunction(f._cachedAst, new Scope(Global), originalFunctions.get(f._cachedAst));
+    interpreted.capturedFrameState = parentFrameState;
+    return interpreted.asFunction();
+  }
   f.livelyDebuggingEnabled = true;
   Object.defineProperty(f, '__serialize__', {configurable: true, value(pool, snapshots, path) {
     return serializeManagedFunction(f, new AcornFunction(f._cachedAst, Scope.recreateFromFrameState(f._cachedScopeObject), f), pool, snapshots, path);
@@ -303,7 +320,7 @@ export class UnwindException {
         if (!frame.isResuming()) console.log('Frame without PC found!', frame);
         if (!this.top) {
             this.top = this.last = frame;
-            if (this.error && this.error.reason === 'await') frame.pendingAwait = {astIndex: frame.getPC().astIndex};
+            if (this.error && this.error.reason === 'await') frame.pendingAwait = {astIndex: frame.getPC().astIndex, ...this.error.pending};
         } else {
             this.last.setParentFrame(frame);
             this.last = frame;
