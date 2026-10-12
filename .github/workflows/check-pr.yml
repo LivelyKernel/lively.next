@@ -41,6 +41,8 @@ jobs:
         run: node --trace-uncaught lively.modules/tests/native-system-live-test.mjs
       - name: Check native startup file loading
         run: node lively.server/tests/source-hashes-test.mjs
+      - name: Check concurrent desktop startup
+        run: node lively.app/scripts/test-startup-parallelism.mjs
       - name: Check desktop downloads
         run: node lively.app/scripts/test-downloads.mjs
       - name: Check desktop dependency junctions
@@ -136,6 +138,7 @@ jobs:
           node --experimental-import-meta-resolve lively.freezer/tests/project-bundle-test.mjs
           node --experimental-import-meta-resolve lively.server/tests/browser-import-map-cache-test.mjs
           node --experimental-import-meta-resolve lively.server/tests/source-hashes-test.mjs
+          node lively.app/scripts/test-startup-parallelism.mjs
           node --experimental-import-meta-resolve lively.project/tests/package-install-test.mjs
           node --experimental-import-meta-resolve lively.installer/tests/runtime-roots-test.mjs
           node lively.morphic/tests/rollup-build-test.cjs

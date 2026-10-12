@@ -233,20 +233,23 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
       if (initBaseURL.endsWith('/')) {
         initBaseURL = initBaseURL.slice(0, -1);
       }
-      const [packageCached, moduleHashes] = await Promise.all([
-        resource(baseURL).join('package-registry.json').readJson(),
-        resource(baseURL).join('__JS_FILE_HASHES__').readJson()
-      ]);
       const migratedMeta = { ...oldSystem.meta };
       const System = lively.modules.getSystem('bootstrapped', { baseURL, meta: migratedMeta }); // the meta of the not yet loaded modules needs to be transformed into register
+      installLinter(System);
+      // Prepare the private loader while backend inputs arrive; keep the dashboard's loader active.
+      const [[packageCached, moduleHashes]] = await Promise.all([
+        Promise.all([
+          resource(baseURL).join('package-registry.json').readJson(),
+          resource(baseURL).join('__JS_FILE_HASHES__').readJson()
+        ]),
+        setupSwcTranspiler(System)
+      ]);
       // Both loaders use this launch's fresh scan, including during bundle replay.
       oldSystem._livelyModulesSourceHashes = System._livelyModulesSourceHashes = moduleHashes;
       $world.env.uninstallSystemChangeHandlers();
       lively.modules.changeSystem(System, true);
       $world.env.installSystemChangeHandlers();
 
-      installLinter(System);
-      await setupSwcTranspiler(System);
       logInfo('Setup SystemJS:', Date.now() - ts + 'ms');
 
       // load packages

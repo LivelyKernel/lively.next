@@ -679,6 +679,7 @@ function emitError (msg) {
       send: backend.send,
       disconnect: backend.disconnect
     });
+    backend.initialize().catch(err => emitError('Native backend initialization failed: ' + err.stack));
     emitStatus('Native interface ready, loading lively...');
     const win = await new Promise(resolve => {
       const findWindow = () => nw.Window.getAll(windows => {
