@@ -537,14 +537,14 @@ export const LivelyDebugger = component({
         ['source pane'],
         ['scope/value pane'],
         ['workspace header'],
-        ['workspace pane']
+        ['workspace input']
       ],
       groups: {
         'source header': { align: 'topLeft', resize: true },
         'source pane': { align: 'topLeft', resize: true },
         'scope/value pane': { align: 'topLeft', resize: true },
         'workspace header': { align: 'topLeft', resize: true },
-        'workspace pane': { align: 'topLeft', resize: true }
+        'workspace input': { align: 'topLeft', resize: true }
       },
       rows: [
         0, { fixed: 26 },
