@@ -169,4 +169,72 @@ describe('Smalltalk debugger tutorial', function () {
     expect(caught.currentFrame.lookup('local')).equals(3);
     expect(resumeInspectorContinuation(caught)).equals(3);
   });
+
+  it('honors a nested rewritten debugger when proceeding from its caller', function () {
+    const first = run(fn('function task() { function child() { debugger; return 3; } debugger; return child() + 2; }'));
+    const child = resumeInspectorContinuation(first);
+    expect(child.isContinuation).equals(true);
+    expect(child.frames()).length(2);
+    expect(resumeInspectorContinuation(child)).equals(5);
+  });
+
+  it('honors a saved receiver method debugger while stepping over its call', function () {
+    const receiver = {child: fn('function child() { debugger; return 3; }')};
+    let stopped = run(fn('function task() { debugger; return this.child() + 2; }'), null, [], {this: receiver});
+    stopped = stepInspectorContinuation(stopped);
+    stopped = stepInspectorContinuation(stopped);
+    expect(stopped.frames()).length(2);
+    expect(resumeInspectorContinuation(stopped)).equals(5);
+  });
+
+  it('keeps lexical self and arguments in an arrow block despite call rebinding', function () {
+    const receiver = {count: 4};
+    const stopped = run(fn('function task(value) { const block = extra => { debugger; return this.count + arguments[0] + extra; }; return block.call({count: 99}, 2); }'), null, [3], {this: receiver});
+    expect(stopped.currentFrame.getThis()).equals(receiver);
+    expect(stopped.currentFrame.lookup('arguments')[0]).equals(3);
+    expect(resumeInspectorContinuation(stopped)).equals(9);
+  });
+
+  it('steps into an expression arrow created after the original suspension', function () {
+    const receiver = {count: 4};
+    let stopped = run(fn('function task() { debugger; const block = extra => this.count + extra; return block.call({count: 99}, 2); }'), null, [], {this: receiver});
+    stopped = stepInspectorContinuation(stopped);
+    stopped = stepInspectorContinuation(stopped);
+    stopped = stepInspectorContinuation(stopped, {action: 'stepInto'});
+    expect(stopped.currentFrame.getThis()).equals(receiver);
+    expect(resumeInspectorContinuation(stopped)).equals(6);
+  });
+
+  it('uses the debug Array.some replacement with undefined values and sparse holes', function () {
+    const result = run(fn('function task() { return [[undefined].some(function() { return true; }), Array(1).some(function() { throw new Error("hole"); })]; }'));
+    expect(result.returnValue).deep.equals([true, false]);
+  });
+
+  it('accepts editor formatting changes when applying unexecuted code', function () {
+    const receiver = {count: 0};
+    receiver.task = fn('function task() { this.count++; let amount = 2; debugger; return amount; }');
+    const stopped = run(receiver.task, null, [], {this: receiver});
+    receiver.task = fn('function task() {\n this.count++;\n let amount = 2;\n debugger;\n return amount * 3;\n}');
+    expect(resumeInspectorContinuation(applySavedInspectorMethod(stopped))).equals(6);
+    expect(receiver.count).equals(1);
+  });
+
+  it('runs an arrow entry point with explicitly supplied lexical receiver and arguments', function () {
+    const receiver = {count: 4};
+    const stopped = run(fn('value => { let local = value; debugger; return this.count + local + arguments[0]; }'), null, [2], {this: receiver, arguments: [3]});
+    expect(stopped.currentFrame.getThis()).equals(receiver);
+    expect(resumeInspectorContinuation(stopped)).equals(9);
+  });
+
+  it('applies saved source to an ordinary method reached through Step Into', function () {
+    const receiver = {visits: 0, child: fn('function child() { this.visits++; let amount = 2; debugger; return amount; }')};
+    let stopped = run(fn('function task() { debugger; return this.child(); }'), null, [], {this: receiver});
+    stopped = stepInspectorContinuation(stopped);
+    stopped = stepInspectorContinuation(stopped, {action: 'stepInto'});
+    stopped = stepInspectorContinuation(stopped);
+    stopped = stepInspectorContinuation(stopped);
+    receiver.child = fn('function child() {\n this.visits++;\n let amount = 2;\n debugger;\n return amount * 3;\n}');
+    expect(resumeInspectorContinuation(applySavedInspectorMethod(stopped))).equals(6);
+    expect(receiver.visits).equals(1);
+  });
 });

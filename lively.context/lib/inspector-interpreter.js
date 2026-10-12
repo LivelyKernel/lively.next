@@ -1,4 +1,4 @@
-import { parse } from 'lively.ast';
+import { parse, escodegen } from 'lively.ast';
 import { Continuation, asRewrittenClosure } from './stackReification.js';
 import { Frame, Function as AcornFunction, Interpreter, Scope } from './interpreter.js';
 
@@ -437,11 +437,15 @@ export function applySavedInspectorMethod (continuation, {startFrame = null} = {
   const pcPath = [...oldNodes].find(([, node]) => node === frame.getPC())[0];
   const pc = newNodes.get(pcPath);
   const statement = frame.pcStatement || frame.getPC();
-  const oldPrefix = oldAst.source.slice(oldAst.body.start - oldAst.start + 1, statement.start - oldAst.start);
   const newStatementPath = [...oldNodes].find(([, node]) => node === statement)[0];
   const newStatement = newNodes.get(newStatementPath);
-  if (!pc || !newStatement || oldPrefix !== newAst.source.slice(newAst.body.start - newAst.start + 1, newStatement.start - newAst.start) ||
-      oldAst.params.map(p => p.name).join() !== newAst.params.map(p => p.name).join()) {
+  const prefixUnchanged = [...oldNodes].every(([path, node]) => {
+    if (node.start < oldAst.body.start || node.end > statement.start) return true;
+    const replacement = newNodes.get(path);
+    return replacement && node.type === replacement.type && escodegen.generate(node) === escodegen.generate(replacement);
+  });
+  if (!pc || !newStatement || !prefixUnchanged ||
+      oldAst.params.map(p => escodegen.generate(p)).join() !== newAst.params.map(p => escodegen.generate(p)).join()) {
     throw new InspectorInterpreterError('Executed code or arguments changed. Restart Frame to apply this edit.');
   }
   const computed = {}, indices = new Map();
@@ -450,7 +454,7 @@ export function applySavedInspectorMethod (continuation, {startFrame = null} = {
     if (!newNode) continue;
     indices.set(oldNode.astIndex, newNode.astIndex);
     if (!frame.isAlreadyComputed(oldNode)) continue;
-    if (oldNode.type !== newNode.type || oldNode.source !== newNode.source) {
+    if (oldNode.type !== newNode.type || escodegen.generate(oldNode) !== escodegen.generate(newNode)) {
       throw new InspectorInterpreterError('A computed expression changed. Restart Frame to apply this edit.');
     }
     computed[newNode.astIndex] = frame.alreadyComputed[oldNode.astIndex];

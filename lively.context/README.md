@@ -80,6 +80,7 @@ debugger abandons its continuation; it does not replay or undo completed effects
 | Inspect callers without changing execution | `nestedLesson`; Step Over to the call, Step Into, select its caller and Proceed | The child runs once and its result reaches the caller; inspecting a frame never discards another frame. |
 | Step Into, Over and Out | `nestedLesson`; enter `double`, inspect `value`, Step Over, Step Out | Enter ordinary saved methods, stop before the next statement, and return to the pending caller with its result. |
 | Change locals and captured block state | `scopeLesson`; evaluate `amount = 4` and `read()` | `read()` returns 4, the outer `amount` remains 1, and the counter becomes 4. |
+| Preserve lexical self in a block | `scopeLesson`; evaluate `self.call({}) === this` | The arrow block retains its home receiver even when called with a different receiver. |
 | Enforce constant bindings | `scopeLesson`; evaluate `receiver = {}` then `receiver.count = 5` | Rebinding fails with TypeError; mutating the referenced counter succeeds. |
 | Respect declaration timing | Add `let later = 3` after a debugger statement and evaluate `later` before proceeding | Reading before initialization throws ReferenceError; proceeding initializes it normally. |
 | Retain each loop iteration's block | `loopLesson`; inspect `i` and `reads[0]()` at the conditional stop | Values are 1 and 0. Proceed returns `[0, 1, 2]` and sets the count to 3. |

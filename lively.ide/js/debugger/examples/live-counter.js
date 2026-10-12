@@ -33,6 +33,7 @@ export class LiveCounter extends Morph {
   scopeLesson () {
     let amount = 1;
     const receiver = this;
+    const self = () => this;
     let read;
     {
       let amount = 2;
@@ -41,7 +42,7 @@ export class LiveCounter extends Morph {
       this.count = read();
     }
     this.updateCount();
-    return {outer: amount, inner: read(), receiver};
+    return {outer: amount, inner: read(), receiver, self: self()};
   }
 
   loopLesson () {

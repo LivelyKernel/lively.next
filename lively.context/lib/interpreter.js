@@ -1,6 +1,6 @@
 import { obj, arr } from "lively.lang";
 import { acorn, escodegen, parseFunction } from "lively.ast";
-import { UnwindException, __getClosure, __createLexicalScope, __declareLexicalBindings, __initializeBinding, __cloneLexicalScope, __awaitValue, interpretedFunctions, capturedBindingMappings, freeFunctionReferences } from "./exception.js";
+import { UnwindException, __getClosure, __createLexicalScope, __declareLexicalBindings, __initializeBinding, __cloneLexicalScope, __awaitValue, capturedBindingMappings, freeFunctionReferences } from "./exception.js";
 import { getGlobal } from "lively.vm/lib/util.js";
 
 let Global = getGlobal();
@@ -37,9 +37,9 @@ export class Interpreter {
   }
 
   runWithFrame(node, frame) {
-    var isFunction = node.type == 'FunctionDeclaration' || node.type =='FunctionExpression',
+    var isFunction = node.type == 'FunctionDeclaration' || node.type =='FunctionExpression' || node.type === 'ArrowFunctionExpression',
         result = this.runWithFrameAndResult(isFunction ? node.body : node, frame, undefined);
-    if (frame.returnTriggered || !isFunction)
+    if (frame.returnTriggered || !isFunction || node.type === 'ArrowFunctionExpression' && node.body.type !== 'BlockStatement')
       return result;
   }
 
@@ -136,7 +136,7 @@ export class Interpreter {
     }
     var origFunc = func;
 
-    if (this.shouldHaltAtNextCall()) // try to fetch interpreted function
+    if (this.shouldHaltAtNextCall() || func && func.livelyDebuggingEnabled || this.functionHasDebugger(func))
       func = this.fetchInterpretedFunction(func) || func;
 
     if (this.shouldInterpret(frame, func)) {
@@ -146,7 +146,7 @@ export class Interpreter {
         this.breakAtStatement = false;
         func = func.startHalted(this);
       } else {
-        func = func.forInterpretation(this);
+        func = func.forInterpretation(new Interpreter({captureErrors: this.captureErrors}));
       }
     }
     if (isNew) {
@@ -174,8 +174,15 @@ export class Interpreter {
 
   shouldInterpret(frame, func) {
     return !this.isNative(func) && !!func.isInterpretableFunction;
-    // TODO: reactivate when necessary
-      // || func.containsDebugger();
+  }
+
+  functionHasDebugger(func) {
+    if (typeof func !== 'function' || !/\bdebugger\s*;/.test(func.toString())) return false;
+    const ast = parseFunction(func.toString());
+    let found = false;
+    acorn.walk.matchNodes(ast.body, {DebuggerStatement() { found = true; }}, null,
+      {visitors: acorn.walk.visitors.stopAtFunctions});
+    return found;
   }
 
   newObject(func) {
@@ -257,7 +264,6 @@ export class Interpreter {
 
   fetchInterpretedFunction(func) {
     if (typeof func !== 'function' || this.isNative(func)) return null;
-    if (interpretedFunctions.has(func)) return interpretedFunctions.get(func);
     if (func.isInterpretableFunction !== undefined) return func;
     if (!func.livelyDebuggingEnabled) {
       const ast = parseFunction(func.toString(), {locations: true, addSource: true, addAstIndex: true});
@@ -296,7 +302,8 @@ export class Interpreter {
         state.result = frame.alreadyComputed[node.astIndex];
         return;
       }
-    } else if (this.shouldHaltAtNextStatement(node) && arr.include(this.statements, node.type)) {
+    } else if (this.shouldHaltAtNextStatement(node) && (arr.include(this.statements, node.type) ||
+        frame.func.node.type === 'ArrowFunctionExpression' && frame.func.node.body === node && node.type !== 'BlockStatement')) {
       if (node.type == 'DebuggerStatement')
         frame.alreadyComputed[node.astIndex] = undefined;
       this.breakAtStatement = false;
@@ -820,6 +827,14 @@ export class Interpreter {
     // }
   }
 
+  visitArrowFunctionExpression(node, state) {
+    const frame = state.currentFrame;
+    const fn = new Function(node, frame.getScope());
+    fn.lexicalThis = frame.getThis();
+    try { fn.lexicalArguments = frame.getArguments(); } catch (error) {}
+    state.result = fn.asFunction();
+  }
+
   visitSequenceExpression(node, state) {
     node.expressions.forEach(function(expr) {
       this.accept(expr, state);
@@ -1094,6 +1109,8 @@ export class Function {
 
   constructor(node, scope, optFunc) {
     this.originalFunction = optFunc;
+    this.lexicalThis = optFunc && optFunc._lexicalThis;
+    this.lexicalArguments = optFunc && optFunc._lexicalArguments;
     this.lexicalScope = scope;
     this.node = node;
     this.source = undefined;
@@ -1172,11 +1189,11 @@ export class Function {
 
   isFunction() {
     var astType = this.getAst().type;
-    return astType == 'FunctionExpression' || astType == 'FunctionDeclaration';
+    return astType == 'FunctionExpression' || astType == 'FunctionDeclaration' || astType === 'ArrowFunctionExpression';
   }
 
   getSource() {
-    var source = this.source || this.getAst().source;
+    var source = this.node.type === 'ArrowFunctionExpression' && this.getAst().source || this.source || this.getAst().source;
     if (source) return source;
 
     var ast = this.getAst();
@@ -1202,8 +1219,8 @@ export class Function {
     var parentFrame = this.parentFrame ? this.parentFrame : Frame.global(),
         frame = parentFrame.newFrame(this, this.lexicalScope);
     // FIXME: add mapping to the new frame.getScope()
-    if (thisObj !== undefined)
-      frame.setThis(thisObj);
+    if (this.node.type === 'ArrowFunctionExpression') frame.setThis(this.lexicalThis);
+    else if (thisObj !== undefined) frame.setThis(thisObj);
     frame.setArguments(argValues);
     // TODO: reactivate when necessary
     // frame.setCaller(lively.ast.Interpreter.Frame.top);
@@ -1298,7 +1315,7 @@ export class Frame {
 
   reset() {
     try {
-      var args = this.getArguments();
+      var args = this.arguments;
     } catch (e) { /* might throw ReferenceError */ }
     this.scope       = new Scope(null, this.func.lexicalScope);
     this.returnTriggered   = false;
@@ -1350,6 +1367,10 @@ export class Frame {
   }
 
   getArguments() {
+    if (this.func.node.type === 'ArrowFunctionExpression') {
+      if (this.func.lexicalArguments === undefined) throw new ReferenceError('arguments is not defined');
+      return this.func.lexicalArguments;
+    }
     if (this.scope && this.scope.getMapping() != Global && this.func.isFunction())
       return this.arguments;
     throw new ReferenceError('arguments is not defined');
@@ -1400,7 +1421,8 @@ export class Frame {
       return this.pc = null;
     } else {
       var ast = this.getOriginalAst();
-      this.pcStatement = acorn.walk.findStatementOfNode(ast, node) || ast;
+      this.pcStatement = acorn.walk.findStatementOfNode(ast, node) ||
+        (ast.type === 'ArrowFunctionExpression' && ast.body.type !== 'BlockStatement' ? ast.body : ast);
       return this.pc = node;
     }
   }

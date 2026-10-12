@@ -3,7 +3,9 @@ import { resource } from 'lively.resources';
 function locationForFrame (frame) {
   if (frame && frame.location) return frame.location;
   const pc = frame && frame.getPC && frame.getPC();
-  return pc && pc.loc ? { lineNumber: pc.loc.start.line - 1, columnNumber: pc.loc.start.column } : {};
+  const ast = frame && frame.getOriginalAst && frame.getOriginalAst();
+  const firstLine = ast && ast.loc && ast.loc.start.line || 1;
+  return pc && pc.loc ? { lineNumber: pc.loc.start.line - firstLine, columnNumber: pc.loc.start.column } : {};
 }
 
 export const CURRENT_LINE_MARKER_ID = 'lively-debugger-current-line';
