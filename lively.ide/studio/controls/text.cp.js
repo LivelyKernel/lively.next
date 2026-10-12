@@ -8,6 +8,7 @@ import {
   PropertyLabelHovered,
   DarkNumberIconWidget,
   PropertyLabel,
+  PropLabel,
   DarkThemeList
 } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
@@ -610,7 +611,14 @@ const RichTextControl = component(PropertySection, {
         }],
         tooltip: 'Letter Spacing'
       })]
-  }), add(part(ColorInput, {
+  }), add(part(PropLabel, {
+    name: 'text color label',
+    textAndAttributes: ['Text color', null],
+    fontSize: 12,
+    fixedWidth: true,
+    extent: pt(202, 16),
+    padding: rect(0, 0, 0, 0)
+  })), add(part(ColorInput, {
     name: 'font color input',
     viewModel: {
       colorPickerComponent: DarkColorPicker
@@ -638,6 +646,14 @@ const RichTextControl = component(PropertySection, {
     }]
   })),
 
+  add(part(PropLabel, {
+    name: 'decoration color label',
+    textAndAttributes: ['Decoration color', null],
+    fontSize: 12,
+    fixedWidth: true,
+    extent: pt(202, 16),
+    padding: rect(0, 0, 0, 0)
+  })),
   add(part(ColorInput, {
     name: 'decoration color input',
     tooltip: 'Decoration Color',
