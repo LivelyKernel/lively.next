@@ -1,8 +1,8 @@
 /*global global, module,Global*/
 import { Path, arr, Closure } from "lively.lang";
 import { ReplaceVisitor, escodegen, parseFunction } from "lively.ast";
-import { Interpreter } from "./interpreter.js";
-import { __createClosure, originalFunctions } from "./exception.js";
+import { Interpreter, Function as AcornFunction, Scope } from "./interpreter.js";
+import { __createClosure, originalFunctions, interpretedFunctions, capturedBindingMappings, freeFunctionReferences } from "./exception.js";
 import { getCurrentASTRegistry, rewriteFunction } from "lively.context";
 
 let Global = typeof window !== "undefined" ? window : globalThis;
@@ -200,13 +200,49 @@ export function run(func, astRegistry, args, optMapping) {
       // e will not be an UnwindException in rewritten system (gets unwrapped)
       if (!e.isUnwindException && !e.unwindException) throw e;
       e = e.isUnwindException ? e : e.unwindException;
-      if (e.error instanceof Error)
-          throw e.error;
-      else
-          return Continuation.fromUnwindException(e);
+      const continuation = Continuation.fromUnwindException(e);
+      if (continuation.reason !== 'await') return continuation;
+      return continuation.resume().then(result => result && result.isContinuation
+          ? result : {isContinuation: false, returnValue: result});
   } finally {
       disableDebugSupport(astRegistry);
   }
+}
+
+export async function runWithCapturedBindings(func, astRegistry, args, mapping = {}) {
+    const ast = parseFunction(func.toString());
+    const missing = [...new Set(freeFunctionReferences(ast).map(ref => ref.name))]
+        .filter(name => !Object.prototype.hasOwnProperty.call(mapping, name) && !(name in Global));
+    if (!missing.length) return run(func, astRegistry, args, mapping);
+    const capture = Global.livelyDesktop && Global.livelyDesktop.debugger.captureFunctionBindings;
+    if (!capture) throw new Error('Missing closure bindings: ' + missing.join(', ') + '. Launch NW.js with LIVELY_APP_FUNCTION_SCOPES=1.');
+    const bindings = await capture(func, missing);
+    addRecorderBindings(bindings, ast);
+    capturedBindingMappings.add(bindings);
+    Object.defineProperties(bindings, Object.getOwnPropertyDescriptors(mapping));
+    return run(func, astRegistry, args, bindings);
+}
+
+function addRecorderBindings(bindings, ast) {
+    const recorder = bindings.__lvVarRecorder;
+    if (!recorder) return;
+    for (const ref of freeFunctionReferences(removeToplevelRecorderRefs(ast))) {
+        if (Object.prototype.hasOwnProperty.call(bindings, ref.name) || !(ref.name in recorder)) continue;
+        Object.defineProperty(bindings, ref.name, {enumerable: true, configurable: true,
+            get() { return recorder[ref.name]; }, set(value) { recorder[ref.name] = value; }});
+    }
+}
+
+export async function prepareCapturedFunction(func, names) {
+    const capture = Global.livelyDesktop && Global.livelyDesktop.debugger.captureFunctionBindings;
+    if (!capture) throw new Error('Missing closure bindings: ' + names.join(', ') + '. Launch NW.js with LIVELY_APP_FUNCTION_SCOPES=1.');
+    const bindings = await capture(func, names);
+    const ast = parseFunction(func.toString(), {locations: true, addSource: true, addAstIndex: true});
+    addRecorderBindings(bindings, ast);
+    capturedBindingMappings.add(bindings);
+    const interpreted = new AcornFunction(ast, new Scope(bindings, new Scope(Global)), func).asFunction();
+    interpretedFunctions.set(func, interpreted);
+    return interpreted;
 }
 
 export function asRewrittenClosure(func, varMapping, astRegistry) {
@@ -287,6 +323,9 @@ export class Continuation {
   }
 
   resume() {
+      if (this.reason === 'bindings') return this.settleBindings().then(continuation => continuation.resume());
+      if (this.reason === 'await') return this.settleAwait().then(continuation =>
+          continuation.reason === 'exception' ? continuation : continuation.resume());
       // FIXME: outer context usually does not have original AST
       // attaching the program node would possibly be right (otherwise the pc's context is missing)
       if (!this.currentFrame.getOriginalAst())
@@ -294,7 +333,7 @@ export class Continuation {
       if (!this.currentFrame.pc)
           throw new Error('Cannot resume because frame has no pc!');
 
-      var interpreter = new Interpreter();
+      var interpreter = new Interpreter({captureErrors: true});
 
       // go through all frames on the stack. beginning with the top most,
       // resume each of them
@@ -313,16 +352,41 @@ export class Continuation {
           try {
               return { val: interpreter.runFromPC(frame, result.val) };
           } catch (ex) {
+              if (ex.unwindException) ex = ex.unwindException;
               if (!ex.isUnwindException)
                   throw ex;
               return { error: ex };
           }
       }, {});
 
-      if (result.error)
-          return Continuation.fromUnwindException(result.error);
+      if (result.error) {
+          const continuation = Continuation.fromUnwindException(result.error);
+          return continuation.reason === 'await' ? continuation.resume() : continuation;
+      }
       else
           return result.val;
+  }
+
+  async settleAwait() {
+      const frame = this.currentFrame;
+      try {
+          const value = await this.error.promise;
+          frame.alreadyComputed[frame.getPC().astIndex] = value;
+          this.reason = 'debugger';
+          this.error = undefined;
+      } catch (error) {
+          const exception = error instanceof Error ? error : new Error(String(error));
+          this.reason = 'exception';
+          this.error = this.exception = frame.exception = frame.awaitRejection = exception;
+      }
+      return this;
+  }
+
+  async settleBindings() {
+      await prepareCapturedFunction(this.error.func, this.error.names);
+      this.reason = 'debugger';
+      this.error = undefined;
+      return this;
   }
 
   static fromUnwindException(e) {
@@ -331,6 +395,9 @@ export class Continuation {
       var frame = Interpreter.stripInterpreterFrames(e.top),
           continuation = new this(frame);
       continuation.error = e.error;
+      continuation.reason = e.error instanceof Error ? 'exception' : e.error && e.error.reason || 'debugger';
+      continuation.exception = e.error instanceof Error ? e.error : undefined;
+      frame.exception = continuation.exception;
       return continuation;
   }
 

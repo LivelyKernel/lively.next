@@ -592,6 +592,7 @@ describe('rewriting', function() {
           debuggerThrow() +
           '} catch (e) {\n' +
           catchIntro(1,'e', false) +
+          'throw e;\n' +
           '} finally {\n' +
           finallyWrapper('1;\n') +
           '}\n'

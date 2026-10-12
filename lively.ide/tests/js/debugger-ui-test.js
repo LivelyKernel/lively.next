@@ -138,4 +138,17 @@ describe('lively debugger ui', function () {
     expect(result).equals(7);
     expect(selectedScope.bindings.count).equals(7);
   });
+
+  it('retains workspace temporaries using the existing Lively evaluation recorder', function () {
+    const workspace = {type: 'workspace', bindings: {}};
+    const scopes = [workspace, {bindings: {amount: 3}}];
+    expect(evaluateInDebuggerScopes('let scratch = amount * 2; scratch', scopes)).equals(6);
+    expect(evaluateInDebuggerScopes('scratch += amount', scopes)).equals(9);
+    expect(workspace.bindings.scratch).equals(9);
+  });
+
+  it('uses a scope setter when evaluating assignments', function () {
+    const scope = {bindings: {amount: 3}, setBinding() { throw new TypeError('constant'); }};
+    expect(() => evaluateInDebuggerScopes('amount = 4', [scope])).to.throw(TypeError);
+  });
 });

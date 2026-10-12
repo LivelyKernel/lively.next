@@ -131,7 +131,7 @@ export class Rewriter {
 
   lastFunctionScopeId() {
       return this.scopes.map(function(scope) {
-          return !!(scope.isWithScope || scope.isCatchScope);
+          return !!(scope.isWithScope || scope.isCatchScope || scope.isBlockScope);
       }).lastIndexOf(false);
   }
 
@@ -152,9 +152,17 @@ export class Rewriter {
   registerDeclarations(ast, visitor) {
       if (!this.scopes.length) return;
       var scope = arr.last(this.scopes), that = this, decls = {};
+      const body = ast.type === 'BlockStatement' || ast.type === 'Program' ? ast : ast.body;
+      scope.functionBody = body;
+      const directDeclarations = new Set(body.body);
+      const lexicalDeclarations = body.body.filter(n => n.type === 'VariableDeclaration' && n.kind !== 'var')
+          .flatMap(n => n.declarations.map(d => [d.id.name, n.kind]));
+      this.registerVars(lexicalDeclarations.map(([name]) => ({ name })));
+      let hasLexicalScopes = lexicalDeclarations.length > 0;
       walk.matchNodes(ast, {
           'VariableDeclaration': function(node, state, depth, type) {
               if (node.type != type) return; // skip Expression, Statement, etc.
+              if (node.kind !== 'var') { hasLexicalScopes = true; return; }
               node.declarations.forEach(function(n) {
                   // only if it has not been defined before (as variable or argument!)
                   if ((scope.localVars.indexOf(n.id.name) == -1) && (n.id.name != 'arguments')) {
@@ -170,13 +178,14 @@ export class Rewriter {
           },
           'FunctionDeclaration': function(node, state, depth, type) {
               if (node.type != type) return; // skip Expression, Statement, etc.
+              if (!directDeclarations.has(node)) return;
               state[node.id.name] = node; // rewrite is done below (to know all local vars first)
               if (scope.localVars.indexOf(node.id.name) == -1)
                   scope.localVars.push(node.id.name);
           }
       }, decls, { visitors: walk.visitors.stopAtFunctions });
 
-      return Object.getOwnPropertyNames(decls).map(function(decl) {
+      const result = Object.getOwnPropertyNames(decls).map(function(decl) {
           var node = decls[decl];
           if (node.type == 'FunctionDeclaration') {
               node = {
@@ -188,10 +197,24 @@ export class Rewriter {
           }
           return node;
       });
+      result.lexicalDeclarations = lexicalDeclarations;
+      result.hasLexicalScopes = hasLexicalScopes;
+      return result;
   }
 
   createPreamble(args, decls, level) {
       var lastFnLevel = this.lastFunctionScopeId();
+      let mapping = this.wrapArgsAndDecls(args, decls);
+      if (decls && decls.lexicalDeclarations && decls.lexicalDeclarations.length) {
+          mapping = this.newNode('MemberExpression', {
+              object: this.newNode('CallExpression', {
+                  callee: this.newNode('Identifier', {name: '__createLexicalScope'}),
+                  arguments: [this.newNode('Literal', {value: null}), this.newNode('Identifier', {name: '_'}),
+                      this.newNode('Identifier', {name: 'undefined'}), parse(JSON.stringify(decls.lexicalDeclarations)).body[0].expression,
+                      typeof mapping === 'string' ? parse('(' + mapping + ')').body[0].expression : mapping]
+              }), property: this.newNode('Literal', {value: 1}), computed: true
+          });
+      }
       return [
           this.newNode('VariableDeclaration', {
               kind: 'var',
@@ -200,7 +223,7 @@ export class Rewriter {
                   this.newVariable('lastNode', this.newNode('Identifier', {name: 'undefined'})),
                   this.newVariable('debugging', this.newNode('Literal', {value: false})),
                   this.newVariable('__' + level, []),
-                  this.newVariable('_' + level, this.wrapArgsAndDecls(args, decls)),
+                  this.newVariable('_' + level, mapping),
               ]
           }),
           this.newNode('ExpressionStatement', {
@@ -280,7 +303,12 @@ export class Rewriter {
   wrapSequence(node, args, decls, originalFunctionIdx) {
       var level = this.scopes.length;
       Array.prototype.unshift.apply(node.body, this.createPreamble(args, decls, level));
-      return this.createCatchForUnwind(node, originalFunctionIdx, level);
+      const wrapped = this.createCatchForUnwind(node, originalFunctionIdx, level);
+      if (decls && decls.hasLexicalScopes) {
+          const call = wrapped.handler.body.body[1].expression;
+          call.arguments[2] = parse('__scopeForUnwind(ex.error, __' + level + ')').body[0].expression;
+      }
+      return wrapped;
   }
 
   wrapVar(name) {
@@ -347,7 +375,7 @@ export class Rewriter {
       var scopeIdx = this.scopes.length - 1,
           scopeIdentifier = scopeIdx < 0 ?
               this.newNode('Literal', {value: null}) :
-              this.newNode('Identifier', { name: '__' + this.lastFunctionScopeId() });
+              this.newNode('Identifier', { name: '__' + (this.scopes[scopeIdx].isBlockScope ? scopeIdx : this.lastFunctionScopeId()) });
       return this.newNode('CallExpression', {
           callee: this.newNode('Identifier', {name: '__createClosure'}),
           arguments: [
@@ -1367,6 +1395,15 @@ export class RewriteVisitor extends BaseVisitor {
       this.registryIndex = registryIndex;
   }
 
+  visitAwaitExpression(n, rewriter) {
+      rewriter.scopes[rewriter.lastFunctionScopeId()].hasAwait = true;
+      return rewriter.newNode('CallExpression', {
+          callee: rewriter.newNode('Identifier', {name: '__awaitValue'}),
+          arguments: [this.accept(n.argument, rewriter), parse('(debugging = true, ' + n.astIndex + ')').body[0].expression],
+          astIndex: n.astIndex
+      });
+  }
+
   visitProgram(n, rewriter) {
       return {
           start: n.start, end: n.end, type: 'Program',
@@ -1379,7 +1416,19 @@ export class RewriteVisitor extends BaseVisitor {
   }        
 
   visitBlockStatement(n, rewriter) {
-      return {
+      const scope = arr.last(rewriter.scopes);
+      const declarations = scope.functionBody === n ? [] : n.body
+          .filter(node => node.type === 'VariableDeclaration' && node.kind !== 'var')
+          .flatMap(node => node.declarations.map(decl => [decl.id.name, node.kind]));
+      const functions = scope.functionBody === n ? [] : n.body.filter(node => node.type === 'FunctionDeclaration');
+      const lexical = declarations.length || functions.length;
+      const root = rewriter.lastFunctionScopeId();
+      let level;
+      if (lexical) {
+          level = rewriter.enterScope({isBlockScope: true}) - 1;
+          rewriter.registerVars(declarations.map(([name]) => ({name})).concat(functions.map(node => node.id)));
+      }
+      const result = {
           start: n.start, end: n.end, type: 'BlockStatement',
           body: n.body.map(function(node) {
               // node is of type Statement
@@ -1387,6 +1436,21 @@ export class RewriteVisitor extends BaseVisitor {
           }, this),
           astIndex: n.astIndex
       };
+      if (!lexical) return result;
+      const parent = '__' + (level - 1);
+      // Catch/with scopes store their environment in the function's frame chain.
+      const parentScope = rewriter.scopes[level - 1];
+      const parentRef = parentScope.isCatchScope || parentScope.isWithScope ? '__' + root : parent;
+      const preamble = parse('let __' + level + ' = __createLexicalScope(' + parentRef + ', _, ' + n.astIndex + ', ' + JSON.stringify(declarations) + '); let _' + level + ' = __' + level + '[1];').body;
+      const initializers = functions.map(node => rewriter.newNode('ExpressionStatement', {
+          expression: rewriter.newNode('AssignmentExpression', {operator: '=', left: rewriter.wrapVar(node.id.name),
+              right: rewriter.rewriteFunctionDeclaration(node, this.registryIndex)})
+      }));
+      const handler = parse('try {} catch (__scopeError) { throw __captureLexicalScope(__scopeError, __' + root + ', __' + level + '); }').body[0].handler;
+      rewriter.exitScope();
+      return {...result, body: [...preamble, ...initializers, rewriter.newNode('TryStatement', {
+          block: {...result}, handler, finalizer: null
+      })]};
   }
 
   visitSequenceExpression(n, rewriter) {
@@ -1424,6 +1488,27 @@ export class RewriteVisitor extends BaseVisitor {
   }
 
   visitForStatement(n, rewriter) {
+      if (n.init && n.init.type === 'VariableDeclaration' && n.init.kind !== 'var') {
+          const root = rewriter.lastFunctionScopeId(), parentLevel = rewriter.scopes.length - 1;
+          const parent = rewriter.scopes[parentLevel].isBlockScope ? parentLevel : root;
+          const level = rewriter.enterScope({isBlockScope: true}) - 1;
+          const declarations = n.init.declarations.map(decl => [decl.id.name, n.init.kind]);
+          rewriter.registerVars(n.init.declarations.map(decl => decl.id));
+          const init = this.accept(n.init, rewriter).expression;
+          const test = n.test ? this.accept(n.test, rewriter) : rewriter.newNode('Literal', {value: true});
+          const update = n.update && this.accept(n.update, rewriter);
+          const body = this.accept(n.body, rewriter);
+          const loop = parse('for (let __' + level + ' = __createLexicalScope(__' + parent + ', _, ' + n.astIndex + ', ' + JSON.stringify(declarations) + '), _' + level + ' = __' + level + '[1], __initialized = 0; true; __' + level + ' = __cloneLexicalScope(__' + level + '), _' + level + ' = __' + level + '[1]) {}').body[0];
+          loop.init.declarations[2].init = init;
+          loop.test = test;
+          if (update) loop.update.expressions.push(update);
+          loop.body = parse('try {} catch (__scopeError) { throw __captureLexicalScope(__scopeError, __' + root + ', __' + level + '); }').body[0];
+          loop.body.block = body.type === 'BlockStatement' ? body : rewriter.newNode('BlockStatement', {body: [body]});
+          loop.body = rewriter.newNode('BlockStatement', {body: [loop.body]});
+          loop.astIndex = n.astIndex;
+          rewriter.exitScope();
+          return loop;
+      }
       // init is a node of type VariableDeclaration or Expression or null
       var init = n.init ? this.accept(n.init, rewriter) : null;
       if (init && init.type == 'ExpressionStatement') {
@@ -1745,6 +1830,16 @@ export class RewriteVisitor extends BaseVisitor {
       // n.kind is "var" or "let" or "const"
       var start = n.start, end = n.end, astIndex = n.astIndex;
       var decls = n.declarations.map(function(decl) {
+          if (n.kind !== 'var') {
+              const target = this.accept(decl.id, rewriter);
+              const value = decl.init ? this.accept(decl.init, rewriter) : rewriter.newNode('Identifier', {name: 'undefined'});
+              const call = rewriter.newNode('CallExpression', {
+                  callee: rewriter.newNode('Identifier', {name: '__initializeBinding'}),
+                  arguments: [target.object, rewriter.newNode('Literal', {value: decl.id.name}),
+                      value.type === 'ExpressionStatement' ? value.expression : value]
+              });
+              return rewriter.storeComputationResult(call, start, end, decl.astIndex, true);
+          }
           if (decl.init == null) { // no initialization, e.g. var x;
               // only advance the pc
               var node = rewriter.lastNodeExpression(decl.astIndex);
@@ -2010,6 +2105,7 @@ export class RewriteVisitor extends BaseVisitor {
               body: rewriter.newNode('BlockStatement', { body: [] })
           });
       handler = this.accept(handler, rewriter);
+      if (!n.handler) handler.body.body.push(rewriter.newNode('ThrowStatement', {argument: rewriter.newNode('Identifier', {name: 'e'})}));
 
       if (finalizer) {
           finalizer = rewriter.newNode('BlockStatement', { body: [
@@ -2129,6 +2225,9 @@ export class RewriteVisitor extends BaseVisitor {
               alternate: null
           })
       );
+      if (rewriter.scopes[rewriter.lastFunctionScopeId()].hasAwait) {
+          body.body.unshift(...parse('if (' + param.name + '.isUnwindException && ' + param.name + '.error.reason === "await") { debugging = true; throw ' + param.name + '; }').body);
+      }
       rewriter.exitScope();
       return {
           start: n.start, end: n.end, type: 'CatchClause',

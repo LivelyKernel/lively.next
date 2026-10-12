@@ -316,8 +316,7 @@ export function materializeInspectorContinuation (continuation, {
 export function asInterpreterContinuation (continuation, options = {}) {
   const currentFrame = continuation && continuation.currentFrame;
   if (currentFrame && currentFrame.getOriginalAst && currentFrame.getOriginalAst()) {
-    return options.startFrame && options.startFrame !== currentFrame
-      ? new Continuation(options.startFrame) : continuation;
+    return continuation;
   }
   return materializeInspectorContinuation(continuation, options);
 }
@@ -334,22 +333,43 @@ export function stepInspectorContinuation (continuation, {
   action = 'stepOver',
   startFrame = null
 } = {}) {
-  const interpreterContinuation = asInterpreterContinuation(continuation, { startFrame });
-  const interpreter = new Interpreter();
+  let interpreterContinuation = asInterpreterContinuation(continuation);
+  while (startFrame && interpreterContinuation.currentFrame !== startFrame) {
+    if (!interpreterContinuation.frames().includes(startFrame)) throw new InspectorInterpreterError('Selected frame is no longer suspended.');
+    const previous = interpreterContinuation.currentFrame;
+    const result = stepOutInspectorContinuation(interpreterContinuation);
+    if (!result || !result.isContinuation || result.currentFrame === previous) return result;
+    interpreterContinuation = result;
+  }
+  const interpreter = new Interpreter({captureErrors: true});
   const frame = interpreterContinuation.currentFrame;
   const result = action === 'stepInto'
     ? interpreter.stepToNextCallOrStatement(frame)
     : interpreter.stepToNextStatement(frame);
-  return continuationFromStepResult(result);
+  const next = continuationFromStepResult(result);
+  if (!next || !next.isContinuation) return returnFromInspectorFrame(interpreterContinuation, next, {startFrame: frame});
+  if (next && next.reason === 'bindings') return next.settleBindings().then(stopped => stepInspectorContinuation(stopped, {action}));
+  return next && next.reason === 'await'
+    ? next.settleAwait().then(stopped => stopped.reason === 'exception' ? stopped : stepInspectorContinuation(stopped, {action}))
+    : next;
 }
 
 export function stepOutInspectorContinuation (continuation, {
   startFrame = null
 } = {}) {
-  const interpreterContinuation = asInterpreterContinuation(continuation, { startFrame });
+  const interpreterContinuation = asInterpreterContinuation(continuation);
+  if (startFrame && startFrame !== interpreterContinuation.currentFrame) {
+    const stopped = stepInspectorContinuation(interpreterContinuation, {startFrame});
+    return stopped && stopped.isContinuation ? stepOutInspectorContinuation(stopped) : stopped;
+  }
   const frame = interpreterContinuation.currentFrame;
   const parentFrame = frame && frame.getParentFrame && frame.getParentFrame();
-  const result = continuationFromStepResult(new Interpreter().runFromPC(frame));
+  let result;
+  try { result = new Interpreter({captureErrors: true}).runFromPC(frame); }
+  catch (error) { result = continuationFromStepResult(error); if (!result || !result.isContinuation) throw error; }
+  result = continuationFromStepResult(result);
+  if (result && result.reason === 'await') return result.settleAwait().then(stopped =>
+    stopped.reason === 'exception' ? stopped : stepOutInspectorContinuation(stopped));
   if (result && result.isContinuation) return result;
   if (!parentFrame) return result;
   const parentPC = parentFrame.getPC && parentFrame.getPC();
@@ -364,13 +384,7 @@ export function restartInspectorFrame (continuation, { startFrame = null } = {})
   const frame = startFrame || continuation.currentFrame;
   if (frame && frame.getOriginalAst && frame.getOriginalAst()) {
     const original = frame.func.originalFunction;
-    const methodName = original && (original.methodName || original.displayName || original.name);
-    let owner = frame.getThis(), current;
-    while (owner && methodName) {
-      const descriptor = Object.getOwnPropertyDescriptor(owner, methodName);
-      if (descriptor) { current = descriptor.value; break; }
-      owner = Object.getPrototypeOf(owner);
-    }
+    const current = savedMethodForFrame(frame);
     if (typeof current === 'function' && current !== original) {
       const ast = asRewrittenClosure(current).originalAst;
       frame.func = new AcornFunction(ast, frame.func.lexicalScope, current);
@@ -380,10 +394,112 @@ export function restartInspectorFrame (continuation, { startFrame = null } = {})
   } else {
     interpreterContinuation = materializeInspectorContinuation(continuation, { startFrame, restart: true });
   }
-  const result = new Interpreter().stepToNextStatement(interpreterContinuation.currentFrame);
+  const result = new Interpreter({captureErrors: true}).stepToNextStatement(interpreterContinuation.currentFrame);
   return continuationFromStepResult(result);
 }
 
+function savedMethodForFrame (frame) {
+  const original = frame.func.originalFunction;
+  const name = original && (original.methodName || original.displayName || original.name);
+  let owner = frame.getThis();
+  while (owner && name) {
+    const descriptor = Object.getOwnPropertyDescriptor(owner, name);
+    if (descriptor) return descriptor.value;
+    owner = Object.getPrototypeOf(owner);
+  }
+  return original;
+}
+
+function astPaths (root) {
+  const nodes = new Map();
+  function visit (node, path) {
+    if (!node || typeof node !== 'object' || !node.type) return;
+    nodes.set(path, node);
+    for (const key of Object.keys(node)) {
+      if (key === 'loc') continue;
+      const value = node[key];
+      if (Array.isArray(value)) value.forEach((child, i) => visit(child, path + '/' + key + '/' + i));
+      else if (value && value.type) visit(value, path + '/' + key);
+    }
+  }
+  visit(root, '');
+  return nodes;
+}
+
+export function applySavedInspectorMethod (continuation, {startFrame = null} = {}) {
+  const interpreted = asInterpreterContinuation(continuation);
+  const frame = startFrame || interpreted.currentFrame;
+  if (!interpreted.frames().includes(frame)) throw new InspectorInterpreterError('Selected frame is no longer suspended.');
+  const current = savedMethodForFrame(frame);
+  if (!current || current === frame.func.originalFunction) return interpreted;
+  const oldAst = frame.getOriginalAst(), newAst = asRewrittenClosure(current).originalAst;
+  const oldNodes = astPaths(oldAst), newNodes = astPaths(newAst);
+  const pcPath = [...oldNodes].find(([, node]) => node === frame.getPC())[0];
+  const pc = newNodes.get(pcPath);
+  const statement = frame.pcStatement || frame.getPC();
+  const oldPrefix = oldAst.source.slice(oldAst.body.start - oldAst.start + 1, statement.start - oldAst.start);
+  const newStatementPath = [...oldNodes].find(([, node]) => node === statement)[0];
+  const newStatement = newNodes.get(newStatementPath);
+  if (!pc || !newStatement || oldPrefix !== newAst.source.slice(newAst.body.start - newAst.start + 1, newStatement.start - newAst.start) ||
+      oldAst.params.map(p => p.name).join() !== newAst.params.map(p => p.name).join()) {
+    throw new InspectorInterpreterError('Executed code or arguments changed. Restart Frame to apply this edit.');
+  }
+  const computed = {}, indices = new Map();
+  for (const [path, oldNode] of oldNodes) {
+    const newNode = newNodes.get(path);
+    if (!newNode) continue;
+    indices.set(oldNode.astIndex, newNode.astIndex);
+    if (!frame.isAlreadyComputed(oldNode)) continue;
+    if (oldNode.type !== newNode.type || oldNode.source !== newNode.source) {
+      throw new InspectorInterpreterError('A computed expression changed. Restart Frame to apply this edit.');
+    }
+    computed[newNode.astIndex] = frame.alreadyComputed[oldNode.astIndex];
+  }
+  frame.func = new AcornFunction(newAst, frame.func.lexicalScope, current);
+  frame.alreadyComputed = computed;
+  frame.setPC(pc);
+  for (let scope = frame.getScope(); scope; scope = scope.getParentScope()) {
+    if (scope.lexicalNodeIndex !== undefined && indices.has(scope.lexicalNodeIndex)) scope.lexicalNodeIndex = indices.get(scope.lexicalNodeIndex);
+  }
+  return interpreted;
+}
+
+export function runToInspectorPosition (continuation, line, {startFrame = null} = {}) {
+  const interpreted = asInterpreterContinuation(continuation);
+  const frame = startFrame || interpreted.currentFrame;
+  if (frame !== interpreted.currentFrame) throw new InspectorInterpreterError('Select the active frame to run to a source line.');
+  const targets = new Set();
+  function visit (node) {
+    if (node !== frame.getOriginalAst() && FUNCTION_TYPES.has(node.type)) return;
+    if (node.loc && node.loc.start.line === line && STATEMENT_TYPES.has(node.type)) targets.add(node);
+    for (const value of Object.values(node)) {
+      if (Array.isArray(value)) value.forEach(child => child && child.type && visit(child));
+      else if (value && value.type) visit(value);
+    }
+  }
+  visit(frame.getOriginalAst());
+  if (!targets.size) throw new InspectorInterpreterError('No executable statement on this line.');
+  const interpreter = new Interpreter({captureErrors: true});
+  interpreter.shouldHaltAtNextStatement = node => targets.has(node);
+  try { return returnFromInspectorFrame(interpreted, interpreter.runFromPC(frame), {startFrame: frame}); }
+  catch (error) {
+    const result = continuationFromStepResult(error);
+    if (result && result.isContinuation) return result;
+    throw error;
+  }
+}
+
 export function resumeInspectorContinuation (continuation, options = {}) {
-  return asInterpreterContinuation(continuation, options).resume();
+  return asInterpreterContinuation(continuation).resume();
+}
+
+export function returnFromInspectorFrame (continuation, value, {startFrame = null} = {}) {
+  const interpreted = asInterpreterContinuation(continuation);
+  const frame = startFrame || interpreted.currentFrame;
+  if (!interpreted.frames().includes(frame)) throw new InspectorInterpreterError('Selected frame is no longer suspended.');
+  const parent = frame.getParentFrame();
+  if (!parent) return value;
+  const pc = parent.getPC();
+  parent.alreadyComputed[pc.astIndex] = value;
+  return new Continuation(parent);
 }
