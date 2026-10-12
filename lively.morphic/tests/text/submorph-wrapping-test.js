@@ -112,11 +112,35 @@ describe('scrolling ordinary text submorphs', () => {
     const text = new Text({ readOnly: true, fixedWidth: true, fixedHeight: true, extent: pt(160, 100), clipMode: 'auto', textString: 'short' });
     try {
       expect(text.scrollExtent).equals(text.extent.addPt(text.scrollbarOffset));
-      text.readOnly = false;
-      text.openInWorld();
-      await text.whenRendered();
-      expect(text.document).not.equals(null);
-      expect(text.scrollExtent).equals(text.extent.addPt(text.scrollbarOffset));
+    } finally { text.remove(); }
+    const editable = new Text({ readOnly: false, fixedWidth: true, fixedHeight: true,
+      extent: pt(160, 100), clipMode: 'auto', hideScrollbars: false, padding: Rectangle.inset(5), borderWidth: 3,
+      textString: 'short', submorphs: [new Morph({ position: pt(220, 160), extent: pt(25, 15) })]
+    }).openInWorld();
+    try {
+      await editable.whenRendered();
+      expect(editable.document).not.equals(null);
+      expect(editable.scrollExtent).equals(editable.textBounds().extent()
+        .addPt(editable.padding.topLeft()).addPt(editable.padding.bottomRight())
+        .addPt(editable.scrollbarOffset).maxPt(editable.innerBounds()
+          .union(editable.submorphBounds()).extent().addPt(editable.scrollbarOffset)));
+    } finally { editable.remove(); }
+  });
+
+  it('scrolls newly assigned static content before its next render', async () => {
+    const text = new Text({ readOnly: true, fixedWidth: true, fixedHeight: true,
+      extent: pt(160, 100), clipMode: 'auto', textString: 'a\nb'
+    }).openInWorld();
+    try {
+      await text.whenFontLoaded();
+      text.env.forceUpdate();
+      text.textString = Array(50).fill('line').join('\n');
+      text.scroll = pt(0, 1e6);
+      text.env.forceUpdate();
+      const node = text.env.renderer.getNodeForMorph(text);
+      expect(node.scrollTop).equals(node.scrollHeight - node.clientHeight);
+      await promise.delay(500);
+      expect(text.scroll.y).equals(node.scrollTop);
     } finally { text.remove(); }
   });
 
