@@ -1,5 +1,4 @@
 import { lessPosition, lessEqPosition, eqPosition } from './position.js';
-import { pt } from 'lively.graphics';
 
 export class Anchor {
   // A text anchor is a text position that moves with insertion and deletions
@@ -46,8 +45,7 @@ export class Anchor {
     let pos = this.embeddedMorph.position;
     if (renderedBounds && tm?.isText) {
       // Reuse the painted bounds instead of measuring every character in the line.
-      const delta = tm.getGlobalTransform().inverse().transformDirection(
-        pt(renderedBounds.x, renderedBounds.y).subPt(this.embeddedMorph.globalBounds().topLeft()));
+      const delta = tm.env.renderer.getInlineMorphPositionDelta(this.embeddedMorph, renderedBounds);
       if (delta.r() < 1e-7) return;
       pos = pos.addPt(delta);
     } else if (tm?.isText) {

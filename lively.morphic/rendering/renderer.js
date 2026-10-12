@@ -1861,6 +1861,16 @@ export default class Renderer {
     }
   }
 
+  getInlineMorphPositionDelta (morph, clientBounds) {
+    const world = morph.world();
+    const worldNode = this.getNodeForMorph(world);
+    const worldBounds = worldNode.getBoundingClientRect();
+    const renderedPosition = pt(clientBounds.x - worldBounds.x, clientBounds.y - worldBounds.y)
+      .scaleBy(1 / world.scale).addPt(world.scroll);
+    const ownBounds = morph.getGlobalTransform().transformRectToRect(morph.origin.negated().extent(morph.extent));
+    return morph.owner.getGlobalTransform().inverse().transformDirection(renderedPosition.subPt(ownBounds.topLeft()));
+  }
+
   /**
    * Removes and rerenders the current selections in a Text to update them.
    * @param {Node} node - The DOM node in which `morph` is rendered.
