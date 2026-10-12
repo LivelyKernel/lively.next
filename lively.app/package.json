@@ -20,7 +20,7 @@
     "min_height": 600,
     "position": "center",
     "show": true,
-    "frame": true,
+    "frame": false,
     "resizable": true
   },
   "chromium-args": "--enable-features=NWESM --enable-node-worker --disable-raf-throttling --remote-debugging-port=9222",

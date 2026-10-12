@@ -610,6 +610,38 @@ async function assertStartupBackground (client, urls, dataDir) {
   console.log('Desktop app smoke passed: dashboard and loading page show orange triangles before the bootstrap bundle loads');
 }
 
+/** Exercise the frame used by both the dashboard and same-document worlds. */
+async function assertDesktopTitlebar (client, dataDir, world = false) {
+  const state = await client.send('Runtime.evaluate', {
+    returnByValue: true,
+    expression: `(() => {
+      const frame = document.getElementById('lively-desktop-titlebar');
+      const style = frame && getComputedStyle(frame);
+      const controls = frame && [...frame.querySelectorAll('button')];
+      const bar = globalThis.$world?.get('lively top bar');
+      const node = bar && document.getElementById(bar.id);
+      const dashboardControls = globalThis.$world?.get('top side');
+      return Boolean(frame && typeof livelyDesktop.windowAction === 'function' &&
+        (!globalThis.nw || nw.App.manifest.window.frame === false) &&
+        style.backgroundColor === 'rgba(0, 0, 0, 0)' && style.webkitAppRegion === 'drag' &&
+        frame.getBoundingClientRect().height === livelyDesktop.titlebarHeight &&
+        controls.every(button => button.getAttribute('aria-label') && getComputedStyle(button).webkitAppRegion === 'no-drag') &&
+        (navigator.platform.startsWith('Mac') || livelyDesktop.menu?.items?.length === 5) &&
+        (${world} || dashboardControls?.globalBounds().top() >= livelyDesktop.titlebarHeight) &&
+        (!${world} || (node && node.getBoundingClientRect().top === 0 &&
+          bar.layout.padding.top() === livelyDesktop.titlebarHeight &&
+          getComputedStyle(node).backgroundImage.includes('linear-gradient') &&
+          bar.submorphs.filter(m => m.isLayoutable).every(m => m.top >= livelyDesktop.titlebarHeight))));
+    })()`
+  });
+  if (state.exceptionDetails || state.result?.value !== true) {
+    throw new Error('Transparent desktop title bar failed: ' + JSON.stringify(state));
+  }
+  const screenshot = await client.send('Page.captureScreenshot', { format: 'png' });
+  fs.writeFileSync(path.join(dataDir, world ? 'world-titlebar.png' : 'dashboard-titlebar.png'), Buffer.from(screenshot.data, 'base64'));
+  console.log('Desktop app smoke passed: transparent ' + (world ? 'world title bar shares the toolbar gradient' : 'dashboard title bar preserves window controls and Go menu'));
+}
+
 /** Open a dashboard tile without replacing the frozen renderer's document. */
 async function openDashboardProject (client, fullName) {
   const result = await waitFor('dashboard project tile', async () => {
@@ -1166,6 +1198,7 @@ async function main () {
           }
         }
         console.log('Desktop app smoke passed: dashboard initialized with canonical workspace packages');
+        await assertDesktopTitlebar(client, dataDir);
         const readyEvent = readTextFile(logFile).match(/^\[([^\]]+)\] (?:Native backend ready|Server ready, loading lively)/m);
         if (!readyEvent) throw new Error('Backend readiness event missing from boot log');
         console.log(JSON.stringify({ mode: native ? 'native' : 'http', reopened, backendReadyMs: Date.parse(readyEvent[1]) - launchStarted }));
@@ -1186,6 +1219,7 @@ async function main () {
             console.log(JSON.stringify({ mode: native ? 'native' : 'http', reopened, worldMs: Date.now() - launchStarted }));
           }
           if (native) await assertNativeAssets(client);
+          await assertDesktopTitlebar(client, dataDir, true);
           client.assertNoRendererErrors();
           continue;
         }
@@ -1218,6 +1252,7 @@ async function main () {
           }, timeoutMs);
           client.assertNoRendererErrors();
           console.log('Desktop app smoke passed: upgraded legacy project opens from the cold dashboard');
+          await assertDesktopTitlebar(client, dataDir, true);
           await assertBrowserSwc(client);
           await client.send('Page.navigate', { url: routeURL('/dashboard/') });
           await openDashboardProject(client, 'smoke--programming');
@@ -1246,6 +1281,7 @@ async function main () {
             return result.result?.value === true;
           }, timeoutMs);
           console.log('Desktop app smoke passed: dashboard tile opens a project in the same document');
+          await assertDesktopTitlebar(client, dataDir, true);
           await assertBrowserSwc(client);
           await assertComponentModuleURLs(client);
           await assertFrozenModuleResurrection(client);
@@ -1330,13 +1366,13 @@ async function main () {
         if (diagnostics.length) console.error(`\n--- recent browser diagnostics ---\n${JSON.stringify(diagnostics, null, 2)}`);
         throw err;
       } finally {
-        if (native && child.exitCode === null) {
+        if (child.exitCode === null) {
           const closed = new Promise(resolve => child.once('exit', resolve));
-          await client.send('Runtime.evaluate', { expression: 'nw.Window.get().close()' });
+          await client.send('Runtime.evaluate', { expression: 'const button = document.querySelector("#lively-desktop-titlebar [data-action=close]"); if (button) button.click(); else nw.Window.get().close()' });
           let timer;
           const code = await Promise.race([closed, new Promise(resolve => { timer = setTimeout(() => resolve('timeout'), 15000); })]);
           clearTimeout(timer);
-          if (code !== 0) throw new Error('Native clean shutdown failed: ' + code);
+          if (code !== 0) throw new Error('Desktop close-button shutdown failed: ' + code);
         }
         client.close();
       }

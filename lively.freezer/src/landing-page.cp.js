@@ -50,7 +50,7 @@ class WorldLandingPage extends Morph {
     const maxWidth = 1100;
     if (worldList) {
       worldList.width = Math.min(this.world().visibleBounds().width - 2 * padding, maxWidth);
-      worldList.center = this.extent.scaleBy(0.5);
+      worldList.center = this.extent.scaleBy(0.5).addPt(pt(0, (globalThis.livelyDesktop?.titlebarHeight || 0) / 2));
     }
   }
 
@@ -73,8 +73,9 @@ class WorldLandingPage extends Morph {
           }));
     this.reset();
     dashboard.showCloseButton = false;
-    dashboard.extent = pt(1110, 800).minPt(this.extent.subPt(pt(50, 150)));
-    dashboard.center = this.innerBounds().center();
+    const titlebarHeight = globalThis.livelyDesktop?.titlebarHeight || 0;
+    dashboard.extent = pt(1110, 800).minPt(this.extent.subPt(pt(50, 150 + titlebarHeight)));
+    dashboard.center = this.innerBounds().center().addPt(pt(0, titlebarHeight / 2));
 
     await dashboard.allFontsLoaded();
     dashboard.animate({
@@ -273,6 +274,7 @@ class WorldAligningLandigPageUIElements extends ViewModel {
     $world._cachedWindowBounds = null;
     document.body.style.overflowY = 'hidden';
     this.ui.topSide.topRight = $world.visibleBounds().insetBy(10).topRight();
+    this.ui.topSide.top += globalThis.livelyDesktop?.titlebarHeight || 0;
     this.ui.fastLoadTogglerWrapper.bottomRight = $world.visibleBounds().bottomRight();
     return this.view;
   }
