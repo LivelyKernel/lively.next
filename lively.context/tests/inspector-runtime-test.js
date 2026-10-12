@@ -218,13 +218,11 @@ describe('inspector runtime', function () {
 
   it('arms the bridge and throws a tagged halt unwind', function () {
     const calls = [];
-    const traps = [];
     installInspectorRuntime({
       env: {},
       bridge: {
         isAvailable: () => true,
-        armHalt: capture => calls.push(capture),
-        breakpointTrap: captureId => traps.push(captureId)
+        armHalt: capture => calls.push(capture)
       }
     });
 
@@ -236,7 +234,6 @@ describe('inspector runtime', function () {
       expect(calls).to.have.length(1);
       expect(calls[0].reason).equals('test halt');
       expect(calls[0].captureId).equals(err.captureId);
-      expect(traps).eql([err.captureId]);
       return;
     }
 
@@ -258,17 +255,20 @@ describe('inspector runtime', function () {
     expect(calls).to.have.length(0);
   });
 
-  it('refuses to halt when the breakpoint trap is missing', function () {
+  it('refuses to halt when the inspector service rejects the halt request', function () {
     const calls = [];
     installInspectorRuntime({
       env: {},
       bridge: {
         isAvailable: () => true,
-        armHalt: capture => calls.push(capture)
+        armHalt: capture => {
+          calls.push(capture);
+          return false;
+        }
       }
     });
 
-    expect(() => halt('not ready')).to.throw(/breakpoint trap/);
+    expect(() => halt('rejected')).to.throw(/rejected/);
     expect(calls).to.have.length(1);
   });
 });
