@@ -98,6 +98,18 @@ async function testCaptureStoresValuesInRenderer () {
   const getPropertiesCalls = client.calls.filter(call => call.method === 'Runtime.getProperties');
   assert.strictEqual(getPropertiesCalls.length, 2);
 
+  const ensureRuntime = client.calls.find(call =>
+    call.method === 'Runtime.evaluate' &&
+    call.params.expression.includes('installInspectorRuntime'));
+  assert(ensureRuntime);
+  assert.strictEqual(ensureRuntime.params.awaitPromise, true);
+
+  const argumentStore = client.calls.find(call =>
+    call.method === 'Debugger.evaluateOnCallFrame' &&
+    call.params.expression.includes('Array.prototype.slice.call(arguments)'));
+  assert(argumentStore);
+  assert(!argumentStore.params.expression.includes('SHOULD_NOT_LEAVE_CDP'));
+
   const storeCalls = client.calls.filter(call => call.method === 'Runtime.callFunctionOn');
   assert(storeCalls.some(call => call.params.objectId === 'this-0'));
   assert(storeCalls.some(call => call.params.objectId === 'scope-local'));
@@ -136,6 +148,9 @@ async function testExceptionCaptureStoresExceptionObject () {
     call.params.functionDeclaration.includes('storeException'));
   assert(frameStoreIndex > -1);
   assert(exceptionStoreIndex > frameStoreIndex);
+  assert(client.calls.some(call =>
+    call.method === 'Runtime.evaluate' &&
+    call.params.expression.includes('installInspectorRuntime')));
 }
 
 async function testTaggedHaltUnwindIsIgnored () {
@@ -164,7 +179,9 @@ async function testHandlePausedResumesAndDeliversDescriptor () {
   await service.handlePaused(pausedPayload());
 
   assert(client.calls.some(call => call.method === 'Debugger.resume'));
-  const deliver = client.calls.find(call => call.method === 'Runtime.evaluate');
+  const deliver = client.calls.find(call =>
+    call.method === 'Runtime.evaluate' &&
+    call.params.expression.includes('deliverCapture'));
   assert(deliver.params.expression.includes('capture-test'));
   assert(deliver.params.expression.includes('deliverCapture'));
 }
