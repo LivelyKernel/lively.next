@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from "url";
 let Generator, fetchModule, babel;
 const jspmAvailabilityCache = new Map();
 const JSPM_AVAILABILITY_TTL = 60 * 1000;
-const IMPORT_MAP_CACHE_VERSION = 1;
+const IMPORT_MAP_CACHE_VERSION = 2;
 
 // Deps that cannot be resolved via jspm.io CDN:
 // - native binary packages (platform-specific compiled addons)
@@ -64,7 +64,8 @@ function createGenerator (inputMap, providers, baseUrl) {
             plugins: [['importAttributes', { deprecatedAssertSyntax: true }], 'decorators-legacy', 'sourcePhaseImports']
           }
         });
-      } catch {
+      } catch (err) {
+        if (!(err instanceof SyntaxError)) throw err;
         // shortcut: keep JSPM's graph for unsupported syntax; add parser plugins when its templates need tracing.
         return analysis;
       }
@@ -263,7 +264,11 @@ export async function generateImportMapForPackage (packageDir, { update = false 
   if (!Generator) {
     const [jspm, parser] = await Promise.all([import('@jspm/generator'), import('@babel/core')]);
     ({ Generator, fetch: fetchModule } = jspm);
-    babel = parser.default;
+    babel = parser.default || parser;
+    // The live loader can expose an empty CJS namespace instead of Babel's native exports.
+    if (typeof babel.parseSync !== 'function' && globalThis.System?._nodeRequire) {
+      babel = globalThis.System._nodeRequire('@babel/core');
+    }
   }
   const providers = { ...cached?._providers };
   const failed = {};

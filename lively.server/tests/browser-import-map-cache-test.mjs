@@ -12,7 +12,7 @@ try {
   const cacheFile = path.join(root, '.cachedImportMap.json');
   await fs.writeFile(manifest, JSON.stringify({ name: 'fixture', dependencies: {} }));
   const generated = await generateImportMapForPackage(root);
-  assert.equal(generated._cacheVersion, 1);
+  assert.equal(generated._cacheVersion, 2);
   assert.deepEqual(JSON.parse(await fs.readFile(cacheFile, 'utf8')), generated);
   assert.deepEqual(generated._dependencies, {});
   await assert.rejects(fs.access(path.join(root, 'browser-import-map.json')), { code: 'ENOENT' });
@@ -148,6 +148,20 @@ try {
   }
   console.log('Constant template import scopes, recursive closure, cooked escapes, source integrity, and ignored expressions passed offline.');
   console.log('Import assertions, decorators, source-phase imports, and unrecognized Babel syntax preserve successful JSPM graphs.');
+  // Installation generates maps through the live loader, whose CJS namespaces differ from native imports.
+  const { default: nodeSystem } = await import('systemjs');
+  const { setupSystem } = await import('lively.installer/install.js');
+  globalThis.System = nodeSystem;
+  const installerSystem = await setupSystem(new URL('../../', import.meta.url).href);
+  const installerJspm = await installerSystem.import('@jspm/generator', new URL('../plugins/lib-lookup.js', import.meta.url).href);
+  installerJspm.setFetch(fixtureFetch);
+  const installerLookup = await installerSystem.import('lively.server/plugins/lib-lookup.js');
+  await fs.writeFile(path.join(templateRoot, '.cachedImportMap.json'), JSON.stringify({
+    imports: map.imports, _dependencies: map._dependencies,
+    _modules: ['incomplete-installer-graph'], _cacheVersion: 1
+  }));
+  assert.deepEqual(await installerLookup.generateImportMapForPackage(templateRoot), map);
+  console.log('Installer SystemJS and native generation discover the same constant-template dependency graph offline.');
   const cacheFile = path.join(templateRoot, '.cachedImportMap.json');
   const successfulCache = await fs.readFile(cacheFile, 'utf8');
   for (const [name, invalidSource] of [
