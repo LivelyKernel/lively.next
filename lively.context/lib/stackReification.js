@@ -155,25 +155,29 @@ export const debugReplacements = {
         }
     }
 
-let debugOption = Path('lively.Config.enableDebuggerStatements');
-let configOption, debugSupportDepth = 0;
+const debuggerState = Global[Symbol.for('lively-debugger-state')] ||= {};
+debuggerState.supportDepth ||= 0;
 
-export function debugSupportEnabled() { return debugSupportDepth > 0; }
+export function debugSupportEnabled() { return debuggerState.supportDepth > 0; }
 
 export function enableDebugSupport(astRegistry) {
   // FIXME currently only takes care of Array
   try {
       ensureLivelyLangPath();
-      if (debugSupportDepth++) return;
-      configOption = debugOption.get(Global);
-      debugOption.set(Global, true, true);
+      if (debuggerState.supportDepth++) return;
+      debuggerState.configOption = Global.lively.Config?.enableDebuggerStatements;
+      (Global.lively.Config ||= {}).enableDebuggerStatements = true;
+      astRegistry = astRegistry || getCurrentASTRegistry();
       var replacements = debugReplacements;
       for (var method in replacements.Array) {
           if (!replacements.Array.hasOwnProperty(method)) continue;
-          var spec = replacements.Array[method],
-              dbgVersion = stackCaptureMode(spec.dbg, null, astRegistry);
-          if (!spec.original) spec.original = Array.prototype[method];
-          Array.prototype[method] = dbgVersion;
+          var spec = replacements.Array[method];
+          if (spec.astRegistry !== astRegistry) {
+              spec.rewritten = stackCaptureMode(spec.dbg, null, astRegistry);
+              spec.astRegistry = astRegistry;
+          }
+          spec.original = Array.prototype[method];
+          Array.prototype[method] = spec.rewritten;
       }
   } catch(e) {
       disableDebugSupport();
@@ -182,8 +186,8 @@ export function enableDebugSupport(astRegistry) {
 }
 
 export function disableDebugSupport() {
-  if (!debugSupportDepth || --debugSupportDepth) return;
-  debugOption.set(Global, configOption, true);
+  if (!debuggerState.supportDepth || --debuggerState.supportDepth) return;
+  Global.lively.Config.enableDebuggerStatements = debuggerState.configOption;
   var replacements = debugReplacements;
   for (var method in replacements.Array) {
       var spec = replacements.Array[method],
@@ -215,6 +219,7 @@ export function run(func, astRegistry, args, optMapping) {
 }
 
 export async function runWithCapturedBindings(func, astRegistry, args, mapping = {}) {
+    if (func.livelyDebuggingEnabled) return run(func, astRegistry, args, mapping);
     const ast = removeRuntimeClosureAnnotations(parseFunction(runtimeFunctionSource(func)));
     const missing = [...new Set(freeFunctionReferences(ast).map(ref => ref.name))]
         .filter(name => !Object.prototype.hasOwnProperty.call(mapping, name) && !(name in Global));
@@ -314,6 +319,8 @@ export class RewrittenClosure extends Closure {
           func._lexicalThis = receiver;
           func._lexicalArguments = args;
       }
+      const prototype = originalFunctions.get(this.originalAst)?.prototype;
+      if (prototype && func.prototype) func.prototype = prototype;
       return __createClosure('[runtime]', this.originalAst.registryId, this.frameState, func);
   }
 

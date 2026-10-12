@@ -4,6 +4,7 @@ import { expect } from 'mocha-es6';
 
 import { string } from 'lively.lang';
 import { classToFunctionTransform } from '../class-to-function-transform.js';
+import { initializeClass } from '../runtime.js';
 import { member } from 'lively.ast/lib/nodes.js';
 import { parse } from 'lively.ast/lib/parser.js';
 import stringify from 'lively.ast/lib/stringify.js';
@@ -31,7 +32,7 @@ function classTemplate (className, superClassName, methodString, classMethodStri
     } else {
       return this[Symbol.for("lively-instance-initialize")].apply(this, arguments);
     }
-  };${(useClassHolder || !className) ? '' : '\n  var __lively_class__ = Foo;'}
+  };${useClassHolder ? `\n  const ${className} = __lively_class__;` : !className ? '' : '\n  var __lively_class__ = Foo;'}
   if (Object.isFrozen(__lively_classholder__) || Object.isFrozen(__lively_class__.prototype)) {
     return __lively_class__;
   }
@@ -51,6 +52,13 @@ let opts = {
 };
 
 describe('class transform', () => {
+  it('retains the class body self binding when the outer declaration changes', () => {
+    const source = 'class Example { create() { return new Example(); } } var original = new Example(); Example = null; original.create() instanceof original.constructor;';
+    const transformed = stringify(classToFunctionTransform(source, opts));
+    const _rec = {};
+    expect(eval(transformed)).equals(true);
+  });
+
   it('is translated into class initializer function', () =>
     expect(stringify(classToFunctionTransform('class Foo {}', opts))).to.equal(
       classTemplateDecl('Foo', 'undefined', 'undefined', 'undefined', '_rec', 'undefined', 0, 12)));

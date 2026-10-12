@@ -109,6 +109,7 @@ function constructorTemplate (name, fields, options) {
 
 const isTransformedClassVarDeclSymbol = Symbol();
 const methodKindSymbol = Symbol();
+const propertiesGetterSymbol = Symbol();
 const tempLivelyClassVar = '__lively_class__';
 const tempLivelyClassHolderVar = '__lively_classholder__';
 
@@ -281,7 +282,10 @@ function replaceClass (node, state, options) {
     } else {
       console.warn(`[lively.classes] classToFunctionTransform encountered unknown class property with kind ${kind}, ignoring it, ${JSON.stringify(propNode)} -> ${stringify(propNode)}`);
     }
-    if (decl) (classSide ? props.clazz : props.inst).push(decl);
+    if (decl) {
+      if (classSide && kind === 'get' && (key.name || key.value) === 'properties') value[propertiesGetterSymbol] = true;
+      (classSide ? props.clazz : props.inst).push(decl);
+    }
     return props;
   }, {
     inst: [],
@@ -345,7 +349,7 @@ function replaceClass (node, state, options) {
                 '=',
                 n.member(n.id(tempLivelyClassHolderVar), classId),
                 constructorTemplate(classId.name, fields, options)))
-          )]
+          ), n.varDecl(n.id(classId.name), n.id(tempLivelyClassVar), 'const')]
         : classId
           ? [n.varDecl(classId, constructorTemplate(classId.name, fields, options)), n.varDecl(n.id(tempLivelyClassVar), classId)]
           : [n.varDecl(n.id(tempLivelyClassVar), constructorTemplate(null, fields, options))],
@@ -460,7 +464,7 @@ export function classToFunctionTransformBabel (path, state, options) {
   function handleFunctionDefinition (path, state) {
     const { nodes: n } = options;
     const { classHolder, currentMethodStack, currentMethod } = state;
-    currentMethodStack.push(path.isObjectMethod() ? null : path.node[methodKindSymbol] ? path.node : currentMethod);
+    currentMethodStack.push(path.isObjectMethod() && !currentMethod?.[propertiesGetterSymbol] ? null : path.node[methodKindSymbol] ? path.node : currentMethod);
     state.currentMethod = arr.last(currentMethodStack);
   }
 

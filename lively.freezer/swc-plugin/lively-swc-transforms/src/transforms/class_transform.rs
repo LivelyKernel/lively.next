@@ -335,11 +335,18 @@ impl ClassTransform {
                     constructor,
                 )),
             });
-            vec![Stmt::Decl(create_var_decl_with_ident(
-                VarDeclKind::Var,
-                lively_class_ident.clone(),
-                Some(class_value_expr),
-            ))]
+            vec![
+                Stmt::Decl(create_var_decl_with_ident(
+                    VarDeclKind::Var,
+                    lively_class_ident.clone(),
+                    Some(class_value_expr),
+                )),
+                Stmt::Decl(create_var_decl_with_ident(
+                    VarDeclKind::Const,
+                    class_ident.expect("named class").clone(),
+                    Some(class_ref.clone()),
+                )),
+            ]
         } else if let Some(class_ident) = class_ident {
             let local_ident = class_ident.clone();
             vec![

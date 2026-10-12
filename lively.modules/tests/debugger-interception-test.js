@@ -3,8 +3,10 @@ import { expect } from 'mocha-es6';
 import { resource } from 'lively.resources';
 import { prepareSystem } from './helpers.js';
 import module from '../src/module.js';
-import { removeSystem } from '../src/system.js';
+import { removeSystem, prepareSystem as reinitializeSystem } from '../src/system.js';
 import { installModuleDebugger } from '../../lively.context/lib/module-debugger.js';
+import { runWithCapturedBindings } from '../../lively.context/lib/stackReification.js';
+import { getCurrentASTRegistry, setCurrentASTRegistry } from '../../lively.context/lib/rewriter.js';
 
 describe('ordinary module debugger interception', function () {
   this.timeout(10000);
@@ -32,6 +34,24 @@ describe('ordinary module debugger interception', function () {
     await resource('local://debugger-interception/').remove();
   });
 
+  it('initializes interception without importing its dependencies during module translation', async () => {
+    delete S.get('@lively-env').moduleDebugger;
+    const systemImport = S.import;
+    S.import = function (name, ...args) {
+      if (name === 'lively.context/lib/module-debugger.js') throw new Error('Importing the debugger during translation can deadlock its dependencies');
+      return systemImport.call(this, name, ...args);
+    };
+    let task;
+    try { ({task} = await load('export function task(pause) { if (pause) debugger; return 3; }')); }
+    finally { S.import = systemImport; }
+    installModuleDebugger(S, { open: (continuation, callbacks) => stops.push({continuation, callbacks}) });
+    expect(task(false)).equals(3);
+    const pending = task(true);
+    expect(stops).length(1);
+    expect(await proceed()).equals(3);
+    expect(await pending).equals(3);
+  });
+
   it('opens from a plain method call and resumes its callers without repeating effects', async () => {
     const {Task} = await load('export class Task { constructor() { this.visits = 0; } outer() { this.visits++; const total = this.inner(3); this.result = total + 1; return this.result; } inner(value) { let amount = value * 2; debugger; return amount; } }');
     const task = new Task();
@@ -56,11 +76,112 @@ describe('ordinary module debugger interception', function () {
     expect(sum.length).equals(2);
   });
 
+  it('explicitly captures an already rewritten closure returned by an intercepted factory', async () => {
+    const {make} = await load('export function make(value) { function charge(quantity) { debugger; return value + quantity; } return {charge, read: () => value}; }');
+    const account = make(2);
+    const stopped = await runWithCapturedBindings(account.charge, null, [3]);
+    expect(stopped.currentFrame.lookup('value')).equals(2);
+    stopped.currentFrame.getScope().findScope('value').scope.set('value', 7);
+    expect(account.read()).equals(7);
+    expect(stopped.resume()).equals(10);
+  });
+
+  it('keeps Mocha suite registration native when fixtures contain debugger statements', async () => {
+    const file = resource('local://debugger-harness/test.js');
+    const mod = module(System, file.url), automatic = System.debuggerInterception;
+    await file.write("import { expect } from 'mocha-es6'; describe('fixture', function () { const { value } = {value: 3}; it('intentional stop', function () { debugger; expect(value).equals(3); }); });");
+    System.debuggerInterception = true;
+    try {
+      await mod.load();
+      expect(mod.debuggingEnabled).equals(false);
+      expect(mod.recorder.mocha.suite.suites[0].tests).length(1);
+    } finally {
+      System.debuggerInterception = automatic;
+      await mod.unload();
+      await file.remove();
+    }
+  });
+
+  it('opens on exceptions only after the module toggle is enabled, including after await', async () => {
+    const {task, later, failure} = await load('export const failure = new Error("expected failure"); export function task(pause) { if (pause) debugger; throw failure; } export async function later() { await Promise.resolve(); throw failure; }');
+    expect(() => task(false)).throws(failure);
+    let rejection;
+    try { await later(); } catch (error) { rejection = error; }
+    expect(rejection).equals(failure);
+    expect(stops).length(0);
+    await module(S, id).setDebuggingEnabled(true);
+    const caller = 'local://debugger-interception/caller.js';
+    await resource(caller).write('import {task} from "./task.js"; export function entry(pause) { if (pause) debugger; return task(false); }');
+    const {entry} = await S.import(caller);
+    const pending = entry(false);
+    expect(stops[0].continuation.frames()).length(2);
+    expect(stops[0].continuation.reason).equals('exception');
+    expect(stops[0].continuation.exception).equals(failure);
+    stops.shift().callbacks.onCancel();
+    expect(await pending).equals(undefined);
+    const awaiting = later();
+    for (let i = 0; i < 30 && !stops.length; i++) await Promise.resolve();
+    expect(stops[0].continuation.exception).equals(failure);
+    stops.shift().callbacks.onCancel();
+    expect(await awaiting).equals(undefined);
+  });
+
+  it('preserves the installed debugger when the loader adopts source modules', async () => {
+    const {task} = await load('export function task(pause) { if (pause) debugger; return 3; }');
+    const runtime = S.get('@lively-env').moduleDebugger;
+    expect(task(false)).equals(3);
+    // A fresh loader has no public fetch hook; translation uses lively.fetch.
+    delete S.fetch;
+    reinitializeSystem(S);
+    expect(installModuleDebugger(S)).equals(runtime);
+    const pending = task(true);
+    expect(stops).length(1);
+    expect(await proceed()).equals(3);
+    expect(await pending).equals(3);
+  });
+
+  it('recompiles cached functions when the AST registry is replaced', async () => {
+    const {task} = await load('export function task(pause) { if (pause) debugger; return 3; }');
+    expect(task(false)).equals(3);
+    const registry = getCurrentASTRegistry();
+    setCurrentASTRegistry({});
+    try {
+      const pending = task(true);
+      expect(stops).length(1);
+      expect(await proceed()).equals(3);
+      expect(await pending).equals(3);
+    } finally { setCurrentASTRegistry(registry); }
+  });
+
+  it('does not recursively intercept helpers called while preparing a function', async () => {
+    const source = 'function task(pause) { if (pause) debugger; return 3; }';
+    const {task} = await load('export ' + source);
+    Object.defineProperty(task, Symbol.for('lively-debug-function-source'), {
+      configurable: true,
+      get() {
+        expect(task(false)).equals(3);
+        return source;
+      }
+    });
+    const pending = task(true);
+    expect(stops).length(1);
+    expect(await proceed()).equals(3);
+    expect(await pending).equals(3);
+  });
+
   it('returns undefined when a resumed function has no return statement', async () => {
     const {task} = await load('export function task() { debugger; let value = 2; value++; }');
     const pending = task();
     expect(await proceed()).equals(undefined);
     expect(await pending).equals(undefined);
+  });
+
+  it('retains functions under numeric property names', async () => {
+    const { methods } = await load('export const methods = {0: function () { return 3; }, 1: function () { return 4; }, 2() { return 5; }};');
+    expect(methods[0]()).equals(3);
+    expect(methods[0].name).equals('0');
+    expect(methods[1]()).equals(4);
+    expect(methods[2]()).equals(5);
   });
 
   it('automatically intercepts a stop added through a module edit', async () => {
@@ -85,6 +206,20 @@ describe('ordinary module debugger interception', function () {
     expect(await pending).equals(instance);
     expect(instance.value).equals(3);
     expect(instance.visits).equals(1);
+  });
+
+  it('preserves prototypes in constructors that can also be called as factories', async () => {
+    const {Task} = await load('export function Task(value, pause) { if (!(this instanceof Task)) return new Task(value, pause); this.initialize(value); if (pause) debugger; } Task.prototype.initialize = function(value) { this.value = value; };');
+    expect(Task(3, false)).instanceOf(Task);
+    expect(Task(3, false).value).equals(3);
+    expect(new Task(4, false).value).equals(4);
+    const pending = Task(5, true);
+    expect(stops).length(1);
+    const instance = stops[0].continuation.currentFrame.getThis();
+    await proceed();
+    expect(await pending).equals(instance);
+    expect(instance).instanceOf(Task);
+    expect(instance.value).equals(5);
   });
 
   it('captures function constructors, including construction inside an intercepted caller', async () => {
@@ -151,6 +286,8 @@ describe('ordinary module debugger interception', function () {
     const instance = new Task();
     const mod = module(S, id);
     expect(mod.debuggingEnabled).equals(false);
+    // SWC class metadata retains source locations without a declaration kind.
+    delete Task[Symbol.for('lively-object-meta')].kind;
     await mod.setDebuggingEnabled(true);
     expect(effects.initializations).equals(1);
     expect(S.get(id).Task).equals(Task);

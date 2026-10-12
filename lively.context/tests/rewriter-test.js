@@ -40,12 +40,12 @@ function tryCatch(level, varMapping, inner, optOuterLevel) {
     + "%s"
     + "} catch (e) {\n"
     + "    var ex = e.isUnwindException ? e : new UnwindException(e);\n"
-    + "    ex.storeFrameInfo(this, arguments, __%s, lastNode, 'RewriteTests', %s);\n"
+    + "    ex.storeFrameInfo(this, arguments, __%s, lastNode, 'RewriteTests', %s%s);\n"
     + "    throw ex;\n"
     + "}\n",
     level, level, generateVarMappingString(), level, level,
     optOuterLevel < 0 ? (typeof window !== "undefined" ? 'window' : 'global') : '__' + optOuterLevel,
-    inner, level, "__/[0-9]+/__");
+    inner, level, "__/[0-9]+/__", level > 0 ? ', new.target' : '');
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   function generateVarMappingString() {
     if (!varMapping) return '{}';

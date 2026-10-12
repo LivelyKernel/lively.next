@@ -226,7 +226,13 @@ export function installSystemInstantiateHook () {
     if (!instantiatePromise) return;
     instantiatePromise.then(async link => {
       let linkRecord = link && link.linkRecord;
-      if (await isMochaTestLoad(load, linkRecord)) installMochaEs6ModuleExecute(load, linkRecord);
+      if (await isMochaTestLoad(load, linkRecord)) {
+        // Test callbacks contain intentional stops handled by their own fixtures.
+        // Keep the harness native; subject modules retain their debugger setting.
+        const testModule = modules.module(load.name);
+        if (testModule._debuggingEnabled === undefined) await testModule.setDebuggingEnabled(false);
+        installMochaEs6ModuleExecute(load, linkRecord);
+      }
     });
   });
   console.log('[mocha-es6] System.instantiate hook installed to allow loading mocha tests');
