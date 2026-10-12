@@ -82,19 +82,20 @@
       #lively-desktop-titlebar button:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
       #lively-desktop-titlebar:not(.mac) button[data-action=close]:hover { background: #c42b1c; color: white; }
       #lively-desktop-titlebar[data-inactive] { color: #484848; }
-      #lively-desktop-titlebar.mac .window-controls { order: -1; margin: 0 auto 0 0; }
+      #lively-desktop-titlebar.mac { padding: 0 7px; }
+      #lively-desktop-titlebar.mac .window-controls { order: -1; margin: 0 auto 0 0; gap: 3px; }
       #lively-desktop-titlebar.mac button {
         position: relative; width: 20px; height: 28px; border-radius: 0;
         background: transparent; color: #292929; font: 12px/12px system-ui, sans-serif;
       }
       #lively-desktop-titlebar.mac button::before {
-        content: ''; position: absolute; width: 12px; height: 12px; top: 8px; left: 4px;
-        box-sizing: border-box; border: 1px solid rgba(0,0,0,.15); border-radius: 50%;
+        content: ''; position: absolute; width: 14px; height: 14px; top: 7px; left: 3px;
+        border-radius: 50%; box-shadow: inset 0 0 0 .5px currentColor;
       }
-      #lively-desktop-titlebar.mac button[data-action=close]::before { background: #ff5f57; }
-      #lively-desktop-titlebar.mac button[data-action=minimize]::before { background: #febc2e; }
-      #lively-desktop-titlebar.mac button[data-action=maximize]::before { background: #28c840; }
-      #lively-desktop-titlebar.mac[data-inactive] button::before { background: #b8b8b8; }
+      #lively-desktop-titlebar.mac button[data-action=close]::before { background: #ff5c60; color: #fc1827; }
+      #lively-desktop-titlebar.mac button[data-action=minimize]::before { background: #fac800; color: #f9b700; }
+      #lively-desktop-titlebar.mac button[data-action=maximize]::before { background: #35c759; color: #00b615; }
+      #lively-desktop-titlebar.mac[data-inactive] button::before { background: #b8b8b8; color: rgba(0,0,0,.15); }
       #lively-desktop-titlebar.mac button span { position: relative; opacity: 0; }
       #lively-desktop-titlebar.mac .window-controls:hover button span { opacity: .55; }
       #lively-desktop-titlebar.mac button:focus-visible span { opacity: 1; }

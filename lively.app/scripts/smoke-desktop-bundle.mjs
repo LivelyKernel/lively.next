@@ -744,11 +744,12 @@ async function assertDesktopTitlebar (client, dataDir, world = false) {
         const mac = navigator.platform.startsWith('Mac');
         const windowControls = frame && [...frame.querySelectorAll('.window-controls button')];
         const colors = frame?.hasAttribute('data-inactive')
-          ? Array(3).fill('rgb(184, 184, 184)') : ['rgb(255, 95, 87)', 'rgb(254, 188, 46)', 'rgb(40, 200, 64)'];
+          ? Array(3).fill('rgb(184, 184, 184)') : ['rgb(255, 92, 96)', 'rgb(250, 200, 0)', 'rgb(53, 199, 89)'];
         const trafficLights = !mac || (windowControls.map(button => button.dataset.action).join(',') === 'close,minimize,maximize' &&
           windowControls.every((button, index) => {
             const circle = getComputedStyle(button, '::before');
-            return circle.width === '12px' && circle.height === '12px' && circle.borderRadius === '50%' && circle.backgroundColor === colors[index];
+            return circle.width === '14px' && circle.height === '14px' && circle.borderRadius === '50%' && circle.backgroundColor === colors[index] &&
+              (index === 0 || button.getBoundingClientRect().x - windowControls[index - 1].getBoundingClientRect().x === 23);
           }));
         return Boolean(frame && typeof livelyDesktop.windowAction === 'function' &&
           title?.textContent === 'lively.next - ' + globalThis.$world?.name && trafficLights &&

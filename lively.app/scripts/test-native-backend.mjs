@@ -9,6 +9,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import { runInNewContext } from 'node:vm';
 import { createServer } from 'node:http';
+import { EventEmitter } from 'node:events';
 
 const executable = process.argv[2] && path.resolve(process.argv[2]);
 if (!executable) throw new Error('Pass an NW.js executable with no adjacent app manifest');
@@ -43,6 +44,44 @@ fs.mkdirSync(path.join(app, 'desktop'));
 fs.mkdirSync(path.join(app, 'lively.installer'));
 fs.writeFileSync(path.join(app, 'lively.installer/packages-config.json'), '{}');
 fs.mkdirSync(runtimeRoot);
+// Native focus events can precede Chromium updating document.hasFocus().
+const menuWindow = new EventEmitter();
+let documentFocused = false;
+let menuState;
+menuWindow.window = {
+  location: new URL(pathToFileURL(path.join(app, 'desktop/boot.html'))),
+  document: { hasFocus: () => documentFocused },
+  livelyDesktop: { setWindowState: (maximized, focused) => { menuState = { maximized, focused }; } }
+};
+runInNewContext(fs.readFileSync(path.join(root, 'lively.app/desktop/background-menu.js'), 'utf8'), {
+  __dirname: app, process, URL,
+  window: { location: menuWindow.window.location },
+  require: id => id === 'module' ? {
+    createRequire: () => name => name === './start-server.cjs'
+      ? { setBackgroundWindow () {} } : { createUpdateService: () => ({}) }
+  } : createRequire(import.meta.url)(id),
+  nw: {
+    App: { startPath: app },
+    Window: { getAll: callback => callback([menuWindow]) },
+    Menu: class { append () {} createMacBuiltin () {} },
+    MenuItem: class { constructor (options) { Object.assign(this, options); } }
+  }
+});
+assert.equal(menuState.focused, false);
+menuWindow.emit('focus'); // document still reports the previous, inactive state
+assert.equal(menuState.focused, true, 'Native focus must activate window controls');
+menuWindow.emit('loaded');
+assert.equal(menuState.focused, true, 'Navigation must retain native focus');
+menuWindow.emit('maximize');
+assert.deepEqual(menuState, { maximized: true, focused: true });
+documentFocused = true;
+menuWindow.emit('blur'); // document still reports the previous, active state
+assert.equal(menuState.focused, false, 'Native blur must deactivate window controls');
+menuWindow.emit('restore');
+assert.deepEqual(menuState, { maximized: false, focused: false });
+menuWindow.emit('loaded');
+assert.equal(menuState.focused, false, 'Navigation must retain native blur');
+console.log('Desktop frame: native focus/blur survive stale document state, navigation and window resizing');
 // Check the page and endpoint boundary without giving remote pages Node APIs.
 const trustedRoot = path.join(fixture, 'trusted pages');
 for (const entry of ['landing-page', 'loading-screen']) {
