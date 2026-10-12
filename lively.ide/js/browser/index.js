@@ -386,6 +386,7 @@ export class PackageTreeData extends TreeData {
     pkgs = pkgs.filter(p => {
       const modulesOfPkg = p.pkg.modules;
       return (p.pkg.kind !== 'project' ||
+      p.pkg.url === this.root.browser.selectedPackage?.url ||
       modulesOfPkg.length > 1 ||
       // This excludes packages for which only the package.json is loaded, which happens only for projects which are newly cloned as dependencies at the beginning of the session.
       modulesOfPkg.length === 1 && !modulesOfPkg[0].name.endsWith('package.json'));
@@ -1159,6 +1160,7 @@ export class BrowserModel extends ViewModel {
     pName = pName || 'lively.morphic';
     if (this.selectedPackage?.address === pName) return;
     const p = await this.systemInterface.getPackage(pName);
+    await this.onPackageSelected(p);
     const columnView = this.ui.columnView;
     const td = columnView.treeData;
     await columnView.setExpandedPath(n => {
@@ -1173,7 +1175,6 @@ export class BrowserModel extends ViewModel {
       });
     }
 
-    await this.onPackageSelected(p);
     await this.whenPackageUpdated();
 
     return p;
