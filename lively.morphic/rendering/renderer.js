@@ -1815,7 +1815,7 @@ export default class Renderer {
     } else {
       if (morph.renderingState.needsLinesToBeCleared) {
         // As we use `keyed` to patch these nodes, handling references to the currently mounted ones would probably cause more trouble than benefit.
-        textNode.querySelectorAll('.line').forEach(l => l.remove());
+        textNode.querySelectorAll(':scope > .line, :scope > blockquote').forEach(l => l.remove());
         morph.renderingState.renderedLines = [];
         delete morph.renderingState.needsLinesToBeCleared;
       }
