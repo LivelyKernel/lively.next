@@ -21,7 +21,7 @@ const os = require('os');
 const { createHash } = require('crypto');
 const { spawn, execSync } = require('child_process');
 const { runVelopackStartup } = require('./updates.cjs');
-const { desktopCacheDir, manifestName, preparePackagedSources } = require('./package-payload.cjs');
+const { desktopCacheDir, manifestName, preparePackagedSources, seedPackagedPartsbin } = require('./package-payload.cjs');
 
 // bg-script supplies its persistent window after requiring this module.
 const backgroundWindow = new Promise(resolve => { module.exports.setBackgroundWindow = resolve; });
@@ -298,6 +298,7 @@ function prepareDesktopRuntimeRoot (sourceRoot, dataDir, logFn) {
     if (fs.existsSync(source)) copyFileWithMode(source, path.join(runtimeRoot, name));
   }
 
+  seedPackagedPartsbin(sourceRoot, runtimeRoot);
   logFn('desktop runtime root ready: ' + runtimeRoot);
   return runtimeRoot;
 }

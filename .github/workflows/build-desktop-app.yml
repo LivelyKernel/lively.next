@@ -477,8 +477,11 @@ jobs:
           }
 
           $env:NODE_OPTIONS = "--experimental-import-meta-resolve"
+          $env:BUN_PATH = $packagedBun
           Push-Location $app
           try {
+            & $packagedNode lively.project/package-install.mjs local_projects/LivelyKernel--partsbin
+            if ($LASTEXITCODE -ne 0) { throw "Windows PartsBin dependency install failed" }
             & $packagedNode lively.modules/tests/native-resolver-test.mjs
             if ($LASTEXITCODE -ne 0) { throw "Windows native resolver fixture failed" }
             & $packagedNode lively.modules/tests/native-system-live-test.mjs

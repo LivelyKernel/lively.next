@@ -69,4 +69,20 @@ function preparePackagedSources (sourceRoot, log = () => {}) {
   }
 }
 
-module.exports = { desktopCacheDir, manifestName, preparePackagedSources, stagePackagedSources };
+function seedPackagedPartsbin (sourceRoot, runtimeRoot) {
+  const projects = path.join(runtimeRoot, 'local_projects');
+  const target = path.join(projects, 'LivelyKernel--partsbin');
+  // Existing checkouts, including local edits, belong to the user.
+  if (fs.existsSync(target)) return;
+  fs.mkdirSync(projects, { recursive: true });
+  const staging = fs.mkdtempSync(path.join(projects, '.partsbin-'));
+  try {
+    fs.cpSync(path.join(sourceRoot, 'local_projects', 'LivelyKernel--partsbin'), staging,
+      { recursive: true, verbatimSymlinks: true });
+    fs.renameSync(staging, target);
+  } finally {
+    fs.rmSync(staging, { recursive: true, force: true });
+  }
+}
+
+module.exports = { desktopCacheDir, manifestName, preparePackagedSources, stagePackagedSources, seedPackagedPartsbin };

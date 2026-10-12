@@ -301,6 +301,62 @@ async function assertComponentModuleURLs (client) {
   console.log('Desktop app smoke passed: component browsing and search use project source URLs without traversing Bun links');
 }
 
+/** Use the toolbar entry point, which loads PartsBin before opening the browser. */
+async function assertPartsbinComponentBrowser (client, reopened) {
+  const button = await client.send('Runtime.evaluate', {
+    returnByValue: true,
+    expression: `(() => {
+      const button = $world.get('lively top bar').get('open component browser');
+      const bounds = document.getElementById(button.id).getBoundingClientRect();
+      return { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
+    })()`
+  });
+  if (button.exceptionDetails) throw new Error('Component browser toolbar button missing: ' + JSON.stringify(button));
+  const { x, y } = button.result.value;
+  await client.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 });
+  await client.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 });
+  await waitFor('component browser opened from toolbar', async () => {
+    const result = await client.send('Runtime.evaluate', {
+      expression: `Boolean($world._componentBrowser?.world() && $world._componentBrowser.viewModel._promise &&
+        $world._componentBrowser.viewModel.ui.componentFilesView.viewModel.lists[0]?.items.some(item => item.value?.pkg?.name === 'LivelyKernel--partsbin'))`, returnByValue: true
+    });
+    return result.result?.value === true;
+  }, 60000);
+  const result = await client.send('Runtime.evaluate', {
+    awaitPromise: true, returnByValue: true,
+    expression: `(async () => {
+      const { resource } = await System.import('lively.resources');
+      const check = (condition, message) => { if (!condition) throw new Error(message); };
+      const browser = $world._componentBrowser;
+      try {
+        const columns = browser.viewModel.ui.componentFilesView;
+        const tree = columns.treeData;
+        const partsbin = tree.root.subNodes.find(node => node.pkg?.name === 'LivelyKernel--partsbin');
+        check(partsbin, 'Component browser did not list PartsBin');
+        await columns.selectNode(partsbin, false);
+        const ui = partsbin.subNodes.find(node => node.name === 'ui');
+        check(ui, 'PartsBin UI directory missing');
+        await columns.selectNode(ui, false);
+        const file = ui.subNodes.find(node => node.name === 'temperature-converter.cp.js');
+        check(file, 'PartsBin component source missing');
+        await columns.selectNode(file, false);
+        check(file.subNodes.some(node => node.componentObject.componentName === 'ThermometerConverter'),
+          'PartsBin component export did not load');
+        const source = resource(new URL('local_projects/LivelyKernel--partsbin/ui/temperature-converter.cp.js', System.baseURL).href);
+        const text = await source.read();
+        const marker = '// desktop retained PartsBin edit';
+        if (${reopened}) check(text.includes(marker), 'Relaunch overwrote PartsBin source edits');
+        else await source.write(text + '\\n' + marker + '\\n');
+        return true;
+      } finally {
+        browser.getWindow().close();
+      }
+    })()`
+  });
+  if (result.exceptionDetails || result.result?.value !== true) throw new Error('Desktop PartsBin browser failed: ' + JSON.stringify(result));
+  console.log('Desktop app smoke passed: toolbar opens PartsBin components' + (reopened ? ' with retained source edits after relaunch' : ''));
+}
+
 async function assertBrowserEnvironmentSwitching (client, port) {
   const result = await client.send('Runtime.evaluate', {
     awaitPromise: true,
@@ -1073,6 +1129,7 @@ async function main () {
   const args = parseArgs();
   const native = args.mode !== 'http';
   const startupOnly = args.startupOnly === 'true';
+  const componentsOnly = args.componentsOnly === 'true';
   const checkSavedWorld = args.checkSavedWorld === 'true';
   if (args.mode && !['native', 'http'].includes(args.mode)) throw new Error('Unknown desktop mode: ' + args.mode);
   const devRoot = args.devRoot ? path.resolve(args.devRoot) : null;
@@ -1096,7 +1153,7 @@ async function main () {
   if (!devRoot && !args.dataDir) seedProject(dataDir);
   let programmingLock;
   let cachedBuild = 'previous build';
-  const cacheProbe = devRoot || native || startupOnly || checkSavedWorld ? null : createServer((req, res) => {
+  const cacheProbe = devRoot || native || startupOnly || componentsOnly || checkSavedWorld ? null : createServer((req, res) => {
     res.writeHead(200, { 'access-control-allow-origin': '*', 'cache-control': 'max-age=31536000' });
     res.end(cachedBuild);
   });
@@ -1268,10 +1325,22 @@ async function main () {
             const names = result.result && result.result.value;
             return names && names.length ? names : null;
           }, timeoutMs);
-          if (JSON.stringify(projects) !== JSON.stringify(reopened ? ['smoke--dormant', 'smoke--programming', 'smoke--project'] : ['smoke--dormant', 'smoke--project'])) {
+          if (JSON.stringify(projects) !== JSON.stringify(reopened && !componentsOnly ? ['smoke--dormant', 'smoke--programming', 'smoke--project'] : ['smoke--dormant', 'smoke--project'])) {
             throw new Error('Dashboard lists dependencies as projects: ' + JSON.stringify(projects));
           }
           console.log('Desktop app smoke passed: dashboard lists local projects without installed dependencies');
+        }
+        if (componentsOnly) {
+          await openDashboardProject(client, 'smoke--project');
+          await waitFor('project before component browser', async () => {
+            const result = await client.send('Runtime.evaluate', {
+              expression: `Boolean($world?._uiInitialized && $world.openedProject?.fullName === 'smoke--project' && globalThis.__desktopDashboardDocument === document)`, returnByValue: true
+            });
+            return result.result?.value === true;
+          }, timeoutMs);
+          await assertPartsbinComponentBrowser(client, reopened);
+          client.assertNoRendererErrors();
+          continue;
         }
         if (reopened) {
           console.log('Desktop app smoke passed: relaunch preserves the project list after dependencies were installed');
@@ -1290,6 +1359,7 @@ async function main () {
           console.log('Desktop app smoke passed: upgraded legacy project opens from the cold dashboard');
           await assertDesktopTitlebar(client, dataDir, true);
           await assertBrowserSwc(client);
+          await assertPartsbinComponentBrowser(client, true);
           await client.send('Page.navigate', { url: routeURL('/dashboard/') });
           await openDashboardProject(client, 'smoke--programming');
           await waitFor('saved programming project after relaunch', async () => {
@@ -1320,6 +1390,7 @@ async function main () {
           await assertDesktopTitlebar(client, dataDir, true);
           await assertBrowserSwc(client);
           await assertComponentModuleURLs(client);
+          await assertPartsbinComponentBrowser(client, false);
           await assertFrozenModuleResurrection(client);
           await assertBrowserSwc(client);
         }
