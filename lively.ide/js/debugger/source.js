@@ -44,7 +44,7 @@ function sourceContextForFrame (frame) {
       ast = member && member.value;
     }
     if (ast && ast.body && ast.body.type === 'BlockStatement') {
-      context = {source, ast, url: descriptor.module.id, name: memberName ? owner.name + '.' + memberName : original.displayName || original.name};
+      context = {source, ast, url: descriptor.module.id, moduleName: descriptor.module.shortName(), name: memberName ? owner.name + '.' + memberName : original.displayName || original.name};
     }
   }
   // Nested interpreter functions retain their AST identity in the caller.
@@ -168,7 +168,9 @@ export function locationStringForFrame (frame) {
   if (!frame) return '';
   const source = frame.source || {};
   const location = locationForFrame(frame);
-  const url = sourceUrlForFrame(frame) || source.scriptId || '(no source url)';
+  const context = sourceContextForFrame(frame);
+  const url = (context && context.moduleName || sourceUrlForFrame(frame) || source.scriptId || '(no source url)')
+    .replace(/^https?:\/\/[^/]+\/?/i, '');
   if (!Number.isFinite(location.lineNumber)) return url;
   return url + ':' + (location.lineNumber + 1) + ':' + ((location.columnNumber || 0) + 1);
 }
