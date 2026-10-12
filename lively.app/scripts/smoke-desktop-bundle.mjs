@@ -722,6 +722,72 @@ async function assertDashboardBackground (client) {
   console.log('Desktop app smoke passed: startup triangles and gradient match the rendered dashboard in landscape and portrait');
 }
 
+/** Observe real compositor frames while the renderer's JavaScript cannot run. */
+async function assertLoadingAnimation (client) {
+  const trace = [];
+  let complete = false;
+  const capture = ({ data }) => {
+    const event = JSON.parse(typeof data === 'string' ? data : Buffer.from(data).toString('utf8'));
+    if (event.method === 'Tracing.dataCollected') trace.push(...event.params.value);
+    if (event.method === 'Tracing.tracingComplete') complete = true;
+  };
+  client.ws.addEventListener('message', capture);
+  await client.send('Tracing.start', {
+    categories: 'devtools.timeline,blink.user_timing,disabled-by-default-devtools.screenshot',
+    transferMode: 'ReportEvents'
+  });
+  try {
+    const result = await client.send('Runtime.evaluate', {
+      awaitPromise: true,
+      returnByValue: true,
+      expression: `(async () => {
+        const background = $world.get('background');
+        background.step = 2;
+        const nodes = background.submorphs.map(m => document.getElementById(m.id));
+        if (!nodes.every(node => node.getAnimations().length === 1)) {
+          throw new Error('Loading triangles still depend on JavaScript animation frames');
+        }
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        performance.mark('lively-triangle-block-start');
+        const until = performance.now() + 800;
+        while (performance.now() < until) {}
+        performance.mark('lively-triangle-block-end');
+        await Promise.all(nodes.flatMap(node => node.getAnimations().map(animation => animation.finished)));
+        // A new transition must interrupt the old one without leaving stale transforms.
+        background.step = 3;
+        background.step = 1;
+        await Promise.all(nodes.flatMap(node => node.getAnimations().map(animation => animation.finished)));
+        if (!nodes.every((node, index) => {
+          const matrix = new DOMMatrix(getComputedStyle(node).transform);
+          const triangle = background.submorphs[index];
+          return node.getAnimations().length === 0 && matrix.a === 1 && matrix.d === 1 &&
+            matrix.b === 0 && matrix.c === 0 &&
+            Math.hypot(matrix.e - triangle.position.x, matrix.f - triangle.position.y) < .02;
+        })) {
+          throw new Error('Completed triangle animations left stale transforms');
+        }
+        return true;
+      })()`
+    });
+    if (result.exceptionDetails) throw new Error('Loading animation failed: ' + JSON.stringify(result.exceptionDetails));
+  } finally {
+    await client.send('Tracing.end');
+    await waitFor('loading animation trace', () => complete, 10000, 50);
+    client.ws.removeEventListener('message', capture);
+  }
+  const start = trace.find(event => event.name === 'lively-triangle-block-start')?.ts;
+  const end = trace.find(event => event.name === 'lively-triangle-block-end')?.ts;
+  const moving = trace.filter(event => {
+    const time = event.args?.expected_display_time ?? event.ts;
+    return event.name === 'Screenshot' && time > start + 100000 && time < end - 100000;
+  });
+  const distinctFrames = new Set(moving.map(frame => frame.args.snapshot)).size;
+  if (distinctFrames < 5) {
+    throw new Error('Triangles stopped moving while JavaScript was busy: ' + moving.length + ' captured frames');
+  }
+  console.log('Desktop app smoke passed: triangles keep moving during an 800ms main-thread block (' + distinctFrames + ' distinct frames)');
+}
+
 /** Exercise the frame used by both the dashboard and same-document worlds. */
 async function assertDesktopTitlebar (client, dataDir, world = false) {
   await waitFor('transparent desktop title bar', async () => {
@@ -1474,6 +1540,7 @@ async function main () {
         }
         console.log('Desktop app smoke passed: dashboard initialized with canonical workspace packages');
         await assertDesktopTitlebar(client, dataDir);
+        if (!startupOnly && !checkSavedWorld) await assertLoadingAnimation(client);
         const readyEvent = readTextFile(logFile).match(/^\[([^\]]+)\] (?:Native backend ready|Server ready, loading lively)/m);
         if (!readyEvent) throw new Error('Backend readiness event missing from boot log');
         console.log(JSON.stringify({ mode: native ? 'native' : 'http', reopened, backendReadyMs: Date.parse(readyEvent[1]) - launchStarted }));
