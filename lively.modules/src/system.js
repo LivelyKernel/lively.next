@@ -15,6 +15,7 @@ function isBrowserRuntime (System) {
   try {
     const env = System.get('@system-env');
     if (env?.browser || env?.nw) return true;
+    if (env?.node) return false;
   } catch (_) {}
   return typeof window !== 'undefined' && typeof document !== 'undefined';
 }
@@ -40,8 +41,6 @@ function usesNativeResolution (System, name, parent) {
   return isNodeRuntime(System) && parent?.startsWith('file:') && !!System.nativeResolve &&
     name !== '@empty' && !name.startsWith('@node/');
 }
-
-const isNode = isNodeRuntime(System);
 
 const GLOBAL = typeof window !== 'undefined'
   ? window
@@ -259,6 +258,9 @@ function prepareSystem (System, config) {
   System.trace = true;
   delete System.get;
   config = config || {};
+  if (config.environment) {
+    System.set('@system-env', System.newModule({ ...System.get('@system-env'), ...config.environment }));
+  }
 
   Object.getOwnPropertySymbols(System).map(sym => {
     if ('lastRegister' in System[sym]) System['REGISTER_INTERNAL'] = System[sym];
@@ -375,7 +377,7 @@ function prepareSystem (System, config) {
     config.map = obj.merge(map, config.map);
   }
 
-  if (isNode) {
+  if (isNodeRuntime(System)) {
     const nodejsCoreModules = ['assert', 'buffer', 'child_process',
       'cluster', 'console', 'crypto', 'dgram', 'dns', 'domain', 'events', 'fs',
       'http', 'https', 'module', 'net', 'os', 'path', 'punycode', 'querystring',
