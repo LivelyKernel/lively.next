@@ -496,6 +496,26 @@ describe('package configuration test', () => {
     return resource(testDir).remove();
   });
 
+  it('restores package configuration without copying unrelated loader metadata', () => {
+    let unrelatedReads = 0;
+    Object.defineProperty(S.CONFIG.meta, testDir + 'unused.js', {
+      enumerable: true,
+      configurable: true,
+      get () { unrelatedReads++; return { format: 'esm' }; }
+    });
+    const url = testDir + 'restored';
+    const pkg = Package.fromJSON(S, {
+      url, _name: 'restored', version: '1.0.0', main: 'entry.js',
+      systemjs: { map: { dependency: '../dep1/entry-a.js' } },
+      lively: { meta: { 'entry.js': { format: 'global', environments: ['browser'] } } }
+    });
+    expect(unrelatedReads).equals(0);
+    expect(pkg.main).equals('entry.js');
+    expect(S.CONFIG.packages[url].meta['entry.js']).deep.equals({ format: 'global', environments: ['browser'] });
+    pkg.map.dependency = 'changed.js';
+    expect(S.CONFIG.packages[url].map.dependency).equals('../dep1/entry-a.js');
+  });
+
   it('installs hooks', async () => {
     await ensurePackage(S, project1aDir);
     await applyConfig(S, {
