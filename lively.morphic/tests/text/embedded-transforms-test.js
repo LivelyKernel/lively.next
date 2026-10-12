@@ -7,6 +7,52 @@ describe('embedded morph transforms', () => {
   let text;
   afterEach(() => text && text.remove());
 
+  for (const canvas of [true, false]) {
+    it(`updates only visible inline anchors after reflow and scrolling (canvas=${canvas})`, async () => {
+      const content = [], embeds = [];
+      for (let i = 0; i < 120; i++) {
+        const embedded = new Morph({ extent: pt(30, 15), rotation: 0.3 });
+        embeds.push(embedded);
+        content.push('before ', null, embedded, null, 'after\n', null);
+      }
+      text = new Text({
+        readOnly: false, fixedWidth: true, fixedHeight: true, clipMode: 'auto',
+        extent: pt(400, 180), fontSize: 14, textAndAttributes: content
+      }).openInWorld();
+      if (!canvas) Object.defineProperty(text, 'canBeMeasuredViaCanvas', { get: () => false });
+      await text.whenFontLoaded();
+      text.env.forceUpdate();
+      expect(await text.whenRendered()).equals(true);
+      let updated = 0, offscreen = 0;
+      for (const { anchor } of text.embeddedMorphMap.values()) {
+        const update = anchor.updateEmbeddedMorph;
+        anchor.updateEmbeddedMorph = function () {
+          updated++;
+          if (!text.isLineVisible(this.position.row)) offscreen++;
+          return update.call(this);
+        };
+      }
+      for (const change of [
+        () => { embeds[0].rotation = Math.PI / 2; },
+        () => { text.scroll = pt(0, Math.floor(text.document.height / 2)); }
+      ]) {
+        updated = offscreen = 0;
+        change();
+        text.env.forceUpdate();
+        expect(await text.whenRendered()).equals(true);
+        expect(updated).greaterThan(0);
+        expect(offscreen).equals(0, 'offscreen anchors must not re-enter rendering');
+        expect(updated).lessThan(embeds.length, 'anchor work is limited to visible lines');
+        text.document.consistencyCheck();
+        const row = text.renderingState.firstVisibleRow;
+        const embedded = embeds[row];
+        const actual = text.env.renderer.getNodeForMorph(embedded).getBoundingClientRect();
+        const model = embedded.globalBounds();
+        for (const key of ['x', 'y', 'width', 'height']) expect(actual[key]).closeTo(model[key], 0.2, key);
+      }
+    });
+  }
+
   for (const readOnly of [true, false]) {
     for (const renderOnGPU of [true, false]) {
       for (const canvas of [true, false]) {
