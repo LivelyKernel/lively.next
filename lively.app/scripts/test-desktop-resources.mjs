@@ -73,14 +73,28 @@ try {
   let bootstrapArgs;
   const pickSnapshot = method('lively.ide/studio/world-browser.cp.js', 'chooseAndOpenSnapshot', {
     ...globals, $world: world, lively: {},
-    window: { showOpenFilePicker: async () => [{ getFile: async () => snapshot }] },
-    System: { baseURL, import: async () => ({ bootstrap: async args => { bootstrapArgs = args; } }) }
+    window: { SYSTEM_BASE_URL: baseURL, showOpenFilePicker: async () => [{ getFile: async () => snapshot }] },
+    System: { baseURL: baseURL + 'lively.freezer/landing-page/', import: async () => ({ bootstrap: async args => { bootstrapArgs = args; } }) }
   });
   const browser = { fadeOut: async () => {}, progressIndicator: {} };
   await pickSnapshot.call(browser);
   await pickSnapshot.call(browser);
   assert.equal(fs.readFileSync(path.join(fixture, bootstrapArgs.filePath), 'utf8'), '{"value":42}');
   assert.equal(fs.existsSync(path.join(fixture, 'snapshots/snapshot-1.json')), false, 'Existing snapshots must be found under the native root');
+
+  let httpUpload;
+  await method('lively.ide/studio/world-browser.cp.js', 'chooseAndOpenSnapshot', {
+    ...globals, $world: world, lively: {},
+    window: { showOpenFilePicker: async () => [{ getFile: async () => snapshot }] },
+    document: { location: { origin: 'http://h' } },
+    System: { baseURL: 'http://h/dashboard/', import: async () => ({ bootstrap: async () => {} }) },
+    resource: url => ({ join: name => {
+      const target = new URL(name, url + '/').href;
+      return { exists: async () => false, join: child => ({ exists: async () => false }),
+        write: async () => { httpUpload = target; } };
+    } })
+  }).call(browser);
+  assert.equal(httpUpload, 'http://h/upload?uploadPath=%2Fsnapshots%2F');
 
   let report;
   const progress = [];
@@ -125,7 +139,7 @@ try {
   }
   console.log('Loading-screen routes: installation paths and names cannot change the route');
 
-  for (const projectURL of [project.url, 'file:///C:/Users/RUNNER%7E1/lively%20desktop/local_projects/demo/', 'http://localhost:9011/local_projects/demo/']) {
+  for (const projectURL of [project.url, 'file:///C:/Users/RUNNER%7E1/lively%20desktop/local_projects/demo/', "file:///C:/Users/O'Brien/local_projects/demo/", 'http://localhost:9011/local_projects/demo/']) {
     const declarations = [];
     const installCSS = method('lively.project/project.js', 'installCSSForProject', {
       resource: url => ({ join: name => ({ url: new URL(name, url).href, read: async () => '.project { color: red; }' }) }),
@@ -134,7 +148,7 @@ try {
     });
     for (const forProject of [true, false]) await installCSS(projectURL, forProject, 'demo', { retrieveProjectFontsFromCSS: async () => {} });
     assert.ok(declarations.length > 1);
-    assert.ok(declarations.every(css => css.startsWith(`@import '${new URL('fonts.css', projectURL).href}';\n`)));
+    assert.ok(declarations.every(css => css.startsWith(`@import '${new URL('fonts.css', projectURL).href.replace(/'/g, '%27')}';\n`)));
   }
   console.log('Project font imports resolve from the project on native Unix/Windows and HTTP pages');
 
@@ -189,9 +203,20 @@ try {
       await pipeline(Readable.from([buffer]), createGunzip(), extract);
       return source;
     };
+    const builder = createRequire(import.meta.url)(path.join(fixture, 'lively.server/scripts/build-library-snapshot.cjs'));
+    const build = builder.buildLibrarySnapshot;
+    let attempts = 0;
+    builder.buildLibrarySnapshot = async (...args) => {
+      if (!attempts++) throw new Error('transient source archive failure');
+      return build(...args);
+    };
     const backend = createBackend(fixture);
-    const first = await backend.readFile(baseURL + 'compressed-sources');
+    await assert.rejects(backend.readFile(baseURL + 'compressed-sources'), /transient source archive failure/);
+    let first;
+    try { first = await backend.readFile(baseURL + 'compressed-sources'); }
+    finally { builder.buildLibrarySnapshot = build; }
     assert.equal(await archiveSource(first), 'export const value = 42;');
+    assert.equal(fs.existsSync(path.join(fixture, 'lively.server/.library-snapshot.tar.gz')), false, 'Development archives cannot be copied into a later package');
     fs.writeFileSync(path.join(fixture, 'lively.morphic/index.js'), 'export const value = 43;');
     assert.equal(await backend.readFile(baseURL + 'compressed-sources'), first, 'Reuse the snapshot during one backend lifetime');
     assert.equal(await archiveSource(await createBackend(fixture).readFile(baseURL + 'compressed-sources')), 'export const value = 43;');

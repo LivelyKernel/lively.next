@@ -412,7 +412,7 @@ export class Project {
    */
   static async installCSSForProject (projectUrl, forProject, projectName, projectRef) {
     const indexCSSResource = resource(projectUrl).join('index.css');
-    const fontURL = resource(projectUrl).join('fonts.css').url;
+    const fontURL = resource(projectUrl).join('fonts.css').url.replace(/'/g, '%27');
     let indexCSS = await indexCSSResource.read();
     if (forProject) {
       indexCSS = `@import '${fontURL}';\n` + indexCSS;

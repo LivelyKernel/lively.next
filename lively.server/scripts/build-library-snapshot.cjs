@@ -44,8 +44,8 @@ const excludedDirs = [
   'lively.modules/dist'
 ];
 
-async function buildLibrarySnapshot (rootDir = path.resolve(__dirname, '..', '..')) {
-  const outFile = path.join(rootDir, 'lively.server', '.library-snapshot.tar.gz');
+async function buildLibrarySnapshot (rootDir = path.resolve(__dirname, '..', '..'),
+  outFile = path.join(rootDir, 'lively.server', '.library-snapshot.tar.gz')) {
   // esm_cache is created lazily, so include only directories already present.
   const presentDirs = cachedDirs.filter(d => fs.existsSync(path.join(rootDir, d)));
   console.log(`[build-library-snapshot] packing ${presentDirs.length}/${cachedDirs.length} dirs from ${rootDir}`);

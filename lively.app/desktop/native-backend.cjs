@@ -118,8 +118,11 @@ module.exports = function createNativeBackend (rootDir, { log = () => {}, onErro
         if (process.env.LIVELY_PREBUILT_LIBRARY_SNAPSHOT) return fs.readFile(process.env.LIVELY_PREBUILT_LIBRARY_SNAPSHOT);
         return librarySnapshot ||= (async () => {
           const { buildLibrarySnapshot } = require(rootDir + '/lively.server/scripts/build-library-snapshot.cjs');
-          return fs.readFile(await buildLibrarySnapshot(rootDir));
-        })();
+          const path = require('node:path');
+          const temporary = await fs.mkdtemp(path.join(require('node:os').tmpdir(), 'lively-native-source-'));
+          try { return await fs.readFile(await buildLibrarySnapshot(rootDir, path.join(temporary, 'sources.tar.gz'))); }
+          finally { await fs.rm(temporary, { recursive: true, force: true }); }
+        })().catch(err => { librarySnapshot = null; throw err; });
       }
       throw new Error('Unsupported native virtual file: ' + url);
     },
