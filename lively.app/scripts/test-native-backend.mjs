@@ -17,6 +17,9 @@ const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'lively native backend '))
 const app = path.join(fixture, 'app with spaces');
 const runtimeRoot = path.join(fixture, 'runtime with spaces');
 fs.mkdirSync(app);
+fs.mkdirSync(path.join(app, 'desktop'));
+fs.mkdirSync(path.join(app, 'lively.installer'));
+fs.writeFileSync(path.join(app, 'lively.installer/packages-config.json'), '{}');
 fs.mkdirSync(runtimeRoot);
 // Check the page and endpoint boundary without giving remote pages Node APIs.
 const trustedRoot = path.join(fixture, 'trusted pages');
@@ -54,18 +57,26 @@ for (const directory of [...workspaces, 'node_modules']) {
 fs.writeFileSync(path.join(app, 'package.json'), JSON.stringify({
   name: 'lively-native-backend-test', main: 'index.html',
   'node-main': '--experimental-import-meta-resolve',
-  'bg-script': 'background.js',
+  'bg-script': 'desktop/background-menu.js',
   'chromium-args': '--enable-features=NWESM --enable-node-worker --disable-raf-throttling --disable-gpu --no-sandbox',
   'node-remote': [],
   window: { show: false }
 }));
 fs.writeFileSync(path.join(app, 'index.html'), '<!doctype html><title>Native backend test</title>');
 fs.writeFileSync(path.join(app, 'next.html'), '<!doctype html><title>Native backend after navigation</title>');
-fs.writeFileSync(path.join(app, 'background.js'), "require('./probe.cjs').setBackgroundWindow(window);");
+// Launch the production bootstrap from a different directory, as a relocated
+// macOS package does. Keep its server entry limited to this backend probe.
+fs.copyFileSync(path.join(root, 'lively.app/desktop/background-menu.js'), path.join(app, 'desktop/background-menu.js'));
+fs.writeFileSync(path.join(app, 'desktop/start-server.cjs'), "module.exports = require('../probe.cjs');");
+fs.writeFileSync(path.join(app, 'desktop/updates.cjs'), `exports.createUpdateService = ({ desktopDir }) => {
+  require('node:assert/strict').equal(desktopDir, __dirname, 'Menu lost the updater directory');
+  return {};
+};`);
 fs.copyFileSync(path.join(root, 'lively.app/desktop/native-backend-worker.js'), path.join(app, 'worker.js'));
 fs.writeFileSync(path.join(app, 'failed-worker.js'), 'self.onmessage = () => { throw new Error("worker-probe-failure"); };');
 fs.writeFileSync(path.join(app, 'probe.cjs'), `
 const assert = require('node:assert/strict');
+assert.notEqual(nw.App.startPath, __dirname, 'Probe must launch outside the app directory');
 const fs = require('node:fs');
 const { pathToFileURL } = require('node:url');
 const config = JSON.parse(fs.readFileSync(__dirname + '/config.json'));
@@ -224,7 +235,7 @@ try {
       root, runtimeRoot, fixture, mode, result, remoteURL: 'http://127.0.0.1:' + remoteServer.address().port
     }));
     let output = '';
-    const child = spawn(executable, [app, `--user-data-dir=${path.join(fixture, 'profile')}`], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(executable, [app, `--user-data-dir=${path.join(fixture, 'profile')}`], { cwd: fixture, stdio: ['ignore', 'pipe', 'pipe'] });
     child.stdout.on('data', data => { output += data; });
     child.stderr.on('data', data => { output += data; });
     const timeout = setTimeout(() => child.kill('SIGTERM'), 60000);
