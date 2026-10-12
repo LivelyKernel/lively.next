@@ -42,7 +42,9 @@ export class Anchor {
         if (!tm.isLineVisible(this.position.row)) return;
       } else return;
     }
-    const pos = (tm && tm.isText) ? tm.charBoundsFromTextPosition(this.position).topLeft().subPt(tm.origin) : this.embeddedMorph.position;
+    const bounds = this.embeddedMorph.getTransform().transformRectToRect(this.embeddedMorph.innerBounds());
+    const offset = bounds.topLeft().subPt(this.embeddedMorph.position);
+    const pos = (tm && tm.isText) ? tm.charBoundsFromTextPosition(this.position).topLeft().addXY(tm.borderWidthLeft, tm.borderWidthTop).subPt(tm.origin).subPt(offset) : this.embeddedMorph.position;
     if (tm) tm._positioningSubmorph = this.embeddedMorph;
     this.embeddedMorph.position = pos;
     if (tm) tm._positioningSubmorph = false;
