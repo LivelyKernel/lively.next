@@ -4,6 +4,24 @@ import { Morph, Text } from '../../index.js';
 import { pt } from 'lively.graphics';
 
 describe('scrolling ordinary text submorphs', () => {
+  it('keeps static text measurements cached while scrolling', async () => {
+    const text = new Text({
+      readOnly: true, textString: Array(30).fill('scroll line').join('\n'),
+      fixedWidth: true, fixedHeight: true, extent: pt(160, 100), clipMode: 'auto'
+    }).openInWorld();
+    try {
+      await text.whenRendered();
+      text.env.forceUpdate();
+      const bounds = text.textBounds();
+      for (const y of [20, 40, 60]) {
+        text.scroll = pt(0, y);
+        text.env.forceUpdate();
+        expect(text.textBounds() === bounds).equals(true);
+        expect(text.scroll.y).equals(y);
+      }
+    } finally { text.remove(); }
+  });
+
   for (const mode of ['interactive', 'static-to-interactive', 'interactive-to-static', 'rapid-roundtrip']) {
     it(`keeps the child in the scrolling content after ${mode}`, async () => {
       const child = new Morph({ position: pt(5, 70), extent: pt(25, 15) });
