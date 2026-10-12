@@ -1037,13 +1037,15 @@ async function openDashboardProject (client, fullName) {
   const result = await waitFor('dashboard project tile', async () => {
     const result = await client.send('Runtime.evaluate', {
       returnByValue: true,
-      expression: `(() => {
+      awaitPromise: true,
+      expression: `(async () => {
         localStorage.removeItem('LIVELY_OFFLINE_MODE');
         const preview = globalThis.$world?.get('a project browser')?.viewModel?.previews?.find(p => p._project._name === ${JSON.stringify(fullName)});
         const button = preview?.get('open button');
         const node = button && document.getElementById(button.id);
         if (!node) return null;
         node.scrollIntoView({ block: 'center', inline: 'nearest' });
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         const bounds = node.getBoundingClientRect();
         if (!bounds.width || !bounds.height) return null;
         const x = bounds.x + bounds.width / 2, y = bounds.y + bounds.height / 2;
@@ -1097,6 +1099,10 @@ class CDPClient {
       this.ws.addEventListener('error', event => reject(new Error(`CDP websocket error: ${event.message || 'unknown'}`)), { once: true });
     });
     this.ws.addEventListener('message', event => this._onMessage(event.data));
+    this.ws.addEventListener('close', () => {
+      for (const { reject } of this.pending.values()) reject(new Error('Desktop CDP connection closed'));
+      this.pending.clear();
+    });
   }
 
   _onMessage (data) {
@@ -2037,6 +2043,7 @@ async function main () {
   }
   cacheProbe?.close();
   portGuard?.close();
+  console.log('Desktop app smoke complete');
 }
 
 main().catch(err => {
