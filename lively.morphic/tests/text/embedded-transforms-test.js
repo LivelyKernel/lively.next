@@ -23,25 +23,31 @@ describe('embedded morph transforms', () => {
       await text.whenFontLoaded();
       text.env.forceUpdate();
       expect(await text.whenRendered()).equals(true);
-      let updated = 0, offscreen = 0;
+      let updated = 0, offscreen = 0, charMeasurements = 0;
+      const charBounds = text.charBoundsFromTextPosition;
+      text.charBoundsFromTextPosition = function (...args) {
+        charMeasurements++;
+        return charBounds.apply(this, args);
+      };
       for (const { anchor } of text.embeddedMorphMap.values()) {
         const update = anchor.updateEmbeddedMorph;
-        anchor.updateEmbeddedMorph = function () {
+        anchor.updateEmbeddedMorph = function (...args) {
           updated++;
           if (!text.isLineVisible(this.position.row)) offscreen++;
-          return update.call(this);
+          return update.apply(this, args);
         };
       }
       for (const change of [
         () => { embeds[0].rotation = Math.PI / 2; },
         () => { text.scroll = pt(0, Math.floor(text.document.height / 2)); }
       ]) {
-        updated = offscreen = 0;
+        updated = offscreen = charMeasurements = 0;
         change();
         text.env.forceUpdate();
         expect(await text.whenRendered()).equals(true);
         expect(updated).greaterThan(0);
         expect(offscreen).equals(0, 'offscreen anchors must not re-enter rendering');
+        expect(charMeasurements).equals(0, 'rendered inline placement must not remeasure character bounds');
         expect(updated).lessThan(embeds.length, 'anchor work is limited to visible lines');
         text.document.consistencyCheck();
         const row = text.renderingState.firstVisibleRow;
