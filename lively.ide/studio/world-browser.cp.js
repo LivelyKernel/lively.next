@@ -559,12 +559,12 @@ export class WorldBrowserModel extends ViewModel {
       return;
     }
     const file = await files[0].getFile();
-    const snapshotInFolder = await resource(System.baseURL).join('../snapshots/').join(file.name).withRelativePartsResolved().exists();
+    const snapshotInFolder = await resource(System.baseURL).join('snapshots/').join(file.name).exists();
     // "copy" (upload, as we are going through the server) into the lively.next/snapshots directory in order to open it
     if (!snapshotInFolder) {
       const fd = new FormData();
       fd.append('file', file, file.name);
-      const res = resource(System.baseURL).join(`../upload?uploadPath=${encodeURIComponent('/snapshots/')}`).withRelativePartsResolved();
+      const res = resource(System.baseURL).join(`upload?uploadPath=${encodeURIComponent('/snapshots/')}`);
       await res.write(fd);
     }
     await this.fadeOut();

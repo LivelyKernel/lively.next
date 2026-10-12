@@ -71,7 +71,9 @@ export class WorldLoadingScreen extends Morph {
   }
 
   getProjectName () {
-    if (!document.location.href.includes('projects')) return false;
+    const route = new URLSearchParams(document.location.search).get('route') ||
+      (document.location.protocol !== 'file:' && document.location.pathname.split('/')[1]);
+    if (route !== 'projects') return false;
     const loc = document.location;
     const query = resource(loc.href).query();
     const projectNameMatch = query.name;
@@ -80,7 +82,9 @@ export class WorldLoadingScreen extends Morph {
   }
 
   getWorldName () {
-    if (!document.location.href.includes('worlds/') && new URLSearchParams(document.location.search).get('route') !== 'worlds') return false;
+    const route = new URLSearchParams(document.location.search).get('route') ||
+      (document.location.protocol !== 'file:' && document.location.pathname.split('/')[1]);
+    if (route !== 'worlds') return false;
     const loc = document.location;
     const query = resource(loc.href).query();
     const worldNameMatch = query.name || window.WORLD_NAME;

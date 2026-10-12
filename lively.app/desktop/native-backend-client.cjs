@@ -70,6 +70,11 @@ module.exports = function createNativeBackendClient (rootDir, { createWorker, lo
         const virtualFiles = ['package-registry.json', '__JS_FILE_HASHES__', 'compressed-sources', 'import-map.json'];
         const isVirtual = url => url.startsWith(baseURL) && virtualFiles.includes(url.slice(baseURL.length).split('?')[0]);
         class DesktopFileResource extends resourceExtension.resourceClass {
+          constructor (url, options = {}) {
+            super(url, options);
+            this.onLoad = options.onLoad;
+            this.onProgress = options.onProgress;
+          }
           newResource (url) { return new this.constructor(url, this); }
           async exists () {
             if (virtualFiles.slice(0, 3).some(name => this.url === baseURL + name)) return true;
@@ -79,6 +84,38 @@ module.exports = function createNativeBackendClient (rootDir, { createWorker, lo
             if (!isVirtual(this.url)) return super.read();
             const result = await call('fileRead', [this.url]);
             return typeof result === 'string' ? result : Buffer.from(result.buffer, result.byteOffset, result.byteLength);
+          }
+          async write (content) {
+            if (this.url.split('?')[0] !== baseURL + 'upload') {
+              if (content?.arrayBuffer) content = Buffer.from(await content.arrayBuffer());
+              return super.write(content);
+            }
+            const files = content.getAll('file');
+            const directory = new this.constructor(baseURL).join(this.query().uploadPath || 'uploads/').asDirectory();
+            await directory.ensureExistance();
+            const report = { status: 'done', uploadedFiles: [] };
+            const total = files.reduce((sum, file) => sum + file.size, 0);
+            let loaded = 0;
+            for (const file of files) {
+              if (!file.name || /[\\/]/.test(file.name) || ['.', '..'].includes(file.name)) throw new Error('Invalid upload filename');
+              const data = Buffer.from(await file.arrayBuffer());
+              const { name, ext } = require('node:path').parse(file.name);
+              let destination = directory.join(encodeURIComponent(file.name));
+              for (let suffix = 1; ; suffix++) {
+                try {
+                  await require('node:fs/promises').writeFile(destination.path(), data, { flag: 'wx' });
+                  break;
+                } catch (err) {
+                  if (err.code !== 'EEXIST') throw err;
+                  destination = directory.join(encodeURIComponent(name + '-' + suffix + ext));
+                }
+              }
+              report.uploadedFiles.push({ path: destination.relativePathFrom(new this.constructor(baseURL)), type: file.type,
+                hash: require('node:crypto').createHash('sha1').update(data).digest('hex') });
+              this.onProgress?.({ loaded: loaded += data.length, total });
+            }
+            this.onLoad?.(report);
+            return this;
           }
         }
         return { ...resourceExtension, resourceClass: DesktopFileResource };
@@ -97,12 +134,15 @@ module.exports = function createNativeBackendClient (rootDir, { createWorker, lo
     },
     close () {
       return closing ||= (async () => {
-        await Promise.allSettled([...requests]);
-        if (!started) return;
-        await started;
-        await post('close', []);
-        clients.clear();
-        worker.terminate();
+        try {
+          await Promise.allSettled([...requests]);
+          if (!started || failure) return;
+          await started;
+          await post('close', []);
+        } finally {
+          clients.clear();
+          worker?.terminate();
+        }
       })();
     }
   };

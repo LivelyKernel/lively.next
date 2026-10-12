@@ -691,13 +691,18 @@ function emitError (msg) {
     if (win.window.livelyBoot) navigate();
     else win.once('loaded', navigate);
     win.on('close', function () {
-      backend.close().then(() => this.close(true), err => emitError('Native shutdown failed: ' + err.stack));
+      const timeout = setTimeout(() => this.close(true), 2000);
+      backend.close().catch(err => emitError('Native shutdown failed: ' + err.stack)).finally(() => {
+        clearTimeout(timeout);
+        this.close(true);
+      });
     });
     return;
   }
 
   emitStatus('Finding free port...');
   const port = await findFreePort(9011);
+  fs.mkdirSync(desktopDataDir(), { recursive: true });
   fs.writeFileSync(path.join(desktopDataDir(), 'local-endpoint.json'), JSON.stringify({ origin: 'http://127.0.0.1:' + port }));
 
   let currentChild = null;

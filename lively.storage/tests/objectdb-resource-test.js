@@ -72,6 +72,23 @@ describe('ObjectDB client resources', function () {
     }
   });
 
+  it('reads JSON when a query name has a binary file extension', async () => {
+    System.global.fetch = async () => response({ value: 42 });
+    expect(await client._GET('test', { name: 'logo.png' })).deep.equals({ value: 42 });
+  });
+
+  it('forwards includeDeleted to native directory exports', async () => {
+    const original = ObjectDBInterface.exportToDir;
+    let args;
+    ObjectDBInterface.exportToDir = async options => { args = options; return true; };
+    try {
+      await handleObjectDBRequest('POST', nativeObjectDBURL + 'exportToDir', JSON.stringify({
+        db: fixture.objectDB.name, url: 'local://export/', includeDeleted: true
+      }));
+      expect(args.includeDeleted).equals(true);
+    } finally { ObjectDBInterface.exportToDir = original; }
+  });
+
   it('preserves HTTP payload errors, text failures and network rejection', async () => {
     System.global.fetch = async () => response({ error: 'rejected by backend' }, 500);
     expect((await client._GET('test').catch(err => err)).message).equals('rejected by backend');

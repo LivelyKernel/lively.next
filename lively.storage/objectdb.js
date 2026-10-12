@@ -1946,6 +1946,7 @@ export class ObjectDBHTTPInterface {
     }).join('&');
     let url = this.resourceURL + action + '?' + query;
     const res = resource(url, { errorOnHTTPStatusCodes: false });
+    res.setBinary(false);
     const answer = res.canDealWithJSON ? await res.readJson() : await res.read();
     return this._processResponse(answer, res.lastResponse, !res.canDealWithJSON);
   }

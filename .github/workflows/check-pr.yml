@@ -43,6 +43,8 @@ jobs:
         run: node lively.app/scripts/test-downloads.mjs
       - name: Check desktop dependency junctions
         run: node lively.app/scripts/test-windows-dependency-layout.mjs
+      - name: Check native desktop resources
+        run: node lively.app/scripts/test-desktop-resources.mjs
       - name: Rebuild Windows LevelDB for NW.js
         if: runner.os == 'Windows'
         run: node lively.app/scripts/rebuild-windows-leveldown.mjs
@@ -136,6 +138,7 @@ jobs:
           node lively.morphic/tests/rollup-build-test.cjs
           node --experimental-import-meta-resolve lively.app/scripts/test-package-payload.mjs
           node --experimental-import-meta-resolve lively.app/scripts/test-downloads.mjs
+          node lively.app/scripts/test-desktop-resources.mjs
       - name: Run CI Test Script for Changed Folders
         run:  ./scripts/test.sh $(./scripts/tests_for_branch.sh)
       - name: Start the lively server

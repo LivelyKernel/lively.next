@@ -202,6 +202,7 @@ const request = async (method, action, args) => {
     await assert.rejects(Promise.all([broken.initialize(), broken.evaluate('42')]), /worker-probe-failure/);
     assert.match(error.message, /worker-probe-failure/);
     await assert.rejects(broken.evaluate('42'), /worker-probe-failure/);
+    await broken.close();
     fs.writeFileSync(config.result, JSON.stringify({ mode: config.mode, nw: process.versions.nw, node: process.versions.node, adapters: [], ticks, longest }));
     return;
   }
@@ -230,6 +231,9 @@ const request = async (method, action, args) => {
   assert.deepEqual(await request('GET', 'exists', { db, type: 'world', name: 'missing' }), { exists: false });
   const adapters = await evaluate('(async()=>{const {Database}=await System.import("lively.storage");return [...Database.databases.values()].map(db=>db.pouchdb.adapter);})()');
   assert.ok(adapters.length && adapters.every(adapter => adapter === 'leveldb'));
+  const remoteAdapter = await evaluate('(async()=>{const {Database}=await System.import("lively.storage");return Database.ensureDB("http://127.0.0.1:1/native-remote-probe",{skip_setup:true}).pouchdb.adapter;})()');
+  assert.equal(remoteAdapter, 'http');
+  assert.deepEqual(await request('GET', 'exists', { db, type: 'world', name: 'missing' }), { exists: false }, 'A remote HTTP database must not poison local storage');
   assert.equal(JSON.parse(await backend.evaluate('40 + 2')), 42);
   const nodeEnv = JSON.parse(await backend.evaluate('System.get("@system-env").node'));
   assert.equal(nodeEnv, true);

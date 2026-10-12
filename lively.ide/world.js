@@ -611,7 +611,7 @@ export class LivelyWorld extends World {
 
     const { domEvt } = evt;
     const { files } = domEvt.dataTransfer;
-    const baseURL = document.location.origin;
+    const baseURL = globalThis.livelyNative ? System.baseURL : document.location.origin;
 
     if (files.length) {
       let uploadPath;

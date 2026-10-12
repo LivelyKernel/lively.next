@@ -412,13 +412,14 @@ export class Project {
    */
   static async installCSSForProject (projectUrl, forProject, projectName, projectRef) {
     const indexCSSResource = resource(projectUrl).join('index.css');
+    const fontURL = resource(projectUrl).join('fonts.css').url;
     let indexCSS = await indexCSSResource.read();
     if (forProject) {
-      indexCSS = `@import '/local_projects/${projectName}/fonts.css';\n` + indexCSS;
+      indexCSS = `@import '${fontURL}';\n` + indexCSS;
       addOrChangeCSSDeclaration(`CSS-for-project-${projectName}`, indexCSS);
       const updateProjectCSS = async () => {
         let cssContents = await indexCSSResource.read();
-        cssContents = `@import '/local_projects/${projectName}/fonts.css';\n` + cssContents;
+        cssContents = `@import '${fontURL}';\n` + cssContents;
         addOrChangeCSSDeclaration(`CSS-for-project-${projectName}`, cssContents);
         await projectRef.retrieveProjectFontsFromCSS();
       };
@@ -426,7 +427,7 @@ export class Project {
       $world.fileWatcher.registerFileAction(resource(projectUrl).join('fonts.css'), updateProjectCSS);
       await updateProjectCSS();
     } else {
-      indexCSS = `@import '/local_projects/${projectName}/fonts.css';\n` + indexCSS;
+      indexCSS = `@import '${fontURL}';\n` + indexCSS;
       addOrChangeCSSDeclaration(`CSS-for-dependency-${projectName}`, indexCSS);
     }
   }

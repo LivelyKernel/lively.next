@@ -15,7 +15,7 @@ module.exports = function createNativeBackend (rootDir, { log = () => {}, onErro
       return listen.call(this, endpoint, ...args);
     };
   }
-  let ready, closing, shell, databases, storageReady;
+  let ready, closing, shell, databases, storageReady, librarySnapshot;
   const pending = new Set();
   const clients = new Map();
   const sockets = new Set();
@@ -114,7 +114,12 @@ module.exports = function createNativeBackend (rootDir, { log = () => {}, onErro
         return JSON.stringify(await computeSourceHashes(baseURL));
       }
       if (url === baseURL + 'compressed-sources') {
-        return require('node:fs/promises').readFile(process.env.LIVELY_PREBUILT_LIBRARY_SNAPSHOT || rootDir + '/lively.server/.library-snapshot.tar.gz');
+        const fs = require('node:fs/promises');
+        if (process.env.LIVELY_PREBUILT_LIBRARY_SNAPSHOT) return fs.readFile(process.env.LIVELY_PREBUILT_LIBRARY_SNAPSHOT);
+        return librarySnapshot ||= (async () => {
+          const { buildLibrarySnapshot } = require(rootDir + '/lively.server/scripts/build-library-snapshot.cjs');
+          return fs.readFile(await buildLibrarySnapshot(rootDir));
+        })();
       }
       throw new Error('Unsupported native virtual file: ' + url);
     },
@@ -154,7 +159,7 @@ module.exports = function createNativeBackend (rootDir, { log = () => {}, onErro
       return run(async ({ system }) => {
         const { handleObjectDBRequest, Database } = await initializeStorage(system);
         const result = await handleObjectDBRequest(method, url, body);
-        if ([...Database.databases.values()].some(db => db.pouchdb.adapter !== 'leveldb')) {
+        if ([...Database.databases.values()].some(db => !['leveldb', 'http'].includes(db.pouchdb.adapter))) {
           throw new Error('Native desktop storage requires persistent leveldb databases');
         }
         return result;

@@ -23,7 +23,7 @@ const actions = {
     destroyDB: 'db',
     commit: 'db type name ref expectedParentCommit commitSpec snapshot preview',
     revert: 'db type name ref toCommitId',
-    exportToDir: 'db url nameAndTypes copyResources',
+    exportToDir: 'db url nameAndTypes includeDeleted copyResources',
     importFromDir: 'db url overwrite copyResources',
     importFromSpecs: 'db specs overwrite copyResources',
     importFromResource: 'db type name url commitSpec purgeHistory',
