@@ -72,6 +72,7 @@ The standalone NW.js probe also checks stdout/stderr streaming, stdin, cancellat
 ```sh
 node --experimental-import-meta-resolve mocha-es6/bin/mocha-es6.js \
   'lively.storage/tests/*-test.js' lively.resources/tests/resource-test.js lively.lang/tests/events-test.js
+node --experimental-import-meta-resolve mocha-es6/bin/mocha-es6.js lively.2lively/tests/l2l-test.js
 node --experimental-import-meta-resolve lively.modules/tests/native-system-live-test.mjs
 node lively.freezer/tests/package-resolution-test.cjs
 node lively.app/scripts/test-build-layout.mjs
@@ -85,6 +86,8 @@ For an HTTP rollback check, pass the native run's printed data directory to the 
 The storage/resource/events run passes 114 checks. SWC tests also execute both frozen and live transforms to verify that resource registrations survive re-execution and direct eval retains its lexical loader. This exposed and fixed self-initializers clearing recorder state and captured eval calls losing their local scope. The shared module evaluator also binds its loader explicitly, since async compilation can rename lexical variables; the shared Rust suites pass 180 transform checks and 15 browser compiler checks. Existing shell/evaluation and command-helper tests pass. Two focused browser serialization checks also pass, including native and HTTP desktop image URLs reopening against the current runtime base while remote image URLs remain unchanged. All 51 affected browser checks pass, including cloned-loader edits, definition callbacks, import updates, virtual modules and native ObjectDB dispatch. The Linux build workflow now runs native packaged smoke coverage and HTTP rollback on the native run's saved data alongside its HTTP checks. Chromium's existing DevTools endpoint remains available for debugging; application backend services do not use it.
 
 Generated project builds pass a 4 GB Node heap limit explicitly, matching the desktop workflow's existing freezer budget. Desktop startup clears inherited `NODE_OPTIONS`, so the generated command must supply that setting itself on macOS, where the default 2 GB limit is insufficient. The packaged project-build smoke check deliberately supplies a 2 GB inherited limit to cover this case.
+
+World metadata changes refresh the existing L2L registration without unregistering the client. Unregistering briefly removed the route for shell output and completion messages, which could leave project loading waiting indefinitely. The L2L regression checks message delivery before and after a metadata update and verifies that the tracker retains the route throughout; all 14 L2L checks pass.
 
 The generated project build checks also exposed assumptions that only hold in a source checkout: CommonJS conversion of mounted Lively workspaces, class instrumentation resolving its generated runtime dependency from the project, and project CSS/assets being located beside the installed core packages. The freezer now uses the application source root for its ESM exclusion, normalizes Windows separators to match Rollup's module IDs (including runtime and payload paths on separate drives), resolves its own generated class runtime, and collects project assets from the transformed modules' actual project roots. The project bundle regression mounts workspaces separately and loads project CSS from a temporary runtime path containing spaces.
 
