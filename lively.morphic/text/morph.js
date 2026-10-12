@@ -541,7 +541,7 @@ export class Text extends Morph {
         set (val) {
           const maxScroll = this.scrollExtent.subXY(this.width, this.height);
           this.setProperty('scroll', val.minPt(maxScroll).maxPt(pt(0, 0)));
-          this.makeDirty();
+          Morph.prototype.makeDirty.call(this);
         }
       },
 
