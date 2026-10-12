@@ -22,8 +22,10 @@ function rewrite(node, astRegistry, namespace) {
     return r.rewrite(node);
 }
 
-function rewriteFunction(node, astRegistry, namespace) {
+function rewriteFunction(node, astRegistry, namespace, outerScopeName, outerBindings = []) {
     var r = new Rewriter(astRegistry, namespace);
+    r.outerScopeName = outerScopeName;
+    r.outerBindings = outerBindings;
     return r.rewriteFunction(node);
 }
 
@@ -211,7 +213,7 @@ export class Rewriter {
                   arguments: [
                       this.newNode('Identifier', { name: '_' }),
                       this.newNode('Identifier', { name: '_' + level }),
-                      this.newNode('Identifier', { name: lastFnLevel < 0 ? (typeof window !== "undefined" ? 'window' : 'global') : '__' + lastFnLevel })
+                      this.newNode('Identifier', { name: lastFnLevel < 0 ? (this.outerScopeName || (typeof window !== "undefined" ? 'window' : 'global')) : '__' + lastFnLevel })
                   ]
               })
           })
@@ -291,6 +293,14 @@ export class Rewriter {
               withScopes.push(i);
       }
 
+      if (scopeRef === undefined && this.outerBindings && this.outerBindings.includes(name)) {
+          scopeRef = this.newNode('MemberExpression', {
+              object: this.newNode('Identifier', { name: this.outerScopeName }),
+              property: this.newNode('Literal', { value: 1 }),
+              computed: true
+          });
+      }
+
       var result = this.newNode('Identifier', { name: name });
       if ((scopeRef === undefined) && (withScopes.length > 0)) {
           // mr 2014-02-05: the reference is a global one - should throw error?
@@ -328,7 +338,9 @@ export class Rewriter {
 
   isWrappedVar(node) {
       return node.type == 'MemberExpression' && node.object.type == 'Identifier' &&
-             node.object.name[0] == '_' && !isNaN(node.object.name.substr(1));
+             node.object.name[0] == '_' && !isNaN(node.object.name.substr(1)) ||
+          node.type == 'MemberExpression' && node.object.type == 'MemberExpression' &&
+          node.object.object.name === this.outerScopeName;
   }
 
   wrapClosure(node, namespace, idx) {
@@ -573,7 +585,7 @@ export class RecordingRewriter extends Rewriter {
                   arguments: [
                       this.newNode('Identifier', { name: '_' }),
                       this.newNode('Identifier', { name: '_' + level }),
-                      this.newNode('Identifier', { name: lastFnLevel < 0 ? 'Global' : '__' + lastFnLevel })
+                      this.newNode('Identifier', { name: lastFnLevel < 0 ? (this.outerScopeName || 'Global') : '__' + lastFnLevel })
                   ]
               })
           })

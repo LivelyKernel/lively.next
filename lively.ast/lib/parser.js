@@ -27,7 +27,7 @@ function addSource (parsed, source) {
     parsed = parse(parsed);
   }
   source && AllNodesVisitor.run(parsed, (node, state, path) =>
-    !node.source && (node.source = source.slice(node.start, node.end)));
+    !Object.hasOwn(node, 'source') && (node.source = source.slice(node.start, node.end)));
   return parsed;
 }
 

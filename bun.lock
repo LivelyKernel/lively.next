@@ -215,6 +215,19 @@
         "mocha-es6": "workspace:*",
       },
     },
+    "lively.context": {
+      "name": "lively.context",
+      "version": "0.1.5",
+      "dependencies": {
+        "lively.ast": "workspace:*",
+        "lively.lang": "workspace:*",
+        "lively.vm": "workspace:*",
+      },
+      "devDependencies": {
+        "lively.classes": "workspace:*",
+        "mocha-es6": "workspace:*",
+      },
+    },
     "lively.freezer": {
       "name": "lively.freezer",
       "version": "0.1.0",
@@ -365,6 +378,7 @@
         "lively.classes": "workspace:*",
         "lively.collab": "workspace:*",
         "lively.components": "workspace:*",
+        "lively.context": "workspace:*",
         "lively.freezer": "workspace:*",
         "lively.git": "workspace:*",
         "lively.graphics": "workspace:*",
@@ -2424,6 +2438,8 @@
     "lively.collab": ["lively.collab@workspace:lively.collab"],
 
     "lively.components": ["lively.components@workspace:lively.components"],
+
+    "lively.context": ["lively.context@workspace:lively.context"],
 
     "lively.freezer": ["lively.freezer@workspace:lively.freezer"],
 

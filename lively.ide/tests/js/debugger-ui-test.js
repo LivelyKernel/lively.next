@@ -27,6 +27,17 @@ function frame (spec = {}) {
 }
 
 describe('lively debugger ui', function () {
+  it('shows the source and current statement of a rewriter continuation', async function () {
+    const originalFrame = {
+      func: { getSource: () => 'function increment() {\n  debugger;\n}' },
+      getOriginalAst: () => ({ sourceFile: '[runtime]' }),
+      getPC: () => ({ loc: { start: { line: 2, column: 2 } } })
+    };
+    const source = await readFrameSource(originalFrame);
+    expect(source).contains('function increment');
+    expect(lineRangeForFrame(originalFrame, source).start.row).equals(1);
+  });
+
   it('loads source text through the captured frame URL', async function () {
     const capturedFrame = frame();
     let requestedUrl;
@@ -108,6 +119,15 @@ describe('lively debugger ui', function () {
 
     expect(result).equals(marker);
     expect(marker.count).equals(6);
+  });
+
+  it('evaluates this against the selected frame receiver', function () {
+    const receiver = { count: 3 };
+    const scopes = [{ bindings: { this: receiver } }, { bindings: { amount: 2 } }];
+
+    expect(evaluateInDebuggerScopes('this', scopes)).equals(receiver);
+    expect(evaluateInDebuggerScopes('this.count += amount', scopes)).equals(5);
+    expect(receiver.count).equals(5);
   });
 
   it('writes workspace assignments back into the selected scope binding', function () {

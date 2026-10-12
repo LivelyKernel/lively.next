@@ -40,6 +40,7 @@ export class InspectorInterpreterError extends Error {
   constructor (message, { frame } = {}) {
     super(message);
     this.name = 'InspectorInterpreterError';
+    this.message = message;
     this.frame = frame;
   }
 }
@@ -356,10 +357,14 @@ export function stepOutInspectorContinuation (continuation, {
 }
 
 export function restartInspectorFrame (continuation, { startFrame = null } = {}) {
-  const interpreterContinuation = materializeInspectorContinuation(continuation, {
-    startFrame,
-    restart: true
-  });
+  let interpreterContinuation;
+  const frame = startFrame || continuation.currentFrame;
+  if (frame && frame.getOriginalAst && frame.getOriginalAst()) {
+    frame.reset();
+    interpreterContinuation = new Continuation(frame);
+  } else {
+    interpreterContinuation = materializeInspectorContinuation(continuation, { startFrame, restart: true });
+  }
   const result = new Interpreter().stepToNextStatement(interpreterContinuation.currentFrame);
   return continuationFromStepResult(result);
 }
