@@ -1,7 +1,8 @@
 import { disconnect, connect } from 'lively.bindings';
-import { defaultPropertiesPanelWidth } from './properties-panel.cp.js';
 import { easings } from 'lively.morphic';
 import { pt } from 'lively.graphics';
+
+export const defaultPropertiesPanelWidth = 250;
 
 export async function toggleSidebar (flapModel) {
   const world = flapModel.world();

@@ -181,6 +181,48 @@ async function assertBrowserSwc (client) {
   console.log('Desktop app smoke passed: initialized SWC compiles a module without Babel fallback');
 }
 
+async function assertDeferredTools (client) {
+  const result = await client.send('Runtime.evaluate', {
+    expression: `(() => {
+      const { registry } = lively.FreezerRuntime || lively.frozenModules;
+      return ['lively.ide/js/browser/ui.cp.js', 'lively.ide/js/inspector/ui.cp.js',
+        'lively.ide/js/objecteditor/index.js', 'lively.ide/studio/properties-panel.cp.js',
+        'lively.ide/studio/asset-browser.cp.js'].filter(id => registry[id]?.recorder);
+    })()`, returnByValue: true
+  });
+  if (result.exceptionDetails || result.result?.value?.length !== 0) {
+    throw new Error('Project startup eagerly loaded closed tools: ' + JSON.stringify(result));
+  }
+  console.log('Desktop app smoke passed: closed editor, inspector and sidebar tools stay unloaded');
+}
+
+async function assertDeferredToolsOpen (client, timeoutMs) {
+  const result = await client.send('Runtime.evaluate', {
+    awaitPromise: true, returnByValue: true,
+    expression: `(async () => {
+      await $world.openSideBar('properties panel');
+      if (!$world.propertiesPanel?.isPropertiesPanel) throw new Error('Deferred properties panel did not open');
+      await $world.openSideBar('properties panel');
+      const shared = await System.import('lively.ide/studio/shared.cp.js');
+      const browser = await System.import('lively.ide/js/browser/ui.cp.js');
+      for (const name of ['BackendButtonDefault', 'BackendButtonClicked', 'FileStatusWarning']) {
+        if (browser[name] !== shared[name]) throw new Error('Legacy browser export changed: ' + name);
+      }
+      $world.get('lively top bar').viewModel.browseAssets();
+      return true;
+    })()`
+  });
+  if (result.exceptionDetails || result.result?.value !== true) {
+    throw new Error('Deferred tools failed to load: ' + JSON.stringify(result));
+  }
+  await waitFor('deferred asset browser', async () => {
+    const result = await client.send('Runtime.evaluate', { expression: 'Boolean($world._assetBrowser?.getWindow())', returnByValue: true });
+    return result.result?.value === true;
+  }, timeoutMs);
+  await client.send('Runtime.evaluate', { expression: '$world._assetBrowser.getWindow().close()' });
+  console.log('Desktop app smoke passed: deferred properties and asset browsers open; legacy component exports retain identity');
+}
+
 /** Select and edit a genuinely frozen module through the system browser. */
 async function assertFrozenModuleResurrection (client) {
   const result = await client.send('Runtime.evaluate', {
@@ -1523,7 +1565,23 @@ async function main () {
           console.log('Desktop app smoke passed: dashboard preserves fork names and hides invalid projects and installed dependencies' +
             (native ? ', without waiting for the backend registry' : ''));
         }
+        if (componentsOnly) await assertDeferredTools(client);
         await assertDashboardBackground(client);
+        await assertDesktopTitlebar(client, dataDir);
+        if (!startupOnly && !checkSavedWorld) await assertLoadingAnimation(client);
+        if (componentsOnly) {
+          const openStarted = Date.now();
+          console.log(JSON.stringify({ reopened, backendReadyBeforeOpen: /Native backend ready|Server ready, loading lively/.test(readTextFile(logFile)) }));
+          await openDashboardProject(client, 'smoke--project');
+          await waitFor('project before component browser', async () => {
+            const result = await client.send('Runtime.evaluate', {
+              expression: `Boolean($world?._uiInitialized && $world.openedProject?.fullName === 'smoke--project' && globalThis.__desktopDashboardDocument === document)`, returnByValue: true
+            });
+            return result.result?.value === true;
+          }, timeoutMs);
+          console.log(JSON.stringify({ mode: native ? 'native' : 'http', reopened, projectOpenMs: Date.now() - openStarted }));
+          await assertDeferredTools(client);
+        }
         const registryResult = native && await client.send('Runtime.evaluate', {
           expression: 'livelyNative.fileExtension().then(({resourceClass}) => new resourceClass(livelyNative.baseURL + \'package-registry.json\').readJson())', awaitPromise: true, returnByValue: true
         });
@@ -1539,8 +1597,6 @@ async function main () {
           }
         }
         console.log('Desktop app smoke passed: dashboard initialized with canonical workspace packages');
-        await assertDesktopTitlebar(client, dataDir);
-        if (!startupOnly && !checkSavedWorld) await assertLoadingAnimation(client);
         const readyEvent = readTextFile(logFile).match(/^\[([^\]]+)\] (?:Native backend ready|Server ready, loading lively)/m);
         if (!readyEvent) throw new Error('Backend readiness event missing from boot log');
         console.log(JSON.stringify({ mode: native ? 'native' : 'http', reopened, backendReadyMs: Date.parse(readyEvent[1]) - launchStarted }));
@@ -1567,14 +1623,8 @@ async function main () {
           continue;
         }
         if (componentsOnly) {
-          await openDashboardProject(client, 'smoke--project');
-          await waitFor('project before component browser', async () => {
-            const result = await client.send('Runtime.evaluate', {
-              expression: `Boolean($world?._uiInitialized && $world.openedProject?.fullName === 'smoke--project' && globalThis.__desktopDashboardDocument === document)`, returnByValue: true
-            });
-            return result.result?.value === true;
-          }, timeoutMs);
           await assertPartsbinComponentBrowser(client, reopened);
+          await assertDeferredToolsOpen(client, timeoutMs);
           await assertDesktopTitlebar(client, dataDir, true);
           client.assertNoRendererErrors();
           continue;

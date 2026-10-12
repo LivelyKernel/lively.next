@@ -1,3 +1,4 @@
+import { FileStatusDefault, FileStatusError, FileStatusSaved, FileStatusInactive, FileStatusWarning, BackendButtonDefault, BackendButtonClicked } from '../../studio/shared.cp.js';
 import { Color, rect, LinearGradient, pt } from 'lively.graphics';
 import {
   ShadowObject, ViewModel, morph, easings, Morph,
@@ -664,88 +665,6 @@ const BrowserTabHovered = component(BrowserTabSelected, {
       name: 'tab caption',
       fontWeight: '400'
     }]
-  }]
-});
-
-const FileStatusDefault = component({
-  name: 'file status default',
-  borderColor: Color.rgb(44, 62, 80),
-  borderRadius: 5,
-  borderWidth: 1,
-  dropShadow: new ShadowObject({ distance: 0, color: Color.rgba(0, 0, 0, 0.5) }),
-  extent: pt(176.3, 35.3),
-  fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgba(44, 62, 80, 0.9) }, { offset: 1, color: Color.rgba(33, 47, 60, 0.9) }], vector: rect(0.5, 0, 0, 1) })
-});
-
-const FileStatusError = component(FileStatusDefault, {
-  name: 'file status error',
-  fill: new LinearGradient({
-    stops: [
-      { offset: 0, color: Color.rgb(231, 76, 60) },
-      { offset: 1, color: Color.rgb(192, 57, 43) }],
-    vector: rect(0.5, 0, 0, 1)
-  })
-});
-
-const FileStatusSaved = component(FileStatusDefault, {
-  name: 'file status saved',
-  fill: new LinearGradient({
-    stops: [
-      { offset: 0, color: Color.rgb(46, 204, 113) },
-      { offset: 1, color: Color.rgb(39, 174, 96) }],
-    vector: rect(0.5, 0, 0, 1)
-  })
-});
-
-const FileStatusInactive = component(FileStatusDefault, {
-  name: 'file status inactive',
-  fill: new LinearGradient({
-    stops: [
-      { offset: 0, color: Color.rgb(128, 139, 150) },
-      { offset: 1, color: Color.rgb(93, 109, 126) }],
-    vector: rect(0.5, 0, 0, 1)
-  })
-});
-
-const FileStatusWarning = component(FileStatusDefault, {
-  name: 'file status warning',
-  borderColor: Color.rgbHex('DA9819'),
-  fill: new LinearGradient({
-    stops: [
-      { offset: 0, color: Color.rgb(249, 213, 68) },
-      { offset: 1, color: Color.rgb(219, 162, 18) }
-    ],
-    vector: rect(0.5, 1, 0, 1)
-  })
-});
-
-const BackendButtonDefault = component(ButtonDefault, {
-  name: 'backend button default',
-  layout: new TilingLayout({
-    align: 'center',
-    axisAlign: 'center',
-    hugContentsHorizontally: true,
-    padding: rect(5, 0, 0, 0)
-  }),
-  borderColor: Color.rgb(44, 62, 80),
-  extent: pt(130.3, 26.1),
-  fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgba(44, 62, 80, 0.9) }, { offset: 1, color: Color.rgba(33, 47, 60, 0.9) }], vector: rect(0.5, 0, 0, 1) }),
-  submorphs: [{
-    name: 'label',
-    fontColor: Color.rgb(163, 228, 215),
-    fontFamily: '"IBM Plex Mono"',
-    fontSize: 14
-  }]
-});
-
-const BackendButtonClicked = component(BackendButtonDefault, {
-  name: 'backend button clicked',
-  fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgb(33, 48, 63) }, { offset: 1, color: Color.rgb(33, 47, 60) }], vector: rect(0.5, 0, 0, 1) }),
-  submorphs: [{
-    name: 'label',
-    fontColor: Color.rgb(63, 110, 101),
-    fontFamily: '"IBM Plex Mono"',
-    fontSize: 14
   }]
 });
 

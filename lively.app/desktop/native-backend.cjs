@@ -65,10 +65,7 @@ module.exports = function createNativeBackend (rootDir, { log = () => {}, onErro
         name: 'desktop-backend', environment: { node: true, browser: false, nw: false }
       });
       log('Native package registry ready');
-      const modules = await system.import('lively.modules');
-      modules.changeSystem(system, true);
-      modules.unwrapModuleResolution(system);
-      modules.wrapModuleResolution(system);
+      // setupSystem installs live loading; instrument the loader itself only on import.
       log('Native backend ready');
       return { system };
     })().catch(initializationFailed);

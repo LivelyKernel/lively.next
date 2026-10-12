@@ -11,7 +11,7 @@ import { resource } from 'lively.resources';
 import { DarkPopupWindow, DarkThemeList, EnumSelector, RemoveButton, TextInput, PropertyLabelActive, PropertyLabelHovered, PropertyLabel } from './shared.cp.js';
 import { PopupModel } from './controls/popups.cp.js';
 import { DarkButton } from 'lively.components/buttons.cp.js';
-import { FileStatusWarning } from '../js/browser/ui.cp.js';
+import { FileStatusWarning } from './shared.cp.js';
 import { Label } from 'lively.morphic/text/label.js';
 import { arr, promise, obj } from 'lively.lang';
 import { connect, once, signal } from 'lively.bindings';

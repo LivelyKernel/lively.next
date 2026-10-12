@@ -121,7 +121,6 @@ async function fastLoadPackages (progress) {
   // lively.ide
   await System.import('lively.ide/world.js');
   await System.import('lively.ide/editor-plugin.js');
-  await System.import('lively.ide/js/editor-plugin.js');
   extractModules('lively.ide');
 
   // lively.shell
@@ -166,7 +165,6 @@ async function fastLoadPackages (progress) {
   extractModules('lively.git');
 
   // lively.freezer
-  await System.import('lively.freezer');
   extractModules('lively.freezer');
 
   extractModules('lively.user');
@@ -235,9 +233,14 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
       if (initBaseURL.endsWith('/')) {
         initBaseURL = initBaseURL.slice(0, -1);
       }
-      const packageCached = await resource(baseURL).join('package-registry.json').readJson();
+      const [packageCached, moduleHashes] = await Promise.all([
+        resource(baseURL).join('package-registry.json').readJson(),
+        resource(baseURL).join('__JS_FILE_HASHES__').readJson()
+      ]);
       const migratedMeta = { ...oldSystem.meta };
       const System = lively.modules.getSystem('bootstrapped', { baseURL, meta: migratedMeta }); // the meta of the not yet loaded modules needs to be transformed into register
+      // Both loaders use this launch's fresh scan, including during bundle replay.
+      oldSystem._livelyModulesSourceHashes = System._livelyModulesSourceHashes = moduleHashes;
       $world.env.uninstallSystemChangeHandlers();
       lively.modules.changeSystem(System, true);
       $world.env.installSystemChangeHandlers();
@@ -358,7 +361,7 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
       logInfo('Loaded module system:', Date.now() - ts + 'ms');
 
       const R = lively.FreezerRuntime;
-      const moduleHashes = await resource(System.baseURL).join('__JS_FILE_HASHES__').readJson();
+      const moduleHashes = System._livelyModulesSourceHashes;
       if (fastLoad) {
         ts = Date.now();
         // revive the modules where the hashes differ from the ones on the bundle

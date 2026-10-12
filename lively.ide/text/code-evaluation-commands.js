@@ -1,4 +1,3 @@
-import * as Inspector from '../js/inspector/ui.cp.js';
 import { string } from 'lively.lang';
 import { Morph, part } from 'lively.morphic';
 import { pt, Color } from 'lively.graphics';
@@ -191,9 +190,9 @@ export const codeEvaluationCommands = [
           err = result.error ? result.error : result.isError ? result.value : null;
           target = result.value;
         } catch (e) { err = e; }
-        Inspector.openInWindow({ targetObject: err || target });
+        (await System.import('lively.ide/js/inspector/ui.cp.js')).openInWindow({ targetObject: err || target });
       } else {
-        Inspector.openInWindow({ remoteTarget: { code: target, evalEnvironment } });
+        (await System.import('lively.ide/js/inspector/ui.cp.js')).openInWindow({ remoteTarget: { code: target, evalEnvironment } });
       }
       return result;
     }

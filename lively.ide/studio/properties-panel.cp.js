@@ -16,6 +16,9 @@ import { DarkColorPicker } from './dark-color-picker.cp.js';
 import { EmbeddingControl } from './controls/embedding.cp.js';
 import { ComponentControl, ComponentStatesControl } from './controls/component.cp.js';
 import { ResponsiveControl } from './controls/responsive.cp.js';
+import { defaultPropertiesPanelWidth } from './sidebar-flap.js';
+
+export { defaultPropertiesPanelWidth };
 
 export class PropertiesPanelModel extends ViewModel {
   static get properties () {
@@ -328,8 +331,6 @@ const BackgroundControl = component(PropertySection, {
     }
   }))]
 });
-
-export const defaultPropertiesPanelWidth = 250;
 
 const PropertiesPanel = component({
   defaultViewModel: PropertiesPanelModel,

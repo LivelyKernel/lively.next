@@ -29,8 +29,6 @@ if (typeof System !== 'undefined' && isNodeRuntime(System)) {
   fetch = globalThis.fetch || _fetch || System._nodeRequire('node-fetch').default;
 }
 
-let jsFileHashMap;
-
 export async function fetchResource (proceed, load) {
   const System = this;
   const isCjs = !!System.METADATA[load.name].isCjs;
@@ -47,10 +45,12 @@ export async function fetchResource (proceed, load) {
   // first check if this file is present inside the js file hash map
   // an wether our locally stored and translated one already matches that
   // criteria
+  let jsFileHashMap = System._livelyModulesSourceHashes;
   if (!jsFileHashMap && !isNodeRuntime(System)) {
     const hashUrl = System.resource(System.baseURL).join('__JS_FILE_HASHES__');
     if (await hashUrl.exists()) jsFileHashMap = await hashUrl.readJson();
     else jsFileHashMap = {};
+    System._livelyModulesSourceHashes = jsFileHashMap;
   }
 
   const useCache = System.useModuleTranslationCache;

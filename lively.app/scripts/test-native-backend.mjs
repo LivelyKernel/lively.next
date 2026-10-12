@@ -175,6 +175,8 @@ const request = async (method, action, args) => {
   await backend.initialize();
   assert.equal(global.System, undefined, 'Backend loader leaked onto the UI thread');
   assert.equal(await evaluate('process.pid'), process.pid, 'Backend spawned another process');
+  assert.equal(await evaluate('System.has(System.normalizeSync("lively.modules"))'), false,
+    'Backend startup eagerly instrumented the loader already imported by setupSystem');
   const archive = new FileResource(pathToFileURL(config.runtimeRoot + '/compressed-sources').href).beBinary(true);
   assert.ok(await archive.exists());
   assert.equal(String(await archive.read()), 'native file', 'Worker binary resource was not preserved');
@@ -182,6 +184,11 @@ const request = async (method, action, args) => {
   const listener = JSON.parse(await backend.evaluate('require("node:net").createServer().listen(0)'));
   assert.ok(listener.isError && listener.value.includes('TCP/HTTP listener'), 'TCP guard did not run inside the worker');
   if (config.mode === 'registry') {
+    const moduleURL = pathToFileURL(config.fixture + '/live-module.js').href;
+    fs.writeFileSync(config.fixture + '/live-module.js', 'export let answer = 23;');
+    assert.equal(await evaluate('(async()=>{const mod=await System.import(' + JSON.stringify(moduleURL) + ');return mod.answer;})()'), 23);
+    assert.equal(await evaluate('(async()=>{const modules=await System.import("lively.modules");await modules.module(' + JSON.stringify(moduleURL) + ').changeSource("export let answer = 42;");return (await System.import(' + JSON.stringify(moduleURL) + ')).answer;})()'), 42,
+      'Lazily imported loader must preserve live editing');
     nw.Window.open(config.remoteURL, { show: false });
     let ticks = 0, longest = 0, previous = Date.now();
     const timer = setInterval(() => { const now = Date.now(); longest = Math.max(longest, now - previous); previous = now; ticks++; }, 20);

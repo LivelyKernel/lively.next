@@ -8,11 +8,49 @@ import module, { isModuleLoaded, doesModuleExist } from '../src/module.js';
 import { removeSystem, loadedModules, whenLoaded } from '../src/system.js';
 import { registerPackage, importPackage } from '../src/packages/package.js';
 import { createFiles, resource } from 'lively.resources';
+import { fetchResource } from '../src/resource.js';
 
 let dir = 'local://lively.modules-module-test/';
 let testDir = dir + 'test-project/';
 let module1 = `${testDir}file1.js`;
 let S;
+
+describe('module source hashes', () => {
+  function fixture (baseURL, hash) {
+    const id = baseURL + 'entry.js';
+    const hashes = { '/entry.js': hash };
+    let reads = 0;
+    const system = {
+      baseURL, METADATA: { [id]: {} }, global: { indexedDB: {} }, useModuleTranslationCache: true,
+      get: () => ({ browser: true, node: false }),
+      _livelyModulesTranslationCache: { fetchStoredModuleSource: async () => ({ source: 'cached source', hash: String(hash) }) },
+      resource: url => url === id
+        ? { isResource: true, ext: () => 'js', read: async () => 'fresh source' }
+        : { join: () => ({ exists: async () => true, readJson: async () => { reads++; return hashes; } }) }
+    };
+    return { system, hashes, reads: () => reads,
+      fetch: () => fetchResource.call(system, () => {}, { name: id, metadata: {} }) };
+  }
+
+  it('uses the fresh bootstrap hashes without another scan', async () => {
+    const f = fixture('http://bootstrap.test/', 22);
+    f.system._livelyModulesSourceHashes = f.hashes;
+    expect(await f.fetch()).equals('cached source');
+    expect(f.reads()).equals(0);
+    f.system._livelyModulesSourceHashes = { '/entry.js': 23 };
+    expect(await f.fetch()).equals('fresh source');
+  });
+
+  it('keeps hashes separate between loaders and reuses each scan', async () => {
+    const first = fixture('http://first.test/', 22);
+    const second = fixture('http://second.test/', 42);
+    expect(await first.fetch()).equals('cached source');
+    expect(await second.fetch()).equals('cached source');
+    expect(await second.fetch()).equals('cached source');
+    expect(first.reads()).equals(1);
+    expect(second.reads()).equals(1);
+  });
+});
 
 describe('module loading', () => {
   beforeEach(async () => {
