@@ -2,9 +2,10 @@
 import fs from "fs";
 import path, { join } from "path";
 import { fileURLToPath, pathToFileURL } from "url";
-let Generator;
+let Generator, fetchModule, babel;
 const jspmAvailabilityCache = new Map();
 const JSPM_AVAILABILITY_TTL = 60 * 1000;
+const IMPORT_MAP_CACHE_VERSION = 1;
 
 // Deps that cannot be resolved via jspm.io CDN:
 // - native binary packages (platform-specific compiled addons)
@@ -36,7 +37,7 @@ function extractFailingPackage (errMsg) {
 }
 
 function createGenerator (inputMap, providers, baseUrl) {
-  return new Generator({
+  const generator = new Generator({
     env: ["browser", "module", "import"],
     baseUrl,
     mapUrl: baseUrl && new URL(".cachedImportMap.json", baseUrl),
@@ -44,6 +45,33 @@ function createGenerator (inputMap, providers, baseUrl) {
     inputMap,
     ...(Object.keys(providers).length ? { providers } : {})
   });
+  const resolver = generator.traceMap.resolver;
+  const analyze = resolver.analyze.bind(resolver);
+  const analyzed = new Map();
+  // JSPM 2.12 omits constant templates; augment the trace without changing source integrity.
+  resolver.analyze = url => {
+    if (!analyzed.has(url)) analyzed.set(url, (async () => {
+      const analysis = await analyze(url);
+      if (analysis?.format !== 'esm') return analysis;
+      const source = await (await fetchModule(url, resolver.fetchOpts)).text();
+      if (!source.includes('`') || !source.includes('import')) return analysis;
+      const ast = babel.parseSync(source, {
+        babelrc: false, configFile: false, sourceType: 'module',
+        parserOpts: { createImportExpressions: true }
+      });
+      babel.traverse(ast, {
+        ImportExpression ({ node: { source } }) {
+          if (source.type !== 'TemplateLiteral' || source.expressions.length) return;
+          const specifier = source.quasis[0].value.cooked;
+          if (typeof specifier === 'string' && !analysis.dynamicDeps.includes(specifier)) analysis.dynamicDeps.push(specifier);
+        }
+      });
+      analysis.dynamicDeps.sort();
+      return analysis;
+    })());
+    return analyzed.get(url);
+  };
+  return generator;
 }
 
 function moduleUrlsIn (value, urls = new Set()) {
@@ -220,10 +248,14 @@ export async function generateImportMapForPackage (packageDir, { update = false 
   let cached;
   try { cached = JSON.parse(await fs.promises.readFile(cacheFile, 'utf8')); }
   catch (err) { if (err.code !== 'ENOENT') throw err; }
-  if (!update && cached && JSON.stringify(cached._dependencies) === JSON.stringify(dependencies) && Array.isArray(cached._modules) && mappedModules.every(url => cached._modules.includes(url))) {
+  if (!update && cached?._cacheVersion === IMPORT_MAP_CACHE_VERSION && JSON.stringify(cached._dependencies) === JSON.stringify(dependencies) && Array.isArray(cached._modules) && mappedModules.every(url => cached._modules.includes(url))) {
     return cached;
   }
-  if (!Generator) ({ Generator } = await import('@jspm/generator'));
+  if (!Generator) {
+    const [jspm, parser] = await Promise.all([import('@jspm/generator'), import('@babel/core')]);
+    ({ Generator, fetch: fetchModule } = jspm);
+    babel = parser.default;
+  }
   const providers = { ...cached?._providers };
   const failed = {};
   // Reuse previously selected URLs, except when refreshing or changing providers.
@@ -253,6 +285,7 @@ export async function generateImportMapForPackage (packageDir, { update = false 
   }
   const importMap = JSON.parse(JSON.stringify(generatedMap).replace(/https:\/\//g, 'esm://'));
   importMap._dependencies = dependencies;
+  importMap._cacheVersion = IMPORT_MAP_CACHE_VERSION;
   importMap._modules = [...new Set([...staticDeps, ...dynamicDeps])].sort();
   if (Object.keys(providers).length) importMap._providers = providers;
   const temporary = `${cacheFile}.${process.pid}.tmp`;
