@@ -584,9 +584,8 @@ export class TilingLayout extends Layout {
 
   /**
    * Defines how the positioned submorphs are to be ordered.
-   * If set to false, the layoutable submorphs are ordered by their relative offset to the container.
-   * If set to true, the layoutable submorphs are ordered by the index they are found at from their owner.
-   * Warning: This property is not supported when the layout is rendered via CSS and defaults to true in this case.
+   * If set to false, the layoutable submorphs are ordered by their reversed owner index.
+   * If set to true, the layoutable submorphs are ordered by their owner index.
    * @type {Boolean}
    */
   get orderByIndex () { return this._orderByIndex; }
@@ -1218,6 +1217,7 @@ export class TilingLayout extends Layout {
   ensureYogaNodesInSync () {
     let { layoutableSubmorphs } = this;
     layoutableSubmorphs = layoutableSubmorphs.filter(m => m.visible);
+    if (!this.orderByIndex) layoutableSubmorphs.reverse();
     const containerNode = this.ensureYogaNodeFor(this.container);
     let i = 0; let resetNodes = layoutableSubmorphs.length !== containerNode.getChildCount();
     for (let m of layoutableSubmorphs) {
@@ -1230,7 +1230,6 @@ export class TilingLayout extends Layout {
     if (resetNodes) {
       while (containerNode.getChildCount()) containerNode.removeChild(containerNode.getChild(0));
       i = 0;
-      if (!this.orderByIndex) layoutableSubmorphs = layoutableSubmorphs.reverse();
       for (let m of layoutableSubmorphs) {
         let subNode = this.ensureYogaNodeFor(m); let danglingParent;
         if (danglingParent = subNode.getParent()) danglingParent.removeChild(subNode);
@@ -1556,8 +1555,6 @@ export class TilingLayout extends Layout {
   }
 
   layoutOrder (morph) {
-    // the following creates a drop zone that is 15 pixels tall.
-    // allows for horizontal reordering.
     return this.container.getProperty('submorphs').indexOf(morph);
   }
 }
