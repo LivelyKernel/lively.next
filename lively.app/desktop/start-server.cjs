@@ -8,8 +8,8 @@
 //     <bundle>/app/ next to the NW.js binary. The server runs from a
 //     per-user runtime root so caches/projects/uploads stay outside the app.
 //
-// LIVELY_DESKTOP_MODE=native uses NW.js's Node-enabled worker. HTTP is the default
-// during rollout and runs under the packaged Node executable.
+// Local services use NW.js's Node-enabled worker by default.
+// LIVELY_DESKTOP_MODE=http runs the HTTP backend under the packaged Node executable.
 
 // Trusted pages use the existing process.mainModule.exports bridge.
 process.mainModule = module;
@@ -651,7 +651,7 @@ function emitError (msg) {
   if (process.env.LIVELY_DESKTOP_MODE && !['native', 'http'].includes(process.env.LIVELY_DESKTOP_MODE)) {
     throw new Error('Unknown desktop mode: ' + process.env.LIVELY_DESKTOP_MODE);
   }
-  if (process.env.LIVELY_DESKTOP_MODE === 'native') {
+  if (process.env.LIVELY_DESKTOP_MODE !== 'http') {
     Object.assign(process.env, childEnv);
     process.chdir(path.join(rootDir, 'lively.server'));
     const { pathToFileURL } = require('node:url');

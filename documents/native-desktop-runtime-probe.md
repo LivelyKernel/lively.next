@@ -47,10 +47,12 @@ The runtime check confirms matching parent/worker process IDs and an absent back
 
 ## Desktop integration
 
-`LIVELY_DESKTOP_MODE=native` selects the embedded backend. HTTP remains the default, and `LIVELY_DESKTOP_MODE=http` explicitly selects rollback. Both modes use the same writable runtime root, ObjectDB directories and snapshots. Native initialization errors reject requests and appear in the interface and boot log; they never select memory storage or start an HTTP fallback automatically.
+Normal launches use the embedded backend without an environment variable. `LIVELY_DESKTOP_MODE=native` explicitly selects it, and `LIVELY_DESKTOP_MODE=http` selects HTTP rollback. Both modes use the same writable runtime root, ObjectDB directories and snapshots. Native initialization errors reject requests and appear in the interface and boot log; they never select memory storage or start an HTTP fallback automatically.
 
 ```sh
-LIVELY_DESKTOP_MODE=native /path/to/bundle/launch.sh
+/path/to/bundle/launch.sh
+# Explicit HTTP rollback:
+LIVELY_DESKTOP_MODE=http /path/to/bundle/launch.sh
 ```
 
 The dashboard and loading screen load from packaged files. `inject-start.js` checks the real paths of these two entry pages before exposing the bridge. HTTP pages receive no native bridge. Native dispatch uses an ObjectDB operation whitelist and JSON value isolation. The frontend SystemJS loader retains browser semantics; backend modules have a separate Node SystemJS loader. Registry and file reads initialize the module runtime; persistent storage loads only when an ObjectDB operation needs it. Shell services also initialize on first use. Explicitly remote ObjectDB, evaluation and collaboration connections retain their network transports.
@@ -140,7 +142,7 @@ Linux x64 measurements on 2026-10-06 compare the inline package at `9347874bf` w
 
 Median longest dashboard frames fall by 41.4% fresh and 43.0% on relaunch. Usable-world time improves by 8.9% and 2.1%; backend readiness improves by 9.4% and 5.2%. Fresh dashboard visibility varies within overlapping ranges; relaunch visibility improves by 27.0%. The isolated CPU-loop check demonstrates that backend execution no longer blocks the UI event loop. Actual startup still has approximately 1.3-second dashboard gaps, so the responsiveness gate remains open; this comparison does not attribute the remaining gaps to a specific function.
 
-HTTP remains the default until the remaining platform and responsiveness gates pass. macOS and Windows packages have not been executed in this Linux environment. Browser storage moves from the HTTP origin to file pages in native mode: existing browser-local preferences and login selections are not migrated, while worlds and project files remain in the shared persistent backend. Validate that identity transition before changing the default.
+Native mode is now the default. Packaged smoke checks leave `LIVELY_DESKTOP_MODE` unset on Linux, macOS and Windows, while Linux also exercises explicit HTTP rollback. macOS and Windows native execution is checked by CI; it cannot be exercised in this Linux environment. Browser storage moves from the HTTP origin to file pages: existing browser-local preferences and login selections are not migrated, while worlds and project files remain in the shared persistent backend.
 
 ## Upstream references
 

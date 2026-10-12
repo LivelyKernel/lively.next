@@ -972,7 +972,7 @@ function seedProject (dataDir) {
 
 async function main () {
   const args = parseArgs();
-  const native = args.mode === 'native';
+  const native = args.mode !== 'http';
   const startupOnly = args.startupOnly === 'true';
   const checkSavedWorld = args.checkSavedWorld === 'true';
   if (args.mode && !['native', 'http'].includes(args.mode)) throw new Error('Unknown desktop mode: ' + args.mode);
@@ -1033,7 +1033,8 @@ async function main () {
         LIVELY_APP_DATA_DIR: dataDir,
         LIVELY_APP_CACHE_DIR: cacheDir,
         LIVELY_APP_SMOKE: '1',
-        LIVELY_DESKTOP_MODE: native ? 'native' : 'http'
+        // Leave the variable unset unless requested, exercising normal startup.
+        LIVELY_DESKTOP_MODE: args.mode
       },
       stdio: ['ignore', 'pipe', 'pipe']
     });
@@ -1052,6 +1053,9 @@ async function main () {
 
       const launchStarted = Date.now();
       const port = await waitForBootLogReady(logFile, timeoutMs, native);
+      if (native && readTextFile(logFile).includes('Starting lively.server on')) {
+        throw new Error('Native desktop mode started an HTTP server');
+      }
       if (reopened && cacheProbe && port === previousPort) throw new Error('HTTP relaunch did not change its port');
       if (!reopened) previousPort = port;
       const rootURL = pathToFileURL(path.join(dataDir, 'runtime-root') + path.sep).href;

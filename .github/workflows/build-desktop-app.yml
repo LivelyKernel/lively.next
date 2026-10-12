@@ -273,13 +273,13 @@ jobs:
           LIVELY_APP_UPDATE_URL: ${{ needs.metadata.outputs.update_url }}
         run: node ./lively.app/scripts/build.mjs --platform=${{ matrix.target_platform }} --arch=${{ matrix.target_arch }}
 
-      - name: Smoke raw Linux desktop app launch
+      - name: Smoke raw Linux HTTP desktop app launch
         # macOS launch is checked below on the signed Velopack artifact.
         if: ${{ matrix.target_platform == 'linux' }}
         run: |
           xvfb-run -a --server-args="-screen 0 1440x900x24" \
             node ./lively.app/scripts/smoke-desktop-bundle.mjs \
-              --bundleDir="dist/${{ matrix.bundle }}" --platform=linux
+              --bundleDir="dist/${{ matrix.bundle }}" --platform=linux --mode=http
 
       - name: Smoke native Linux desktop services and HTTP rollback
         if: ${{ matrix.target_platform == 'linux' }}
@@ -292,7 +292,7 @@ jobs:
             node ./lively.app/scripts/test-native-backend.mjs "$nw_executable"
           xvfb-run -a --server-args="-screen 0 1440x900x24" \
             node ./lively.app/scripts/smoke-desktop-bundle.mjs \
-              --bundleDir="dist/${{ matrix.bundle }}" --platform=linux --mode=native \
+              --bundleDir="dist/${{ matrix.bundle }}" --platform=linux \
               | tee native-desktop-smoke.log
           data_dir="$(awk '/^Smoke data: / { sub(/^Smoke data: /, ""); print; exit }' native-desktop-smoke.log)"
           test -n "$data_dir"
