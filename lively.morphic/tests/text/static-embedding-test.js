@@ -13,12 +13,16 @@ describe('embedded morphs in static text', () => {
       expect(text.needsDocument).equals(false);
       expect(text.textString).equals('before \ufffd after');
       expect(embedded.owner).equals(text);
-      expect(text.submorphs).includes(embedded);
+      expect(text.submorphs).deep.equals([embedded]);
       expect(text.embeddedMorphMap.has(embedded)).equals(true);
+      const ordinary = Array.from({ length: 3 }, () => new Morph());
+      ordinary.forEach(morph => text.addMorph(morph));
+      expect(text.submorphs).deep.equals([embedded, ...ordinary]);
+      expect(text.withAllSubmorphsSelect(morph => morph === embedded)).length(1);
       embedded.remove();
       text.env.forceUpdate();
       expect(text.textString).equals('before  after');
-      expect(text.submorphs).not.includes(embedded);
+      expect(text.submorphs).deep.equals(ordinary);
       expect(text.embeddedMorphMap.has(embedded)).equals(false);
       expect(embedded.owner).equals(null);
     } finally { text.remove(); }
@@ -42,6 +46,7 @@ describe('embedded morphs in static text', () => {
       expect(copy.embeddedMorphs).length(1);
       expect(copy.embeddedMorphs[0]).not.equals(second);
       expect(copy.embeddedMorphs[0].owner).equals(copy);
+      expect(copy.submorphs).deep.equals(copy.embeddedMorphs);
       expect(second.owner).equals(text);
     } finally { copy?.remove(); text.remove(); }
   });
