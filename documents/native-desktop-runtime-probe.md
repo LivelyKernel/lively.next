@@ -13,7 +13,7 @@ The backend can run in NW.js's Node context with the merged Bun dependency layou
 
 ## Results
 
-Verified on Linux on 2026-10-05, against merged main `d62a66be8` plus the resource/backend changes:
+Verified on Linux on 2026-10-05, against merged main `318685694` plus the resource/backend changes:
 
 | Runtime | Embedded Node | Without `NWESM` | With both settings |
 | --- | --- | --- | --- |
@@ -82,7 +82,7 @@ DISPLAY=:91 node lively.app/scripts/smoke-desktop-bundle.mjs \
 
 For an HTTP rollback check, pass the native run's printed data directory to the same harness with `--mode=http --dataDir=/path/to/data --checkSavedWorld=true`. The normal browser boot check also runs successfully with external HTTP blocked.
 
-The storage/resource/events run passes 114 checks. Existing shell/evaluation and command-helper tests pass. The Linux build workflow now runs native packaged smoke coverage and HTTP rollback on the native run's saved data alongside its HTTP checks. Chromium's existing DevTools endpoint remains available for debugging; application backend services do not use it.
+The storage/resource/events run passes 114 checks. SWC tests also execute both frozen and live transforms to verify that resource registrations survive re-execution and direct eval retains its lexical loader. This exposed and fixed self-initializers clearing recorder state and captured eval calls losing their local scope. The shared module evaluator also binds its loader explicitly, since async compilation can rename lexical variables; the shared Rust suites pass 180 transform checks and 15 browser compiler checks. Existing shell/evaluation and command-helper tests pass. All 51 affected browser checks pass, including cloned-loader edits, definition callbacks, import updates, virtual modules and native ObjectDB dispatch. The Linux build workflow now runs native packaged smoke coverage and HTTP rollback on the native run's saved data alongside its HTTP checks. Chromium's existing DevTools endpoint remains available for debugging; application backend services do not use it.
 
 The generated project build checks also exposed assumptions that only hold in a source checkout: CommonJS conversion of mounted Lively workspaces, class instrumentation resolving its generated runtime dependency from the project, and project CSS/assets being located beside the installed core packages. The freezer now uses the application source root for its ESM exclusion, resolves its own generated class runtime, and collects project assets from the transformed modules' actual project roots. The project bundle regression mounts workspaces separately and loads project CSS from a temporary runtime path containing spaces.
 
@@ -92,18 +92,18 @@ Use `--startupOnly=true` to measure launch to visible dashboard, backend readine
 
 The default-mode gate is at least 25% lower median dashboard time, no more than 10% regression in usable-world time, acceptable responsiveness during backend initialization, and matching persistence/workflow checks on Linux, macOS and Windows.
 
-Linux x64 results on 2026-10-05, in seconds: median (minimum–maximum), three samples per row. HTTP and native use the same final SDK package, NW.js 0.111.1, Bun 1.4.2 and identical seeded project contents. HTTP uses packaged Node 24.20.0; native uses NW.js's embedded Node 25.9.0. Main `d62a66be8` is a separately packaged reference with the same runtime configuration. Runs are serialized with mode order alternated. Fresh rows use empty profiles/data/cache directories; relaunch rows reuse those directories. The OS file cache is warm. These are Xvfb measurements on a shared development host with concurrent work, not release hardware.
+Linux x64 results on 2026-10-05, in seconds: median (minimum–maximum), three samples per row. HTTP and native use the same SDK package built from `318685694` plus this branch, with the CI freezer configuration, NW.js 0.111.1, Bun 1.4.2 and identical seeded project contents. HTTP uses packaged Node 24.20.0; native uses NW.js's embedded Node 25.9.0. The separately packaged Bun-merge reference `d62a66be8` was measured earlier and is retained for context; acceptance comparisons use the current HTTP/native pair. Runs are serialized with mode order alternated. Fresh rows use empty profiles/data/cache directories; relaunch rows reuse those directories. The OS file cache is warm. These are Xvfb measurements on a shared development host with concurrent work, not release hardware.
 
 | Package/mode | Profile/cache | Visible dashboard | Backend ready | Usable world | Longest dashboard frame |
 | --- | --- | --- | --- | --- | --- |
-| Main / HTTP reference | Fresh | 19.37 (18.18–23.53) | 16.90 (15.84–20.70) | 30.36 (29.13–40.75) | 0.95 (0.90–1.23) |
-| Main / HTTP reference | Relaunch | 7.20 (6.55–9.50) | 4.69 (4.60–5.63) | 17.02 (15.23–21.65) | 1.40 (0.78–2.38) |
-| Final / HTTP | Fresh | 19.61 (19.21–20.05) | 17.60 (16.95–17.95) | 29.18 (28.98–30.17) | 0.90 (0.88–0.97) |
-| Final / HTTP | Relaunch | 6.86 (6.68–7.31) | 4.81 (4.67–4.89) | 15.28 (15.27–17.35) | 0.88 (0.87–1.47) |
-| Final / native | Fresh | 3.58 (3.45–3.72) | 17.52 (16.48–18.69) | 25.59 (24.09–27.21) | 2.40 (2.13–2.55) |
-| Final / native | Relaunch | 4.11 (3.62–4.40) | 6.13 (5.62–6.67) | 13.47 (13.15–14.33) | 2.42 (1.30–2.70) |
+| Bun merge / HTTP reference | Fresh | 19.37 (18.18–23.53) | 16.90 (15.84–20.70) | 30.36 (29.13–40.75) | 0.95 (0.90–1.23) |
+| Bun merge / HTTP reference | Relaunch | 7.20 (6.55–9.50) | 4.69 (4.60–5.63) | 17.02 (15.23–21.65) | 1.40 (0.78–2.38) |
+| Current / HTTP | Fresh | 19.24 (19.07–20.07) | 16.91 (16.90–17.87) | 30.34 (29.97–30.70) | 0.93 (0.92–0.98) |
+| Current / HTTP | Relaunch | 7.16 (6.80–7.40) | 4.64 (4.59–4.66) | 16.48 (15.44–17.91) | 1.40 (0.90–1.63) |
+| Current / native | Fresh | 4.19 (3.54–4.44) | 17.50 (17.39–18.20) | 25.32 (25.20–26.79) | 2.23 (2.17–2.93) |
+| Current / native | Relaunch | 4.24 (4.15–4.45) | 6.43 (6.24–6.82) | 14.18 (13.57–14.23) | 2.40 (2.30–2.58) |
 
-Against HTTP in the same package, median dashboard visibility improves by 81.7% fresh and 40.0% on relaunch; usable-world time improves by 12.3% and 11.8%. Backend initialization itself remains substantial. On relaunch, median boot-log times from Node-main entry are 0.22 seconds for runtime-root preparation, 2.45 seconds for registry readiness and 5.84 seconds for the complete module runtime. Initial package/module loading and later storage initialization remain the dominant work. Registry-only checks open no databases.
+Against HTTP in the same package, median dashboard visibility improves by 78.2% fresh and 40.8% on relaunch; usable-world time improves by 16.6% and 14.0%. Backend initialization itself remains substantial. On relaunch, median boot-log times from Node-main entry are 0.39 seconds for runtime-root preparation, 2.64 seconds for registry readiness and 6.10 seconds for the complete module runtime. Initial package/module loading and later storage initialization remain the dominant work. Registry-only checks open no databases.
 
 The timing thresholds pass for visibility and world readiness in this sample. The responsiveness gate remains open: two-second animation-frame gaps mean an early visible dashboard cannot be described as continuously interactive throughout initialization. Further isolation or reduction of synchronous module work needs validation before enabling native mode by default.
 
