@@ -1,15 +1,13 @@
-/* global it, describe, before, beforeEach, afterEach,System */
+/* global it, describe, beforeEach, afterEach,System */
 import { createDOMEnvironment } from '../rendering/dom-helper.js';
 import { morph, config, MorphicEnv } from '../index.js';
 import { expect } from 'mocha-es6';
 import { pt, Color, rect } from 'lively.graphics';
 import { num, promise } from 'lively.lang';
-import { resource } from 'lively.resources';
 
 const HTMLScrollbarOffset = pt(config.scrollbarOffset, config.scrollbarOffset);
 
 let env;
-let morphicCSS;
 let world, submorph1, submorph2, submorph3, image, ellipse;
 function createDummyWorld () {
   world = morph({
@@ -40,14 +38,7 @@ describe('rendering', function () {
   // jsdom sometimes takes its time to initialize...
   if (System.get('@system-env').node) { this.timeout(10000); }
 
-  before(async () => morphicCSS = await resource(System.decanonicalize('lively.morphic/index.js')).parent().join('assets/morphic.css').read());
-  beforeEach(async () => {
-    const domEnv = await createDOMEnvironment();
-    const style = domEnv.document.createElement('style');
-    style.textContent = morphicCSS;
-    domEnv.document.head.appendChild(style);
-    env = await MorphicEnv.pushDefault(new MorphicEnv(domEnv)).setWorld(createDummyWorld());
-  });
+  beforeEach(async () => env = await MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment())).setWorld(createDummyWorld()));
   afterEach(() => MorphicEnv.popDefault().uninstall());
 
   it('morph id is DOM node id', () => {
