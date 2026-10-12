@@ -104,7 +104,8 @@ leaves the DOM inspector enabled, and requires no special Node inspector flag.
 Concurrent reader requests and a normal DevTools evaluation verified identity and
 continuation resume in NW.js 0.111.1. The ordinary Node reader still uses
 `node:inspector` for its native check. No external controller or native stack capture
-is involved; the crash was an integration bug in attaching competing inspector backends.
+is involved. The bridge avoids the reproduced competing-inspector integration;
+the direct Node/Blink ownership crash remains an NW.js integration issue.
 
 Primary implementation and runtime guidance:
 [V8 function scopes](https://github.com/v8/v8/blob/main/src/inspector/v8-debugger.cc),

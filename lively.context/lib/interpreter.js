@@ -344,6 +344,7 @@ export class Interpreter {
         frame = state.currentFrame;
     this.accept(node.test, state);
     var condVal = state.result;
+    if (node.test.astIndex != null) frame.alreadyComputed[node.test.astIndex] = condVal;
     state.result = oldResult;
 
     if (condVal) {
