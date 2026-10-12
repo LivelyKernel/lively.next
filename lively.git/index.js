@@ -105,20 +105,17 @@ export class GitHubAPIWrapper {
       }
     });
     const deployKeys = await resKeyList.json();
-    
-    // Should allow us to catch all cases where no keys are found in which case we do not have to delete anythings
-    if (!deployKeys.find) return;
-    
-    const keyIdToRemove = deployKeys.find(key => key.title === title).id;
+    const keyToRemove = Array.isArray(deployKeys) && deployKeys.find(key => key.title === title);
+    if (!keyToRemove) return;
 
-    await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/keys/${keyIdToRemove}`, {
+    await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/keys/${keyToRemove.id}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${currentUserToken()}`,
         'X-GitHub-Api-Version': '2022-11-28'
       }
     });
-    }
+  }
 
   static async listGithubBranches (repoOwner, repoName) {
     const token = currentUserToken();
