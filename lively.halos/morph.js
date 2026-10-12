@@ -2263,13 +2263,14 @@ export default class Halo extends Morph {
 
   onDragStart (evt) {
     this.dragHalo().init();
-    this._lastDragPos = evt.startPosition;
+    this._lastDragPos = evt.position;
   }
 
   onDrag (evt) {
     if (!this.world()) return;
     this.dragHalo().update(evt.state.dragDelta);
     this.dragHalo().visible = false;
+    this._lastDragPos = evt.position;
   }
 
   onDragEnd (evt) {
