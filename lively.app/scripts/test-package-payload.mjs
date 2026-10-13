@@ -6,7 +6,7 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { manifestName, preparePackagedSources, stagePackagedSources } from '../desktop/package-payload.cjs';
+import { manifestName, preparePackagedSources, stagePackagedSources, seedPackagedPartsbin } from '../desktop/package-payload.cjs';
 
 const fixture = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'lively-payload-')));
 const originalCache = process.env.LIVELY_APP_CACHE_DIR;
@@ -53,6 +53,23 @@ try {
     restore();
   }
   assert.equal(fs.realpathSync(path.join(source, 'lively.a', 'node_modules', 'cycle-a')), path.join(source, 'lively.a'));
+  const partsbin = path.join(source, 'local_projects', 'LivelyKernel--partsbin');
+  fs.mkdirSync(path.join(partsbin, 'node_modules'), { recursive: true });
+  fs.writeFileSync(path.join(partsbin, 'package.json'), '{"name":"LivelyKernel--partsbin"}');
+  fs.writeFileSync(path.join(partsbin, 'component.cp.js'), 'bundled component');
+  fs.symlinkSync('..', path.join(partsbin, 'node_modules', 'LivelyKernel--partsbin'), 'dir');
+  const runtime = path.join(fixture, 'runtime with spaces');
+  const installed = path.join(runtime, 'local_projects', 'LivelyKernel--partsbin');
+  seedPackagedPartsbin(source, runtime);
+  assert.equal(fs.readFileSync(path.join(installed, 'component.cp.js'), 'utf8'), 'bundled component');
+  assert.equal(fs.realpathSync(path.join(installed, 'node_modules', 'LivelyKernel--partsbin')), installed);
+  fs.writeFileSync(path.join(installed, 'component.cp.js'), 'user edit');
+  fs.writeFileSync(path.join(partsbin, 'component.cp.js'), 'app upgrade');
+  seedPackagedPartsbin(source, runtime);
+  assert.equal(fs.readFileSync(path.join(installed, 'component.cp.js'), 'utf8'), 'user edit');
+  const failedRuntime = path.join(fixture, 'failed runtime');
+  assert.throws(() => seedPackagedPartsbin(path.join(fixture, 'missing source'), failedRuntime));
+  assert.deepEqual(fs.readdirSync(path.join(failedRuntime, 'local_projects')), []);
   const broken = path.join(fixture, 'broken payload');
   fs.mkdirSync(broken);
   fs.writeFileSync(path.join(broken, manifestName), JSON.stringify({ sha256: '../escape' }));

@@ -18,8 +18,6 @@ function isNodeRuntime (System) {
     !!process.versions?.node;
 }
 
-const isNode = isNodeRuntime(System);
-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // Functions below are for re-loading modules from change.js. We typically
 // start with a load object that skips the normalize / fetch step. Since we need
@@ -234,6 +232,7 @@ export async function customTranslate (load) {
   // }
 
   const System = this; const debug = System.debug;
+  const isNode = isNodeRuntime(System);
   const meta = load.metadata;
 
   // JSON files should be handled by SystemJS's native JSON format handler.
@@ -357,6 +356,7 @@ export async function customTranslate (load) {
 
 export async function postCustomTranslate (load) {
   // FIXME: Move this too into the transpilation step via a custom babel plugin "lively-post-transpile"
+  const System = this;
   const start = load.metadata.ts;
   if (!load.metadata['lively.modules instrumented']) return; // if we already retrieved the source from cache, not need to store it again
   let translated = load.source;
@@ -370,7 +370,7 @@ export async function postCustomTranslate (load) {
 
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // cache experiment part 2
-  if (isNode && useCache && load.name.startsWith('file:')) {
+  if (isNodeRuntime(System) && useCache && load.name.startsWith('file:')) {
     let cache = System._livelyModulesTranslationCache ||
                (System._livelyModulesTranslationCache = new NodeModuleTranslationCache());
     try {

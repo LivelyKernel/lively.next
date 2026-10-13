@@ -173,7 +173,7 @@ export default class ServerCommand extends CommandInterface {
         ? [windowsBash, ['-lc', command]]
         : ['cmd', ['/C', command]]);
     } else {
-      command = `source ${binDir}/lively.profile; ${command}`;
+      command = `source '${(binDir + "/lively.profile").replace(/'/g, "'\\''")}'; ${command}`;
       ([command, args] = ['/bin/bash', ['-c', command]]);
     }
 

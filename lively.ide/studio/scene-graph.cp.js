@@ -105,7 +105,7 @@ export class MorphPanelModel extends ViewModel {
 
   onWorldResize (align = true) {
     const { view } = this;
-    const bounds = $world.visibleBounds();
+    const bounds = $world.visibleBoundsExcludingTopBar();
     const offsetTop = navigator.standalone && touchInputDevice ? 25 : 0;
     view.height = bounds.height - offsetTop;
     view.top = offsetTop + bounds.top();
@@ -117,7 +117,7 @@ export class MorphPanelModel extends ViewModel {
 
   async toggle (active) {
     const { view } = this;
-    const bounds = $world.visibleBounds();
+    const bounds = $world.visibleBoundsExcludingTopBar();
     const versionViewer = $world.get('lively version checker');
     this.onWorldResize(false);
     if (active) {
@@ -638,7 +638,7 @@ const MorphPanel = component({
     layout: new TilingLayout({
       axis: 'column',
       orderByIndex: true,
-      padding: rect(0, 60, 0, -60),
+      padding: Rectangle.inset(0, 10, 0, 0),
       resizePolicies: [['search field', {
         height: 'fixed',
         width: 'fill'

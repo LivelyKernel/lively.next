@@ -1,6 +1,7 @@
 /* global process */
 import Resource from './resource.js';
 import { applyExclude, windowsURLPrefixRe, windowsRootPathRe, ensurePlatformIndependentCharacters } from './helpers.js';
+import { parallel } from 'lively.lang/promise.js';
 
 import { createWriteStream, createReadStream, readFile, writeFile, stat, mkdir, rmdir, unlink, readdir, lstat, rename, access } from 'fs';
 
@@ -82,14 +83,13 @@ export class NodeJSFileResource extends Resource {
     if (depth <= 0) depth = 1;
 
     if (depth === 1) {
-      let subResources = [];
-      for (const name of await readdirP(this.path())) {
+      let subResources = await parallel((await readdirP(this.path())).map(name => async () => {
         let subResource = this.join(name);
         const stat = await subResource.stat();
         subResource = stat.isDirectory() ? subResource.asDirectory() : subResource;
         subResource._assignPropsFromStat(stat);
-        subResources.push(subResource);
-      }
+        return subResource;
+      }), 16);
       if (exclude) subResources = applyExclude(exclude, subResources);
       return subResources;
     }

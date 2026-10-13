@@ -264,7 +264,7 @@ export class RemoteCoreInterface extends AbstractCoreInterface {
   }
 
   livelyModulesAccessor (varName = 'modules') {
-    return `${varName} = System.get(System.decanonicalize("lively.modules"))`;
+    return `${varName} = System.get(System.decanonicalize("lively.modules")) || await System.import("lively.modules")`;
   }
 
   normalizeSync (name, parentName, isPlugin) {

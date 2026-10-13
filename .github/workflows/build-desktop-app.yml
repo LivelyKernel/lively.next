@@ -273,13 +273,33 @@ jobs:
           LIVELY_APP_UPDATE_URL: ${{ needs.metadata.outputs.update_url }}
         run: node ./lively.app/scripts/build.mjs --platform=${{ matrix.target_platform }} --arch=${{ matrix.target_arch }}
 
-      - name: Smoke raw Linux desktop app launch
+      - name: Smoke raw Linux HTTP desktop app launch
         # macOS launch is checked below on the signed Velopack artifact.
         if: ${{ matrix.target_platform == 'linux' }}
         run: |
           xvfb-run -a --server-args="-screen 0 1440x900x24" \
             node ./lively.app/scripts/smoke-desktop-bundle.mjs \
-              --bundleDir="dist/${{ matrix.bundle }}" --platform=linux
+              --bundleDir="dist/${{ matrix.bundle }}" --platform=linux --mode=http
+
+      - name: Smoke native Linux desktop services and HTTP rollback
+        if: ${{ matrix.target_platform == 'linux' }}
+        timeout-minutes: 15
+        run: |
+          nw_version="$(node -p "require('./dist/${{ matrix.bundle }}/desktop/build-info.json').nwVersion")"
+          nw_executable="$(find dist/.cache/nw -path "*/nwjs-sdk-v${nw_version}-linux-x64/nw" -type f -print -quit)"
+          test -x "$nw_executable"
+          xvfb-run -a --server-args="-screen 0 1440x900x24" \
+            node ./lively.app/scripts/test-native-backend.mjs "$nw_executable"
+          xvfb-run -a --server-args="-screen 0 1440x900x24" \
+            node ./lively.app/scripts/smoke-desktop-bundle.mjs \
+              --bundleDir="dist/${{ matrix.bundle }}" --platform=linux \
+              | tee native-desktop-smoke.log
+          data_dir="$(awk '/^Smoke data: / { sub(/^Smoke data: /, ""); print; exit }' native-desktop-smoke.log)"
+          test -n "$data_dir"
+          xvfb-run -a --server-args="-screen 0 1440x900x24" \
+            node ./lively.app/scripts/smoke-desktop-bundle.mjs \
+              --bundleDir="dist/${{ matrix.bundle }}" --platform=linux --mode=http \
+              --dataDir="$data_dir" --checkSavedWorld=true
 
       - name: Setup .NET for Velopack
         # vpk pack is platform-native. Windows packaging is handled by the
@@ -370,7 +390,7 @@ jobs:
     # The raw Windows bundle is cross-built by one matrix leg. Do not block
     # native Windows packaging/smoke on unrelated Linux/macOS bundle failures;
     # if the Windows artifact is missing, the download step below will fail.
-    if: ${{ always() && needs.metadata.result == 'success' && needs.build.result != 'cancelled' }}
+    if: ${{ !cancelled() && needs.metadata.result == 'success' && needs.build.result != 'cancelled' }}
     runs-on: windows-latest
     defaults:
       run:
@@ -457,13 +477,18 @@ jobs:
           }
 
           $env:NODE_OPTIONS = "--experimental-import-meta-resolve"
+          $env:BUN_PATH = $packagedBun
           Push-Location $app
           try {
+            node "$env:GITHUB_WORKSPACE/lively.app/scripts/rebuild-windows-leveldown.mjs" "$app" "$packagedNode"
+            if ($LASTEXITCODE -ne 0) { throw "Windows NW.js LevelDB rebuild failed" }
+            & $packagedNode lively.project/package-install.mjs local_projects/LivelyKernel--partsbin
+            if ($LASTEXITCODE -ne 0) { throw "Windows PartsBin dependency install failed" }
             & $packagedNode lively.modules/tests/native-resolver-test.mjs
             if ($LASTEXITCODE -ne 0) { throw "Windows native resolver fixture failed" }
             & $packagedNode lively.modules/tests/native-system-live-test.mjs
             if ($LASTEXITCODE -ne 0) { throw "Windows live SystemJS fixture failed" }
-            & $packagedNode --input-type=module -e "import {createRequire} from 'node:module'; import path from 'node:path'; import {pathToFileURL} from 'node:url'; for (const [owner,name] of [['lively.freezer','@swc/core'],['lively.morphic','yoga-layout'],['lively.modules','brotli']]) { const r=createRequire(path.resolve(owner,'package.json')); await import(pathToFileURL(r.resolve(name)).href); console.log(owner+' -> '+name+' native load passed'); }"
+            & $packagedNode --input-type=module -e "import {createRequire} from 'node:module'; import path from 'node:path'; import {pathToFileURL} from 'node:url'; for (const [owner,name] of [['lively.freezer','@swc/core'],['lively.morphic','yoga-layout'],['lively.modules','brotli'],['lively.storage','pouchdb']]) { const r=createRequire(path.resolve(owner,'package.json')); await import(pathToFileURL(r.resolve(name)).href); console.log(owner+' -> '+name+' native load passed'); }"
             if ($LASTEXITCODE -ne 0) { throw "Windows native dependency load failed" }
             & $packagedNode lively.server/scripts/build-package-registry-cache.cjs
             if ($LASTEXITCODE -ne 0) { throw "Windows package registry seed build failed" }

@@ -121,7 +121,6 @@ async function fastLoadPackages (progress) {
   // lively.ide
   await System.import('lively.ide/world.js');
   await System.import('lively.ide/editor-plugin.js');
-  await System.import('lively.ide/js/editor-plugin.js');
   extractModules('lively.ide');
 
   // lively.shell
@@ -166,7 +165,6 @@ async function fastLoadPackages (progress) {
   extractModules('lively.git');
 
   // lively.freezer
-  await System.import('lively.freezer');
   extractModules('lively.freezer');
 
   extractModules('lively.user');
@@ -210,7 +208,7 @@ async function shallowReloadModulesIfNeeded (modulesToCheck, moduleHashes, R) {
   return arr.uniq(modsToReload);
 }
 
-const baseURL = window.SYSTEM_BASE_URL || document.location.origin; // usually the server is located at the origin, but this can be overridden via this window var
+const baseURL = (window.SYSTEM_BASE_URL || document.location.origin).replace(/\/$/, '');
 function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false || window.FORCE_FAST_LOAD) {
   lively.wasFastLoaded = fastLoad;
   // for loading an instrumented version of the packages comprising the lively.system
@@ -235,15 +233,23 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
       if (initBaseURL.endsWith('/')) {
         initBaseURL = initBaseURL.slice(0, -1);
       }
-      const packageCached = await resource(baseURL).join('package-registry.json').readJson();
       const migratedMeta = { ...oldSystem.meta };
       const System = lively.modules.getSystem('bootstrapped', { baseURL, meta: migratedMeta }); // the meta of the not yet loaded modules needs to be transformed into register
+      installLinter(System);
+      // Prepare the private loader while backend inputs arrive; keep the dashboard's loader active.
+      const [[packageCached, moduleHashes]] = await Promise.all([
+        Promise.all([
+          resource(baseURL).join('package-registry.json').readJson(),
+          resource(baseURL).join('__JS_FILE_HASHES__').readJson()
+        ]),
+        setupSwcTranspiler(System)
+      ]);
+      // Both loaders use this launch's fresh scan, including during bundle replay.
+      oldSystem._livelyModulesSourceHashes = System._livelyModulesSourceHashes = moduleHashes;
       $world.env.uninstallSystemChangeHandlers();
       lively.modules.changeSystem(System, true);
       $world.env.installSystemChangeHandlers();
 
-      installLinter(System);
-      await setupSwcTranspiler(System);
       logInfo('Setup SystemJS:', Date.now() - ts + 'ms');
 
       // load packages
@@ -259,7 +265,8 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
         // denote the exports
         m._frozenModule = true;
       }
-      oldSystem.config({ baseURL }); // this system keeps lurking around inside lively.modules somehow, so this fixes that issue for the time being
+      // Frozen desktop chunks still resolve their class runtime beside the entry page.
+      if (!window.livelyNative) oldSystem.config({ baseURL });
       installFetchHook();
       logInfo('Load package info:', Date.now() - ts + 'ms');
     })
@@ -357,7 +364,7 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
       logInfo('Loaded module system:', Date.now() - ts + 'ms');
 
       const R = lively.FreezerRuntime;
-      const moduleHashes = await resource(System.baseURL).join('__JS_FILE_HASHES__').readJson();
+      const moduleHashes = System._livelyModulesSourceHashes;
       if (fastLoad) {
         ts = Date.now();
         // revive the modules where the hashes differ from the ones on the bundle
@@ -489,7 +496,7 @@ export async function bootstrap ({
       };
       if (snapshot) {
         let World, loadMorphFromSnapshot, loadWorld;
-        if (!snapshot.startsWith('http')) snapshot = resource(System.baseURL).join(snapshot).url;
+        if (!/^(https?|file):/.test(snapshot)) snapshot = resource(System.baseURL).join(snapshot).url;
         ({ World } = await lively.modules.module('lively.morphic/world.js').recorder);
         ({ loadWorld } = await lively.modules.module('lively.morphic/world-loading.js').recorder);
         ({ loadMorphFromSnapshot } = await lively.modules.module('lively.morphic/serialization.js').recorder);

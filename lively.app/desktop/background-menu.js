@@ -7,10 +7,17 @@
 (function () {
   'use strict';
 
+  // A script in node-main also runs in every Node-enabled worker and resolves
+  // against process.cwd(). Keep only Node flags there; start the app here once.
+  const path = require('path');
+  const desktopDir = path.join(__dirname, 'desktop');
+  const desktopRequire = require('module').createRequire(path.join(desktopDir, 'background-menu.js'));
+  const bootstrap = desktopRequire('./start-server.cjs');
+  bootstrap.setBackgroundWindow(window);
+
   const fs = require('fs');
   const os = require('os');
-  const path = require('path');
-  const { createUpdateService } = require('./updates.cjs');
+  const { createUpdateService } = desktopRequire('./updates.cjs');
 
   function uniquePaths (paths) {
     return Array.from(new Set(paths.filter(Boolean).map(p => path.resolve(p))));
@@ -42,7 +49,7 @@
   function findRootDir (logFn) {
     const appStartPath = typeof nw !== 'undefined' && nw.App && nw.App.startPath;
     const candidates = uniquePaths([
-      ...candidateRootsFrom(__dirname),
+      ...candidateRootsFrom(desktopDir),
       ...candidateRootsFrom(process.cwd && process.cwd()),
       ...candidateRootsFrom(process.execPath),
       ...candidateRootsFrom(process.argv && process.argv[0]),
@@ -83,14 +90,14 @@
   }
 
   const rootDir = findRootDir(log);
-  const bundled = !rootDir || !__dirname.startsWith(rootDir + path.sep);
+  const bundled = !rootDir || !desktopDir.startsWith(rootDir + path.sep);
   logFile = bundled
     ? fallbackLogFile
     : path.join(rootDir, 'lively.app', 'boot.log');
   log('background menu rootDir=' + (rootDir || '(unavailable)') + ', bundled=' + bundled);
 
   const updateService = rootDir
-    ? createUpdateService({ rootDir, desktopDir: __dirname, log })
+    ? createUpdateService({ rootDir, desktopDir, log })
     : null;
 
   function withMainWindow (fn, onMissing) {
@@ -357,10 +364,30 @@
   goMenu.append(updateMenuItem);
   menu.append(new nw.MenuItem({ label: 'Go', submenu: goMenu }));
 
-  function attachMenu (win, reason) {
+  function attachMenu (win, reason, updateState) {
     try {
-      win.menu = menu;
-      log('native menu attached (' + reason + ')');
+      const helper = pageHelper(win);
+      const url = new URL(windowLocation(win));
+      const base = bootstrap.livelyNative?.baseURL;
+      const file = url.href.replace(/[?#].*$/, '');
+      const { pathToFileURL } = require('node:url');
+      const trusted = (url.origin === window.location.origin && ['/boot.html', '/desktop/boot.html'].includes(url.pathname)) ||
+        [path.join(desktopDir, 'boot.html'), path.join(desktopDir, '..', 'boot.html')]
+        .some(boot => file === pathToFileURL(boot).href) ||
+        (base && ['landing-page', 'loading-screen'].some(entry => file === base + 'lively.freezer/' + entry + '/index.html')) ||
+        (bootstrap.desktopOrigin && url.origin === bootstrap.desktopOrigin);
+      if (helper && trusted) {
+        helper.windowAction = action => {
+          if (['close', 'minimize', 'maximize', 'restore'].includes(action)) win[action]();
+        };
+        updateState();
+      }
+      if (process.platform === 'darwin') {
+        if (win.menu !== menu) win.menu = menu;
+      } else {
+        if (helper && trusted) helper.menu = goMenu;
+      }
+      log('desktop menu attached (' + reason + ')');
     } catch (err) {
       log('menu attach failed (' + reason + '): ' + (err.stack || err));
     }
@@ -374,8 +401,20 @@
         return;
       }
 
-      win.on('loaded', function () { attachMenu(win, 'loaded'); });
-      attachMenu(win, 'initial');
+      let maximized = false, minimized = false;
+      let focused = win.window.document.hasFocus();
+      const updateState = () => pageHelper(win)?.setWindowState?.(maximized, focused);
+      win.on('maximize', () => { maximized = true; updateState(); });
+      win.on('minimize', () => { minimized = true; });
+      win.on('restore', () => { if (!minimized) maximized = false; minimized = false; updateState(); });
+      win.on('focus', () => { focused = true; updateState(); });
+      win.on('blur', () => { focused = false; updateState(); });
+      win.on('closed', () => nw.App.quit());
+      win.on('document-start', frame => {
+        if (!frame) win.window.addEventListener('DOMContentLoaded', () => attachMenu(win, 'document ready', updateState), { once: true });
+      });
+      win.on('loaded', function () { attachMenu(win, 'loaded', updateState); });
+      attachMenu(win, 'initial', updateState);
     });
   }
 

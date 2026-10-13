@@ -8,7 +8,7 @@ import ShellEditorPlugin from './editor-plugin.js';
 import DiffEditorPlugin from '../diff/editor-plugin.js';
 import EditorPlugin, { guessTextModeName } from '../editor-plugin.js';
 import { packagesOfSnapshot } from 'lively.morphic/serialization.js';
-import { DarkButton } from '../js/browser/ui.cp.js';
+import { DarkButton } from 'lively.components/buttons.cp.js';
 import { InputLine } from 'lively.components/inputs.js';
 
 // var t = Terminal.runCommand("ls")

@@ -36,16 +36,17 @@ function nodejsRequire (name) {
 // nodejs_leveldbPath("test")
 // nodejs_leveldbPath("file:///Users/robert/Downloads/hackernews-data")
 function nodejs_leveldbPath (dbName) {
+  if (!isNode) throw new Error('nodejs_leveldbPath called under non-nodejs environment');
+  const { fileURLToPath } = nodejsRequire('node:url');
+  const { isAbsolute } = nodejsRequire('node:path');
   // absolute path?
-  if (dbName.startsWith('/')) return dbName;
+  if (isAbsolute(dbName)) return dbName;
   if (dbName.match(/[^\/]+:\/\//)) {
-    if (dbName.startsWith('file:')) { dbName = dbName.replace(/^file:\/\//, ''); }
-    return dbName;
+    return dbName.startsWith('file:') ? fileURLToPath(dbName) : dbName;
   }
 
-  if (!isNode) throw new Error('nodejs_leveldbPath called under non-nodejs environment');
   let basePath = typeof System !== 'undefined' && System.baseURL.startsWith('file://')
-    ? System.baseURL.replace('file://', '')
+    ? fileURLToPath(System.baseURL)
     : GLOB.process.cwd();
 
   // are we in a typical lively.next env? Meaning serverPath points to
@@ -79,12 +80,10 @@ function nodejs_attemptToLoadProperPouchDB () {
   if (!isNode) throw new Error('nodejs_attemptToLoadProperPouchDB called under non-nodejs environment');
 
   if (typeof System !== 'undefined') {
-    let { join } = System._nodeRequire('path');
-    let storageMain = System.normalizeSync('lively.storage/index.js');
-    let pouchDBMain = System.normalizeSync('pouchdb', storageMain).replace(/file:\/\//, '');
-    let pouchDBNodeMain = join(pouchDBMain, '../../lib/index.js');
+    let storageRequire = System._nodeRequire('node:module').createRequire(
+      System.normalizeSync('lively.storage/index.js'));
     try {
-      PouchDB = System._nodeRequire(pouchDBNodeMain);
+      PouchDB = storageRequire('pouchdb');
       PouchDB.plugin(pouchdbAdapterMem);
       return true;
     } catch (e) { return false; }
@@ -180,8 +179,9 @@ export default class Database {
   close () {
     // close database to free mem
     if (!this._pouchdb) return;
-    this._pouchdb.close();
+    const closed = this._pouchdb.close();
     delete this._pouchdb;
+    return closed;
   }
 
   isDestroyed () { return !!this.pouchdb._destroyed; }

@@ -10,7 +10,7 @@ import { LinearGradient } from 'lively.graphics/color.js';
 
 import { ButtonDarkDefault, SystemButton, DarkButton } from 'lively.components/buttons.cp.js';
 import { resource } from 'lively.resources';
-import { FileStatusWarning } from '../js/browser/ui.cp.js';
+import { FileStatusWarning } from './shared.cp.js';
 import { promise } from 'lively.lang';
 import { once, signal } from 'lively.bindings';
 import { ModeSelector, ModeSelectorLabelDark, ModeSelectorLabel } from 'lively.components/widgets/mode-selector.cp.js';

@@ -410,7 +410,7 @@ const config = {
   },
 
   remotes: {
-    server: typeof System !== 'undefined' && System.get('@system-env').browser ? `${document.location.origin}/eval` : null
+    server: typeof System !== 'undefined' && System.get('@system-env').browser ? `${window.SERVER_URL || document.location.origin}/eval` : null
   },
 
   css: {

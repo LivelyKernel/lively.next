@@ -53,7 +53,8 @@
     "lively.shell": "workspace:*",
     "lively.storage": "workspace:*",
     "lively.vm": "workspace:*",
-    "terser": "5.51.2"
+    "terser": "5.51.2",
+    "lively.app": "workspace:*"
   },
   "scripts": {
     "build-loading-screen": "./tools/build-loading-screen.sh",

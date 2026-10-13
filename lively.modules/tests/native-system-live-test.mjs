@@ -14,7 +14,8 @@ const modules = await import('lively.modules');
 const originalLog = console.log;
 console.log('native SystemJS: discovering installed packages');
 console.log = () => {};
-const system = await setupSystem(pathToFileURL(`${root}/`).href);
+const system = await setupSystem(root);
+assert.equal(system.baseURL, pathToFileURL(`${root}/`).href);
 console.log = originalLog;
 
 console.log('native SystemJS: importing instrumented loader');

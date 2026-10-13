@@ -18,9 +18,7 @@
       display: flex; align-items: center; justify-content: center;
       position: relative;
     }
-    /* Triangles matching LandingPage's three polygons (lively.freezer/src/
-       landing-page.cp.js lines 147-181). Same absolute coords scaled into
-       the full viewport via preserveAspectRatio=slice. */
+    /* The dashboard's scene, scaled to cover and centered by ShapeMorpher.fit. */
     .triangles {
       position: absolute;
       inset: 0;
@@ -75,19 +73,14 @@
   </style>
 </head>
 <body>
-  <!-- Three triangles — coords from the dashboard's LandingPageBG, translated
-       so each triangle's widest edge sits on y = viewBox bottom and
-       preserveAspectRatio=xMidYMax pins that bottom edge snug to the window.
-       The original landing-page layout had the triangles float in mid-viewport
-       at fixed pixel positions; here we want the boot screen to look like the
-       triangles are rising out of the window's bottom edge regardless of size. -->
-  <svg class="triangles" viewBox="0 0 1660 980" preserveAspectRatio="xMidYMax slice">
-    <!-- T1: tip originally at y=8, bottom edge at y=877 → shift +103 so bottom hits 980 -->
-    <polygon fill="rgba(230, 126, 34, 0.6)" points="420.53,111.1 839.04,978.46 110.4,980.24"/>
-    <!-- T2: tip originally at y=210, bottom at y=919 → shift +61 -->
-    <polygon fill="rgba(230, 126, 34, 0.6)" points="651.33,271.3 1443.85,980.42 575.6,980.13"/>
-    <!-- T3: already reaches the bottom -->
-    <polygon fill="rgba(230, 126, 34, 0.6)" points="908.46,338.2 1661.05,980.61 792.8,980.32"/>
+  <!-- Step1 in landing-page.cp.js; the frozen entry pages reuse this SVG. -->
+  <svg class="triangles" viewBox="0 0 1320.3 829.3" preserveAspectRatio="xMidYMid slice">
+    <foreignObject width="1320.3" height="829.3">
+      <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;background:linear-gradient(141.4375836736863deg,color(display-p3 0.9451 0.7686 0.0588) 0%,color(display-p3 0.9529 0.6118 0.0706) 100%)"></div>
+    </foreignObject>
+    <polygon fill="rgb(230,126,34)" opacity="0.6" points="420.5325,8.1 839.0366,875.4553 110.4,877.2404"/>
+    <polygon fill="rgb(230,126,34)" opacity="0.6" points="651.329,210.3 1443.8498,919.4216 575.6,919.1307"/>
+    <polygon fill="rgb(230,126,34)" opacity="0.6" points="908.463,338.2 1661.0498,980.6119 792.8,980.321"/>
   </svg>
 
   <div class="card">
@@ -103,10 +96,18 @@
     </svg>
 
     <div class="progress-track"><div class="progress-bar"></div></div>
-    <div class="status" id="status">Starting server…</div>
+    <div class="status" id="status">Starting lively…</div>
   </div>
 
   <script>
+    // The native window starts hidden: package preparation can block before
+    // this document exists. Reveal it only after the orange screen has painted.
+    const painted = new Promise(resolve => {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        nw.Window.get().show();
+        resolve();
+      }));
+    });
     // node-main → DOM communication: expose helpers on window that node-main
     // calls directly. Events via nw.Window.emit don't cross the node↔DOM
     // boundary reliably.
@@ -127,7 +128,7 @@
         document.querySelector('.progress-bar').style.display = 'none';
       },
       navigate: function (url) {
-        window.location.href = url;
+        return painted.then(() => { window.location.href = url; });
       }
     };
   </script>

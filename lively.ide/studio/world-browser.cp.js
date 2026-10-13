@@ -559,12 +559,13 @@ export class WorldBrowserModel extends ViewModel {
       return;
     }
     const file = await files[0].getFile();
-    const snapshotInFolder = await resource(System.baseURL).join('../snapshots/').join(file.name).withRelativePartsResolved().exists();
+    const base = resource(window.SYSTEM_BASE_URL || document.location.origin);
+    const snapshotInFolder = await base.join('snapshots/').join(file.name).exists();
     // "copy" (upload, as we are going through the server) into the lively.next/snapshots directory in order to open it
     if (!snapshotInFolder) {
       const fd = new FormData();
       fd.append('file', file, file.name);
-      const res = resource(System.baseURL).join(`../upload?uploadPath=${encodeURIComponent('/snapshots/')}`).withRelativePartsResolved();
+      const res = base.join(`upload?uploadPath=${encodeURIComponent('/snapshots/')}`);
       await res.write(fd);
     }
     await this.fadeOut();
@@ -645,7 +646,7 @@ export class WorldBrowserModel extends ViewModel {
 
   async viewDidLoad () {
     if (lively.FreezerRuntime) {
-      const localconfigContent = await resource(SERVER_URL + '/localconfig.js').read();
+      const localconfigContent = await resource((window.SYSTEM_BASE_URL || SERVER_URL) + '/localconfig.js').read();
       if (localconfigContent.replaceAll(' = ', '=').includes('config.hideScrollbarsInWorldBrowser=true')) config.hideScrollbarsInWorldBrowser = true;
     }
     await this.displayItems();
@@ -756,8 +757,8 @@ export class WorldBrowserModel extends ViewModel {
   }
 
   async createNewProject () {
-    if (this.playgroundsMode) document.location = '/worlds/load?name=__newWorld__';
-    else document.location = '/projects/load?name=__newProject__';
+    const route = this.playgroundsMode ? '/worlds/load?name=__newWorld__' : '/projects/load?name=__newProject__';
+    document.location = globalThis.livelyNative ? livelyNative.route(route) : route;
   }
 
   allFontsLoaded () {

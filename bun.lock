@@ -70,7 +70,9 @@
       "version": "0.1.0",
       "dependencies": {
         "lively.installer": "workspace:*",
+        "lively.resources": "workspace:*",
         "lively.server": "workspace:*",
+        "lively.storage": "workspace:*",
         "nw": "0.111.1-sdk",
         "velopack": "0.0.1444-gc245055",
       },
@@ -244,6 +246,7 @@
         "js-untar": "2.0.0",
         "lively-system-interface": "workspace:*",
         "lively.2lively": "workspace:*",
+        "lively.app": "workspace:*",
         "lively.ast": "workspace:*",
         "lively.bindings": "workspace:*",
         "lively.classes": "workspace:*",

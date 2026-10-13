@@ -12,9 +12,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const zlib = require('node:zlib');
-
-const rootDir = path.resolve(__dirname, '..', '..');
-const outFile = path.join(__dirname, '..', '.library-snapshot.tar.gz');
+const { pipeline } = require('node:stream/promises');
 
 const tar = require('tar-fs');
 
@@ -46,29 +44,23 @@ const excludedDirs = [
   'lively.modules/dist'
 ];
 
-// Only include cachedDirs that actually exist on disk (esm_cache is created
-// lazily by the server, so may be missing in CI).
-const presentDirs = cachedDirs.filter(d => fs.existsSync(path.join(rootDir, d)));
-console.log(`[build-library-snapshot] packing ${presentDirs.length}/${cachedDirs.length} dirs from ${rootDir}`);
-if (presentDirs.length < cachedDirs.length) {
-  const missing = cachedDirs.filter(d => !presentDirs.includes(d));
-  console.log(`[build-library-snapshot]   missing (skipped): ${missing.join(', ')}`);
+async function buildLibrarySnapshot (rootDir = path.resolve(__dirname, '..', '..'),
+  outFile = path.join(rootDir, 'lively.server', '.library-snapshot.tar.gz')) {
+  // esm_cache is created lazily, so include only directories already present.
+  const presentDirs = cachedDirs.filter(d => fs.existsSync(path.join(rootDir, d)));
+  console.log(`[build-library-snapshot] packing ${presentDirs.length}/${cachedDirs.length} dirs from ${rootDir}`);
+  fs.mkdirSync(path.dirname(outFile), { recursive: true });
+  await pipeline(tar.pack(rootDir, {
+    ignore: name => excludedDirs.some(p => name.includes(p)),
+    entries: presentDirs
+  }), zlib.createGzip(), fs.createWriteStream(outFile));
+  const mb = (fs.statSync(outFile).size / 1024 / 1024).toFixed(1);
+  console.log(`[build-library-snapshot] wrote ${outFile} (${mb} MB)`);
+  return outFile;
 }
 
-fs.mkdirSync(path.dirname(outFile), { recursive: true });
-
-tar.pack(rootDir, {
-  ignore (name) {
-    return excludedDirs.some(p => name.includes(p));
-  },
-  entries: presentDirs
-}).pipe(zlib.Gzip()).pipe(fs.createWriteStream(outFile))
-  .on('finish', () => {
-    const size = fs.statSync(outFile).size;
-    const mb = (size / 1024 / 1024).toFixed(1);
-    console.log(`[build-library-snapshot] wrote ${outFile} (${mb} MB)`);
-  })
-  .on('error', err => {
-    console.error('[build-library-snapshot] failed:', err);
-    process.exit(1);
-  });
+module.exports = { buildLibrarySnapshot };
+if (require.main === module) buildLibrarySnapshot().catch(err => {
+  console.error('[build-library-snapshot] failed:', err);
+  process.exitCode = 1;
+});

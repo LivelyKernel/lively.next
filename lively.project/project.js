@@ -12,7 +12,7 @@ import { runCommand } from 'lively.shell/client-command.js';
 import ShellClientResource from 'lively.shell/client-resource.js';
 import { PackageRegistry } from 'lively.modules/index.js';
 import { currentUserToken, currentUserData, isUserLoggedIn, currentUser, currentUsername } from 'lively.user';
-import { reloadPackage } from 'lively.modules/src/packages/package.js';
+import { Package, reloadPackage } from 'lively.modules/src/packages/package.js';
 import { buildScriptShell } from './templates/build-shell.js';
 import { buildScript } from './templates/build.js';
 import { buildRemoteScript } from './templates/build-upload-action.js';
@@ -198,21 +198,39 @@ export class Project {
 
   static async listAvailableProjects (forProjectBrowser = false) {
     const baseURL = (await Project.systemInterface.getConfig()).baseURL;
-
-    const packageCache = lively.FreezerRuntime
-      ? await resource(baseURL).join('../package-registry.json').withRelativePartsResolved().readJson()
-      : PackageRegistry.ofSystem(System);
-
-    let projectsCandidates = [];
-    Object.keys(packageCache.packageMap).forEach(pack =>
-      Object.keys(packageCache.packageMap[pack].instances || packageCache.packageMap[pack].versions).forEach(v => {
-        // filters out invalid projects (e.g., with invalid package.json file)
-        const pkg = (packageCache.packageMap[pack].instances || packageCache.packageMap[pack].versions)[v];
-        if ((pkg.version || pkg._version) === '0.0.0') return;
-        projectsCandidates.push(pkg);
-      })
-    );
     const projectsDirectory = resource(baseURL).join('local_projects').asDirectory();
+    let projectsCandidates = [];
+
+    if (lively.FreezerRuntime && globalThis.livelyNative) {
+      // Dashboard metadata does not require initializing the backend module system.
+      const directories = (await projectsDirectory.dirList(1)).filter(dir => dir.isDirectory());
+      projectsCandidates = (await Promise.all(directories.map(async dir => {
+        let config;
+        try {
+          config = await dir.join('package.json').readJson();
+          if (!config || typeof config !== 'object' || Array.isArray(config)) return null;
+          const forkInfoFile = dir.join('.livelyForkInformation');
+          if (await forkInfoFile.exists()) {
+            const forkInfo = await forkInfoFile.readJson();
+            config.name = forkInfo.owner + '--' + forkInfo.name;
+            config.isFork = true;
+          }
+        } catch (error) {
+          if (error.code === 'ENOENT' || error.name === 'SyntaxError') return null;
+          throw error;
+        }
+        if (config.name && typeof config.name !== 'string') return null;
+        config.name ||= dir.name();
+        return new Package(System, dir.asFile().url, null, null, config);
+      }))).filter(Boolean);
+    } else {
+      const packageCache = lively.FreezerRuntime
+        ? await resource(baseURL).join('../package-registry.json').withRelativePartsResolved().readJson()
+        : PackageRegistry.ofSystem(System);
+      Object.values(packageCache.packageMap).forEach(pack =>
+        projectsCandidates.push(...Object.values(pack.instances || pack.versions)));
+    }
+    projectsCandidates = projectsCandidates.filter(p => (p.version || p._version) !== '0.0.0');
     projectsCandidates = projectsCandidates.filter(p =>
       resource(new URL(p.url, baseURL).href).parent()?.equals(projectsDirectory));
     const includePartsbinSetting = localStorage.getItem('livelyIncludePartsbinInList');
@@ -394,13 +412,14 @@ export class Project {
    */
   static async installCSSForProject (projectUrl, forProject, projectName, projectRef) {
     const indexCSSResource = resource(projectUrl).join('index.css');
+    const fontURL = resource(projectUrl).join('fonts.css').url.replace(/'/g, '%27');
     let indexCSS = await indexCSSResource.read();
     if (forProject) {
-      indexCSS = `@import '/local_projects/${projectName}/fonts.css';\n` + indexCSS;
+      indexCSS = `@import '${fontURL}';\n` + indexCSS;
       addOrChangeCSSDeclaration(`CSS-for-project-${projectName}`, indexCSS);
       const updateProjectCSS = async () => {
         let cssContents = await indexCSSResource.read();
-        cssContents = `@import '/local_projects/${projectName}/fonts.css';\n` + cssContents;
+        cssContents = `@import '${fontURL}';\n` + cssContents;
         addOrChangeCSSDeclaration(`CSS-for-project-${projectName}`, cssContents);
         await projectRef.retrieveProjectFontsFromCSS();
       };
@@ -408,7 +427,7 @@ export class Project {
       $world.fileWatcher.registerFileAction(resource(projectUrl).join('fonts.css'), updateProjectCSS);
       await updateProjectCSS();
     } else {
-      indexCSS = `@import '/local_projects/${projectName}/fonts.css';\n` + indexCSS;
+      indexCSS = `@import '${fontURL}';\n` + indexCSS;
       addOrChangeCSSDeclaration(`CSS-for-dependency-${projectName}`, indexCSS);
     }
   }
@@ -762,9 +781,8 @@ export class Project {
     let content = buildScript;
     content = content.replaceAll('%PROJECT_NAME%', this.fullName);
     await (await resource(mjsBuildScript).ensureExistance()).write(content);
-    const shellBuildScriptOrigin = new URL(shellBuildScript).origin;
-    const scriptDir = shellBuildScript.replace(shellBuildScriptOrigin + '/', '').replace('/build.sh', '');
-    const cmd = runCommand(`cd ../${scriptDir} && chmod a+x build.sh`, { l2lClient: ShellClientResource.defaultL2lClient });
+    const scriptDir = resolveShellDirectory(await defaultDirectory(), '..', 'local_projects', this.fullName, 'tools');
+    const cmd = runCommand('chmod a+x build.sh', { cwd: scriptDir, l2lClient: ShellClientResource.defaultL2lClient });
     await cmd.whenDone();
     return cmd.exitCode;
   }

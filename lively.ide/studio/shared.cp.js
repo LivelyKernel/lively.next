@@ -1,11 +1,12 @@
-import { Label, ViewModel, HTMLMorph, Morph, TilingLayout, component, without, part, add } from 'lively.morphic';
+import { Label, ViewModel, HTMLMorph, Morph, TilingLayout, component, without, part, add, ShadowObject } from 'lively.morphic';
 import { DarkDropDownList, DarkList } from 'lively.components/list.cp.js';
 import { signal } from 'lively.bindings';
-import { Color, Rectangle, pt, rect } from 'lively.graphics';
+import { Color, Rectangle, pt, rect, LinearGradient } from 'lively.graphics';
 import { DarkNumberWidget, NumberWidgetModel } from '../value-widgets.cp.js';
 import { CloseButton, PopupWindow, CloseButtonHovered } from '../styling/shared.cp.js';
 import { InputLine } from 'lively.components/inputs.js';
 import { Spinner } from 'lively.components/loading-indicator.cp.js';
+import { ButtonDefault } from 'lively.components/buttons.cp.js';
 
 const DarkThemeList = component(DarkList, {
   name: 'sidebar list',
@@ -260,3 +261,85 @@ const DarkFlap = component(DarkPopupWindow, {
 });
 
 export { AddButton, RemoveButton, HeadlineLabel, PropLabel, DarkNumberIconWidget, TextInput, EnumSelector, PropertyLabel, PropertyLabelLight, PropertyLabelHovered, PropertyLabelHoveredLight, PropertyLabelActive, PropertyLabelActiveLight, DarkThemeList, DarkFlap, DarkPopupWindow, DarkCloseButton, DarkCloseButtonHovered, BoundsContainerInactive, BoundsContainerHovered, Spinner };
+
+export const FileStatusDefault = component({
+  name: 'file status default',
+  borderColor: Color.rgb(44, 62, 80),
+  borderRadius: 5,
+  borderWidth: 1,
+  dropShadow: new ShadowObject({ distance: 0, color: Color.rgba(0, 0, 0, 0.5) }),
+  extent: pt(176.3, 35.3),
+  fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgba(44, 62, 80, 0.9) }, { offset: 1, color: Color.rgba(33, 47, 60, 0.9) }], vector: rect(0.5, 0, 0, 1) })
+});
+
+export const FileStatusError = component(FileStatusDefault, {
+  name: 'file status error',
+  fill: new LinearGradient({
+    stops: [
+      { offset: 0, color: Color.rgb(231, 76, 60) },
+      { offset: 1, color: Color.rgb(192, 57, 43) }],
+    vector: rect(0.5, 0, 0, 1)
+  })
+});
+
+export const FileStatusSaved = component(FileStatusDefault, {
+  name: 'file status saved',
+  fill: new LinearGradient({
+    stops: [
+      { offset: 0, color: Color.rgb(46, 204, 113) },
+      { offset: 1, color: Color.rgb(39, 174, 96) }],
+    vector: rect(0.5, 0, 0, 1)
+  })
+});
+
+export const FileStatusInactive = component(FileStatusDefault, {
+  name: 'file status inactive',
+  fill: new LinearGradient({
+    stops: [
+      { offset: 0, color: Color.rgb(128, 139, 150) },
+      { offset: 1, color: Color.rgb(93, 109, 126) }],
+    vector: rect(0.5, 0, 0, 1)
+  })
+});
+
+export const FileStatusWarning = component(FileStatusDefault, {
+  name: 'file status warning',
+  borderColor: Color.rgbHex('DA9819'),
+  fill: new LinearGradient({
+    stops: [
+      { offset: 0, color: Color.rgb(249, 213, 68) },
+      { offset: 1, color: Color.rgb(219, 162, 18) }
+    ],
+    vector: rect(0.5, 1, 0, 1)
+  })
+});
+
+export const BackendButtonDefault = component(ButtonDefault, {
+  name: 'backend button default',
+  layout: new TilingLayout({
+    align: 'center',
+    axisAlign: 'center',
+    hugContentsHorizontally: true,
+    padding: rect(5, 0, 0, 0)
+  }),
+  borderColor: Color.rgb(44, 62, 80),
+  extent: pt(130.3, 26.1),
+  fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgba(44, 62, 80, 0.9) }, { offset: 1, color: Color.rgba(33, 47, 60, 0.9) }], vector: rect(0.5, 0, 0, 1) }),
+  submorphs: [{
+    name: 'label',
+    fontColor: Color.rgb(163, 228, 215),
+    fontFamily: '"IBM Plex Mono"',
+    fontSize: 14
+  }]
+});
+
+export const BackendButtonClicked = component(BackendButtonDefault, {
+  name: 'backend button clicked',
+  fill: new LinearGradient({ stops: [{ offset: 0, color: Color.rgb(33, 48, 63) }, { offset: 1, color: Color.rgb(33, 47, 60) }], vector: rect(0.5, 0, 0, 1) }),
+  submorphs: [{
+    name: 'label',
+    fontColor: Color.rgb(63, 110, 101),
+    fontFamily: '"IBM Plex Mono"',
+    fontSize: 14
+  }]
+});

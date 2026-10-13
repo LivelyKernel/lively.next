@@ -1,6 +1,6 @@
 import { ViewModel, part } from 'lively.morphic/components/core.js';
 import { pt } from 'lively.graphics';
-import { defaultPropertiesPanelWidth } from 'lively.ide/studio/properties-panel.cp.js';
+import { defaultPropertiesPanelWidth } from 'lively.ide/studio/sidebar-flap.js';
 
 import { CommentGroup } from './components/comment.cp.js';
 import { CommentCountBadge } from './components/comment-count-badge.cp.js';

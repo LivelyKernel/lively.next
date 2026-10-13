@@ -1,8 +1,7 @@
 import { component, TilingLayout } from 'lively.morphic';
 import { ColorPicker } from '../styling/color-picker.cp.js';
 import { Color } from 'lively.graphics';
-import { EnumSelector, TextInput, DarkNumberIconWidget, DarkThemeList, DarkCloseButton, DarkCloseButtonHovered } from './shared.cp.js';
-import { BackendButtonDefault } from '../js/browser/ui.cp.js';
+import { EnumSelector, TextInput, DarkNumberIconWidget, DarkThemeList, DarkCloseButton, DarkCloseButtonHovered, BackendButtonDefault } from './shared.cp.js';
 
 import { rect } from 'lively.graphics/geometry-2d.js';
 

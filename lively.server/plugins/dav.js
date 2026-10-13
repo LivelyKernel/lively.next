@@ -8,7 +8,8 @@ import util from 'util';
 import zlib from 'zlib';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { computeSourceHashes } from '../source-hashes.js';
 
 const COMPRESSABLE_URLS = [
   'components_cache'
@@ -173,23 +174,7 @@ export default class LivelyDAVPlugin {
       return;
     }
     console.log('[lively.server] creating file hash map');
-    const rootDir = resource('file://' + this.options.rootDirectory);
-    const filesToHash = await rootDir.dirList('infinity', {
-      exclude: (res) => {
-        return res.url.includes('/node_modules/') ||
-               res.url.includes('.module_cache') ||
-               !res.url.startsWith(System.baseURL + 'lively') &&
-               !res.url.includes('esm_cache') ||
-               res.isFile() &&
-               !res.url.endsWith('.js') &&
-               !res.url.endsWith('.cjs') &&
-               !res.url.endsWith('.mjs');
-      }
-    });
-    for (let file of filesToHash) {
-      if (!file.isFile()) continue;
-      this.fileHashes[file.url.replace(System.baseURL, '/')] = string.hashCode(await file.read());
-    }
+    this.fileHashes = await computeSourceHashes(pathToFileURL(this.options.rootDirectory).href);
     console.log('[lively.server] finished file hash map');
 
     // Skip the tar+gzip step when a pre-built snapshot is available

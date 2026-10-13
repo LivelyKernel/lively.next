@@ -19,7 +19,6 @@ import { notYetImplemented } from 'lively.lang/function.js';
 import { defaultDirectory } from '../shell/shell-interface.js';
 import { ProjectSettingsPrompt, RepoCreationPrompt } from 'lively.project/prompts.cp.js';
 import { isUserLoggedIn } from 'lively.user';
-import { AssetBrowserLight } from './asset-browser.cp.js';
 import { StatusMessageError } from 'lively.halos/components/messages.cp.js';
 
 import { OfflineToggleDark } from '../offline-mode-toggle.cp.js';
@@ -443,6 +442,7 @@ export class TopBarModel extends ViewModel {
     fun.guardNamed('loadingAssetBrowser', async () => {
       if (!$world._assetBrowser) {
         this.colorTopbarButton(this.ui.openAssetBrowser, true);
+        const { AssetBrowserLight } = await System.import('lively.ide/studio/asset-browser.cp.js');
         const assetBrowser = part(AssetBrowserLight, { extent: pt(520, 600) });
         await assetBrowser.initialize();
         const win = assetBrowser.openInWindow({ title: 'Asset Browser' });

@@ -15,7 +15,6 @@ import { CodeSearch } from './code-search.cp.js';
 import { WorldBrowser, WorldBrowserModel } from './studio/world-browser.cp.js';
 import { Console } from './debug/console.cp.js';
 import { WindowSwitcher } from './window-switcher.cp.js';
-import { browserForFile } from './js/browser/ui.cp.js';
 import { SaveProjectDialog } from 'lively.project/prompts.cp.js';
 import { Project } from 'lively.project';
 import { StatusMessageConfirm, StatusMessageError } from 'lively.halos/components/messages.cp.js';
@@ -960,7 +959,7 @@ const commands = [
       const fileName = args.packageName ? args.packageName + args.moduleName : args.moduleName;
       let browser;
       if (args.reuse) {
-        browser = browserForFile(System.decanonicalize(fileName)) || await Browser.open();
+        browser = Browser.browserForFile(System.decanonicalize(fileName)) || await Browser.open();
         await browser.browse(loc);
       } else {
         browser = await Browser.browse(loc);

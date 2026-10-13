@@ -2776,6 +2776,7 @@ export class Image extends Morph {
         defaultValue: config.defaultImage,
 
         set (url) {
+          url = globalThis.livelyNative?.assetURL(url) || url;
           this.isLoaded = false;
           this.setProperty('imageUrl', url);
           this.setProperty('naturalExtent', null);
@@ -2815,6 +2816,16 @@ export class Image extends Morph {
         defaultValue: true
       }
     };
+  }
+
+  __additionally_serialize__ (snapshot, ref, pool, addFn) {
+    super.__additionally_serialize__(snapshot, ref, pool, addFn);
+    // Desktop image URLs must survive HTTP port changes and native/HTTP switches.
+    if ((globalThis.livelyNative || globalThis.__LIVELY_DESKTOP_APP__) && this.imageUrl.startsWith(System.baseURL)) {
+      addFn('imageUrl', pool.expressionSerializer.exprStringEncode({
+        __expr__: `System.baseURL + ${JSON.stringify(this.imageUrl.slice(System.baseURL.length))}`
+      }));
+    }
   }
 
   get isImage () { return true; }
