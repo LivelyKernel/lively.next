@@ -538,7 +538,10 @@ async function reopenSmokeWorld (client, url, timeoutMs) {
   await client.send('Page.navigate', { url });
   await waitFor('saved world reopen', async () => {
     const result = await client.send('Runtime.evaluate', {
-      expression: `Boolean(globalThis.$world?.name === ${JSON.stringify(SAVED_WORLD)} && $world.get('desktop-persistent-marker') && !globalThis.__loadError__)`,
+      expression: `Boolean(globalThis.$world?.name === ${JSON.stringify(SAVED_WORLD)} &&
+        $world.get('desktop-persistent-marker') && $world._uiInitialized &&
+        $world.sceneGraphFlap?.owner === $world && $world.propertiesPanelFlap?.owner === $world &&
+        !globalThis.__loadError__)`,
       returnByValue: true
     });
     return result.result?.value === true;
