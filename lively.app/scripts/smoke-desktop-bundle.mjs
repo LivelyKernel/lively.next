@@ -223,6 +223,79 @@ async function assertDeferredToolsOpen (client, timeoutMs) {
   console.log('Desktop app smoke passed: deferred properties and asset browsers open; legacy component exports retain identity');
 }
 
+async function assertSidebarLayout (client) {
+  await waitFor('previous sidebar animation finishing', async () => {
+    const result = await client.send('Runtime.evaluate', {
+      expression: 'Boolean(!$world.propertiesPanel?.owner && !$world.sceneGraph?.owner)', returnByValue: true
+    });
+    return result.result?.value === true;
+  }, 10000);
+  const opened = await client.send('Runtime.evaluate', {
+    awaitPromise: true, returnByValue: true,
+    expression: `(async () => {
+      for (const flap of [$world.sceneGraphFlap, $world.propertiesPanelFlap]) {
+        await flap.viewModel.action(flap.viewModel);
+      }
+      return true;
+    })()`
+  });
+  if (opened.exceptionDetails || opened.result?.value !== true) {
+    throw new Error('Sidebar flaps failed to open: ' + JSON.stringify(opened));
+  }
+  try {
+    for (const viewport of [null, { width: 960, height: 600 }, { width: 1200, height: 800 }]) {
+      if (viewport) await client.send('Emulation.setDeviceMetricsOverride', { ...viewport, deviceScaleFactor: 1, mobile: false });
+      await waitFor('sidebars below the toolbar', async () => {
+        const result = await client.send('Runtime.evaluate', {
+          returnByValue: true,
+          expression: `(() => {
+            const bar = document.getElementById($world.get('lively top bar').id).getBoundingClientRect();
+            for (const [panel, edge, content, gap] of [
+              [$world.sceneGraph, 'left', $world.sceneGraph.get('search field'), 10],
+              [$world.propertiesPanel, 'right', $world.propertiesPanel.submorphs[0], 0]
+            ]) {
+              const node = document.getElementById(panel.id), contentNode = document.getElementById(content.id);
+              if (!node || !contentNode) return { pending: panel.name };
+              const bounds = node.getBoundingClientRect();
+              const contentBounds = contentNode.getBoundingClientRect();
+              if (panel.owner !== $world || Math.abs(bounds.top - bar.bottom) > 1 ||
+                  Math.abs(bounds.bottom - innerHeight) > 1 ||
+                  Math.abs(bounds[edge] - (edge === 'left' ? 0 : innerWidth)) > 1 ||
+                  Math.abs(contentBounds.top - bounds.top - gap) > 1) {
+                return { panel: panel.name, bar: bar.toJSON(), bounds: bounds.toJSON(), content: contentBounds.toJSON() };
+              }
+            }
+            return true;
+          })()`
+        });
+        if (result.exceptionDetails || result.result?.value !== true) {
+          throw new Error('Desktop sidebar layout failed: ' + JSON.stringify(result));
+        }
+        return true;
+      }, 10000);
+    }
+  } finally {
+    await client.send('Emulation.clearDeviceMetricsOverride');
+    const closed = await client.send('Runtime.evaluate', {
+      awaitPromise: true, returnByValue: true,
+      expression: `(async () => {
+        for (const flap of [$world.sceneGraphFlap, $world.propertiesPanelFlap]) {
+          await flap.viewModel.action(flap.viewModel);
+        }
+        return true;
+      })()`
+    });
+    if (closed.exceptionDetails || closed.result?.value !== true) throw new Error('Sidebar flaps failed to close: ' + JSON.stringify(closed));
+    await waitFor('sidebar closing animations finishing', async () => {
+      const result = await client.send('Runtime.evaluate', {
+        expression: 'Boolean(!$world.propertiesPanel.owner && !$world.sceneGraph.owner)', returnByValue: true
+      });
+      return result.result?.value === true;
+    }, 10000);
+  }
+  console.log('Desktop app smoke passed: both sidebars sit below the toolbar and fill the window after opening and resizing');
+}
+
 /** Select and edit a genuinely frozen module through the system browser. */
 async function assertFrozenModuleResurrection (client) {
   const result = await client.send('Runtime.evaluate', {
@@ -1618,6 +1691,7 @@ async function main () {
             console.log(JSON.stringify({ mode: native ? 'native' : 'http', reopened, worldMs: Date.now() - launchStarted }));
           }
           if (native) await assertNativeAssets(client);
+          await assertSidebarLayout(client);
           await assertDesktopTitlebar(client, dataDir, true);
           client.assertNoRendererErrors();
           continue;
@@ -1625,6 +1699,7 @@ async function main () {
         if (componentsOnly) {
           await assertPartsbinComponentBrowser(client, reopened);
           await assertDeferredToolsOpen(client, timeoutMs);
+          await assertSidebarLayout(client);
           await assertDesktopTitlebar(client, dataDir, true);
           client.assertNoRendererErrors();
           continue;
@@ -1644,6 +1719,7 @@ async function main () {
           }, timeoutMs);
           client.assertNoRendererErrors();
           console.log('Desktop app smoke passed: upgraded legacy project opens from the cold dashboard');
+          await assertSidebarLayout(client);
           await assertDesktopTitlebar(client, dataDir, true);
           await assertBrowserSwc(client);
           await assertPartsbinComponentBrowser(client, true);
@@ -1674,6 +1750,7 @@ async function main () {
             return result.result?.value === true;
           }, timeoutMs);
           console.log('Desktop app smoke passed: dashboard tile opens a project in the same document');
+          await assertSidebarLayout(client);
           await assertDesktopTitlebar(client, dataDir, true);
           await assertBrowserSwc(client);
           await assertComponentModuleURLs(client);

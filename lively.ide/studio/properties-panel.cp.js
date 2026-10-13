@@ -81,7 +81,7 @@ export class PropertiesPanelModel extends ViewModel {
 
   onWorldResize (align = true) {
     const { view } = this;
-    const bounds = $world.visibleBounds();
+    const bounds = $world.visibleBoundsExcludingTopBar();
     const offsetTop = navigator.standalone && touchInputDevice ? 25 : 0;
 
     view.height = bounds.height - offsetTop;
@@ -94,7 +94,7 @@ export class PropertiesPanelModel extends ViewModel {
 
   async toggle (active) {
     const { view } = this;
-    const bounds = $world.visibleBounds();
+    const bounds = $world.visibleBoundsExcludingTopBar();
     const zoomIndicator = $world.get('world zoom indicator');
     this.onWorldResize(false);
     if (active) {
@@ -342,7 +342,6 @@ const PropertiesPanel = component({
   clipMode: 'auto',
   layout: new TilingLayout({
     axis: 'column',
-    padding: rect(0, 50, 0, -50),
     resizePolicies: [['shape control', {
       height: 'fixed',
       width: 'fill'
