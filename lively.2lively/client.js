@@ -45,9 +45,9 @@ const urlHelper = {
 
 function determineLocation () {
   if (typeof document !== 'undefined' && document.location) {
-    const base = System.baseURL || document.location.origin;
-    // Native desktop pages keep their file: base so livelyNative.isLocal can route the socket in-process.
-    return base.startsWith('file:') ? base : urlHelper.root(base);
+    // Native desktop pages have a nested file: base; livelyNative.isLocal routes sockets at its runtime root.
+    if (globalThis.livelyNative?.baseURL) return globalThis.livelyNative.baseURL;
+    return urlHelper.root(System.baseURL || document.location.origin);
   }
 
   if (isNode) { return System._nodeRequire('os').hostname(); }
