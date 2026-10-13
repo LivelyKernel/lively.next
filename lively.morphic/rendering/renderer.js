@@ -131,6 +131,8 @@ export default class Renderer {
    */
   renderStep () {
     this._layoutCSSOrder = new WeakMap();
+    // Share measurements only within a synchronous layout/render phase.
+    this._intrinsicTextWidths = new WeakMap();
     try {
       this.emptyRenderQueues();
       this.worldMorph.applyLayoutIfNeeded(); // cascades through all submorphs and applies the javascript layouts
@@ -212,6 +214,7 @@ export default class Renderer {
         }
       }
       this._layoutCSSOrder = new WeakMap();
+      this._intrinsicTextWidths = new WeakMap();
       for (let morph of this.morphsToRevisit) {
         this.renderStylingChanges(morph);
       }
@@ -235,6 +238,7 @@ export default class Renderer {
       }, morph => morph.submorphs);
     } finally {
       this._layoutCSSOrder = null;
+      this._intrinsicTextWidths = null;
     }
   }
 
@@ -633,6 +637,8 @@ export default class Renderer {
     const styleClasses = morph.styleClasses.join(' ');
     morph.renderingState.styleClasses = [...morph.styleClasses];
     node.setAttribute('class', styleClasses);
+    // Ancestor classes can change the styles of measured text spans.
+    if (this._intrinsicTextWidths) this._intrinsicTextWidths = new WeakMap();
   }
 
   // -=-=-=-=-=-=-=-=-
@@ -1033,7 +1039,7 @@ export default class Renderer {
    * @param {Boolean} isRealRender - Indicates whether this is an actual render to display the resulting node in the DOM or if it is a render inside of an invisible node to measure the text to be renderer.
    * @returns {Node} The DOM node for the line (`DIV`).
    */
-  nodeForLine (lineObject, morph, isRealRender = false) {
+  nodeForLine (lineObject, morph, isRealRender = false, inertEmbeddedMorphs = false) {
     if (!lineObject) lineObject = '';
     let line = lineObject.isLine ? lineObject.textAndAttributes : lineObject;
 
@@ -1049,7 +1055,7 @@ export default class Renderer {
         if (typeof content !== 'string') {
           renderedChunks.push(
             content.isMorph
-              ? this.renderMorphInLine(content, attributes)
+              ? this.renderMorphInLine(content, attributes, inertEmbeddedMorphs)
               : objectReplacementChar);
           continue;
         }
@@ -1166,9 +1172,15 @@ export default class Renderer {
    * @param {Object} attr - An Object with which some properties of `morph` can be overwritten.
    * @returns {Node} The node of the morph to be added as a child of a node for a line.
    */
-  renderMorphInLine (morph, attr) {
+  renderMorphInLine (morph, attr, inert = false) {
     attr = attr || {};
-    const rendered = this.renderMorph(morph);
+    const rendered = inert ? this.doc.createElement('div') : this.renderMorph(morph);
+    if (inert) {
+      rendered.className = 'Morph';
+      applyStylingToNode(morph, rendered);
+      rendered.style.width = morph.width + 'px';
+      rendered.style.height = morph.height + 'px';
+    }
     rendered.style.position = 'sticky';
     rendered.style.transform = '';
     rendered.style.textAlign = 'initial';
@@ -1180,7 +1192,7 @@ export default class Renderer {
     if (attr.paddingLeft) rendered.style.marginLeft = attr.paddingLeft;
     if (attr.paddingRight) rendered.style.marginRight = attr.paddingRight;
     if (attr.paddingBottom) rendered.style.marginBottom = attr.paddingBottom;
-    morph.renderingState.needsRerender = false;
+    if (!inert) morph.renderingState.needsRerender = false;
     return rendered;
   }
 
@@ -2012,6 +2024,8 @@ export default class Renderer {
 
     morph.renderingState.lineWrapping = morph.lineWrapping;
     morph.renderingState.fixedWidth = morph.fixedWidth;
+    morph.renderingState.needsRemeasure = true;
+    morph.invalidateTextLayout(true, true);
   }
 
   /**
@@ -2045,7 +2059,39 @@ export default class Renderer {
     if (morph.debug) textNode.append(...this.renderDebugLayer(morph));
   }
 
+  measureIntrinsicTextWidth (morph) {
+    const cachedWidth = this._intrinsicTextWidths?.get(morph);
+    if (cachedWidth !== undefined) return cachedWidth;
+    const textNode = this.textLayerNodeFor(morph);
+    textNode.className = 'newtext-text-layer actual';
+    Object.assign(textNode.style, {
+      width: 'max-content', minWidth: '0px', maxWidth: 'none',
+      height: 'auto', visibility: 'hidden', whiteSpace: 'pre',
+      fontKerning: morph.document ? 'none' : 'auto'
+    });
+    for (const line of splitTextAndAttributesIntoLines(morph.textAndAttributes)) {
+      textNode.appendChild(this.nodeForLine(line, morph, false, true));
+    }
+    this.ensurePlaceholder();
+    this.placeholder.className = 'Text';
+    const parent = this.getNodeForMorph(morph);
+    (parent?.isConnected ? parent : this.placeholder).appendChild(textNode);
+    try {
+      let width = parseFloat(this.doc.defaultView.getComputedStyle(textNode).width);
+      if (!Number.isFinite(width) && textNode.parentNode !== this.placeholder) {
+        this.placeholder.appendChild(textNode);
+        width = parseFloat(this.doc.defaultView.getComputedStyle(textNode).width);
+      }
+      width += morph.borderWidthLeft + morph.borderWidthRight;
+      if (!Number.isFinite(width)) return morph.width;
+      this._intrinsicTextWidths?.set(morph, width);
+      return width;
+    } finally { textNode.remove(); }
+  }
+
   tryToMeasureViaCanvas (morph) {
+    // Shrink fits the browser's kerned width; canvas sums individual glyphs.
+    if (morph.owner?.layout?.getResizeWidthPolicyFor?.(morph) === 'shrink') return false;
     if (!morph.allFontsLoaded()) return false;
     const fm = morph.env.fontMetric;
     const lines = splitTextAndAttributesIntoLines(morph.textAndAttributes);

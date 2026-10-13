@@ -26,6 +26,7 @@ const propsToDelete = [
   'order',
   'overflow',
   'width', 'height',
+  'max-width',
   'top', 'left', 'right', 'bottom', 'position',
   'margin-left',
   'margin-right',
