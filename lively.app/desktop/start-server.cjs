@@ -562,6 +562,28 @@ function bootUrlForPort (port) {
   return 'http://127.0.0.1:' + port + (path.startsWith('/') ? path : '/' + path);
 }
 
+// Retained-environment debugging reads closure scopes through NW.js's Blink
+// inspector (chromium-args --remote-debugging-port). It is on by default in
+// both desktop modes; LIVELY_APP_FUNCTION_SCOPES=0 disables it.
+function functionScopesEnabled () {
+  return process.env.LIVELY_APP_FUNCTION_SCOPES !== '0';
+}
+
+function installFunctionScopeReader (win) {
+  if (!functionScopesEnabled()) return;
+  const { captureRendererFunctionBindings } = require('./function-scopes.cjs');
+  const cdpPort = Number(process.env.LIVELY_APP_CDP_PORT || 9222);
+  const install = () => {
+    const desktop = win.window.livelyDesktop || (win.window.livelyDesktop = {});
+    const debuggerBridge = desktop.debugger || (desktop.debugger = {});
+    debuggerBridge.captureFunctionBindings = (func, names) =>
+      captureRendererFunctionBindings(win.window, func, names, cdpPort);
+  };
+  win.on('loaded', install);
+  // The boot page may have finished loading before this window was resolved.
+  if (win.window.document?.readyState === 'complete') install();
+}
+
 // ---------------------------------------------------------------------------
 // 5. Boot
 // ---------------------------------------------------------------------------
@@ -695,6 +717,7 @@ function bootUrlForPort (port) {
       });
       findWindow();
     });
+    installFunctionScopeReader(win);
     const navigate = () => win.window.livelyBoot.navigate(dashboardURL);
     if (win.window.livelyBoot) navigate();
     else win.once('loaded', navigate);
@@ -819,7 +842,7 @@ function bootUrlForPort (port) {
   let inspectorStarted = false;
 
   function startInspectorService (trigger) {
-    if (closing || inspectorStarted || (process.env.LIVELY_APP_INSPECTOR_SERVICE !== '1' || process.env.LIVELY_APP_FUNCTION_SCOPES === '1')) return;
+    if (closing || inspectorStarted || (process.env.LIVELY_APP_INSPECTOR_SERVICE !== '1' || functionScopesEnabled())) return;
     inspectorStarted = true;
     const cdpPort = Number(process.env.LIVELY_APP_CDP_PORT || 9222);
     const inspectorPort = Number.isFinite(cdpPort) && cdpPort > 0 ? cdpPort : 9222;
@@ -853,7 +876,7 @@ function bootUrlForPort (port) {
   }
 
   function scheduleInspectorStart (trigger) {
-    if (inspectorStartScheduled || inspectorStarted || (process.env.LIVELY_APP_INSPECTOR_SERVICE !== '1' || process.env.LIVELY_APP_FUNCTION_SCOPES === '1')) return;
+    if (inspectorStartScheduled || inspectorStarted || (process.env.LIVELY_APP_INSPECTOR_SERVICE !== '1' || functionScopesEnabled())) return;
     inspectorStartScheduled = true;
     const timer = setTimeout(() => {
       inspectorStartScheduled = false;
@@ -862,17 +885,9 @@ function bootUrlForPort (port) {
     if (timer && typeof timer.unref === 'function') timer.unref();
   }
 
-  if (process.env.LIVELY_APP_FUNCTION_SCOPES === '1') {
-    const { captureRendererFunctionBindings } = require('./function-scopes.cjs');
-    win.on('loaded', function () {
-      const desktop = win.window.livelyDesktop || (win.window.livelyDesktop = {});
-      const debuggerBridge = desktop.debugger || (desktop.debugger = {});
-      debuggerBridge.captureFunctionBindings = (func, names) => captureRendererFunctionBindings(
-        win.window, func, names, Number(process.env.LIVELY_APP_CDP_PORT || 9222));
-    });
-  }
+  installFunctionScopeReader(win);
 
-  if (process.env.LIVELY_APP_INSPECTOR_SERVICE === '1' && process.env.LIVELY_APP_FUNCTION_SCOPES !== '1') {
+  if (process.env.LIVELY_APP_INSPECTOR_SERVICE === '1' && !functionScopesEnabled()) {
     win.once('loaded', function () {
       let href = '';
       try { href = String(win.window.location && win.window.location.href || ''); } catch (_) {}

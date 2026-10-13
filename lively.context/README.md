@@ -286,12 +286,15 @@ repairing `amount`. These results use the original continuation machinery.
 
 Restart preserves captured outer bindings and original arguments; introducing new
 retained bindings uses the Runtime reader in `runWithCapturedBindings` or Step Into.
-The desktop app must be launched with `LIVELY_APP_FUNCTION_SCOPES=1` for this reader.
+The desktop app installs this reader by default in both native and HTTP desktop modes;
+`LIVELY_APP_FUNCTION_SCOPES=0` disables it.
 
 ## NW.js retained-environment experiment
 
-Build with `FLAVOR=sdk` and launch with `LIVELY_APP_FUNCTION_SCOPES=1`.
-The background Node context uses NW.js's existing browser inspector transport and exposes:
+The reader is enabled by default in normal and SDK builds and in both native and HTTP
+desktop modes (`LIVELY_APP_FUNCTION_SCOPES=0` disables it). The background Node context
+uses NW.js's existing browser inspector transport (`--remote-debugging-port`, overridable
+with `LIVELY_APP_CDP_PORT`) and exposes:
 
 ```js
 const values = await livelyDesktop.debugger.captureFunctionBindings(fn, ['step', 'marker']);

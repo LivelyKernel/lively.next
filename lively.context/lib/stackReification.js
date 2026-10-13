@@ -228,7 +228,7 @@ export async function runWithCapturedBindings(func, astRegistry, args, mapping =
     const capture = Global.livelyDesktop && Global.livelyDesktop.debugger.captureFunctionBindings;
     if (liveBindings) addRecorderBindings(liveBindings, ast);
     const available = liveBindings && missing.every(name => Object.prototype.hasOwnProperty.call(liveBindings, name));
-    if (!capture && !available) throw new Error('Missing closure bindings: ' + missing.join(', ') + '. Launch NW.js with LIVELY_APP_FUNCTION_SCOPES=1.');
+    if (!capture && !available) throw new Error('Missing closure bindings: ' + missing.join(', ') + '. Retained bindings are read by the lively.next desktop app unless LIVELY_APP_FUNCTION_SCOPES=0.');
     const bindings = available ? Object.defineProperties({}, Object.getOwnPropertyDescriptors(liveBindings)) : await capture(func, missing);
     addRecorderBindings(bindings, ast);
     if (!liveBindings) capturedBindingMappings.add(bindings);
@@ -255,7 +255,7 @@ export async function prepareCapturedFunction(func, names) {
     const ast = removeRuntimeClosureAnnotations(parseFunction(runtimeFunctionSource(func), {locations: true, addSource: true, addAstIndex: true}));
     if (liveBindings) addRecorderBindings(liveBindings, ast);
     const available = liveBindings && names.every(name => Object.prototype.hasOwnProperty.call(liveBindings, name));
-    if (!capture && !available) throw new Error('Missing closure bindings: ' + names.join(', ') + '. Launch NW.js with LIVELY_APP_FUNCTION_SCOPES=1.');
+    if (!capture && !available) throw new Error('Missing closure bindings: ' + names.join(', ') + '. Retained bindings are read by the lively.next desktop app unless LIVELY_APP_FUNCTION_SCOPES=0.');
     const bindings = available ? liveBindings : await capture(func, names);
     addRecorderBindings(bindings, ast);
     if (!liveBindings) capturedBindingMappings.add(bindings);

@@ -1841,6 +1841,21 @@ async function main () {
           }
         }
         console.log('Desktop app smoke passed: dashboard initialized with canonical workspace packages');
+        if (process.env.LIVELY_APP_FUNCTION_SCOPES !== '0') {
+          const scopes = await client.send('Runtime.evaluate', {
+            expression: `(async () => {
+              const marker = {};
+              let step = 3;
+              const read = () => marker && step;
+              const values = await livelyDesktop.debugger.captureFunctionBindings(read, ['marker', 'step']);
+              return values.marker === marker && values.step === 3;
+            })()`, awaitPromise: true, returnByValue: true
+          });
+          if (scopes.exceptionDetails || scopes.result?.value !== true) {
+            throw new Error('Default function-scope reader failed: ' + JSON.stringify(scopes));
+          }
+          console.log('Desktop app smoke passed: function-scope reader enabled by default' + (native ? ' in native mode' : ''));
+        }
         const readyEvent = readTextFile(logFile).match(/^\[([^\]]+)\] (?:Native backend ready|Server ready, loading lively)/m);
         if (!readyEvent) throw new Error('Backend readiness event missing from boot log');
         console.log(JSON.stringify({ mode: native ? 'native' : 'http', reopened, backendReadyMs: Date.parse(readyEvent[1]) - launchStarted }));
