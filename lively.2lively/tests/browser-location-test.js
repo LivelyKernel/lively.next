@@ -12,6 +12,9 @@ describe('browser connection location', function () {
       L2LClient.default = () => null;
       L2LClient.ensure = options => options;
       expect(L2LClient.forLivelyInBrowser().url).equals('http://example.test/lively-socket.io');
+      System.config({baseURL: 'file:///C:/Users/RUNNER%7E1/runtime-root/'});
+      expect(L2LClient.forLivelyInBrowser().url).equals('file:///C:/Users/RUNNER%7E1/runtime-root/lively-socket.io',
+        'native desktop pages must keep their runtime root for livelyNative.isLocal');
     } finally {
       System.config({baseURL});
       L2LClient.default = originalDefault;
