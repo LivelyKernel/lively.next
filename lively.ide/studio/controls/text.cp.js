@@ -8,6 +8,7 @@ import {
   PropertyLabelHovered,
   DarkNumberIconWidget,
   PropertyLabel,
+  PropLabel,
   DarkThemeList
 } from '../shared.cp.js';
 import { ColorInput } from '../../styling/color-picker.cp.js';
@@ -39,7 +40,7 @@ export class RichTextControlModel extends ViewModel {
       styledProps: {
         readOnly: true,
         get () {
-          return ['fontSize', 'lineHeight', 'letterSpacing', 'fontColor', 'fontFamily', 'fontWeight', 'textAlign', 'textDecoration', 'fontStyle'];
+          return ['fontSize', 'lineHeight', 'letterSpacing', 'fontColor', 'fontFamily', 'fontWeight', 'textAlign', 'textDecoration', 'textDecorationColor', 'fontStyle'];
         }
       },
       expose: {
@@ -57,6 +58,10 @@ export class RichTextControlModel extends ViewModel {
             { target: 'line height input', signal: 'number', handler: 'changeLineHeight' },
             { target: 'letter spacing input', signal: 'number', handler: 'changeLetterSpacing' },
             { target: 'font color input', signal: 'color', handler: 'changeFontColor' },
+            { target: 'decoration color input', signal: 'color', handler: 'changeDecorationColor' },
+            { target: 'selection mode selector', signal: 'selection', handler: 'changeSelectionMode' },
+            { target: 'selection color input', signal: 'color', handler: 'changeSelectionColor' },
+            { target: 'text overflow selector', signal: 'selection', handler: 'changeTextOverflow' },
             { target: 'alignment controls', signal: 'onMouseDown', handler: 'selectTextAlignment' },
             { target: 'resizing controls', signal: 'onMouseDown', handler: 'selectBoundsResizing' },
             { target: 'inline link', signal: 'onMouseDown', handler: 'changeLink' },
@@ -102,7 +107,8 @@ export class RichTextControlModel extends ViewModel {
           lineHeightInput, letterSpacingInput, fontColorInput,
           leftAlign, centerAlign, rightAlign, blockAlign, inlineLink,
           italicStyle, underlineStyle, quote,
-          lineWrappingSelector, paddingControls
+          lineWrappingSelector, paddingControls, decorationColorInput,
+          selectionControls, selectionModeSelector, selectionColorInput, textOverflowSelector
         } = this.ui;
 
         const fontItemCreator = font => {
@@ -159,6 +165,14 @@ export class RichTextControlModel extends ViewModel {
         fontColorInput.setColor(text.fontColor);
         if (text.fontColorMixed || this.globalMode && text.hasMixedTextAttributes('fontColor')) fontColorInput.setMixed(rainbow);
 
+        decorationColorInput.setColor(text.textDecorationColor || text.fontColor);
+        if (text.textDecorationColorMixed || this.globalMode && text.hasMixedTextAttributes('textDecorationColor')) decorationColorInput.setMixed(rainbow);
+        selectionControls.visible = this.globalMode;
+        selectionModeSelector.selection = this.targetMorph.selectionMode;
+        selectionColorInput.setColor(this.targetMorph.selectionColor);
+        textOverflowSelector.visible = this.globalMode && !this.targetMorph.document;
+        textOverflowSelector.selection = this.targetMorph.textOverflow;
+
         leftAlign.master.setState(text.textAlign === 'left' ? 'active' : null);
         centerAlign.master.setState(text.textAlign === 'center' ? 'active' : null);
         rightAlign.master.setState(text.textAlign === 'right' ? 'active' : null);
@@ -167,7 +181,7 @@ export class RichTextControlModel extends ViewModel {
         underlineStyle.master.setState(text.textDecoration === 'underline' ? 'active' : null);
         if (quote) quote.master.setState(text.quote === 1 ? 'active' : null);
         if (inlineLink) inlineLink.master.setState(text.link ? 'active' : null);
-        if (paddingControls) paddingControls.startPadding(text.padding);
+        if (paddingControls) paddingControls.startPadding(this.targetMorph.padding);
       });
     });
   }
@@ -309,6 +323,24 @@ export class RichTextControlModel extends ViewModel {
     this.confirm('fontColor', color);
   }
 
+  changeDecorationColor (color) {
+    if (this.globalMode) this.targetMorph.removePlainTextAttribute('textDecorationColor');
+    this.confirm('textDecorationColor', color);
+  }
+
+  changeSelectionMode (mode) {
+    this.targetMorph?.withMetaDo({ reconcileChanges: true }, () => { this.targetMorph.selectionMode = mode; });
+    this.update();
+  }
+
+  changeSelectionColor (color) {
+    this.targetMorph?.withMetaDo({ reconcileChanges: true }, () => { this.targetMorph.selectionColor = color; });
+  }
+
+  changeTextOverflow (overflow) {
+    this.targetMorph?.withMetaDo({ reconcileChanges: true }, () => { this.targetMorph.textOverflow = overflow; });
+  }
+
   changeFontSize (size) {
     if (this.globalMode) this.targetMorph.removePlainTextAttribute('fontSize');
     this.confirm('fontSize', size);
@@ -346,8 +378,38 @@ export class RichTextControlModel extends ViewModel {
 
   deactivate () {
     this.models.fontColorInput.closeColorPicker();
+    this.models.decorationColorInput.closeColorPicker();
+    this.models.selectionColorInput.closeColorPicker();
   }
 }
+
+const TextColorInput = component(ColorInput, {
+  name: 'text color input',
+  viewModel: {
+    colorPickerComponent: DarkColorPicker
+  },
+  layout: new TilingLayout({
+    axisAlign: 'center',
+    orderByIndex: true,
+    padding: rect(20, 1, -10, 1),
+    resizePolicies: [['hex input', {
+      height: 'fill',
+      width: 'fixed'
+    }], ['opacity input', {
+      height: 'fill',
+      width: 'fixed'
+    }]],
+    spacing: 10
+  }),
+  extent: pt(250, 25),
+  submorphs: [{
+    name: 'hex input',
+    extent: pt(74.8, 22)
+  }, {
+    name: 'opacity input',
+    extent: pt(83.4, 22)
+  }]
+});
 
 const RichTextControl = component(PropertySection, {
   defaultViewModel: RichTextControlModel,
@@ -577,34 +639,58 @@ const RichTextControl = component(PropertySection, {
         }],
         tooltip: 'Letter Spacing'
       })]
-  }), add(part(ColorInput, {
-    name: 'font color input',
-    viewModel: {
-      colorPickerComponent: DarkColorPicker
-    },
-    layout: new TilingLayout({
-      axisAlign: 'center',
-      orderByIndex: true,
-      padding: rect(20, 1, -10, 1),
-      resizePolicies: [['hex input', {
-        height: 'fill',
-        width: 'fixed'
-      }], ['opacity input', {
-        height: 'fill',
-        width: 'fixed'
-      }]],
-      spacing: 10
-    }),
-    extent: pt(250.3, 25),
-    submorphs: [{
-      name: 'hex input',
-      extent: pt(74.8, 22)
-    }, {
-      name: 'opacity input',
-      extent: pt(83.4, 22)
-    }]
+  }), add(part(PropLabel, {
+    name: 'text color label',
+    textAndAttributes: ['Text color', null],
+    fontSize: 12,
+    fixedWidth: true,
+    extent: pt(250, 16),
+    padding: rect(20, 0, -20, 0)
+  })), add(part(TextColorInput, {
+    name: 'font color input'
   })),
 
+  add(part(PropLabel, {
+    name: 'decoration color label',
+    textAndAttributes: ['Decoration color', null],
+    fontSize: 12,
+    fixedWidth: true,
+    extent: pt(250, 16),
+    padding: rect(20, 0, -20, 0)
+  })),
+  add(part(TextColorInput, {
+    name: 'decoration color input',
+    tooltip: 'Decoration Color'
+  })),
+  add({
+    name: 'selection controls',
+    fill: Color.transparent,
+    extent: pt(250, 60),
+    layout: new TilingLayout({ axis: 'column', hugContentsVertically: true, orderByIndex: true, spacing: 10 }),
+    submorphs: [{
+      name: 'selection mode row',
+      fill: Color.transparent,
+      extent: pt(250, 23),
+      layout: new TilingLayout({ padding: rect(20, 0, -20, 0), orderByIndex: true }),
+      submorphs: [part(EnumSelector, {
+        name: 'selection mode selector',
+        tooltip: 'Selection Mode',
+        extent: pt(202, 23),
+        viewModel: {
+          listAlign: 'bottom', openListInWorld: true, listMaster: DarkThemeList,
+          items: [
+            { isListItem: true, string: 'Native Selection', value: 'native' },
+            { isListItem: true, string: 'Lively Selection', value: 'lively' },
+            { isListItem: true, string: 'No Selection', value: 'none' }
+          ]
+        },
+        submorphs: [{ name: 'label', fontSize: 12 }]
+      })]
+    }, part(TextColorInput, {
+      name: 'selection color input',
+      tooltip: 'Selection Color'
+    })]
+  }),
   add({
     name: 'bottom wrapper',
     clipMode: 'hidden',
@@ -673,6 +759,18 @@ const RichTextControl = component(PropertySection, {
         name: 'label',
         fontSize: 12
       }]
+    }), part(EnumSelector, {
+      name: 'text overflow selector',
+      tooltip: 'Text Overflow',
+      extent: pt(202, 23),
+      viewModel: {
+        listAlign: 'bottom', openListInWorld: true, listMaster: DarkThemeList,
+        items: [
+          { isListItem: true, string: 'Clip Overflow', value: 'clip' },
+          { isListItem: true, string: 'Show Ellipsis', value: 'ellipsis' }
+        ]
+      },
+      submorphs: [{ name: 'label', fontSize: 12 }]
     })]
   }), add(part(PaddingControlsDark, { name: 'padding controls' }))
   ]

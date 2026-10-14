@@ -145,6 +145,27 @@ describe('component -> source reconciliation', function () {
     expect(updatedSource.includes('extent: pt(100,50)'), 'updates width in code').to.be.true;
   });
 
+  it('persists explicit selection mode changes while ignoring transient changes', async () => {
+    const text = ComponentA.getSubmorphNamed('some submorph');
+    const originalSource = await getSource();
+    text.selectionMode = 'native';
+    expect(await getSource()).equals(originalSource);
+    text.selectionMode = 'none';
+    text.withMetaDo({ reconcileChanges: true }, () => { text.selectionMode = 'native'; });
+    await ComponentA._changeTracker.onceChangesProcessed();
+    expect(await getSource()).includes("selectionMode: 'native'");
+    const instance = part(A).openInWorld();
+    try {
+      await instance.whenRendered();
+      instance.master.applyIfNeeded(true);
+      instance.env.forceUpdate();
+      expect(instance.getSubmorphNamed('some submorph').selectionMode).equals('native');
+    } finally { instance.remove(); }
+    text.withMetaDo({ reconcileChanges: true }, () => { text.selectionMode = 'none'; });
+    await ComponentA._changeTracker.onceChangesProcessed();
+    expect(part(A).getSubmorphNamed('some submorph').selectionMode).equals('none');
+  });
+
   it('inserts properties in proper order', async () => {
     ComponentC.withMetaDo({ reconcileChanges: true }, () => {
       ComponentC.layout = new TilingLayout();
