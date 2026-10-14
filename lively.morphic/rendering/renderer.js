@@ -1188,6 +1188,9 @@ export default class Renderer {
    */
   renderMorphInLine (morph, attr, inert = false) {
     attr = attr || {};
+    // Static text can render inline morphs before the layout pass reaches them; clearing
+    // needsRerender below would then skip their pending layout and its container CSS.
+    if (!inert && morph.layout) morph.applyLayoutIfNeeded();
     const rendered = inert ? this.doc.createElement('div') : this.renderMorph(morph);
     if (inert) {
       rendered.className = 'Morph';
