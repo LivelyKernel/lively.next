@@ -1030,6 +1030,7 @@ describe('breakpoints', () => {
     expect(m.get('helen').width).to.equal(150);
     m.width = 199;
     m.master.applyIfNeeded(true);
+    m.applyLayoutIfNeeded();
     expect(m.get('helen').width).to.equal(199);
     m.width = 250;
     m.master.applyIfNeeded(true);
