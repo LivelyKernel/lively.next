@@ -1167,7 +1167,8 @@ export default class Renderer {
    * @see textLayerNodeFunctionFor above.
    */
   lineNodeFunctionFor (morph) {
-    return (line) => this.nodeForLine(line, morph);
+    // Measurement lines must not adopt the live nodes of embedded morphs.
+    return (line) => this.nodeForLine(line, morph, false, true);
   }
 
   /**
