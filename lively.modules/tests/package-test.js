@@ -53,6 +53,54 @@ describe('package loading', function () {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   describe('basics', () => {
+    it('defers closure scope and package metadata until they are inspected', async () => {
+      const pkg = await ensurePackage(S, project1aDir);
+      const mod = module(S, pkg.url + '/entry-a.js');
+      const packageLookup = mod.package;
+      let lookups = 0;
+      mod.package = function () { lookups++; return packageLookup.call(this); };
+      try {
+        const cell = {value: 3};
+        const func = mod.recordDebugClosure(() => cell.value, {value: cell}, 0, 8, '() => 3');
+        expect(lookups).equals(0);
+        const bindings = func[Symbol.for('lively-debug-bindings')];
+        bindings.value = 4;
+        expect(cell.value).equals(4);
+        expect(func[Symbol.for('lively-debug-bindings')]).equals(bindings);
+        const meta = func[Symbol.for('lively-module-meta')];
+        expect(meta.pathInPackage).equals('entry-a.js');
+        expect(lookups).above(0);
+        expect(func[Symbol.for('lively-module-meta')]).equals(meta);
+      } finally { mod.package = packageLookup; }
+    });
+
+    it('records closure metadata without scanning packages or reading the filesystem on each call', async () => {
+      const pkg = await ensurePackage(S, project1aDir);
+      const mod = module(S, pkg.url + '/entry-a.js');
+      expect(mod.package()).equals(pkg);
+      const registry = PackageRegistry.ofSystem(S);
+      const allPackageURLs = registry.allPackageURLs;
+      const nodeRequire = S._nodeRequire;
+      let filesystemLookups = 0;
+      if (nodeRequire) S._nodeRequire = name => {
+        if (name === 'node:fs') filesystemLookups++;
+        return nodeRequire(name);
+      };
+      registry.allPackageURLs = () => { throw new Error('Cached package lookups must not enumerate the registry'); };
+      try {
+        expect(getPackage(S, pkg.url, true)).equals(pkg);
+        const func = mod.recordDebugClosure(() => 42, {}, 0, 8, '() => 42');
+        expect(func()).equals(42);
+        expect(func[Symbol.for('lively-module-meta')]).deep.equals({
+          package: { name: pkg.name, version: pkg.version }, pathInPackage: 'entry-a.js'
+        });
+        expect(filesystemLookups).equals(0);
+      } finally {
+        registry.allPackageURLs = allPackageURLs;
+        S._nodeRequire = nodeRequire;
+      }
+    });
+
     it('loads package configs from encoded file URLs before the transpiler is configured', async () => {
       if (!System.get('@system-env').node) return;
 

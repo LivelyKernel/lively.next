@@ -1,6 +1,9 @@
 import { HeadlessSession } from 'lively.headless';
 import { promise } from 'lively.lang';
 
+const TEST_RUNNER_EVAL_TIMEOUT = Number(process.env.LIVELY_TEST_RUNNER_EVAL_TIMEOUT) || 5 * 60 * 1000;
+const TEST_RUNNER_OPEN_TIMEOUT = Number(process.env.LIVELY_TEST_RUNNER_OPEN_TIMEOUT) || 5 * 60 * 1000;
+
 export default class TestRunner {
   async setup (livelyServer) {
     console.log('[Test Runner] Started');
@@ -12,7 +15,7 @@ export default class TestRunner {
       let attempts = 1;
       while (true) {
         try {
-          this.headlessSession = new HeadlessSession();
+          this.headlessSession = new HeadlessSession({ aliveTimeout: TEST_RUNNER_OPEN_TIMEOUT });
           await this.headlessSession.open('http://localhost:9011/worlds/load?name=__newWorld__&askForWorldName=false&fastLoad=false',  (sess) => sess.runEval(`typeof $world !== 'undefined' && $world.isWorld && $world._uiInitialized`, { timeout: 5000 }).catch(() => false));
         } catch (err) {
           if (attempts < 3) {
@@ -33,9 +36,14 @@ export default class TestRunner {
       const { loadPackage } = await System.import("lively-system-interface/commands/packages.js");
       const packageToTestLoaded = localInterface.coreInterface.getPackages().find(pkg => pkg.name === '${module_to_test}');
       if (!packageToTestLoaded){
+        const repositoryPackage = resource('http://localhost:9011/${module_to_test}/');
+        const localProjectPackage = resource('http://localhost:9011/local_projects/${module_to_test}/');
+        const packageBase = await repositoryPackage.join('package.json').exists()
+          ? repositoryPackage
+          : localProjectPackage;
         await loadPackage(localInterface.coreInterface, {
           name: '${module_to_test}',
-          address: 'http://localhost:9011/local_projects/${module_to_test}',
+          address: packageBase.asFile().url,
           type: 'package'
         });
       }
@@ -62,7 +70,7 @@ export default class TestRunner {
         })
       });
       JSON.stringify(results);
-      `)
+      `, { timeout: TEST_RUNNER_EVAL_TIMEOUT })
     } catch (err) {
       const browserErrors = this.headlessSession?.summarizeRecentConsoleErrors();
       results = JSON.stringify({

@@ -305,7 +305,7 @@ describe('document as text tree', () => {
     });
   });
 
-  it('survives fuzzy testing', function () {
+  it('survives fuzzy testing', async function () {
     this.timeout(6000);
     const { doc, actions, error } = Document.fuzzyTest();
     if (error) {
