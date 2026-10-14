@@ -118,6 +118,30 @@ describe('static embedding render regressions', () => {
     } finally { text.remove(); }
   });
 
+  for (const renderViaCSS of [false, true]) {
+    it(`lays out a hugging embed before its Text is shrunk (CSS: ${renderViaCSS})`, async () => {
+      const embedded = new Morph({
+        layout: new TilingLayout({ hugContentsHorizontally: true, hugContentsVertically: true }),
+        submorphs: [new Morph({ extent: pt(100, 20) })]
+      });
+      const text = new Text({ name: 'label', readOnly: true, fontSize: 20, fixedHeight: false,
+        textAndAttributes: ['before ', null, embedded, null, ' after', null] });
+      const owner = new Morph({ extent: pt(1000, 100), submorphs: [text],
+        layout: new TilingLayout({ renderViaCSS, resizePolicies: [['label', { width: 'shrink', height: 'fixed' }]] })
+      }).openInWorld();
+      try {
+        await text.whenFontLoaded();
+        owner.env.forceUpdate();
+        expect(embedded.width).closeTo(100, 1, 'shrinking Text must not clear the pending inline layout at its default 10px');
+        const line = text.renderingState.textLayer.querySelector('.line');
+        const range = document.createRange();
+        range.selectNodeContents(line);
+        expect(text.intrinsicWidth()).closeTo(range.getBoundingClientRect().width, 1, 'Text shrink width must include the laid-out inline box');
+        expect(text.height).closeTo(parseFloat(getComputedStyle(line).lineHeight), 1, 'the inline layout must leave one unwrapped line');
+      } finally { owner.remove(); }
+    });
+  }
+
   for (const variant of ['initial', 'set-then-fit', 'measure-before-render', 'label-like']) {
     it(`applies a hugging inline layout (${variant})`, async () => {
       const embedded = new Morph({
