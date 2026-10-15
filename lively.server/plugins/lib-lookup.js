@@ -261,6 +261,13 @@ export async function generateImportMapForPackage (packageDir, { update = false 
   return importMap;
 }
 
+// The generator's fetch cache never expires. After a CDN rebuild it can hold bytes
+// that no longer match the served modules, which would then be pinned as integrity.
+export async function clearImportMapFetchCache () {
+  const { clearCache } = await import('@jspm/generator');
+  await clearCache();
+}
+
 export async function generateImportMap (packageName, options) {
   const pkg = packageName && System.get('@lively-env').packageRegistry.lookup(packageName);
   if (!pkg) throw new Error(`Unknown package: ${packageName}`);
