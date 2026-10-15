@@ -33,7 +33,7 @@ export class Anchor {
     return this._position;
   }
 
-  updateEmbeddedMorph () {
+  updateEmbeddedMorph (renderedBounds) {
     if (!this.embeddedMorph) return;
     const tm = this.embeddedMorph.owner;
     if (tm && !tm.isLineVisible(this.position.row)) {
@@ -42,7 +42,17 @@ export class Anchor {
         if (!tm.isLineVisible(this.position.row)) return;
       } else return;
     }
-    const pos = (tm && tm.isText) ? tm.charBoundsFromTextPosition(this.position).topLeft().subPt(tm.origin) : this.embeddedMorph.position;
+    let pos = this.embeddedMorph.position;
+    if (renderedBounds && tm?.isText) {
+      // Reuse the painted bounds instead of measuring every character in the line.
+      const delta = tm.env.renderer.getInlineMorphPositionDelta(this.embeddedMorph, renderedBounds);
+      if (delta.r() < 1e-7) return;
+      pos = pos.addPt(delta);
+    } else if (tm?.isText) {
+      const bounds = this.embeddedMorph.getTransform().transformRectToRect(this.embeddedMorph.innerBounds());
+      const offset = bounds.topLeft().subPt(this.embeddedMorph.position);
+      pos = tm.charBoundsFromTextPosition(this.position).topLeft().addXY(tm.borderWidthLeft, tm.borderWidthTop).subPt(tm.origin).subPt(offset);
+    }
     if (tm) tm._positioningSubmorph = this.embeddedMorph;
     this.embeddedMorph.position = pos;
     if (tm) tm._positioningSubmorph = false;
