@@ -518,11 +518,12 @@ export class Text extends Morph {
           if (obj.isArray(textAndAttributes) && textAndAttributes.find(m => m?.doit)) { this.needsDocument = true; }
           const previousTextAndAttributes = this._isDowngrading ? [] : !this.document && this.textAndAttributes;
           if (this.document) {
-            this.replace(
-              { start: { row: 0, column: 0 }, end: this.documentEndPosition },
-              textAndAttributes,
-              false
-            );
+            this.withMetaDo({ partOfTextAndAttributesAssignment: true }, () =>
+              this.replace(
+                { start: { row: 0, column: 0 }, end: this.documentEndPosition },
+                textAndAttributes,
+                false
+              ));
           } else {
             if (textAndAttributes.length === 0) textAndAttributes = ['', null];
             if (typeof textAndAttributes === 'string') textAndAttributes = [textAndAttributes, null];
