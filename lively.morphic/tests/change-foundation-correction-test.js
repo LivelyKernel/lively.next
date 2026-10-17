@@ -117,6 +117,35 @@ describe('morphic transaction corrections', function () {
     expect(target.opacity).equals(0.5);
   });
 
+  for (const boundary of ['undoStop', 'undoStart']) {
+    it(`releases joined entries from the closed recording token at ${boundary}`, () => {
+      const target = morph();
+      undo.undoStart(target, 'first gesture');
+      manager.transaction({ scope: target }, () => { target.opacity = 0.5; });
+      const recording = undo.undoInProgress;
+      const joined = recording.joinedTransactions.slice();
+      expect(joined).to.have.length(1);
+
+      if (boundary === 'undoStart') undo.undoStart(target, 'next gesture');
+      else undo.undoStop();
+
+      expect(recording.isRecording()).equals(false);
+      expect(recording.joinedTransactions).to.be.empty;
+      expect(undo.undos[0].transactions.slice(1)).deep.equals(joined);
+      if (boundary === 'undoStart') {
+        manager.transaction({ scope: target }, () => { target.rotation = 0.25; });
+        undo.undoStop();
+        undo.undo();
+        expect(target.rotation).equals(0);
+        expect(target.opacity).equals(0.5);
+      }
+      undo.undo();
+      expect(target.opacity).equals(1);
+      undo.redo();
+      expect(target.opacity).equals(0.5);
+    });
+  }
+
   for (const direction of ['apply', 'reverseApply']) {
     for (const nestedCompensation of [false, true]) {
       it(`keeps incomplete morphic rollback during composite ${direction} with ${nestedCompensation ? 'nested' : 'plain'} compensation failure`, () => {
