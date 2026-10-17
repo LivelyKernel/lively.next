@@ -3,8 +3,7 @@ export const MorphicOperationKind = Object.freeze({
   INSERT_MORPH: 'insert-morph',
   REMOVE_MORPH: 'remove-morph',
   MOVE_MORPH: 'move-morph',
-  REPLACE_TEXT: 'replace-text',
-  CUSTOM: 'custom-operation'
+  REPLACE_TEXT: 'replace-text'
 });
 
 export const MorphicAttachmentKind = Object.freeze({
@@ -20,14 +19,14 @@ export const MorphicValueSemantics = Object.freeze({
 const operationKinds = new Set(Object.values(MorphicOperationKind));
 const valueSemanticsKinds = new Set(Object.values(MorphicValueSemantics));
 
-function isSnapshotContainer (value) {
+export function isSnapshotContainer (value) {
   if (Array.isArray(value)) return true;
   if (!value || typeof value !== 'object') return false;
   const prototype = Object.getPrototypeOf(value);
   return prototype === Object.prototype || prototype === null;
 }
 
-function cloneSnapshotContainers (value, freeze = false, seen = new WeakMap()) {
+export function cloneSnapshotContainers (value, freeze = false, seen = new WeakMap()) {
   if (!isSnapshotContainer(value)) return value;
   if (seen.has(value)) return seen.get(value);
   const clone = Array.isArray(value)
@@ -40,7 +39,7 @@ function cloneSnapshotContainers (value, freeze = false, seen = new WeakMap()) {
   return freeze ? Object.freeze(clone) : clone;
 }
 
-function snapshotContainersEqual (left, right, seen = new WeakMap()) {
+export function snapshotContainersEqual (left, right, seen = new WeakMap()) {
   if (Object.is(left, right)) return true;
   if (!isSnapshotContainer(left) || !isSnapshotContainer(right) ||
       Array.isArray(left) !== Array.isArray(right)) return false;
@@ -65,7 +64,7 @@ function resolveMorph (context, targetId) {
   return target;
 }
 
-export function attachedMorph ({ ownerId, index, transform = null }) {
+export function attachedMorph ({ ownerId, index, transform = null, localState = null }) {
   if (typeof ownerId !== 'string' || !ownerId) {
     throw new Error('Attached morph state requires an ownerId');
   }
@@ -76,12 +75,13 @@ export function attachedMorph ({ ownerId, index, transform = null }) {
     kind: MorphicAttachmentKind.ATTACHED,
     ownerId,
     index,
-    transform
+    transform,
+    ...(localState ? { localState } : {})
   });
 }
 
-export function detachedMorph () {
-  return Object.freeze({ kind: MorphicAttachmentKind.DETACHED });
+export function detachedMorph ({ localState = null } = {}) {
+  return Object.freeze({ kind: MorphicAttachmentKind.DETACHED, ...(localState ? { localState } : {}) });
 }
 
 function validateAttachment (attachment, name) {
@@ -118,6 +118,8 @@ export class MorphicOperation {
   invert () { throw new Error(`${this.constructor.name}.invert is not implemented`); }
 }
 
+const identityValue = value => value;
+
 export class SetMorphProperty extends MorphicOperation {
   constructor ({
     targetId,
@@ -126,8 +128,8 @@ export class SetMorphProperty extends MorphicOperation {
     after,
     metadata = {},
     valueSemantics = inferredValueSemantics(before, after),
-    snapshotValue = value => value,
-    materializeValue = value => value,
+    snapshotValue = identityValue,
+    materializeValue = identityValue,
     snapshotValuesEqual = snapshotContainersEqual
   }) {
     if (typeof property !== 'string' || !property) {
@@ -203,8 +205,10 @@ export class SetMorphProperty extends MorphicOperation {
     return new SetMorphProperty({
       targetId: this.targetId,
       property: this.property,
-      before: this.after,
-      after: this.before,
+      before: this.valueSemantics === MorphicValueSemantics.SNAPSHOT
+        ? this.materializeValue(cloneSnapshotContainers(this.after)) : this.after,
+      after: this.valueSemantics === MorphicValueSemantics.SNAPSHOT
+        ? this.materializeValue(cloneSnapshotContainers(this.before)) : this.before,
       metadata: this.metadata,
       valueSemantics: this.valueSemantics,
       snapshotValue: this.snapshotValue,
@@ -262,57 +266,6 @@ export class MoveMorph extends MorphicOperation {
       morphId: this.morphId,
       from: this.to,
       to: this.from,
-      metadata: this.metadata
-    });
-  }
-}
-
-export class CustomOperation extends MorphicOperation {
-  constructor ({
-    targetId,
-    before,
-    after,
-    applyHandler,
-    reverseHandler,
-    validateHandler = null,
-    metadata = {}
-  }) {
-    if (typeof applyHandler !== 'function' || typeof reverseHandler !== 'function') {
-      throw new Error('CustomOperation requires explicit apply and reverse handlers');
-    }
-    if (validateHandler && typeof validateHandler !== 'function') {
-      throw new Error('CustomOperation validateHandler must be a function');
-    }
-    super({
-      kind: MorphicOperationKind.CUSTOM,
-      targetId,
-      before,
-      after,
-      applyHandler,
-      reverseHandler,
-      validateHandler,
-      metadata
-    });
-  }
-
-  validate (context) {
-    resolveMorph(context, this.targetId);
-    this.validateHandler?.(context, this);
-  }
-
-  apply (context) {
-    this.applyHandler(context, this);
-    return this;
-  }
-
-  invert () {
-    return new CustomOperation({
-      targetId: this.targetId,
-      before: this.after,
-      after: this.before,
-      applyHandler: this.reverseHandler,
-      reverseHandler: this.applyHandler,
-      validateHandler: this.validateHandler,
       metadata: this.metadata
     });
   }
