@@ -403,6 +403,7 @@ export class UndoManager {
           timestamp: undo.timestamp
         })
       : undo;
+    undo.joinedTransactions = [];
     return this.addTransaction(transaction);
   }
 
