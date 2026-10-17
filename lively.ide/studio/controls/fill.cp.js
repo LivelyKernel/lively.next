@@ -12,6 +12,7 @@ import { AssetBrowserPopup } from '../asset-browser.cp.js';
 
 import { StatusMessageError } from 'lively.halos/components/messages.cp.js';
 import { LabeledCheckbox } from 'lively.components/checkbox.cp.js';
+import { setMorphPropertyWithComponentCommand } from '../../components/change-tracker.js';
 
 export class FillControlModel extends ViewModel {
   static get properties () {
@@ -34,8 +35,10 @@ export class FillControlModel extends ViewModel {
   }
 
   aspectRatioChecked (checked) {
-    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
-      this.targetMorph.sizeToAspectRatio = checked;
+    setMorphPropertyWithComponentCommand({
+      target: this.targetMorph,
+      property: 'sizeToAspectRatio',
+      value: checked
     });
   }
 
@@ -171,8 +174,10 @@ export class FillControlModel extends ViewModel {
     if (!this.targetMorph) return;
     let color = this.ui.fillColorInput.colorValue;
     if (obj.equals(this.targetMorph.fill, color)) return;
-    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
-      this.targetMorph.fill = color;
+    setMorphPropertyWithComponentCommand({
+      target: this.targetMorph,
+      property: 'fill',
+      value: color
     });
   }
 
