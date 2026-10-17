@@ -224,6 +224,12 @@ describe('object', function () {
          '}');
     });
 
+    it('escapes backslashes in string literals', function () {
+      const value = 'path\\backslash\nnext line';
+      const inspected = inspect({ value }, { quote: "'" });
+      expect(Function(`return (${inspected})`)().value).to.equal(value); // eslint-disable-line no-new-func
+    });
+
     it('observes maxDepth when printing', function () {
       expect(inspect(obj1, { maxDepth: 1 })).to.equal(
         '{\n' +
