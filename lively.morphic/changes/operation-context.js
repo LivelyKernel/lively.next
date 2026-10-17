@@ -2,6 +2,7 @@
 import { obj } from 'lively.lang';
 import { MorphicAttachmentKind } from './operations.js';
 import { attachmentOf, attachmentsEqual, propertyEquals } from './recovery.js';
+import { applyTextEdit, captureTextRecovery, textOperationMatches } from './text.js';
 
 /** Weak live lookup; only detached ownership roots have a strong lifetime handle. */
 export function operationContext (manager, { scope = [], resolveMorph = manager.resolveMorph, metadata = {} } = {}) {
@@ -30,6 +31,9 @@ export function operationContext (manager, { scope = [], resolveMorph = manager.
     readMorphProperty: (morph, property) => property in morph
       ? morph[property] : morph.getProperty?.(property) ?? morph._morphicState?.[property],
     valuesEqual: propertyEquals,
+    replaceText: (morph, operation) => applyTextEdit(morph, operation, context),
+    textMatches: (morph, operation, endpoint) => textOperationMatches(morph, operation, endpoint, context),
+    captureTextRecovery: (morph, operation) => captureTextRecovery(morph, operation, context),
     setMorphProperty: (morph, property, value) => {
       manager._assertAtomicAccess(morph);
       const write = () => {
@@ -79,7 +83,8 @@ export function operationContext (manager, { scope = [], resolveMorph = manager.
     },
     retainDetached: (operations = []) => {
       detached.clear();
-      const ids = new Set(operations.flatMap(operation => [operation.targetId, operation.from?.ownerId, operation.to?.ownerId]));
+      const ids = new Set(operations.flatMap(operation => [operation.targetId, operation.from?.ownerId, operation.to?.ownerId,
+        ...(operation.embedded || []).flatMap(entry => [entry.morphId, entry.before?.ownerId, entry.after?.ownerId])]));
       for (const id of ids) {
         let root = known.get(id)?.deref();
         while (root?.owner) root = root.owner;
