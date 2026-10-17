@@ -194,14 +194,13 @@ export class RecordedChangeTransaction extends EditTransaction {
     }
     const last = arr.last(this.joinedTransactions);
     const recorded = this.recorder?.changes || [];
-    const recordedCount = recorded.length;
-    if (last && this._lastJoinedChangeCount <= recordedCount &&
-        last.canMergeWith(transaction, recorded.slice(this._lastJoinedChangeCount))) {
+    const interveningChanges = recorded.filter(change => !this._lastJoinedChanges?.has(change));
+    if (last && this._lastJoinedChanges && last.canMergeWith(transaction, interveningChanges)) {
       this.joinedTransactions[this.joinedTransactions.length - 1] = last.merge(transaction);
     } else {
       this.joinedTransactions.push(transaction);
     }
-    this._lastJoinedChangeCount = recordedCount;
+    this._lastJoinedChanges = new WeakSet(recorded);
     return arr.last(this.joinedTransactions);
   }
 
@@ -333,8 +332,11 @@ export class UndoManager {
   undoStart (morph, name) {
     if (this.applyCount) return;
     if (this.undoInProgress) {
-      console.warn(`There is already an undo being recorded. Tried to start undo ${name} for ${morph.name}, but ${this.undoInProgress.name} is currently in progress.`);
-      return;
+      if (this.undoInProgress.joinedTransactions.length) this.undoStop();
+      else {
+        console.warn(`There is already an undo being recorded. Tried to start undo ${name} for ${morph.name}, but ${this.undoInProgress.name} is currently in progress.`);
+        return;
+      }
     }
     return this.undoInProgress = new RecordedChangeTransaction(
       name,
@@ -355,6 +357,7 @@ export class UndoManager {
           timestamp: undo.timestamp
         })
       : undo;
+    undo.joinedTransactions = [];
     return this.addTransaction(transaction);
   }
 
@@ -380,6 +383,43 @@ export class UndoManager {
     const removed = recorded.length - retained.length;
     this.undoInProgress.recorder.changes = retained;
     return removed;
+  }
+
+  /** Remove expired domains from history, preserving other domains in the same group. */
+  removeTransactions (predicate) {
+    const replacements = new Map();
+    const prune = transaction => {
+      if (replacements.has(transaction)) return replacements.get(transaction);
+      let retained = transaction;
+      if (predicate(transaction)) retained = null;
+      else if (transaction instanceof CompositeEditTransaction) {
+        let entries = transaction.transactions.map(prune).filter(Boolean);
+        if (entries.some((entry, index) => entry !== transaction.transactions[index]) ||
+            entries.length !== transaction.transactions.length) {
+          entries = entries.filter(entry => !(entry instanceof RecordedChangeTransaction &&
+            entry.recorded() && !entry.changes.length));
+          retained = entries.length ? new CompositeEditTransaction(entries, transaction) : null;
+        }
+      }
+      replacements.set(transaction, retained);
+      return retained;
+    };
+    this.undos = this.undos.map(prune).filter(Boolean);
+    this.redos = this.redos.map(prune).filter(Boolean);
+    this.grouping.current = this.grouping.current.map(prune).filter(Boolean);
+    const active = this.undoInProgress;
+    if (active) {
+      const retained = active.joinedTransactions.map(prune).filter(Boolean);
+      if (retained.some((entry, index) => entry !== active.joinedTransactions[index]) ||
+          retained.length !== active.joinedTransactions.length) {
+        active.joinedTransactions = retained;
+        delete active._lastJoinedChanges;
+        if (!retained.length && !active.recorder.changes.length) {
+          active.stopRecording();
+          this.undoInProgress = null;
+        }
+      }
+    }
   }
 
   removeLatestUndo () {

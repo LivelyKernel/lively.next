@@ -336,6 +336,65 @@ describe('undo', () => {
     ]);
   });
 
+  it('closes an interrupted joined group when another undo starts', () => {
+    const target = morph({ fill: Color.red });
+    target.undoStart('interrupted joined group');
+    target.fill = Color.green;
+    const [change] = env.undoManager.undoInProgress.recorder.changes;
+    env.undoManager.discardRecordedChanges([change]);
+    env.undoManager.addTransaction(new TestEditTransaction({
+      label: 'joined fill',
+      apply: () => { target.fill = Color.green; },
+      reverseApply: () => { target.fill = Color.red; }
+    }), { joinActive: true });
+    const interrupted = env.undoManager.undoInProgress;
+    const next = target.undoStart('next group');
+    expect(next).not.equals(interrupted);
+    expect(interrupted.isRecording()).equals(false);
+    expect(interrupted.joinedTransactions).to.be.empty;
+    target.opacity = 0.5;
+    target.undoStop();
+    expect(env.undoManager.undos).has.length(2);
+    env.undoManager.undo();
+    expect(target.opacity).equals(1);
+    expect(target.fill).equals(Color.green);
+    env.undoManager.undo();
+    expect(target.fill).equals(Color.red);
+    env.undoManager.redo();
+    env.undoManager.redo();
+    expect(target.fill).equals(Color.green);
+    expect(target.opacity).equals(0.5);
+  });
+
+  it('prunes a domain from nested groups while preserving other entries and group identities', () => {
+    const kept = new TestEditTransaction({ label: 'kept', apply: () => {}, reverseApply: () => {} });
+    const expired = new TestEditTransaction({ label: 'expired', apply: () => {}, reverseApply: () => {} });
+    const group = new CompositeEditTransaction([kept, new CompositeEditTransaction([expired])]);
+    env.undoManager.addTransaction(group);
+    env.undoManager.removeTransactions(transaction => transaction === expired);
+    expect(env.undoManager.undos[0].transactions).deep.equals([kept]);
+    expect(env.undoManager.grouping.current).deep.equals(env.undoManager.undos);
+    env.undoManager.undo();
+    expect(env.undoManager.redos).has.length(1);
+    env.undoManager.removeTransactions(transaction => transaction === kept);
+    expect(env.undoManager.redos).to.be.empty;
+  });
+
+  it('preserves unrelated recorded changes when removing an active joined domain', () => {
+    const target = morph({ fill: Color.red });
+    target.undoStart('mixed active group');
+    target.fill = Color.green;
+    const expired = new TestEditTransaction({ label: 'expired', apply: () => {}, reverseApply: () => {} });
+    env.undoManager.addTransaction(expired, { joinActive: true });
+    env.undoManager.removeTransactions(transaction => transaction === expired);
+    expect(env.undoManager.undoInProgress.joinedTransactions).to.be.empty;
+    target.undoStop();
+    env.undoManager.undo();
+    expect(target.fill).equals(Color.red);
+    env.undoManager.redo();
+    expect(target.fill).equals(Color.green);
+  });
+
   it('rolls back already replayed domains when a composite apply fails', () => {
     const state = { value: 0 };
     const first = new TestEditTransaction({

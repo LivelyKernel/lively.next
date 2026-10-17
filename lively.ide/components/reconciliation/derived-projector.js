@@ -81,7 +81,8 @@ export function projectDerivedComponentRename ({
   beforeParentDocument,
   afterParentDocument,
   nodeId,
-  resolveComponentDocument = null
+  resolveComponentDocument = null,
+  normalizeModuleId = null
 }) {
   if (typeof source !== 'string') throw new Error('Derived rename projection requires source');
   if (!(beforeParentDocument instanceof ComponentDocument) ||
@@ -104,7 +105,8 @@ export function projectDerivedComponentRename ({
     exportName,
     componentId,
     parentDocument: beforeParentDocument,
-    resolveComponentDocument
+    resolveComponentDocument,
+    normalizeModuleId
   });
   if (!parsedBefore.supported || !parsedBefore.document.parentComponent) {
     return unsupportedResult(source, [diagnostic(
@@ -193,7 +195,8 @@ export function projectDerivedComponentRename ({
     exportName,
     componentId,
     parentDocument: afterParentDocument,
-    resolveComponentDocument
+    resolveComponentDocument,
+    normalizeModuleId
   });
   if (!parsedAfter.supported) {
     return unsupportedResult(source, [diagnostic(
@@ -221,7 +224,8 @@ export function projectDerivedComponentStructure ({
   componentId = `${moduleId}#${exportName}`,
   beforeParentDocument,
   afterParentDocument,
-  resolveComponentDocument = null
+  resolveComponentDocument = null,
+  normalizeModuleId = null
 }) {
   if (typeof source !== 'string') throw new Error('Derived structure projection requires source');
   if (!(beforeParentDocument instanceof ComponentDocument) ||
@@ -240,7 +244,8 @@ export function projectDerivedComponentStructure ({
     exportName,
     componentId,
     parentDocument: beforeParentDocument,
-    resolveComponentDocument
+    resolveComponentDocument,
+    normalizeModuleId
   });
   if (!parsedBefore.supported || !parsedBefore.document.parentComponent) {
     return unsupportedResult(source, [diagnostic(
@@ -319,7 +324,7 @@ export function projectDerivedComponentStructure ({
   }
   let sourceAfter = applyChanges(source, changes);
   const parseWithParent = parentDocument => parseComponentSource({
-    source: sourceAfter, moduleId, exportName, componentId, parentDocument, resolveComponentDocument
+    source: sourceAfter, moduleId, exportName, componentId, parentDocument, resolveComponentDocument, normalizeModuleId
   });
   let current = parseWithParent(beforeParentDocument);
   const relocations = [];
