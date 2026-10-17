@@ -361,9 +361,8 @@ export class ResponsiveControlModel extends PropertySectionModel {
   // FIXME: this is code duplication to lively.components/responsive.cp.js
   refreshChangeTrackers () {
     if (!this.targetMorph._changeTracker) return;
-    this.targetMorph._changeTracker.processChangeInComponent({
-      prop: 'master',
-      meta: { reconcileChanges: true },
+    return this.targetMorph._changeTracker.setProperty({
+      property: 'master',
       target: this.targetMorph,
       value: this.targetStylePolicy
     });

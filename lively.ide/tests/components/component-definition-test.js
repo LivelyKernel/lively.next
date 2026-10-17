@@ -1,9 +1,11 @@
-/* global describe, it */
+/* global afterEach, describe, it */
 import { expect } from 'mocha-es6';
 import { ComponentDescriptor, morph, part, add, component } from 'lively.morphic';
 import { Color, pt } from 'lively.graphics';
 import { InteractiveComponentDescriptor } from '../../components/editor.js';
-import { createInitialComponentDefinition } from '../../components/reconciliation.js';
+import { createInitialComponentDefinition, ensureComponentNamesInSource } from '../../components/component-definition.js';
+import { ProjectionalReconciliationUnsupportedError } from '../../components/change-tracker.js';
+import { releaseComponentEditingState } from './test-isolation.js';
 
 const prevDescr = component.DescriptorClass;
 component.DescriptorClass = InteractiveComponentDescriptor;
@@ -46,23 +48,57 @@ const e2 = component(e1, {
 
 component.DescriptorClass = prevDescr || ComponentDescriptor;
 
-describe('component definition reconciliation', () => {
+describe('component definition editing', () => {
+  releaseComponentEditingState();
+  afterEach(() => e2.stopEditSession());
+
+  it('T9 names additions when their inherited anchor has no own spec', () => {
+    const source = `const Example = component(Base, {
+      name: 'example', submorphs: [add({ fill: 'red' }, 'button')]
+    });`;
+    const start = source.indexOf("{ fill: 'red' }");
+    const policySpec = { name: 'example', submorphs: [
+      { COMMAND: 'add', props: { name: 'generated', fill: 'red' }, before: 'button' }
+    ] };
+    const updated = ensureComponentNamesInSource(source, 'Example', policySpec,
+      [{ start, end: start + "{ fill: 'red' }".length }]);
+    expect(updated).includes(`add({ name: "generated", fill: 'red' }, 'button')`);
+  });
+
   it('component proxy includes added morphs', async () => {
     const c = await e2.edit();
     expect(c.get('moppel')).not.to.be.null;
   });
 
-  it('allows to create a component proxy for editing the spec', async () => {
-    // define an ad hoc component
-    const c = await e2.edit(); // => returns a component morph from the spec that is auto mapping changes to the spec
-    c._changeTracker.componentModule = null; // prevents this file from being changed
-    c.withMetaDo({ reconcileChanges: true }, () => {
-      c.get('alice').fill = Color.green;
-      c.fill = Color.purple;
-    });
-    await c._changeTracker.onceChangesProcessed();
-    expect(e2.stylePolicy.getSubSpecFor('alice').fill).to.eql(Color.green);
-    expect(e2.stylePolicy.spec.fill).to.eql(Color.purple);
+  it('rejects source-less proxy edits without mutating component policy', async () => {
+    const c = await e2.edit();
+    // Every editable session must have source; losing it is an internal bug.
+    const tracker = c._changeTracker;
+    const componentModule = tracker.componentModule;
+    const aliceFill = c.get('alice').fill;
+    const fill = c.fill;
+    const world = c.world;
+    const logged = [];
+    c.world = () => ({ showError: () => {}, logError: error => logged.push(error) });
+    try {
+      tracker.componentModule = null;
+      c.withMetaDo({ reconcileChanges: true }, () => {
+        c.get('alice').fill = Color.green;
+        c.fill = Color.purple;
+      });
+      const error = await tracker.onceChangesProcessed().catch(error => error);
+      expect(error).to.be.instanceOf(ProjectionalReconciliationUnsupportedError);
+      expect(error.message).includes('bug');
+      expect(logged).has.length(1);
+      expect(logged[0].stack).includes(error.message);
+      expect(c.get('alice').fill).equals(aliceFill);
+      expect(c.fill).equals(fill);
+      expect(e2.stylePolicy.getSubSpecFor('alice').fill).to.eql(Color.black);
+      expect(e2.stylePolicy.spec.fill).to.eql(Color.yellow);
+    } finally {
+      tracker.componentModule = componentModule;
+      c.world = world;
+    }
   });
 
   it('allows to reify source code based on changes applied to its spec', () => {
