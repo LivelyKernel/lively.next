@@ -287,7 +287,7 @@ describe('component -> source reconciliation', function () {
   });
 
   it('updates the layouts definitions in response to a morph getting removed', async () => {
-    ComponentB.withMetaDo({ reconcileChanges: true }, async () => {
+    ComponentB.withMetaDo({ reconcileChanges: true }, () => {
       ComponentB.layout = new TilingLayout({
         resizePolicies: [
           ['some submorph', { height: 'fill', width: 'fill' }]
@@ -311,7 +311,7 @@ describe('component -> source reconciliation', function () {
 });`);
 
     let removedMorph;
-    ComponentB.withMetaDo({ reconcileChanges: true }, async () => {
+    ComponentB.withMetaDo({ reconcileChanges: true }, () => {
       removedMorph = ComponentB.getSubmorphNamed('some submorph').remove();
     });
     await ComponentB._changeTracker.onceChangesProcessed();
