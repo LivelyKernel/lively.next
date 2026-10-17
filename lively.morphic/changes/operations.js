@@ -202,19 +202,11 @@ export class SetMorphProperty extends MorphicOperation {
   }
 
   invert () {
-    return new SetMorphProperty({
-      targetId: this.targetId,
-      property: this.property,
-      before: this.valueSemantics === MorphicValueSemantics.SNAPSHOT
-        ? this.materializeValue(cloneSnapshotContainers(this.after)) : this.after,
-      after: this.valueSemantics === MorphicValueSemantics.SNAPSHOT
-        ? this.materializeValue(cloneSnapshotContainers(this.before)) : this.before,
-      metadata: this.metadata,
-      valueSemantics: this.valueSemantics,
-      snapshotValue: this.snapshotValue,
-      materializeValue: this.materializeValue,
-      snapshotValuesEqual: this.snapshotValuesEqual
-    });
+    // Swap the immutable endpoints; materialization can adopt a live identity.
+    return Object.freeze(Object.assign(Object.create(SetMorphProperty.prototype), this, {
+      before: this.after,
+      after: this.before
+    }));
   }
 }
 

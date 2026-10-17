@@ -179,6 +179,37 @@ describe('morphic transaction kernel', () => {
     expect(target.date.getTime()).equals(1000);
   });
 
+  it('preserves inverse snapshots when materialization adopts a live identity', () => {
+    class Box { constructor (value) { this.value = value; } }
+    const cached = new Box({ level: 2 });
+    const target = { state: cached };
+    const context = createContext({ target });
+    const operation = new SetMorphProperty({
+      targetId: 'target', property: 'state',
+      before: new Box({ level: 1 }), after: cached,
+      valueSemantics: MorphicValueSemantics.SNAPSHOT,
+      snapshotValue: box => box.value,
+      materializeValue: () => cached,
+      metadata: { acceptAlreadyApplied: true }
+    });
+    const inverse = operation.invert();
+
+    // The identity owner restores its state before the runtime undo is replayed.
+    cached.value = { level: 1 };
+    inverse.apply(context);
+    expect(target.state).equals(cached);
+    expect(inverse.before).deep.equals({ level: 2 });
+    expect(inverse.after).deep.equals({ level: 1 });
+    cached.value = { level: 2 };
+    inverse.invert().apply(context);
+    expect(target.state).equals(cached);
+    expect(operation.before).deep.equals({ level: 1 });
+    expect(operation.after).deep.equals({ level: 2 });
+    cached.value = { level: 3 };
+    expect(() => inverse.apply(context)).to.throw(/Precondition failed/);
+    expect(cached.value).deep.equals({ level: 3 });
+  });
+
   it('represents insertion, removal, reordering, and reparenting as exact moves', () => {
     const a = treeNode('a');
     const b = treeNode('b');
