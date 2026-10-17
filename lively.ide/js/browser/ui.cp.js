@@ -159,11 +159,14 @@ class ComponentEditControlModel extends ViewModel {
     if (this.componentDescriptor?.isDirty()) this.componentDescriptor.reset();
   }
 
-  toggleDerivedInstance (active) {
+  async toggleDerivedInstance (active) {
     if (active) {
       try {
         const pos = this.componentMorph.position;
         noUpdate(() => this.componentMorph.remove());
+        const backup = this.componentDescriptor._backupComponentDef;
+        this.componentDescriptor.stopEditSession();
+        this.componentDescriptor._backupComponentDef = backup;
         this.world().sceneGraph?.refresh();
         this.instanceMorph = part(this.componentDescriptor).openInWorld();
         this.instanceMorph.position = pos;
@@ -178,6 +181,11 @@ class ComponentEditControlModel extends ViewModel {
       const pos = this.instanceMorph.position;
       this.cleanupInstance();
       this.world().sceneGraph?.refresh();
+      disconnect(this.componentMorph, 'stop editing', this, 'terminateEditSession');
+      disconnect(this.componentMorph, 'behaviorChanged', this, 'updateControlButtons');
+      this.componentMorph = await this.componentDescriptor.edit();
+      once(this.componentMorph, 'stop editing', this, 'terminateEditSession');
+      connect(this.componentMorph, 'behaviorChanged', this, 'updateControlButtons');
       this.componentMorph.openInWorld();
       this.world().sceneGraph?.refresh();
       this.componentMorph.position = pos;

@@ -357,6 +357,7 @@ class NameHolder extends Morph {
       isEditable: {
         derived: true,
         get () {
+          if (this.target.isComponent) return false;
           const ownerChain = this.target.ownerChain();
           let withinComponentContext = false; let derived = false;
           for (const each of ownerChain) {
@@ -442,8 +443,8 @@ class NameHolder extends Morph {
     this.validName = !owner || !owner.getSubmorphNamed(newName) || oldName === newName;
     if (this.target.isComponent && !evt.hasArrowPressed) {
       // also confirm we are not in conflict with other stuff in the module scope
-      System.import('lively.ide/components/reconciliation.js').then(({ canBeRenamed }) => {
-        this.validName = this.validName && canBeRenamed(moduleManager.module(this.target[Symbol.for('lively-module-meta')].moduleId), oldName, newName);
+      System.import('lively.ide/components/component-definition.js').then(({ canBeRenamed }) => {
+        this.validName = this.validName && canBeRenamed(moduleManager.module(this.target[Symbol.for('lively-module-meta')].moduleId), newName);
         signal(this, 'valid', [this.validName, newName]);
       });
       return;
@@ -455,7 +456,9 @@ class NameHolder extends Morph {
     this.nameHolder.nativeCursor = this.isEditable ? 'text' : 'not-allowed';
     this.nameHolder.readOnly = !this.isEditable;
     if (!this.isEditable) {
-      this.tooltip = 'Cannot change this items name, since it was derived from another component.';
+      this.tooltip = this.target.isComponent
+        ? 'Rename component declarations in the System Browser.'
+        : 'Cannot change this items name, since it was derived from another component.';
     } else this.tooltip = "Click to edit the item's name";
     if (this.nameHolder.textString === this.target.name) return;
     this.nameHolder.textString = this.target.name;
@@ -475,6 +478,7 @@ class NameHolder extends Morph {
   }
 
   updateName (newName) {
+    if (!this.isEditable) return;
     if (!this.forceUniqueName || this.validName) {
       this.withMetaDo({ reconcileChanges: true }, () => {
         this.target.name = newName;
@@ -1193,7 +1197,7 @@ class ComponentHaloItem extends RoundHaloItem {
     const {
       insertComponentDefinition,
       removeComponentDefinition
-    } = await System.import('lively.ide/components/reconciliation.js');
+    } = await System.import('lively.ide/components/component-definition.js');
     const { InteractiveComponentDescriptor } = await System.import('lively.ide/components/editor.js');
     const Browser = await System.import('lively.ide/js/browser/ui.cp.js');
     if (toBeComponent) {
@@ -1280,6 +1284,7 @@ class ComponentHaloItem extends RoundHaloItem {
         const { moduleId, exportedName } = target.master[Symbol.for('lively-module-meta')];
         const pos = target.position;
         await removeComponentDefinition(exportedName, moduleManager.module(moduleId));
+        target._changeTracker?.dispose();
         target.isComponent = false;
         const master = new PolicyApplicator({}, target.master);
         target.master = null;
