@@ -452,6 +452,11 @@ export class ChangeManager {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // group changes
 
+  /**
+   * Record a batch. On a callback exception, clean the recording stack and rethrow;
+   * applied mutations are not rolled back. Use MorphicTransactionManager.transaction
+   * for atomic operation edits.
+   */
   groupChangesWhile (targetMorph, groupChange, whileFn, record = true) {
     if (!groupChange) groupChange = new GroupChange(targetMorph);
     this.changeGroupStack.push(groupChange);
