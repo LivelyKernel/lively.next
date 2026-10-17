@@ -1,3 +1,5 @@
+import { captureRecovery, recover, assertSupportedOperation } from './recovery.js';
+
 function validateOperation (operation) {
   if (!operation || typeof operation.validate !== 'function' ||
       typeof operation.apply !== 'function' || typeof operation.invert !== 'function') {
@@ -6,26 +8,14 @@ function validateOperation (operation) {
 }
 
 export class MorphicRollbackError extends Error {
-  constructor (message, cause, rollbackErrors) {
+  constructor (message, { cause, rollbackErrors = [], unreversedOperations = [] }) {
     super(message);
+    this.message = message;
     this.name = 'MorphicRollbackError';
     this.cause = cause;
-    this.rollbackErrors = rollbackErrors;
+    this.rollbackErrors = Object.freeze(rollbackErrors.slice());
+    this.unreversedOperations = Object.freeze(unreversedOperations.slice());
   }
-}
-
-export function rollbackOperations (operations, context) {
-  const rollbackErrors = [];
-  for (const operation of operations.slice().reverse()) {
-    try {
-      const inverse = operation.invert();
-      inverse.validate(context);
-      inverse.apply(context);
-    } catch (error) {
-      rollbackErrors.push(error);
-    }
-  }
-  return rollbackErrors;
 }
 
 export class MorphicChangeSet {
@@ -54,20 +44,22 @@ export class MorphicChangeSet {
   }
 
   apply (context) {
-    this.validate(context);
-    const applied = [];
+    const journal = [];
     try {
       for (const operation of this.operations) {
+        assertSupportedOperation(operation);
+        // Dynamic preconditions are checked at the operation's position.
+        operation.validate(context);
+        const recovery = captureRecovery(operation, context);
+        journal.push(recovery);
         operation.apply(context);
-        applied.push(operation);
       }
     } catch (error) {
-      const rollbackErrors = rollbackOperations(applied, context);
-      if (rollbackErrors.length) {
+      const rollback = recover(journal);
+      if (rollback.unreversedOperations.length) {
         throw new MorphicRollbackError(
           `Failed to apply ${this.id} and to roll it back completely`,
-          error,
-          rollbackErrors
+          { cause: error, ...rollback }
         );
       }
       throw error;

@@ -6,12 +6,11 @@ export {
   SetMorphProperty,
   MoveMorph,
   attachedMorph,
-  detachedMorph,
-  CustomOperation
+  detachedMorph
 } from './operations.js';
 export {
   MorphicChangeSet,
   MorphicRollbackError
 } from './change-set.js';
-export { MorphicTransaction } from './transaction.js';
-export { MorphicReplayDirection, MorphicTransactionManager } from './manager.js';
+export { MorphicReplayDirection } from './replay.js';
+export { MorphicTransactionUnsupportedError, MorphicTransactionAsyncError } from './errors.js';

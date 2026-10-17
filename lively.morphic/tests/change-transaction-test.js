@@ -1,12 +1,11 @@
 /* global describe, it */
+import { ChangeManager } from '../changes.js';
 import { expect } from 'mocha-es6';
 import {
-  CustomOperation,
   MoveMorph,
   MorphicChangeSet,
   MorphicOperationKind,
   MorphicReplayDirection,
-  MorphicTransactionManager,
   MorphicValueSemantics,
   SetMorphProperty,
   attachedMorph,
@@ -31,16 +30,13 @@ function captureError (callback) {
 }
 
 function valueOperation (targetId, before, after) {
-  const applyValue = (context, operation) => {
-    context.resolveMorph(operation.targetId).value = operation.after;
-  };
-  return new CustomOperation({
-    targetId,
-    before,
-    after,
-    applyHandler: applyValue,
-    reverseHandler: applyValue
-  });
+  return new SetMorphProperty({ targetId, property: 'value', before, after });
+}
+
+/** Exercise the actual capture authority without a DOM environment. */
+function createManager (targets) {
+  Object.entries(targets).forEach(([id, target]) => { target.id = id; });
+  return new ChangeManager({ resolveMorph: id => targets[id] });
 }
 
 function createTreeContext (root) {
@@ -247,7 +243,7 @@ describe('morphic transaction kernel', () => {
     expect(parent.children).deep.equals([child]);
   });
 
-  it('validates every target before applying a change set', () => {
+  it('recovers earlier operations when a later target is missing', () => {
     const firstTarget = { value: 0 };
     const context = createContext({ first: firstTarget });
     const changeSet = new MorphicChangeSet({
@@ -267,13 +263,11 @@ describe('morphic transaction kernel', () => {
     const firstTarget = { value: 0 };
     const secondTarget = { value: 0 };
     const context = createContext({ first: firstTarget, second: secondTarget });
-    const failingOperation = new CustomOperation({
-      targetId: 'second',
-      before: 0,
-      after: 1,
-      applyHandler: () => { throw new Error('apply failed'); },
-      reverseHandler: () => {}
-    });
+    context.setMorphProperty = (target, property, value) => {
+      target[property] = value;
+      if (target === secondTarget && value === 1) throw new Error('apply failed');
+    };
+    const failingOperation = valueOperation('second', 0, 1);
     const changeSet = new MorphicChangeSet({
       id: 'atomic-application',
       operations: [valueOperation('first', 0, 1), failingOperation]
@@ -288,22 +282,20 @@ describe('morphic transaction kernel', () => {
   it('joins nested operations and notifies only after the outer commit', () => {
     const firstTarget = { value: 0 };
     const secondTarget = { value: 0 };
-    const manager = new MorphicTransactionManager(
-      createContext({ first: firstTarget, second: secondTarget })
-    );
+    const manager = createManager({ first: firstTarget, second: secondTarget });
     const notifications = [];
-    manager.addCommitListener(changeSet => notifications.push(changeSet));
+    manager.addCommittedChangeListener(changeSet => notifications.push(changeSet));
 
-    const changeSet = manager.transaction({ label: 'outer', origin: 'test' }, transaction => {
+    const { changeSet } = manager.transaction({ undoable: false, label: 'outer', origin: 'test' }, transaction => {
       transaction.perform(new SetMorphProperty({
         targetId: 'first', property: 'value', before: 0, after: 1
       }));
-      const nestedTransaction = manager.transaction({ label: 'nested' }, nested => {
+      const nestedTransaction = manager.transaction({ undoable: false, label: 'nested' }, nested => {
         nested.perform(new SetMorphProperty({
           targetId: 'second', property: 'value', before: 0, after: 2
         }));
       });
-      expect(nestedTransaction).equals(transaction);
+      expect(nestedTransaction.changeSet.operations).to.have.length(1);
       expect(notifications).to.have.length(0);
     });
 
@@ -317,37 +309,29 @@ describe('morphic transaction kernel', () => {
   it('rolls back an entire transaction and suppresses commit notification on failure', () => {
     const firstTarget = { value: 0 };
     const secondTarget = { value: 0 };
-    const manager = new MorphicTransactionManager(
-      createContext({ first: firstTarget, second: secondTarget })
-    );
+    const manager = createManager({ first: firstTarget, second: secondTarget });
     const notifications = [];
-    manager.addCommitListener(changeSet => notifications.push(changeSet));
+    manager.addCommittedChangeListener(changeSet => notifications.push(changeSet));
 
-    const error = captureError(() => manager.transaction({ label: 'failing' }, transaction => {
+    const error = captureError(() => manager.transaction({ undoable: false, label: 'failing' }, transaction => {
       transaction.perform(new SetMorphProperty({
         targetId: 'first', property: 'value', before: 0, after: 1
       }));
-      transaction.perform(new CustomOperation({
-        targetId: 'second',
-        before: 0,
-        after: 1,
-        applyHandler: () => { throw new Error('transaction failed'); },
-        reverseHandler: () => {}
-      }));
+      throw new Error('transaction failed');
     }));
 
     expect(error.message).equals('transaction failed');
     expect(firstTarget.value).equals(0);
     expect(secondTarget.value).equals(0);
-    expect(manager.activeTransaction).equals(null);
+    expect(manager._atomicFrame).equals(null);
     expect(notifications).deep.equals([]);
   });
 
   it('rejects asynchronous callbacks and rolls back synchronous mutations', () => {
     const target = { value: 0 };
-    const manager = new MorphicTransactionManager(createContext({ target }));
+    const manager = createManager({ target });
 
-    const error = captureError(() => manager.transaction({ label: 'async' }, transaction => {
+    const error = captureError(() => manager.transaction({ undoable: false, label: 'async' }, transaction => {
       transaction.perform(new SetMorphProperty({
         targetId: 'target', property: 'value', before: 0, after: 1
       }));
@@ -360,11 +344,12 @@ describe('morphic transaction kernel', () => {
 
   it('replays undo and redo with explicit origins and directions', () => {
     const target = { fill: 'red' };
-    const manager = new MorphicTransactionManager(createContext({ target }));
+    const manager = createManager({ target });
     const notifications = [];
-    manager.addCommitListener(changeSet => notifications.push(changeSet));
+    manager.addCommittedChangeListener(changeSet => notifications.push(changeSet));
 
-    const committed = manager.transaction({
+    const { changeSet: committed } = manager.transaction({
+      undoable: false,
       label: 'recolor',
       origin: 'direct-manipulation'
     }, transaction => {
@@ -372,8 +357,8 @@ describe('morphic transaction kernel', () => {
         targetId: 'target', property: 'fill', before: 'red', after: 'green'
       }));
     });
-    const undo = manager.replay(committed, MorphicReplayDirection.UNDO);
-    const redo = manager.replay(committed, MorphicReplayDirection.REDO);
+    const undo = manager.applyChangeSet(committed, { context: manager.operationContext(), direction: MorphicReplayDirection.UNDO });
+    const redo = manager.applyChangeSet(committed, { context: manager.operationContext(), direction: MorphicReplayDirection.REDO });
 
     expect(target.fill).equals('green');
     expect(notifications).deep.equals([committed, undo, redo]);
@@ -383,11 +368,13 @@ describe('morphic transaction kernel', () => {
     expect(redo.metadata.replayDirection).equals('redo');
   });
 
-  it('requires custom operations to provide an explicit inverse handler', () => {
-    const error = captureError(() => new CustomOperation({
-      targetId: 'target',
-      applyHandler: () => {}
-    }));
-    expect(error.message).equals('CustomOperation requires explicit apply and reverse handlers');
+  it('rejects opaque operations without invoking their handlers', () => {
+    const manager = createManager({ target: { value: 0 } });
+    let applied = false;
+    const error = captureError(() => manager.transaction({ undoable: false }, tx => tx.perform({
+      kind: 'custom-operation', targetId: 'target', apply: () => { applied = true; }, invert: () => {}
+    })));
+    expect(error.name).equals('MorphicTransactionUnsupportedError');
+    expect(applied).equals(false);
   });
 });

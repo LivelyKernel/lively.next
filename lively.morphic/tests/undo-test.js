@@ -1,6 +1,7 @@
 /* global it, describe, beforeEach, afterEach */
 import { defaultDOMEnv } from '../rendering/dom-helper.js';
 import { morph, MorphicEnv, Hand, World } from '../index.js';
+import { ChangeManager } from '../changes.js';
 import { expect } from 'mocha-es6';
 import { pt, Color } from 'lively.graphics';
 import { arr } from 'lively.lang';
@@ -8,11 +9,10 @@ import {
   CompositeEditTransaction,
   EditTransaction,
   EditTransactionKind,
-  MorphicChangeSetTransaction
+  ChangeSetEditTransaction
 } from '../undo.js';
 import {
   MorphicReplayDirection,
-  MorphicTransactionManager,
   MorphicValueSemantics,
   SetMorphProperty
 } from '../changes/index.js';
@@ -440,19 +440,16 @@ describe('undo', () => {
   });
 
   it('stores morphic change sets with explicit undo and redo replay origins', () => {
-    const target = { value: 0 };
+    const target = { id: 'target', value: 0 };
     const replayed = [];
-    const manager = new MorphicTransactionManager({
-      resolveMorph: id => id === 'target' ? target : null,
-      setMorphProperty: (morph, property, value) => { morph[property] = value; }
-    });
-    manager.addCommitListener(changeSet => replayed.push(changeSet));
-    const changeSet = manager.transaction({ label: 'set value' }, transaction => {
+    const manager = new ChangeManager({ undoManager: env.undoManager, resolveMorph: id => id === 'target' ? target : null });
+    manager.addCommittedChangeListener(changeSet => replayed.push(changeSet));
+    const { history } = manager.transaction({ label: 'set value' }, transaction => {
       transaction.perform(new SetMorphProperty({
         targetId: 'target', property: 'value', before: 0, after: 1
       }));
     });
-    env.undoManager.addTransaction(new MorphicChangeSetTransaction(changeSet, manager));
+    expect(history.entry).to.be.instanceOf(ChangeSetEditTransaction);
     replayed.length = 0;
 
     env.undoManager.undo();
