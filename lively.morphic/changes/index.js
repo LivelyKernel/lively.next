@@ -5,6 +5,7 @@ export {
   MorphicOperation,
   SetMorphProperty,
   MoveMorph,
+  ReplaceText,
   attachedMorph,
   detachedMorph
 } from './operations.js';
@@ -13,4 +14,4 @@ export {
   MorphicRollbackError
 } from './change-set.js';
 export { MorphicReplayDirection } from './replay.js';
-export { MorphicTransactionUnsupportedError, MorphicTransactionAsyncError } from './errors.js';
+export { MorphicTransactionUnsupportedError, MorphicTransactionAsyncError, MorphicSemanticViewReplayError } from './errors.js';

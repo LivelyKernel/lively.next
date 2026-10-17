@@ -8,6 +8,7 @@ import {
   MorphicAttachmentKind,
   MorphicValueSemantics,
   MoveMorph,
+  ReplaceText,
   SetMorphProperty,
   attachedMorph,
   detachedMorph,
@@ -16,13 +17,18 @@ import {
 
 import { operationContext } from './changes/operation-context.js';
 import { captureRecovery, recover, assertSupportedOperation, attachmentOf, propertyEquals, readProperty } from './changes/recovery.js';
-import { MorphicTransactionUnsupportedError, MorphicTransactionAsyncError } from './changes/errors.js';
+import { MorphicTransactionUnsupportedError, MorphicTransactionAsyncError, MorphicSemanticViewReplayError } from './changes/errors.js';
 import { ChangeSetEditTransaction } from './undo.js';
 import { guardMorphState, captureStateGuardViolations, restoreStateGuards, releaseStateGuards, writeRecordedState } from './changes/state-guard.js';
+import { prepareTextEdit, enlistTextMorphs, semanticTextOperations, releaseTextRecovery } from './changes/text.js';
+import { Range } from './text/range.js';
+import { graphicsValuePolicy } from './changes/graphics-policy.js';
+import { rememberDerivations, changeSetUnits, reconcileSourceUnit } from './changes/derived.js';
 
 const atomicState = { activeManager: null, depth: 0, recordDescriptor: null };
 const liveChangeManagers = new Set();
 const atomicDispatch = new Map();
+const semanticReceipts = new WeakMap();
 
 /** Restore own descriptors, including the absence of an ordinary override. */
 function restoreAtomicDispatch (manager, saved) {
@@ -165,9 +171,13 @@ function informMorph (changeManager, change, morph) {
 /** Atomic reactions run as new leaves; ordinary notification skips this work. */
 function informAtomicMorph (changeManager, change, morph) {
   const operationDepth = changeManager._operationDepth;
-  if (!changeManager._recovering) changeManager._operationDepth = 0;
+  const frame = changeManager._atomicFrame;
+  const previous = frame?.root.notificationParent;
+  changeManager._operationDepth = 0;
+  if (frame) frame.root.notificationParent = frame.notifications.get(change) || previous;
   try { informMorph(changeManager, change, morph); } finally {
     changeManager._operationDepth = operationDepth;
+    if (frame) frame.root.notificationParent = previous;
   }
 }
 
@@ -416,10 +426,76 @@ export class ChangeManager {
 
   operationContext (options) { return operationContext(this, options); }
 
+  get _textCaptureActive () { return !!atomicState.activeManager; }
+
+  _assignText (target, value) {
+    const range = target.document ? target.documentRange
+      : prepareTextEdit(target, { start: { row: 0, column: 0 }, end: { row: 0, column: 0 } }, target.textAndAttributes).insertedRange;
+    return this._replaceText(target, range, value, { fullAssignment: true });
+  }
+
+  _changeTextAttributes (target, range, attributes, mode) {
+    const value = target.textAndAttributesInRange(range).map((entry, index) => {
+      if (index % 2 === 0) return entry;
+      if (mode === 'set') return attributes;
+      if (mode === 'add') return { ...entry, ...attributes };
+      if (!entry) return entry;
+      const result = { ...entry };
+      Object.keys(attributes || {}).forEach(key => delete result[key]);
+      return Object.keys(result).length ? result : null;
+    });
+    return this._replaceText(target, range, value, { attributesOnly: true });
+  }
+
+  /** Engine hook for the supported Text APIs; direct Document calls are not captured. */
+  _replaceText (target, range, value, options = {}) {
+    this._assertAtomicAccess(target);
+    if (!options.fullAssignment && !options.attributesOnly && new Range(range).isEmpty() &&
+        (value === '' || Array.isArray(value) && (!value.length || value.length === 2 && !value[0]))) return new Range(range);
+    const frame = this._atomicFrame;
+    const operation = prepareTextEdit(target, range, value, { ...options, metadata: this.defaultMeta });
+    enlistTextMorphs(this, frame, target, operation);
+    this._perform(frame, operation);
+    return new Range(operation.insertedRange);
+  }
+
   _enlistAtomicMorph (frame, morph) {
     this._assertAtomicAccess(morph);
     guardMorphState(this, frame, morph);
     frame.context.enlist?.(morph);
+  }
+
+  _notifyTextOperation (target, operation, capturedOperation = operation) {
+    const change = new MethodCallChange(target, 'replace', [new Range(operation.range), operation.after], {
+      target, selector: 'replace', args: [new Range(operation.insertedRange), operation.before, false]
+    }, { ...this.defaultMeta, textReplacement: true });
+    change.operation = capturedOperation;
+    this._record(target, change);
+  }
+
+  /** Keep lazy engine fitting in the text source unit without changing ordinary fit. */
+  _guardAtomicTextFit (frame, target) {
+    let prototype = target;
+    while (prototype && !Object.hasOwn(prototype, 'fit')) prototype = Object.getPrototypeOf(prototype);
+    if (!prototype) return;
+    const fits = frame.root.textFits ||= new Map();
+    if (fits.has(prototype)) return;
+    const descriptor = Object.getOwnPropertyDescriptor(prototype, 'fit');
+    if (typeof descriptor.value !== 'function' || !descriptor.configurable && !descriptor.writable) {
+      this._rejectAtomic('Text fitting requires a restorable engine method', 'text-fit-descriptor', target);
+    }
+    const original = descriptor.value;
+    Object.defineProperty(prototype, 'fit', { ...descriptor, value: function (...args) {
+      const manager = atomicState.activeManager;
+      const root = manager?._atomicFrame?.root;
+      const previous = root?.notificationParent;
+      let current = manager?._atomicFrame;
+      let source;
+      while (current && !source) { source = current.textOrigins?.get(this); current = current.parent; }
+      if (root) root.notificationParent = previous || source;
+      try { return original.apply(this, args); } finally { if (root) root.notificationParent = previous; }
+    } });
+    fits.set(prototype, descriptor);
   }
 
   _rejectAtomic (message, kind, morph = null, detection = 'before') {
@@ -450,19 +526,44 @@ export class ChangeManager {
       this._enlistAtomicMorph(frame, frame.context.resolveMorph(operation.from.ownerId));
       this._enlistAtomicMorph(frame, frame.context.resolveMorph(operation.to.ownerId));
     }
+    if (operation instanceof ReplaceText) enlistTextMorphs(this, frame, frame.context.resolveMorph(operation.targetId), operation);
+    if (operation instanceof ReplaceText) this._guardAtomicTextFit(frame, frame.context.resolveMorph(operation.targetId));
     operation.validate(frame.context);
     const recovery = captureRecovery(operation, frame.context);
-    frame.journal.push(recovery);
+    recovery.derivedFrom = frame.root.notificationParent || this._performingRecovery;
+    if (operation instanceof ReplaceText) (frame.textOrigins ||= new Map()).set(frame.context.resolveMorph(operation.targetId), recovery);
+    if (!this._recovering) {
+      frame.journal.push(recovery);
+      if (operation instanceof ReplaceText) {
+        recovery.recorded = true;
+        frame.operations.push(recovery);
+      }
+    }
+    frame.root.unitJournal?.entries.push(recovery);
     this._operationDepth++;
     const previous = this._performingRecovery;
     this._performingRecovery = recovery;
     try {
       operation.apply(frame.context);
-      if (!recovery.recorded) frame.operations.push(recovery);
+      if (operation instanceof ReplaceText) {
+        recovery.operation = new ReplaceText({ ...(recovery.appliedOperation || operation), embedded: operation.embedded.map(entry => ({
+          ...entry, after: attachmentOf(frame.context.resolveMorph(entry.morphId))
+        })) });
+        recovery.appliedOperation = recovery.operation;
+        const target = frame.context.resolveMorph(operation.targetId);
+        this._notifyTextOperation(target, recovery.operation);
+      }
+      if (!this._recovering && !recovery.recorded) frame.operations.push(recovery);
     } catch (error) {
+      if (operation instanceof ReplaceText && recovery.appliedOperation) {
+        recovery.appliedOperation = new ReplaceText({ ...recovery.appliedOperation, embedded: operation.embedded.map(entry => ({
+          ...entry, after: attachmentOf(frame.context.resolveMorph(entry.morphId))
+        })) });
+      }
       failAtomicFrame(frame, error);
       throw error;
     } finally {
+      if (operation instanceof ReplaceText) releaseTextRecovery(operation);
       this._operationDepth--;
       this._performingRecovery = previous;
     }
@@ -489,7 +590,21 @@ export class ChangeManager {
     let rollback;
     const undoManager = frame.options.undoManager;
     if (undoManager) undoManager.applyCount++;
-    try { rollback = recover(frame.journal); } finally {
+    try {
+      rollback = recover(frame.journal, { reconcileUnit: unit => reconcileSourceUnit(
+        this, unit, frame.context, 'reverse', replacement => {
+          const previous = this._performingRecovery;
+          this._performingRecovery = unit.entry;
+          try {
+            if (replacement) return this._perform(frame, replacement);
+            unit.entry.restore();
+            if (unit.entry.operation instanceof ReplaceText) {
+              this._notifyTextOperation(frame.context.resolveMorph(unit.entry.operation.targetId), unit.entry.operation.invert(), unit.entry.operation);
+            }
+          } finally { this._performingRecovery = previous; }
+        }, { recovering: true }
+      ) });
+    } finally {
       if (undoManager) undoManager.applyCount--;
       this._operationDepth--;
       this._recovering = false;
@@ -526,7 +641,7 @@ export class ChangeManager {
     if (opts.undoable && !opts.undoManager) throw new Error('Undoable transactions require an UndoManager');
     const id = `morphic-transaction-${this.commitCounter++}`;
     const frame = {
-      id, parent, options: opts, journal: [], operations: [], recorded: [], deferred: [], stateGuards: new Map(), closed: false, hasFailed: false, failed: undefined,
+      id, parent, options: opts, journal: [], operations: [], recorded: [], deferred: [], notifications: new WeakMap(), stateGuards: new Map(), closed: false, hasFailed: false, failed: undefined,
       context: parent?.context || this.operationContext({ scope: options?.scope, metadata: {
         ...opts.metadata, origin: opts.origin, undoable: opts.undoable
       } })
@@ -562,10 +677,15 @@ export class ChangeManager {
         operations: frame.operations.filter(entry => !entry.structuralOwner).map(entry => entry.operation),
         metadata: opts.metadata
       });
+      rememberDerivations(changeSet, frame.operations.filter(entry => !entry.structuralOwner));
       restoreStateGuards(frame);
     } catch (error) {
       throw this._rollbackFrame(frame, error);
     } finally {
+      if (!parent && frame.textFits) {
+        for (const [prototype, descriptor] of frame.textFits) Object.defineProperty(prototype, 'fit', descriptor);
+        frame.textFits.clear();
+      }
       releaseStateGuards(frame);
       frame.closed = true;
       this._atomicFrame = parent;
@@ -577,6 +697,7 @@ export class ChangeManager {
       parent.operations.push(...frame.operations);
       parent.recorded.push(...frame.recorded);
       parent.deferred.push(...frame.deferred);
+      if (frame.textOrigins) for (const [target, source] of frame.textOrigins) (parent.textOrigins ||= new Map()).set(target, source);
       return { value, changeSet, history: null };
     }
     frame.context.retainDetached?.(changeSet.operations);
@@ -604,23 +725,37 @@ export class ChangeManager {
       legacyChanges: Object.freeze(legacyChanges), committedChange: null,
       undoManager: frame.options.undoManager, commitToken: Object.freeze({})
     });
-    this.committedChangeListeners.slice().forEach(listener => {
+    const listeners = this.committedChangeListeners.slice().filter(listener => {
       const containsMorph = this.committedChangeListenerScopes.get(listener);
       if (containsMorph && !legacyChanges.some(change =>
         [change.target, change.morph, ...(change.owners || [])].some(morph => morph && containsMorph(morph))) &&
-          !changeSet.operations.some(operation => containsMorph(frame.context.resolveMorph(operation.targetId)))) return;
-      try { listener(changeSet, context); } catch (error) {
+          !changeSet.operations.some(operation => containsMorph(frame.context.resolveMorph(operation.targetId)))) return false;
+      return true;
+    });
+    if (!listeners.length) return;
+    const view = changeSet.operations.some(operation => operation instanceof ReplaceText)
+      ? new MorphicChangeSet({ ...changeSet, operations: semanticTextOperations(changeSet.operations, context) }) : changeSet;
+    if (view !== changeSet) semanticReceipts.set(view, { context, commitToken: context.commitToken, capturedChangeSet: changeSet });
+    listeners.forEach(listener => {
+      try { listener(view, context); } catch (error) {
         console.error(`Error in committed change listener: ${error.stack}`);
       }
     });
   }
 
   applyChangeSet (changeSet, { context, direction = 'forward', origin = direction, undoManager = this.undoManager, notify = true } = {}) {
+    if (changeSet?.operations.some(operation => operation instanceof SetMorphProperty && operation.property === 'textAndAttributes' && operation.metadata.textReplacement)) {
+      const receipt = semanticReceipts.get(changeSet);
+      if (!receipt || receipt.context !== context || receipt.commitToken !== context?.commitToken || receipt.capturedChangeSet !== context.capturedChangeSet) {
+        throw new MorphicSemanticViewReplayError(changeSet);
+      }
+      changeSet = receipt.capturedChangeSet;
+    }
     if (!(changeSet instanceof MorphicChangeSet) || !context) throw new Error('applyChangeSet requires a change set and operation context');
     if (!['forward', 'undo', 'redo'].includes(direction)) throw new Error(`Unknown replay direction: ${direction}`);
     if (atomicState.activeManager) this._rejectAtomic('Use perform inside a transaction', 'nested-replay');
-    const operations = direction === 'undo'
-      ? changeSet.operations.slice().reverse().map(operation => operation.invert()) : changeSet.operations;
+    const units = changeSetUnits(changeSet);
+    if (direction === 'undo') units.reverse();
     const guards = new Set([this.undoManager, undoManager].filter(Boolean));
     guards.forEach(manager => manager.applyCount++);
     try {
@@ -630,19 +765,17 @@ export class ChangeManager {
         metadata: { ...changeSet.metadata, originalOrigin: changeSet.origin, replayDirection: direction, replayOf: changeSet.id }
       }, tx => {
         this._atomicFrame.context = context;
-        const consumedReactions = new Set();
-        for (const operation of operations) {
-          // An earlier replayed setter may already have produced a recorded reaction.
-          const reaction = operation instanceof SetMorphProperty && this._atomicFrame.operations.find(entry => {
-            const prior = entry.operation;
-            return entry.causedBy && !consumedReactions.has(entry) && prior instanceof SetMorphProperty &&
-              prior.targetId === operation.targetId && prior.property === operation.property &&
-              prior.valueSemantics === operation.valueSemantics &&
-              propertyEquals(prior.materializeValue(prior.before), operation.before, operation) &&
-              propertyEquals(readProperty(context, context.resolveMorph(operation.targetId), operation.property), operation.after, operation);
+        for (const unit of units) {
+          const rollback = reconcileSourceUnit(this, unit, context, direction === 'undo' ? 'reverse' : 'forward', replacement => {
+            tx.perform(replacement || (direction === 'undo' ? unit.entry.operation.invert() : unit.entry.operation));
           });
-          if (reaction) consumedReactions.add(reaction);
-          else tx.perform(operation);
+          if (rollback.unreversedOperations.length) {
+            const error = new MorphicRollbackError('Morphic source-unit replay did not converge', {
+              cause: new Error('Source-unit reaction conflict'), ...rollback
+            });
+            this._atomicFrame.root.fault = error;
+            throw error;
+          }
         }
       });
       return result.changeSet;
@@ -747,13 +880,16 @@ export class ChangeManager {
       const frame = this._atomicFrame;
       const performedMove = this._operationDepth && this._performingRecovery?.operation;
       if (frame && !(performedMove instanceof MoveMorph && performedMove.morphId === morph.id) &&
+          !(performedMove instanceof ReplaceText && performedMove.embedded.some(entry => entry.morphId === morph.id)) &&
           !this._structuralCaptures.some(entry => entry.morph === morph)) {
         this._enlistAtomicMorph(frame, targetMorph);
         this._enlistAtomicMorph(frame, morph);
         recovery = captureRecovery(new MoveMorph({ morphId: morph.id, from: attachmentOf(morph), to: attachmentOf(morph) }), frame.context);
         recovery.morph = morph;
         if (!recovery.owners.includes(targetMorph)) recovery.owners.push(targetMorph);
-        frame.journal.push(recovery);
+        recovery.derivedFrom = frame.root.notificationParent || this._performingRecovery;
+        if (!this._recovering) frame.journal.push(recovery);
+        frame.root.unitJournal?.entries.push(recovery);
         this._structuralCaptures.push(recovery);
       }
     }
@@ -803,32 +939,55 @@ export class ChangeManager {
       if (frame) {
         const performed = this._performingRecovery;
         const operation = performed?.operation;
-        const directLeaf = this._operationDepth && operation?.targetId === morph.id && (
+        const textLeaf = operation instanceof ReplaceText && (
+          morph.id === operation.targetId && (change.operation === performed.operation || change.prop === 'textAndAttributes' ||
+            (operation.fullAssignment || morph._isUpgrading) && ['document', 'textLayout', 'needsDocument', 'selection', 'renderingState'].includes(change.prop)) ||
+          change instanceof StructuralChange && operation.embedded.some(entry => entry.morphId === change.morph.id) ||
+          operation.embedded.some(entry => entry.morphId === morph.id) && ['position', 'rotation', 'scale'].includes(change.prop)
+        );
+        const anchorPlacement = operation instanceof ReplaceText && change.prop === 'position' &&
+          operation.embedded.some(entry => entry.morphId === morph.id) &&
+          morph.owner?._positioningSubmorph === morph && this._currentMorphNotification?.target !== morph;
+        const directLeaf = anchorPlacement || this._operationDepth && (textLeaf || operation?.targetId === morph.id && (
           operation instanceof SetMorphProperty && change.prop === operation.property ||
           operation instanceof MoveMorph && (change instanceof StructuralChange || ['position', 'rotation', 'scale'].includes(change.prop))
-        );
-        if (!this._recovering && directLeaf) {
-          if (!performed.recorded) {
+        ));
+        if (directLeaf) {
+          if (!this._recovering && !performed.recorded) {
             performed.recorded = true;
             arr.remove(frame.journal, performed);
             frame.journal.push(performed);
             frame.operations.push(performed);
           }
-        } else if (!this._recovering && !(change instanceof GroupChange) && !(change instanceof StructuralChange)) {
-          const captured = change.operation;
+          frame.notifications.set(change, performed);
+        } else if ((!this._recovering || frame.root.unitJournal) && !(change instanceof GroupChange) && !(change instanceof StructuralChange)) {
+          let captured = change.operation;
+          try { assertSupportedOperation(captured); } catch (error) { failAtomicFrame(frame, error); throw error; }
+          if (change instanceof ValueChange) {
+            const expected = frame.root.unitJournal?.policyFor(captured);
+            const policy = expected || (Object.keys(change.valuePolicy).length ? change.valuePolicy : graphicsValuePolicy(change.prevValue, change.value));
+            captured = new SetMorphProperty({
+              targetId: morph.id, property: change.prop, before: change.prevValue, after: change.value, metadata: change.meta,
+              valueSemantics: policy.valueSemantics, snapshotValue: policy.snapshotValue,
+              materializeValue: policy.materializeValue, snapshotValuesEqual: policy.snapshotValuesEqual
+            });
+          }
           try { assertSupportedOperation(captured); } catch (error) { failAtomicFrame(frame, error); throw error; }
           this._enlistAtomicMorph(frame, morph);
-          const recovery = captureRecovery(captured, frame.context);
-          recovery.causedBy = performed;
+          const recovery = captureRecovery(captured, frame.context, { rawState: change instanceof ValueChange });
+          recovery.derivedFrom = frame.root.notificationParent || this._performingRecovery;
           recovery.structuralOwner = this._structuralCaptures.find(entry => entry.morph === morph &&
             ['position', 'rotation', 'scale'].includes(captured.property));
-          frame.journal.push(recovery);
-          frame.operations.push(recovery);
-        } else if (!this._recovering && change._atomicRecovery) {
+          if (!this._recovering) {
+            frame.journal.push(recovery);
+            frame.operations.push(recovery);
+          }
+          frame.root.unitJournal?.entries.push(recovery);
+          frame.notifications.set(change, recovery);
+        } else if (change._atomicRecovery) {
           const recovery = change._atomicRecovery;
-          arr.remove(frame.journal, recovery);
-          frame.journal.push(recovery);
-          frame.operations.push(recovery);
+          if (!this._recovering) frame.operations.push(recovery);
+          frame.notifications.set(change, recovery);
         }
         frame.recorded.push(change);
       }

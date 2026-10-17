@@ -2,6 +2,8 @@ import { obj, arr, fun } from 'lively.lang';
 import { MorphicChangeSet, MorphicRollbackError } from './changes/change-set.js';
 import { cloneSnapshotContainers, MorphicValueSemantics, SetMorphProperty } from './changes/operations.js';
 import { MorphicReplayDirection } from './changes/replay.js';
+import { textReplayFor } from './changes/text.js';
+import { sameDerivations, copyDerivations } from './changes/derived.js';
 
 export const EditTransactionKind = Object.freeze({
   RECORDED_MORPH_CHANGES: 'recorded-morph-changes',
@@ -147,6 +149,7 @@ export class ChangeSetEditTransaction extends EditTransaction {
     }
     super({ kind: EditTransactionKind.MORPHIC_CHANGE_SET, label, metadata: { ...metadata, changeSetId: changeSet.id } });
     Object.assign(this, { changeSet, changeManager, context, groupToken });
+    this.textReplay = textReplayFor(changeSet.operations);
     this.groupBarrier = groupToken?._joinBarrier || 0;
   }
 
@@ -164,7 +167,8 @@ export class ChangeSetEditTransaction extends EditTransaction {
     if (!(transaction instanceof ChangeSetEditTransaction) || !this.groupToken ||
         this.groupToken !== transaction.groupToken || this.groupBarrier !== transaction.groupBarrier ||
         interveningChanges.length || this.changeManager !== transaction.changeManager ||
-        this.changeSet.operations.length !== transaction.changeSet.operations.length) return false;
+        this.changeSet.operations.length !== transaction.changeSet.operations.length ||
+        !sameDerivations(this.changeSet, transaction.changeSet)) return false;
     return this.changeSet.operations.every((left, index) => {
       const right = transaction.changeSet.operations[index];
       return left instanceof SetMorphProperty && right instanceof SetMorphProperty &&
@@ -186,7 +190,9 @@ export class ChangeSetEditTransaction extends EditTransaction {
         ? operation.materializeValue(cloneSnapshotContainers(transaction.changeSet.operations[index].after))
         : transaction.changeSet.operations[index].after
     }));
-    return new ChangeSetEditTransaction(new MorphicChangeSet({ ...this.changeSet, operations }), this.changeManager, {
+    const changeSet = new MorphicChangeSet({ ...this.changeSet, operations });
+    copyDerivations(this.changeSet, changeSet);
+    return new ChangeSetEditTransaction(changeSet, this.changeManager, {
       context: transaction.context, label: this.label, metadata: this.metadata, groupToken: this.groupToken
     });
   }

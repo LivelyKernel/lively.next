@@ -1,12 +1,13 @@
 import {
-  SetMorphProperty, MoveMorph, MorphicValueSemantics,
+  SetMorphProperty, MoveMorph, ReplaceText, MorphicValueSemantics,
   attachedMorph, detachedMorph, cloneSnapshotContainers
 } from './operations.js';
-import { MorphicTransactionUnsupportedError } from './errors.js';
+import { MorphicTransactionUnsupportedError, MorphicRollbackError } from './errors.js';
+import { journalUnits } from './derived.js';
 
 /** Reject opaque handlers before any effect. */
 export function assertSupportedOperation (operation) {
-  if (!operation || ![SetMorphProperty.prototype, MoveMorph.prototype]
+  if (!operation || ![SetMorphProperty.prototype, MoveMorph.prototype, ReplaceText.prototype]
     .includes(Object.getPrototypeOf(operation))) {
     throw new MorphicTransactionUnsupportedError('Unsupported morphic operation', {
       kind: operation?.kind || 'unknown', targetId: operation?.targetId
@@ -56,22 +57,26 @@ export function readProperty (context, morph, property) {
 }
 
 /** Capture actual state before attempting an operation, including its failing write. */
-export function captureRecovery (operation, context) {
+export function captureRecovery (operation, context, { rawState = false } = {}) {
   assertSupportedOperation(operation);
   const target = context.resolveMorph(operation.targetId);
   if (!target) throw new Error(`Cannot resolve morph ${operation.targetId}`);
+  if (operation instanceof ReplaceText) return context.captureTextRecovery(target, operation);
   if (operation instanceof SetMorphProperty) {
-    const current = readProperty(context, target, operation.property);
+    // ValueChange is a raw state leaf; public getters can initialize another leaf.
+    const read = rawState && target.isMorph ? () => target.getProperty(operation.property) : () => readProperty(context, target, operation.property);
+    const current = read();
     const before = operation.valueSemantics === MorphicValueSemantics.SNAPSHOT
       ? cloneSnapshotContainers(operation.snapshotValue(current), true)
       : current;
     return {
       operation,
-      restored: () => propertyEquals(readProperty(context, target, operation.property), before, operation),
+      restored: () => propertyEquals(read(), before, operation),
       restore: () => {
         const value = operation.valueSemantics === MorphicValueSemantics.SNAPSHOT
           ? operation.materializeValue(cloneSnapshotContainers(before)) : before;
-        if (context.setMorphProperty) context.setMorphProperty(target, operation.property, value, operation);
+        if (rawState && target.isMorph) target.setProperty(operation.property, value);
+        else if (context.setMorphProperty) context.setMorphProperty(target, operation.property, value, operation);
         else target[operation.property] = value;
       }
     };
@@ -96,11 +101,32 @@ export function captureRecovery (operation, context) {
 }
 
 /** Verification, rather than an inverse's return/throw, decides completeness. */
-export function recover (journal) {
+export function recover (journal, { reconcileUnit } = {}) {
   const rollbackErrors = [];
   const unreversedOperations = [];
   const diagnostics = [];
-  for (const entry of journal.slice().reverse()) {
+  const units = reconcileUnit ? journalUnits(journal).reverse() : journal.slice().reverse().map(entry => ({ entry }));
+  for (const unit of units) {
+    const { entry } = unit;
+    if (reconcileUnit && [SetMorphProperty, MoveMorph, ReplaceText].some(Type => entry.operation instanceof Type)) {
+      let result;
+      try { result = reconcileUnit(unit); } catch (error) {
+        if (error instanceof MorphicRollbackError) {
+          diagnostics.push(...error.rollbackErrors);
+          rollbackErrors.push(...error.rollbackErrors);
+          unreversedOperations.push(...error.unreversedOperations);
+        }
+        const pair = { operation: entry.operation, error };
+        diagnostics.push(pair);
+        rollbackErrors.push(pair);
+        unreversedOperations.push(entry.operation);
+        continue;
+      }
+      diagnostics.push(...result.diagnostics);
+      rollbackErrors.push(...result.rollbackErrors);
+      unreversedOperations.push(...result.unreversedOperations);
+      continue;
+    }
     let error;
     let hasError = false;
     let restored = false;
