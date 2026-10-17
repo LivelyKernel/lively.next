@@ -18,6 +18,7 @@ import { TargetScript } from './ticking.js';
 import { copyMorph } from './serialization.js';
 
 import { PolicyApplicator } from './components/policy.js';
+import { writeRecordedState } from './changes/state-guard.js';
 
 const defaultCommandHandler = new CommandHandler();
 
@@ -1664,7 +1665,7 @@ export class Morph {
       submorph._owner = this;
       submorph._cachedPaths = {};
       if (tfm) this.withMetaDo({ reconcileChanges: false }, () => submorph.setTransform(tfm));
-      this._morphicState.submorphs = submorphs;
+      writeRecordedState(this, 'submorphs', submorphs);
 
       this.makeDirty();
       submorph.resumeSteppingAll();

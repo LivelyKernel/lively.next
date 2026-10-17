@@ -18,6 +18,7 @@ import { operationContext } from './changes/operation-context.js';
 import { captureRecovery, recover, assertSupportedOperation, attachmentOf, propertyEquals, readProperty } from './changes/recovery.js';
 import { MorphicTransactionUnsupportedError, MorphicTransactionAsyncError } from './changes/errors.js';
 import { ChangeSetEditTransaction } from './undo.js';
+import { guardMorphState, captureStateGuardViolations, restoreStateGuards, releaseStateGuards, writeRecordedState } from './changes/state-guard.js';
 
 const atomicState = { activeManager: null, depth: 0, recordDescriptor: null };
 const liveChangeManagers = new Set();
@@ -415,9 +416,15 @@ export class ChangeManager {
 
   operationContext (options) { return operationContext(this, options); }
 
-  _rejectAtomic (message, kind, morph = null) {
+  _enlistAtomicMorph (frame, morph) {
+    this._assertAtomicAccess(morph);
+    guardMorphState(this, frame, morph);
+    frame.context.enlist?.(morph);
+  }
+
+  _rejectAtomic (message, kind, morph = null, detection = 'before') {
     const manager = atomicState.activeManager || this;
-    const error = new MorphicTransactionUnsupportedError(message, { kind, targetId: morph?.id });
+    const error = new MorphicTransactionUnsupportedError(message, { kind, targetId: morph?.id, detection });
     if (manager._atomicFrame) failAtomicFrame(manager._atomicFrame, error);
     throw error;
   }
@@ -438,10 +445,10 @@ export class ChangeManager {
     if (this._atomicFrame !== frame || frame.closed) throw new Error('Transaction scope is closed');
     this._assertAtomicAccess();
     try { assertSupportedOperation(operation); } catch (error) { failAtomicFrame(frame, error); throw error; }
-    frame.context.enlist?.(frame.context.resolveMorph(operation.targetId));
+    this._enlistAtomicMorph(frame, frame.context.resolveMorph(operation.targetId));
     if (operation instanceof MoveMorph) {
-      frame.context.enlist?.(frame.context.resolveMorph(operation.from.ownerId));
-      frame.context.enlist?.(frame.context.resolveMorph(operation.to.ownerId));
+      this._enlistAtomicMorph(frame, frame.context.resolveMorph(operation.from.ownerId));
+      this._enlistAtomicMorph(frame, frame.context.resolveMorph(operation.to.ownerId));
     }
     operation.validate(frame.context);
     const recovery = captureRecovery(operation, frame.context);
@@ -519,13 +526,12 @@ export class ChangeManager {
     if (opts.undoable && !opts.undoManager) throw new Error('Undoable transactions require an UndoManager');
     const id = `morphic-transaction-${this.commitCounter++}`;
     const frame = {
-      id, parent, options: opts, journal: [], operations: [], recorded: [], deferred: [], closed: false, hasFailed: false, failed: undefined,
+      id, parent, options: opts, journal: [], operations: [], recorded: [], deferred: [], stateGuards: new Map(), closed: false, hasFailed: false, failed: undefined,
       context: parent?.context || this.operationContext({ scope: options?.scope, metadata: {
         ...opts.metadata, origin: opts.origin, undoable: opts.undoable
       } })
     };
     frame.root = parent?.root || frame;
-    if (parent) (Array.isArray(options?.scope) ? options.scope : [options?.scope]).filter(Boolean).forEach(morph => frame.context.enlist?.(morph));
     this._atomicFrame = frame;
     const previousManager = atomicState.activeManager;
     atomicState.activeManager = this;
@@ -535,13 +541,20 @@ export class ChangeManager {
     try {
       enterAtomicDispatch();
       dispatchEntered = true;
-      this.doWithValueChangeMeta({ ...opts.metadata, origin: opts.origin, undoable: opts.undoable }, null, () => {
-        value = callback(Object.freeze({ id, perform: operation => this._perform(frame, operation) }));
-        if (isPromise(value)) {
-          Promise.resolve(value).catch(() => {});
-          throw new MorphicTransactionAsyncError();
-        }
-      });
+      (Array.isArray(options?.scope) ? options.scope : [options?.scope]).filter(Boolean)
+        .forEach(morph => this._enlistAtomicMorph(frame, morph));
+      try {
+        this.doWithValueChangeMeta({ ...opts.metadata, origin: opts.origin, undoable: opts.undoable }, null, () => {
+          value = callback(Object.freeze({ id, perform: operation => this._perform(frame, operation) }));
+          if (isPromise(value)) {
+            Promise.resolve(value).catch(() => {});
+            throw new MorphicTransactionAsyncError();
+          }
+        });
+      } finally {
+        const violation = captureStateGuardViolations(frame);
+        if (violation) failAtomicFrame(frame, violation);
+      }
       if (frame.root.fault) throw frame.root.fault;
       if (frame.hasFailed) throw frame.failed;
       changeSet = new MorphicChangeSet({
@@ -549,9 +562,11 @@ export class ChangeManager {
         operations: frame.operations.filter(entry => !entry.structuralOwner).map(entry => entry.operation),
         metadata: opts.metadata
       });
+      restoreStateGuards(frame);
     } catch (error) {
       throw this._rollbackFrame(frame, error);
     } finally {
+      releaseStateGuards(frame);
       frame.closed = true;
       this._atomicFrame = parent;
       atomicState.activeManager = previousManager;
@@ -733,8 +748,8 @@ export class ChangeManager {
       const performedMove = this._operationDepth && this._performingRecovery?.operation;
       if (frame && !(performedMove instanceof MoveMorph && performedMove.morphId === morph.id) &&
           !this._structuralCaptures.some(entry => entry.morph === morph)) {
-        frame.context.enlist?.(targetMorph);
-        frame.context.enlist?.(morph);
+        this._enlistAtomicMorph(frame, targetMorph);
+        this._enlistAtomicMorph(frame, morph);
         recovery = captureRecovery(new MoveMorph({ morphId: morph.id, from: attachmentOf(morph), to: attachmentOf(morph) }), frame.context);
         recovery.morph = morph;
         if (!recovery.owners.includes(targetMorph)) recovery.owners.push(targetMorph);
@@ -802,7 +817,7 @@ export class ChangeManager {
         } else if (!this._recovering && !(change instanceof GroupChange) && !(change instanceof StructuralChange)) {
           const captured = change.operation;
           try { assertSupportedOperation(captured); } catch (error) { failAtomicFrame(frame, error); throw error; }
-          frame.context.enlist?.(morph);
+          this._enlistAtomicMorph(frame, morph);
           const recovery = captureRecovery(captured, frame.context);
           recovery.causedBy = performed;
           recovery.structuralOwner = this._structuralCaptures.find(entry => entry.morph === morph &&
@@ -830,7 +845,7 @@ export class ChangeManager {
     // FIXME
     signal(this, 'changeRecorded', change);
     if (change.hasOwnProperty('value')) {
-      morph._morphicState[change.prop] = change.value;
+      writeRecordedState(morph, change.prop, change.value);
     }
 
     const isDocumentChange = change.prevValue?.isDocument ||
