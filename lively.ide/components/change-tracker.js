@@ -980,7 +980,8 @@ export class ComponentChangeTracker {
       moduleId: derivedModule.id,
       exportName,
       componentId: `${derivedModule.id}#${exportName}:derived-projection`,
-      resolveComponentDocument: this.projectionalComponentDocumentResolver(derivedModule)
+      resolveComponentDocument: this.projectionalComponentDocumentResolver(derivedModule),
+      normalizeModuleId: (id, from) => this.projectionalModuleId(id, from)
     };
   }
 
@@ -1146,6 +1147,7 @@ export class ComponentChangeTracker {
       bridgeCommands: commands,
       parentDocument: this.projectionalRuntimeParentDocument(commands, context),
       resolveComponentDocument: this.projectionalComponentDocumentResolver(),
+      normalizeModuleId: (id, from) => this.projectionalModuleId(id, from),
       resolveModuleExports: id => this.projectionalModuleExports(id),
       beforeDocument: this._projectionalSource === this.currentModuleSource
         ? this._projectionalDocument
@@ -1407,11 +1409,16 @@ export class ComponentChangeTracker {
     };
   }
 
+  /** Reuse the editing session's loader normalization for parent and export identity. */
+  projectionalModuleId (moduleId, from = this.componentModuleId) {
+    return this.componentModule.System.decanonicalize(moduleId, from);
+  }
+
   /** Read loaded exports without loading modules or creating module interfaces. */
   projectionalModuleExports (moduleId) {
     try {
       const system = this.componentModule.System;
-      return system.get(system.decanonicalize(moduleId, this.componentModuleId));
+      return system.get(this.projectionalModuleId(moduleId));
     } catch (error) {
       return null;
     }
@@ -1513,7 +1520,8 @@ export class ComponentChangeTracker {
       exportName: this.componentDescriptor.componentName,
       componentId: this.committedChangeAdapter.componentId,
       parentDocument: this.projectionalRuntimeParentDocument([], {}),
-      resolveComponentDocument: this.projectionalComponentDocumentResolver()
+      resolveComponentDocument: this.projectionalComponentDocumentResolver(),
+      normalizeModuleId: (id, from) => this.projectionalModuleId(id, from)
     });
   }
 

@@ -1,4 +1,4 @@
-/* global describe, it */
+/* global describe, it, System */
 import { expect } from 'mocha-es6';
 import {
   ComponentDocument,
@@ -214,6 +214,66 @@ export const Example = component({
     });
     expect(parsed.supported).to.be.true;
     expect(parsed.document.sourceMetadata.parentDocument).equals(parentDocument);
+  });
+
+  for (const [binding, expression] of [
+    ["{ Base as Parent }", 'Parent'],
+    ['* as parents', 'parents.Base']
+  ]) {
+    it(`F7 normalizes a package-style parent binding through ${expression}`, () => {
+      const parentDocument = parseComponentSource({
+        source: "const Base = component({ name: 'base', submorphs: [{ name: 'child' }] });",
+        moduleId: System.decanonicalize('lively.components/buttons.cp.js'),
+        exportName: 'Base'
+      }).document;
+      const normalizations = [];
+      const parsed = parseComponentSource({
+        source: `import ${binding} from 'lively.components/buttons.cp.js';
+const Example = component(${expression}, { name: 'example' });`,
+        moduleId, exportName: 'Example', parentDocument,
+        resolveComponentDocument: () => null,
+        normalizeModuleId: (id, from) => {
+          normalizations.push([id, from]);
+          return System.decanonicalize(id, from);
+        }
+      });
+      expect(parsed.supported, JSON.stringify(parsed.diagnostics)).to.be.true;
+      expect(parsed.document.root.children[0].name).equals('child');
+      expect(normalizations).deep.includes(['lively.components/buttons.cp.js', moduleId]);
+    });
+  }
+
+  it('F7 keeps a normalized different module or export distinct and the resolver authoritative', () => {
+    const parentDocument = parseComponentSource({
+      source: "const Base = component({ name: 'base' });",
+      moduleId: System.decanonicalize('lively.components/buttons.cp.js'),
+      exportName: 'Base'
+    }).document;
+    const normalizeModuleId = (id, from) => System.decanonicalize(id, from);
+    for (const [specifier, imported] of [
+      ['lively.components/inputs.cp.js', 'Base'],
+      ['lively.components/buttons.cp.js', 'Other']
+    ]) {
+      const parsed = parseComponentSource({
+        source: `import { ${imported} as Parent } from '${specifier}';
+const Example = component(Parent, { name: 'example' });`,
+        moduleId, exportName: 'Example', parentDocument, normalizeModuleId
+      });
+      expect(parsed.supported).to.be.false;
+      expect(parsed.diagnostics[0].kind).equals(ComponentSourceDiagnosticKind.PARENT_COMPONENT_MISMATCH);
+    }
+    const resolvedOther = parseSource("const Other = component({ name: 'other' });", 'Other').document;
+    let normalizationCalls = 0;
+    const parsed = parseComponentSource({
+      source: `import { Base } from 'lively.components/buttons.cp.js';
+const Example = component(Base, { name: 'example' });`,
+      moduleId, exportName: 'Example', parentDocument,
+      resolveComponentDocument: () => resolvedOther,
+      normalizeModuleId: () => { normalizationCalls++; throw new Error('Resolved identity takes precedence'); }
+    });
+    expect(parsed.supported).to.be.false;
+    expect(parsed.diagnostics[0].kind).equals(ComponentSourceDiagnosticKind.PARENT_COMPONENT_MISMATCH);
+    expect(normalizationCalls).equals(0);
   });
 
   it('rejects a supplied parent document from another module exporting the same name', () => {

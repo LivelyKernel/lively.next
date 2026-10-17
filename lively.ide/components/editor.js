@@ -88,7 +88,8 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
         moduleId: this.moduleName,
         exportName: this.componentName,
         parentDocument: this._cachedComponent._changeTracker.projectionalRuntimeParentDocument([], {}),
-        resolveComponentDocument
+        resolveComponentDocument,
+        normalizeModuleId: (id, from) => this._cachedComponent._changeTracker.projectionalModuleId(id, from)
       });
       const invalidNames = parsed.diagnostics
         .filter(diagnostic => diagnostic.kind === ComponentSourceDiagnosticKind.INVALID_NODE_NAME)

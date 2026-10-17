@@ -212,7 +212,8 @@ function textPropertyChange (source, document, nodeId, valueSource) {
         exportName: document.exportName,
         componentId: document.componentId,
         parentDocument: document.sourceMetadata.parentDocument || null,
-        resolveComponentDocument: document.sourceMetadata.resolveComponentDocument || null
+        resolveComponentDocument: document.sourceMetadata.resolveComponentDocument || null,
+        normalizeModuleId: document.sourceMetadata.normalizeModuleId || null
       });
       if (!parsed.supported) return null;
       const current = alignParsedDocumentIdentities(parsed.document, document);
@@ -506,7 +507,8 @@ function materializedMoveChanges (source, document, semanticDelta, suppression, 
     exportName: document.exportName,
     componentId: document.componentId,
     parentDocument: document.sourceMetadata.parentDocument || null,
-    resolveComponentDocument: document.sourceMetadata.resolveComponentDocument || null
+    resolveComponentDocument: document.sourceMetadata.resolveComponentDocument || null,
+    normalizeModuleId: document.sourceMetadata.normalizeModuleId || null
   });
   if (!parsed.supported) return null;
   const intermediateDocument = alignParsedDocumentIdentities(parsed.document, document);
@@ -1694,7 +1696,8 @@ export function projectComponentSource ({ source, beforeDocument, reduction, res
     exportName: beforeDocument.exportName,
     componentId: beforeDocument.componentId,
     parentDocument: beforeDocument.sourceMetadata.parentDocument || null,
-    resolveComponentDocument: beforeDocument.sourceMetadata.resolveComponentDocument || null
+    resolveComponentDocument: beforeDocument.sourceMetadata.resolveComponentDocument || null,
+    normalizeModuleId: beforeDocument.sourceMetadata.normalizeModuleId || null
   });
   const alignedDocument = reparsed.supported
     ? alignParsedDocumentIdentities(reparsed.document, reduction.document)
