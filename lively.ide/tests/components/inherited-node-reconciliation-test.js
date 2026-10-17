@@ -3,6 +3,7 @@ import { expect } from 'mocha-es6';
 import { createFiles, resource } from 'lively.resources';
 import module from 'lively.modules/src/module.js';
 import { Color } from 'lively.graphics';
+import { connect, disconnect } from 'lively.bindings';
 import { morph, part, GridLayout, TilingLayout } from 'lively.morphic';
 import { releaseComponentEditingState } from './test-isolation.js';
 
@@ -252,6 +253,14 @@ export { Derived };
           const showError = world.showError;
           const errors = [];
           world.showError = error => errors.push(String(error?.message || error));
+          const notifications = [];
+          const observer = { observe: change => {
+            if (change.target === target && change.prop === 'name') {
+              notifications.push({ value: change.value, current: target.name });
+            }
+          } };
+          connect(target, 'change', observer, 'observe');
+          connect(world, 'onSubmorphChange', observer, 'observe');
           try {
             editable.undoStart('rejected inherited rename');
             target.withMetaDo({ reconcileChanges: true }, () => { target.name = 'independent'; });
@@ -265,6 +274,8 @@ export { Derived };
             expect(tracker._projectionalDocument).equals(document);
             expect(descriptor.stylePolicy.spec).equals(policySpec);
             expect(target.name).equals(name);
+            expect(notifications.length).above(0);
+            expect(notifications.every(({ value, current }) => value === current)).equals(true);
             expect(owner.submorphs).deep.equals(siblings);
             expect(owner.layout?.getSpec()).deep.equals(layoutSpec);
             expect(policySpec.layout?.getSpec()).deep.equals(cachedLayoutSpec);
@@ -280,7 +291,11 @@ export { Derived };
             expect(componentModule._source).equals(source);
             expect(editable.tooltip).equals('earlier edit');
             expect(errors).has.length(1);
-          } finally { world.showError = showError; }
+          } finally {
+            disconnect(target, 'change', observer, 'observe');
+            disconnect(world, 'onSubmorphChange', observer, 'observe');
+            world.showError = showError;
+          }
         });
       }
     }

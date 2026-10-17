@@ -47,27 +47,41 @@ function committedChangeContext (changes, committedChange = null) {
   });
 }
 
-function signalBindings (obj, name, change) {
+/** Notify change bindings while the change remains applied. */
+function signalBindings (changeManager, obj, name, change) {
   // optimized lively.bindings.signal
   let conns = obj.attributeConnections;
   if (!conns) return;
   conns = conns.slice();
   for (let i = 0; i < conns.length; i++) {
+    if (changeManager._suppressedChangeNotifications?.has(change)) return;
     if (conns[i].sourceAttrName === name) { conns[i].update(change); }
   }
 }
 
 function informMorph (changeManager, change, morph) {
+  const previous = changeManager._currentMorphNotification;
+  changeManager._currentMorphNotification = change;
   try {
+    if (changeManager._suppressedChangeNotifications?.has(change)) return;
     morph.onChange(change);
-    signalBindings(morph, 'change', change);
+    signalBindings(changeManager, morph, 'change', change);
     let owner = morph.owner;
-    while (owner) {
+    while (owner && !changeManager._suppressedChangeNotifications?.has(change)) {
       owner.onSubmorphChange(change, morph);
       owner = owner.owner;
     }
   } catch (err) {
     console.error(`Error in informMorph: ${err.stack}`);
+  } finally {
+    changeManager._currentMorphNotification = previous;
+    const callbacks = changeManager._afterMorphNotifications?.get(change);
+    if (callbacks) {
+      changeManager._afterMorphNotifications.delete(change);
+      for (const callback of callbacks) {
+        try { callback(); } catch (err) { console.error(`Error after informMorph: ${err.stack}`); }
+      }
+    }
   }
 }
 
@@ -497,6 +511,22 @@ export class ChangeManager {
 
   removeChangeListener (listenFn) {
     arr.remove(this.changeRecordedListeners, listenFn);
+  }
+
+  /** A compensated change must not be delivered to morphs after its inverse. */
+  suppressChangeNotifications (change) {
+    this._suppressedChangeNotifications ||= new WeakSet();
+    this._suppressedChangeNotifications.add(change);
+  }
+
+  /** Finish the current notification before a fallback rejection reverses it. */
+  deferAfterChangeNotifications (change, callback) {
+    if (this._currentMorphNotification !== change) return false;
+    this._afterMorphNotifications ||= new WeakMap();
+    const callbacks = this._afterMorphNotifications.get(change) || [];
+    callbacks.push(callback);
+    this._afterMorphNotifications.set(change, callbacks);
+    return true;
   }
 
   informChangeListeners (change) {

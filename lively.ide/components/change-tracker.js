@@ -593,6 +593,10 @@ export class ComponentChangeTracker {
       for (const legacyChange of batchChanges) {
         this._projectionalBatchesByLegacyChange.set(legacyChange, batch);
       }
+      // Compensation suppresses the original morph notification, including our binding.
+      if (this._projectionallyCompensatedChanges?.has(context.committedChange)) {
+        this.processChangeInComponent(context.committedChange);
+      }
     }
     this.onShadowComponentCommands?.(batch);
     return Object.freeze({
@@ -626,8 +630,10 @@ export class ComponentChangeTracker {
       ...this.projectionallyOwnedLegacyChanges(batch, context), ...rollbackChanges
     ]);
     this._projectionallyCompensatedChanges ||= new WeakSet();
-    this.projectionallyOwnedLegacyChanges(batch, context).forEach(change =>
-      this._projectionallyCompensatedChanges.add(change));
+    this.projectionallyOwnedLegacyChanges(batch, context).forEach(change => {
+      this._projectionallyCompensatedChanges.add(change);
+      this.trackedComponent?.env?.changeManager?.suppressChangeNotifications(change);
+    });
     if (undo && !undo.recorder.changes.length && !undo.joinedTransactions.length) {
       undo.stopRecording();
       manager.undoInProgress = null;
@@ -1358,10 +1364,21 @@ export class ComponentChangeTracker {
     };
   }
 
+  /** Keep replay callbacks out of planning closures that capture committed morph maps. */
+  projectionalReplayNotification ({ textRefresh = null, refreshMovedTarget = null, direction = null } = {}) {
+    return replay => {
+      if (direction && replay.direction !== direction) return;
+      refreshMovedTarget?.(replay);
+      return this.refreshAndTrackProjectionalDependants(textRefresh);
+    };
+  }
+
   projectionalTransactionAdapters (transaction, runtimeContext) {
     return {
-      forTransaction: (nextTransaction, nextContext = runtimeContext) =>
-        this.projectionalTransactionAdapters(nextTransaction, nextContext),
+      forTransaction: nextTransaction =>
+        this.projectionalTransactionAdapters(nextTransaction, this.runtimeProjectionContext({
+          resolveMorph: id => this.trackedComponent.getMorphWithId(id)
+        })),
       sourceStore: {
         read: () => this.currentModuleSource,
         write: source => {
@@ -1670,26 +1687,22 @@ export class ComponentChangeTracker {
       });
       throw error;
     }
-    const refreshOptions = { label, afterReplay: () => this.refreshAndTrackProjectionalDependants() };
+    const refreshOptions = { label, afterReplay: this.projectionalReplayNotification() };
     const componentEdit = new ProjectionalComponentEditTransaction(
       transaction,
       adapters,
       policyTransaction
-        ? { label, afterReplay: replay => {
-            if (replay.direction === ComponentTransactionDirection.REVERSE) {
-              return refreshOptions.afterReplay(replay);
-            }
-          } }
+        ? { label, afterReplay: this.projectionalReplayNotification({
+            direction: ComponentTransactionDirection.REVERSE
+          }) }
         : refreshOptions
     );
     const editTransaction = policyTransaction
       ? new CompositeEditTransaction([componentEdit,
         new ProjectionalPolicyCachePropertyEditTransaction(policyTransaction,
-          policyProjection.stores, { label, afterReplay: replay => {
-            if (replay.direction === PolicyCacheTransactionDirection.FORWARD) {
-              return refreshOptions.afterReplay(replay);
-            }
-          } })], { label })
+          policyProjection.stores, { label, afterReplay: this.projectionalReplayNotification({
+            direction: PolicyCacheTransactionDirection.FORWARD
+          }) })], { label })
       : componentEdit;
     this.recordProjectionalEditTransaction(editTransaction);
     this.refreshAndTrackProjectionalDependants();
@@ -1852,23 +1865,18 @@ export class ComponentChangeTracker {
       : null;
     const refreshOptions = refreshesDependants
       ? {
-          afterReplay: replay => {
-            refreshMovedTarget?.(replay);
-            return this.refreshAndTrackProjectionalDependants(textRefresh);
-          }
+          afterReplay: this.projectionalReplayNotification({ textRefresh, refreshMovedTarget })
         }
       : {};
     const componentEdit = new ProjectionalComponentEditTransaction(
       transaction,
       adapters,
-      policyCachePlanCount
+      policyCachePlanCount && refreshesDependants
         // Cache replay runs first during undo. Refresh only after the runtime
         // inverse, so styling cannot invalidate its property preconditions.
-        ? { afterReplay: replay => {
-            if (replay.direction === ComponentTransactionDirection.REVERSE) {
-              return refreshOptions.afterReplay?.(replay);
-            }
-          } }
+        ? { afterReplay: this.projectionalReplayNotification({
+            direction: ComponentTransactionDirection.REVERSE, textRefresh, refreshMovedTarget
+          }) }
         : refreshOptions
     );
     let policyCacheTransaction = null;
@@ -2081,25 +2089,24 @@ export class ComponentChangeTracker {
           derivedRuntimeChangeContext
         )
       : null;
+    const policyCacheReplayOptions = {
+      afterReplay: refreshesDependants
+        ? this.projectionalReplayNotification({
+            direction: PolicyCacheTransactionDirection.FORWARD, textRefresh, refreshMovedTarget
+          })
+        : null
+    };
     const policyCacheEdit = policyCacheTransaction
       ? policyCacheTransaction instanceof PreparedPolicyCacheRenameTransaction
         ? new ProjectionalPolicyCacheEditTransaction(
             policyCacheTransaction,
             policyCacheStores,
-            { afterReplay: replay => {
-                if (replay.direction === PolicyCacheTransactionDirection.FORWARD) {
-                  return refreshOptions.afterReplay?.(replay);
-                }
-              } }
+            policyCacheReplayOptions
           )
         : new ProjectionalPolicyCachePropertyEditTransaction(
             policyCacheTransaction,
             policyCacheStores,
-            { afterReplay: replay => {
-                if (replay.direction === PolicyCacheTransactionDirection.FORWARD) {
-                  return refreshOptions.afterReplay?.(replay);
-                }
-              } }
+            policyCacheReplayOptions
           )
       : null;
     const derivedEdits = [
@@ -3047,6 +3054,9 @@ export class ComponentChangeTracker {
    */
   processChangeInComponent (change) {
     if (this.ignoreChange(change)) return Promise.resolve(true);
+    if (!this._projectionallyCompensatedChanges?.has(change) &&
+        this.trackedComponent?.env?.changeManager?.deferAfterChangeNotifications(
+          change, () => this.processChangeInComponent(change))) return Promise.resolve(true);
     const moduleState = moduleReconciliationStateFor(this);
     let batch = this._projectionalBatchesByLegacyChange?.get(change);
     if (!this._projectionallyCompensatedChanges?.has(change) && change.reverseApply) {
@@ -3062,7 +3072,10 @@ export class ComponentChangeTracker {
         this._compensatingRejectedChange = true;
         change.target.withMetaDo({ doNotOverride: true }, () => change.reverseApply());
         this._projectionallyCompensatedChanges ||= new WeakSet();
-        owned.forEach(entry => this._projectionallyCompensatedChanges.add(entry));
+        owned.forEach(entry => {
+          this._projectionallyCompensatedChanges.add(entry);
+          this.trackedComponent?.env?.changeManager?.suppressChangeNotifications(entry);
+        });
         manager?.discardRecordedChanges([...owned,
           ...(undo?.recorder?.changes || []).filter(entry => !recorded.has(entry))]);
         if (undo && !undo.recorder.changes.length && !undo.joinedTransactions.length) {

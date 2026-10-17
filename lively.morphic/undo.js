@@ -194,14 +194,13 @@ export class RecordedChangeTransaction extends EditTransaction {
     }
     const last = arr.last(this.joinedTransactions);
     const recorded = this.recorder?.changes || [];
-    const recordedCount = recorded.length;
-    if (last && this._lastJoinedChangeCount <= recordedCount &&
-        last.canMergeWith(transaction, recorded.slice(this._lastJoinedChangeCount))) {
+    const interveningChanges = recorded.filter(change => !this._lastJoinedChanges?.has(change));
+    if (last && this._lastJoinedChanges && last.canMergeWith(transaction, interveningChanges)) {
       this.joinedTransactions[this.joinedTransactions.length - 1] = last.merge(transaction);
     } else {
       this.joinedTransactions.push(transaction);
     }
-    this._lastJoinedChangeCount = recordedCount;
+    this._lastJoinedChanges = new WeakSet(recorded);
     return arr.last(this.joinedTransactions);
   }
 
@@ -414,7 +413,7 @@ export class UndoManager {
       if (retained.some((entry, index) => entry !== active.joinedTransactions[index]) ||
           retained.length !== active.joinedTransactions.length) {
         active.joinedTransactions = retained;
-        delete active._lastJoinedChangeCount;
+        delete active._lastJoinedChanges;
         if (!retained.length && !active.recorder.changes.length) {
           active.stopRecording();
           this.undoInProgress = null;
