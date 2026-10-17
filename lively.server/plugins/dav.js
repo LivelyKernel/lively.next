@@ -88,6 +88,19 @@ function patchLoadedJsDAVUtilsForWindowsPaths () {
     .forEach(id => patchJsDAVUtilForWindowsPaths(cache[id].exports));
 }
 
+/** Supply precise validators through jsDAV's filesystem backend API. */
+function patchJsDAVFileETags (File) {
+  if (File.__livelyETagPatch) return;
+  File.getETag = function (callback) {
+    fs.stat(this.path, { bigint: true }, (err, stat) => {
+      if (err) return callback(err);
+      const mtime = stat.mtimeNs ?? stat.mtimeMs;
+      callback(null, `"${stat.ino}-${stat.size}-${mtime}"`);
+    });
+  };
+  File.__livelyETagPatch = true;
+}
+
 (function loadJsDAV () {
   // jsDAV shows unimportant console logs while loading, hide those...
   const log = console.log;
@@ -104,6 +117,7 @@ function patchLoadedJsDAVUtilsForWindowsPaths () {
   console.log = () => {};
   try {
     patchJsDAVUtilForWindowsPaths(System._nodeRequire('jsDAV/lib/shared/util'));
+    patchJsDAVFileETags(System._nodeRequire('jsDAV/lib/DAV/backends/fs/file'));
     DavHandler = System._nodeRequire('jsDAV/lib/DAV/handler');
     FsTree = System._nodeRequire('jsDAV/lib/DAV/backends/fs/tree');
     jsDavPlugins.browser = System._nodeRequire('jsDAV/lib/DAV/plugins/browser.js');
@@ -309,6 +323,14 @@ export default class LivelyDAVPlugin {
       // check if there is a brotli compressed version persent and serve that instead
       req.url = req.url.replace('.json', '.br.json');
       res.setHeader('content-encoding', 'br');
+    }
+
+    // shortcut: date-only validation keeps second precision until jsDAV is repaired upstream.
+    if (['GET', 'HEAD'].includes(req.method) && req.headers['if-none-match']) {
+      // RFC 9110: entity tags take precedence over whole-second dates.
+      delete req.headers['if-modified-since'];
+      // jsDAV's final GET check compares quoted tags literally; GET uses weak comparison.
+      req.headers['if-none-match'] = req.headers['if-none-match'].replace(/^W\//, '');
     }
 
     this.callDAV(req, res);
