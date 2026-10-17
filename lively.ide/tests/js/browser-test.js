@@ -74,6 +74,8 @@ describe('system browser client/server switching', function () {
     const directory = resource(System.baseURL).join('.' + name).asDirectory();
     const remoteDirectory = resource((await remote.getConfig()).baseURL).join('.' + name).asDirectory();
     const manifest = directory.join('package.json');
+    // Server writes can share a Last-Modified timestamp with the browser's cached copy.
+    const readManifest = async () => (await fetch(manifest.url, { cache: 'no-store' })).json();
     const config = {
       name, version: '1.0.0', main: 'nested/shared.js', description: 'Preserve me',
       lively: {
@@ -96,13 +98,13 @@ describe('system browser client/server switching', function () {
       expect(control.viewModel.listMorph.items.map(item => item.value)).deep.equals(['client', 'shared', 'server']);
       expect(browser.selectedModule?.url).equals(directory.join('nested/shared.js').url);
       expect(control.selection, 'initial module environment').equals('client');
-      expect(await manifest.readJson(), 'synchronizing the dropdown must not edit package.json').deep.equals(config);
+      expect(await readManifest(), 'synchronizing the dropdown must not edit package.json').deep.equals(config);
       const choose = async mode => {
         control.selection = mode;
         await promise.waitFor(60000, () => !browser.state.isChangingModuleEnvironment && !control.viewModel.deactivated);
         expect(control.selection).equals(mode);
         expect(control.get('label').textString).includes({client: 'Client-only', shared: 'Shared', server: 'Server-only'}[mode]);
-        const saved = await manifest.readJson();
+        const saved = await readManifest();
         const environments = { client: ['client'], shared: ['client', 'server'], server: ['server'] }[mode];
         expect(saved.lively.meta['nested/shared.js'].environments).deep.equals(environments);
         expect(saved.description).equals(config.description);
@@ -143,7 +145,7 @@ describe('system browser client/server switching', function () {
         expect(await browser.setModuleEnvironment('server')).equals(false);
         expect(browser.ui.sourceEditor.textString).equals(unsaved);
         expect(control.selection).equals('shared');
-        expect((await manifest.readJson()).lively.meta['nested/shared.js'].environments).deep.equals(['client', 'server']);
+        expect((await readManifest()).lively.meta['nested/shared.js'].environments).deep.equals(['client', 'server']);
         let confirmations = 0;
         browser.warnForUnsavedChanges = async () => { confirmations++; return true; };
         expect(await browser.setModuleEnvironment('server')).equals(true);
