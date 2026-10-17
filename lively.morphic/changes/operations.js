@@ -262,3 +262,41 @@ export class MoveMorph extends MorphicOperation {
     });
   }
 }
+
+/** Compact text endpoints; external ownership is part of the same typed edit. */
+export class ReplaceText extends MorphicOperation {
+  constructor ({ targetId, range, insertedRange, before, after, embedded = [], attributesOnly = false, fullAssignment = false, invalidateTextLayout = true, consistencyCheck = true, metadata = {} }) {
+    for (const endpoint of [range, insertedRange]) {
+      if (!endpoint || ![endpoint.start, endpoint.end].every(position =>
+        Number.isInteger(position?.row) && position.row >= 0 && Number.isInteger(position.column) && position.column >= 0)) {
+        throw new Error('ReplaceText requires document ranges');
+      }
+    }
+    if (!Array.isArray(before) || !Array.isArray(after)) throw new Error('ReplaceText requires text and attribute endpoints');
+    super({
+      kind: MorphicOperationKind.REPLACE_TEXT, targetId,
+      before: cloneSnapshotContainers(before, true), after: cloneSnapshotContainers(after, true),
+      range: cloneSnapshotContainers({ start: range.start, end: range.end }, true),
+      insertedRange: cloneSnapshotContainers({ start: insertedRange.start, end: insertedRange.end }, true),
+      embedded: cloneSnapshotContainers(embedded, true), attributesOnly, fullAssignment, invalidateTextLayout, consistencyCheck, metadata
+    });
+  }
+
+  validate (context) {
+    const target = resolveMorph(context, this.targetId);
+    if (!target.isText || typeof context.replaceText !== 'function') throw new Error('ReplaceText requires a Text operation context');
+  }
+
+  apply (context) {
+    this.validate(context);
+    context.replaceText(resolveMorph(context, this.targetId), this);
+    return this;
+  }
+
+  invert () {
+    return new ReplaceText({
+      ...this, before: this.after, after: this.before, range: this.insertedRange, insertedRange: this.range,
+      embedded: this.embedded.map(entry => ({ ...entry, before: entry.after, after: entry.before }))
+    });
+  }
+}

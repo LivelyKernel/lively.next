@@ -14,3 +14,12 @@ export class MorphicTransactionAsyncError extends Error {
     this.name = 'MorphicTransactionAsyncError';
   }
 }
+
+export class MorphicSemanticViewReplayError extends Error {
+  constructor (view) {
+    super('Exact semantic text replay requires the matching commit context and receipt');
+    this.message = 'Exact semantic text replay requires the matching commit context and receipt';
+    this.name = 'MorphicSemanticViewReplayError';
+    this.changeSetId = view.id;
+  }
+}

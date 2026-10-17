@@ -43,6 +43,9 @@ export class MorphicChangeSet {
     return this;
   }
 
+  /** A semantic full-text property view alone cannot restore external attachments.
+   * Use ChangeManager.applyChangeSet with its matching receipt for exact replay.
+   */
   apply (context) {
     const journal = [];
     try {
