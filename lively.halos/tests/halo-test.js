@@ -5,6 +5,7 @@ import { expect } from 'mocha-es6';
 import { pt, Color } from 'lively.graphics';
 import { num, promise } from 'lively.lang';
 import { LivelyWorld } from 'lively.ide/world.js';
+import { TopBarModel } from 'lively.ide/studio/top-bar.cp.js';
 
 let describeInBrowser = System.get('@system-env').browser
   ? describe
@@ -117,6 +118,38 @@ describeInBrowser('halos', function () {
     halo.dragHalo().init();
     halo.dragHalo().update(pt(10, 5));
     expect(submorph1.position).equals(pt(20, 15));
+  });
+
+  it('catches up custom drags from the current press while ignoring a stale creation position', async () => {
+    const halo = await world.showHaloFor(submorph1);
+    const model = new TopBarModel({ primaryTarget: world });
+    const previousWorld = System.global.$world;
+    System.global.$world = world;
+    try {
+      const press = pt(40, 40);
+      model.handleHaloSelection({ position: press, targetMorph: submorph1 });
+      const evt = {
+        position: pt(70, 40), startPosition: pt(-1000, -1000),
+        targetMorphs: [submorph1], state: {}, leftMouseButtonPressed: () => true
+      };
+      model.handleHaloPreview(evt);
+      expect(model._customDrag).equals(true);
+      evt.position = pt(75, 40);
+      model.handleHaloPreview(evt);
+      expect(submorph1.position).equals(pt(45, 10));
+      model.handleShapeCreation({ targetMorph: submorph1 });
+      expect(model._haloDragStartPosition).equals(null);
+      model.handleHaloPreview(evt);
+      expect(model._customDrag).equals(false);
+    } finally { System.global.$world = previousWorld; halo.remove(); }
+  });
+
+  it('starts a native halo drag at the current position without using a stale press', async () => {
+    const halo = await world.showHaloFor(submorph1);
+    halo.onDragStart({ position: pt(40, 40), startPosition: pt(-1000, -1000) });
+    halo.customDrag({ position: pt(45, 43) });
+    expect(submorph1.position).equals(pt(15, 13));
+    halo.onDragEnd();
   });
 
   it('drags correctly of owner is transformed', async () => {
