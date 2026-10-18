@@ -6,18 +6,21 @@ const guardedStates = new WeakMap();
 
 /** Compare data or accessor descriptors without invoking user getters. */
 function descriptorsEqual (left, right) {
-  return !!left && !!right && ['value', 'get', 'set', 'writable', 'enumerable', 'configurable']
-    .every(key => Object.is(left[key], right[key]));
+  return !!left && !!right && Object.is(left.value, right.value) &&
+    left.get === right.get && left.set === right.set &&
+    left.writable === right.writable && left.enumerable === right.enumerable &&
+    left.configurable === right.configurable;
 }
 
 /** Check shallow slots, prototype and extensibility through the retained raw object. */
 function stateMatches (guard) {
-  const actual = Object.getOwnPropertyDescriptors(guard.state);
-  const keys = Reflect.ownKeys(guard.expected);
-  return Reflect.ownKeys(actual).length === keys.length &&
-    keys.every(key => descriptorsEqual(actual[key], guard.expected[key])) &&
-    Object.getPrototypeOf(guard.state) === guard.prototype &&
-    Object.isExtensible(guard.state) === guard.extensible;
+  if (Reflect.ownKeys(guard.state).length !== guard.keys.length ||
+      Object.getPrototypeOf(guard.state) !== guard.prototype ||
+      Object.isExtensible(guard.state) !== guard.extensible) return false;
+  for (const key of guard.keys) {
+    if (!descriptorsEqual(Object.getOwnPropertyDescriptor(guard.state, key), guard.expected[key])) return false;
+  }
+  return true;
 }
 
 /** Plain assignment preserves the instance shape; redefinition is recovery only. */
@@ -78,7 +81,8 @@ export function guardMorphState (manager, frame, morph) {
   });
   const guard = {
     morph, state, parent, descriptor, proxy, revoke,
-    expected: Object.getOwnPropertyDescriptors(state),
+    expected: Object.getOwnPropertyDescriptors(state), keys: Reflect.ownKeys(state),
+    slot: { ...descriptor, value: proxy },
     prototype: Object.getPrototypeOf(state), extensible: Object.isExtensible(state)
   };
   guard.cleanup = {
@@ -96,8 +100,10 @@ export function guardMorphState (manager, frame, morph) {
 
 /** Journal each kind of unrecorded damage once per savepoint. */
 function captureGuardViolations (frame, guard) {
+  // Clean enlistment needs no damage records or recovery closures.
+  const slot = guard.slot;
+  if (descriptorsEqual(Object.getOwnPropertyDescriptor(guard.morph, '_morphicState'), slot) && stateMatches(guard)) return null;
   let violation = null;
-  const slot = { ...guard.descriptor, value: guard.proxy };
   const damage = [
     { kind: 'state-slot', restored: () => descriptorsEqual(Object.getOwnPropertyDescriptor(guard.morph, '_morphicState'), slot), restore: () => restoreSlot(guard.morph, slot) },
     { kind: 'direct-state-alias', restored: () => stateMatches(guard), restore: () => restoreRawState(guard) }
@@ -159,6 +165,7 @@ export function writeRecordedState (morph, property, value) {
   const state = guard ? guard.state : morph._morphicState;
   state[property] = value;
   for (let current = guard; current; current = current.parent) {
+    if (!Object.hasOwn(current.expected, property)) current.keys.push(property);
     current.expected[property] = Object.getOwnPropertyDescriptor(state, property);
   }
 }

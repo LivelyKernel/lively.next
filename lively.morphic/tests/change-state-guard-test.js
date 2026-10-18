@@ -460,4 +460,48 @@ describe('morphic atomic direct state guards', function () {
     });
   }
 
+  it('tracks newly recorded state keys through repeated enlistment and nested cleanup', () => {
+    const target = morph();
+    const state = target._morphicState;
+    manager.transaction({ scope: target }, () => {
+      target.setProperty('guardScalar', 1);
+      target.opacity = 0.6;
+      manager.transaction({ scope: target }, () => { target.setProperty('guardScalar', 2); });
+      target.rotation = 0.3;
+    });
+    expect(target._morphicState).equals(state);
+    expect(target.getProperty('guardScalar')).equals(2);
+    env.undoManager.undo();
+    expect(target.getProperty('guardScalar')).equals(undefined);
+    expect(target.opacity).equals(1);
+    expect(target.rotation).equals(0);
+    env.undoManager.redo();
+    expect(target.getProperty('guardScalar')).equals(2);
+  });
+
+  it('validates symbol and accessor descriptors without invoking their getters', () => {
+    const target = morph();
+    const state = target._morphicState;
+    const symbol = Symbol('guard-descriptor');
+    let reads = 0;
+    const getter = () => { reads++; return 23; };
+    Object.defineProperty(state, symbol, { get: getter, configurable: true });
+    state.guardZero = -0;
+    state.guardNaN = NaN;
+    const error = failureOf(() => manager.transaction({ scope: target }, () => {
+      target.opacity = 0.5;
+      Object.defineProperty(state, symbol, { get: () => 23, configurable: true });
+      target.rotation = 0.3;
+    }));
+    expect(error).to.be.instanceOf(MorphicTransactionUnsupportedError);
+    expect(error.kind).equals('direct-state-alias');
+    expect(Object.getOwnPropertyDescriptor(state, symbol).get).equals(getter);
+    expect(reads).equals(0);
+    expect(Object.is(state.guardZero, -0)).equals(true);
+    expect(Number.isNaN(state.guardNaN)).equals(true);
+    expect(target.opacity).equals(1);
+    expect(target.rotation).equals(0);
+    expect(target._morphicState).equals(state);
+  });
+
 });
