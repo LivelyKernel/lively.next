@@ -17,18 +17,21 @@ import {
 
 import { operationContext } from './changes/operation-context.js';
 import { captureRecovery, recover, assertSupportedOperation, attachmentOf, propertyEquals, readProperty } from './changes/recovery.js';
-import { MorphicTransactionUnsupportedError, MorphicTransactionAsyncError, MorphicSemanticViewReplayError } from './changes/errors.js';
-import { ChangeSetEditTransaction } from './undo.js';
+import { MorphicTransactionUnsupportedError, MorphicTransactionAsyncError, MorphicSemanticViewReplayError, MorphicCompensationConflictError, MorphicHistoryOwnershipError } from './changes/errors.js';
+import { ChangeSetEditTransaction, UndoManager } from './undo.js';
 import { guardMorphState, captureStateGuardViolations, restoreStateGuards, releaseStateGuards, writeRecordedState } from './changes/state-guard.js';
 import { prepareTextEdit, enlistTextMorphs, semanticTextOperations, releaseTextRecovery } from './changes/text.js';
 import { Range } from './text/range.js';
 import { graphicsValuePolicy } from './changes/graphics-policy.js';
 import { rememberDerivations, changeSetUnits, reconcileSourceUnit } from './changes/derived.js';
+import { matchesCompensationEndpoint, compensationTextLengths } from './changes/compensation.js';
 
 const atomicState = { activeManager: null, depth: 0, recordDescriptor: null };
 const liveChangeManagers = new Set();
 const atomicDispatch = new Map();
 const semanticReceipts = new WeakMap();
+const compensationReceipts = new WeakMap();
+const commitTokens = new WeakMap();
 
 /** Restore own descriptors, including the absence of an ordinary override. */
 function restoreAtomicDispatch (manager, saved) {
@@ -404,6 +407,8 @@ export class ChangeManager {
   }
 
   reset () {
+    this._activeCommitDeliveries = [];
+    this._usedCommitDeliveries = [];
     this._atomicFrame = null;
     this._operationDepth = 0;
     this._structuralCaptures = [];
@@ -425,6 +430,28 @@ export class ChangeManager {
   }
 
   operationContext (options) { return operationContext(this, options); }
+
+  /** Tokens authenticate live deliveries; a saved context cannot stage new history. */
+  commitTokenFor (context) {
+    if (!this._activeCommitDeliveries.includes(context)) throw new MorphicHistoryOwnershipError('published');
+    let token = commitTokens.get(context);
+    if (!token) {
+      const lifetime = UndoManager._openLegacyCommit(this, context);
+      token = lifetime.token;
+      commitTokens.set(context, token);
+      this._usedCommitDeliveries.push(lifetime);
+    }
+    return token;
+  }
+
+  _closeCommitDelivery (context) {
+    for (let index = this._usedCommitDeliveries.length - 1; index >= 0; index--) {
+      const lifetime = this._usedCommitDeliveries[index];
+      if (lifetime.context !== context) continue;
+      this._usedCommitDeliveries.splice(index, 1);
+      UndoManager._closeLegacyCommit(lifetime);
+    }
+  }
 
   get _textCaptureActive () { return !!atomicState.activeManager; }
 
@@ -579,6 +606,10 @@ export class ChangeManager {
     for (const changeRecorder of recorders) {
       changeRecorder.changes = changeRecorder.changes.filter(change => !owned.has(change));
     }
+    for (const manager of new Set([this.undoManager, frame.options.undoManager])) {
+      const active = manager?.undoInProgress;
+      if (active?._historyOrder) active._historyOrder = active._historyOrder.filter(change => !owned.has(change));
+    }
     for (const group of this.changeGroupStack) {
       group.changes = group.changes.filter(change => !owned.has(change));
     }
@@ -701,30 +732,37 @@ export class ChangeManager {
       return { value, changeSet, history: null };
     }
     frame.context.retainDetached?.(changeSet.operations);
-    let history = null;
-    this._discardAtomicRecords(frame);
+    let entry = null;
     if (changeSet.operations.length && opts.undoable && !opts.undoManager.applyCount) {
-      const entry = new ChangeSetEditTransaction(changeSet, this, {
+      entry = new ChangeSetEditTransaction(changeSet, this, {
         context: frame.context, groupToken: opts.undoManager.undoInProgress
       });
-      const stored = opts.undoManager.addTransaction(entry, { joinActive: true, group: false });
-      history = { undoManager: opts.undoManager, entry: stored };
     }
-    if (changeSet.operations.length && opts.notify !== false) this._deliverAtomicCommit(changeSet, frame);
+    const context = Object.freeze({
+      ...frame.context, capturedChangeSet: changeSet,
+      legacyChanges: Object.freeze(frame.recorded.filter(change => !(change instanceof GroupChange) || change.operation)), committedChange: null,
+      undoManager: opts.undoManager
+    });
+    const token = UndoManager._commitToken(this, context);
+    commitTokens.set(context, token);
+    const pending = UndoManager._stageCommit(token, { legacyChanges: context.legacyChanges, undoManager: opts.undoManager, entry, undoable: changeSet.undoable });
+    compensationReceipts.set(changeSet, { changeSet, context: new WeakRef(context), pending, operationContext: frame.context,
+      textLengths: compensationTextLengths(changeSet, frame.context) });
+    let history;
+    try {
+      if (changeSet.operations.length && opts.notify !== false) this._deliverAtomicCommit(changeSet, frame, context);
+    } finally {
+      this._discardAtomicRecords(frame);
+      history = UndoManager._publishCommit(token);
+    }
     for (const callback of frame.deferred) {
       try { callback(); } catch (error) { console.error(`Error after atomic commit: ${error.stack}`); }
     }
     return { value, changeSet, history };
   }
 
-  _deliverAtomicCommit (changeSet, frame) {
-    const legacyChanges = frame.recorded.filter(change => !(change instanceof GroupChange));
-    const context = Object.freeze({
-      ...frame.context,
-      capturedChangeSet: changeSet,
-      legacyChanges: Object.freeze(legacyChanges), committedChange: null,
-      undoManager: frame.options.undoManager, commitToken: Object.freeze({})
-    });
+  _deliverAtomicCommit (changeSet, frame, context) {
+    const { legacyChanges } = context;
     const listeners = this.committedChangeListeners.slice().filter(listener => {
       const containsMorph = this.committedChangeListenerScopes.get(listener);
       if (containsMorph && !legacyChanges.some(change =>
@@ -735,22 +773,22 @@ export class ChangeManager {
     if (!listeners.length) return;
     const view = changeSet.operations.some(operation => operation instanceof ReplaceText)
       ? new MorphicChangeSet({ ...changeSet, operations: semanticTextOperations(changeSet.operations, context) }) : changeSet;
-    if (view !== changeSet) semanticReceipts.set(view, { context, commitToken: context.commitToken, capturedChangeSet: changeSet });
-    listeners.forEach(listener => {
-      try { listener(view, context); } catch (error) {
-        console.error(`Error in committed change listener: ${error.stack}`);
-      }
-    });
+    if (view !== changeSet) semanticReceipts.set(view, { context, commitToken: commitTokens.get(context), capturedChangeSet: changeSet });
+    this._activeCommitDeliveries.push(context);
+    try {
+      listeners.forEach(listener => {
+        try { listener(view, context); } catch (error) {
+          console.error(`Error in committed change listener: ${error.stack}`);
+        }
+      });
+    } finally {
+      this._activeCommitDeliveries.pop();
+      if (this._usedCommitDeliveries.length) this._closeCommitDelivery(context);
+    }
   }
 
   applyChangeSet (changeSet, { context, direction = 'forward', origin = direction, undoManager = this.undoManager, notify = true } = {}) {
-    if (changeSet?.operations.some(operation => operation instanceof SetMorphProperty && operation.property === 'textAndAttributes' && operation.metadata.textReplacement)) {
-      const receipt = semanticReceipts.get(changeSet);
-      if (!receipt || receipt.context !== context || receipt.commitToken !== context?.commitToken || receipt.capturedChangeSet !== context.capturedChangeSet) {
-        throw new MorphicSemanticViewReplayError(changeSet);
-      }
-      changeSet = receipt.capturedChangeSet;
-    }
+    changeSet = this._capturedChangeSet(changeSet, context);
     if (!(changeSet instanceof MorphicChangeSet) || !context) throw new Error('applyChangeSet requires a change set and operation context');
     if (!['forward', 'undo', 'redo'].includes(direction)) throw new Error(`Unknown replay direction: ${direction}`);
     if (atomicState.activeManager) this._rejectAtomic('Use perform inside a transaction', 'nested-replay');
@@ -780,6 +818,81 @@ export class ChangeManager {
       });
       return result.changeSet;
     } finally { guards.forEach(manager => manager.applyCount--); }
+  }
+
+  _capturedChangeSet (changeSet, context) {
+    if (changeSet?.operations?.some(operation => operation instanceof SetMorphProperty && operation.property === 'textAndAttributes' && operation.metadata.textReplacement)) {
+      const receipt = semanticReceipts.get(changeSet);
+      if (!receipt || receipt.context !== context || receipt.commitToken !== commitTokens.get(context) || receipt.capturedChangeSet !== context.capturedChangeSet) {
+        throw new MorphicSemanticViewReplayError(changeSet);
+      }
+      changeSet = receipt.capturedChangeSet;
+    }
+    return changeSet;
+  }
+
+  /** Explicit postcommit reversal; a receipt owns history and notification cleanup. */
+  compensate (input, { context, commitToken = null, undoManager = this.undoManager, cause = null } = {}) {
+    if (commitToken && (commitTokens.get(context) !== commitToken || !this._activeCommitDeliveries.includes(context))) {
+      throw new MorphicHistoryOwnershipError('published');
+    }
+    let receipt = compensationReceipts.get(input);
+    let changeSet = input instanceof MorphicChangeSet ? this._capturedChangeSet(input, context) : context?.capturedChangeSet;
+    if (changeSet) changeSet = this._capturedChangeSet(changeSet, context);
+    receipt ||= compensationReceipts.get(changeSet);
+    if (!receipt) {
+      const legacyChanges = context?.legacyChanges || (input instanceof MorphicChangeSet ? [] : [input]);
+      const operations = changeSet?.operations || legacyChanges.flatMap(leafChangesOf).map(change => change.operation).filter(Boolean);
+      if (!operations.length) throw new MorphicCompensationConflictError(changeSet, cause);
+      operations.forEach(assertSupportedOperation);
+      changeSet ||= new MorphicChangeSet({ id: `morphic-compensation-${this.commitCounter++}`, operations });
+      const scope = legacyChanges.flatMap(leafChangesOf).flatMap(change => [change.target, change.morph, ...(change.owners || [])]).filter(Boolean);
+      receipt = { changeSet, context: context && new WeakRef(context), legacyChanges: legacyChanges.map(change => new WeakRef(change)),
+        operationContext: this.operationContext({ scope, resolveMorph: context?.resolveMorph }) };
+    }
+    const commitContext = receipt.context?.deref();
+    if (context && commitContext && context !== commitContext && context !== receipt.operationContext) {
+      throw new MorphicCompensationConflictError(changeSet, cause);
+    }
+    const runtime = receipt.operationContext;
+    const matches = endpoint => {
+      try { return matchesCompensationEndpoint(receipt.changeSet, runtime, endpoint, receipt.textLengths); } catch (error) { return false; }
+    };
+    const before = matches('before'); const after = matches('after');
+    if (receipt.compensated) {
+      if (!before) throw new MorphicCompensationConflictError(receipt.changeSet, cause);
+      return { state: 'already-compensated' };
+    }
+    if (!before && !after) throw new MorphicCompensationConflictError(receipt.changeSet, cause);
+    const token = commitToken || (commitContext && commitTokens.get(commitContext));
+    const pending = receipt.pending || UndoManager._commitFor(token);
+    if (pending?.phase === 'published' && pending.stored) pending.undoManager._replaceHistoryEntry(pending.stored, null, { preflight: true });
+    const managers = new Set([this.undoManager, undoManager, pending?.undoManager].filter(Boolean));
+    const owned = [...(commitContext?.legacyChanges || receipt.legacyChanges?.map(reference => reference.deref()) || []), commitContext?.committedChange].filter(Boolean).flatMap(change => [change, ...leafChangesOf(change)]);
+    const skipClaims = [pending?.entry, pending?.stored];
+    managers.forEach(manager => manager._replaceHistoryEntry(owned, null, { preflight: true, allowMissing: true, skipClaims }));
+    const snapshots = new Map([...managers].map(manager => [manager, new Set(manager.undoInProgress?.recorder.changes || [])]));
+    try {
+      if (!before) this.applyChangeSet(receipt.changeSet, { context: runtime, direction: 'undo', origin: 'runtime-projection', undoManager, notify: false });
+      if (!matches('before')) throw new MorphicCompensationConflictError(receipt.changeSet, cause);
+    } catch (error) {
+      throw new MorphicRollbackError('Morphic compensation is incomplete', {
+        cause: cause !== null ? cause : error instanceof MorphicRollbackError ? error.cause : error,
+        rollbackErrors: error instanceof MorphicRollbackError ? error.rollbackErrors : receipt.changeSet.operations.map(operation => ({ operation, error })),
+        unreversedOperations: error instanceof MorphicRollbackError ? error.unreversedOperations : receipt.changeSet.operations
+      });
+    }
+    for (const manager of managers) {
+      const inverse = (manager.undoInProgress?.recorder.changes || []).filter(change => !snapshots.get(manager).has(change));
+      manager._replaceHistoryEntry([...owned, ...inverse], null, { allowMissing: true, skipClaims });
+    }
+    UndoManager._cancelCommit(token, pending);
+    owned.forEach(change => this.suppressChangeNotifications(change));
+    managers.forEach(manager => manager.cancelEmptyGroup());
+    receipt.compensated = true;
+    compensationReceipts.set(input, receipt);
+    compensationReceipts.set(receipt.changeSet, receipt);
+    return { state: 'compensated' };
   }
 
   suppressChangeNotifications (change) {
@@ -1202,11 +1315,17 @@ export class ChangeManager {
         : legacyChanges,
       change
     );
-    listeners.forEach(listener => {
-      try { listener(changeSet, context); } catch (error) {
-        console.error(`Error in committed change listener: ${error.stack}`);
-      }
-    });
+    this._activeCommitDeliveries.push(context);
+    try {
+      listeners.forEach(listener => {
+        try { listener(changeSet, context); } catch (error) {
+          console.error(`Error in committed change listener: ${error.stack}`);
+        }
+      });
+    } finally {
+      this._activeCommitDeliveries.pop();
+      if (this._usedCommitDeliveries.length) this._closeCommitDelivery(context);
+    }
     return changeSet;
   }
 

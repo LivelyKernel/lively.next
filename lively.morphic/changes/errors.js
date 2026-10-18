@@ -23,3 +23,25 @@ export class MorphicSemanticViewReplayError extends Error {
     this.changeSetId = view.id;
   }
 }
+
+export class MorphicHistoryOwnershipError extends Error {
+  constructor (kind, { ownedIdentities = [], interleavedEntries = [], missingIdentities = [] } = {}) {
+    super(`Cannot replace morphic history: ${kind}`);
+    this.message = `Cannot replace morphic history: ${kind}`;
+    this.name = 'MorphicHistoryOwnershipError';
+    this.kind = kind;
+    this.ownedIdentities = Object.freeze(ownedIdentities.slice());
+    this.interleavedEntries = Object.freeze(interleavedEntries.slice());
+    this.missingIdentities = Object.freeze(missingIdentities.slice());
+  }
+}
+
+export class MorphicCompensationConflictError extends Error {
+  constructor (changeSet, cause = null) {
+    super('Cannot prove a complete before or after state for morphic compensation');
+    this.message = 'Cannot prove a complete before or after state for morphic compensation';
+    this.name = 'MorphicCompensationConflictError';
+    this.changeSet = changeSet;
+    this.cause = cause;
+  }
+}
