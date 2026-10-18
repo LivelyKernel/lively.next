@@ -586,7 +586,7 @@ export class ChangeManager {
     const undoManager = frame.options.undoManager;
     if (undoManager) undoManager.applyCount++;
     try {
-      rollback = recover(frame.journal, { reconcileUnit: unit => reconcileSourceUnit(
+      rollback = recover(frame.journal.filter(entry => entry.operation.kind !== 'state-guard-cleanup'), { reconcileUnit: unit => reconcileSourceUnit(
         this, unit, frame.context, 'reverse', replacement => {
           const previous = this._performingRecovery;
           this._performingRecovery = unit.entry;
@@ -600,6 +600,12 @@ export class ChangeManager {
         }, { recovering: true }
       ) });
     } finally {
+      const cleanup = restoreStateGuards(frame);
+      if (rollback) {
+        rollback.rollbackErrors.push(...cleanup.rollbackErrors);
+        rollback.unreversedOperations.push(...cleanup.unreversedOperations);
+        rollback.diagnostics.push(...cleanup.diagnostics);
+      }
       if (undoManager) undoManager.applyCount--;
       this._operationDepth--;
       this._recovering = false;
@@ -673,7 +679,13 @@ export class ChangeManager {
         metadata: opts.metadata
       });
       rememberDerivations(changeSet, frame.operations.filter(entry => !entry.structuralOwner));
-      restoreStateGuards(frame);
+      const cleanup = restoreStateGuards(frame);
+      if (cleanup.diagnostics.length) {
+        frame.root.diagnostics ||= [];
+        frame.root.diagnostics.push(...cleanup.diagnostics);
+        this._lastRollbackDiagnostics = frame.root.diagnostics;
+      }
+      if (cleanup.unreversedOperations.length) throw cleanup.rollbackErrors[0].error;
     } catch (error) {
       throw this._rollbackFrame(frame, error);
     } finally {

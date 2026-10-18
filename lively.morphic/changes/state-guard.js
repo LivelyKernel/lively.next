@@ -1,5 +1,6 @@
 /* global Proxy, WeakMap, Reflect */
 import { MorphicTransactionUnsupportedError } from './errors.js';
+import { recover } from './recovery.js';
 
 const guardedStates = new WeakMap();
 
@@ -84,8 +85,7 @@ export function guardMorphState (manager, frame, morph) {
     operation: { kind: 'state-guard-cleanup', targetId: morph.id },
     restored: () => descriptorsEqual(Object.getOwnPropertyDescriptor(morph, '_morphicState'), descriptor) && stateMatches(guard),
     restore: () => {
-      if (!stateMatches(guard)) restoreRawState(guard);
-      restoreSlot(morph, descriptor);
+      try { if (!stateMatches(guard)) restoreRawState(guard); } finally { restoreSlot(morph, descriptor); }
     }
   };
   frame.stateGuards.set(morph, guard);
@@ -126,19 +126,26 @@ export function captureStateGuardViolations (frame) {
   return violation;
 }
 
-/** Restore the enclosing proxy or original data value before leaving the savepoint. */
+/** Visit the live set after recovery: reactions may have enlisted new guards. */
 export function restoreStateGuards (frame) {
-  const guards = [...frame.stateGuards.values()].reverse();
-  for (const guard of guards) guard.cleanup.restore();
-  if (frame.parent) {
-    const cleanups = new Set(guards.map(guard => guard.cleanup));
+  const result = { rollbackErrors: [], unreversedOperations: [], diagnostics: [] };
+  for (const guard of frame.stateGuards.values()) {
+    const cleanup = recover([guard.cleanup]);
+    result.rollbackErrors.push(...cleanup.rollbackErrors);
+    result.unreversedOperations.push(...cleanup.unreversedOperations);
+    result.diagnostics.push(...cleanup.diagnostics);
+  }
+  if (frame.parent && !result.unreversedOperations.length) {
+    const cleanups = new Set([...frame.stateGuards.values()].map(guard => guard.cleanup));
     frame.journal = frame.journal.filter(entry => !cleanups.has(entry));
   }
+  return result;
 }
 
-/** Revoke captured proxies on every exit, even when recovery itself is incomplete. */
+/** An unrestored live slot must remain readable, even after incomplete recovery. */
 export function releaseStateGuards (frame) {
   for (const guard of [...frame.stateGuards.values()].reverse()) {
+    if (!descriptorsEqual(Object.getOwnPropertyDescriptor(guard.morph, '_morphicState'), guard.descriptor)) continue;
     guard.revoke();
     if (guard.parent) guardedStates.set(guard.morph, guard.parent);
     else guardedStates.delete(guard.morph);
