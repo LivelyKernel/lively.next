@@ -14,4 +14,4 @@ export {
   MorphicRollbackError
 } from './change-set.js';
 export { MorphicReplayDirection } from './replay.js';
-export { MorphicTransactionUnsupportedError, MorphicTransactionAsyncError, MorphicSemanticViewReplayError } from './errors.js';
+export { MorphicTransactionUnsupportedError, MorphicTransactionAsyncError, MorphicSemanticViewReplayError, MorphicHistoryOwnershipError, MorphicCompensationConflictError } from './errors.js';
