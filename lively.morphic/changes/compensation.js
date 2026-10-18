@@ -1,6 +1,7 @@
 import { SetMorphProperty, MoveMorph, ReplaceText } from './operations.js';
 import { propertyEquals, readProperty, attachmentOf, attachmentsEqual } from './recovery.js';
 import { composeTextOperations } from './text.js';
+import { DomainEditOperation } from './domain-edit.js';
 
 /** Numeric receipts disambiguate insertion/deletion's empty range endpoints. */
 export function compensationTextLengths (changeSet, context) {
@@ -26,11 +27,12 @@ export function matchesCompensationEndpoint (changeSet, context, endpoint, textL
       if (!text.has(operation.targetId)) text.set(operation.targetId, []);
       text.get(operation.targetId).push(operation);
     } else {
-      const key = `${operation.targetId}:${operation.kind}:${operation.property || ''}`;
+      const key = operation instanceof DomainEditOperation ? operation.edit : `${operation.targetId}:${operation.kind}:${operation.property || ''}`;
       if (!endpoints.has(key) || endpoint === 'after') endpoints.set(key, operation);
     }
   }
   for (const operation of endpoints.values()) {
+    if (operation instanceof DomainEditOperation) { if (!operation.matches(endpoint)) return false; else continue; }
     const target = context.resolveMorph(operation.targetId);
     if (!target) return false;
     if (operation instanceof SetMorphProperty) {

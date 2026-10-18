@@ -3,6 +3,7 @@ import { propertyEquals, readProperty, attachmentOf, attachmentsEqual } from './
 import { composeTextOperations } from './text.js';
 import { Anchor } from '../text/anchors.js';
 import { Range } from '../text/range.js';
+import { DomainEditOperation } from './domain-edit.js';
 import { eqPosition, lessPosition } from '../text/position.js';
 
 // Only numeric parent links survive the journal; history never retains recovery closures.
@@ -57,7 +58,7 @@ function leaves (unit) {
   return nodes(unit).sort((a, b) => a.order - b.order).map(node => node.entry);
 }
 /** Repeated writes share one unit target. */
-function keyOf (operation) { return `${operation.targetId}:${operation.kind}:${operation.property || ''}`; }
+function keyOf (operation) { return operation instanceof DomainEditOperation ? operation.edit : `${operation.targetId}:${operation.kind}:${operation.property || ''}`; }
 /** Restore a fresh snapshot value under the operation's captured policy. */
 function materialized (operation, endpoint) {
   return operation.valueSemantics === 'snapshot'
@@ -162,6 +163,7 @@ export function reconcileSourceUnit (manager, unit, context, direction, invoke, 
     const { operation, endpoint } = entry;
     if (recovering && operation === unit.entry.operation) return unit.entry.restored();
     const target = context.resolveMorph(operation.targetId);
+    if (operation instanceof DomainEditOperation) return operation.matches(endpoint);
     if (operation instanceof SetMorphProperty) {
       return propertyEquals(readProperty(context, target, operation.property), operation[endpoint], operation);
     }
@@ -172,6 +174,7 @@ export function reconcileSourceUnit (manager, unit, context, direction, invoke, 
     if (entry.text) return entry.repair(manager, journal);
     const { operation, endpoint } = entry;
     if (recovering && operation === unit.entry.operation) return invoke();
+    if (operation instanceof DomainEditOperation) return;
     const target = context.resolveMorph(operation.targetId);
     let edit;
     if (operation instanceof SetMorphProperty) {

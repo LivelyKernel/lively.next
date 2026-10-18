@@ -18,7 +18,8 @@ import {
 import { operationContext } from './changes/operation-context.js';
 import { captureRecovery, recover, assertSupportedOperation, attachmentOf, propertyEquals, readProperty } from './changes/recovery.js';
 import { MorphicTransactionUnsupportedError, MorphicTransactionAsyncError, MorphicSemanticViewReplayError, MorphicCompensationConflictError, MorphicHistoryOwnershipError } from './changes/errors.js';
-import { ChangeSetEditTransaction, UndoManager } from './undo.js';
+import { ChangeSetEditTransaction, UndoManager, EditTransaction } from './undo.js';
+import { DomainEditOperation } from './changes/domain-edit.js';
 import { guardMorphState, captureStateGuardViolations, restoreStateGuards, releaseStateGuards, writeRecordedState } from './changes/state-guard.js';
 import { prepareTextEdit, enlistTextMorphs, semanticTextOperations, releaseTextRecovery } from './changes/text.js';
 import { Range } from './text/range.js';
@@ -26,70 +27,29 @@ import { graphicsValuePolicy } from './changes/graphics-policy.js';
 import { rememberDerivations, changeSetUnits, reconcileSourceUnit } from './changes/derived.js';
 import { matchesCompensationEndpoint, compensationTextLengths } from './changes/compensation.js';
 
-const atomicState = { activeManager: null, depth: 0, recordDescriptor: null };
-const liveChangeManagers = new Set();
-const atomicDispatch = new Map();
+const atomicState = { activeManager: null, depth: 0, descriptors: null };
 const semanticReceipts = new WeakMap();
 const compensationReceipts = new WeakMap();
 const commitTokens = new WeakMap();
+const atomicMethods = ['_record', 'informCommittedChangeListeners', 'addValueChange'];
 
-/** Restore own descriptors, including the absence of an ordinary override. */
-function restoreAtomicDispatch (manager, saved) {
-  for (const name of ['informCommittedChangeListeners', '_record']) {
-    if (saved.descriptors[name]) Object.defineProperty(manager, name, saved.descriptors[name]);
-    else delete manager[name];
-  }
-}
-
-/** Guard every environment before its next write, without a permanent hot-path test. */
-function installAtomicDispatch (manager) {
-  if (atomicDispatch.has(manager)) return;
-  const saved = {
-    record: manager._record,
-    committed: manager.informCommittedChangeListeners,
-    descriptors: Object.fromEntries(['_record', 'informCommittedChangeListeners']
-      .map(name => [name, Object.getOwnPropertyDescriptor(manager, name)]))
-  };
-  atomicDispatch.set(manager, saved);
-  try {
-    for (const [name, value] of [['_record', manager._recordAtomic], ['informCommittedChangeListeners', manager._informCommittedAtomic]]) {
-      const descriptor = saved.descriptors[name];
-      Object.defineProperty(manager, name, {
-        ...(descriptor && 'value' in descriptor ? descriptor : { configurable: true, writable: true }), value
-      });
-    }
-  } catch (error) {
-    restoreAtomicDispatch(manager, saved);
-    atomicDispatch.delete(manager);
-    throw error;
-  }
-}
-
-/** Install once for the synchronous outer scope; nested savepoints share dispatch. */
+/** Shared guards cover every environment without visiting live managers. */
 function enterAtomicDispatch () {
   if (atomicState.depth++) return;
+  atomicState.descriptors = Object.fromEntries(atomicMethods.map(name =>
+    [name, Object.getOwnPropertyDescriptor(ChangeManager.prototype, name)]));
   try {
-    atomicState.recordDescriptor = Object.getOwnPropertyDescriptor(ChangeManager.prototype, '_record');
-    ChangeManager.prototype._record = ChangeManager.prototype._recordWithAtomicNotifications;
-    for (const reference of liveChangeManagers) {
-      const manager = reference.deref();
-      if (manager) installAtomicDispatch(manager);
-      else liveChangeManagers.delete(reference);
-    }
-  } catch (error) {
-    leaveAtomicDispatch();
-    throw error;
-  }
+    ChangeManager.prototype._record = ChangeManager.prototype._recordAtomic;
+    ChangeManager.prototype.informCommittedChangeListeners = ChangeManager.prototype._informCommittedAtomic;
+    ChangeManager.prototype.addValueChange = ChangeManager.prototype._addValueChangeAtomic;
+  } catch (error) { leaveAtomicDispatch(); throw error; }
 }
 
-/** Release strong references and guards on every outermost exit. */
+/** Nested savepoints share the guards; the outer finally restores exact descriptors. */
 function leaveAtomicDispatch () {
   if (--atomicState.depth) return;
-  Object.defineProperty(ChangeManager.prototype, '_record', atomicState.recordDescriptor);
-  atomicState.recordDescriptor = null;
-  try {
-    for (const [manager, saved] of atomicDispatch) restoreAtomicDispatch(manager, saved);
-  } finally { atomicDispatch.clear(); }
+  for (const name of atomicMethods) Object.defineProperty(ChangeManager.prototype, name, atomicState.descriptors[name]);
+  atomicState.descriptors = null;
 }
 
 /** Keep the first primitive failure, including a falsy thrown value. */
@@ -402,8 +362,6 @@ export class ChangeManager {
     this.undoManager = undoManager;
     this.resolveMorph = resolveMorph;
     this.reset();
-    liveChangeManagers.add(new WeakRef(this));
-    if (atomicState.depth) installAtomicDispatch(this);
   }
 
   reset () {
@@ -544,11 +502,17 @@ export class ChangeManager {
     }
   }
 
+  _performEdit (frame, edit) {
+    if (!(edit instanceof EditTransaction)) this._rejectAtomic('performEdit requires an EditTransaction', 'domain-edit');
+    try { return this._perform(frame, new DomainEditOperation(edit, { metadata: this.defaultMeta })); }
+    catch (error) { failAtomicFrame(frame, error); throw error; }
+  }
+
   _perform (frame, operation) {
     if (this._atomicFrame !== frame || frame.closed) throw new Error('Transaction scope is closed');
     this._assertAtomicAccess();
     try { assertSupportedOperation(operation); } catch (error) { failAtomicFrame(frame, error); throw error; }
-    this._enlistAtomicMorph(frame, frame.context.resolveMorph(operation.targetId));
+    if (!(operation instanceof DomainEditOperation)) this._enlistAtomicMorph(frame, frame.context.resolveMorph(operation.targetId));
     if (operation instanceof MoveMorph) {
       this._enlistAtomicMorph(frame, frame.context.resolveMorph(operation.from.ownerId));
       this._enlistAtomicMorph(frame, frame.context.resolveMorph(operation.to.ownerId));
@@ -561,7 +525,7 @@ export class ChangeManager {
     if (operation instanceof ReplaceText) (frame.textOrigins ||= new Map()).set(frame.context.resolveMorph(operation.targetId), recovery);
     if (!this._recovering) {
       frame.journal.push(recovery);
-      if (operation instanceof ReplaceText) {
+      if (operation instanceof ReplaceText || operation instanceof DomainEditOperation) {
         recovery.recorded = true;
         frame.operations.push(recovery);
       }
@@ -691,7 +655,7 @@ export class ChangeManager {
         .forEach(morph => this._enlistAtomicMorph(frame, morph));
       try {
         this.doWithValueChangeMeta({ ...opts.metadata, origin: opts.origin, undoable: opts.undoable }, null, () => {
-          value = callback(Object.freeze({ id, perform: operation => this._perform(frame, operation) }));
+          value = callback(Object.freeze({ id, perform: operation => this._perform(frame, operation), performEdit: edit => this._performEdit(frame, edit) }));
           if (isPromise(value)) {
             Promise.resolve(value).catch(() => {});
             throw new MorphicTransactionAsyncError();
@@ -745,7 +709,7 @@ export class ChangeManager {
     });
     const token = UndoManager._commitToken(this, context);
     commitTokens.set(context, token);
-    const pending = UndoManager._stageCommit(token, { legacyChanges: context.legacyChanges, undoManager: opts.undoManager, entry, undoable: changeSet.undoable });
+    const pending = UndoManager._stageCommit(token, { legacyChanges: context.legacyChanges, undoManager: opts.undoManager, entry, undoable: changeSet.undoable, orderedBeforeDelivery: true });
     compensationReceipts.set(changeSet, { changeSet, context: new WeakRef(context), pending, operationContext: frame.context,
       textLengths: compensationTextLengths(changeSet, frame.context) });
     let history;
@@ -767,7 +731,7 @@ export class ChangeManager {
       const containsMorph = this.committedChangeListenerScopes.get(listener);
       if (containsMorph && !legacyChanges.some(change =>
         [change.target, change.morph, ...(change.owners || [])].some(morph => morph && containsMorph(morph))) &&
-          !changeSet.operations.some(operation => containsMorph(frame.context.resolveMorph(operation.targetId)))) return false;
+          !changeSet.operations.some(operation => operation.targetId && containsMorph(frame.context.resolveMorph(operation.targetId)))) return false;
       return true;
     });
     if (!listeners.length) return;
@@ -1104,7 +1068,7 @@ export class ChangeManager {
         }
         frame.recorded.push(change);
       }
-      return atomicDispatch.get(this).record.call(this, morph, change);
+      return this._recordWithAtomicNotifications(morph, change);
     } catch (error) {
       if (this._atomicFrame && !this._recovering) failAtomicFrame(this._atomicFrame, error);
       throw error;
@@ -1264,9 +1228,14 @@ export class ChangeManager {
     this.changeRecordedListeners.forEach(fn => fn(change));
   }
 
+  _addValueChangeAtomic (morph, prop, value, meta) {
+    this._assertAtomicAccess(morph);
+    return atomicState.descriptors.addValueChange.value.call(this, morph, prop, value, meta);
+  }
+
   _informCommittedAtomic (change) {
     if (this._atomicFrame) return null;
-    return atomicDispatch.get(this).committed.call(this, change);
+    return atomicState.descriptors.informCommittedChangeListeners.value.call(this, change);
   }
 
   informCommittedChangeListeners (change) {

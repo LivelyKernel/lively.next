@@ -1747,10 +1747,14 @@ export class Morph {
    * `remove` was introduced as a band-aid for the old master component system (before we had declarative components)
    * FIXME: can the parameter be removed?
    */
-  abandon (remove = true) {
+  abandonNode (remove = false) {
     signal(this, 'onAbandon');
     if ($world.isIDEWorld) $world.emptyCommentsFor(this);
     if (remove) this.remove();
+  }
+
+  abandon (remove = true) {
+    this.abandonNode(remove);
     this.submorphs.forEach(submorph => submorph.abandon(false)); // do not remove submorphs
   }
 
