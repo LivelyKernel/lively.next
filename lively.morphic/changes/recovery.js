@@ -2,12 +2,14 @@ import {
   SetMorphProperty, MoveMorph, ReplaceText, MorphicValueSemantics,
   attachedMorph, detachedMorph, cloneSnapshotContainers
 } from './operations.js';
-import { MorphicTransactionUnsupportedError, MorphicRollbackError } from './errors.js';
+import { MorphicTransactionUnsupportedError } from './errors.js';
+import { MorphicRollbackError } from './change-set.js';
+import { DomainEditOperation } from './domain-edit.js';
 import { journalUnits } from './derived.js';
 
 /** Reject opaque handlers before any effect. */
 export function assertSupportedOperation (operation) {
-  if (!operation || ![SetMorphProperty.prototype, MoveMorph.prototype, ReplaceText.prototype]
+  if (!operation || ![SetMorphProperty.prototype, MoveMorph.prototype, ReplaceText.prototype, DomainEditOperation.prototype]
     .includes(Object.getPrototypeOf(operation))) {
     throw new MorphicTransactionUnsupportedError('Unsupported morphic operation', {
       kind: operation?.kind || 'unknown', targetId: operation?.targetId
@@ -59,6 +61,7 @@ export function readProperty (context, morph, property) {
 /** Capture actual state before attempting an operation, including its failing write. */
 export function captureRecovery (operation, context, { rawState = false } = {}) {
   assertSupportedOperation(operation);
+  if (operation instanceof DomainEditOperation) return operation.captureRecovery();
   const target = context.resolveMorph(operation.targetId);
   if (!target) throw new Error(`Cannot resolve morph ${operation.targetId}`);
   if (operation instanceof ReplaceText) return context.captureTextRecovery(target, operation);
@@ -108,7 +111,7 @@ export function recover (journal, { reconcileUnit } = {}) {
   const units = reconcileUnit ? journalUnits(journal).reverse() : journal.slice().reverse().map(entry => ({ entry }));
   for (const unit of units) {
     const { entry } = unit;
-    if (reconcileUnit && [SetMorphProperty, MoveMorph, ReplaceText].some(Type => entry.operation instanceof Type)) {
+    if (reconcileUnit && [SetMorphProperty, MoveMorph, ReplaceText, DomainEditOperation].some(Type => entry.operation instanceof Type)) {
       let result;
       try { result = reconcileUnit(unit); } catch (error) {
         if (error instanceof MorphicRollbackError) {

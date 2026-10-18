@@ -7,6 +7,41 @@ import { textReplayFor } from './changes/text.js';
 import { sameDerivations, copyDerivations } from './changes/derived.js';
 import { GroupChange, MethodCallChange } from './changes.js';
 import { MorphicHistoryOwnershipError } from './changes/errors.js';
+import { signal } from 'lively.bindings';
+import { DetachedLifetimeHandle, topOwner } from './changes/lifetime.js';
+import { DomainEditOperation } from './changes/domain-edit.js';
+export { DetachedLifetimeHandle, isReleasedDetachedMember } from './changes/lifetime.js';
+
+const entryHandles = new WeakMap();
+const contextLeases = new WeakMap();
+
+/** Release automatic retention before evaluating caller disposal predicates. */
+function releaseEntry (entry, reason) {
+  entry.dispose?.(reason);
+  for (const handle of entryHandles.get(entry) || []) handle.release(reason);
+}
+
+/** Include domains enlisted in the same atomic entry. */
+function entryChildren (entry) {
+  if (entry instanceof CompositeEditTransaction) return entry.transactions;
+  if (entry instanceof ChangeSetEditTransaction) return [...new Set(entry.changeSet.operations.filter(operation => operation instanceof DomainEditOperation).map(operation => operation.edit))];
+  return entry.joinedTransactions || [];
+}
+
+/** Deduplication is deferred to the stats consumer. */
+function retainedHandles (entry) {
+  return [...(entryHandles.get(entry) || []), ...(contextLeases.has(entry) ? [contextLeases.get(entry)] : entry.context?.lifetimeHandles || []), ...entryChildren(entry).flatMap(retainedHandles)];
+}
+
+/** Rebuilding a wrapper keeps the same history ownership of its retained payload. */
+function moveWrapperHandles (entry, replacement, reason) {
+  if (entry === replacement) return;
+  const handles = entryHandles.get(entry);
+  if (!handles) return;
+  entryHandles.delete(entry);
+  if (replacement) entryHandles.set(replacement, [...(entryHandles.get(replacement) || []), ...handles]);
+  else handles.forEach(handle => handle.release(reason));
+}
 
 const historyClaims = new WeakMap();
 const pendingHistory = new WeakMap();
@@ -113,6 +148,13 @@ export class EditTransaction {
     this.metadata = Object.freeze({ ...metadata });
   }
 
+  retainDetached (roots, options) {
+    const handle = new DetachedLifetimeHandle(roots, options);
+    if (!entryHandles.has(this)) entryHandles.set(this, []);
+    entryHandles.get(this).push(handle);
+    return handle;
+  }
+
   apply () { throw new Error(`${this.constructor.name}.apply is not implemented`); }
   reverseApply () { throw new Error(`${this.constructor.name}.reverseApply is not implemented`); }
   canMergeWith () { return false; }
@@ -191,7 +233,7 @@ export class CompositeEditTransaction extends EditTransaction {
       entry.merge(transaction.transactions[index])), this);
   }
 
-  dispose () { this.transactions.forEach(entry => entry.dispose?.()); }
+  dispose (reason) { this.transactions.forEach(entry => releaseEntry(entry, reason)); }
 
   apply () {
     const applied = [];
@@ -235,6 +277,7 @@ export class ChangeSetEditTransaction extends EditTransaction {
     }
     super({ kind: EditTransactionKind.MORPHIC_CHANGE_SET, label, metadata: { ...metadata, changeSetId: changeSet.id } });
     Object.assign(this, { changeSet, changeManager, context, groupToken });
+    if (context.claimLifetime) contextLeases.set(this, context.claimLifetime());
     this.textReplay = textReplayFor(changeSet.operations);
     this.groupBarrier = groupToken?._joinBarrier || 0;
   }
@@ -283,7 +326,12 @@ export class ChangeSetEditTransaction extends EditTransaction {
     });
   }
 
-  dispose () { this.context.release?.(); }
+  dispose (reason) {
+    if (contextLeases.has(this)) contextLeases.get(this).release(reason);
+    else this.context.release?.(reason);
+    const domains = new Set(this.changeSet.operations.filter(operation => operation instanceof DomainEditOperation).map(operation => operation.edit));
+    for (const entry of domains) releaseEntry(entry, reason);
+  }
 }
 
 export class RecordedChangeTransaction extends EditTransaction {
@@ -336,6 +384,10 @@ export class RecordedChangeTransaction extends EditTransaction {
     if (last && this._lastJoinedChanges && last.canMergeWith(transaction, interveningChanges)) {
       const merged = last.merge(transaction);
       this.joinedTransactions[this.joinedTransactions.length - 1] = merged;
+      moveWrapperHandles(last, merged, 'replacement');
+      moveWrapperHandles(transaction, merged, 'replacement');
+      if (last !== merged) releaseEntry(last, 'replacement');
+      if (transaction !== merged && transaction !== last) releaseEntry(transaction, 'replacement');
       if (this._historyOrder) this._historyOrder[this._historyOrder.indexOf(last)] = merged;
       (this._joinPositions ||= new WeakMap()).set(merged, this._joinPositions.get(last));
     } else {
@@ -422,11 +474,12 @@ export class UndoManager {
   }
 
   /** Internal commit staging; the token never grants access to published history. */
-  static _stageCommit (token, { legacyChanges, undoManager, entry = null, undoable = true }) {
+  static _stageCommit (token, { legacyChanges, undoManager, entry = null, undoable = true, orderedBeforeDelivery = false }) {
     const active = undoManager?.undoInProgress;
     const pending = {
       phase: 'pending', legacyChanges, undoManager, entry, undoable, installed: null,
-      before: active ? new WeakSet(chronologicalRecords(active)) : null, token
+      before: active ? new WeakSet(chronologicalRecords(active)) : null, token,
+      orderBarrier: orderedBeforeDelivery ? historyClock.next : null
     };
     pendingHistory.set(token, pending);
     const lifetime = commitLifetimes.get(token);
@@ -443,6 +496,7 @@ export class UndoManager {
     pending.before = null;
     if (!pending.entry || !pending.undoManager) return null;
     const manager = pending.undoManager;
+    const inOrder = pending.orderBarrier === historyClock.next;
     pending.previous = arr.last(manager.undoInProgress?.joinedTransactions || []);
     pending.stored = pending.installed ? pending.entry : manager.addTransaction(pending.entry, { joinActive: true, group: false });
     const active = manager.undoInProgress;
@@ -455,7 +509,8 @@ export class UndoManager {
     }
     if (!active && pending.stored) {
       publicationOrder.set(pending.stored, pending.token);
-      const index = manager.undos.findIndex(entry => publishedAfter(publicationOrder.get(entry), pending.token));
+      // No token/publication since the pre-delivery stage proves this is newest.
+      const index = inOrder ? -1 : manager.undos.findIndex(entry => publishedAfter(publicationOrder.get(entry), pending.token));
       if (index > -1) { arr.remove(manager.undos, pending.stored); manager.undos.splice(index, 0, pending.stored); }
     }
     pending.installed = null;
@@ -484,7 +539,7 @@ export class UndoManager {
     pending.legacyChanges = [];
     pending.before = null;
     pending.installed = null;
-    pending.entry?.dispose?.();
+    if (pending.entry) releaseEntry(pending.entry, 'compensation');
     pending.undoManager?.cancelEmptyGroup();
   }
 
@@ -531,6 +586,7 @@ export class UndoManager {
     if (!found && !allowMissing) throw new MorphicHistoryOwnershipError('stale-receipt');
     if (preflight) return;
     this.undos = undos; this.redos = redos; this.grouping.current = current;
+    for (const [entry, rewritten] of replacements) moveWrapperHandles(entry, rewritten, 'replacement');
     if (active) {
       active.joinedTransactions = joined;
       active.recorder.changes = recorded;
@@ -574,7 +630,7 @@ export class UndoManager {
     if (destinationPlan) installReplacement(active, destinationPlan);
     if (pending) {
       pending.entry = transaction; pending.undoManager = this; pending.installed = active;
-      if (prior && prior !== transaction) prior.dispose?.();
+      if (prior && prior !== transaction) releaseEntry(prior, 'replacement');
       if (source !== this) source?.cancelEmptyGroup();
     }
     return transaction;
@@ -585,11 +641,13 @@ export class UndoManager {
     if (!active || active.joinedTransactions.length || replayLeaves(active.recorder.changes).length) return false;
     active.stopRecording();
     this.undoInProgress = null;
+    releaseEntry(active, 'empty-group');
     return true;
   }
 
   reset () {
-    for (const entry of new Set([...(this.undos || []), ...(this.redos || []), ...(this.undoInProgress?.joinedTransactions || [])])) entry.dispose?.();
+    if (this.undoInProgress) this.undoInProgress.stopRecording();
+    for (const entry of new Set([...(this.undos || []), ...(this.redos || []), ...(this.undoInProgress ? [this.undoInProgress] : []), ...(this.undoInProgress?.joinedTransactions || []), ...(this.grouping?.current || [])])) releaseEntry(entry, 'reset');
     this.undos = [];
     this.redos = [];
     this.undoInProgress = null;
@@ -618,13 +676,18 @@ export class UndoManager {
     const first = this.grouping.current[0];
     let undoGroup = first;
     for (const transaction of grouped) {
-      undoGroup = undoGroup.canMergeWith(transaction)
-        ? undoGroup.merge(transaction)
-        : new CompositeEditTransaction(
-          undoGroup instanceof CompositeEditTransaction
-            ? undoGroup.transactions.concat(transaction)
-            : [undoGroup, transaction]
-        );
+      const previous = undoGroup;
+      if (previous.canMergeWith(transaction)) {
+        undoGroup = previous.merge(transaction);
+        moveWrapperHandles(previous, undoGroup, 'replacement');
+        moveWrapperHandles(transaction, undoGroup, 'replacement');
+        if (previous !== undoGroup) releaseEntry(previous, 'replacement');
+        if (transaction !== undoGroup && transaction !== previous) releaseEntry(transaction, 'replacement');
+      } else {
+        undoGroup = new CompositeEditTransaction(previous instanceof CompositeEditTransaction
+          ? previous.transactions.concat(transaction) : [previous, transaction]);
+        if (previous instanceof CompositeEditTransaction) moveWrapperHandles(previous, undoGroup, 'replacement');
+      }
     }
     this.undos = arr.withoutAll(this.undos, grouped);
     if (undoGroup !== first) {
@@ -632,6 +695,7 @@ export class UndoManager {
       this.undos[index] = undoGroup;
     }
     this.grouping.current = [];
+    this._historyChanged();
     return undoGroup;
   }
 
@@ -673,7 +737,7 @@ export class UndoManager {
     ).startRecording(this.filter);
   }
 
-  undoStop () {
+  _closeGroup () {
     const undo = this.undoInProgress;
     if (!undo) return null;
     undo.stopRecording();
@@ -698,7 +762,9 @@ export class UndoManager {
       if (recorded) entries.push(recorded);
       delete undo._historyOrder;
       undo.joinedTransactions = [];
-      return this.addTransaction(entries.length === 1 ? entries[0] : new CompositeEditTransaction(entries, undo));
+      const transaction = entries.length === 1 ? entries[0] : new CompositeEditTransaction(entries, undo);
+      moveWrapperHandles(undo, transaction, 'replacement');
+      return transaction;
     }
     const transaction = undo.joinedTransactions.length
       ? new CompositeEditTransaction([undo, ...undo.joinedTransactions], {
@@ -708,7 +774,57 @@ export class UndoManager {
         })
       : undo;
     undo.joinedTransactions = [];
-    return this.addTransaction(transaction);
+    moveWrapperHandles(undo, transaction, 'replacement');
+    return transaction;
+  }
+
+  undoStop () {
+    const transaction = this._closeGroup();
+    return transaction ? this.addTransaction(transaction) : null;
+  }
+
+  abortGroup (groupToken) {
+    if (!groupToken || groupToken !== this.undoInProgress || this.applyCount) throw new MorphicHistoryOwnershipError('stale-group');
+    const transaction = this._closeGroup();
+    this.applyCount++;
+    let reason = 'abort';
+    try { transaction.reverseApply(); }
+    catch (error) { reason = 'failed-entry'; throw error; }
+    finally { this.applyCount--; releaseEntry(transaction, reason); this._historyChanged(); }
+    return transaction;
+  }
+
+  _historyChanged () { signal(this, 'historyChanged', this); }
+
+  historyStats () {
+    const entries = [...this.undos, ...this.redos, ...(this.undoInProgress ? [this.undoInProgress] : [])];
+    const handles = new Set(entries.flatMap(retainedHandles).filter(handle => !handle.released));
+    const roots = new Set([...handles].flatMap(handle => handle.roots).map(topOwner));
+    const nodes = new Set();
+    const visit = node => { if (nodes.has(node)) return; nodes.add(node); (node.submorphs || []).forEach(visit); };
+    for (const root of roots) if (!root.owner && !root.isWorld && !root.world?.()) visit(root);
+    const seen = new WeakSet();
+    const estimate = value => {
+      if (typeof value === 'string') return value.length * 2;
+      if (typeof value === 'number') return 8;
+      if (typeof value === 'boolean') return 4;
+      if (!value || typeof value !== 'object' || value.isMorph || seen.has(value)) return 0;
+      seen.add(value);
+      if (Array.isArray(value)) return 16 + value.reduce((sum, item) => sum + 8 + estimate(item), 0);
+      if (![Object.prototype, null].includes(Object.getPrototypeOf(value))) return 0;
+      return 16 + Object.keys(value).reduce((sum, key) => sum + key.length * 2 + estimate(value[key]), 0);
+    };
+    const payload = entry => estimate(entry.metadata) + (entry.changeSet?.operations || []).reduce((sum, operation) => sum + estimate(operation.before) + estimate(operation.after), 0) + entryChildren(entry).reduce((sum, child) => sum + payload(child), 0);
+    return { undoEntries: this.undos.length, redoEntries: this.redos.length, retainedDetachedRoots: [...roots].filter(root => !root.owner && !root.isWorld && !root.world?.()).length,
+      retainedDetachedNodes: nodes.size, estimatedPayloadBytes: [...new Set(entries)].reduce((sum, entry) => sum + payload(entry), 0), payloadIsEstimate: true };
+  }
+
+  clearHistory () {
+    this.undoStop();
+    this.groupLaterCancel();
+    for (const entry of new Set([...this.undos, ...this.redos, ...this.grouping.current])) releaseEntry(entry, 'clear-history');
+    this.undos = []; this.redos = []; this.grouping.current = [];
+    this._historyChanged();
   }
 
   addTransaction (transaction, { group = true, joinActive = false } = {}) {
@@ -717,15 +833,18 @@ export class UndoManager {
       throw new Error('UndoManager can only store EditTransaction instances');
     }
     if (joinActive && this.undoInProgress) {
-      return this.undoInProgress.joinTransaction(transaction);
+      const joined = this.undoInProgress.joinTransaction(transaction);
+      this._historyChanged();
+      return joined;
     }
     this.undos.push(transaction);
     publicationOrder.set(transaction, historyClock.next++);
     if (group) this.grouping.current.push(transaction);
     if (this.redos.length) {
-      this.redos.forEach(entry => entry.dispose?.());
+      this.redos.forEach(entry => releaseEntry(entry, 'redo-truncation'));
       this.redos.length = 0;
     }
+    this._historyChanged();
     return transaction;
   }
 
@@ -746,7 +865,7 @@ export class UndoManager {
     const prune = transaction => {
       if (replacements.has(transaction)) return replacements.get(transaction);
       let retained = transaction;
-      if (predicate(transaction)) { transaction.dispose?.(); retained = null; }
+      if (predicate(transaction)) { releaseEntry(transaction, 'domain-pruning'); retained = null; }
       else if (transaction instanceof CompositeEditTransaction) {
         let entries = transaction.transactions.map(prune).filter(Boolean);
         if (entries.some((entry, index) => entry !== transaction.transactions[index]) ||
@@ -754,6 +873,7 @@ export class UndoManager {
           entries = entries.filter(entry => !(entry instanceof RecordedChangeTransaction &&
             entry.recorded() && !entry.changes.length));
           retained = entries.length ? new CompositeEditTransaction(entries, transaction) : null;
+          moveWrapperHandles(transaction, retained, 'domain-pruning');
         }
       }
       replacements.set(transaction, retained);
@@ -772,10 +892,12 @@ export class UndoManager {
         delete active._lastJoinedChanges;
         if (!retained.length && !active.recorder.changes.length) {
           active.stopRecording();
+          releaseEntry(active, 'domain-pruning');
           this.undoInProgress = null;
         }
       }
     }
+    this._historyChanged();
   }
 
 
@@ -794,8 +916,9 @@ export class UndoManager {
     try {
       undo.reverseApply();
       this.redos.unshift(undo);
-    } catch (error) { undo.dispose?.(); throw error; } finally {
+    } catch (error) { releaseEntry(undo, 'failed-entry'); throw error; } finally {
       this.applyCount--;
+      this._historyChanged();
     }
     return undo;
   }
@@ -808,8 +931,9 @@ export class UndoManager {
     try {
       redo.apply();
       this.undos.push(redo);
-    } catch (error) { redo.dispose?.(); throw error; } finally {
+    } catch (error) { releaseEntry(redo, 'failed-entry'); throw error; } finally {
       this.applyCount--;
+      this._historyChanged();
     }
     return redo;
   }

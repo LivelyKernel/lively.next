@@ -29,7 +29,7 @@ describe('morphic transaction dispatch lifetime', function () {
   afterEach(() => MorphicEnv.popDefault().uninstall());
 
   for (const exit of ['success', 'error', 'thenable']) {
-    it(`removes dispatch overrides from every live manager after ${exit}`, () => {
+    it(`restores shared dispatch guards after ${exit}`, () => {
       const target = morph();
       const other = new ChangeManager();
       const cause = new Error('callback');
@@ -37,8 +37,8 @@ describe('morphic transaction dispatch lifetime', function () {
       expectOrdinary(other);
       const run = () => manager.transaction({ scope: target }, () => {
         for (const current of [manager, other]) {
-          expect(current._record).not.equals(ChangeManager.prototype._record);
-          expect(current.informCommittedChangeListeners).not.equals(ChangeManager.prototype.informCommittedChangeListeners);
+          expect(current._record).equals(ChangeManager.prototype._record);
+          expect(current.informCommittedChangeListeners).equals(ChangeManager.prototype.informCommittedChangeListeners);
         }
         target.opacity = 0.5;
         if (exit === 'error') throw cause;
@@ -72,7 +72,7 @@ describe('morphic transaction dispatch lifetime', function () {
         else inner();
         expect(manager._record).equals(record);
         expect(other._record).equals(foreignRecord);
-        expect(manager._record).not.equals(ChangeManager.prototype._record);
+        expect(manager._record).equals(ChangeManager.prototype._record);
         target.rotation = 1;
       });
       expectOrdinary(manager);
@@ -89,7 +89,7 @@ describe('morphic transaction dispatch lifetime', function () {
     const error = failureOf(() => manager.transaction({ scope: target }, () => {
       target.opacity = 0.5;
       other = new ChangeManager();
-      expect(other._record).not.equals(ChangeManager.prototype._record);
+      expect(other._record).equals(ChangeManager.prototype._record);
       other.addValueChange(foreign, 'value', 1);
     }));
     expect(error).to.be.instanceOf(MorphicTransactionUnsupportedError);

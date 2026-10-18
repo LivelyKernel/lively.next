@@ -3,12 +3,14 @@ import { obj } from 'lively.lang';
 import { MorphicAttachmentKind } from './operations.js';
 import { attachmentOf, attachmentsEqual, propertyEquals } from './recovery.js';
 import { applyTextEdit, captureTextRecovery, textOperationMatches } from './text.js';
+import { DetachedLifetimeHandle } from './lifetime.js';
 
 /** Weak live lookup; only detached ownership roots have a strong lifetime handle. */
 export function operationContext (manager, { scope = [], resolveMorph = manager.resolveMorph, metadata = {} } = {}) {
   const roots = (Array.isArray(scope) ? scope : [scope]).filter(Boolean).map(root => new WeakRef(root));
   const known = new Map();
-  const detached = new Map();
+  const lifetimes = [new DetachedLifetimeHandle()];
+  const claimed = new WeakSet();
   const remember = morph => {
     while (morph) {
       const previous = known.get(morph.id)?.deref();
@@ -82,16 +84,25 @@ export function operationContext (manager, { scope = [], resolveMorph = manager.
       context.moveMorph(morph, before, { ...before, transform });
     },
     retainDetached: (operations = []) => {
-      detached.clear();
+      const retained = new Set();
       const ids = new Set(operations.flatMap(operation => [operation.targetId, operation.from?.ownerId, operation.to?.ownerId,
         ...(operation.embedded || []).flatMap(entry => [entry.morphId, entry.before?.ownerId, entry.after?.ownerId])]));
       for (const id of ids) {
         let root = known.get(id)?.deref();
         while (root?.owner) root = root.owner;
-        if (root && !root.isWorld) detached.set(root.id, root);
+        if (root && !root.isWorld) retained.add(root);
       }
+      if (!lifetimes.some(handle => !handle.released)) lifetimes.push(new DetachedLifetimeHandle());
+      for (const handle of lifetimes) if (!handle.released) handle.update([...retained]);
     },
-    release: () => detached.clear()
+    lifetimeHandles: lifetimes,
+    claimLifetime: () => {
+      let handle = lifetimes.find(handle => !handle.released && !claimed.has(handle));
+      if (!handle) { handle = new DetachedLifetimeHandle(lifetimes.find(handle => !handle.released)?.roots || []); lifetimes.push(handle); }
+      claimed.add(handle);
+      return handle;
+    },
+    release: reason => lifetimes.forEach(handle => handle.release(reason))
   };
   roots.forEach(root => remember(root.deref()));
   return context;
