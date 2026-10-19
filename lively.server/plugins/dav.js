@@ -317,7 +317,7 @@ export default class LivelyDAVPlugin {
 
     if (req.method == 'GET' &&
         req.url.endsWith('.json') &&
-        req.headers['accept-encoding'].includes('br') &&
+        req.headers['accept-encoding']?.includes('br') &&
         // fixme
         COMPRESSABLE_URLS.find(url => req.url.includes(url))) {
       // check if there is a brotli compressed version persent and serve that instead
