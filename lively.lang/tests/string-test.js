@@ -15,10 +15,37 @@ import {
   md5,
   changeIndent,
   applyChange,
+  print,
   lineIndexComputer
 } from '../string.js';
 
 describe('string', function () {
+  describe('print', () => {
+    for (const [name, value] of [
+      ['backslashes', 'C:\\temp\\file.txt'],
+      ['newlines', 'a\nb'],
+      ['carriage returns', 'a\rb'],
+      ['CRLF', 'a\r\nb'],
+      ['Unicode line separators', 'a\u2028b'],
+      ['Unicode paragraph separators', 'a\u2029b'],
+      ['quotes', '"single\' and double"']
+    ]) {
+      it(`round-trips ${name}`, () => {
+        const printed = print(value);
+        expect(printed, `string.print must escape ${name}`).not.match(/[\r\u2028\u2029]/);
+        expect(Function(`return (${printed})`)(), // eslint-disable-line no-new-func
+          `string.print must round-trip ${name}`).equals(value);
+      });
+    }
+
+    it('keeps array recursion and non-string printing', () => {
+      const values = [1, ['C:\\temp', null, true]];
+      expect(Function(`return (${print(values)})`)(), // eslint-disable-line no-new-func
+        'nested array strings must round-trip').deep.equals(values);
+      expect(print({ foo: 23 }), 'non-string objects keep their existing representation').equals('[object Object]');
+    });
+  });
+
   it('tableize', function () {
     expect([['a', 'b', 'c'], ['d', 'e', 'f']]).to.eql(tableize('a b c\nd e f'));
     expect([['a', 1, 'c'], ['d', 2, 'f']]).to.eql(tableize('a 1 c\nd 2 f'));
