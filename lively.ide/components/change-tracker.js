@@ -396,8 +396,15 @@ export class ComponentChangeTracker {
     this._moduleChangedListener = subscribe('lively.modules/modulechanged', change => {
       if (change.module === this.componentModule?.id && !change.error &&
           typeof change.newSource === 'string') {
-        // modulechanged evicts the module cache before notifying the active session.
-        this.componentModule.setSource(change.newSource);
+        // Keep the payload until all subscribers have had a chance to evict the cache.
+        this._pendingModuleSource = change.newSource;
+        Promise.resolve().then(() => {
+          if (typeof this._pendingModuleSource !== 'string') return;
+          if (this.componentModule._source == null) {
+            this.componentModule.setSource(this._pendingModuleSource);
+          }
+          delete this._pendingModuleSource;
+        });
       }
     }, S);
     connect(aComponent, 'onSubmorphChange', this, 'processChangeInComponent', { garbageCollect: true });
@@ -2747,6 +2754,9 @@ export class ComponentChangeTracker {
   }
 
   recordProjectionalEditTransaction (editTransaction, legacyChanges = null) {
+    editTransaction.metadata = Object.freeze({
+      ...editTransaction.metadata, componentTracker: this
+    });
     const undoManager = this.trackedComponent?.env?.undoManager;
     if (!undoManager) return editTransaction;
     if (undoManager.undoInProgress) {
@@ -2938,6 +2948,9 @@ export class ComponentChangeTracker {
   }
 
   dispose () {
+    delete this._pendingModuleSource;
+    this.trackedComponent?.env?.undoManager?.removeTransactions(transaction =>
+      transaction.metadata.componentTracker === this);
     if (this._moduleChangedListener) {
       unsubscribe('lively.modules/modulechanged', this._moduleChangedListener,
         this.componentModule?.System || this.componentDescriptor?.System || System);
@@ -2970,6 +2983,9 @@ export class ComponentChangeTracker {
    * @type { string }
    */
   get currentModuleSource () {
+    if (this.componentModule?._source == null && typeof this._pendingModuleSource === 'string') {
+      this.componentModule.setSource(this._pendingModuleSource);
+    }
     return this.componentModule?._source;
   }
 
