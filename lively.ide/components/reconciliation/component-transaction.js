@@ -501,7 +501,8 @@ export class ProjectionalComponentEditTransaction extends EditTransaction {
     label = transaction?.commands?.length > 1
       ? 'component command batch'
       : `component ${transaction?.command?.kind || 'command'}`,
-    afterReplay = null
+    afterReplay = null,
+    metadata = {}
   } = {}) {
     if (!(transaction instanceof PreparedComponentTransaction) &&
         !(transaction instanceof CoalescedComponentTransaction)) {
@@ -515,7 +516,7 @@ export class ProjectionalComponentEditTransaction extends EditTransaction {
     super({
       kind: EditTransactionKind.COMPONENT_COMMAND,
       label,
-      metadata: { componentTransactionId: transaction.id }
+      metadata: { ...metadata, componentTransactionId: transaction.id }
     });
     this.transaction = transaction;
     this.adapters = adapters;
@@ -562,7 +563,7 @@ export class ProjectionalComponentEditTransaction extends EditTransaction {
     const runtimeContext = { ...next.adapters.runtimeContext, resolveMorph: id => targets.get(id) };
     return new ProjectionalComponentEditTransaction(transaction,
       next.adapters.forTransaction(transaction, runtimeContext), {
-        label: this.label, afterReplay: next.afterReplay
+        label: this.label, afterReplay: next.afterReplay, metadata: this.metadata
       });
   }
 
