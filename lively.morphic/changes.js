@@ -365,6 +365,7 @@ export class ChangeManager {
   }
 
   reset () {
+    this._rollbackDiagnostics = null;
     this._activeCommitDeliveries = [];
     this._usedCommitDeliveries = [];
     this._atomicFrame = null;
@@ -388,6 +389,9 @@ export class ChangeManager {
   }
 
   operationContext (options) { return operationContext(this, options); }
+
+  get _lastRollbackDiagnostics () { return this._rollbackDiagnostics?.deref(); }
+  set _lastRollbackDiagnostics (diagnostics) { this._rollbackDiagnostics = new WeakRef(diagnostics); }
 
   /** Tokens authenticate live deliveries; a saved context cannot stage new history. */
   commitTokenFor (context) {
@@ -643,7 +647,7 @@ export class ChangeManager {
     const id = `morphic-transaction-${this.commitCounter++}`;
     const frame = {
       id, parent, options: opts, journal: [], operations: [], recorded: [], deferred: [], notifications: new WeakMap(), stateGuards: new Map(), closed: false, hasFailed: false, failed: undefined,
-      context: parent?.context || this.operationContext({ scope: options?.scope, metadata: {
+      context: parent?.context || options?.context || this.operationContext({ scope: options?.scope, metadata: {
         ...opts.metadata, origin: opts.origin, undoable: opts.undoable
       } })
     };
@@ -687,7 +691,9 @@ export class ChangeManager {
       }
       if (cleanup.unreversedOperations.length) throw cleanup.rollbackErrors[0].error;
     } catch (error) {
-      throw this._rollbackFrame(frame, error);
+      try { throw this._rollbackFrame(frame, error); } finally {
+        if (!parent) frame.context.releaseUnclaimed?.('rollback');
+      }
     } finally {
       if (!parent && frame.textFits) {
         for (const [prototype, descriptor] of frame.textFits) Object.defineProperty(prototype, 'fit', descriptor);
@@ -707,34 +713,36 @@ export class ChangeManager {
       if (frame.textOrigins) for (const [target, source] of frame.textOrigins) (parent.textOrigins ||= new Map()).set(target, source);
       return { value, changeSet, history: null };
     }
-    frame.context.retainDetached?.(changeSet.operations);
-    let entry = null;
-    if (changeSet.operations.length && opts.undoable && !opts.undoManager.applyCount) {
-      entry = new ChangeSetEditTransaction(changeSet, this, {
-        context: frame.context, groupToken: opts.undoManager.undoInProgress
-      });
-    }
-    const context = Object.freeze({
-      ...frame.context, capturedChangeSet: changeSet,
-      legacyChanges: Object.freeze(frame.recorded.filter(change => !(change instanceof GroupChange) || change.operation)), committedChange: null,
-      undoManager: opts.undoManager
-    });
-    const token = UndoManager._commitToken(this, context);
-    commitTokens.set(context, token);
-    const pending = UndoManager._stageCommit(token, { legacyChanges: context.legacyChanges, undoManager: opts.undoManager, entry, undoable: changeSet.undoable, orderedBeforeDelivery: true });
-    compensationReceipts.set(changeSet, { changeSet, context: new WeakRef(context), pending, operationContext: frame.context,
-      textLengths: compensationTextLengths(changeSet, frame.context) });
-    let history;
     try {
-      if (changeSet.operations.length && opts.notify !== false) this._deliverAtomicCommit(changeSet, frame, context);
-    } finally {
-      this._discardAtomicRecords(frame);
-      history = UndoManager._publishCommit(token);
-    }
-    for (const callback of frame.deferred) {
-      try { callback(); } catch (error) { console.error(`Error after atomic commit: ${error.stack}`); }
-    }
-    return { value, changeSet, history };
+      frame.context.retainDetached?.(changeSet.operations);
+      let entry = null;
+      if (changeSet.operations.length && opts.undoable && !opts.undoManager.applyCount) {
+        entry = new ChangeSetEditTransaction(changeSet, this, {
+          context: frame.context, groupToken: opts.undoManager.undoInProgress
+        });
+      }
+      const context = Object.freeze({
+        ...frame.context, capturedChangeSet: changeSet,
+        legacyChanges: Object.freeze(frame.recorded.filter(change => !(change instanceof GroupChange) || change.operation)), committedChange: null,
+        undoManager: opts.undoManager
+      });
+      const token = UndoManager._commitToken(this, context);
+      commitTokens.set(context, token);
+      const pending = UndoManager._stageCommit(token, { legacyChanges: context.legacyChanges, undoManager: opts.undoManager, entry, undoable: changeSet.undoable, orderedBeforeDelivery: true });
+      compensationReceipts.set(changeSet, { changeSet, context: new WeakRef(context), pending, operationContext: frame.context,
+        textLengths: compensationTextLengths(changeSet, frame.context) });
+      let history;
+      try {
+        if (changeSet.operations.length && opts.notify !== false) this._deliverAtomicCommit(changeSet, frame, context);
+      } finally {
+        this._discardAtomicRecords(frame);
+        history = UndoManager._publishCommit(token);
+      }
+      for (const callback of frame.deferred) {
+        try { callback(); } catch (error) { console.error(`Error after atomic commit: ${error.stack}`); }
+      }
+      return { value, changeSet, history };
+    } finally { frame.context.releaseUnclaimed?.('unclaimed-context'); }
   }
 
   _deliverAtomicCommit (changeSet, frame, context) {
@@ -775,10 +783,9 @@ export class ChangeManager {
     try {
       // The journal and recovery path are the same as a new edit; history is disabled.
       const result = this.transaction({
-        label: changeSet.label, origin, undoable: false, undoManager, notify,
+        label: changeSet.label, origin, undoable: false, undoManager, notify, context,
         metadata: { ...changeSet.metadata, originalOrigin: changeSet.origin, replayDirection: direction, replayOf: changeSet.id }
       }, tx => {
-        this._atomicFrame.context = context;
         for (const unit of units) {
           const rollback = reconcileSourceUnit(this, unit, context, direction === 'undo' ? 'reverse' : 'forward', replacement => {
             tx.perform(replacement || (direction === 'undo' ? unit.entry.operation.invert() : unit.entry.operation));
@@ -904,6 +911,7 @@ export class ChangeManager {
     try {
       res = doFn(morph);
       if (isPromise(res)) {
+        Promise.resolve(res).catch(() => {});
         throw new Error('withMetaDo callbacks must be synchronous');
       }
     } finally {
