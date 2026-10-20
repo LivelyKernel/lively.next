@@ -81,7 +81,8 @@ export function projectDerivedComponentRename ({
   beforeParentDocument,
   afterParentDocument,
   nodeId,
-  resolveComponentDocument = null
+  resolveComponentDocument = null,
+  normalizeModuleId = null
 }) {
   if (typeof source !== 'string') throw new Error('Derived rename projection requires source');
   if (!(beforeParentDocument instanceof ComponentDocument) ||
@@ -104,7 +105,8 @@ export function projectDerivedComponentRename ({
     exportName,
     componentId,
     parentDocument: beforeParentDocument,
-    resolveComponentDocument
+    resolveComponentDocument,
+    normalizeModuleId
   });
   if (!parsedBefore.supported || !parsedBefore.document.parentComponent) {
     return unsupportedResult(source, [diagnostic(
@@ -193,7 +195,8 @@ export function projectDerivedComponentRename ({
     exportName,
     componentId,
     parentDocument: afterParentDocument,
-    resolveComponentDocument
+    resolveComponentDocument,
+    normalizeModuleId
   });
   if (!parsedAfter.supported) {
     return unsupportedResult(source, [diagnostic(
@@ -222,6 +225,7 @@ export function projectDerivedComponentStructure ({
   beforeParentDocument,
   afterParentDocument,
   resolveComponentDocument = null,
+  normalizeModuleId = null,
   restoredOverride = null,
   introducedNodeId = null
 }) {
@@ -242,7 +246,8 @@ export function projectDerivedComponentStructure ({
     exportName,
     componentId,
     parentDocument: beforeParentDocument,
-    resolveComponentDocument
+    resolveComponentDocument,
+    normalizeModuleId
   });
   if (!parsedBefore.supported || !parsedBefore.document.parentComponent) {
     return unsupportedResult(source, [diagnostic(
@@ -321,7 +326,7 @@ export function projectDerivedComponentStructure ({
   }
   let sourceAfter = applyChanges(source, changes);
   const parseWithParent = parentDocument => parseComponentSource({
-    source: sourceAfter, moduleId, exportName, componentId, parentDocument, resolveComponentDocument
+    source: sourceAfter, moduleId, exportName, componentId, parentDocument, resolveComponentDocument, normalizeModuleId
   });
   let current = parseWithParent(beforeParentDocument);
   const relocations = [];
@@ -364,7 +369,7 @@ export function projectDerivedComponentStructure ({
   }
   if (current.supported && restoredOverride) {
     const restored = restoredOverrideSource(restoredOverride, afterParentDocument,
-      introducedNodeId, resolveComponentDocument);
+      introducedNodeId, resolveComponentDocument, normalizeModuleId);
     if (restored) {
       const owner = findComponentParent(current.document, introducedNodeId);
       const insertion = owner && insertMovedNodeChange(sourceAfter, current.document,
@@ -403,7 +408,7 @@ export function projectDerivedComponentStructure ({
 }
 
 /** Reconcile the retained override against surviving descendants before reinserting it. */
-function restoredOverrideSource (retained, afterParent, nodeId, resolveComponentDocument) {
+function restoredOverrideSource (retained, afterParent, nodeId, resolveComponentDocument, normalizeModuleId) {
   const { projection, parentDocument, nodeId: oldId } = retained;
   const oldNode = findComponentNode(parentDocument, oldId);
   const newNode = findComponentNode(afterParent, nodeId);
@@ -424,7 +429,7 @@ function restoredOverrideSource (retained, afterParent, nodeId, resolveComponent
     componentId: projection.beforeDocument.componentId,
     beforeParentDocument: parentDocument,
     afterParentDocument: parent,
-    resolveComponentDocument
+    resolveComponentDocument, normalizeModuleId
   });
   if (!pruned.supported) throw new Error('Removed derived override could not be reconciled');
   let source = pruned.sourceAfter;
@@ -438,7 +443,7 @@ function restoredOverrideSource (retained, afterParent, nodeId, resolveComponent
     const renamed = projectDerivedComponentRename({ source, moduleId: document.moduleId,
       exportName: document.exportName, componentId: document.componentId,
       beforeParentDocument: parent, afterParentDocument: renamedParent,
-      nodeId: oldId, resolveComponentDocument });
+      nodeId: oldId, resolveComponentDocument, normalizeModuleId });
     if (!renamed.supported) throw new Error('Removed derived override could not be renamed');
     source = renamed.sourceAfter;
     document = renamed.document;
