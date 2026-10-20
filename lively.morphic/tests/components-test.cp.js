@@ -1040,22 +1040,26 @@ describe('components', () => {
     expect(instance.get('before').textString).equals(undefined);
   });
 
-  it('T10b replaces with a fresh part named after the old target', () => {
+  it('T10b preserves a fresh part policy when replacing the target', () => {
     const Replacement = ComponentDescriptor.for(() => component({
       name: 'replacement', fill: Color.orange, submorphs: [{ name: 'part child' }]
     }), { exportedName: 'ReplacementPart', moduleId });
     const Base = ComponentDescriptor.for(() => component({
       name: 'base', submorphs: [{ type: Text, name: 'old', textString: 'old text' }]
     }), { exportedName: 'PartReplacementBase', moduleId });
+    let replacementPolicy;
     const Derived = ComponentDescriptor.for(() => component(Base, {
-      submorphs: [replace('old', part(Replacement))]
+      submorphs: [replace('old', (replacementPolicy = part(Replacement)))]
     }), { exportedName: 'PartReplacementDerived', moduleId });
     const replacement = part(Derived).get('old');
 
-    expect(replacement).not.equals(null);
-    expect(replacement.get('part child')).not.equals(null);
-    expect(replacement.fill).equals(Color.orange);
-    expect(replacement.isText).not.equals(true);
+    // Inline parts already supply a policy; D's plain-spec regression is separate.
+    expect(replacementPolicy.isPolicyApplicator, 'T10b: an inline part already has a policy').equals(true);
+    expect(replacementPolicy.parent, 'T10b: the replacement must retain its own master').equals(Replacement.stylePolicy);
+    expect(replacement, 'T10b: the fresh part must use the old target name').not.equals(null);
+    expect(replacement.get('part child'), 'T10b: the fresh part must retain its children').not.equals(null);
+    expect(replacement.fill, 'T10b: the fresh part must retain its own style').equals(Color.orange);
+    expect(replacement.isText, 'T10b: the fresh part must not inherit the old Text type').not.equals(true);
   });
 });
 
