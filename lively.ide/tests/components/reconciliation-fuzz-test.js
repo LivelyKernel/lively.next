@@ -10,7 +10,7 @@ import {
   reconciliationFuzzBaseSource,
   reconciliationFuzzSubjectSource,
   SeededRandom
-} from '../../components/debug.js';
+} from './reconciliation-fuzzer.js';
 import { releaseComponentEditingState } from './test-isolation.js';
 
 const testRoot = 'local://component-reconciliation-fuzz-test/';
