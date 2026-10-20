@@ -134,11 +134,7 @@ function print (obj) {
   //      // => [[1,2,3],"string",[object Object]]
   if (obj && Array.isArray(obj)) return '[' + obj.map(print) + ']';
   if (typeof obj !== 'string') return String(obj);
-  let result = String(obj);
-  result = result.replace(/\n/g, '\\n\\\n');
-  result = result.replace(/(")/g, '\\$1');
-  result = '\"' + result + '\"';
-  return result;
+  return inspectObject(obj);
 }
 
 function printNested (list, depth) {
