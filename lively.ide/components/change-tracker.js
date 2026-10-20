@@ -1460,8 +1460,20 @@ export class ComponentChangeTracker {
           const preservesDocument =
             (source === transaction.sourceBefore && document === transaction.beforeDocument) ||
             (source === transaction.sourceAfter && document === transaction.document);
+          const lookup = this._projectionalBindingLookup;
+          const range = transaction.beforeDocument.sourceMetadata.componentRange;
+          // Only a validated body edit can carry import resolutions to another source.
+          const preservesBindings = range && lookup &&
+            lookup.source === this.currentModuleSource &&
+            ((lookup.source === transaction.sourceBefore && source === transaction.sourceAfter) ||
+             (lookup.source === transaction.sourceAfter && source === transaction.sourceBefore)) &&
+            transaction.sourceProjection?.changes?.every(change =>
+              change.start >= range.start && change.end <= range.end);
           this.writeProjectionalModuleSource(this.componentModule, source);
           if (preservesDocument) this._projectionalDocument = document;
+          if (preservesBindings) {
+            this._projectionalBindingLookup = { ...lookup, source, parsed: null };
+          }
         }
       },
       documentStore: {
