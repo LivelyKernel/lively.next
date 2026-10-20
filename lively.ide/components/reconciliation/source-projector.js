@@ -1645,9 +1645,17 @@ export function projectComponentSource ({ source, beforeDocument, reduction, res
   }
 
   const prunedNodeIds = new Set();
+  if (semanticDelta.kind === ComponentSemanticDeltaKind.PROPERTY_CLEARED) {
+    const node = findComponentNode(beforeDocument, semanticDelta.nodeId);
+    const properties = beforeDocument.sourceMetadata.propertyLocations?.[node.id] || {};
+    if (node.provenance.kind === ComponentNodeProvenanceKind.INHERITED &&
+        Object.keys(properties).every(property => property === 'name' || property === semanticDelta.property)) {
+      prunedNodeIds.add(node.id);
+    }
+  }
   const rawChanges = [...(structuralChanges || [change]), ...importChanges];
   const changes = [ComponentSemanticDeltaKind.NODE_REMOVED, ComponentSemanticDeltaKind.NODE_RESTORED,
-    ComponentSemanticDeltaKind.NODE_MOVED].includes(semanticDelta.kind)
+    ComponentSemanticDeltaKind.NODE_MOVED, ComponentSemanticDeltaKind.PROPERTY_CLEARED].includes(semanticDelta.kind)
     ? pruneEmptyOverrideChanges(source, beforeDocument, rawChanges, prunedNodeIds)
     : rawChanges;
   const sourceAfter = applyChanges(source, changes);
