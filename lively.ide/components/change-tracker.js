@@ -99,6 +99,20 @@ const derivedExpressionSerializer = new ExpressionSerializer();
 const moduleReconciliationStates = new WeakMap();
 const policyCacheCheckpoints = new WeakMap();
 
+/** Collect the whole-module source preconditions retained by a component entry. */
+function componentHistorySourceModules (entry, modules = new Set()) {
+  if (entry instanceof CompositeEditTransaction) {
+    entry.transactions.forEach(transaction => componentHistorySourceModules(transaction, modules));
+  } else if (entry instanceof ProjectionalComponentEditTransaction) {
+    if (entry.transaction.sourceBefore !== entry.transaction.sourceAfter) {
+      modules.add(entry.transaction.beforeDocument.moduleId);
+    }
+  } else if (entry instanceof ProjectionalDerivedEditTransaction) {
+    entry.transaction.modules.forEach(plan => modules.add(plan.moduleId));
+  }
+  return modules;
+}
+
 function moduleReconciliationStateFor (tracker) {
   const componentModule = tracker.componentModule;
   if (!componentModule || (typeof componentModule !== 'object' &&
@@ -3000,10 +3014,47 @@ export class ComponentChangeTracker {
     return record;
   }
 
+  pruneSessionHistory () {
+    const manager = this.trackedComponent?.env?.undoManager;
+    if (!manager) return;
+    const entries = new Map();
+    const collect = entry => {
+      if (entries.has(entry)) return;
+      if (entry.metadata.componentTracker) {
+        entries.set(entry, componentHistorySourceModules(entry));
+      } else if (entry instanceof CompositeEditTransaction) entry.transactions.forEach(collect);
+    };
+    [...manager.undos, ...manager.redos, ...manager.grouping.current,
+      ...(manager.undoInProgress?.joinedTransactions || [])].forEach(collect);
+    const discarded = new Set();
+    const modules = new Set();
+    const discard = (entry, sourceModules) => {
+      discarded.add(entry);
+      sourceModules.forEach(moduleId => modules.add(moduleId));
+    };
+    for (const [entry, sourceModules] of entries) {
+      if (entry.metadata.componentTracker === this) discard(entry, sourceModules);
+    }
+    // Whole-module replay snapshots connect history across sessions and derived modules.
+    let previousSize;
+    do {
+      previousSize = discarded.size;
+      for (const [entry, sourceModules] of entries) {
+        if (!discarded.has(entry) && [...sourceModules].some(moduleId => modules.has(moduleId))) {
+          discard(entry, sourceModules);
+        }
+      }
+    } while (discarded.size !== previousSize);
+    manager.removeTransactions(entry => discarded.has(entry));
+    if ([...discarded].some(entry => entry.metadata.componentTracker !== this)) {
+      const world = this.trackedComponent.world() || this.trackedComponent.env?.world;
+      world?.showStatusMessage?.('Closing this session cleared undo and redo for other components sharing its source modules. Current edits were kept.');
+    }
+  }
+
   dispose () {
     delete this._pendingModuleSource;
-    this.trackedComponent?.env?.undoManager?.removeTransactions(transaction =>
-      transaction.metadata.componentTracker === this);
+    this.pruneSessionHistory();
     if (this._moduleChangedListener) {
       unsubscribe('lively.modules/modulechanged', this._moduleChangedListener,
         this.componentModule?.System || this.componentDescriptor?.System || System);
