@@ -6,6 +6,7 @@ import { ExpressionSerializer } from 'lively.serializer2';
 import { connect, disconnect } from 'lively.bindings';
 import { subscribe, unsubscribe } from 'lively.notifications';
 import { morph } from 'lively.morphic';
+import { getDefaultValueFor } from 'lively.morphic/helpers.js';
 import { ComponentDescriptor, evalAsSpec } from 'lively.morphic/components/core.js';
 import { BreakpointStore, PolicyApplicator, StylePolicy } from 'lively.morphic/components/policy.js';
 import {
@@ -450,6 +451,8 @@ export class ComponentChangeTracker {
   }
 
   ignoreCommittedOperation (operation, context) {
+    if (operation.kind === MorphicOperationKind.MOVE_MORPH &&
+        operation.morphId === this.trackedComponent.id) return true;
     const legacyChange = context.legacyChanges?.find(change => change.operation === operation) ||
       (operation.metadata?.textReplacement ? context.committedChange : null);
     if (legacyChange && this.ignoreSourceChange(legacyChange)) return true;
@@ -1179,6 +1182,20 @@ export class ComponentChangeTracker {
               : bridgeCommand.property,
             bridgeCommand.value
           )),
+      propertyMatchesInheritedValueFor: bridgeCommand => {
+        const target = context.resolveMorph?.(bridgeCommand.nodeId);
+        if (!target || !this.componentPolicy?.getSubPolicyFor) return false;
+        let policy = this.componentPolicy.getSubPolicyFor(target);
+        if (!policy?.isPolicy) policy = this.componentPolicy;
+        let inherited = policy.parent?.synthesizeSubSpec(
+          target === this.trackedComponent || target === policy.targetMorph ? null : target.name
+        );
+        if (inherited?.isPolicy) inherited = inherited.synthesizeSubSpec();
+        const value = inherited?.[bridgeCommand.property];
+        return obj.equals(bridgeCommand.value, value === undefined
+          ? getDefaultValueFor(target.constructor, bridgeCommand.property)
+          : value);
+      },
       introducedNodeFor: ({
         document,
         parentId,
@@ -2979,6 +2996,8 @@ export class ComponentChangeTracker {
   }
 
   ignoreSourceChange (change) {
+    if (['addMorphAt', 'removeMorph'].includes(change.selector) &&
+        change.args[0] === this.trackedComponent) return true;
     if (change.selector === 'replace' && change.target?.isText &&
         change.meta?.partOfTextAndAttributesAssignment) return true;
     if (change.changes?.length && !change.selector) {

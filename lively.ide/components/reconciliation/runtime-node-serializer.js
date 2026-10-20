@@ -1,4 +1,5 @@
-import { getTextAttributesExpr, getValueExpr } from '../helpers.js';
+import { convertToExpression, DEFAULT_SKIPPED_ATTRIBUTES, getTextAttributesExpr, getValueExpr } from '../helpers.js';
+import { parse } from 'lively.ast';
 import { string, tree } from 'lively.lang';
 import {
   addedNodeProvenance,
@@ -231,6 +232,19 @@ function mergeBindings (target, additions = {}) {
   }
 }
 
+/** Use the component serializer's property selection for real morphs. */
+function canonicalRuntimeProperties (morph) {
+  if (typeof morph?.propertiesAndPropertySettings !== 'function') return null;
+  const expression = convertToExpression(morph, {
+    skipAttributes: [...DEFAULT_SKIPPED_ATTRIBUTES, 'treeData']
+  });
+  const source = `(${expression.__expr__})`;
+  const parsed = parse(source).body[0].expression;
+  const spec = parsed.type === 'SequenceExpression' ? parsed.expressions.at(-1) : parsed;
+  if (spec.type !== 'ObjectExpression') throw new Error('The component serializer did not produce a spec');
+  return new Set(spec.properties.map(property => property.key.name || property.key.value));
+}
+
 function childNodeId (document, parentId, index) {
   const candidateFor = candidateIndex => parentId === document.root.id
     ? `${document.componentId}:node:${candidateIndex}`
@@ -419,10 +433,13 @@ function nodeFromSpec ({
     return null;
   }
 
+  // Policy overrides are source specs; canonicalize only raw live morph state.
+  const canonical = partProjection || insidePartOverride ? null : canonicalRuntimeProperties(morph);
   const properties = {};
   for (const [property, value] of Object.entries(spec)) {
     if (['name', 'type', 'submorphs', '__wasAddedToDerived__',
       '__projectionalInheritedOverride__'].includes(property)) continue;
+    if (canonical && !canonical.has(property)) continue;
     if (isExplicitValue(value)) {
       properties[property] = explicitProperty(value);
       continue;

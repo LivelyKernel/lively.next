@@ -227,9 +227,20 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   }
 
   stopEditSession () {
-    this._cachedComponent?._changeTracker?.dispose();
+    const component = this._cachedComponent;
+    component?._changeTracker?.dispose();
     this._backupComponentDef = null;
     this._cachedComponent = null;
+    if (component && !component.world()) {
+      // History retains the detached morph, but not an active editing session.
+      once(component, 'onOwnerChanged', () => {
+        if (!component.world() || !component.env.undoManager.applyCount || this._cachedComponent) return;
+        this._cachedComponent = component;
+        this.ensureComponentDefBackup();
+        new ComponentChangeTracker(component, this);
+        this.ensureNamesInSourceCode();
+      });
+    }
   }
 
   /**
