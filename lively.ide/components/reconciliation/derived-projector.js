@@ -221,7 +221,9 @@ export function projectDerivedComponentStructure ({
   componentId = `${moduleId}#${exportName}`,
   beforeParentDocument,
   afterParentDocument,
-  resolveComponentDocument = null
+  resolveComponentDocument = null,
+  restoredOverride = null,
+  introducedNodeId = null
 }) {
   if (typeof source !== 'string') throw new Error('Derived structure projection requires source');
   if (!(beforeParentDocument instanceof ComponentDocument) ||
@@ -360,6 +362,21 @@ export function projectDerivedComponentStructure ({
       current = parseWithParent(afterParentDocument);
     }
   }
+  if (current.supported && restoredOverride) {
+    const restored = restoredOverrideSource(restoredOverride, afterParentDocument,
+      introducedNodeId, resolveComponentDocument);
+    if (restored) {
+      const owner = findComponentParent(current.document, introducedNodeId);
+      const insertion = owner && insertMovedNodeChange(sourceAfter, current.document,
+        owner.id, owner.children.findIndex(node => node.id === introducedNodeId), restored);
+      if (!insertion) return unsupportedResult(source, [diagnostic(
+        DerivedProjectionDiagnosticKind.SOURCE_UNSUPPORTED,
+        'Removed derived override cannot be restored at its new position'
+      )], parsedBefore.document);
+      sourceAfter = applyChanges(sourceAfter, [insertion]);
+      current = parseWithParent(afterParentDocument);
+    }
+  }
   if (sourceAfter !== applyChanges(source, changes)) {
     const range = parsedBefore.document.sourceMetadata.componentRange;
     const end = range.end + sourceAfter.length - source.length;
@@ -383,6 +400,51 @@ export function projectDerivedComponentStructure ({
     changes: Object.freeze(changes),
     diagnostics: Object.freeze([])
   });
+}
+
+/** Reconcile the retained override against surviving descendants before reinserting it. */
+function restoredOverrideSource (retained, afterParent, nodeId, resolveComponentDocument) {
+  const { projection, parentDocument, nodeId: oldId } = retained;
+  const oldNode = findComponentNode(parentDocument, oldId);
+  const newNode = findComponentNode(afterParent, nodeId);
+  if (!oldNode || !newNode) throw new Error('Removed override has no matching parent subtree');
+  const remap = (node, old) => node.with({
+    id: old?.id || node.id,
+    children: node.children.map(child => remap(child,
+      old?.children.find(candidate => candidate.name === child.name)))
+  });
+  const replace = node => node.id === oldId
+    ? remap(newNode, oldNode).with({ name: oldNode.name })
+    : node.with({ children: node.children.map(replace) });
+  const parent = new ComponentDocument({ ...parentDocument, root: replace(parentDocument.root) });
+  const pruned = projectDerivedComponentStructure({
+    source: projection.sourceBefore,
+    moduleId: projection.beforeDocument.moduleId,
+    exportName: projection.beforeDocument.exportName,
+    componentId: projection.beforeDocument.componentId,
+    beforeParentDocument: parentDocument,
+    afterParentDocument: parent,
+    resolveComponentDocument
+  });
+  if (!pruned.supported) throw new Error('Removed derived override could not be reconciled');
+  let source = pruned.sourceAfter;
+  let document = pruned.document;
+  if (oldNode.name !== newNode.name) {
+    const renamedParent = new ComponentDocument({ ...parent,
+      root: (function rename (node) {
+        return node.id === oldId ? node.with({ name: newNode.name })
+          : node.with({ children: node.children.map(rename) });
+      })(parent.root) });
+    const renamed = projectDerivedComponentRename({ source, moduleId: document.moduleId,
+      exportName: document.exportName, componentId: document.componentId,
+      beforeParentDocument: parent, afterParentDocument: renamedParent,
+      nodeId: oldId, resolveComponentDocument });
+    if (!renamed.supported) throw new Error('Removed derived override could not be renamed');
+    source = renamed.sourceAfter;
+    document = renamed.document;
+  }
+  const location = document.sourceMetadata.nodeIdToAstLocation?.[oldId];
+  return location ? source.slice(location.start, location.end) : null;
 }
 
 /** A rejected graph must never expose a partially planned component list to cache consumers. */
@@ -532,6 +594,10 @@ export function planDerivedComponentRenamePropagation (options) {
 export function planDerivedComponentStructurePropagation (options) {
   return planDerivedComponentPropagation({
     ...options,
-    projectComponent: projectDerivedComponentStructure
+    projectComponent: projectionOptions => projectDerivedComponentStructure({
+      ...projectionOptions,
+      introducedNodeId: options.introducedNodeId,
+      restoredOverride: options.restoredOverrides?.get(projectionOptions.exportName + '\n' + projectionOptions.moduleId)
+    })
   });
 }

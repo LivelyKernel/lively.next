@@ -72,7 +72,6 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
     super.init(generatorFunctionOrInlinePolicy, meta);
     this.subscribeToParent();
     this.refreshDependants();
-    this.previouslyRemovedMorphs = new WeakMap();
     this.checkForGeneratedNames();
     return this;
   }
@@ -122,11 +121,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   }
 
   recordRemovedMorph (removedMorph, meta) {
-    this.previouslyRemovedMorphs.set(removedMorph, meta);
-
-    once(removedMorph, 'removeMorph', () => {
-      this.previouslyRemovedMorphs.delete(removedMorph);
-    });
+    (this.previouslyRemovedMorphs ||= new WeakMap()).set(removedMorph, meta);
   }
 
   /**
@@ -324,7 +319,6 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
           .get(descr);
     }
     obj.adoptObject(descr, InteractiveComponentDescriptor);
-    if (!descr.previouslyRemovedMorphs) descr.previouslyRemovedMorphs = new WeakMap();
     return descr;
   }
 }

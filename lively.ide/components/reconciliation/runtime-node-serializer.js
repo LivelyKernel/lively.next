@@ -189,13 +189,18 @@ function runtimePartOverrideSpec (
           : { ...normalized.spec, __projectionalInheritedOverride__: true };
       })
     : localOverrides;
-  return {
+  const result = {
     ...overrideSpec,
     name: typeof overrideSpec.name === 'string' && overrideSpec.name
       ? overrideSpec.name
       : runtimeSpec.name,
     submorphs
   };
+  if (typeof morph?.master?.getConfigAsExpression === 'function') {
+    if (morph.master.getConfig()) result.master = morph.master;
+    else delete result.master;
+  }
+  return result;
 }
 
 function normalizedRuntimeSpec (spec) {
@@ -424,7 +429,10 @@ function nodeFromSpec ({
         partProjection.policy
       )
     : spec;
-  const submorphs = spec.submorphs === undefined ? [] : spec.submorphs;
+  const embedded = morph?.isText ? morph.textAndAttributes.filter(value => value?.isMorph) : [];
+  const submorphs = spec.submorphs === undefined ? [] : Array.isArray(spec.submorphs)
+    ? spec.submorphs.filter((child, index) => !embedded.includes(runtimeChildForSpec(morph, child, index)))
+    : spec.submorphs;
   if (!Array.isArray(submorphs)) {
     diagnostics.push(diagnostic(
       RuntimeNodeSerializationDiagnosticKind.INVALID_SPEC,

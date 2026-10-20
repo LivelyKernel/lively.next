@@ -499,7 +499,7 @@ export class ComponentChangeTracker {
     return owners.some(owner => owner.isText &&
       // A replacement has already removed old embedded morphs from the text.
       (operation.metadata?.partOfTextAndAttributesAssignment ||
-       owner.textAndAttributes?.includes(target) || target.owner === owner));
+       owner.textAndAttributes?.includes(target) || owner.embeddedMorphMap?.has(target)));
   }
 
   processCommittedChangeSet (changeSet, context) {
@@ -536,6 +536,16 @@ export class ComponentChangeTracker {
         : this.commitProjectionalBatch(batch, context);
       if (projectionalCommit) {
         batch = Object.freeze({ ...batch, projectionalCommit });
+        if (batch.commands[0]?.kind === ComponentBridgeCommandKind.REMOVE_NODE &&
+            batch.derivedPropagation?.components.length) {
+          const nodeId = batch.shadowProjection.steps[0].componentCommand.nodeId;
+          this.componentDescriptor.recordRemovedMorph(context.resolveMorph(batch.commands[0].nodeId),
+            new Map(batch.derivedPropagation.components.map(component => [
+              component.exportName + '\n' + component.moduleId,
+              { nodeId, projection: component.projection,
+                parentDocument: component.projection.beforeDocument.sourceMetadata.parentDocument }
+            ])));
+        }
         const moduleState = moduleReconciliationStateFor(this);
         if (!moduleState?.pending) {
           this._finishPromise = Promise.resolve(true);
@@ -1063,10 +1073,16 @@ export class ComponentChangeTracker {
         !batch.shadowProjection?.supported ||
         !this.componentDescriptor?.stylePolicy?._dependants?.size) return null;
     try {
+      const introducedNodeId = batch.shadowProjection.steps[0].componentCommand.nodeId;
+      const restoredOverrides = command.kind === ComponentBridgeCommandKind.INTRODUCE_NODE
+        ? this.componentDescriptor.previouslyRemovedMorphs?.get(context.resolveMorph(command.nodeId))
+        : null;
       const propagation = planDerivedComponentStructurePropagation({
         root: this.componentDescriptor,
         beforeParentDocument: batch.shadowProjection.beforeDocument,
         afterParentDocument: batch.shadowProjection.document,
+        introducedNodeId,
+        restoredOverrides,
         getDependants: descriptor => this.projectionalDerivedDescriptors(descriptor, true),
         describeComponent: descriptor => this.projectionalDerivedComponentDescription(
           descriptor,
@@ -1079,6 +1095,28 @@ export class ComponentChangeTracker {
       );
       let runtimeStructuralProjection = null;
       if (cachedComponents.length) {
+        const restoredMorphs = new Map();
+        if (restoredOverrides) {
+          const policies = new Map();
+          policies.set(this.componentDescriptor.stylePolicy, this.evaluateProjectionalPolicy({
+            descriptor: this.componentDescriptor, componentModule: this.componentModule,
+            source: batch.shadowProjection.sourceAfter, document: batch.shadowProjection.document
+          }));
+          for (const component of propagation.components) {
+            const projected = this.evaluateProjectionalPolicy({
+              descriptor: component.dependant,
+              componentModule: this.projectionalModuleForId(component.moduleId),
+              source: component.projection.sourceAfter, document: component.projection.document
+            }, policies);
+            policies.set(component.dependant.stylePolicy, projected);
+            const path = componentNodeNamePath(component.projection.document, introducedNodeId);
+            if (!path || !component.dependant._cachedComponent) continue;
+            let spec = projected.asBuildSpec(true);
+            for (const name of path) spec = spec?.submorphs?.find(child => child.name === name);
+            if (!spec) throw new Error('Restored derived subtree has no build spec');
+            restoredMorphs.set(component.dependant, morph(spec));
+          }
+        }
         const nodeId = batch.shadowProjection.steps[0].componentCommand.nodeId;
         const projection = projectCachedDerivedRuntimeStructure({
           components: cachedComponents,
@@ -1091,7 +1129,9 @@ export class ComponentChangeTracker {
           changeSetId: batch.changeSetId,
           sourceMorph: command.kind === ComponentBridgeCommandKind.INTRODUCE_NODE
             ? context.resolveMorph?.(command.nodeId)
-            : null
+            : null,
+          runtimeRenames: batch.shadowProjection.steps[0].runtimeRenames,
+          restoredMorphs
         });
         if (projection) {
           const resolveMorph = id => projection.resolveMorph(id) || context.resolveMorph?.(id);
@@ -1841,13 +1881,16 @@ export class ComponentChangeTracker {
     const refreshesDependants =
       batch.commands[0].kind !== ComponentBridgeCommandKind.RENAME_NODE;
     const structuralStep = batch.commands[0].kind === ComponentBridgeCommandKind.MOVE_NODE ||
+      batch.shadowProjection.steps[0].componentCommand.kind === ComponentCommandKind.SUPPRESS_INHERITED_NODE ||
       (batch.commands[0].kind === ComponentBridgeCommandKind.INTRODUCE_NODE &&
        batch.shadowProjection.runtimeChangeSet.operations.some(operation => operation.property === 'name'))
       ? batch.shadowProjection.steps[0]
       : null;
     const refreshMovedTarget = structuralStep
-      ? ({ direction = ComponentTransactionDirection.FORWARD } = {}) =>
-          this.refreshProjectionalMovedTarget(
+      ? ({ direction = ComponentTransactionDirection.FORWARD } = {}) => {
+          if (structuralStep.componentCommand.kind === ComponentCommandKind.SUPPRESS_INHERITED_NODE &&
+              direction === ComponentTransactionDirection.FORWARD) return false;
+          return this.refreshProjectionalMovedTarget(
             context.resolveMorph?.(batch.commands[0].nodeId),
             {
               direction,
@@ -1858,7 +1901,8 @@ export class ComponentChangeTracker {
                 structuralStep.componentCommand.inheritanceTransition?.requiredBindings ||
                 structuralStep.componentCommand.requiredBindings || []
             }
-          )
+          );
+        }
       : null;
     const refreshOptions = refreshesDependants
       ? {
@@ -2996,6 +3040,8 @@ export class ComponentChangeTracker {
   }
 
   ignoreSourceChange (change) {
+    if (change.operation?.kind === MorphicOperationKind.MOVE_MORPH &&
+        obj.equals(change.operation.before, change.operation.after)) return true;
     if (['addMorphAt', 'removeMorph'].includes(change.selector) &&
         change.args[0] === this.trackedComponent) return true;
     if (change.selector === 'replace' && change.target?.isText &&
@@ -3024,23 +3070,6 @@ export class ComponentChangeTracker {
         change.prop !== 'vertices' &&
         obj.equals(change.prevValue, change.value)) return true;
     return false;
-  }
-
-  /**
-   * Given a change, returns wether or not we can delay the reconciliation
-   * of that change to a later time. This can be beneficial, since we
-   * sometimes want to avoid degrading performance when properties that
-   * are expensive to reconcile are changed in quick succession.
-   * @param { object } change - The change to check.
-   * @returns { boolean }
-   */
-  // FIXME: should be investigated again when we look at performance optimizations!
-  adjournChange (change) {
-    const isReplaceChange = change.selector === 'replace';
-    if (!isReplaceChange) return false;
-    const insertsMorph = change.args[1].find(m => m?.isMorph);
-    const removesMorph = change.undo.args[1].find(m => m?.isMorph);
-    return !insertsMorph && !removesMorph;
   }
 
   /**
