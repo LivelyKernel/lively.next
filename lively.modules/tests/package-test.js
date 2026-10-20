@@ -53,17 +53,26 @@ describe('package loading', function () {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   describe('basics', () => {
-    it('retains a package-scoped import map after registration', async () => {
+    it('picks up a package-scoped import map written after initial registration', async () => {
+      const pkg = await ensurePackage(S, project1aDir);
+      expect(pkg.systemjs?.importMap, 'the package starts without a cached import map').to.equal(undefined);
+
       const importMap = { imports: { dependency: 'https://example.com/dependency.js' } };
       await resource(project1aDir + '.cachedImportMap.json').writeJson(importMap);
-
-      const pkg = await ensurePackage(S, project1aDir);
       await pkg.register();
 
-      expect(pkg.systemjs.importMap).to.eql({
+      expect(pkg.systemjs?.importMap, 're-registration must publish the newly written import map').to.eql({
         ...importMap,
         _mapUrl: resource(project1aDir + '.cachedImportMap.json').url
       });
+    });
+
+    it('keeps package systemjs metadata in sync with applyConfig', async () => {
+      const pkg = await ensurePackage(S, project1aDir);
+      const dependency = 'https://example.com/dependency.js';
+      applyConfig(S, { systemjs: { map: { dependency } } }, 'some-project');
+
+      expect(pkg.systemjs?.map?.dependency, 'applyConfig must update package systemjs metadata').to.equal(dependency);
     });
 
     it('loads package configs from encoded file URLs before the transpiler is configured', async () => {
