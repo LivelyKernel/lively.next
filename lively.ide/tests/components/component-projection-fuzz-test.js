@@ -4,7 +4,7 @@ import {
   ComponentProjectionFuzzOperationKind,
   ComponentProjectionFuzzer,
   DEFAULT_COMPONENT_PROJECTION_FUZZ_OPERATIONS
-} from '../../components/reconciliation/component-projection-fuzzer.js';
+} from './component-projection-fuzzer.js';
 import { parseComponentSource } from '../../components/reconciliation/source-adapter.js';
 import {
   ComponentDocument,

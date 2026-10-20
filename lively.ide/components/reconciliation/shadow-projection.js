@@ -285,12 +285,7 @@ function componentCommandFor ({
       document,
       parentId: parent.id,
       index: bridgeCommand.index,
-      bridgeCommand,
-      // A live part can be attached to a component policy whose source update
-      // replaces child identities. Materialize its resolved subtree so the
-      // reduced document describes the same inherited children that reparsing
-      // part(...) will resolve.
-      materializePartSubtree: true
+      bridgeCommand
     });
     if (!serialized?.supported) {
       return { serializationFailure: serialized };
@@ -355,6 +350,22 @@ function componentCommandFor ({
     const beforeId = runtimeOrderingName === null
       ? null
       : runtimeOrderingNode?.id ?? siblings[bridgeCommand.index]?.id ?? null;
+    if (node.provenance.suppressed && previousParent.id === destinationParent.id) {
+      const restoredIndex = runtimeVisibleChildren({
+        children: destinationParent.children.slice(0, destinationParent.children.indexOf(node))
+      }).length;
+      if (bridgeCommand.index !== restoredIndex) return { rejectionDiagnostic: diagnostic(
+        ShadowProjectionDiagnosticKind.RESTORE_INDEX_MISMATCH,
+        `Inherited node ${node.name} can only be restored at index ${restoredIndex}`
+      ) };
+      return {
+        command: RestoreInheritedNode({ ...commandSpec, parentId: destinationParent.id,
+          beforeId: node.provenance.beforeId }),
+        bindings: {},
+        runtimeTargetIds: Object.freeze({ [destinationParent.id]: bridgeCommand.parentId,
+          [node.id]: bridgeCommand.nodeId })
+      };
+    }
     if (node.provenance.kind === ComponentNodeProvenanceKind.INHERITED) {
       if (previousParent.id === destinationParent.id || node.provenance.suppressed) return false;
       const serialized = introducedNodeFor?.({
@@ -711,7 +722,8 @@ export function prepareShadowScalarProjection ({
       componentCommand: translated.command,
       reduction,
       sourceProjection,
-      runtimeProjection
+      runtimeProjection,
+      runtimeRenames: translated.runtimeRenames || Object.freeze([])
     }));
     currentDocument = sourceProjection.projectedDocument;
     currentSource = sourceProjection.sourceAfter;
@@ -764,7 +776,9 @@ export function compareShadowProjectionToCurrentSource (shadowProjection, curren
     source: currentSource,
     moduleId: document.moduleId,
     exportName: document.exportName,
-    componentId: document.componentId
+    componentId: document.componentId,
+    parentDocument: document.sourceMetadata.parentDocument,
+    resolveComponentDocument: document.sourceMetadata.resolveComponentDocument
   });
   if (!parsedCurrent.supported) {
     return Object.freeze({

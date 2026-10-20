@@ -71,7 +71,7 @@ function propertyKeySource (property) {
   return /^[A-Za-z_$][\w$]*$/.test(property) ? property : JSON.stringify(property);
 }
 
-function componentNodeSource (node, document, insidePartOverride = false) {
+function componentNodeSource (node, document, insidePartOverride = false, materialize = false) {
   const entries = [`name: ${JSON.stringify(node.name)}`];
   if (node.typeExpression) entries.push(`type: ${node.typeExpression}`);
   for (const [property, entry] of Object.entries(node.properties)) {
@@ -79,9 +79,12 @@ function componentNodeSource (node, document, insidePartOverride = false) {
     if (typeof valueSource !== 'string') return null;
     entries.push(`${propertyKeySource(property)}: ${valueSource}`);
   }
-  if (node.children.length) {
-    const childSources = node.children.map(child => {
-      const childSource = componentNodeSource(child, document, !!node.partComponent);
+  const children = node.children.filter(child => materialize ||
+    child.provenance.kind !== ComponentNodeProvenanceKind.INHERITED ||
+    child.provenance.hasLocalOverrides || child.provenance.suppressed);
+  if (children.length) {
+    const childSources = children.map(child => {
+      const childSource = componentNodeSource(child, document, !!node.partComponent || insidePartOverride, materialize);
       if (childSource === null) return null;
       return child.provenance.kind === ComponentNodeProvenanceKind.INHERITED &&
         child.provenance.suppressed
@@ -263,31 +266,7 @@ function removeNodeChange (source, document, nodeId, parentId) {
   const parent = findComponentNode(document, parentId);
   const location = document.sourceMetadata.nodeIdToAstLocation?.[nodeId];
   if (!parent || !location) return null;
-  let end = location.end;
-  while (source[end] === ' ' || source[end] === '\t' || source[end] === '\n') end++;
-  if (source[end] === ',') {
-    end++;
-    while (source[end] === ' ' || source[end] === '\t') end++;
-    return Object.freeze({
-      action: 'remove',
-      start: location.start,
-      end,
-      text: ''
-    });
-  }
-  let start = location.start;
-  while (start > 0 && (
-    source[start - 1] === ' ' ||
-    source[start - 1] === '\t' ||
-    source[start - 1] === '\n'
-  )) start--;
-  if (source[start - 1] === ',') start--;
-  return Object.freeze({
-    action: 'remove',
-    start,
-    end: location.end,
-    text: ''
-  });
+  return suppressionRemovalChange(source, location);
 }
 
 /** Append to the source array without confusing inherited children or comments with entries. */
@@ -456,7 +435,7 @@ function reparentNodeChanges (source, beforeDocument, afterDocument, semanticDel
     : null;
 }
 
-function suppressInheritedNodeChange (source, document, semanticDelta) {
+function suppressInheritedNodeChange (source, document, semanticDelta, discardOverride = true) {
   const node = findComponentNode(document, semanticDelta.nodeId);
   const parentId = semanticDelta.parentId;
   if (document.sourceMetadata.opaqueSubmorphExpressions?.[parentId]) return null;
@@ -464,6 +443,10 @@ function suppressInheritedNodeChange (source, document, semanticDelta) {
     .propertyLocations?.[parentId]?.submorphs?.value;
   const callSource = `without(${JSON.stringify(node?.name)})`;
   if (!node) return null;
+  const location = document.sourceMetadata.nodeIdToAstLocation?.[node.id];
+  if (location && discardOverride) {
+    return Object.freeze({ action: 'replace', ...location, text: callSource });
+  }
   if (!arrayLocation) {
     return ensureNodeSpecChange(source, document, parentId, 'submorphs', `[${callSource}]`);
   }
@@ -472,16 +455,18 @@ function suppressInheritedNodeChange (source, document, semanticDelta) {
 
 /** Remove an array entry with its separator, including suppression and override entries. */
 export function suppressionRemovalChange (source, location) {
-  let end = location.end;
-  while (/\s/.test(source[end] || '')) end++;
-  if (source[end] === ',') {
-    end++;
-    return Object.freeze({ action: 'remove', start: location.start, end, text: '' });
+  const tokens = [];
+  parse(source, { onToken: tokens });
+  const next = tokens.find(token => token.start >= location.end);
+  if (next?.type.label === ',') {
+    return Object.freeze({ action: 'replace', start: location.start, end: next.end,
+      text: source.slice(location.end, next.start) });
   }
-  let start = location.start;
-  while (start > 0 && /\s/.test(source[start - 1])) start--;
-  if (source[start - 1] === ',') start--;
-  return Object.freeze({ action: 'remove', start, end: location.end, text: '' });
+  const previous = tokens.findLast(token => token.end <= location.start);
+  return Object.freeze(previous?.type.label === ','
+    ? { action: 'replace', start: previous.start, end: location.end,
+        text: source.slice(previous.end, location.start) }
+    : { action: 'remove', start: location.start, end: location.end, text: '' });
 }
 
 /** Remove suppressions, retaining the one replaced by a restored node override. */
@@ -584,7 +569,7 @@ function consolidateRestoredNodeChange (
     semanticDelta.consolidatedNodeId
   );
   const nodeSource = restoredNode &&
-    componentNodeSource(restoredNode, afterDocument, true);
+    componentNodeSource(restoredNode, afterDocument, true, true);
   if (typeof nodeSource !== 'string') return null;
   const location = beforeDocument.sourceMetadata
     .nodeIdToAstLocation?.[semanticDelta.consolidatedNodeId] ||
@@ -1063,11 +1048,40 @@ function semanticDifferenceMessage (actual, expected) {
 
 export function alignParsedDocumentIdentities (parsedDocument, expectedDocument) {
   const idMap = new Map();
+  const suppressedReceipts = expectedDocument.sourceMetadata.suppressedNodeReceipts || {};
+  const retainedIds = new Set();
+  const overridesMatchReceipt = (parsed, retained) => {
+    if (!retained || parsed.name !== retained.name) return false;
+    const locations = parsedDocument.sourceMetadata.propertyLocations?.[parsed.id] || {};
+    for (const property of Object.keys(locations)) {
+      if (['name', 'submorphs'].includes(property)) continue;
+      if (property === 'type') {
+        if (parsed.typeExpression !== retained.typeExpression) return false;
+      } else if (JSON.stringify(canonicalSemanticValue(parsed.properties[property])) !==
+          JSON.stringify(canonicalSemanticValue(retained.properties[property]))) return false;
+    }
+    return parsed.children.every(child => {
+      const owned = parsedDocument.sourceMetadata.nodeIdToAstLocation?.[child.id] ||
+        parsedDocument.sourceMetadata.suppressionLocations?.[child.id];
+      if (!owned) return true;
+      const expected = retained.children.find(node => node.name === child.name);
+      return expected && (!child.provenance.suppressed || expected.provenance.suppressed) &&
+        overridesMatchReceipt(child, expected);
+    });
+  };
   const alignNode = (parsedNode, expectedNode) => {
     if (parsedNode.name !== expectedNode.name) return null;
     const expectedByName = new Map(expectedNode.children.map(child => [child.name, child]));
     const children = [];
     idMap.set(parsedNode.id, expectedNode.id);
+    // A without marker has no override payload. Retain the verified removal receipt,
+    // rather than deleting the detached runtime subtree from the replay document.
+    if (parsedNode.provenance.suppressed && expectedNode.provenance.suppressed &&
+        suppressedReceipts[expectedNode.id] && overridesMatchReceipt(parsedNode, expectedNode)) {
+      const remember = node => { retainedIds.add(node.id); node.children.forEach(remember); };
+      remember(expectedNode);
+      return expectedNode;
+    }
     for (const parsedChild of parsedNode.children) {
       const expectedChild = expectedByName.get(parsedChild.name);
       children.push(expectedChild
@@ -1104,6 +1118,18 @@ export function alignParsedDocumentIdentities (parsedDocument, expectedDocument)
   const sourceMetadata = Object.fromEntries(Object.entries(parsedDocument.sourceMetadata)
     .map(([key, value]) => [key, value && Object.getPrototypeOf(value) === Object.prototype
       ? remapNodeRecords(value) : value]));
+  const parsedLayouts = parsedDocument.layoutModels.map(model => ({
+    ...model,
+    ownerId: idMap.get(model.ownerId) || model.ownerId,
+    references: model.references.map(reference => ({
+      ...reference, targetId: idMap.get(reference.targetId) || reference.targetId
+    }))
+  }));
+  const layoutModels = expectedDocument.layoutModels.map(model =>
+    parsedLayouts.find(parsed => parsed.ownerId === model.ownerId) ||
+      (retainedIds.has(model.ownerId) ? model : null)).filter(Boolean);
+  layoutModels.push(...parsedLayouts.filter(model =>
+    !layoutModels.some(candidate => candidate.ownerId === model.ownerId)));
   return new ComponentDocument({
     revision: parsedDocument.revision,
     componentId: parsedDocument.componentId,
@@ -1111,16 +1137,11 @@ export function alignParsedDocumentIdentities (parsedDocument, expectedDocument)
     exportName: parsedDocument.exportName,
     parentComponent: parsedDocument.parentComponent,
     root,
-    layoutModels: parsedDocument.layoutModels.map(model => ({
-      ...model,
-      ownerId: idMap.get(model.ownerId) || model.ownerId,
-      references: model.references.map(reference => ({
-        ...reference,
-        targetId: idMap.get(reference.targetId) || reference.targetId
-      }))
-    })),
+    layoutModels,
     sourceMetadata: {
       ...sourceMetadata,
+      suppressedNodeReceipts: Object.fromEntries(Object.entries(suppressedReceipts).filter(
+        ([id]) => findComponentNode(expectedDocument, id)?.provenance.suppressed)),
       layoutReferenceLocations: Object.freeze(Object.fromEntries(
         Object.entries(sourceMetadata.layoutReferenceLocations || {})
           .map(([ownerId, locations]) => [
@@ -1441,10 +1462,12 @@ export function projectComponentSource ({ source, beforeDocument, reduction, res
       const suppression = suppressInheritedNodeChange(source, beforeDocument, {
         nodeId: semanticDelta.inheritedNodeId,
         parentId: semanticDelta.fromParentId
-      });
+      }, false);
       const nodeSource = materializedNode && componentNodeSource(
         materializedNode,
-        reduction.document
+        reduction.document,
+        false,
+        true
       );
       const introduction = typeof nodeSource === 'string' && insertMovedNodeChange(
         source,
@@ -1602,6 +1625,19 @@ export function projectComponentSource ({ source, beforeDocument, reduction, res
     change = suppressInheritedNodeChange(source, beforeDocument, semanticDelta);
   } else if (semanticDelta.kind === ComponentSemanticDeltaKind.NODE_RESTORED) {
     structuralChanges = restoreInheritedNodeChanges(source, beforeDocument, semanticDelta);
+    const retained = beforeDocument.sourceMetadata.suppressedNodeReceipts?.[semanticDelta.nodeId]?.source;
+    const location = beforeDocument.sourceMetadata.suppressionLocations?.[semanticDelta.nodeId];
+    if (retained && location) {
+      structuralChanges = [Object.freeze({ action: 'replace', ...location, text: retained }),
+        ...restoreInheritedNodeChanges(source, beforeDocument, semanticDelta, location)];
+    }
+    if (!structuralChanges) {
+      let owner = findComponentParent(beforeDocument, semanticDelta.nodeId);
+      while (owner && !beforeDocument.sourceMetadata.suppressedNodeReceipts?.[owner.id]) {
+        owner = findComponentParent(beforeDocument, owner.id);
+      }
+      if (owner) structuralChanges = [];
+    }
   } else {
     diagnostics.push(diagnostic(
       ComponentSourceProjectionDiagnosticKind.UNSUPPORTED_DELTA,
@@ -1704,8 +1740,43 @@ export function projectComponentSource ({ source, beforeDocument, reduction, res
     parentDocument: beforeDocument.sourceMetadata.parentDocument || null,
     resolveComponentDocument: beforeDocument.sourceMetadata.resolveComponentDocument || null
   });
+  const suppressedNodeReceipts = { ...beforeDocument.sourceMetadata.suppressedNodeReceipts };
+  if (semanticDelta.kind === ComponentSemanticDeltaKind.NODE_SUPPRESSED) {
+    const location = beforeDocument.sourceMetadata.nodeIdToAstLocation?.[semanticDelta.nodeId];
+    suppressedNodeReceipts[semanticDelta.nodeId] = Object.freeze({
+      source: location ? source.slice(location.start, location.end) : null
+    });
+  }
+  const materializedPaths = [];
+  if ([ComponentSemanticDeltaKind.PROPERTY_SET, ComponentSemanticDeltaKind.TEXT_EDITED]
+    .includes(semanticDelta.kind) &&
+      !beforeDocument.sourceMetadata.nodeSpecLocations?.[semanticDelta.nodeId]) {
+    materializedPaths.push(semanticDelta.nodeId);
+  }
+  if ([ComponentSemanticDeltaKind.NODE_INTRODUCED, ComponentSemanticDeltaKind.NODE_SUPPRESSED]
+    .includes(semanticDelta.kind)) {
+    materializedPaths.push(semanticDelta.parentId);
+  }
+  if (semanticDelta.kind === ComponentSemanticDeltaKind.NODE_MOVED) {
+    materializedPaths.push(semanticDelta.toParentId);
+    if (semanticDelta.inheritanceTransition === ComponentMoveInheritanceTransitionKind.MATERIALIZE) {
+      materializedPaths.push(semanticDelta.fromParentId);
+    }
+  }
+  const pathDocument = documentWithLocalOverridePaths(reduction.document, materializedPaths, prunedNodeIds);
+  for (let owner = findComponentParent(pathDocument, semanticDelta.nodeId); owner;
+    owner = findComponentParent(pathDocument, owner.id)) {
+    if (suppressedNodeReceipts[owner.id]) {
+      suppressedNodeReceipts[owner.id] = Object.freeze({
+        source: owner.provenance.hasLocalOverrides
+          ? componentNodeSource(owner, pathDocument, true) : null
+      });
+    }
+  }
+  const receiptDocument = new ComponentDocument({ ...pathDocument,
+    sourceMetadata: { ...pathDocument.sourceMetadata, suppressedNodeReceipts } });
   const alignedDocument = reparsed.supported
-    ? alignParsedDocumentIdentities(reparsed.document, reduction.document)
+    ? alignParsedDocumentIdentities(reparsed.document, receiptDocument)
     : null;
   const refreshesLayoutModels =
     ([
@@ -1733,22 +1804,6 @@ export function projectComponentSource ({ source, beforeDocument, reduction, res
       expectedDocument = documentWithProjectedPropertyEntry(
         expectedDocument, alignedDocument, semanticDelta.nodeId, property
       );
-    }
-  }
-  const materializedPaths = [];
-  if ([ComponentSemanticDeltaKind.PROPERTY_SET, ComponentSemanticDeltaKind.TEXT_EDITED]
-    .includes(semanticDelta.kind) &&
-      !beforeDocument.sourceMetadata.nodeSpecLocations?.[semanticDelta.nodeId]) {
-    materializedPaths.push(semanticDelta.nodeId);
-  }
-  if ([ComponentSemanticDeltaKind.NODE_INTRODUCED, ComponentSemanticDeltaKind.NODE_SUPPRESSED]
-    .includes(semanticDelta.kind)) {
-    materializedPaths.push(semanticDelta.parentId);
-  }
-  if (semanticDelta.kind === ComponentSemanticDeltaKind.NODE_MOVED) {
-    materializedPaths.push(semanticDelta.toParentId);
-    if (semanticDelta.inheritanceTransition === ComponentMoveInheritanceTransitionKind.MATERIALIZE) {
-      materializedPaths.push(semanticDelta.fromParentId);
     }
   }
   if (materializedPaths.length || prunedNodeIds.size) {

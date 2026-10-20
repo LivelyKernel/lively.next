@@ -17,7 +17,10 @@ export const DerivedRuntimeStructureProjectionKind = Object.freeze({
 });
 
 function childrenOf (morph) {
-  return morph?.submorphs || morph?.children || [];
+  const children = morph?.submorphs || morph?.children || [];
+  return morph?.isText
+    ? children.filter(child => !morph.textAndAttributes.includes(child))
+    : children;
 }
 
 function componentNodeNamePath (document, nodeId) {
@@ -122,7 +125,7 @@ function operationMetadata (component) {
   };
 }
 
-function introductionOperation (component, nodeId, runtimeMorphs, sourceMorph) {
+function introductionOperation (component, nodeId, runtimeMorphs, sourceMorph, runtimeRenames, restoredMorph) {
   const { beforeDocument, document: afterDocument } = component.projection;
   const root = component.dependant._cachedComponent;
   const node = findComponentNode(afterDocument, nodeId);
@@ -135,20 +138,33 @@ function introductionOperation (component, nodeId, runtimeMorphs, sourceMorph) {
     );
   }
   assertRuntimeOwnerMatchesDocument(owner, beforeDocument, parentBefore);
-  assertCopyableIntroducedSubtree(afterDocument, node);
+  if (!restoredMorph) assertCopyableIntroducedSubtree(afterDocument, node);
+  sourceMorph = restoredMorph || sourceMorph;
   if (!sourceMorph || typeof sourceMorph.copy !== 'function') {
     throw new Error(
       `Cached derived component ${component.exportName} cannot copy the introduced runtime node`
     );
   }
-  const target = sourceMorph.copy();
-  if (!target || target === sourceMorph || target.owner) {
+  const target = restoredMorph || sourceMorph.copy();
+  if (!target || (!restoredMorph && target === sourceMorph) || target.owner) {
     throw new Error(
       `Cached derived component ${component.exportName} produced an invalid runtime copy`
     );
   }
   // Name allocation happens before the originating runtime rename is applied.
   target.name = node.name;
+  const renameCopiedDescendants = (morph, node) => {
+    const rename = runtimeRenames.find(rename => rename.nodeId === node.id);
+    if (rename) {
+      if (morph.name !== rename.before) throw new Error(`Copied runtime node has stale name ${morph.name}`);
+      morph.name = rename.after;
+    }
+    visibleChildren(afterDocument, node).forEach((child, index) => {
+      const runtimeChild = childrenOf(morph)[index];
+      if (runtimeChild) renameCopiedDescendants(runtimeChild, child);
+    });
+  };
+  if (!restoredMorph) renameCopiedDescendants(target, node);
   assertRuntimeSubtreeMatchesDocument(target, afterDocument, node);
   const index = visibleChildren(afterDocument, parent)
     .findIndex(({ id }) => id === nodeId);
@@ -276,7 +292,9 @@ export function projectCachedDerivedRuntimeStructure ({
   nodeId,
   commandKind,
   changeSetId,
-  sourceMorph = null
+  sourceMorph = null,
+  runtimeRenames = [],
+  restoredMorphs = new Map()
 }) {
   if (!Array.isArray(components)) {
     throw new Error('Cached derived runtime projection requires component plans');
@@ -298,7 +316,8 @@ export function projectCachedDerivedRuntimeStructure ({
     const afterVisible = isRuntimeVisible(component.projection.document, nodeId);
     if (!beforeVisible && !afterVisible) continue;
     const operation = !beforeVisible && afterVisible
-      ? introductionOperation(component, nodeId, runtimeMorphs, sourceMorph)
+      ? introductionOperation(component, nodeId, runtimeMorphs, sourceMorph, runtimeRenames,
+          restoredMorphs.get(component.dependant))
       : afterVisible
         ? movementOperation(component, nodeId, runtimeMorphs)
         : removalOperation(component, nodeId, runtimeMorphs);

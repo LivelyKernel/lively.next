@@ -13,7 +13,7 @@ import {
   SetOpaqueProperty,
   SetProperty,
   SuppressInheritedNode
-} from './commands.js';
+} from '../../components/reconciliation/commands.js';
 import {
   ComponentNode,
   ComponentNodeProvenanceKind,
@@ -22,24 +22,24 @@ import {
   findComponentLayoutModel,
   findComponentParent,
   localNodeProvenance
-} from './component-document.js';
+} from '../../components/reconciliation/component-document.js';
 import {
   ComponentTransactionDirection,
   applyPreparedComponentTransaction,
   commitPreparedComponentTransaction,
   prepareScalarComponentTransaction
-} from './component-transaction.js';
+} from '../../components/reconciliation/component-transaction.js';
 import { SeededRandom } from './fuzz-random.js';
-import { reduceComponent } from './reducer.js';
-import { parseComponentSource } from './source-adapter.js';
+import { reduceComponent } from '../../components/reconciliation/reducer.js';
+import { parseComponentSource } from '../../components/reconciliation/source-adapter.js';
 import {
   alignParsedDocumentIdentities,
   componentDocumentsSemanticallyEqual
-} from './source-projector.js';
+} from '../../components/reconciliation/source-projector.js';
 import {
   ComponentImportKind,
   componentImportBinding
-} from './import-bindings.js';
+} from '../../components/reconciliation/import-bindings.js';
 
 export const DEFAULT_COMPONENT_PROJECTION_FUZZ_SEED = 0x51CA1A;
 

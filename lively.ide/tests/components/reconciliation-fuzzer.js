@@ -12,17 +12,17 @@ import {
 import { GroupChange } from 'lively.morphic/changes.js';
 import { module } from 'lively.modules/index.js';
 import { parse } from 'lively.ast';
-import { SeededRandom } from './reconciliation/fuzz-random.js';
+import { SeededRandom } from './fuzz-random.js';
 import {
   ComponentNodeProvenanceKind,
   findComponentNode
-} from './reconciliation/component-document.js';
+} from '../../components/reconciliation/component-document.js';
 
-export { SeededRandom } from './reconciliation/fuzz-random.js';
+export { SeededRandom } from './fuzz-random.js';
 export {
   ComponentProjectionFuzzer,
   runComponentProjectionFuzz
-} from './reconciliation/component-projection-fuzzer.js';
+} from './component-projection-fuzzer.js';
 
 /**
  * Deterministic stress testing for component-to-source reconciliation.
