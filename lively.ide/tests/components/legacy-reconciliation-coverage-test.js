@@ -3,6 +3,7 @@ import { expect } from 'mocha-es6';
 import { createFiles, resource } from 'lively.resources';
 import module from 'lively.modules/src/module.js';
 import { Color } from 'lively.graphics';
+import { connect, disconnect } from 'lively.bindings';
 import { Morph, morph, part } from 'lively.morphic';
 import { add } from 'lively.morphic/components/core.js';
 import { InteractiveComponentDescriptor } from '../../components/editor.js';
@@ -240,7 +241,22 @@ describe('legacy component editing coverage', () => {
     class SourceLessMorph extends Morph {}
     SourceLessMorph[Symbol.for('lively-module-meta')] = null;
     const unsupported = new SourceLessMorph({ name: 'unsupported' });
-    a.withMetaDo({ reconcileChanges: true }, () => a.addMorph(unsupported));
+    const notifications = [];
+    const observer = { observe: change => {
+      if (change.target === a && change.args?.[0] === unsupported) {
+        notifications.push({ selector: change.selector, owner: unsupported.owner });
+      }
+    } };
+    connect(a, 'onChange', observer, 'observe');
+    connect(a, 'change', observer, 'observe');
+    connect($world, 'onSubmorphChange', observer, 'observe');
+    try {
+      a.withMetaDo({ reconcileChanges: true }, () => a.addMorph(unsupported));
+    } finally {
+      disconnect(a, 'onChange', observer, 'observe');
+      disconnect(a, 'change', observer, 'observe');
+      disconnect($world, 'onSubmorphChange', observer, 'observe');
+    }
     let rejection;
     try { await processed(); } catch (error) { rejection = error; }
     expect(rejection).to.be.instanceOf(Error);
@@ -248,6 +264,9 @@ describe('legacy component editing coverage', () => {
     expect(currentSources()).deep.equals(before);
     expect(descriptors.get('A').stylePolicy.spec).equals(policySpec);
     expect(unsupported.owner).equals(null);
+    expect(notifications.length).above(0);
+    expect(notifications.every(({ selector, owner }) =>
+      selector === 'addMorphAt' ? owner === a : selector === 'removeMorph' && owner === null)).equals(true);
     expect(a.submorphs.map(child => child.name)).deep.equals(cold('A').submorphs.map(child => child.name));
     expect(manager.undos).has.length(1);
     expect(manager.undoInProgress).equals(null);
