@@ -11,6 +11,7 @@ import {
 import {
   ComponentMoveInheritanceTransitionKind,
   ComponentTextEditKind,
+  ClearPropertyOverride,
   EditText,
   IntroduceNode,
   MoveNode,
@@ -160,6 +161,7 @@ function componentCommandFor ({
   runtimeNodeNameFor,
   runtimeOrderingNameFor,
   valueExpressionFor,
+  propertyMatchesInheritedValueFor,
   introducedNodeFor
 }) {
   const commandSpec = {
@@ -455,6 +457,13 @@ function componentCommandFor ({
     };
   }
   if (bridgeCommand.kind !== ComponentBridgeCommandKind.SET_PROPERTY) return null;
+  if (document.sourceMetadata.propertyLocations?.[nodeId]?.[bridgeCommand.property] &&
+      propertyMatchesInheritedValueFor?.(bridgeCommand)) {
+    return {
+      command: ClearPropertyOverride({ ...commandSpec, property: bridgeCommand.property }),
+      bindings: {}
+    };
+  }
   if (isSemanticValue(bridgeCommand.value)) {
     return {
       command: SetProperty({
@@ -497,6 +506,7 @@ export function prepareShadowScalarProjection ({
   runtimeOrderingNameFor,
   runtimeValuesFor,
   valueExpressionFor,
+  propertyMatchesInheritedValueFor,
   introducedNodeFor,
   runtimeLayoutFor
 }) {
@@ -586,6 +596,7 @@ export function prepareShadowScalarProjection ({
         runtimeNodeNameFor,
         runtimeOrderingNameFor,
         valueExpressionFor,
+        propertyMatchesInheritedValueFor,
         introducedNodeFor
       });
     } catch (error) {
