@@ -9,6 +9,7 @@ import {
 } from '../changes/operations.js';
 import { expect } from 'mocha-es6';
 import { Color, pt } from 'lively.graphics';
+import { connect, disconnect } from 'lively.bindings';
 
 let env;
 
@@ -99,6 +100,61 @@ describe('morphic change engine characterization', function () {
 
     expect(notifications).deep.equals(['manager', 'target', 'owner']);
   });
+
+  for (const boundary of ['committed', 'target', 'binding', 'owner', 'method-binding', 'owner-binding']) {
+    it(`characterizes foundation F6 compensation at the ${boundary} boundary`, () => {
+      const ancestor = morph({ submorphs: [{ submorphs: [{ name: 'target', fill: Color.red }] }] });
+      const owner = ancestor.submorphs[0];
+      const target = owner.submorphs[0];
+      const notifications = [];
+      const record = change => {
+        if (change.target === target && change.prop === 'fill') {
+          notifications.push({ value: change.value, current: target.fill });
+        }
+      };
+      const reject = change => {
+        if (change.target !== target || change.prop !== 'fill' || change.value !== Color.green) return;
+        if (boundary !== 'committed' &&
+            env.changeManager.deferAfterChangeNotifications?.(change, () => reject(change))) return;
+        change.reverseApply();
+        env.changeManager.suppressChangeNotifications?.(change);
+      };
+      const listener = (changeSet, context) => {
+        if (boundary === 'committed') reject(context.committedChange);
+      };
+      env.changeManager.addCommittedChangeListener(listener);
+      target.onChange = change => { record(change); if (boundary === 'target') reject(change); };
+      const first = { handle: change => { if (boundary === 'binding') reject(change); } };
+      const second = { handle: record };
+      connect(target, 'change', first, 'handle');
+      connect(target, 'change', second, 'handle');
+      const method = { handle: change => { if (boundary === 'method-binding') reject(change); } };
+      const ownerMethod = { handle: change => { if (boundary === 'owner-binding') reject(change); } };
+      owner.onSubmorphChange = change => { record(change); if (boundary === 'owner') reject(change); };
+      ancestor.onSubmorphChange = record;
+      connect(target, 'onChange', method, 'handle');
+      connect(owner, 'onSubmorphChange', ownerMethod, 'handle');
+      connect(target, 'onChange', second, 'handle');
+      connect(owner, 'onSubmorphChange', second, 'handle');
+      try {
+        target.fill = Color.green;
+        expect(target.fill).equals(Color.red);
+        expect(notifications.length).above(0);
+        expect(notifications.every(({ value, current }) => value === current)).equals(true);
+        expect(notifications.filter(({ value }) => value === Color.red)).has.length(6);
+        expect(notifications.filter(({ value }) => value === Color.green))
+          .has.length(boundary === 'committed' ? 0 : 6);
+      } finally {
+        disconnect(target, 'change', first, 'handle');
+        disconnect(target, 'change', second, 'handle');
+        disconnect(target, 'onChange', method, 'handle');
+        disconnect(owner, 'onSubmorphChange', ownerMethod, 'handle');
+        disconnect(target, 'onChange', second, 'handle');
+        disconnect(owner, 'onSubmorphChange', second, 'handle');
+        env.changeManager.removeCommittedChangeListener(listener);
+      }
+    });
+  }
 
   it('restores a removed morph at its exact sibling index', () => {
     const owner = morph({

@@ -171,6 +171,70 @@ describe('component edit cost and retained history', () => {
     expect(text.extent).deep.equals(afterExtent);
   });
 
+  it('F6 detects an intervening change that replaces a discarded record at the same count', async () => {
+    editable.undoStart('drag with a recorder replacement');
+    const text = editable.get('text');
+    text.withMetaDo({ isLayoutAction: true }, () => { text.extent = pt(30, 40); });
+    await dragTo(11);
+    const recorder = manager.undoInProgress.recorder;
+    const measurement = recorder.changes.find(change => change.target === text && change.prop === 'extent');
+    expect(measurement).to.be.ok;
+    const count = recorder.changes.length;
+    manager.discardRecordedChanges([measurement]);
+    editable.opacity = 0.5;
+    expect(recorder.changes).has.length(count);
+    await dragTo(12);
+    expect(manager.undoInProgress.joinedTransactions).has.length(2);
+    editable.undoStop();
+    const after = componentModule._source;
+    manager.undo();
+    await tracker.onceChangesProcessed();
+    expect(componentModule._source).equals(source);
+    expect(editable.get('box').position).deep.equals(pt(10, 20));
+    expect(editable.opacity).equals(1);
+    manager.redo();
+    await tracker.onceChangesProcessed();
+    expect(componentModule._source).equals(after);
+    expect(editable.get('box').position).deep.equals(pt(12, 24));
+    expect(editable.opacity).equals(0.5);
+  });
+
+  it('F6 resolves all coalesced targets by id in the current editable at replay', async () => {
+    editable.undoStart('drag two targets');
+    await dragTo(11);
+    const text = editable.get('text');
+    editable.withMetaDo({ reconcileChanges: true }, () => { text.position = pt(2, 4); });
+    await tracker.onceChangesProcessed();
+    await dragTo(12);
+    expect(manager.undoInProgress.joinedTransactions).has.length(1);
+    const joined = manager.undoInProgress.joinedTransactions[0];
+    const runtimeContext = (joined.transactions?.[0] || joined).adapters.runtimeContext;
+    editable.undoStop();
+    const after = componentModule._source;
+    const oldBox = editable.get('box');
+    const cold = part(descriptor);
+    instances.push(cold);
+    const currentBox = cold.get('box');
+    // Simulate replacing a runtime object while retaining its semantic runtime id.
+    currentBox._id = oldBox.id;
+    oldBox.remove();
+    expect(runtimeContext.resolveMorph(oldBox.id)).equals(undefined);
+    editable.addMorphAt(currentBox, 0);
+    expect(runtimeContext.resolveMorph(oldBox.id)).equals(currentBox);
+    manager.undo();
+    await tracker.onceChangesProcessed();
+    expect(componentModule._source).equals(source);
+    expect(currentBox.position).deep.equals(pt(10, 20));
+    expect(text.position).deep.equals(pt(0, 0));
+    expect(oldBox.position).deep.equals(pt(12, 24));
+    manager.redo();
+    await tracker.onceChangesProcessed();
+    expect(componentModule._source).equals(after);
+    expect(currentBox.position).deep.equals(pt(12, 24));
+    expect(text.position).deep.equals(pt(2, 4));
+    expect(oldBox.position).deep.equals(pt(12, 24));
+  });
+
   it('drops a conflicted coalesced entry and leaves earlier history reachable', async () => {
     const earlier = part(descriptor);
     instances.push(earlier);

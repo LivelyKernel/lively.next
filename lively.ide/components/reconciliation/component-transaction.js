@@ -545,12 +545,8 @@ export class ProjectionalComponentEditTransaction extends EditTransaction {
   /** Compact repeated property writes and retain other scalar operations in replay order. */
   merge (next) {
     const operations = [];
-    const targets = new Map();
     for (const operation of [...this.transaction.runtimeChangeSet.operations,
       ...next.transaction.runtimeChangeSet.operations]) {
-      targets.set(operation.targetId,
-        next.adapters.runtimeContext.resolveMorph(operation.targetId) ||
-          this.adapters.runtimeContext.resolveMorph(operation.targetId));
       const previous = operations[operations.length - 1];
       if (previous?.targetId === operation.targetId && previous.property === operation.property &&
           previous.valueSemantics === MorphicValueSemantics.REFERENCE &&
@@ -560,9 +556,8 @@ export class ProjectionalComponentEditTransaction extends EditTransaction {
     }
     const runtimeChangeSet = new MorphicChangeSet({ ...next.transaction.runtimeChangeSet, operations });
     const transaction = new CoalescedComponentTransaction(this.transaction, next.transaction, runtimeChangeSet);
-    const runtimeContext = { ...next.adapters.runtimeContext, resolveMorph: id => targets.get(id) };
     return new ProjectionalComponentEditTransaction(transaction,
-      next.adapters.forTransaction(transaction, runtimeContext), {
+      next.adapters.forTransaction(transaction), {
         label: this.label, afterReplay: next.afterReplay, metadata: this.metadata
       });
   }
