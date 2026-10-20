@@ -1106,11 +1106,9 @@ export class ComponentChangeTracker {
         )
       });
       if (!propagation.supported) return propagation;
-      const cachedComponents = propagation.components.filter(
-        ({ dependant }) => dependant?._cachedComponent
-      );
       let runtimeStructuralProjection = null;
-      if (cachedComponents.length) {
+      if (propagation.components.length) {
+        let projectedPolicies;
         const restoredMorphs = new Map();
         if (restoredOverrides) {
           const policies = new Map();
@@ -1135,7 +1133,7 @@ export class ComponentChangeTracker {
         }
         const nodeId = batch.shadowProjection.steps[0].componentCommand.nodeId;
         const projection = projectCachedDerivedRuntimeStructure({
-          components: cachedComponents,
+          components: propagation.components,
           nodeId,
           commandKind: command.kind === ComponentBridgeCommandKind.REMOVE_NODE
             ? DerivedRuntimeStructureProjectionKind.REMOVE
@@ -1146,6 +1144,20 @@ export class ComponentChangeTracker {
           sourceMorph: command.kind === ComponentBridgeCommandKind.INTRODUCE_NODE
             ? context.resolveMorph?.(command.nodeId)
             : null,
+          synthesizeIntroducedMorph: (component, introducedId) => {
+            if (!projectedPolicies) {
+              projectedPolicies = new Map();
+              for (const entry of this.projectionalPolicySourceEntries({ ...batch, derivedPropagation: propagation })) {
+                const projected = this.evaluateProjectionalPolicy(entry, projectedPolicies);
+                projectedPolicies.set(entry.descriptor.stylePolicy, projected);
+              }
+            }
+            const policy = projectedPolicies.get(component.dependant.stylePolicy);
+            const path = componentNodeNamePath(component.projection.document, introducedId);
+            const spec = policy && path && policySpecAtPath(policy.asFullySynthesizedSpec(), path);
+            if (!spec) throw new Error(`Cannot synthesize introduced runtime node ${introducedId}`);
+            return morph(spec);
+          },
           runtimeRenames: batch.shadowProjection.steps[0].runtimeRenames,
           restoredMorphs
         });
@@ -2257,6 +2269,21 @@ export class ComponentChangeTracker {
     return projected;
   }
 
+  /** Enumerate source plans in parent-first order for policy evaluation. */
+  projectionalPolicySourceEntries (batch) {
+    return [{
+      descriptor: this.componentDescriptor,
+      componentModule: this.componentModule,
+      source: batch.shadowProjection.sourceAfter,
+      document: batch.shadowProjection.document
+    }, ...(batch.derivedPropagation?.components || []).map(component => ({
+      descriptor: component.dependant,
+      componentModule: this.projectionalModuleForId(component.moduleId),
+      source: component.projection.sourceAfter,
+      document: component.projection.document
+    }))];
+  }
+
   prepareProjectionalPolicyCacheFromSource (batch, context = {}) {
     if (batch.derivedPropagation && !batch.derivedPropagation.supported) return null;
     const policy = this.componentDescriptor?.stylePolicy;
@@ -2271,23 +2298,17 @@ export class ComponentChangeTracker {
         componentNodeNamePath(batch.shadowProjection.document, step.reduction.semanticDelta.nodeId);
       const affectedMorph = context.resolveMorph?.(batch.commands[0].nodeId) ||
         this.trackedComponent?.getMorphWithId?.(batch.commands[0].nodeId);
-      const entries = [{
-        descriptor: this.componentDescriptor,
-        componentModule: this.componentModule,
-        source: batch.shadowProjection.sourceAfter,
-        document: batch.shadowProjection.document
-      }, ...(batch.derivedPropagation?.components || []).map(component => ({
-        descriptor: component.dependant,
-        componentModule: this.projectionalModuleForId(component.moduleId),
-        source: component.projection.sourceAfter,
-        document: component.projection.document
-      }))];
-      for (const entry of entries) {
+      for (const entry of this.projectionalPolicySourceEntries(batch)) {
         const cachedPolicy = entry.descriptor.stylePolicy;
         const projected = this.evaluateProjectionalPolicy(entry, projectedPolicies, references);
         projectedPolicies.set(cachedPolicy, projected);
         const command = batch.commands[0];
         const isMasterEdit = command.property === 'master' || command.kind === ComponentBridgeCommandKind.SET_MASTER;
+        const runtimeProjection = batch.derivedPropagation?.runtimeStructuralProjection;
+        const introduction = runtimeProjection?.changeSet.operations.find(operation =>
+          operation.from?.kind === 'detached' && operation.metadata.componentId === entry.document.componentId);
+        const introducedMorph = introduction && runtimeProjection.runtimeContext.resolveMorph(introduction.morphId);
+        const introducedPath = introducedMorph && componentNodeNamePath(entry.document, step.reduction.semanticDelta.nodeId);
         const pairs = [];
         const pairSpecs = (before, after, path = []) => {
           if (before?.COMMAND === 'add') before = before.props;
@@ -2299,7 +2320,12 @@ export class ComponentChangeTracker {
               affectedPath.length <= path.length &&
               affectedPath.every((name, index) => name === path[index]);
             const runtimePath = inAffectedSubtree ? path.slice(affectedPath.length) : path;
-            const runtimeMorph = entry.descriptor === this.componentDescriptor
+            const inIntroducedSubtree = introducedPath && introducedPath.length <= path.length &&
+              introducedPath.every((name, index) => name === path[index]);
+            const runtimeMorph = inIntroducedSubtree
+              ? path.slice(introducedPath.length).reduce((owner, name) =>
+                  owner?.submorphs?.find(child => child.name === name), introducedMorph)
+              : entry.descriptor === this.componentDescriptor
               ? runtimePath.reduce((owner, name) => owner?.submorphs?.find(child => child.name === name),
                   inAffectedSubtree ? affectedMorph : this.trackedComponent)
               : null;
