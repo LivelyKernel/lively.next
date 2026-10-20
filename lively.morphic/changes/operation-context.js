@@ -102,6 +102,7 @@ export function operationContext (manager, { scope = [], resolveMorph = manager.
       claimed.add(handle);
       return handle;
     },
+    releaseUnclaimed: reason => lifetimes.forEach(handle => { if (!claimed.has(handle)) handle.release(reason); }),
     release: reason => lifetimes.forEach(handle => handle.release(reason))
   };
   roots.forEach(root => remember(root.deref()));

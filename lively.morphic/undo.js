@@ -779,6 +779,7 @@ export class UndoManager {
   }
 
   undoStop () {
+    if (this.applyCount && this.undoInProgress) throw new MorphicHistoryOwnershipError('replay');
     const transaction = this._closeGroup();
     return transaction ? this.addTransaction(transaction) : null;
   }

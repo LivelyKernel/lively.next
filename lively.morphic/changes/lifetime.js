@@ -2,6 +2,16 @@
 /* global WeakRef */
 const liveHandles = new Set();
 const disposalReceipts = new WeakSet();
+let handleSweep = liveHandles.values();
+
+/** Bound registry maintenance without scanning the entire history per handle. */
+function pruneDeadHandles () {
+  for (let count = 0; count < 8; count++) {
+    const { value: reference, done } = handleSweep.next();
+    if (done) { handleSweep = liveHandles.values(); break; }
+    if (!reference.deref()) liveHandles.delete(reference);
+  }
+}
 
 /** Resolve membership without detaching descendants. */
 export function topOwner (node) {
@@ -35,14 +45,20 @@ export class DetachedLifetimeHandle {
   constructor (roots = [], { onRelease = null, shouldDispose = null, dispose = null, logError = null } = {}) {
     if ([onRelease, shouldDispose, dispose, logError].some(fn => fn !== null && typeof fn !== 'function') ||
         !!shouldDispose !== !!dispose) throw new Error('Detached disposal requires a caller predicate and hook');
-    Object.assign(this, { roots: [...new Set(roots)], onRelease, shouldDispose, dispose, logError, released: false });
-    this.reference = new WeakRef(this);
-    liveHandles.add(this.reference);
+    Object.assign(this, { roots: [], onRelease, shouldDispose, dispose, logError, released: false, reference: null });
+    this.update(roots);
   }
 
   update (roots) {
     if (this.released) throw new Error('Detached lifetime handle has been released');
     this.roots = [...new Set(roots)];
+    if (this.roots.length) {
+      if (!liveHandles.has(this.reference)) {
+        pruneDeadHandles();
+        this.reference ||= new WeakRef(this);
+        liveHandles.add(this.reference);
+      }
+    } else liveHandles.delete(this.reference);
   }
 
   release (reason = 'released') {
