@@ -93,14 +93,11 @@ function rememberRuntimeMorph (runtimeMorphs, morph) {
   runtimeMorphs.set(morph.id, morph);
 }
 
-function assertCopyableIntroducedSubtree (document, node) {
-  if (node.provenance.kind !== ComponentNodeProvenanceKind.INHERITED ||
-      node.provenance.hasLocalOverrides || !isRuntimeVisible(document, node.id)) {
-    throw new Error(
-      `Cached derived runtime introduction for ${node.name} requires local synthesis`
-    );
-  }
-  visibleChildren(document, node).forEach(child => assertCopyableIntroducedSubtree(document, child));
+/** Copy only when the base subtree already represents all derived-local state. */
+function isCopyableIntroducedSubtree (document, node) {
+  return node.provenance.kind === ComponentNodeProvenanceKind.INHERITED &&
+    !node.provenance.hasLocalOverrides && isRuntimeVisible(document, node.id) &&
+    visibleChildren(document, node).every(child => isCopyableIntroducedSubtree(document, child));
 }
 
 function assertRuntimeSubtreeMatchesDocument (runtimeMorph, document, node) {
@@ -125,28 +122,33 @@ function operationMetadata (component) {
   };
 }
 
-function introductionOperation (component, nodeId, runtimeMorphs, sourceMorph, runtimeRenames, restoredMorph) {
+/** Prepare a detached copy or synthesized subtree before any transaction writes. */
+function introductionOperation (component, nodeId, runtimeMorphs, sourceMorph, synthesizeIntroducedMorph, runtimeRenames, restoredMorph) {
   const { beforeDocument, document: afterDocument } = component.projection;
   const root = component.dependant._cachedComponent;
   const node = findComponentNode(afterDocument, nodeId);
   const parent = node && findComponentParent(afterDocument, nodeId);
   const parentBefore = parent && findComponentNode(beforeDocument, parent.id);
   const owner = parentBefore && resolveRuntimeNode(root, beforeDocument, parentBefore.id);
-  if (!node || !parent || !parentBefore || !owner) {
+  if (!node || !parent || !parentBefore || (root && !owner)) {
     throw new Error(
       `Cached derived component ${component.exportName} cannot resolve the introduced runtime owner`
     );
   }
-  assertRuntimeOwnerMatchesDocument(owner, beforeDocument, parentBefore);
-  if (!restoredMorph) assertCopyableIntroducedSubtree(afterDocument, node);
-  sourceMorph = restoredMorph || sourceMorph;
-  if (!sourceMorph || typeof sourceMorph.copy !== 'function') {
+  if (owner) assertRuntimeOwnerMatchesDocument(owner, beforeDocument, parentBefore);
+  const copyable = !restoredMorph && isCopyableIntroducedSubtree(afterDocument, node);
+  if (!restoredMorph && !copyable && !synthesizeIntroducedMorph) {
+    throw new Error(`Cached derived runtime introduction for ${node.name} requires local synthesis`);
+  }
+  if (copyable && typeof sourceMorph?.copy !== 'function') {
     throw new Error(
       `Cached derived component ${component.exportName} cannot copy the introduced runtime node`
     );
   }
-  const target = restoredMorph || sourceMorph.copy();
-  if (!target || (!restoredMorph && target === sourceMorph) || target.owner) {
+  const target = restoredMorph || (copyable
+    ? sourceMorph.copy()
+    : synthesizeIntroducedMorph(component, nodeId));
+  if (!target || target === sourceMorph || target.owner) {
     throw new Error(
       `Cached derived component ${component.exportName} produced an invalid runtime copy`
     );
@@ -164,7 +166,7 @@ function introductionOperation (component, nodeId, runtimeMorphs, sourceMorph, r
       if (runtimeChild) renameCopiedDescendants(runtimeChild, child);
     });
   };
-  if (!restoredMorph) renameCopiedDescendants(target, node);
+  if (copyable) renameCopiedDescendants(target, node);
   assertRuntimeSubtreeMatchesDocument(target, afterDocument, node);
   const index = visibleChildren(afterDocument, parent)
     .findIndex(({ id }) => id === nodeId);
@@ -173,15 +175,16 @@ function introductionOperation (component, nodeId, runtimeMorphs, sourceMorph, r
       `Cached derived component ${component.exportName} cannot place the introduced runtime node`
     );
   }
-  const projectedNames = childrenOf(owner).map(({ name }) => name);
+  const projectedNames = (owner ? childrenOf(owner) : visibleChildren(beforeDocument, parentBefore))
+    .map(({ name }) => name);
   projectedNames.splice(index, 0, target.name);
   assertNamesMatch(projectedNames, afterDocument, parent);
   rememberRuntimeMorph(runtimeMorphs, target);
-  rememberRuntimeMorph(runtimeMorphs, owner);
+  if (owner) rememberRuntimeMorph(runtimeMorphs, owner);
   return new MoveMorph({
     morphId: target.id,
     from: detachedMorph(),
-    to: attachedMorph({ ownerId: owner.id, index }),
+    to: attachedMorph({ ownerId: owner?.id || `${afterDocument.componentId}:${parent.id}`, index }),
     metadata: operationMetadata(component)
   });
 }
@@ -293,6 +296,7 @@ export function projectCachedDerivedRuntimeStructure ({
   commandKind,
   changeSetId,
   sourceMorph = null,
+  synthesizeIntroducedMorph = null,
   runtimeRenames = [],
   restoredMorphs = new Map()
 }) {
@@ -311,22 +315,27 @@ export function projectCachedDerivedRuntimeStructure ({
   const operations = [];
   const bindings = new Map();
   for (const component of components) {
-    if (!component?.dependant?._cachedComponent) continue;
+    if (!component?.dependant) continue;
     const beforeVisible = isRuntimeVisible(component.projection.beforeDocument, nodeId);
     const afterVisible = isRuntimeVisible(component.projection.document, nodeId);
     if (!beforeVisible && !afterVisible) continue;
+    const root = component.dependant?._cachedComponent;
+    // Retain an activated override's template even when its editor opens only before replay.
+    if (!root && !(commandKind === DerivedRuntimeStructureProjectionKind.INTRODUCE &&
+        !beforeVisible && afterVisible && synthesizeIntroducedMorph &&
+        !isCopyableIntroducedSubtree(component.projection.document,
+          findComponentNode(component.projection.document, nodeId)))) continue;
     const operation = !beforeVisible && afterVisible
-      ? introductionOperation(component, nodeId, runtimeMorphs, sourceMorph, runtimeRenames,
-          restoredMorphs.get(component.dependant))
+      ? introductionOperation(component, nodeId, runtimeMorphs, sourceMorph, synthesizeIntroducedMorph,
+          runtimeRenames, restoredMorphs.get(component.dependant))
       : afterVisible
         ? movementOperation(component, nodeId, runtimeMorphs)
         : removalOperation(component, nodeId, runtimeMorphs);
     if (operation) {
       operations.push(operation);
-      const root = component.dependant._cachedComponent;
       const target = runtimeMorphs.get(operation.morphId);
       bindings.set(operation.morphId, {
-        component, target, detachedTargets: new WeakMap([[root, target]])
+        component, target, detachedTargets: new WeakMap(root ? [[root, target]] : [])
       });
     }
   }
