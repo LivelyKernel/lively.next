@@ -92,6 +92,29 @@ export { Derived };
     await tracker._shadowComparisonPromise;
   }
 
+  it('F7 edits a namespace package parent through the static fallback with exact undo and redo', async () => {
+    await open("component(buttons.ButtonDefault, { name: 'derived' })",
+      "import * as buttons from 'lively.components/buttons.cp.js';");
+    editable.openInWorld();
+    expect(tracker.projectionalComponentDocumentResolver()({ expression: 'buttons.ButtonDefault' })).equals(null);
+    const before = componentModule._source;
+    const beforeOpacity = editable.opacity;
+    await edit(editable, 'opacity', 0.4);
+    const after = componentModule._source;
+    expect(after).not.equals(before);
+    expect(cold().opacity).equals(0.4);
+    editable.env.undoManager.undo();
+    await processed();
+    expect(componentModule._source).equals(before);
+    expect(editable.opacity).equals(beforeOpacity);
+    expect(cold().opacity).equals(beforeOpacity);
+    editable.env.undoManager.redo();
+    await processed();
+    expect(componentModule._source).equals(after);
+    expect(editable.opacity).equals(0.4);
+    expect(cold().opacity).equals(0.4);
+  });
+
   /** Apply an ordinary edit and require one non-overlapping source change per step. */
   async function edit (target, property, value) {
     editable.undoStart(`edit inherited ${property}`);
