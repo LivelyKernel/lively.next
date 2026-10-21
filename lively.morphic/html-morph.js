@@ -3,7 +3,7 @@ import { promise, arr } from 'lively.lang';
 import { pt, Rectangle } from 'lively.graphics';
 import { Morph } from './morph.js';
 import { addOrChangeCSSDeclaration } from './rendering/dom-helper.js';
-import css from 'css';
+import { scopedCss } from './rendering/scoped-css.js';
 
 // Usage:
 // var htmlMorph = $world.addMorph(new HTMLMorph({position: pt(10,10)}));
@@ -161,12 +161,7 @@ export class HTMLMorph extends Morph {
   installCssDeclaration (doc) {
     if (!this.cssDeclaration) return;
     try {
-      const parsed = css.parse(this.cssDeclaration);
-      // prepend morph id to each rule so that css is scoped to morph
-      parsed.stylesheet.rules.forEach(r => {
-        if (r.selectors) r.selectors = r.selectors.map(ea => `#${this.id} ${ea}`);
-      });
-      addOrChangeCSSDeclaration('css-for-' + this.id, css.stringify(parsed), this.document);
+      addOrChangeCSSDeclaration('css-for-' + this.id, scopedCss(this.cssDeclaration, [this.id]), doc);
     } catch (err) {
       console.error(`Error setting cssDeclaration of ${this}: ${err}`); // eslint-disable-line no-console
     }

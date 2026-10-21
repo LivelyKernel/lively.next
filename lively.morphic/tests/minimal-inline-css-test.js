@@ -3,6 +3,7 @@ import { expect } from 'mocha-es6';
 import { Morph, Text, HTMLMorph, Path, Polygon } from '../index.js';
 import { pt, Color } from 'lively.graphics';
 import { promise } from 'lively.lang';
+import { addOrChangeCSSDeclaration } from '../rendering/dom-helper.js';
 
 describe('minimal inline morph CSS', () => {
   for (const type of [Path, Polygon]) {
@@ -67,6 +68,7 @@ describe('minimal inline morph CSS', () => {
       morph.scale = 1;
       check();
       expect(node.style.transform).equals('');
+      expect(getComputedStyle(node).transform).not.equals('none', 'default transform must remain a containing block for fixed HTML');
     } finally { morph.remove(); }
   });
 
@@ -100,7 +102,11 @@ describe('minimal inline morph CSS', () => {
       expect(node.style.borderRadius).equals('');
       expect(node.style.opacity).equals('');
       expect(node.style.transform).equals('');
-      expect(getComputedStyle(node).borderTopLeftRadius).equals('0px');
+      const restored = getComputedStyle(node);
+      expect(restored.borderLeftWidth).equals('0px', 'returning to defaults must remove the visible border');
+      expect(restored.opacity).equals('1', 'returning to defaults must restore full opacity');
+      expect(restored.transform).equals('matrix(1, 0, 0, 1, 0, 0)', 'returning to defaults must restore the default transform');
+      expect(restored.borderTopLeftRadius).equals('0px');
     } finally { parent.remove(); }
   });
 
@@ -148,4 +154,35 @@ describe('minimal inline morph CSS', () => {
       expect(node.style.background).not.equals('');
     } finally { text.remove(); }
   });
+  it('allows project style classes to override default-valued fill and cursor', async () => {
+    const style = addOrChangeCSSDeclaration('minimal-default-override', '.minimal-default-override { background:rgb(0,0,255); cursor:wait; }');
+    const morph = new Morph({ fill: Color.white, nativeCursor: 'auto', styleClasses: ['minimal-default-override'] }).openInWorld();
+    try {
+      await morph.whenRendered();
+      const computed = getComputedStyle(morph.env.renderer.getNodeForMorph(morph));
+      expect(computed.backgroundColor).equals('rgb(0, 0, 255)', 'project classes may override omitted default fill');
+      expect(computed.cursor).equals('wait', 'project classes may override omitted default cursor');
+    } finally { morph.remove(); style.remove(); }
+  });
+
+  it('inlines preview defaults for HTML copied outside Lively', async () => {
+    const morph = new Morph({ extent: pt(100, 100), submorphs: [new Morph({ borderWidth: 3, extent: pt(40, 40), position: pt(10, 20) })] }).openInWorld();
+    let frame;
+    try {
+      await morph.whenRendered();
+      const preview = morph.renderPreview({ inlineDefaults: true });
+      frame = document.createElement('iframe');
+      frame.srcdoc = '<!doctype html><html><body>' + preview + '</body></html>';
+      const loaded = new Promise(resolve => { frame.onload = resolve; });
+      document.body.appendChild(frame);
+      await loaded;
+      const child = frame.contentDocument.querySelector('.morph-preview .morph-preview');
+      const style = frame.contentWindow.getComputedStyle(child);
+      expect(style.borderLeftStyle).equals('solid', 'copied borders must survive without the Lively stylesheet');
+      expect(style.borderLeftWidth).equals('3px', 'copied border widths must survive without the Lively stylesheet');
+      expect(style.backgroundColor).to.be.oneOf(['rgb(255, 255, 255)', 'color(display-p3 1 1 1)'], 'copied default white fill must survive without the Lively stylesheet');
+      expect(style.transformOrigin).equals('0px 0px', 'copied transform origin must survive without the Lively stylesheet');
+    } finally { frame?.remove(); morph.remove(); }
+  });
+
 });
