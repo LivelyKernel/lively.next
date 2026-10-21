@@ -1366,12 +1366,12 @@ export class Text extends Morph {
         const line = this.document.getLine(submorphAnchor.position.row);
         this.textLayout.resetLineCharBoundsCacheOfLine(line);
         line.hasEstimatedExtent = true;
-        line.lineNeedsRerender = true;
+        // Inline styling already reflows the live line; rebuilding it reloads iframes.
+        this.renderingState.renderedTextAndAttributes = null;
       } else {
         this.renderingState.needsRemeasure = true;
         delete this._cachedBounds;
       }
-      this.renderingState.renderedTextAndAttributes = null;
       this.makeDirty();
     }
   }
