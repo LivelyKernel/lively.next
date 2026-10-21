@@ -1,27 +1,17 @@
 /* global ResizeObserver */
 import { promise, arr } from 'lively.lang';
+import { connect } from 'lively.bindings';
 import { pt, Rectangle } from 'lively.graphics';
 import { Morph } from './morph.js';
 import { addOrChangeCSSDeclaration } from './rendering/dom-helper.js';
-import css from 'css';
+import { scopedCss } from './rendering/scoped-css.js';
 
 const cssMorphs = new WeakMap();
 const sharedCssNodes = new WeakMap();
 const cssDocuments = new WeakMap();
 const cssMarkers = new WeakMap();
+const cssUnloadConnections = new WeakMap();
 const sharedCssId = 'css-for-shared-html-morphs';
-
-function scopedCss (source, ids) {
-  const parsed = css.parse(source);
-  function scope (rules) {
-    for (const rule of rules) {
-      if (rule.selectors) rule.selectors = ids.flatMap(id => rule.selectors.map(selector => `#${id} ${selector}`));
-      if (rule.rules) scope(rule.rules);
-    }
-  }
-  scope(parsed.stylesheet.rules);
-  return css.stringify(parsed);
-}
 
 function updateSharedCss (doc) {
   let groups = [];
@@ -225,6 +215,11 @@ export class HTMLMorph extends Morph {
     const previousDocument = cssDocuments.get(this);
     if (previousDocument && (previousDocument !== doc || !this.cssDeclaration || !this.world())) this.uninstallCssDeclaration();
     if (!this.cssDeclaration || !this.world()) return;
+    const connection = cssUnloadConnections.get(this);
+    if (connection?.sourceObj !== this.world()) {
+      connection?.disconnect();
+      cssUnloadConnections.set(this, connect(this.world(), 'onUnload', this, 'uninstallCssDeclaration'));
+    }
     cssDocuments.set(this, doc);
     let members = cssMorphs.get(doc);
     if (!members) cssMorphs.set(doc, members = new Set());
@@ -251,6 +246,8 @@ export class HTMLMorph extends Morph {
   }
 
   uninstallCssDeclaration () {
+    cssUnloadConnections.get(this)?.disconnect();
+    cssUnloadConnections.delete(this);
     const doc = cssDocuments.get(this);
     if (!doc) return;
     doc.getElementById('css-for-' + this.id)?.remove();
