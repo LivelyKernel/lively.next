@@ -31,8 +31,8 @@ export function defaultAttributes (morph) {
  * @param {Node} node - The node in which `morph` is rendered into the DOM.
  * @returns {Node} `morph`'s DOM node with applied styling attributes.
  */
-export function applyStylingToNode (morph, node) {
-  let styleProps = defaultStyle(morph);
+export function applyStylingToNode (morph, node, inlineDefaults = false) {
+  let styleProps = defaultStyle(morph, inlineDefaults);
 
   if (typeof morph.renderStyles === 'function') {
     styleProps = morph.renderStyles(styleProps);
@@ -175,7 +175,7 @@ export class ShadowObject {
   }
 }
 
-function defaultStyle (morph) {
+function defaultStyle (morph, inlineDefaults) {
   const { reactsToPointer, nativeCursor, clipMode } = morph;
   const layoutStyle = {};
   // this also performs measure of the actual morphs height, so do that before rendering the style props
@@ -206,24 +206,26 @@ function defaultStyle (morph) {
   }
 
   domStyle.position = 'absolute';
-  // Keep animation snapshots complete; omit defaults only when rendering nodes.
-  for (const side of ['left', 'right', 'top', 'bottom']) {
-    if (domStyle[`border-${side}-width`] === '0px') {
-      delete domStyle[`border-${side}-width`];
-      delete domStyle[`border-${side}-style`];
-      delete domStyle[`border-${side}-color`];
-    } else if (domStyle[`border-${side}-style`] === 'solid') delete domStyle[`border-${side}-style`];
+  if (!inlineDefaults) {
+    // Keep animation snapshots complete; omit defaults only when rendering nodes.
+    for (const side of ['left', 'right', 'top', 'bottom']) {
+      if (domStyle[`border-${side}-width`] === '0px') {
+        delete domStyle[`border-${side}-width`];
+        delete domStyle[`border-${side}-style`];
+        delete domStyle[`border-${side}-color`];
+      } else if (domStyle[`border-${side}-style`] === 'solid') delete domStyle[`border-${side}-style`];
+    }
+    if (domStyle['border-radius'] === '0px 0px 0px 0px') delete domStyle['border-radius'];
+    if (domStyle['transform-origin'] === '0px 0px') delete domStyle['transform-origin'];
+    if (domStyle.opacity === 1) delete domStyle.opacity;
+    if (!domStyle.display) delete domStyle.display;
+    if (!domStyle['box-shadow']) delete domStyle['box-shadow'];
+    if (!domStyle.filter) delete domStyle.filter;
+    if (domStyle.background === Color.white.toP3ColorString()) delete domStyle.background;
+    if (domStyle.transform.trim() === 'rotate(0.000rad) scale(1.00000,1.00000)') delete domStyle.transform;
   }
-  if (domStyle['border-radius'] === '0px 0px 0px 0px') delete domStyle['border-radius'];
-  if (domStyle['transform-origin'] === '0px 0px') delete domStyle['transform-origin'];
-  if (domStyle.opacity === 1) delete domStyle.opacity;
-  if (!domStyle.display) delete domStyle.display;
-  if (!domStyle['box-shadow']) delete domStyle['box-shadow'];
-  if (!domStyle.filter) delete domStyle.filter;
-  if (domStyle.background === Color.white.toP3ColorString()) delete domStyle.background;
-  if (domStyle.transform.trim() === 'rotate(0.000rad) scale(1.00000,1.00000)') delete domStyle.transform;
-  if (!reactsToPointer) domStyle['pointer-events'] = 'none';
-  if (nativeCursor !== 'auto') domStyle.cursor = nativeCursor;
+  if (inlineDefaults || !reactsToPointer) domStyle['pointer-events'] = reactsToPointer ? 'auto' : 'none';
+  if (inlineDefaults || nativeCursor !== 'auto') domStyle.cursor = nativeCursor;
 
   Object.assign(domStyle, layoutStyle);
 

@@ -44,7 +44,9 @@ class DomEnvironment {
 async function createDOMEnvironment_browser () {
   const env = new IFramedDomEnvironment(await createIFrame(document.body)); // eslint-disable-line no-use-before-define
   const cssUrl = new URL('assets/morphic.css', System.decanonicalize('lively.morphic/index.js')).href;
-  await addOrChangeLinkedCSS('lively-morphic-css', cssUrl, env.document);
+  try { await addOrChangeLinkedCSS('lively-morphic-css', cssUrl, env.document); } catch (err) {
+    console.warn(`Could not load morphic CSS in iframe: ${err}`); // eslint-disable-line no-console
+  }
   return env;
 }
 
