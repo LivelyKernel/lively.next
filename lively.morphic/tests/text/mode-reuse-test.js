@@ -4,6 +4,35 @@ import { Text, Morph } from '../../index.js';
 import { pt, Color } from 'lively.graphics';
 
 describe('text mode reuse', () => {
+  it('refreshes static lines when global formatting removes inline attributes', async () => {
+    const text = new Text({
+      readOnly: false, fixedWidth: true, fixedHeight: true,
+      textAndAttributes: ['inline', { fontColor: Color.red, fontSize: 28 }, ' plain', null]
+    }).openInWorld();
+    try {
+      await text.whenRendered();
+      text.readOnly = true;
+      text.env.forceUpdate();
+      const originalLine = text.renderingState.textLayer.querySelector('.line');
+      text.removePlainTextAttribute('fontSize', 40);
+      text.env.forceUpdate();
+      expect(text.renderingState.textLayer.querySelector('.line')).equals(originalLine);
+      text.removePlainTextAttribute('fontColor');
+      text.fontColor = Color.blue;
+      text.removePlainTextAttribute('fontSize');
+      text.fontSize = 30;
+      text.env.forceUpdate();
+      const span = text.renderingState.textLayer.querySelector('.line').firstChild;
+      expect(getComputedStyle(span).color).equals(Color.blue.toP3ColorString().replace(' / 1', ''));
+      expect(getComputedStyle(span).fontSize).equals('30px');
+      text.readOnly = false;
+      text.env.forceUpdate();
+      expect(text.textAndAttributes[1]?.fontColor).equals(undefined);
+      expect(text.textAndAttributes[1]?.fontSize).equals(undefined);
+      text.document.consistencyCheck();
+    } finally { text.remove(); }
+  });
+
   it('restores marker and cursor nodes without accumulating selection anchors', async () => {
     const text = new Text({ readOnly: false, textString: 'first\nsecond' }).openInWorld();
     try {
