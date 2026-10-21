@@ -25,6 +25,7 @@ export class LayoutPreview extends Morph {
       align: autoLayout.align,
       axisAlign: autoLayout.axisAlign,
       axis: autoLayout.axis,
+      reverseOrder: autoLayout.reverseOrder,
       justifySubmorphs: autoLayout.justifySubmorphs
     });
     ['mini bar 1', 'mini bar 2', 'mini bar 3'].forEach(bar => {
@@ -61,6 +62,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
             { target: 'vertical', signal: 'onMouseDown', handler: 'setVerticalFlow' },
             { target: 'horizontal', signal: 'onMouseDown', handler: 'setHorizontalFlow' },
             { target: 'wrap submorphs checkbox', signal: 'checked', handler: 'toggleWrapping' },
+            { target: 'reverse order checkbox', signal: 'checked', handler: 'toggleReverseOrder' },
             { target: 'spacing input', signal: 'number', handler: 'confirm' },
             { target: 'total padding input', signal: 'number', handler: 'confirm' }
           ];
@@ -88,7 +90,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
     this.withoutBindingsDo(() => {
       const {
         miniLayoutPreview, vertical, horizontal,
-        spacingInput, totalPaddingInput, wrapSubmorphsCheckbox
+        spacingInput, totalPaddingInput, wrapSubmorphsCheckbox, reverseOrderCheckbox
       } = this.ui;
       miniLayoutPreview.setActive(!!this.popup);
       if (!this.targetMorph) return;
@@ -104,6 +106,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
         totalPaddingInput.number = layout.padding.top();
       }
       wrapSubmorphsCheckbox.checked = layout.wrapSubmorphs;
+      reverseOrderCheckbox.checked = layout.reverseOrder;
     });
   }
 
@@ -128,6 +131,14 @@ export class AutoLayoutControlModel extends PropertySectionModel {
       this.targetMorph.layout = layout.with({ wrapSubmorphs: !layout.wrapSubmorphs });
     });
     this.update('wrapping');
+  }
+
+  toggleReverseOrder () {
+    const layout = this.targetMorph.layout;
+    this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
+      this.targetMorph.layout = layout.with({ reverseOrder: !layout.reverseOrder });
+    });
+    this.update();
   }
 
   setVerticalFlow () {
@@ -536,7 +547,8 @@ const LayoutControl = component(PropertySection, {
     fill: Color.transparent,
     layout: new TilingLayout({
       axisAlign: 'center',
-      orderByIndex: true
+      orderByIndex: true,
+      spacing: 8
     }),
     submorphs: [{
       name: 'spacer',
@@ -552,6 +564,11 @@ const LayoutControl = component(PropertySection, {
           name: 'label',
           master: PropLabel
         }]
+    }), part(LabeledCheckbox, {
+      name: 'reverse order checkbox',
+      tooltip: 'Reverse the layout order without changing the submorph order.',
+      viewModel: { label: 'Reverse Order' },
+      submorphs: [{ name: 'label', master: PropLabel }]
     })
     ]
   })]
