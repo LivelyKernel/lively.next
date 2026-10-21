@@ -596,7 +596,11 @@ export class TilingLayout extends Layout {
   get orderByIndex () { return this._orderByIndex; }
   set orderByIndex (active) { this._orderByIndex = !!active; this.onConfigUpdate(); }
 
-  /** Reverse the chosen index or position order without changing the owner's submorphs. */
+  /**
+   * Reverses submorph-index order without changing the owner's submorphs.
+   * Has no effect when orderByIndex is false: that mode stays purely positional.
+   * @type {Boolean}
+   */
   get reverseOrder () { return this._reverseOrder; }
   set reverseOrder (active) { this._reverseOrder = !!active; this.onConfigUpdate(); }
 
@@ -1000,7 +1004,7 @@ export class TilingLayout extends Layout {
     style.top = 'unset';
     style.left = 'unset';
     const index = order.layoutableIndices.get(morph) ?? -1;
-    style.order = this.reverseOrder ? layoutableSubmorphs.length - 1 - index : index;
+    style.order = this.orderByIndex && this.reverseOrder ? layoutableSubmorphs.length - 1 - index : index;
     const hasNextSibling = layoutableSubmorphs.length > style.order + 1;
     const hasPrevSibling = style.order > 0;
 
@@ -1226,7 +1230,7 @@ export class TilingLayout extends Layout {
   ensureYogaNodesInSync () {
     let { layoutableSubmorphs } = this;
     layoutableSubmorphs = layoutableSubmorphs.filter(m => m.visible);
-    if (this.reverseOrder) layoutableSubmorphs.reverse();
+    if (this.orderByIndex && this.reverseOrder) layoutableSubmorphs.reverse();
     const containerNode = this.ensureYogaNodeFor(this.container);
     let i = 0; let resetNodes = layoutableSubmorphs.length !== containerNode.getChildCount();
     for (let m of layoutableSubmorphs) {

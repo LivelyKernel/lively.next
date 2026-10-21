@@ -25,7 +25,7 @@ export class LayoutPreview extends Morph {
       align: autoLayout.align,
       axisAlign: autoLayout.axisAlign,
       axis: autoLayout.axis,
-      reverseOrder: autoLayout.reverseOrder,
+      reverseOrder: autoLayout.orderByIndex && autoLayout.reverseOrder,
       justifySubmorphs: autoLayout.justifySubmorphs
     });
     ['mini bar 1', 'mini bar 2', 'mini bar 3'].forEach(bar => {
@@ -107,6 +107,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
       }
       wrapSubmorphsCheckbox.checked = layout.wrapSubmorphs;
       reverseOrderCheckbox.checked = layout.reverseOrder;
+      layout.orderByIndex ? reverseOrderCheckbox.enable() : reverseOrderCheckbox.disable();
     });
   }
 
@@ -135,6 +136,7 @@ export class AutoLayoutControlModel extends PropertySectionModel {
 
   toggleReverseOrder () {
     const layout = this.targetMorph.layout;
+    if (!layout.orderByIndex) return;
     this.targetMorph.withMetaDo({ reconcileChanges: true }, () => {
       this.targetMorph.layout = layout.with({ reverseOrder: !layout.reverseOrder });
     });
@@ -566,7 +568,7 @@ const LayoutControl = component(PropertySection, {
         }]
     }), part(LabeledCheckbox, {
       name: 'reverse order checkbox',
-      tooltip: 'Reverse the layout order without changing the submorph order.',
+      tooltip: 'Reverse submorph-index order. Unavailable for position ordering.',
       viewModel: { label: 'Reverse Order' },
       submorphs: [{ name: 'label', master: PropLabel }]
     })

@@ -56,6 +56,42 @@ describe('reversed tiling layouts', () => {
           expect(layout.reverseOrder).equals(false, 'position mode does not enable reversal');
         } finally { container.remove(); }
       });
+
+      it(`ignores reverseOrder in ${axis} position mode across relayouts (CSS: ${renderViaCSS})`, async () => {
+        let forwardPositions;
+        for (const reverseOrder of [false, true]) {
+          const children = [80, 0, 40].map(offset => new Morph({
+            extent: pt(20, 20), position: axis === 'row' ? pt(offset, 0) : pt(0, offset)
+          }));
+          const layout = new TilingLayout({ axis, renderViaCSS, orderByIndex: false, reverseOrder });
+          const container = new Morph({ extent: pt(200, 200), submorphs: children, layout }).openInWorld();
+          const expectedOrder = [children[1], children[2], children[0]];
+          const position = axis === 'row' ? 'left' : 'top';
+          const positions = () => children.map(child => child.position.toTuple());
+          try {
+            await container.whenRendered();
+            container.env.forceUpdate();
+            expect([...children].sort((a, b) => a[position] - b[position])).deep.equals(expectedOrder, 'position mode keeps spatial order even with reverseOrder');
+            if (!reverseOrder) forwardPositions = positions();
+            expect(positions()).deep.equals(forwardPositions, 'reverseOrder has no effect on positional endpoints');
+            for (let iteration = 0; iteration < 3; iteration++) {
+              container.extent = container.extent.addPt(pt(1, 1));
+              layout.computeLayout();
+              container.env.forceUpdate();
+              expect(positions()).deep.equals(forwardPositions, 'relayout and extent changes preserve purely positional order');
+              if (renderViaCSS) {
+                for (const child of children) {
+                  const style = {};
+                  layout.addSubmorphCSS(child, style);
+                  expect(style.order).equals(expectedOrder.indexOf(child), 'CSS ignores reverseOrder in position mode');
+                }
+              }
+            }
+            expect(container.submorphs).deep.equals(children, 'position mode preserves owner indices');
+            expect(layout.reverseOrder).equals(reverseOrder, 'position mode preserves the inactive flag');
+          } finally { container.remove(); }
+        }
+      });
     }
   }
 
