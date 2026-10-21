@@ -3,7 +3,7 @@ import { arr, string, tree, num, obj, promise } from 'lively.lang';
 import { getSvgVertices, canBePromotedToCompositionLayer, applyAttributesToNode, stylepropsToNode, lineWrappingToClass } from './property-dom-mapping.js';
 import { Rectangle, pt, Transform } from 'lively.graphics';
 import { objectReplacementChar } from 'lively.morphic/text/document.js';
-import { splitTextAndAttributesIntoLines } from 'lively.morphic/text/attributes.js';
+import { splitTextAndAttributesIntoLines, textCacheLimits } from 'lively.morphic/text/attributes.js';
 
 import { keyed, noOpUpdate, insertNodeBefore } from './keyed.js';
 import { applyStylingToNode } from './morphic-default.js';
@@ -1235,9 +1235,13 @@ export default class Renderer {
       renderedLines.push(this.nodeForLine({ isLine: true, textAndAttributes: line, row }, morph, !inertEmbeddedMorphs, inertEmbeddedMorphs));
       row++;
     }
-    // ponytail: cache string-only lines; inline nodes move between render layers.
-    // Reinsert inline placeholders before extending this cache to embedded morphs.
-    if (!morph.embeddedMorphMap.size) morph.renderingState.cachedStaticLines = renderedLines;
+    // Cache the whole string-only line set; inline nodes move between layers.
+    if (!inertEmbeddedMorphs && !morph.embeddedMorphMap.size &&
+        renderedLines.length <= textCacheLimits.lines &&
+        morph.textString.length <= textCacheLimits.characters &&
+        morph.textAndAttributes.length <= 2 * textCacheLimits.attributeRuns) {
+      morph.renderingState.cachedStaticLines = renderedLines;
+    }
     return renderedLines;
   }
 

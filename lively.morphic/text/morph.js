@@ -16,7 +16,7 @@ import KeyHandler from '../events/KeyHandler.js';
 import { UndoManager } from '../undo.js';
 import Layout from './layout.js';
 import textCommands from './commands.js';
-import { textAndAttributesWithSubRanges } from './attributes.js';
+import { textAndAttributesWithSubRanges, textCacheLimits } from './attributes.js';
 import { serializeMorph, deserializeMorph } from '../serialization.js';
 import { getSvgVertices } from '../rendering/property-dom-mapping.js';
 import { getClassName } from 'lively.serializer2';
@@ -1862,6 +1862,9 @@ export class Text extends Morph {
     let defaultTextStyle;
     if (this.document) defaultTextStyle = this.defaultTextStyle;
     else resetStyle = false;
+    delete this.renderingState.cachedStaticLines;
+    delete this._documentBackup;
+    delete this._documentBackupEndPosition;
     this.document = doc;
     this.document.lines.forEach(line => line.lineNeedsRerender = true);
     this.textLayout.reset();
@@ -2290,10 +2293,12 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   invalidateDocumentBackup () {
-    if (this.document || !this._documentBackup) return;
-    const range = { start: { row: 0, column: 0 }, end: this._documentBackup.endPosition };
+    const end = this._documentBackup?.endPosition || this._documentBackupEndPosition;
+    if (this.document || !end) return;
+    const range = { start: { row: 0, column: 0 }, end };
     this.anchors.forEach(anchor => anchor.onDelete(range));
     delete this._documentBackup;
+    delete this._documentBackupEndPosition;
   }
 
   /**
@@ -2307,7 +2312,14 @@ export class Text extends Morph {
 
     this._isDowngrading = true;
     const textAndAttributes = this.document.textAndAttributes;
-    this._documentBackup = this.document;
+    if (this.document.stringSize <= textCacheLimits.characters &&
+        this.document.rowCount <= textCacheLimits.lines &&
+        textAndAttributes.length <= 2 * textCacheLimits.attributeRuns) {
+      this._documentBackup = this.document;
+    } else {
+      // Preserve anchor invalidation on static edits without retaining the tree.
+      this._documentBackupEndPosition = this.document.endPosition;
+    }
     this.getProperty('selection')?.uninstall();
     for (const [embedded, entry] of this.embeddedMorphMap) {
       if (!entry.anchor) continue;
@@ -2336,6 +2348,7 @@ export class Text extends Morph {
     if (this.document) return;
 
     this._isUpgrading = true;
+    delete this._documentBackupEndPosition;
     if (this._documentBackup) {
       this.document = this._documentBackup;
       delete this._documentBackup;
