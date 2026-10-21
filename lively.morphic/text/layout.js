@@ -265,7 +265,9 @@ export default class Layout {
     const line = doc.getLine(row);
 
     const cached = this.lineCharBoundsCache.get(line);
-    if (cached && (morph.canBeMeasuredViaCanvas || !line.lineNeedsRerender)) return cached;
+    const canCache = morph.canBeMeasuredViaCanvas || !line.lineNeedsRerender ||
+                     !line.textAndAttributes.some(part => part?.isMorph);
+    if (cached && canCache) return cached;
     const { fontMetric } = morph;
     let charBounds;
 
@@ -285,7 +287,7 @@ export default class Layout {
       // delay measuring until next render
       return charBounds;
     }
-    if (morph.canBeMeasuredViaCanvas || !line.lineNeedsRerender) this.lineCharBoundsCache.set(line, charBounds);
+    if (canCache) this.lineCharBoundsCache.set(line, charBounds);
     return charBounds;
   }
 
