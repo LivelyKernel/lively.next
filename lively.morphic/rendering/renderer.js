@@ -228,7 +228,7 @@ export default class Renderer {
       }
 
       for (const morph of morphsToHandle) {
-        if (morph.isText) this.updateEmbeddedMorphPositions(morph);
+        if (morph.isText && morph.renderingState.needsEmbeddedMorphAlignment) this.updateEmbeddedMorphPositions(morph);
       }
 
       // Inspect the current tree: layout/master application can add morphs after collection.
@@ -632,6 +632,7 @@ export default class Renderer {
     }
 
     if (morph.isText && (morph.document || morph.needsDocument) && morph.isClip()) node.style.overflow = 'hidden';
+    if (morph.isText && !morph.document && morph.embeddedMorphMap.size) rs.needsEmbeddedMorphAlignment = true;
     rs.needsRerender = false;
     rs.scrollChanged = false;
   }
@@ -1215,7 +1216,7 @@ export default class Renderer {
    * @param {Morph} morph - The morph for which to render its whole text.
    * @returns {Node[]} An array of Nodes
    */
-  renderWholeText (morph) {
+  renderWholeText (morph, inertEmbeddedMorphs = false) {
     const renderedLines = [];
     let textAndAttributesByLine = splitTextAndAttributesIntoLines(morph.textAndAttributes);
     if (textAndAttributesByLine.length === 0) {
@@ -1224,7 +1225,7 @@ export default class Renderer {
     }
     let row = 0;
     for (let line of textAndAttributesByLine) {
-      renderedLines.push(this.nodeForLine({ isLine: true, textAndAttributes: line, row }, morph, true));
+      renderedLines.push(this.nodeForLine({ isLine: true, textAndAttributes: line, row }, morph, !inertEmbeddedMorphs, inertEmbeddedMorphs));
       row++;
     }
     return renderedLines;
@@ -1786,6 +1787,7 @@ export default class Renderer {
   renderTextAndAttributes (node, morph) {
     const textNode = morph.renderingState.textLayer;
     if (!textNode) return;
+    if (!morph.document && morph.embeddedMorphMap.size) morph.renderingState.needsEmbeddedMorphAlignment = true;
     textNode.style['font-kerning'] = morph.document ? 'none' : 'auto';
     const canvasSupported = morph.canBeMeasuredViaCanvas;
 
@@ -1870,15 +1872,18 @@ export default class Renderer {
 
   updateEmbeddedMorphPositions (morph) {
     if (morph.document || !morph.embeddedMorphMap.size) return;
+    if (!morph.visible || morph.ownerChain().some(owner => !owner.visible)) return;
+    let pending = false;
     for (const embedded of morph.embeddedMorphs) {
       const node = this.getNodeForMorph(embedded);
-      if (!node?.isConnected) continue;
+      if (!node?.isConnected || node.offsetParent === null) { pending = true; continue; }
       const delta = this.getInlineMorphPositionDelta(embedded, node.getBoundingClientRect());
       if (delta.r() < 1e-7) continue;
       morph._positioningSubmorph = embedded;
       try { embedded.position = embedded.position.addPt(delta); }
       finally { morph._positioningSubmorph = false; }
     }
+    morph.renderingState.needsEmbeddedMorphAlignment = pending;
   }
 
   getInlineMorphPositionDelta (morph, clientBounds) {
@@ -2186,17 +2191,10 @@ export default class Renderer {
     else this.renderStylingChanges(morph);
     const liveTextNode = morph.renderingState.textLayer;
     const prevParent = liveTextNode.parentNode;
-    const textNode = morph.embeddedMorphMap.size ? liveTextNode.cloneNode(true) : liveTextNode;
+    const textNode = morph.embeddedMorphMap.size ? liveTextNode.cloneNode(false) : liveTextNode;
     if (textNode !== liveTextNode) {
-      // Measure inline boxes without disconnecting or mounting their live contents.
-      const boxes = new Map(Array.from(textNode.querySelectorAll('.Morph'), node => [node.id, node]));
-      for (const embedded of morph.embeddedMorphs) {
-        const box = boxes.get(embedded.id);
-        if (!box) continue;
-        box.replaceChildren();
-        box.style.width = embedded.width + 'px';
-        box.style.height = embedded.height + 'px';
-      }
+      // Reuse the inert line renderer without copying live embedded contents.
+      textNode.append(...this.renderWholeText(morph, true));
     } else textNode.remove();
     this.ensurePlaceholder();
     this.placeholder.className = 'Text';
