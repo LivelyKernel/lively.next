@@ -3,7 +3,7 @@ import { arr, string, tree, num, obj, promise } from 'lively.lang';
 import { getSvgVertices, canBePromotedToCompositionLayer, applyAttributesToNode, stylepropsToNode, lineWrappingToClass } from './property-dom-mapping.js';
 import { Rectangle, pt, Transform } from 'lively.graphics';
 import { objectReplacementChar } from 'lively.morphic/text/document.js';
-import { splitTextAndAttributesIntoLines } from 'lively.morphic/text/attributes.js';
+import { splitTextAndAttributesIntoLines, textCacheLimits } from 'lively.morphic/text/attributes.js';
 
 import { keyed, noOpUpdate, insertNodeBefore } from './keyed.js';
 import { applyStylingToNode } from './morphic-default.js';
@@ -965,6 +965,9 @@ export default class Renderer {
    */
   removeTextSpecialsFromDOMFor (node, morph) {
     delete morph.renderingState.fillerDiv;
+    delete morph.renderingState.renderedMarkers;
+    delete morph.renderingState.markers;
+    delete morph.renderingState.selectionRanges;
 
     morph.renderingState.cursorNodes.forEach(n => n.remove());
     morph.renderingState.cursorNodes = [];
@@ -1220,6 +1223,7 @@ export default class Renderer {
    * @returns {Node[]} An array of Nodes
    */
   renderWholeText (morph, inertEmbeddedMorphs = false) {
+    if (!inertEmbeddedMorphs && morph.renderingState.cachedStaticLines) return morph.renderingState.cachedStaticLines;
     const renderedLines = [];
     let textAndAttributesByLine = splitTextAndAttributesIntoLines(morph.textAndAttributes);
     if (textAndAttributesByLine.length === 0) {
@@ -1230,6 +1234,13 @@ export default class Renderer {
     for (let line of textAndAttributesByLine) {
       renderedLines.push(this.nodeForLine({ isLine: true, textAndAttributes: line, row }, morph, !inertEmbeddedMorphs, inertEmbeddedMorphs));
       row++;
+    }
+    // Cache the whole string-only line set; inline nodes move between layers.
+    if (!inertEmbeddedMorphs && !morph.embeddedMorphMap.size &&
+        renderedLines.length <= textCacheLimits.lines &&
+        morph.textString.length <= textCacheLimits.characters &&
+        morph.textAndAttributes.length <= 2 * textCacheLimits.attributeRuns) {
+      morph.renderingState.cachedStaticLines = renderedLines;
     }
     return renderedLines;
   }
@@ -1810,7 +1821,7 @@ export default class Renderer {
     } else {
       if (morph.renderingState.needsLinesToBeCleared) {
         // As we use `keyed` to patch these nodes, handling references to the currently mounted ones would probably cause more trouble than benefit.
-        textNode.querySelectorAll('.line').forEach(l => l.remove());
+        textNode.querySelectorAll(':scope > .line, :scope > blockquote').forEach(l => l.remove());
         morph.renderingState.renderedLines = [];
         delete morph.renderingState.needsLinesToBeCleared;
       }
