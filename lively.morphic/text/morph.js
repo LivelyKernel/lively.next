@@ -541,6 +541,7 @@ export class Text extends Morph {
         set (val) {
           const maxScroll = this.scrollExtent.subXY(this.width, this.height);
           this.setProperty('scroll', val.minPt(maxScroll).maxPt(pt(0, 0)));
+          Morph.prototype.makeDirty.call(this);
         }
       },
 
@@ -1723,13 +1724,37 @@ export class Text extends Morph {
   defaultCharExtent () { return this.textLayout.defaultCharExtent(this); }
 
   get scrollExtent () {
+    let domExtent;
+    if (!this.document && !this.renderingState.scrollLayer && ['auto', 'scroll'].includes(this.clipMode)) {
+      const node = this.env.renderer?.getNodeForMorph(this);
+      const clientWidth = node?.isConnected ? node.clientWidth : 0;
+      const clientHeight = clientWidth ? node.clientHeight : 0;
+      if (clientWidth && clientHeight) {
+        domExtent = this.extent.addXY(node.scrollWidth - clientWidth, node.scrollHeight - clientHeight);
+        if (!this.renderingState.needsRemeasure &&
+            this.renderingState.renderedTextAndAttributes === this.textAndAttributes) return domExtent;
+      }
+    }
     // rms: See: morph>>scrollExtent
-    return this.textBounds()
+    const modelExtent = this.textBounds()
       .extent()
       .addPt(this.padding.topLeft())
       .addPt(this.padding.bottomRight())
       .addPt(this.scrollbarOffset)
       .maxPt(super.scrollExtent);
+    return domExtent ? domExtent.maxPt(modelExtent) : modelExtent;
+  }
+
+  get scrollbarVisible () {
+    if (!this.document && !this.renderingState.scrollLayer && !this.hideScrollbars && this.clipMode === 'auto') {
+      const node = this.env.renderer?.getNodeForMorph(this);
+      const clientWidth = node?.isConnected ? node.clientWidth : 0;
+      const clientHeight = clientWidth ? node.clientHeight : 0;
+      if (clientWidth && clientHeight) {
+        return { horizontal: node.scrollWidth > clientWidth, vertical: node.scrollHeight > clientHeight };
+      }
+    }
+    return super.scrollbarVisible;
   }
 
   get commands () {
@@ -2267,6 +2292,7 @@ export class Text extends Morph {
     const textAndAttributes = this.document.textAndAttributes;
     this.textString = '';
     this.document = null;
+    delete this.renderingState.needsScrollLayerAdded;
     this.renderingState.needsScrollLayerRemoved = true;
     this.requestTextLayoutMeasuring();
     this.textLayout = null;
@@ -2297,6 +2323,7 @@ export class Text extends Morph {
     this.textLayout = new Layout();
     this.textLayout.estimateLineExtents(this);
 
+    delete this.renderingState.needsScrollLayerRemoved;
     this.renderingState.needsScrollLayerAdded = true;
     this.renderingState.needsLinesToBeCleared = true;
     this._isUpgrading = false;
@@ -2997,6 +3024,10 @@ export class Text extends Morph {
       }
       if (!obj.equals(this.renderingState.renderedTextAndAttributes, this.textAndAttributes)) {
         renderer.renderTextAndAttributes(node, this);
+      }
+      if (!obj.equals(this.renderingState.scroll, this.scroll)) {
+        renderer.updateNodeScrollFromMorph(this);
+        this.renderingState.scroll = this.scroll;
       }
     }
   }
