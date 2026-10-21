@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import { registerHooks } from 'node:module';
 import { setFetch } from '@jspm/generator';
 import { generateImportMapForPackage, installDeps } from '../plugins/lib-lookup.js';
 
@@ -12,7 +13,6 @@ try {
   const cacheFile = path.join(root, '.cachedImportMap.json');
   await fs.writeFile(manifest, JSON.stringify({ name: 'fixture', dependencies: {} }));
   const generated = await generateImportMapForPackage(root);
-  assert.equal(generated._cacheVersion, 2);
   assert.deepEqual(JSON.parse(await fs.readFile(cacheFile, 'utf8')), generated);
   assert.deepEqual(generated._dependencies, {});
   await assert.rejects(fs.access(path.join(root, 'browser-import-map.json')), { code: 'ENOENT' });
@@ -28,14 +28,14 @@ try {
   assert.deepEqual(refreshed._dependencies, dependencies);
   assert.deepEqual(JSON.parse(await fs.readFile(cacheFile, 'utf8')), refreshed);
   await fs.unlink(cacheFile);
-  assert.deepEqual(await generateImportMapForPackage(root), refreshed);
+  assert.deepEqual(await generateImportMapForPackage(root), refreshed, 'Deleting the map must rebuild the dependency graph');
   // Legacy hidden maps have no manifest or module-closure metadata.
   await fs.writeFile(cacheFile, JSON.stringify({ imports: {} }));
-  assert.deepEqual(await generateImportMapForPackage(root), refreshed);
+  assert.deepEqual(await generateImportMapForPackage(root), refreshed, 'Legacy maps must rebuild the dependency graph');
   const oldCache = { ...refreshed, _modules: ['incomplete-old-graph'] };
   delete oldCache._cacheVersion;
   await fs.writeFile(cacheFile, JSON.stringify(oldCache));
-  assert.deepEqual(await generateImportMapForPackage(root), refreshed);
+  assert.deepEqual(await generateImportMapForPackage(root), refreshed, 'Unversioned maps must rebuild an incomplete dependency graph');
   const mappedUrl = 'https://ga.jspm.io/npm:map-fixture@1.0.0/load.js';
   const dependencyUrl = new URL('./dependency.js', mappedUrl).href;
   setFetch(async url => {
@@ -160,7 +160,9 @@ try {
     imports: map.imports, _dependencies: map._dependencies,
     _modules: ['incomplete-installer-graph'], _cacheVersion: 1
   }));
-  assert.deepEqual(await installerLookup.generateImportMapForPackage(templateRoot), map);
+  let installerMap;
+  await assert.doesNotReject(async () => { installerMap = await installerLookup.generateImportMapForPackage(templateRoot); }, 'Installer map generation must load a usable native Babel parser');
+  assert.deepEqual(installerMap, map, 'Installer and native maps must contain identical constant-template dependencies');
   console.log('Installer SystemJS and native generation discover the same constant-template dependency graph offline.');
   const cacheFile = path.join(templateRoot, '.cachedImportMap.json');
   const successfulCache = await fs.readFile(cacheFile, 'utf8');
@@ -181,8 +183,55 @@ try {
     assert.equal(await fs.readFile(cacheFile, 'utf8'), successfulCache);
   }
   console.log('Original JSPM analysis and fetch failures still reject generation and preserve the previous cache.');
+  assert.equal(map._cacheVersion, 2, 'cache format version follows the complete browser dependency graph');
 } finally {
   setFetch(nativeFetch);
   globalThis.fetch = nativeFetch;
   await fs.rm(templateRoot, { recursive: true, force: true });
+}
+
+// Exercise public map generation against a JSPM version without the private tracing API.
+for (const [name, traceMap] of [
+  ['missing traceMap', 'undefined'],
+  ['missing resolver', '{}'],
+  ['missing analyze', '{ resolver: {} }'],
+  ['non-callable analyze', '{ resolver: { analyze: true } }']
+]) {
+  const lookupUrl = new URL('../plugins/lib-lookup.js', import.meta.url).href;
+  const fakeJspm = 'data:text/javascript,' + encodeURIComponent(`
+    export class Generator {
+      constructor() { this.traceMap = ${traceMap}; this.map = { imports: {} }; }
+      getMap() { return this.map; }
+      async uninstall() {}
+      async extractMap() { return { map: this.map, staticDeps: [], dynamicDeps: [] }; }
+    }
+    export const fetch = () => { throw new Error('This fixture must not access the network'); };
+  `);
+  const hooks = registerHooks({
+    resolve(specifier, context, next) {
+      if (specifier === '@jspm/generator' && context.parentURL?.startsWith(lookupUrl)) {
+        return { url: fakeJspm, shortCircuit: true };
+      }
+      return next(specifier, context);
+    }
+  });
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lively-jspm-compat-'));
+  const warnings = [];
+  const warn = console.warn;
+  console.warn = message => warnings.push(message);
+  try {
+    await fs.writeFile(path.join(directory, 'package.json'), JSON.stringify({ name: 'compat-fixture', dependencies: {} }));
+    const { generateImportMapForPackage } = await import(lookupUrl + '?compat=' + encodeURIComponent(name));
+    let generated;
+    await assert.doesNotReject(async () => { generated = await generateImportMapForPackage(directory); }, `${name}: map generation must degrade instead of throwing`);
+    assert.deepEqual(generated.imports, {}, `${name}: the normal JSPM map remains available`);
+    assert.deepEqual(JSON.parse(await fs.readFile(path.join(directory, '.cachedImportMap.json'), 'utf8')), generated, `${name}: map generation still writes a reusable cache`);
+    assert.equal(warnings.length, 1, `${name}: the unsupported tracing API must emit one warning`);
+    assert.match(warnings[0], /resolver\.analyze.*unavailable.*default tracing/i, `${name}: warning explains the tracing fallback`);
+  } finally {
+    console.warn = warn;
+    hooks.deregister();
+    await fs.rm(directory, { recursive: true, force: true });
+  }
+  console.log(`Private JSPM API compatibility passed: ${name}.`);
 }

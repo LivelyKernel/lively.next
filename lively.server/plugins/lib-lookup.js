@@ -45,7 +45,11 @@ function createGenerator (inputMap, providers, baseUrl) {
     inputMap,
     ...(Object.keys(providers).length ? { providers } : {})
   });
-  const resolver = generator.traceMap.resolver;
+  const resolver = generator.traceMap?.resolver;
+  if (typeof resolver?.analyze !== 'function') {
+    console.warn('[lib-lookup] JSPM resolver.analyze is unavailable; constant-template import tracing is disabled. Using JSPM default tracing.');
+    return generator;
+  }
   const analyze = resolver.analyze.bind(resolver);
   const analyzed = new Map();
   // JSPM 2.12 omits constant templates; augment the trace without changing source integrity.
