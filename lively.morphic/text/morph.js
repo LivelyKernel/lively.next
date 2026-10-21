@@ -1727,8 +1727,10 @@ export class Text extends Morph {
     let domExtent;
     if (!this.document && !this.renderingState.scrollLayer && ['auto', 'scroll'].includes(this.clipMode)) {
       const node = this.env.renderer?.getNodeForMorph(this);
-      if (node?.isConnected && node.clientWidth && node.clientHeight) {
-        domExtent = this.extent.addXY(node.scrollWidth - node.clientWidth, node.scrollHeight - node.clientHeight);
+      const clientWidth = node?.isConnected ? node.clientWidth : 0;
+      const clientHeight = clientWidth ? node.clientHeight : 0;
+      if (clientWidth && clientHeight) {
+        domExtent = this.extent.addXY(node.scrollWidth - clientWidth, node.scrollHeight - clientHeight);
         if (!this.renderingState.needsRemeasure &&
             this.renderingState.renderedTextAndAttributes === this.textAndAttributes) return domExtent;
       }
@@ -1746,8 +1748,10 @@ export class Text extends Morph {
   get scrollbarVisible () {
     if (!this.document && !this.renderingState.scrollLayer && !this.hideScrollbars && this.clipMode === 'auto') {
       const node = this.env.renderer?.getNodeForMorph(this);
-      if (node?.isConnected && node.clientWidth && node.clientHeight) {
-        return { horizontal: node.scrollWidth > node.clientWidth, vertical: node.scrollHeight > node.clientHeight };
+      const clientWidth = node?.isConnected ? node.clientWidth : 0;
+      const clientHeight = clientWidth ? node.clientHeight : 0;
+      if (clientWidth && clientHeight) {
+        return { horizontal: node.scrollWidth > clientWidth, vertical: node.scrollHeight > clientHeight };
       }
     }
     return super.scrollbarVisible;
