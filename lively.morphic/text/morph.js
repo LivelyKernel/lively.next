@@ -2295,7 +2295,15 @@ export class Text extends Morph {
 
     this._isDowngrading = true;
     const textAndAttributes = this.document.textAndAttributes;
-    this.textString = '';
+    this.getProperty('selection')?.uninstall();
+    for (const [embedded, entry] of this.embeddedMorphMap) {
+      if (!entry.anchor) continue;
+      this.removeAnchor(entry.anchor);
+      disconnect(entry.anchor, 'position', embedded, 'position');
+      entry.anchor.embeddedMorph = null;
+      entry.anchor = null;
+    }
+    this.anchors.forEach(anchor => anchor.onDelete(this.documentRange));
     this.document = null;
     delete this.renderingState.needsScrollLayerAdded;
     this.renderingState.needsScrollLayerRemoved = true;
