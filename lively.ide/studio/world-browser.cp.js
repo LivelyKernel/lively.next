@@ -1637,6 +1637,7 @@ const WorldBrowser = component({
     }]
   }, {
     name: 'fader bottom',
+    reactsToPointer: false,
     extent: pt(880.3, 63.9),
     fill: new LinearGradient({
       stops: [
