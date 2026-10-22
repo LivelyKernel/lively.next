@@ -545,6 +545,8 @@ export class ComponentChangeTracker {
               { nodeId, projection: component.projection,
                 parentDocument: component.projection.beforeDocument.sourceMetadata.parentDocument }
             ])));
+        } else if (batch.commands[0]?.kind === ComponentBridgeCommandKind.INTRODUCE_NODE) {
+          this.componentDescriptor.previouslyRemovedMorphs?.delete(context.resolveMorph(batch.commands[0].nodeId));
         }
         const moduleState = moduleReconciliationStateFor(this);
         if (!moduleState?.pending) {
@@ -2945,6 +2947,7 @@ export class ComponentChangeTracker {
     );
     if (this.trackedComponent?._changeTracker === this) {
       delete this.trackedComponent._changeTracker;
+      delete this.componentDescriptor?.previouslyRemovedMorphs;
     }
     disconnect(this.trackedComponent, 'onSubmorphChange', this, 'processChangeInComponent');
     disconnect(this.trackedComponent, 'onChange', this, 'processChangeInComponent');

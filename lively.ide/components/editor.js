@@ -224,6 +224,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   stopEditSession () {
     const component = this._cachedComponent;
     component?._changeTracker?.dispose();
+    delete this.previouslyRemovedMorphs;
     this._backupComponentDef = null;
     this._cachedComponent = null;
     if (component && !component.world()) {
