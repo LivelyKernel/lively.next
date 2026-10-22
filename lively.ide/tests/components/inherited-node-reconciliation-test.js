@@ -3,6 +3,7 @@ import { expect } from 'mocha-es6';
 import { createFiles, resource } from 'lively.resources';
 import module from 'lively.modules/src/module.js';
 import { Color } from 'lively.graphics';
+import { connect, disconnect } from 'lively.bindings';
 import { morph, part, GridLayout, TilingLayout } from 'lively.morphic';
 import { releaseComponentEditingState } from './test-isolation.js';
 
@@ -90,6 +91,29 @@ export { Derived };
     await tracker.onceChangesProcessed();
     await tracker._shadowComparisonPromise;
   }
+
+  it('F7 edits a namespace package parent through the static fallback with exact undo and redo', async () => {
+    await open("component(buttons.ButtonDefault, { name: 'derived' })",
+      "import * as buttons from 'lively.components/buttons.cp.js';");
+    editable.openInWorld();
+    expect(tracker.projectionalComponentDocumentResolver()({ expression: 'buttons.ButtonDefault' })).equals(null);
+    const before = componentModule._source;
+    const beforeOpacity = editable.opacity;
+    await edit(editable, 'opacity', 0.4);
+    const after = componentModule._source;
+    expect(after).not.equals(before);
+    expect(cold().opacity).equals(0.4);
+    editable.env.undoManager.undo();
+    await processed();
+    expect(componentModule._source).equals(before);
+    expect(editable.opacity).equals(beforeOpacity);
+    expect(cold().opacity).equals(beforeOpacity);
+    editable.env.undoManager.redo();
+    await processed();
+    expect(componentModule._source).equals(after);
+    expect(editable.opacity).equals(0.4);
+    expect(cold().opacity).equals(0.4);
+  });
 
   /** Apply an ordinary edit and require one non-overlapping source change per step. */
   async function edit (target, property, value) {
@@ -252,6 +276,14 @@ export { Derived };
           const showError = world.showError;
           const errors = [];
           world.showError = error => errors.push(String(error?.message || error));
+          const notifications = [];
+          const observer = { observe: change => {
+            if (change.target === target && change.prop === 'name') {
+              notifications.push({ value: change.value, current: target.name });
+            }
+          } };
+          connect(target, 'change', observer, 'observe');
+          connect(world, 'onSubmorphChange', observer, 'observe');
           try {
             editable.undoStart('rejected inherited rename');
             target.withMetaDo({ reconcileChanges: true }, () => { target.name = 'independent'; });
@@ -265,6 +297,8 @@ export { Derived };
             expect(tracker._projectionalDocument).equals(document);
             expect(descriptor.stylePolicy.spec).equals(policySpec);
             expect(target.name).equals(name);
+            expect(notifications.length).above(0);
+            expect(notifications.every(({ value, current }) => value === current)).equals(true);
             expect(owner.submorphs).deep.equals(siblings);
             expect(owner.layout?.getSpec()).deep.equals(layoutSpec);
             expect(policySpec.layout?.getSpec()).deep.equals(cachedLayoutSpec);
@@ -280,7 +314,11 @@ export { Derived };
             expect(componentModule._source).equals(source);
             expect(editable.tooltip).equals('earlier edit');
             expect(errors).has.length(1);
-          } finally { world.showError = showError; }
+          } finally {
+            disconnect(target, 'change', observer, 'observe');
+            disconnect(world, 'onSubmorphChange', observer, 'observe');
+            world.showError = showError;
+          }
         });
       }
     }

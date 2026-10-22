@@ -99,6 +99,20 @@ const derivedExpressionSerializer = new ExpressionSerializer();
 const moduleReconciliationStates = new WeakMap();
 const policyCacheCheckpoints = new WeakMap();
 
+/** Collect the whole-module source preconditions retained by a component entry. */
+function componentHistorySourceModules (entry, modules = new Set()) {
+  if (entry instanceof CompositeEditTransaction) {
+    entry.transactions.forEach(transaction => componentHistorySourceModules(transaction, modules));
+  } else if (entry instanceof ProjectionalComponentEditTransaction) {
+    if (entry.transaction.sourceBefore !== entry.transaction.sourceAfter) {
+      modules.add(entry.transaction.beforeDocument.moduleId);
+    }
+  } else if (entry instanceof ProjectionalDerivedEditTransaction) {
+    entry.transaction.modules.forEach(plan => modules.add(plan.moduleId));
+  }
+  return modules;
+}
+
 function moduleReconciliationStateFor (tracker) {
   const componentModule = tracker.componentModule;
   if (!componentModule || (typeof componentModule !== 'object' &&
@@ -396,8 +410,15 @@ export class ComponentChangeTracker {
     this._moduleChangedListener = subscribe('lively.modules/modulechanged', change => {
       if (change.module === this.componentModule?.id && !change.error &&
           typeof change.newSource === 'string') {
-        // modulechanged evicts the module cache before notifying the active session.
-        this.componentModule.setSource(change.newSource);
+        // Keep the payload until all subscribers have had a chance to evict the cache.
+        this._pendingModuleSource = change.newSource;
+        Promise.resolve().then(() => {
+          if (typeof this._pendingModuleSource !== 'string') return;
+          if (this.componentModule._source == null) {
+            this.componentModule.setSource(this._pendingModuleSource);
+          }
+          delete this._pendingModuleSource;
+        });
       }
     }, S);
     connect(aComponent, 'onSubmorphChange', this, 'processChangeInComponent', { garbageCollect: true });
@@ -601,6 +622,10 @@ export class ComponentChangeTracker {
       for (const legacyChange of batchChanges) {
         this._projectionalBatchesByLegacyChange.set(legacyChange, batch);
       }
+      // Compensation suppresses the original morph notification, including our binding.
+      if (this._projectionallyCompensatedChanges?.has(context.committedChange)) {
+        this.processChangeInComponent(context.committedChange);
+      }
     }
     this.onShadowComponentCommands?.(batch);
     return Object.freeze({
@@ -634,8 +659,10 @@ export class ComponentChangeTracker {
       ...this.projectionallyOwnedLegacyChanges(batch, context), ...rollbackChanges
     ]);
     this._projectionallyCompensatedChanges ||= new WeakSet();
-    this.projectionallyOwnedLegacyChanges(batch, context).forEach(change =>
-      this._projectionallyCompensatedChanges.add(change));
+    this.projectionallyOwnedLegacyChanges(batch, context).forEach(change => {
+      this._projectionallyCompensatedChanges.add(change);
+      this.trackedComponent?.env?.changeManager?.suppressChangeNotifications(change);
+    });
     if (undo && !undo.recorder.changes.length && !undo.joinedTransactions.length) {
       undo.stopRecording();
       manager.undoInProgress = null;
@@ -982,7 +1009,8 @@ export class ComponentChangeTracker {
       moduleId: derivedModule.id,
       exportName,
       componentId: `${derivedModule.id}#${exportName}:derived-projection`,
-      resolveComponentDocument: this.projectionalComponentDocumentResolver(derivedModule)
+      resolveComponentDocument: this.projectionalComponentDocumentResolver(derivedModule),
+      normalizeModuleId: (id, from) => this.projectionalModuleId(id, from)
     };
   }
 
@@ -1092,11 +1120,9 @@ export class ComponentChangeTracker {
         )
       });
       if (!propagation.supported) return propagation;
-      const cachedComponents = propagation.components.filter(
-        ({ dependant }) => dependant?._cachedComponent
-      );
       let runtimeStructuralProjection = null;
-      if (cachedComponents.length) {
+      if (propagation.components.length) {
+        let projectedPolicies;
         const restoredMorphs = new Map();
         if (restoredOverrides) {
           const policies = new Map();
@@ -1121,7 +1147,7 @@ export class ComponentChangeTracker {
         }
         const nodeId = batch.shadowProjection.steps[0].componentCommand.nodeId;
         const projection = projectCachedDerivedRuntimeStructure({
-          components: cachedComponents,
+          components: propagation.components,
           nodeId,
           commandKind: command.kind === ComponentBridgeCommandKind.REMOVE_NODE
             ? DerivedRuntimeStructureProjectionKind.REMOVE
@@ -1132,6 +1158,20 @@ export class ComponentChangeTracker {
           sourceMorph: command.kind === ComponentBridgeCommandKind.INTRODUCE_NODE
             ? context.resolveMorph?.(command.nodeId)
             : null,
+          synthesizeIntroducedMorph: (component, introducedId) => {
+            if (!projectedPolicies) {
+              projectedPolicies = new Map();
+              for (const entry of this.projectionalPolicySourceEntries({ ...batch, derivedPropagation: propagation })) {
+                const projected = this.evaluateProjectionalPolicy(entry, projectedPolicies);
+                projectedPolicies.set(entry.descriptor.stylePolicy, projected);
+              }
+            }
+            const policy = projectedPolicies.get(component.dependant.stylePolicy);
+            const path = componentNodeNamePath(component.projection.document, introducedId);
+            const spec = policy && path && policySpecAtPath(policy.asFullySynthesizedSpec(), path);
+            if (!spec) throw new Error(`Cannot synthesize introduced runtime node ${introducedId}`);
+            return morph(spec);
+          },
           runtimeRenames: batch.shadowProjection.steps[0].runtimeRenames,
           restoredMorphs
         });
@@ -1178,6 +1218,7 @@ export class ComponentChangeTracker {
       bridgeCommands: commands,
       parentDocument: this.projectionalRuntimeParentDocument(commands, context),
       resolveComponentDocument: this.projectionalComponentDocumentResolver(),
+      normalizeModuleId: (id, from) => this.projectionalModuleId(id, from),
       resolveModuleExports: id => this.projectionalModuleExports(id),
       beforeDocument: this._projectionalSource === this.currentModuleSource
         ? this._projectionalDocument
@@ -1410,10 +1451,21 @@ export class ComponentChangeTracker {
     };
   }
 
+  /** Keep replay callbacks out of planning closures that capture committed morph maps. */
+  projectionalReplayNotification ({ textRefresh = null, refreshMovedTarget = null, direction = null } = {}) {
+    return replay => {
+      if (direction && replay.direction !== direction) return;
+      refreshMovedTarget?.(replay);
+      return this.refreshAndTrackProjectionalDependants(textRefresh);
+    };
+  }
+
   projectionalTransactionAdapters (transaction, runtimeContext) {
     return {
-      forTransaction: (nextTransaction, nextContext = runtimeContext) =>
-        this.projectionalTransactionAdapters(nextTransaction, nextContext),
+      forTransaction: nextTransaction =>
+        this.projectionalTransactionAdapters(nextTransaction, this.runtimeProjectionContext({
+          resolveMorph: id => this.trackedComponent.getMorphWithId(id)
+        })),
       sourceStore: {
         read: () => this.currentModuleSource,
         write: source => {
@@ -1422,8 +1474,20 @@ export class ComponentChangeTracker {
           const preservesDocument =
             (source === transaction.sourceBefore && document === transaction.beforeDocument) ||
             (source === transaction.sourceAfter && document === transaction.document);
+          const lookup = this._projectionalBindingLookup;
+          const range = transaction.beforeDocument.sourceMetadata.componentRange;
+          // Only a validated body edit can carry import resolutions to another source.
+          const preservesBindings = range && lookup &&
+            lookup.source === this.currentModuleSource &&
+            ((lookup.source === transaction.sourceBefore && source === transaction.sourceAfter) ||
+             (lookup.source === transaction.sourceAfter && source === transaction.sourceBefore)) &&
+            transaction.sourceProjection?.changes?.every(change =>
+              change.start >= range.start && change.end <= range.end);
           this.writeProjectionalModuleSource(this.componentModule, source);
           if (preservesDocument) this._projectionalDocument = document;
+          if (preservesBindings) {
+            this._projectionalBindingLookup = { ...lookup, source, parsed: null };
+          }
         }
       },
       documentStore: {
@@ -1442,11 +1506,16 @@ export class ComponentChangeTracker {
     };
   }
 
+  /** Reuse the editing session's loader normalization for parent and export identity. */
+  projectionalModuleId (moduleId, from = this.componentModuleId) {
+    return this.componentModule.System.decanonicalize(moduleId, from);
+  }
+
   /** Read loaded exports without loading modules or creating module interfaces. */
   projectionalModuleExports (moduleId) {
     try {
       const system = this.componentModule.System;
-      return system.get(system.decanonicalize(moduleId, this.componentModuleId));
+      return system.get(this.projectionalModuleId(moduleId));
     } catch (error) {
       return null;
     }
@@ -1548,7 +1617,8 @@ export class ComponentChangeTracker {
       exportName: this.componentDescriptor.componentName,
       componentId: this.committedChangeAdapter.componentId,
       parentDocument: this.projectionalRuntimeParentDocument([], {}),
-      resolveComponentDocument: this.projectionalComponentDocumentResolver()
+      resolveComponentDocument: this.projectionalComponentDocumentResolver(),
+      normalizeModuleId: (id, from) => this.projectionalModuleId(id, from)
     });
   }
 
@@ -1722,26 +1792,22 @@ export class ComponentChangeTracker {
       });
       throw error;
     }
-    const refreshOptions = { label, afterReplay: () => this.refreshAndTrackProjectionalDependants() };
+    const refreshOptions = { label, afterReplay: this.projectionalReplayNotification() };
     const componentEdit = new ProjectionalComponentEditTransaction(
       transaction,
       adapters,
       policyTransaction
-        ? { label, afterReplay: replay => {
-            if (replay.direction === ComponentTransactionDirection.REVERSE) {
-              return refreshOptions.afterReplay(replay);
-            }
-          } }
+        ? { label, afterReplay: this.projectionalReplayNotification({
+            direction: ComponentTransactionDirection.REVERSE
+          }) }
         : refreshOptions
     );
     const editTransaction = policyTransaction
       ? new CompositeEditTransaction([componentEdit,
         new ProjectionalPolicyCachePropertyEditTransaction(policyTransaction,
-          policyProjection.stores, { label, afterReplay: replay => {
-            if (replay.direction === PolicyCacheTransactionDirection.FORWARD) {
-              return refreshOptions.afterReplay(replay);
-            }
-          } })], { label })
+          policyProjection.stores, { label, afterReplay: this.projectionalReplayNotification({
+            direction: PolicyCacheTransactionDirection.FORWARD
+          }) })], { label })
       : componentEdit;
     this.recordProjectionalEditTransaction(editTransaction);
     this.refreshAndTrackProjectionalDependants();
@@ -1908,23 +1974,18 @@ export class ComponentChangeTracker {
       : null;
     const refreshOptions = refreshesDependants
       ? {
-          afterReplay: replay => {
-            refreshMovedTarget?.(replay);
-            return this.refreshAndTrackProjectionalDependants(textRefresh);
-          }
+          afterReplay: this.projectionalReplayNotification({ textRefresh, refreshMovedTarget })
         }
       : {};
     const componentEdit = new ProjectionalComponentEditTransaction(
       transaction,
       adapters,
-      policyCachePlanCount
+      policyCachePlanCount && refreshesDependants
         // Cache replay runs first during undo. Refresh only after the runtime
         // inverse, so styling cannot invalidate its property preconditions.
-        ? { afterReplay: replay => {
-            if (replay.direction === ComponentTransactionDirection.REVERSE) {
-              return refreshOptions.afterReplay?.(replay);
-            }
-          } }
+        ? { afterReplay: this.projectionalReplayNotification({
+            direction: ComponentTransactionDirection.REVERSE, textRefresh, refreshMovedTarget
+          }) }
         : refreshOptions
     );
     let policyCacheTransaction = null;
@@ -2137,25 +2198,24 @@ export class ComponentChangeTracker {
           derivedRuntimeChangeContext
         )
       : null;
+    const policyCacheReplayOptions = {
+      afterReplay: refreshesDependants
+        ? this.projectionalReplayNotification({
+            direction: PolicyCacheTransactionDirection.FORWARD, textRefresh, refreshMovedTarget
+          })
+        : null
+    };
     const policyCacheEdit = policyCacheTransaction
       ? policyCacheTransaction instanceof PreparedPolicyCacheRenameTransaction
         ? new ProjectionalPolicyCacheEditTransaction(
             policyCacheTransaction,
             policyCacheStores,
-            { afterReplay: replay => {
-                if (replay.direction === PolicyCacheTransactionDirection.FORWARD) {
-                  return refreshOptions.afterReplay?.(replay);
-                }
-              } }
+            policyCacheReplayOptions
           )
         : new ProjectionalPolicyCachePropertyEditTransaction(
             policyCacheTransaction,
             policyCacheStores,
-            { afterReplay: replay => {
-                if (replay.direction === PolicyCacheTransactionDirection.FORWARD) {
-                  return refreshOptions.afterReplay?.(replay);
-                }
-              } }
+            policyCacheReplayOptions
           )
       : null;
     const derivedEdits = [
@@ -2235,6 +2295,21 @@ export class ComponentChangeTracker {
     return projected;
   }
 
+  /** Enumerate source plans in parent-first order for policy evaluation. */
+  projectionalPolicySourceEntries (batch) {
+    return [{
+      descriptor: this.componentDescriptor,
+      componentModule: this.componentModule,
+      source: batch.shadowProjection.sourceAfter,
+      document: batch.shadowProjection.document
+    }, ...(batch.derivedPropagation?.components || []).map(component => ({
+      descriptor: component.dependant,
+      componentModule: this.projectionalModuleForId(component.moduleId),
+      source: component.projection.sourceAfter,
+      document: component.projection.document
+    }))];
+  }
+
   prepareProjectionalPolicyCacheFromSource (batch, context = {}) {
     if (batch.derivedPropagation && !batch.derivedPropagation.supported) return null;
     const policy = this.componentDescriptor?.stylePolicy;
@@ -2249,23 +2324,17 @@ export class ComponentChangeTracker {
         componentNodeNamePath(batch.shadowProjection.document, step.reduction.semanticDelta.nodeId);
       const affectedMorph = context.resolveMorph?.(batch.commands[0].nodeId) ||
         this.trackedComponent?.getMorphWithId?.(batch.commands[0].nodeId);
-      const entries = [{
-        descriptor: this.componentDescriptor,
-        componentModule: this.componentModule,
-        source: batch.shadowProjection.sourceAfter,
-        document: batch.shadowProjection.document
-      }, ...(batch.derivedPropagation?.components || []).map(component => ({
-        descriptor: component.dependant,
-        componentModule: this.projectionalModuleForId(component.moduleId),
-        source: component.projection.sourceAfter,
-        document: component.projection.document
-      }))];
-      for (const entry of entries) {
+      for (const entry of this.projectionalPolicySourceEntries(batch)) {
         const cachedPolicy = entry.descriptor.stylePolicy;
         const projected = this.evaluateProjectionalPolicy(entry, projectedPolicies, references);
         projectedPolicies.set(cachedPolicy, projected);
         const command = batch.commands[0];
         const isMasterEdit = command.property === 'master' || command.kind === ComponentBridgeCommandKind.SET_MASTER;
+        const runtimeProjection = batch.derivedPropagation?.runtimeStructuralProjection;
+        const introduction = runtimeProjection?.changeSet.operations.find(operation =>
+          operation.from?.kind === 'detached' && operation.metadata.componentId === entry.document.componentId);
+        const introducedMorph = introduction && runtimeProjection.runtimeContext.resolveMorph(introduction.morphId);
+        const introducedPath = introducedMorph && componentNodeNamePath(entry.document, step.reduction.semanticDelta.nodeId);
         const pairs = [];
         const pairSpecs = (before, after, path = []) => {
           if (before?.COMMAND === 'add') before = before.props;
@@ -2277,7 +2346,12 @@ export class ComponentChangeTracker {
               affectedPath.length <= path.length &&
               affectedPath.every((name, index) => name === path[index]);
             const runtimePath = inAffectedSubtree ? path.slice(affectedPath.length) : path;
-            const runtimeMorph = entry.descriptor === this.componentDescriptor
+            const inIntroducedSubtree = introducedPath && introducedPath.length <= path.length &&
+              introducedPath.every((name, index) => name === path[index]);
+            const runtimeMorph = inIntroducedSubtree
+              ? path.slice(introducedPath.length).reduce((owner, name) =>
+                  owner?.submorphs?.find(child => child.name === name), introducedMorph)
+              : entry.descriptor === this.componentDescriptor
               ? runtimePath.reduce((owner, name) => owner?.submorphs?.find(child => child.name === name),
                   inAffectedSubtree ? affectedMorph : this.trackedComponent)
               : null;
@@ -2747,6 +2821,9 @@ export class ComponentChangeTracker {
   }
 
   recordProjectionalEditTransaction (editTransaction, legacyChanges = null) {
+    editTransaction.metadata = Object.freeze({
+      ...editTransaction.metadata, componentTracker: this
+    });
     const undoManager = this.trackedComponent?.env?.undoManager;
     if (!undoManager) return editTransaction;
     if (undoManager.undoInProgress) {
@@ -2937,7 +3014,47 @@ export class ComponentChangeTracker {
     return record;
   }
 
+  pruneSessionHistory () {
+    const manager = this.trackedComponent?.env?.undoManager;
+    if (!manager) return;
+    const entries = new Map();
+    const collect = entry => {
+      if (entries.has(entry)) return;
+      if (entry.metadata.componentTracker) {
+        entries.set(entry, componentHistorySourceModules(entry));
+      } else if (entry instanceof CompositeEditTransaction) entry.transactions.forEach(collect);
+    };
+    [...manager.undos, ...manager.redos, ...manager.grouping.current,
+      ...(manager.undoInProgress?.joinedTransactions || [])].forEach(collect);
+    const discarded = new Set();
+    const modules = new Set();
+    const discard = (entry, sourceModules) => {
+      discarded.add(entry);
+      sourceModules.forEach(moduleId => modules.add(moduleId));
+    };
+    for (const [entry, sourceModules] of entries) {
+      if (entry.metadata.componentTracker === this) discard(entry, sourceModules);
+    }
+    // Whole-module replay snapshots connect history across sessions and derived modules.
+    let previousSize;
+    do {
+      previousSize = discarded.size;
+      for (const [entry, sourceModules] of entries) {
+        if (!discarded.has(entry) && [...sourceModules].some(moduleId => modules.has(moduleId))) {
+          discard(entry, sourceModules);
+        }
+      }
+    } while (discarded.size !== previousSize);
+    manager.removeTransactions(entry => discarded.has(entry));
+    if ([...discarded].some(entry => entry.metadata.componentTracker !== this)) {
+      const world = this.trackedComponent.world() || this.trackedComponent.env?.world;
+      world?.showStatusMessage?.('Closing this session cleared undo and redo for other components sharing its source modules. Current edits were kept.');
+    }
+  }
+
   dispose () {
+    delete this._pendingModuleSource;
+    this.pruneSessionHistory();
     if (this._moduleChangedListener) {
       unsubscribe('lively.modules/modulechanged', this._moduleChangedListener,
         this.componentModule?.System || this.componentDescriptor?.System || System);
@@ -2970,6 +3087,9 @@ export class ComponentChangeTracker {
    * @type { string }
    */
   get currentModuleSource () {
+    if (this.componentModule?._source == null && typeof this._pendingModuleSource === 'string') {
+      this.componentModule.setSource(this._pendingModuleSource);
+    }
     return this.componentModule?._source;
   }
 
@@ -3082,6 +3202,9 @@ export class ComponentChangeTracker {
    */
   processChangeInComponent (change) {
     if (this.ignoreChange(change)) return Promise.resolve(true);
+    if (!this._projectionallyCompensatedChanges?.has(change) &&
+        this.trackedComponent?.env?.changeManager?.deferAfterChangeNotifications(
+          change, () => this.processChangeInComponent(change))) return Promise.resolve(true);
     const moduleState = moduleReconciliationStateFor(this);
     let batch = this._projectionalBatchesByLegacyChange?.get(change);
     if (!this._projectionallyCompensatedChanges?.has(change) && change.reverseApply) {
@@ -3097,7 +3220,10 @@ export class ComponentChangeTracker {
         this._compensatingRejectedChange = true;
         change.target.withMetaDo({ doNotOverride: true }, () => change.reverseApply());
         this._projectionallyCompensatedChanges ||= new WeakSet();
-        owned.forEach(entry => this._projectionallyCompensatedChanges.add(entry));
+        owned.forEach(entry => {
+          this._projectionallyCompensatedChanges.add(entry);
+          this.trackedComponent?.env?.changeManager?.suppressChangeNotifications(entry);
+        });
         manager?.discardRecordedChanges([...owned,
           ...(undo?.recorder?.changes || []).filter(entry => !recorded.has(entry))]);
         if (undo && !undo.recorder.changes.length && !undo.joinedTransactions.length) {

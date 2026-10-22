@@ -3,7 +3,7 @@ import { expect } from 'mocha-es6';
 import { createFiles, resource } from 'lively.resources';
 import module from 'lively.modules/src/module.js';
 import { pt, Color } from 'lively.graphics';
-import { part } from 'lively.morphic';
+import { morph, part, TilingLayout } from 'lively.morphic';
 import { InteractiveComponentDescriptor } from '../../components/editor.js';
 import { ComponentTransactionConflictError } from '../../components/reconciliation/component-transaction.js';
 import { releaseComponentEditingState } from './test-isolation.js';
@@ -64,6 +64,86 @@ describe('component edit cost and retained history', () => {
     expect(comparisons).equals(0);
     expect(tracker.shadowCommandBatches).equals(undefined);
     expect(tracker._shadowComparisonPromise).equals(undefined);
+  });
+
+  it('F9 reuses binding resolution across a body-only drag with exact replay', async () => {
+    const before = componentModule._source;
+    editable.undoStart('cached-binding drag');
+    await dragTo(11);
+    const modules = tracker._projectionalBindingLookup.modules;
+    expect(modules.size > 0).equals(true);
+    await dragTo(12);
+    editable.undoStop();
+    const after = componentModule._source;
+    expect(tracker._projectionalBindingLookup.modules).equals(modules);
+    expect(tracker._projectionalBindingLookup.source).equals(after);
+    const cold = part(descriptor);
+    instances.push(cold);
+    expect(cold.get('box').position).deep.equals(editable.get('box').position);
+    manager.undo();
+    await tracker.onceChangesProcessed();
+    expect(componentModule._source).equals(before);
+    expect(editable.get('box').position).deep.equals(pt(10, 20));
+    manager.redo();
+    await tracker.onceChangesProcessed();
+    expect(componentModule._source).equals(after);
+    expect(editable.get('box').position).deep.equals(pt(12, 24));
+  });
+
+  it('F9 invalidates binding resolution when a projection inserts an import', async () => {
+    await dragTo(11);
+    const before = componentModule._source;
+    const modules = tracker._projectionalBindingLookup.modules;
+    const child = morph({ name: 'layout owner', layout: new TilingLayout({ spacing: 3 }) });
+    editable.undoStart('introduction with an import');
+    editable.withMetaDo({ reconcileChanges: true }, () => { editable.addMorph(child); });
+    await tracker.onceChangesProcessed();
+    expect(tracker.lastShadowCommandBatch.projectionalCommit).to.be.ok;
+    expect(componentModule._source).includes('TilingLayout');
+    await dragTo(12);
+    editable.undoStop();
+    expect(tracker._projectionalBindingLookup.modules).not.equals(modules);
+    const after = componentModule._source;
+    const cold = part(descriptor);
+    instances.push(cold);
+    expect(cold.get('layout owner').layout.getSpec()).deep.equals(child.layout.getSpec());
+    manager.undo();
+    await tracker.onceChangesProcessed();
+    expect(componentModule._source).equals(before);
+    expect(editable.get('layout owner')).equals(null);
+    manager.redo();
+    await tracker.onceChangesProcessed();
+    expect(componentModule._source).equals(after);
+    expect(editable.get('layout owner').layout.getSpec()).deep.equals(child.layout.getSpec());
+  });
+
+  it('F9 reloads binding specifiers from saved source before the next drag', async () => {
+    editable.openInWorld();
+    await dragTo(11);
+    const modules = tracker._projectionalBindingLookup.modules;
+    const savedSpecifier = System.decanonicalize('lively.graphics/geometry-2d.js');
+    const saved = componentModule._source.replace("import { pt, Color } from 'lively.graphics';",
+      `import { Color } from 'lively.graphics';\nimport { pt } from '${savedSpecifier}';`);
+    await componentModule.changeSource(saved);
+    editable.undoStart('drag after changed import');
+    await dragTo(12);
+    editable.undoStop();
+    expect(tracker._projectionalBindingLookup.modules).not.equals(modules);
+    expect([...tracker._projectionalBindingLookup.modules.values()].map(entry => entry.specifier))
+      .includes(savedSpecifier);
+    const after = componentModule._source;
+    expect(after).includes(`from '${savedSpecifier}'`);
+    manager.undo();
+    await tracker.onceChangesProcessed();
+    expect(componentModule._source).equals(saved);
+    expect(editable.get('box').position).deep.equals(pt(11, 22));
+    manager.redo();
+    await tracker.onceChangesProcessed();
+    expect(componentModule._source).equals(after);
+    expect(editable.get('box').position).deep.equals(pt(12, 24));
+    const cold = part(descriptor);
+    instances.push(cold);
+    expect(cold.get('box').position).deep.equals(editable.get('box').position);
   });
 
   it('allows explicitly enabled diagnostic histories and comparisons', async () => {
@@ -169,6 +249,70 @@ describe('component edit cost and retained history', () => {
     expect(componentModule._source).equals(after);
     expect(text.position).deep.equals(pt(2, 4));
     expect(text.extent).deep.equals(afterExtent);
+  });
+
+  it('F6 detects an intervening change that replaces a discarded record at the same count', async () => {
+    editable.undoStart('drag with a recorder replacement');
+    const text = editable.get('text');
+    text.withMetaDo({ isLayoutAction: true }, () => { text.extent = pt(30, 40); });
+    await dragTo(11);
+    const recorder = manager.undoInProgress.recorder;
+    const measurement = recorder.changes.find(change => change.target === text && change.prop === 'extent');
+    expect(measurement).to.be.ok;
+    const count = recorder.changes.length;
+    manager.discardRecordedChanges([measurement]);
+    editable.opacity = 0.5;
+    expect(recorder.changes).has.length(count);
+    await dragTo(12);
+    expect(manager.undoInProgress.joinedTransactions).has.length(2);
+    editable.undoStop();
+    const after = componentModule._source;
+    manager.undo();
+    await tracker.onceChangesProcessed();
+    expect(componentModule._source).equals(source);
+    expect(editable.get('box').position).deep.equals(pt(10, 20));
+    expect(editable.opacity).equals(1);
+    manager.redo();
+    await tracker.onceChangesProcessed();
+    expect(componentModule._source).equals(after);
+    expect(editable.get('box').position).deep.equals(pt(12, 24));
+    expect(editable.opacity).equals(0.5);
+  });
+
+  it('F6 resolves all coalesced targets by id in the current editable at replay', async () => {
+    editable.undoStart('drag two targets');
+    await dragTo(11);
+    const text = editable.get('text');
+    editable.withMetaDo({ reconcileChanges: true }, () => { text.position = pt(2, 4); });
+    await tracker.onceChangesProcessed();
+    await dragTo(12);
+    expect(manager.undoInProgress.joinedTransactions).has.length(1);
+    const joined = manager.undoInProgress.joinedTransactions[0];
+    const runtimeContext = (joined.transactions?.[0] || joined).adapters.runtimeContext;
+    editable.undoStop();
+    const after = componentModule._source;
+    const oldBox = editable.get('box');
+    const cold = part(descriptor);
+    instances.push(cold);
+    const currentBox = cold.get('box');
+    // Simulate replacing a runtime object while retaining its semantic runtime id.
+    currentBox._id = oldBox.id;
+    oldBox.remove();
+    expect(runtimeContext.resolveMorph(oldBox.id)).equals(undefined);
+    editable.addMorphAt(currentBox, 0);
+    expect(runtimeContext.resolveMorph(oldBox.id)).equals(currentBox);
+    manager.undo();
+    await tracker.onceChangesProcessed();
+    expect(componentModule._source).equals(source);
+    expect(currentBox.position).deep.equals(pt(10, 20));
+    expect(text.position).deep.equals(pt(0, 0));
+    expect(oldBox.position).deep.equals(pt(12, 24));
+    manager.redo();
+    await tracker.onceChangesProcessed();
+    expect(componentModule._source).equals(after);
+    expect(currentBox.position).deep.equals(pt(12, 24));
+    expect(text.position).deep.equals(pt(2, 4));
+    expect(oldBox.position).deep.equals(pt(12, 24));
   });
 
   it('drops a conflicted coalesced entry and leaves earlier history reachable', async () => {
