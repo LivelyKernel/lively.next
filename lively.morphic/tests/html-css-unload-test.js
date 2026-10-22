@@ -1,4 +1,4 @@
-/* global describe, it */
+/* global describe, it, getComputedStyle */
 import { expect } from 'mocha-es6';
 import { HTMLMorph } from '../html-morph.js';
 import { Morph, MorphicEnv, morph } from '../index.js';
@@ -7,6 +7,26 @@ import { loadWorld } from '../world-loading.js';
 import { pt } from 'lively.graphics';
 
 describe('HTML CSS world lifetime', () => {
+  for (const shareCss of [false, true]) {
+    it(`keeps CSS installed after a cancelled beforeunload (shareCss=${shareCss})`, async () => {
+      const html = new HTMLMorph({
+        shareCss,
+        html: '<span class="unload-content">content</span>',
+        cssDeclaration: '.unload-content { color:rgb(255,0,0); }'
+      }).openInWorld();
+      try {
+        await html.whenRendered();
+        const world = html.world();
+        expect(getComputedStyle(html.domNode.firstChild).color).equals('rgb(255, 0, 0)', 'CSS must be installed before beforeunload');
+        html.env.eventDispatcher.dispatchDOMEvent(new Event('beforeunload'), world, 'onBeforeUnload');
+        await html.whenRendered();
+        expect(html.env.world).equals(world, 'a cancelled beforeunload keeps the active world');
+        expect(getComputedStyle(html.domNode.firstChild).color).equals('rgb(255, 0, 0)', 'CSS must survive a cancelled beforeunload');
+        expect((world.attributeConnections || []).some(c => c.targetObj === html)).equals(true, 'the active world must retain the CSS cleanup connection');
+      } finally { html.remove(); }
+    });
+  }
+
   it('releases private and shared CSS from a nested old world on in-page loadWorld', async () => {
     const env = MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment()));
     const members = [false, true].map(shareCss => new HTMLMorph({ env, shareCss, cssDeclaration: '.content { color:red; }' }));
