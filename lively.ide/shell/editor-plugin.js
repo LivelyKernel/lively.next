@@ -9,7 +9,6 @@ import './mode.js';
 import { Snippet } from '../text/snippets.js';
 
 let defaultDir;
-Promise.resolve(defaultDirectory()).then(dir => defaultDir = dir);
 
 export default class ShellEditorPlugin extends CodeMirrorEnabledEditorPlugin {
   constructor () {
@@ -38,7 +37,8 @@ export default class ShellEditorPlugin extends CodeMirrorEnabledEditorPlugin {
   }
 
   async changeCwdInteractively () {
-    let cwd = this.cwd;
+    let cwd = this.cwd || await defaultDirectory();
+    defaultDir = cwd;
     let dirs = arr.uniq([cwd].concat(defaultDir, ...this.knownCwds)).filter(Boolean);
     let { status, list: newDirs, selections: [choice] } = await this.textMorph.world().editListPrompt(
       'Choose working directory:', dirs, {
