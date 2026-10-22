@@ -15,7 +15,12 @@ export function scopedCss (source, ids) {
   function scope (rules) {
     for (const rule of rules) {
       // The custom HTML node is the first child; morphic submorphs are siblings.
-      if (rule.selectors) rule.selectors = ids.flatMap(id => rule.selectors.map(selector => `#${id} > :where(:first-child) ${selector}`));
+      if (rule.selectors) {
+        rule.selectors = ids.flatMap(id => rule.selectors.flatMap(selector => [
+          `#${id} > :is(${selector}):where(:first-child)`,
+          `#${id} > :where(:first-child) ${selector}`
+        ]));
+      }
       if (rule.rules) scope(rule.rules);
     }
   }
