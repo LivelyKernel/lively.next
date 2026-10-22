@@ -51,6 +51,8 @@ function ensurePackage (System, packageURL, isNormalized = false) {
 }
 
 function getPackage (System, packageURL, isNormalized = false) {
+  const registered = isNormalized && classHolder.PackageRegistry.ofSystem(System).findPackageWithURL(packageURL);
+  if (registered) return registered;
   let { pkg, url } = lookupPackage(System, packageURL, isNormalized);
   if (pkg) return pkg;
   throw new Error(`[getPackage] package ${packageURL} (as ${url}) not found`);
