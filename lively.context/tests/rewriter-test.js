@@ -7,6 +7,8 @@ import { escodegen, parse } from "lively.ast";
 import { string, arr, obj } from "lively.lang";
 import { getCurrentASTRegistry, RecordingRewriter, setCurrentASTRegistry } from "lively.context";
 import { stackCaptureMode, asRewrittenClosure } from "../lib/stackReification.js";
+import { installShallowDeepEqual } from './helpers.js';
+installShallowDeepEqual(chai);
 
 chai.use(function(chai, utils) {
   chai.ast = chai.ast || {};
@@ -37,13 +39,13 @@ function tryCatch(level, varMapping, inner, optOuterLevel) {
     + "__%s.push(_, _%s, %s);\n"
     + "%s"
     + "} catch (e) {\n"
-    + "    var ex = e.isUnwindException ? e : new UnwindException(e);\n"
-    + "    ex.storeFrameInfo(this, arguments, __%s, lastNode, 'RewriteTests', %s);\n"
+    + "    var ex = e && e.isUnwindException ? e : new UnwindException(e);\n"
+    + "    ex.storeFrameInfo(this, arguments, __%s, lastNode, 'RewriteTests', %s%s);\n"
     + "    throw ex;\n"
     + "}\n",
     level, level, generateVarMappingString(), level, level,
     optOuterLevel < 0 ? (typeof window !== "undefined" ? 'window' : 'global') : '__' + optOuterLevel,
-    inner, level, "__/[0-9]+/__");
+    inner, level, "__/[0-9]+/__", level > 0 ? ', new.target' : '');
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   function generateVarMappingString() {
     if (!varMapping) return '{}';
@@ -119,8 +121,8 @@ function closureWrapper(level, name, args, innerVarDecl, inner, optInnerLevel) {
 
 function catchIntro(level, catchVar, storeResult) {
   storeResult = storeResult == null ? true : !!storeResult;
-  return string.format("var _%s = { '%s': %s.isUnwindException ? %s.error : %s };\n"
-    + "if (_%s['%s'].toString() == 'Debugger' && !(lively.Config && lively.Config.loadRewrittenCode))\n"
+  return (storeResult ? '__closeIteratorsAfterCatch(' + catchVar + ');\n' : '') + string.format("var _%s = { '%s': %s && %s.isUnwindException ? %s.release() : %s };\n"
+    + "if (__isControlSignal(_%s['%s']) && !(lively.Config && lively.Config.loadRewrittenCode))\n"
     + "    throw %s;\n"
     + (storeResult ? pcAdvance() + ";\n"
       + "__%s = [\n"
@@ -128,7 +130,7 @@ function catchIntro(level, catchVar, storeResult) {
       + "    _%s,\n"
       + "    __%s\n"
       + "];\n" : ""),
-    level, catchVar, catchVar, catchVar, catchVar,
+    level, catchVar, catchVar, catchVar, catchVar, catchVar,
     level, catchVar, catchVar, level - 1, level, level - 1);
 }
 
@@ -141,12 +143,7 @@ function debuggerThrow() {
     (typeof window !== "undefined" ? 'window' : 'global') + ")) {\n" +
     "debugging = true;\n" +
     prefixResult('undefined') + ";\n" +
-    "throw {\n" +
-    "toString: function () {\n" +
-    "return 'Debugger';\n" +
-    "},\n" +
-    "astIndex: __/[0-9]+/__\n" +
-    "};\n" +
+    "throw __debuggerSignal(__/[0-9]+/__);\n" +
     "}\n";
 }
 
@@ -498,7 +495,7 @@ describe('rewriting', function() {
 
   it('rewrites function re-declarations', function() {
     var src = 'function foo() { 1; } foo(); function foo() { 2; }',
-        ast = parser.parse(src),
+        ast = parser.parse(src, { sourceType: 'script' }),
         astCopy = obj.deepCopy(ast),
         result = rewrite(ast),
         expected = tryCatch(0, { 'foo': closureWrapper(0, 'foo', [], {}, '2;\n') },
@@ -590,6 +587,7 @@ describe('rewriting', function() {
           debuggerThrow() +
           '} catch (e) {\n' +
           catchIntro(1,'e', false) +
+          'throw e;\n' +
           '} finally {\n' +
           finallyWrapper('1;\n') +
           '}\n'
@@ -723,7 +721,7 @@ describe('rewriting', function() {
         astCopy = obj.deepCopy(ast),
         result = rewrite(ast),
         expected = tryCatch(0, { },
-          'if (true) {\n' +
+          'if (_[lastNode = 0] = true) {\n' +
           debuggerThrow() +
           '} else\n' +
           '1;\n'
@@ -738,7 +736,7 @@ describe('rewriting', function() {
         astCopy = obj.deepCopy(ast),
         result = rewrite(ast),
         expected = tryCatch(0, { },
-          'if (true)\n' +
+          'if (_[lastNode = 0] = true)\n' +
           '1;\n' +
           'else {\n' +
           debuggerThrow() +
@@ -856,7 +854,7 @@ describe('rewriting', function() {
         astCopy = obj.deepCopy(ast),
         result = rewrite(ast),
         sourceResult = escodegen.generate(result);
-    expect(sourceResult).to.include("function (foo)", "arrow expr not converted to function?");
+    expect(sourceResult).to.include('foo =>', 'arrow must preserve lexical this');
     expect(sourceResult).to.include("return { x: 23 };", "arrow result not returning?");
   });
 

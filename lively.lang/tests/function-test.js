@@ -49,13 +49,26 @@ describe('fun', function () {
     });
 
     it('can extract a function body a string', function () {
-      let f = function (arg1, arg2, arg4) { let x = { n: 33 }; return x.n + arg2 + arg4; };
-      const normalized = fun.extractBody(f)
-        .replace(/\n[ ]{4}/g, '\n  ')
-        .replace(/\{ n: 33 \}/g, '{\n  n: 33\n}');
-      expect(normalized).to.equal('let x = {\n  n: 33\n};\nreturn x.n + arg2 + arg4;');
+      // Keep the native source stable when the surrounding test is transpiled.
+      const f = globalThis.Function('arg1', 'arg2', 'arg4', '  let x = {\n    n: 33\n  };\n  return x.n + arg2 + arg4;');
+      expect(fun.extractBody(f)).to.equal('let x = {\n  n: 33\n};\nreturn x.n + arg2 + arg4;');
+      expect(globalThis.Function('arg1', 'arg2', 'arg4', fun.extractBody(f))(0, 2, 4)).equals(f(0, 2, 4));
       expect(fun.extractBody(function () {})).to.equal('');
       expect(fun.extractBody(function () { 123; })).to.equal('123;');
+    });
+
+    it('extracts the retained source body of an instrumented function', function () {
+      const rewritten = globalThis.Function('arg1', 'arg2', 'arg4', '  let x = {\n      n: 99\n  };\n  return x.n + arg2 + arg4;');
+      expect(fun.extractBody(rewritten)).equals('let x = {\n    n: 99\n};\nreturn x.n + arg2 + arg4;');
+      const original = 'function (arg1, arg2, arg4) {\n  let x = {\n    n: 33\n  };\n  return x.n + arg2 + arg4;\n}';
+      const prefix = '/* prefix */';
+      const moduleSource = prefix + original + '/* suffix */';
+      Object.defineProperty(rewritten, Symbol.for('lively-object-meta'), {
+        value: {moduleSource, start: prefix.length, end: prefix.length + original.length}, configurable: true
+      });
+      expect(fun.extractBody(rewritten)).equals('let x = {\n  n: 33\n};\nreturn x.n + arg2 + arg4;');
+      expect(globalThis.Function('arg1', 'arg2', 'arg4', fun.extractBody(rewritten))(0, 2, 4)).equals(39);
+      expect(rewritten(0, 2, 4)).equals(105);
     });
   });
 

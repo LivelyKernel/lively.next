@@ -56,6 +56,7 @@ export default class PackageConfiguration {
     // non-existing package.json
     System.CONFIG.packages[packageURL].configured = true;
 
+    // getConfig() copies every installed package; only this package is needed.
     let packageInSystem = obj.deepCopy(System.CONFIG.packages[packageURL] || {});
     if (!packageInSystem.map) packageInSystem.map = {};
 

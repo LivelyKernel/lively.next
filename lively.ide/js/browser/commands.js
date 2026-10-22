@@ -69,6 +69,19 @@ export default function browserCommands (browser) {
     { name: 'browser save', exec: browser => { return browser.save(); } },
 
     {
+      name: 'toggle module debugger interception',
+      exec: async browser => {
+        if (!browser.selectedModule) return false;
+        await browser.reviveFrozenModuleIfNeeded();
+        const module = await browser.systemInterface.getModule(browser.selectedModule.url);
+        if (!module?.setDebuggingEnabled) return false;
+        const enabled = await module.setDebuggingEnabled(!module.debuggingEnabled);
+        browser.setStatusMessage('Debugger interception ' + (enabled ? 'enabled' : 'disabled'));
+        return true;
+      }
+    },
+
+    {
       name: 'jump to codeentity',
       exec: async browser => {
         const { editorPlugin: { textMorph: ed } } = browser;
