@@ -218,7 +218,12 @@ export class HTMLMorph extends Morph {
     const connection = cssUnloadConnections.get(this);
     if (connection?.sourceObj !== this.world()) {
       connection?.disconnect();
-      cssUnloadConnections.set(this, connect(this.world(), 'onUnload', this, 'uninstallCssDeclaration'));
+      cssUnloadConnections.set(this, connect(this.world(), 'onUnload', this, 'uninstallCssDeclaration', {
+        updater: (update, evt) => {
+          // beforeunload can be cancelled; loadWorld unloads without an event.
+          if (evt?.type !== 'beforeunload') update();
+        }
+      }));
     }
     cssDocuments.set(this, doc);
     let members = cssMorphs.get(doc);
