@@ -296,9 +296,11 @@ export default class LivelyDAVPlugin {
       return;
     }
 
-    if (req.url == '/livelyClassesRuntime.js') {
+    const requestPath = String(req.url).split('?')[0];
+    if (['GET', 'HEAD'].includes(req.method) &&
+        (requestPath == '/livelyClassesRuntime.js' || requestPath.endsWith('/livelyClassesRuntime.js'))) {
       res.writeHead(200, { 'content-type': 'application/javascript' });
-      res.end(await resource(System.baseURL).join('lively.classes/build/runtime.js').read());
+      res.end(req.method === 'HEAD' ? undefined : await resource(System.baseURL).join('lively.classes/build/runtime.js').read());
       return;
     }
 

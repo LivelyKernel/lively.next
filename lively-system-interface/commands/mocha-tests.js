@@ -44,6 +44,17 @@ export async function runMochaTests (grep, testsByFile, onChange, onError) {
           } catch (e) { typeof onError === 'function' && onError(e, 'pass'); }
         });
 
+        runner.on('pending', test => {
+          try {
+            let t = tests.find(ea => ea.fullTitle === test.fullTitle());
+            // An unset state is the existing skipped convention for IDE and CI consumers.
+            delete t.state;
+            delete t.error;
+            t.duration = test.duration;
+            typeof onChange === 'function' && onChange(t, 'pending');
+          } catch (e) { typeof onError === 'function' && onError(e, 'pending'); }
+        });
+
         runner.on('fail', (test, error) => {
           try {
             let t = tests.find(ea => ea.fullTitle === test.fullTitle());
