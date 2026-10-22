@@ -113,6 +113,17 @@ describeInBrowser('halos', function () {
     expect(halo.nameHalo().nameHolders[0].submorphs[0].textString).equals(submorph1.name);
   });
 
+  it('refuses unsupported component declaration renames before mutating the target', async () => {
+    submorph1.isComponent = true;
+    const originalName = submorph1.name;
+    const halo = await world.showHaloFor(submorph1);
+    const holder = halo.nameHalo().nameHolders[0];
+    holder.updateName('renamed component');
+    expect(holder.isEditable).to.be.false;
+    expect(submorph1.name).equals(originalName);
+    expect(holder.tooltip).includes('System Browser');
+  });
+
   it('drag drags', async () => {
     let halo = await world.showHaloFor(submorph1);
     halo.dragHalo().init();
