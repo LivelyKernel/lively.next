@@ -481,7 +481,7 @@ class DOMTextMeasure {
   getEmptySpaceOfMorph (textMorph) {
     const leftBorder = textMorph.borderStyleLeft !== 'none' ? textMorph.borderWidthLeft : 0;
     const rightBorder = textMorph.borderStyleRight !== 'none' ? textMorph.borderWidthRight : 0;
-    return textMorph.width - textMorph.padding.left() - textMorph.padding.right() - leftBorder - rightBorder;
+    return textMorph.width - textMorph.textPadding.left() - textMorph.textPadding.right() - leftBorder - rightBorder;
   }
 
   measureCharWidthsInCanvas (morph, str, styleOpts = {}, measuringState) {
@@ -860,7 +860,7 @@ export function charBoundsOfLineViaCanvas (line, textMorph, fontMetric, measure)
   const boundsPerInnerLine = arr.groupBy(characterBounds, b => b[1][1]);
   const result = [];
   let innerLineOffset = 0;
-  const paddedSpace = textMorph.padding.right() + textMorph.padding.left();
+  const paddedSpace = textMorph.textPadding.right() + textMorph.textPadding.left();
   let totalWidth = textMorph.width;
   if (!textMorph.fixedWidth) {
     // in this case the padding + longest line defines the total width

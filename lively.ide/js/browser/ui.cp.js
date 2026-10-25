@@ -1416,6 +1416,7 @@ const SystemBrowser = component({
   }, {
     type: Text,
     name: 'source editor',
+    showLineNumbers: true,
     readOnly: false,
     needsDocument: true,
     borderColor: Color.rgb(204, 204, 204),
