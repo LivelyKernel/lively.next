@@ -29,6 +29,7 @@ export function getEligibleSourceEditorsFor (modId, modSource) {
   });
   return qualifiedEditors.filter(editor => {
     if (typeof modSource !== 'string' || editor.textString !== modSource) return false;
+    if (editor.pluginFind?.(plugin => plugin.isComponentSourceEditorPlugin)?.sessions.size) return true;
     if (editor.owner?.isBrowser && modSource) return !editor.owner.hasUnsavedChanges(modSource);
     return true;
   });
@@ -234,14 +235,10 @@ export function getComponentNode (parsedModuleContent, componentName) {
  * @returns { object } The AST node of the component declaration
  */
 export function findComponentDef (parsedModuleContent, componentName) {
-  return query.queryNodes(parsedModuleContent, `// VariableDeclaration [
-          @kind == "const"
-          && /:declarations '*' [
-            VariableDeclarator [
-              /:id Identifier [ @name == "${componentName}"]
-            ]
-         ]
-      ]`)[0];
+  return parsedModuleContent.body
+    .map(statement => statement.type === 'ExportNamedDeclaration' ? statement.declaration : statement)
+    .find(declaration => declaration?.type === 'VariableDeclaration' && declaration.kind === 'const' &&
+      declaration.declarations.some(({ id }) => id.type === 'Identifier' && id.name === componentName));
 }
 
 /**
