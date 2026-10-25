@@ -107,6 +107,16 @@ export async function fetchResource (proceed, load) {
 
 // FIXME!!!
 const livelyURLRe = /^lively:\/\/([^\/]+)\/(.*)$/;
+
+/** Resolve the Workspace's module suffix while preserving exact morph ids. */
+function morphForLivelyId (id) {
+  if (typeof $world === 'undefined') return false;
+  const morph = $world.getMorphWithId(id);
+  if (morph) return morph;
+  const morphId = id.replace(/\.cp\.js$/, '');
+  return morphId === id ? morph : $world.getMorphWithId(morphId);
+}
+
 function livelyProtocol (proceed, url) {
   const match = url.match(livelyURLRe);
   if (!match) return proceed(url);
@@ -115,11 +125,11 @@ function livelyProtocol (proceed, url) {
     ext: () => '',
     isResource: true,
     read () {
-      const m = typeof $world !== 'undefined' && $world.getMorphWithId(id);
+      const m = morphForLivelyId(id);
       return Promise.resolve(m ? m.textString : `/*Could not locate ${id}*/`);
     },
     write (source) {
-      const m = typeof $world !== 'undefined' && $world.getMorphWithId(id);
+      const m = morphForLivelyId(id);
       if (!m) return Promise.reject(`Could not save morph ${id}`);
       m.textString = source;
       return Promise.resolve(this);
@@ -152,13 +162,13 @@ class LivelyResource extends Resource {
 
   async read () {
     const id = this.morphId;
-    const m = typeof $world !== 'undefined' && $world.getMorphWithId(id);
+    const m = morphForLivelyId(id);
     return Promise.resolve(m ? m.textString : `/*Could not locate ${id}*/`);
   }
 
   async write (source) {
     const id = this.morphId;
-    const m = typeof $world !== 'undefined' && $world.getMorphWithId(id);
+    const m = morphForLivelyId(id);
     if (!m) return Promise.reject(`Could not save morph ${id}`);
     m.textString = source;
     return Promise.resolve(this);
@@ -166,12 +176,12 @@ class LivelyResource extends Resource {
 
   async exists () {
     // checks if the morph exists
-    return typeof $world !== 'undefined' && $world.getMorphWithId(this.morphId);
+    return morphForLivelyId(this.morphId);
   }
 
   async remove () {
     // removes the morph
-    typeof $world !== 'undefined' && $world.getMorphWithId(this.morphId).remove();
+    typeof $world !== 'undefined' && morphForLivelyId(this.morphId).remove();
     return true;
   }
 }
