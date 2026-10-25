@@ -151,6 +151,9 @@ function textInRange (target, range) {
 
 /** Follow the same document, anchor, selection and layout routines as Text.replace. */
 export function applyTextEdit (target, operation, context, { recovering = false } = {}) {
+  if (!recovering && !target.env.changeManager._recovering && !target.isTextChangeAllowed(operation.range, operation.after)) {
+    throw new Error('Text change rejected by a text plugin');
+  }
   if (!recovering && !equalText(textInRange(target, operation.range), operation.before)) {
     throw new Error(`Precondition failed for text ${target.id}`);
   }
@@ -233,7 +236,7 @@ export function captureTextRecovery (target, operation, context) {
     restored: stateMatches,
     restore: () => {
       const applied = recovery.appliedOperation;
-      if (applied) applyTextEdit(target, applied.invert(), context);
+      if (applied) applyTextEdit(target, applied.invert(), context, { recovering: true });
       recovery.restoreAuxiliary();
     },
     restoreAuxiliary: () => {

@@ -432,10 +432,13 @@ export class Text extends Morph {
           return this.document ? this.document.textString : this.textAndAttributes.map((text, i) => i % 2 === 0 ? text : '').join('');
         },
         set (value) {
+          if (this.document) value = (value !== null) ? String(value) : '';
+          if (!this.isTextChangeAllowed(null, value)) {
+            if (this.env.changeManager._textCaptureActive) throw new Error('Text change rejected by a text plugin');
+            return;
+          }
           if (this.document) {
-            value = (value !== null) ? String(value) : '';
-            this.deleteText({ start: { column: 0, row: 0 }, end: this.document.endPosition });
-            this.insertText(value, { column: 0, row: 0 });
+            this.replace(this.documentRange, value, false);
           } else {
             this.textAndAttributes = [String(value), null];
           }
@@ -476,6 +479,10 @@ export class Text extends Morph {
           }
         },
         set (textAndAttributes) {
+          if (!this.isTextChangeAllowed(null, textAndAttributes)) {
+            if (this.env.changeManager._textCaptureActive) throw new Error('Text change rejected by a text plugin');
+            return;
+          }
           if (this.env.changeManager._textCaptureActive) {
             this.env.changeManager._assignText(this, textAndAttributes);
             return;
@@ -1055,7 +1062,7 @@ export class Text extends Morph {
     // filter the anchors
     if (snapshot.props.anchors && this.selection.isEmpty()) {
       snapshot.props.anchors.value = snapshot.props.anchors.value.filter(ref => {
-        return !ref.id.includes('selection-');
+        return !ref.id?.includes('selection-');
       });
     }
 
@@ -1519,6 +1526,21 @@ export class Text extends Morph {
     return this.readOnly; /* || !this.isFocused() */
   }
 
+  /** A null range preflights a whole-value assignment before its individual edits. */
+  isTextChangeAllowed (range, replacement) {
+    return (this.plugins || []).every(plugin => {
+      if (typeof plugin?.isTextChangeAllowed !== 'function') return true;
+      if (!range) {
+        range = this.documentRange;
+        if (!this.document) {
+          const { ranges } = textAndAttributesWithSubRanges(range.start, this.textAndAttributes);
+          range.end = arr.last(ranges)?.end || range.start;
+        }
+      }
+      return plugin.isTextChangeAllowed(range, replacement) !== false;
+    });
+  }
+
   addAnchor (anchor) {
     if (!anchor) return;
 
@@ -1961,13 +1983,16 @@ export class Text extends Morph {
     undoGroup = true,
     consistencyCheck = true
   ) {
+    range = range.isRange ? range : new Range(range);
+    if (!this.isTextChangeAllowed(range, textOrtextAndAttributes)) {
+      if (this.env.changeManager._textCaptureActive) throw new Error('Text change rejected by a text plugin');
+      return Range.at(range.start);
+    }
     if (this.env.changeManager._textCaptureActive) {
-      return this.env.changeManager._replaceText(this, new Range(range).toLiteral(), textOrtextAndAttributes, { extendTextAttributes, invalidateTextLayout, consistencyCheck });
+      return this.env.changeManager._replaceText(this, range.toLiteral(), textOrtextAndAttributes, { extendTextAttributes, invalidateTextLayout, consistencyCheck });
     }
     const prevTextAndAttributes = this.env.changeManager.hasCommittedListenerFor(this)
       ? this.textAndAttributes : null;
-    range = range.isRange ? range : new Range(range);
-
     // convert insertion into text and attibutes
     const textAndAttributes = typeof textOrtextAndAttributes === 'string'
       ? [textOrtextAndAttributes, null]

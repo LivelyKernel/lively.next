@@ -16,6 +16,7 @@ import {
 } from 'lively.morphic/changes/index.js';
 import { CompositeEditTransaction } from 'lively.morphic/undo.js';
 import { getEligibleSourceEditorsFor, getTextAttributesExpr, getValueExpr } from './helpers.js';
+import { protectComponentSource, updateComponentSourceEditor } from './source-editor.js';
 import {
   ClearPropertyOverride,
   ComponentCommandKind,
@@ -437,6 +438,7 @@ export class ComponentChangeTracker {
     aComponent._changeTracker = this;
     connect(aComponent, 'onOwnerChanged', this, 'updateEditSessionOwner', { garbageCollect: true });
     this.updateEditSessionOwner();
+    if (typeof this.currentModuleSource === 'string') protectComponentSource(this);
   }
 
   /** End an attached edit session after detachment, allowing synchronous reparenting. */
@@ -1583,22 +1585,10 @@ export class ComponentChangeTracker {
       this._projectionalSource = source;
     }
     for (const editor of editors) {
-      const previous = editor.textString;
-      let start = 0;
-      while (start < previous.length && start < source.length && previous[start] === source[start]) start++;
-      let previousEnd = previous.length;
-      let sourceEnd = source.length;
-      while (previousEnd > start && sourceEnd > start && previous[previousEnd - 1] === source[sourceEnd - 1]) {
-        previousEnd--;
-        sourceEnd--;
+      updateComponentSourceEditor(editor, source);
+      if (!editor.pluginFind?.(plugin => plugin.isComponentSourceEditorPlugin)?.hasTextEdits) {
+        editor.owner?.resetChangedContentIndicator?.();
       }
-      if (previousEnd !== start || sourceEnd !== start) {
-        if (editor.document) editor.replace({
-          start: editor.indexToPosition(start), end: editor.indexToPosition(previousEnd)
-        }, source.slice(start, sourceEnd));
-        else editor.textString = source;
-      }
-      editor.owner?.resetChangedContentIndicator?.();
     }
   }
 
@@ -3014,7 +3004,7 @@ export class ComponentChangeTracker {
     return record;
   }
 
-  pruneSessionHistory () {
+  pruneSessionHistory (reason = 'session-close') {
     const manager = this.trackedComponent?.env?.undoManager;
     if (!manager) return;
     const entries = new Map();
@@ -3046,13 +3036,18 @@ export class ComponentChangeTracker {
       }
     } while (discarded.size !== previousSize);
     manager.removeTransactions(entry => discarded.has(entry));
-    if ([...discarded].some(entry => entry.metadata.componentTracker !== this)) {
+    if ((reason === 'source-edit' && discarded.size) ||
+        [...discarded].some(entry => entry.metadata.componentTracker !== this)) {
       const world = this.trackedComponent.world() || this.trackedComponent.env?.world;
-      world?.showStatusMessage?.('Closing this session cleared undo and redo for other components sharing its source modules. Current edits were kept.');
+      world?.showStatusMessage?.(reason === 'source-edit'
+        ? 'Editing code cleared component undo and redo for this module. Current edits were kept.'
+        : 'Closing this session cleared undo and redo for other components sharing its source modules. Current edits were kept.');
     }
   }
 
   dispose () {
+    for (const plugin of this._sourceEditorPlugins || []) plugin.removeSession(this);
+    this._sourceEditorPlugins?.clear();
     delete this._pendingModuleSource;
     this.pruneSessionHistory();
     if (this._moduleChangedListener) {
@@ -3100,6 +3095,7 @@ export class ComponentChangeTracker {
    */
   async whenReady () {
     await this.componentModule.source();
+    protectComponentSource(this);
     return true;
   }
 
