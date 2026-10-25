@@ -66,7 +66,7 @@ export default class Layout {
   estimateExtentOfLine (morph, line, transform = morph.getGlobalTransform()) {
     const {
       fontMetric, lineWrapping,
-      padding, debug, defaultTextStyle
+      textPadding: padding, debug, defaultTextStyle
     } = morph;
     let { x: morphWidth, y: morphHeight } = morph.getProperty('extent');
 
@@ -163,7 +163,7 @@ export default class Layout {
   textBounds (morph) {
     const {
       document: doc,
-      padding,
+      textPadding: padding,
       borderWidthLeft,
       borderWidthRight,
       borderWidthTop,
@@ -334,7 +334,7 @@ export default class Layout {
       console.warn(`Cannot compute bounds for line ${row}/${column}`);
       bounds = new Rectangle(0, 0, 0, 0);
     }
-    const { document: doc, padding } = morph;
+    const { document: doc, textPadding: padding } = morph;
     bounds.x = bounds.x + padding.left();
     bounds.y = bounds.y + doc.computeVerticalOffsetOf(row) + padding.top();
 
@@ -347,7 +347,7 @@ export default class Layout {
 
   textPositionFromPoint (morph, point) {
     let { x, y } = point.addPt(morph.origin);
-    const { document: doc, padding } = morph;
+    const { document: doc, textPadding: padding } = morph;
     const padL = padding.left();
     const padT = padding.top();
 

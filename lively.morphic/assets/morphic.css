@@ -214,6 +214,26 @@ input:placeholder {
   pointer-events: none;
 }
 
+.newtext-line-number-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  z-index: 11;
+}
+
+.newtext-line-number-layer .line-number {
+  position: absolute;
+  width: 100%;
+  padding-right: 6px;
+  box-sizing: border-box;
+  text-align: right;
+  white-space: pre;
+}
+
 .newtext-text-layer.wrap-by-words {
   white-space: pre-wrap;
   word-break: break-word;

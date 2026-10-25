@@ -1031,6 +1031,16 @@ const commands = [
   },
 
   {
+    name: 'toggle line numbers',
+    scrollCursorIntoView: false,
+    multiSelectAction: 'single',
+    exec: function (morph) {
+      morph.showLineNumbers = !morph.showLineNumbers;
+      return true;
+    }
+  },
+
+  {
     name: 'toggle line wrapping',
     scrollCursorIntoView: false,
     multiSelectAction: 'single',

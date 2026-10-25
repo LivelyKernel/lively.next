@@ -183,7 +183,7 @@ export class Text extends Morph {
         group: '_rendering',
         after: ['readOnly'],
         initialize () {
-          if (!this.readOnly || this.needsDocument) this.backWithDocument();
+          if (!this.readOnly || this.needsDocument || this.showLineNumbers) this.backWithDocument();
         }
       },
 
@@ -284,13 +284,13 @@ export class Text extends Morph {
         after: ['borderWidth', 'borderColor', 'borderRadius', 'borderStyle'],
         set (readOnly) {
           if (!readOnly) {
-            this.backedUpSelectionMode = this.selectionMode;
+            if (!this.showLineNumbers || this.selectionMode !== 'lively') this.backedUpSelectionMode = this.selectionMode;
             this.backWithDocument();
             this.selectionMode = 'lively';
             this.backedUpNativeCursor = this.nativeCursor;
             this.nativeCursor = 'text';
           } else {
-            if (!this.needsDocument) {
+            if (!this.needsDocument && !this.showLineNumbers) {
               this.removeDocument();
               if (this.backedUpSelectionMode) this.selectionMode = this.backedUpSelectionMode;
               else this.selectionMode = 'none';
@@ -317,6 +317,27 @@ export class Text extends Morph {
           }
           this.setProperty('needsDocument', needsDocument);
         }
+      },
+
+      showLineNumbers: {
+        group: 'text',
+        isStyleProp: true,
+        defaultValue: false,
+        after: ['readOnly', 'needsDocument'],
+        set (value) {
+          this.setProperty('showLineNumbers', value);
+          if (value) {
+            this.backWithDocument();
+            if (this.selectionMode === 'native') {
+              this.backedUpSelectionMode = 'native';
+              this.selectionMode = 'lively';
+            }
+          } else if (this.readOnly && !this.needsDocument && this.document) {
+            this.removeDocument();
+            this.selectionMode = this.backedUpSelectionMode || 'none';
+          }
+        },
+        doc: 'Show one-based document line numbers in a gutter that stays fixed when scrolling horizontally.'
       },
 
       selectable: {
@@ -614,7 +635,7 @@ export class Text extends Morph {
         type: 'Enum',
         values: ['none', 'native', 'lively'],
         defaultValue: 'none',
-        after: ['document', 'needsDocument'],
+        after: ['document', 'needsDocument', 'showLineNumbers'],
         isStyleProp: true,
         set (mode) {
           if (mode === 'native') {
@@ -622,9 +643,10 @@ export class Text extends Morph {
               $world.setStatusMessage('Only possible for non-editable texts.');
               return;
             }
-            if (this.needsDocument) {
+            if (this.needsDocument || this.showLineNumbers) {
               // mixing documents with native selection does not work,
               // since it is obstructing the scroll
+              if (this.showLineNumbers) this.backedUpSelectionMode = 'native';
               this.selectionMode = 'lively';
               return;
             }
@@ -1283,7 +1305,8 @@ export class Text extends Morph {
         case 'fixedWidth':
           hardLayoutChange = change.prevValue !== change.value;
           break;
-        case 'lineWrapping': hardLayoutChange = true; break;
+        case 'lineWrapping':
+        case 'showLineNumbers': hardLayoutChange = true; break;
         case 'borderWidth':
           this.renderingState.cursorChange = true;
         case 'fixedHeight':
@@ -1745,6 +1768,20 @@ export class Text extends Morph {
 
   defaultCharExtent () { return this.textLayout.defaultCharExtent(this); }
 
+  get lineNumberGutterWidth () {
+    if (!this.showLineNumbers || !this.document) return 0;
+    const digits = Math.max(2, String(this.document.rowCount).length);
+    return Math.ceil(this.fontMetric.sizeFor(this.defaultTextStyle, '8'.repeat(digits), true).width) + 12;
+  }
+
+  get textPadding () {
+    const padding = this.padding;
+    const gutterWidth = this.lineNumberGutterWidth;
+    return gutterWidth
+      ? Rectangle.inset(padding.left() + gutterWidth, padding.top(), padding.right(), padding.bottom())
+      : padding;
+  }
+
   get scrollExtent () {
     let domExtent;
     if (!this.document && !this.renderingState.scrollLayer && ['auto', 'scroll'].includes(this.clipMode)) {
@@ -1760,8 +1797,8 @@ export class Text extends Morph {
     // rms: See: morph>>scrollExtent
     const modelExtent = this.textBounds()
       .extent()
-      .addPt(this.padding.topLeft())
-      .addPt(this.padding.bottomRight())
+      .addPt(this.textPadding.topLeft())
+      .addPt(this.textPadding.bottomRight())
       .addPt(this.scrollbarOffset)
       .maxPt(super.scrollExtent);
     return domExtent ? domExtent.maxPt(modelExtent) : modelExtent;
@@ -2633,8 +2670,8 @@ export class Text extends Morph {
         return sel.start.row === sel.end.row
           ? start.union(end)
           : rect(
-            pt(this.padding.left(), start.top()),
-            pt(this.width - this.padding.left(), end.bottom())
+            pt(this.textPadding.left(), start.top()),
+            pt(this.width - this.textPadding.left(), end.bottom())
           );
       })
       .reduce((all, ea) => ea.union(all));
@@ -2679,7 +2716,7 @@ export class Text extends Morph {
     if (n === 0) return pos;
 
     // raw char bounds are without text padding so subtract it from goalX as well
-    if (typeof goalX === 'number') goalX -= this.padding.left();
+    if (typeof goalX === 'number') goalX -= this.textPadding.left();
 
     let nextRow = pos.row; let nextCol = pos.column;
 
@@ -2810,7 +2847,7 @@ export class Text extends Morph {
 
   alignRowAtTop (row = this.cursorPosition.row, offset = pt(0, 0)) {
     const charBounds = this.charBoundsFromTextPosition({ row, column: 0 });
-    const pos = charBounds.topLeft().addXY(-this.padding.left(), 0);
+    const pos = charBounds.topLeft().addXY(-this.textPadding.left(), 0);
     this.scroll = pos.addPt(offset);
   }
 
@@ -2825,7 +2862,7 @@ export class Text extends Morph {
     const { scroll } = this;
     const viewBounds = this.innerBounds()
       .translatedBy(scroll)
-      .insetByRect(this.padding)
+      .insetByRect(this.textPadding)
       .insetBy(this.borderWidth);
     let charBounds = this.charBoundsFromTextPosition(pos);
 
@@ -2903,7 +2940,7 @@ export class Text extends Morph {
   alignRow (row, how = 'center') {
     // how = "center", "bottom", "top";
     if (!this.isClip()) return;
-    const { scroll, padding } = this;
+    const { scroll, textPadding: padding } = this;
     const paddedBounds = this.innerBounds().insetByRect(padding).translatedBy(scroll);
     const charBounds = this.charBoundsFromTextPosition({ row, column: 0 });
     const deltaY = how === 'top' || how === 'bottom'
@@ -2944,7 +2981,7 @@ export class Text extends Morph {
       if (fixedHeight && fixedWidth) return;
       if (!this.textLayout) return; /* not init'ed yet */
 
-      const textBounds = this.textBounds().outsetByRect(this.padding);
+      const textBounds = this.textBounds().outsetByRect(this.textPadding);
       this.withMetaDo({ metaInteraction: true }, () => {
         if (!fixedHeight && this.height !== textBounds.height) this.height = textBounds.height;
         if (!fixedWidth && this.width !== textBounds.width) this.width = textBounds.width;
@@ -2982,7 +3019,7 @@ export class Text extends Morph {
   }
 
   get defaultLineHeight () {
-    const p = this.padding;
+    const p = this.textPadding;
     return p.top() + p.bottom() +
       this.fontMetric.defaultLineHeight({
         fontSize: this.fontSize,
@@ -3023,6 +3060,12 @@ export class Text extends Morph {
   patchSpecialProps (node, renderer, patchStyle) {
     if (this.renderingState.needsScrollLayerAdded || this.renderingState.needsScrollLayerRemoved) {
       renderer.handleScrollLayer(node, this);
+    }
+
+    const gutterWidth = this.lineNumberGutterWidth;
+    if ((this.renderingState.lineNumberGutterWidth || 0) !== gutterWidth) {
+      this.renderingState.lineNumberGutterWidth = gutterWidth;
+      this.invalidateTextLayout(true, true);
     }
 
     const currentTextLayerStyleObject = this.styleObject();
@@ -3108,11 +3151,12 @@ export class Text extends Morph {
         this.renderingState.scroll = this.scroll;
       }
     }
+    renderer.patchLineNumberLayer(node, this);
   }
 
   styleObject () {
     const {
-      padding: { x: padLeft, y: padTop, width: padWidth, height: padHeight },
+      textPadding: { x: padLeft, y: padTop, width: padWidth, height: padHeight },
       _fontStyleToRender,
       _fontWeightToRender,
       _fontFamilyToRender,
@@ -3411,8 +3455,8 @@ export class Text extends Morph {
     const { startRow, endRow } = this.whatsVisible;
     const realEndRow = Math.min(this.documentEndPosition.row, endRow);
     const doc = this.document;
-    const padLeft = this.padding.left();
-    const padTop = this.padding.top();
+    const padLeft = this.textPadding.left();
+    const padTop = this.textPadding.top();
 
     const grid = arr.range(startRow, realEndRow).reduce((bounds, row) => {
       const charBounds = this.textLayout.charBoundsOfRow(this, row).slice();
@@ -3817,7 +3861,7 @@ export class Text extends Morph {
   // command helper
 
   textPageHeight () {
-    const { height, padding, borderWidthBottom, borderWidthTop } = this;
+    const { height, textPadding: padding, borderWidthBottom, borderWidthTop } = this;
     return height - padding.top() - padding.bottom() - borderWidthBottom - borderWidthTop;
   }
 
@@ -3836,7 +3880,7 @@ export class Text extends Morph {
     const row = this.textLayout[
       direction === 'down' ? 'lastFullVisibleLine' : 'firstFullVisibleLine'
     ](this);
-    const { cursorPosition: { column }, padding } = this;
+    const { cursorPosition: { column }, textPadding: padding } = this;
     if (!select) this.cursorPosition = { row, column };
     else this.selection.lead = { row, column };
     if (direction === 'down') {
