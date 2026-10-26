@@ -72,15 +72,17 @@ class MiniMapModel extends ViewModel {
       bottom: $world.windowBounds().height
     };
 
-    // find the highest left and right position that is taken up by a morph
-    const xPositionsForMin = $world.morphsInWorld.map(m => m.positionOnCanvas.x);
-    const xPositionsForMax = $world.morphsInWorld.map(m => m.positionOnCanvas.x + m.width);
+    // Include each morph's own transformed box, including children outside their owners.
+    const bounds = $world.morphsInWorldWithSubmorphs.map(m =>
+      m.getGlobalTransform().transformRectToRect(m.innerBounds()));
+    const xPositionsForMin = bounds.map(b => $world.screenToWorld(b.topLeft()).x);
+    const xPositionsForMax = bounds.map(b => $world.screenToWorld(b.bottomRight()).x);
     const maxX = max(xPositionsForMax) || 0;
     const minX = min(xPositionsForMin) || 0;
 
     // find the highest position in top and bottom direction that a morph currently holds
-    const yPositionsForMin = $world.morphsInWorld.map(m => m.positionOnCanvas.y);
-    const yPositionsForMax = $world.morphsInWorld.map(m => m.positionOnCanvas.y + m.height);
+    const yPositionsForMin = bounds.map(b => $world.screenToWorld(b.topLeft()).y);
+    const yPositionsForMax = bounds.map(b => $world.screenToWorld(b.bottomRight()).y);
     const maxY = max(yPositionsForMax) || 0;
     const minY = min(yPositionsForMin) || 0;
 
@@ -150,17 +152,16 @@ class MiniMapModel extends ViewModel {
   }
 
   createCurrentViewPortMorph () {
-    const height = $world.screenToWorld($world.bottomRight).y - $world.screenToWorld($world.topLeft).y;
-    const width = $world.screenToWorld($world.bottomRight).x - $world.screenToWorld($world.topLeft).x;
+    const bounds = $world.windowBounds();
 
     const viewPort = new Morph({
       name: 'viewport',
-      extent: pt(width, height),
+      position: bounds.topLeft(),
+      extent: bounds.extent(),
       borderWidth: 15,
       borderColor: Color.lively,
       fill: Color.transparent
     });
-    viewPort._positionOnCanvas = $world.screenToWorld(pt(0, 0));
     return viewPort;
   }
 
@@ -188,17 +189,23 @@ class MiniMapModel extends ViewModel {
     let widthBalancing = this.balanceNegativeLeft + (this.widthCorrection / 2);
     let topBalancing = this.balanceNegativeTop + (this.heightCorrection / 2);
 
-    itemsToDraw.forEach((m) => {
-      let xPos = (m.positionOnCanvas.x + widthBalancing) / virtualWidthDivisor;
-      xPos = (300 * xPos);
-
-      let yPos = (m.positionOnCanvas.y + topBalancing) / virtualHeightDivisor;
-      yPos = (this.view.height * yPos);
-
-      let width = this.widthFromCanvasSpaceToMapSpace(m.width);
-      let height = this.heightFromCanvasSpaceToMapSpace(m.height);
-      this.renderMorphPreviewOnCanvas(m, xPos, yPos, width, height, context);
-    });
+    const scaleX = 300 / virtualWidthDivisor / $world.scaleFactor;
+    const scaleY = this.view.height / virtualHeightDivisor / $world.scaleFactor;
+    context.save();
+    try {
+      itemsToDraw.forEach((m) => {
+        const transform = m.getGlobalTransform();
+        const position = $world.screenToWorld(pt(transform.e, transform.f));
+        context.setTransform(
+          transform.a * scaleX, transform.b * scaleY,
+          transform.c * scaleX, transform.d * scaleY,
+          (position.x + widthBalancing) * 300 / virtualWidthDivisor,
+          (position.y + topBalancing) * this.view.height / virtualHeightDivisor);
+        this.renderMorphPreviewOnCanvas(m, 0, 0, m.width, m.height, context);
+      });
+    } finally {
+      context.restore();
+    }
   }
 
   async prepareImageDataForPolygons (polygon) {
@@ -219,14 +226,6 @@ class MiniMapModel extends ViewModel {
 
   renderMorphPreviewOnCanvas (morph, xPos, yPos, width, height, context) {
     const m = morph;
-    context.setTransform(1, 0, 0, 1, 0, 0); // reset context rotation
-    if (m.getGlobalTransform().getRotation()) {
-      context.translate(xPos, yPos);
-      context.rotate(m.getGlobalTransform().getRotation() * Math.PI / 180);
-      xPos = 0;
-      yPos = 0;
-    }
-
     context.beginPath();
     if (m.isImage) {
       const img = $world.env.renderer.getNodeForMorph(m).querySelector('img');
@@ -238,7 +237,7 @@ class MiniMapModel extends ViewModel {
       return;
     }
 
-    context.lineWidth = m.borderWidth.top / 5;
+    context.lineWidth = m.borderWidth.top;
     context.strokeStyle = m.borderColor.top; // this assumes that the border has the same color on all sides
     context.fillStyle = m.fill;
 
