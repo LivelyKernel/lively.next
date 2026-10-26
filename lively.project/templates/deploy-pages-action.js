@@ -60,6 +60,8 @@ jobs:
         with:
           path: .            
           key: \${{ runner.os }}-\${{ env.cache-name }}-\${{ env.ref }}     
+      # lively.next:custom start before-project
+      # lively.next:custom end before-project
       - name: Checkout Project Repository
         uses: actions/checkout@v4
         with:
@@ -67,8 +69,12 @@ jobs:
           path: local_projects/%PROJECT_NAME%%PROJECT_DEPENDENCIES%
       - name: Install Project Dependencies
         run: node lively.project/package-install.mjs local_projects/%PROJECT_NAME%
+      # lively.next:custom start before-build
+      # lively.next:custom end before-build
       - name: Build Project
         run: bun run --cwd local_projects/%PROJECT_NAME% build-minified
+      # lively.next:custom start after-build
+      # lively.next:custom end after-build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
@@ -77,6 +83,8 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     steps:
+      # lively.next:custom start before-deploy
+      # lively.next:custom end before-deploy
       - name: Setup Pages
         uses: actions/configure-pages@v3
       - name: Deploy to GitHub Pages
@@ -84,4 +92,6 @@ jobs:
       - name: Delete uploaded Artifact
         uses: geekyeggo/delete-artifact@v2
         with:
-          name: github-pages`;
+          name: github-pages
+      # lively.next:custom start after-deploy
+      # lively.next:custom end after-deploy`;
