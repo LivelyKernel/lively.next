@@ -336,7 +336,8 @@ function supportingPlugins(context = 'node', self) {
          return self.resolveId.call(this, id, importer, options);
        }
     }, // but only do resolutions so that polyfills does not screw us up
-    context == 'browser' && nodePolyfills(), // only if we bundle for the browser
+    // Flatn/Bun dependencies can live outside the build working directory.
+    context == 'browser' && nodePolyfills({ include: /[/\\]node_modules[/\\].*\.[cm]?js$/ }),
     commonjs({
       sourceMap: false,
       defaultIsModuleExports: true,
