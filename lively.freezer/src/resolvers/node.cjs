@@ -332,7 +332,9 @@ function supportingPlugins(context = 'node', self) {
     },
     {
        name: 'lively-resolve',
-       resolveId: (id, importer) => self.resolveId(id, importer)
+       resolveId (id, importer) {
+         return self.resolveId.call(this, id, importer);
+       }
     }, // but only do resolutions so that polyfills does not screw us up
     context == 'browser' && nodePolyfills(), // only if we bundle for the browser
     commonjs({
