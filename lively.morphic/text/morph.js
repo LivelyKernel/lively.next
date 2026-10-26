@@ -16,7 +16,7 @@ import KeyHandler from '../events/KeyHandler.js';
 import { UndoManager } from '../undo.js';
 import Layout from './layout.js';
 import textCommands from './commands.js';
-import { textAndAttributesWithSubRanges, textCacheLimits } from './attributes.js';
+import { textAndAttributesWithSubRanges } from './attributes.js';
 import { serializeMorph, deserializeMorph } from '../serialization.js';
 import { getSvgVertices } from '../rendering/property-dom-mapping.js';
 import { getClassName } from 'lively.serializer2';
@@ -31,6 +31,8 @@ import { availableFonts } from '../rendering/fonts.js';
  * Most of the time, this will just work for you. To toggle between a state where editing is possible and impossible, use the `readOnly` property.
  * When interactive editing is activated, you can use all features of text in lively, such as markers (think: syntax highlighting).
  * When interactive editing is deactivated, you can enable native selection of text.
+ * Mode switches retain inactive documents and string-only static lines by default.
+ * Use `clearModeSwitchCache()` to release them, or `cacheModeSwitches = false` to disable retention.
  *
  * **SOME TECHNICAL NOTES**
  * You should refrain from manipulating the Document of a Text manually, if you are not exactly sure what you are doing.
@@ -262,6 +264,18 @@ export class Text extends Morph {
         get () {
           return !this.fixedHeight && !this.fixedWidth;
         }
+      },
+
+      cacheModeSwitches: {
+        group: 'text',
+        defaultValue: true,
+        after: ['renderingState'],
+        before: ['readOnly'],
+        set (enabled) {
+          this.setProperty('cacheModeSwitches', enabled);
+          if (!enabled) this.clearModeSwitchCache();
+        },
+        doc: 'Retain inactive documents and string-only static lines across mode switches. Disabling releases existing caches.'
       },
 
       readOnly: {
@@ -2292,6 +2306,18 @@ export class Text extends Morph {
   // TextAttributes
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  /**
+   * Release inactive mode-switch caches without changing content, anchors or the
+   * active document/DOM. Future switches may cache again unless cacheModeSwitches is false.
+   */
+  clearModeSwitchCache () {
+    if (this._documentBackup) this._documentBackupEndPosition = this._documentBackup.endPosition;
+    delete this._documentBackup;
+    delete this.renderingState.cachedStaticLines;
+    // A visible Line retains its whole document tree through its parent links.
+    if (!this.document) this.renderingState.visibleLines = [];
+  }
+
   invalidateDocumentBackup () {
     const end = this._documentBackup?.endPosition || this._documentBackupEndPosition;
     if (this.document || !end) return;
@@ -2302,9 +2328,8 @@ export class Text extends Morph {
   }
 
   /**
-   * This removes a Document and a TextLayout from a Text.
-   * These are necessary for features like interactive editing, but are expensive.
-   * Thus, we try to only keep them around when they are necessary.
+   * Switch to static text, removing the active Document and TextLayout.
+   * The inactive Document is retained for reuse when cacheModeSwitches is enabled.
    * This is an internal function and you should probably not call it yourself!
    */
   removeDocument () {
@@ -2312,14 +2337,7 @@ export class Text extends Morph {
 
     this._isDowngrading = true;
     const textAndAttributes = this.document.textAndAttributes;
-    if (this.document.stringSize <= textCacheLimits.characters &&
-        this.document.rowCount <= textCacheLimits.lines &&
-        textAndAttributes.length <= 2 * textCacheLimits.attributeRuns) {
-      this._documentBackup = this.document;
-    } else {
-      // Preserve anchor invalidation on static edits without retaining the tree.
-      this._documentBackupEndPosition = this.document.endPosition;
-    }
+    this._documentBackup = this.document;
     this.getProperty('selection')?.uninstall();
     for (const [embedded, entry] of this.embeddedMorphMap) {
       if (!entry.anchor) continue;
@@ -2329,6 +2347,7 @@ export class Text extends Morph {
       entry.anchor = null;
     }
     this.document = null;
+    if (!this.cacheModeSwitches) this.clearModeSwitchCache();
     delete this.renderingState.needsScrollLayerAdded;
     this.renderingState.needsScrollLayerRemoved = true;
     this.requestTextLayoutMeasuring();

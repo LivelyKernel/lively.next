@@ -46,38 +46,43 @@ describe('text mode reuse regressions', () => {
     lines: () => [Array(1001).fill('x').join('\n'), null],
     'attribute runs': () => Array.from({ length: 1001 }, (_, i) => ['x', { fontWeight: i % 2 ? 'bold' : 'normal' }]).flat()
   };
-  for (const [limit, content] of Object.entries(largeContents)) {
-    it(`does not retain an oversized document (${limit})`, async () => {
+  for (const [size, content] of Object.entries(largeContents)) {
+    it(`reuses a large document regardless of ${size}`, async () => {
       const text = new Text({ readOnly: false, fixedWidth: true, fixedHeight: true, textAndAttributes: content() }).openInWorld();
       try {
         await text.whenRendered();
         const original = text.document;
         const anchor = text.addAnchor({ id: 'large-text-anchor', row: 0, column: 1 });
-        text.readOnly = true;
-        expect(text._documentBackup).equals(undefined, `${limit}: oversized documents must not be retained in static mode`);
-        expect(anchor.position).deep.equals({ row: 0, column: 1 }, `${limit}: dropping the cache must preserve anchors`);
-        text.readOnly = false;
-        text.env.forceUpdate();
-        expect(text.document).not.equals(original, `${limit}: oversized documents must be reconstructed`);
-        expect(text.textString).equals(original.textString, `${limit}: reconstruction must preserve contents`);
-        text.document.consistencyCheck();
+        for (let cycle = 0; cycle < 3; cycle++) {
+          text.readOnly = true;
+          expect(text._documentBackup).equals(original, `${size}: retain the document in static mode`);
+          expect(anchor.position).deep.equals({ row: 0, column: 1 }, `${size}: switching must preserve anchors`);
+          text.readOnly = false;
+          text.env.forceUpdate();
+          expect(text.document).equals(original, `${size}: reuse the same document`);
+          text.document.consistencyCheck();
+        }
         text.readOnly = true;
         text.textString = 'replacement';
-        expect(anchor.position).deep.equals({ row: 0, column: 0 }, `${limit}: static replacement must retain anchor invalidation semantics`);
+        expect(anchor.position).deep.equals({ row: 0, column: 0 }, `${size}: static replacement must retain anchor invalidation semantics`);
       } finally { text.remove(); }
     });
 
-    it(`does not retain oversized static line DOM (${limit})`, async () => {
+    it(`reuses large static line DOM regardless of ${size}`, async () => {
       const text = new Text({ readOnly: true, fixedWidth: true, fixedHeight: true, textAndAttributes: content() }).openInWorld();
       try {
         await text.whenFontLoaded();
         text.env.forceUpdate();
-        expect(text.renderingState.cachedStaticLines).equals(undefined, `${limit}: oversized static line sets must not be cached`);
+        const lines = text.renderingState.cachedStaticLines;
+        expect(lines).to.be.ok;
+        expect(lines[0]).equals(text.renderingState.textLayer.querySelector('.line'));
         const before = text.textString;
         text.readOnly = false;
         text.readOnly = true;
         text.env.forceUpdate();
-        expect(text.textString).equals(before, `${limit}: mode switches must preserve uncached text`);
+        expect(text.renderingState.cachedStaticLines).equals(lines, `${size}: retain the whole line set`);
+        expect(text.renderingState.textLayer.querySelector('.line')).equals(lines[0], `${size}: reuse the rendered line`);
+        expect(text.textString).equals(before, `${size}: mode switches must preserve text`);
       } finally { text.remove(); }
     });
   }
