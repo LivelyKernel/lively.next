@@ -11,7 +11,7 @@ export class ExposedLabelModel extends ViewModel {
   static get properties () {
     return {
       expose: {
-        get () { return ['label', 'enabled', 'details', 'tone', 'report', { method: 'report', as: 'summarize' }, ['textString', { target: 'caption' }]]; }
+        get () { return ['label', 'enabled', 'details', 'tone', 'transientValue', 'report', { method: 'report', as: 'summarize' }, ['textString', { target: 'caption' }]]; }
       },
       label: {
         defaultValue: 'default',
@@ -25,7 +25,8 @@ export class ExposedLabelModel extends ViewModel {
       },
       enabled: { defaultValue: true },
       details: { defaultValue: null },
-      tone: { defaultValue: Color.blue }
+      tone: { defaultValue: Color.blue },
+      transientValue: { defaultValue: null, serialize: false }
     };
   }
 
@@ -100,7 +101,7 @@ describe('exposed component properties', () => {
   });
 
   it('round-trips exposed data and styles through a part expression', () => {
-    const label = part(ExposedLabel, { label: 'serialized', enabled: false, details: ['one', 2], tone: Color.orange, fill: Color.green });
+    const label = part(ExposedLabel, { label: 'serialized', enabled: false, details: ['one', 2], tone: Color.orange, transientValue: 'session only', fill: Color.green });
     const expression = serializeSpec(label, {
       asExpression: true,
       exposeMasterRefs: true,
@@ -109,11 +110,13 @@ describe('exposed component properties', () => {
     });
     expect(expression.__expr__).includes('part(ExposedLabel');
     expect(expression.__expr__).not.matches(/\b(?:report|summarize):/);
+    expect(expression.__expr__).not.includes('transientValue:');
     const restored = new ExpressionSerializer().deserializeExprObj(expression);
     expect(restored.label).equals('serialized');
     expect(restored.enabled).equals(false);
     expect(restored.details).deep.equals(['one', 2]);
     expect(restored.tone).equals(Color.orange);
+    expect(restored.transientValue).equals(null);
     expect(restored.fill).equals(Color.green);
     expect(restored.report()).equals('serialized');
     expect(restored.summarize()).equals('serialized');
