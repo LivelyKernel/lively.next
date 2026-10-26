@@ -8,12 +8,15 @@ import { WorldBrowserModel, WorldPreviewModel } from '../studio/world-browser.cp
 describe('world browser session transitions', () => {
   let previous, routes, bootstrapCalls;
   beforeEach(() => {
+    const frozenRuntime = lively.FreezerRuntime || lively.frozenModules;
     previous = {
       native: globalThis.livelyNative,
       frozen: lively.FreezerRuntime,
       resurrection: lively.isResurrectionBuild,
       noFastLoad: lively.doNotUseFastLoad,
-      importModule: System.import,
+      importers: [...new Set([System, frozenRuntime?.oldSystem].filter(Boolean))]
+        .map(loader => ({ loader, importModule: loader.import })),
+      bootstrapModule: frozenRuntime?.registry?.['lively.freezer/src/util/bootstrap.js']?.contextModule,
       url: document.location.href
     };
     routes = [];
@@ -23,7 +26,7 @@ describe('world browser session transitions', () => {
     lively.doNotUseFastLoad = false;
   });
   afterEach(() => {
-    System.import = previous.importModule;
+    for (const { loader, importModule } of previous.importers) loader.import = importModule;
     lively.FreezerRuntime = previous.frozen;
     lively.isResurrectionBuild = previous.resurrection;
     lively.doNotUseFastLoad = previous.noFastLoad;
@@ -47,10 +50,16 @@ describe('world browser session transitions', () => {
       const button = tile.get('open button');
       const native = globalThis.livelyNative;
       try {
-        System.import = async function (id, ...args) {
-          if (id === 'lively.freezer/src/util/bootstrap.js') return { bootstrap: async options => { bootstrapCalls.push(options); } };
-          return previous.importModule.call(this, id, ...args);
-        };
+        // Frozen module contexts import through their retained loader and chunk ID.
+        for (const { loader, importModule } of previous.importers) {
+          loader.import = async function (id, ...args) {
+            if (id === 'lively.freezer/src/util/bootstrap.js' ||
+                (previous.bootstrapModule && this.normalizeSync(id, args[0]) === previous.bootstrapModule)) {
+              return { bootstrap: async options => { bootstrapCalls.push(options); } };
+            }
+            return importModule.call(this, id, ...args);
+          };
+        }
         globalThis.livelyNative = {
           ...native,
           assetURL: url => url,
@@ -66,7 +75,7 @@ describe('world browser session transitions', () => {
           positionIn: morph => morph.innerBounds().center()
         });
       } finally {
-        System.import = previous.importModule;
+        for (const { loader, importModule } of previous.importers) loader.import = importModule;
         lively.FreezerRuntime = false;
         globalThis.livelyNative = native;
       }
