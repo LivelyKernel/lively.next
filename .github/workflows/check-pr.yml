@@ -148,6 +148,18 @@ jobs:
           node --experimental-import-meta-resolve lively.app/scripts/test-package-payload.mjs
           node --experimental-import-meta-resolve lively.app/scripts/test-downloads.mjs
           node lively.app/scripts/test-desktop-resources.mjs
+      - name: Check owned test-server cleanup
+        run: node scripts/tests/test-server-lifecycle-test.cjs
+      - name: Check headless profile isolation
+        run: node scripts/tests/headless-profile-test.cjs
+      - name: Check project workflow customizations
+        run: node lively.project/tests/workflow-customizations-test.cjs
+      - name: Check package test backend selection
+        run: node scripts/tests/test-package-backend-test.cjs
+      - name: Check failed-test diagnostics
+        run: node scripts/tests/test-diagnostics-test.cjs
+      - name: Check affected-package test selection
+        run: node scripts/tests/affected-tests-test.cjs
       - name: Run CI Test Script for Changed Folders
         run:  ./scripts/test.sh $(./scripts/tests_for_branch.sh)
       - name: Start the lively server

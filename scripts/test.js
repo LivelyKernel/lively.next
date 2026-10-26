@@ -1,6 +1,7 @@
 /*
 This script can be used to run the test in a selected package.
-The script assumes that a lively server is running locally on port 9011.
+The HTTP server defaults to localhost:9011. Set LIVELY_TEST_SERVER_READY_URL
+to use the same server URL as scripts/test.sh.
 This script gets used by `test.sh`. To invoke tests, run `test.sh`.
 You should rarely (never) want to invoke this script here directly.
 
@@ -17,6 +18,7 @@ const fs = require('fs');
 const CI = !!process.env.CI;
 
 const targetPackage = process.argv[2];
+const testServerURL = new URL(process.env.LIVELY_TEST_SERVER_READY_URL || 'http://localhost:9011/');
 let passed = 0; let failed = 0; let skipped = 0;
 let markdownListOfFailingTests = '';
 
@@ -27,8 +29,8 @@ if (CI) {
   console.log('');
 }
 const options = {
-  hostname: 'localhost',
-  port: 9011,
+  hostname: testServerURL.hostname,
+  port: testServerURL.port,
   path: '/subserver/TestRunner/' + targetPackage,
   method: 'GET'
 };
@@ -110,14 +112,19 @@ const req = http.request(options, res => {
               console.log(`${test.fullTitle} failed ❌`);
             }
             if (test.error) {
-              console.log(`  ERROR: ${test.error.message || test.error}`);
-              if (test.error.actual !== undefined && test.error.expected !== undefined) {
-                console.log(`  EXPECTED: ${JSON.stringify(test.error.expected).slice(0, 500)}`);
-                console.log(`  ACTUAL:   ${JSON.stringify(test.error.actual).slice(0, 500)}`);
-              }
+              const details = [test.error.stack || test.error.message || String(test.error)];
+              if (test.error.expected !== undefined) details.push(`EXPECTED: ${JSON.stringify(test.error.expected)}`);
+              if (test.error.actual !== undefined) details.push(`ACTUAL: ${JSON.stringify(test.error.actual)}`);
+              console.log(details.join('\n'));
+              if (CI) markdownListOfFailingTests += `\n\`\`\`text\n${details.join('\n')}\n\`\`\`\n`;
             }
           }
         });
+        if (testfile.browserErrors) {
+          const details = `Recent browser console errors:\n${testfile.browserErrors}`;
+          console.log(details);
+          if (CI) markdownListOfFailingTests += `\n\`\`\`text\n${details}\n\`\`\`\n`;
+        }
         if (CI) console.log('::endgroup::');
         else console.log('');
       });
