@@ -28,14 +28,14 @@ try {
     export const callable = semver;
     export const result = [semver('1.2.3').version, satisfies('1.2.3', '^1.0.0'), processUser.browser, processUser.nextTick];
   `);
-  build = await rollup({
-    input: entry,
-    shimMissingExports: true,
-    plugins: [lively({
-      resolver, asBrowserModule: true, useSwc: true, isResurrectionBuild: true,
-      minify: false, compress: false, includeLivelyAssets: false, includePolyfills: false
-    })]
+  const plugin = lively({
+    resolver, asBrowserModule: true, useSwc: true, isResurrectionBuild: true,
+    minify: false, compress: false, includeLivelyAssets: false, includePolyfills: false
   });
+  // Execute the transformed chunk with source initializeClass below. Packaging
+  // its generated runtime asset would require an unrelated classes build.
+  delete plugin.generateBundle;
+  build = await rollup({ input: entry, shimMissingExports: true, plugins: [plugin] });
   const { output } = await build.generate({ format: 'system' });
   for (const exposeNodeModule of [true, false]) {
     const context = createContext({ console, setTimeout, clearTimeout });
