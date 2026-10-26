@@ -1,9 +1,60 @@
 /* global ResizeObserver */
 import { promise, arr } from 'lively.lang';
+import { connect } from 'lively.bindings';
 import { pt, Rectangle } from 'lively.graphics';
 import { Morph } from './morph.js';
 import { addOrChangeCSSDeclaration } from './rendering/dom-helper.js';
 import { scopedCss } from './rendering/scoped-css.js';
+
+const cssMorphs = new WeakMap();
+const sharedCssNodes = new WeakMap();
+const cssDocuments = new WeakMap();
+const cssMarkers = new WeakMap();
+const cssUnloadConnections = new WeakMap();
+const sharedCssId = 'css-for-shared-html-morphs';
+
+function updateSharedCss (doc) {
+  let groups = [];
+  let lastMarker;
+  const nodes = [];
+  const flush = () => {
+    if (!groups.length) return;
+    let previousNode = lastMarker;
+    for (const [source, ids] of groups) {
+      try {
+        const declaration = scopedCss(source, ids);
+        const id = sharedCssId + (nodes.length ? `-${nodes.length}` : '');
+        const previous = doc.getElementById(id);
+        const node = previous?.textContent === declaration ? previous : addOrChangeCSSDeclaration(id, declaration, doc);
+        if (node.previousSibling !== previousNode) doc.head.insertBefore(node, previousNode.nextSibling);
+        previousNode = node;
+        nodes.push(node);
+      } catch (err) {
+        console.error(`Error setting shared cssDeclaration: ${err}`); // eslint-disable-line no-console
+      }
+    }
+    groups = [];
+  };
+  const members = Array.from(cssMorphs.get(doc) || []);
+  const markers = new Map(members.map(morph => [cssMarkers.get(morph), morph]));
+  const previousNodes = new Set(sharedCssNodes.get(doc) || []);
+  // shortcut: scan sheet positions on updates, track dirty segments if this gets slow.
+  for (const node of Array.from(doc.head.childNodes)) {
+    const morph = markers.get(node);
+    if (morph?.shareCss) {
+      const previous = groups[groups.length - 1];
+      if (previous && previous[0] === morph.cssDeclaration) previous[1].push(morph.id);
+      else groups.push([morph.cssDeclaration, [morph.id]]);
+      lastMarker = node;
+    } else if (morph || !previousNodes.has(node) &&
+        (node.tagName === 'STYLE' || node.tagName === 'LINK' && /(^|\s)stylesheet(\s|$)/i.test(node.rel))) {
+      flush();
+    }
+  }
+  flush();
+  for (const node of sharedCssNodes.get(doc) || []) if (!nodes.includes(node)) node.remove();
+  sharedCssNodes.set(doc, nodes);
+}
 
 // Usage:
 // var htmlMorph = $world.addMorph(new HTMLMorph({position: pt(10,10)}));
@@ -86,18 +137,20 @@ export class HTMLMorph extends Morph {
         isStyleProp: true,
         defaultValue: true
       },
+      shareCss: {
+        defaultValue: false,
+        set (val) {
+          this.setProperty('shareCss', val);
+          this.installCssDeclaration(this.document);
+        }
+      },
       cssDeclaration: {
+        after: ['shareCss'],
         isStyleProp: true,
         set (val) {
           this.setProperty('cssDeclaration', val);
-          const doc = this.document;
-          if (!val) {
-            const style = doc.getElementById('css-for-' + this.id);
-            if (style) style.remove();
-          } else {
-            this.installCssDeclaration(doc);
-            this.makeDirty();
-          }
+          this.installCssDeclaration(this.document);
+          this.makeDirty();
         }
       }
     };
@@ -159,17 +212,59 @@ export class HTMLMorph extends Morph {
   }
 
   installCssDeclaration (doc) {
-    if (!this.cssDeclaration) return;
+    const previousDocument = cssDocuments.get(this);
+    if (previousDocument && (previousDocument !== doc || !this.cssDeclaration || !this.world())) this.uninstallCssDeclaration();
+    if (!this.cssDeclaration || !this.world()) return;
+    const connection = cssUnloadConnections.get(this);
+    if (connection?.sourceObj !== this.world()) {
+      connection?.disconnect();
+      cssUnloadConnections.set(this, connect(this.world(), 'onUnload', this, 'uninstallCssDeclaration', {
+        updater: (update, evt) => {
+          // beforeunload can be cancelled; loadWorld unloads without an event.
+          if (evt?.type !== 'beforeunload') update();
+        }
+      }));
+    }
+    cssDocuments.set(this, doc);
+    let members = cssMorphs.get(doc);
+    if (!members) cssMorphs.set(doc, members = new Set());
+    members.add(this);
+    let marker = cssMarkers.get(this);
+    if (!marker) {
+      marker = doc.createComment('css-for-' + this.id);
+      doc.head.appendChild(marker);
+      cssMarkers.set(this, marker);
+    }
+    if (this.shareCss) {
+      doc.getElementById('css-for-' + this.id)?.remove();
+      updateSharedCss(doc);
+      return;
+    }
     try {
-      addOrChangeCSSDeclaration('css-for-' + this.id, scopedCss(this.cssDeclaration, [this.id]), doc);
+      const id = 'css-for-' + this.id;
+      const node = addOrChangeCSSDeclaration(id, scopedCss(this.cssDeclaration, [this.id]), doc);
+      if (node.previousSibling !== marker) doc.head.insertBefore(node, marker.nextSibling);
     } catch (err) {
       console.error(`Error setting cssDeclaration of ${this}: ${err}`); // eslint-disable-line no-console
     }
+    updateSharedCss(doc);
+  }
+
+  uninstallCssDeclaration () {
+    cssUnloadConnections.get(this)?.disconnect();
+    cssUnloadConnections.delete(this);
+    const doc = cssDocuments.get(this);
+    if (!doc) return;
+    doc.getElementById('css-for-' + this.id)?.remove();
+    cssMarkers.get(this)?.remove();
+    cssMarkers.delete(this);
+    if (cssMorphs.get(doc)?.delete(this)) updateSharedCss(doc);
+    cssDocuments.delete(this);
   }
 
   onOwnerChanged (newOwner) {
     super.onOwnerChanged(newOwner);
-    if (newOwner === null) this.document.getElementById('css-for-' + this.id)?.remove();
+    if (newOwner === null) this.uninstallCssDeclaration();
     else this.installCssDeclaration(this.document);
   }
 
