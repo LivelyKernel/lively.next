@@ -544,8 +544,17 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
     onlyIncludeStyleProps, asExpression, skipUnchangedFromMaster
   } = opts;
   const { properties } = morph.propertiesAndPropertySettings();
+  const exposedProps = morph.viewModel?.exposedPropertyNames || [];
+  const modelProps = morph.viewModel?.propertiesAndPropertySettings().properties;
+  const spec = morph.spec(skipUnchangedFromDefault);
+  for (const name of exposedProps) {
+    if (typeof morph[name] === 'function' || modelProps[name]?.readOnly) continue;
+    if (morph.viewModel.__lookupGetter__(name) && !morph.viewModel.__lookupSetter__(name)) continue;
+    spec[name] = morph[name];
+  }
 
-  for (const name in morph.spec(skipUnchangedFromDefault)) {
+  for (const name in spec) {
+    if (asExpression && name === 'viewModel') continue;
     let v = morph[name];
     let styleProtoVal = styleProto?.[name];
 
@@ -553,6 +562,7 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
     if (name !== 'name' && skipUnchangedFromMaster && obj.equals(v, styleProtoVal)) continue;
     if (masterInScope &&
         !morph.__only_serialize__.includes(name) &&
+        !exposedProps.includes(name) &&
         !(name === 'name' && asExpression)) continue;
     if (name === 'textAndAttributes') continue;
 
@@ -564,7 +574,7 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
     }
 
     let folded;
-    if (styleProto && (folded = properties[name].foldable)) {
+    if (styleProto && (folded = properties[name]?.foldable)) {
       let unchanged = true;
       for (let subProp of folded) {
         if (!obj.equals(v[subProp], styleProtoVal?.[subProp] || styleProtoVal)) {
@@ -613,7 +623,7 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
       exported[name] = serializeNestedProp(name, val, opts, ['topLeft', 'topRight', 'bottomRight', 'bottomLeft']);
       continue;
     }
-    if (onlyIncludeStyleProps && !properties[name]?.isStyleProp) continue;
+    if (onlyIncludeStyleProps && !properties[name]?.isStyleProp && !exposedProps.includes(name)) continue;
     if (val && val.isMorph) {
       exported[name] = serializeSpec(val, { // eslint-disable-line no-use-before-define
         ...opts,
@@ -714,11 +724,13 @@ function insertConnections (exported, opts) {
  * Carrys over any function members that are attached to the morph.
  * @param { Morph } aMorph - The morph to extract function members from.
  * @param { object } exported - The spec to populate with the function values.
+ * @param { object } opts - The spec serialization options.
  */
-function handleFunctionMembers (aMorph, exported) {
+function handleFunctionMembers (aMorph, exported, opts) {
   Object.keys(aMorph).forEach(name => {
     if (typeof aMorph[name] !== 'function') return;
     if (aMorph[name].isConnectionWrapper) return;
+    if (opts.asExpression && aMorph.viewModel?.exposedPropertyNames.includes(name)) return;
     exported[name] = aMorph[name];
   });
 }
@@ -939,7 +951,7 @@ export function serializeSpec (morph, opts = {}) {
   }
 
   if (keepFunctions) {
-    handleFunctionMembers(morph, exported);
+    handleFunctionMembers(morph, exported, subopts);
   }
 
   handleTypeInfo(morph, exported, subopts);

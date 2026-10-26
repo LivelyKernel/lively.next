@@ -458,6 +458,10 @@ export class ViewModel {
     }
   }
 
+  get exposedPropertyNames () {
+    return (this.expose || []).map(prop => Array.isArray(prop) ? prop[0] : obj.isObject(prop) ? prop.as : prop);
+  }
+
   /**
    * Install all of the exposed props in the view as defined.
    */
