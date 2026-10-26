@@ -13,6 +13,9 @@ import { initializeClass } from 'lively.classes/runtime.js';
 const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lively-commonjs-polyfills-'));
 const modulesRequire = createRequire(resolver.normalizeFileName('lively.modules/package.json'));
 const semver = modulesRequire.resolve('semver');
+const ideRequire = createRequire(resolver.normalizeFileName('lively.ide/package.json'));
+const eslintRequire = createRequire(ideRequire.resolve('eslint/package.json'));
+const globParent = eslintRequire.resolve('glob-parent');
 let build;
 try {
   const dependency = path.join(directory, 'node_modules', 'process-user');
@@ -24,9 +27,10 @@ try {
   const entry = path.join(directory, 'entry.js');
   await fs.writeFile(entry, `
     import semver, { satisfies } from ${JSON.stringify(semver)};
+    import globParent from ${JSON.stringify(globParent)};
     import processUser from './node_modules/process-user/index.js';
     export const callable = semver;
-    export const result = [semver('1.2.3').version, satisfies('1.2.3', '^1.0.0'), processUser.browser, processUser.nextTick];
+    export const result = [semver('1.2.3').version, satisfies('1.2.3', '^1.0.0'), processUser.browser, processUser.nextTick, globParent('src/**/index.js')];
   `);
   const plugin = lively({
     resolver, asBrowserModule: true, useSwc: true, isResurrectionBuild: true,
@@ -62,7 +66,7 @@ try {
     runInContext(output.find(chunk => chunk.type === 'chunk').code, context);
     assert.equal(typeof exports.callable, 'function', 'module.exports must retain its callable default export');
     assert.equal(exports.callable('2.3.4').version, '2.3.4');
-    assert.deepEqual(Array.from(exports.result), ['1.2.3', true, true, 'function']);
+    assert.deepEqual(Array.from(exports.result), ['1.2.3', true, true, 'function', 'src']);
     assert.equal(context.process, undefined, 'Node globals must be imported from the browser shim');
     if (exposeNodeModule) assert.equal(context.module.exports, nativeExports, 'Dependency exports must not escape into the renderer module');
   }
