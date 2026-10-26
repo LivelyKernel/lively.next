@@ -568,6 +568,49 @@ export { Derived };
   });
 
   describe('T9 reducer and bridge ordering', () => {
+    it('orders an added child around inherited siblings without source entries', async () => {
+      await open(`component(Ordered, { name: 'derived', submorphs: [{ name: 'container', submorphs: [
+        add({ name: 'n' })
+      ] }] })`);
+      const parent = editable.get('container');
+      const moved = editable.get('n');
+      const first = await structure(() => parent.addMorphAt(moved, 0));
+      expect(first).matches(/add\(\{ name: 'n' \}, "child"\)/);
+      const middle = await structure(() => parent.addMorphAt(moved, 2));
+      expect(middle).matches(/add\(\{ name: 'n' \}, "other"\)/);
+      const last = await structure(() => parent.addMorph(moved));
+      expect(last).equals(initialSource);
+      await replay([initialSource, first, middle, last], stage => {
+        expect(parent.submorphs.map(child => child.name)).deep.equals([
+          ['child', 'other', 'n'], ['n', 'child', 'other'],
+          ['child', 'n', 'other'], ['child', 'other', 'n']
+        ][stage]);
+        checkStructure();
+      });
+    });
+
+    it('retargets and reorders added anchors without inherited source entries', async () => {
+      await open(`component(Ordered, { name: 'derived', submorphs: [{ name: 'container', submorphs: [
+        add({ name: 'x' }, 'n'), /* keep the middle comment */ add({ name: 'n' }, 'child'),
+        add({ name: 'tail' })
+      ] }] })`);
+      const parent = editable.get('container');
+      const moved = editable.get('n');
+      const last = await structure(() => parent.addMorph(moved));
+      expect(last).matches(/add\(\{ name: 'x' \}, "child"\)/);
+      expect(last).includes('/* keep the middle comment */');
+      const middle = await structure(() => parent.addMorphAt(moved, 1));
+      expect(middle).matches(/add\(\{ name: 'n' \}, "child"\)/);
+      await replay([initialSource, last, middle], stage => {
+        expect(parent.submorphs.map(child => child.name)).deep.equals([
+          ['x', 'n', 'child', 'other', 'tail'],
+          ['x', 'child', 'other', 'tail', 'n'],
+          ['x', 'n', 'child', 'other', 'tail']
+        ][stage]);
+        checkStructure();
+      });
+    });
+
     for (const index of [0, 1]) {
       it(`${index ? 'rejects' : 'accepts'} restoration at runtime index ${index} (P2-5)`, async () => {
         await open("component(Ordered, { name: 'derived' })");
