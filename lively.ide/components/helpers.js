@@ -136,7 +136,7 @@ export function getValueExpr (prop, value, depth = 0) {
   }
   if (prop === 'imageUrl' && $world.openedProject && value.includes($world.openedProject.name)) {
     value = value.replaceAll('"', '');
-    value = `projectAsset('${value.split('/').pop()}')`;
+    value = `projectAsset('${value.split('/').pop()}', import.meta.url)`;
     bindings['lively.project'] = ['projectAsset'];
   }
 
