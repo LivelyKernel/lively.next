@@ -9,7 +9,7 @@ const packages = readJSON('package.json').workspaces.map(directory => ({
   directory,
   ...readJSON(`${directory}/package.json`)
 }));
-const changed = execFileSync('git', ['diff', '--name-only', '-z', `origin/${process.env.GITHUB_BASE_REF || 'main'}...`], {
+const changed = execFileSync('git', ['diff', '--no-renames', '--name-only', '-z', `origin/${process.env.GITHUB_BASE_REF || 'main'}...`], {
   cwd: root, encoding: 'utf8'
 }).split('\0').filter(Boolean);
 // Shared runtime, dependency and CI changes can affect every package.
@@ -30,5 +30,5 @@ do {
     }
   }
 } while (added);
-const selected = testPackages.filter(name => shared || affected.has(name));
+const selected = testPackages.filter(name => packages.some(pkg => pkg.name === name) && (shared || affected.has(name)));
 console.log(selected.length ? selected.join(' ') : 'none');
