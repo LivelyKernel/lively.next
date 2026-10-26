@@ -129,6 +129,18 @@ export class PropertyControl extends DraggableTreeLabel {
   static render (args) {
     let propertyControl;
 
+    if (args.spec.foldable && isMultiValue(args.value, args.spec.foldable)) {
+      return [
+        ...this.renderGrabbableKey(args),
+        ' ...', {
+          onMouseDown: () => {
+            args.target[args.keyString] = args.value.valueOf();
+            args.node.rerender();
+          }
+        }
+      ];
+    }
+
     if (!args.spec.type) {
       args.spec = {
         ...args.spec,
@@ -256,7 +268,7 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   static renderGrabbableKey (args, isDraggable = true) {
-    const { keyString, target, value } = args;
+    const { keyString, target, value, node } = args;
     isDraggable = target.isMorph && isDraggable;
     const dragHandlers = {
       onDragStart: (evt) => {
@@ -284,7 +296,7 @@ export class PropertyControl extends DraggableTreeLabel {
           ...isDraggable ? dragHandlers : {}
         })
         : ['  ', null],
-      `${keyString}:`, {
+      `${node?.keyString || keyString}:`, {
         'vertical-align': 'top',
         ...isDraggable ? dragHandlers : {}
       }
@@ -376,7 +388,7 @@ export class PropertyControl extends DraggableTreeLabel {
       const editor = part(parameterizedNumberPopupLight({
         title: keyString,
         tooltip: keyString,
-        value: target[keyString],
+        value: target[keyString]?.valueOf(),
         min: widgetState.min,
         max: widgetState.max,
         baseFactor: widgetState.baseFactor,
