@@ -37,17 +37,27 @@ describeInBrowser('top bar shape creation undo', () => {
 
   afterEach(async () => {
     try {
-      model?.detachFromTarget(world);
-    } finally {
-      if (env) {
-        if (MorphicEnv.default() === env) MorphicEnv.popDefault();
-        env.uninstallSystemChangeHandlers();
-        env.renderer?.placeholder?.remove();
-        await env.uninstall();
+      if (world) {
+        // Finish font-triggered fits before uninstalling their renderer and metrics.
+        const texts = world.withAllSubmorphsDo(m => m).filter(m => m.isText);
+        await Promise.all(texts.map(m => m.whenFontLoaded()));
+        env.forceUpdate();
+        await env.whenRendered(world);
       }
-      root?.remove();
-      System.global.$world = previousWorld;
-      System.global.renderer = previousRenderer;
+    } finally {
+      try {
+        model?.detachFromTarget(world);
+      } finally {
+        if (env) {
+          if (MorphicEnv.default() === env) MorphicEnv.popDefault();
+          env.uninstallSystemChangeHandlers();
+          env.renderer?.placeholder?.remove();
+          await env.uninstall();
+        }
+        root?.remove();
+        System.global.$world = previousWorld;
+        System.global.renderer = previousRenderer;
+      }
     }
   });
 
