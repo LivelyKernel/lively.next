@@ -605,10 +605,10 @@ class PropertyNode extends InspectionNode {
   display (inspector) {
     let { _propertyWidget: w, keyString, valueString, target, value, spec } = this;
 
-    if (!this.interactive && !(spec.foldable && isMultiValue(value, spec.foldable))) {
+    if (!this.interactive) {
       return inspector.renderPropertyControl({
         target,
-        keyString,
+        keyString: this.foldedProp || keyString,
         valueString,
         tree: inspector.ui.propertyTree,
         value,
