@@ -647,8 +647,11 @@ export class WorldBrowserModel extends ViewModel {
 
   async viewDidLoad () {
     if (lively.FreezerRuntime) {
-      const localconfigContent = await resource((window.SYSTEM_BASE_URL || SERVER_URL) + '/localconfig.js').read();
-      if (localconfigContent.replaceAll(' = ', '=').includes('config.hideScrollbarsInWorldBrowser=true')) config.hideScrollbarsInWorldBrowser = true;
+      const localconfig = resource((window.SYSTEM_BASE_URL || SERVER_URL) + '/localconfig.js');
+      if (await localconfig.exists()) {
+        const localconfigContent = await localconfig.read();
+        if (localconfigContent.replaceAll(' = ', '=').includes('config.hideScrollbarsInWorldBrowser=true')) config.hideScrollbarsInWorldBrowser = true;
+      }
     }
     await this.displayItems();
     this.onRefresh('showCloseButton');

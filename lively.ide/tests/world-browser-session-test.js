@@ -1,8 +1,9 @@
 /* global describe, it, beforeEach, afterEach */
 import { expect } from 'mocha-es6';
-import { part } from 'lively.morphic';
+import { part, config } from 'lively.morphic';
 import { signal } from 'lively.bindings';
-import { WorldPreviewModel } from '../studio/world-browser.cp.js';
+import { resource } from 'lively.resources';
+import { WorldBrowserModel, WorldPreviewModel } from '../studio/world-browser.cp.js';
 
 describe('world browser session transitions', () => {
   let previous, routes, bootstrapCalls;
@@ -98,4 +99,49 @@ describe('world browser session transitions', () => {
       expect(bootstrapCalls[0].fastLoad).equals(true);
     });
   }
+});
+
+describe('world browser optional local configuration', () => {
+  const root = resource(System.baseURL).join('world-browser-localconfig-test/');
+  let previous, calls, model;
+
+  beforeEach(async () => {
+    previous = {
+      frozen: lively.FreezerRuntime,
+      baseURL: window.SYSTEM_BASE_URL,
+      hideScrollbars: config.hideScrollbarsInWorldBrowser
+    };
+    await root.ensureExistance();
+    lively.FreezerRuntime = previous.frozen || {};
+    window.SYSTEM_BASE_URL = root.url.replace(/\/$/, '');
+    config.hideScrollbarsInWorldBrowser = false;
+    calls = [];
+    model = {
+      async displayItems () { calls.push('items'); },
+      onRefresh (property) { calls.push(property); }
+    };
+  });
+
+  afterEach(async () => {
+    lively.FreezerRuntime = previous.frozen;
+    window.SYSTEM_BASE_URL = previous.baseURL;
+    config.hideScrollbarsInWorldBrowser = previous.hideScrollbars;
+    await root.remove();
+  });
+
+  it('initializes the frozen browser without a localconfig.js file', async () => {
+    await WorldBrowserModel.prototype.viewDidLoad.call(model);
+    expect(config.hideScrollbarsInWorldBrowser).equals(false);
+    expect(calls).deep.equals(['items', 'showCloseButton']);
+  });
+
+  it('applies an existing scrollbar preference before displaying items', async () => {
+    await root.join('localconfig.js').write('config.hideScrollbarsInWorldBrowser = true;');
+    model.displayItems = async () => {
+      expect(config.hideScrollbarsInWorldBrowser).equals(true);
+      calls.push('items');
+    };
+    await WorldBrowserModel.prototype.viewDidLoad.call(model);
+    expect(calls).deep.equals(['items', 'showCloseButton']);
+  });
 });
