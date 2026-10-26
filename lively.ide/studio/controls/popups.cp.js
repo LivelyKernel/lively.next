@@ -9,6 +9,7 @@ import { PopupWindow } from '../../styling/shared.cp.js';
 import { InputLineDefault } from 'lively.components/inputs.cp.js';
 import { DefaultNumberWidget, DarkNumberWidget } from '../../value-widgets.cp.js';
 import { LabeledCheckboxOnDark, LabeledCheckboxLight } from 'lively.components';
+import { LayoutControl } from './layout.cp.js';
 
 export class PopupModel extends ViewModel {
   static get properties () {
@@ -37,6 +38,30 @@ export class PopupModel extends ViewModel {
     this.view.remove();
   }
 }
+
+class LayoutPopupModel extends PopupModel {
+  static get properties () {
+    return { targetMorph: {} };
+  }
+
+  viewDidLoad () {
+    this.models.layoutControl.focusOn(this.targetMorph);
+  }
+
+  close () {
+    this.models.layoutControl.closePopup();
+    super.close();
+  }
+}
+
+const LayoutPopup = component(DarkPopupWindow, {
+  defaultViewModel: LayoutPopupModel,
+  name: 'layout popup',
+  submorphs: [{
+    name: 'header menu',
+    submorphs: [{ name: 'title', textAndAttributes: ['Layout', null] }]
+  }, add(part(LayoutControl))]
+});
 
 export class ShadowPopupModel extends PopupModel {
   static get properties () {
@@ -1201,4 +1226,4 @@ const FlipPopup = component(DarkPopupWindow, {
   })]
 });
 
-export { BlurPopup, ShadowPopup, ShadowPopupLight, InsetShadowPopup, OpacityPopup, CursorPopup, TiltPopup, NumberWidgetLight, NumberPopupLight, PaddingPopup, PositionPopupLight, FlipPopup };
+export { BlurPopup, ShadowPopup, ShadowPopupLight, InsetShadowPopup, OpacityPopup, CursorPopup, TiltPopup, NumberWidgetLight, NumberPopupLight, PaddingPopup, PositionPopupLight, FlipPopup, LayoutPopup };
