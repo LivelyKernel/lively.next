@@ -749,15 +749,15 @@ describe('morph inside textAndAttributes', () => {
     expect(m.position).equals(sut.charBoundsFromTextPosition({ column: 0, row: 1 }).topLeft());
   });
 
-  it('enforces document once morph is embedded', () => {
+  it('embeds a morph in static text without forcing a document', () => {
     m.remove(), sut.remove();
     const t = text('I am a read only text', { readOnly: true });
     expect(t.document).to.be.undefined;
     t.textAndAttributes = ['I am a read only text!', null, m, null, '\n', null];
     expect(m.owner).to.equal(t);
     expect(t.submorphs).to.include(m);
-    expect(t.document).not.to.be.undefined;
-    expect(t.needsDocument).to.be.true;
+    expect(t.document).to.be.undefined;
+    expect(t.needsDocument).to.be.false;
     expect(t.embeddedMorphMap.has(m)).to.be.true;
     expect(t.embeddedMorphs).to.include(m);
   });

@@ -227,6 +227,10 @@ export default class Renderer {
         }
       }
 
+      for (const morph of morphsToHandle) {
+        if (morph.isText && morph.renderingState.needsEmbeddedMorphAlignment) this.updateEmbeddedMorphPositions(morph);
+      }
+
       // Inspect the current tree: layout/master application can add morphs after collection.
       return !!tree.find(this.worldMorph, morph => {
         const rs = morph.renderingState;
@@ -628,6 +632,7 @@ export default class Renderer {
     }
 
     if (morph.isText && (morph.document || morph.needsDocument) && morph.isClip()) node.style.overflow = 'hidden';
+    if (morph.isText && !morph.document && morph.embeddedMorphMap.size) rs.needsEmbeddedMorphAlignment = true;
     rs.needsRerender = false;
     rs.scrollChanged = false;
   }
@@ -1184,6 +1189,9 @@ export default class Renderer {
    */
   renderMorphInLine (morph, attr, inert = false) {
     attr = attr || {};
+    // Static text can render inline morphs before the layout pass reaches them; clearing
+    // needsRerender below would then skip their pending layout and its container CSS.
+    if (!inert && morph.layout) morph.applyLayoutIfNeeded();
     const rendered = inert ? this.doc.createElement('div') : this.renderMorph(morph);
     if (inert) {
       rendered.className = 'Morph';
@@ -1211,7 +1219,7 @@ export default class Renderer {
    * @param {Morph} morph - The morph for which to render its whole text.
    * @returns {Node[]} An array of Nodes
    */
-  renderWholeText (morph) {
+  renderWholeText (morph, inertEmbeddedMorphs = false) {
     const renderedLines = [];
     let textAndAttributesByLine = splitTextAndAttributesIntoLines(morph.textAndAttributes);
     if (textAndAttributesByLine.length === 0) {
@@ -1220,7 +1228,7 @@ export default class Renderer {
     }
     let row = 0;
     for (let line of textAndAttributesByLine) {
-      renderedLines.push(this.nodeForLine({ isLine: true, textAndAttributes: line, row }, morph, true));
+      renderedLines.push(this.nodeForLine({ isLine: true, textAndAttributes: line, row }, morph, !inertEmbeddedMorphs, inertEmbeddedMorphs));
       row++;
     }
     return renderedLines;
@@ -1782,6 +1790,7 @@ export default class Renderer {
   renderTextAndAttributes (node, morph) {
     const textNode = morph.renderingState.textLayer;
     if (!textNode) return;
+    if (!morph.document && morph.embeddedMorphMap.size) morph.renderingState.needsEmbeddedMorphAlignment = true;
     textNode.style['font-kerning'] = morph.document ? 'none' : 'auto';
     const canvasSupported = morph.canBeMeasuredViaCanvas;
 
@@ -1790,7 +1799,14 @@ export default class Renderer {
     }
 
     if (!morph.document) {
-      textNode.replaceChildren(...this.renderWholeText(morph));
+      if (!obj.equals(morph.renderingState.renderedTextAndAttributes, morph.textAndAttributes)) {
+        textNode.replaceChildren(...this.renderWholeText(morph));
+      } else {
+        // Update inline styling without disconnecting unchanged line contents.
+        morph.textAndAttributes.forEach((content, i, text) => {
+          if (content?.isMorph) this.renderMorphInLine(content, text[i + 1]);
+        });
+      }
     } else {
       if (morph.renderingState.needsLinesToBeCleared) {
         // As we use `keyed` to patch these nodes, handling references to the currently mounted ones would probably cause more trouble than benefit.
@@ -1855,6 +1871,32 @@ export default class Renderer {
         delete morph.renderingState.adaptScrollAfterDocumentRemoval;
       });
     }
+  }
+
+  updateEmbeddedMorphPositions (morph) {
+    if (morph.document || !morph.embeddedMorphMap.size) return;
+    if (!morph.visible || morph.ownerChain().some(owner => !owner.visible)) return;
+    let pending = false;
+    for (const embedded of morph.embeddedMorphs) {
+      const node = this.getNodeForMorph(embedded);
+      if (!node?.isConnected || node.offsetParent === null) { pending = true; continue; }
+      const delta = this.getInlineMorphPositionDelta(embedded, node.getBoundingClientRect());
+      if (delta.r() < 1e-7) continue;
+      morph._positioningSubmorph = embedded;
+      try { embedded.position = embedded.position.addPt(delta); }
+      finally { morph._positioningSubmorph = false; }
+    }
+    morph.renderingState.needsEmbeddedMorphAlignment = pending;
+  }
+
+  getInlineMorphPositionDelta (morph, clientBounds) {
+    const world = morph.world();
+    const worldNode = this.getNodeForMorph(world);
+    const worldBounds = worldNode.getBoundingClientRect();
+    const renderedPosition = pt(clientBounds.x - worldBounds.x, clientBounds.y - worldBounds.y)
+      .scaleBy(1 / world.scale);
+    const ownBounds = morph.getGlobalTransform().transformRectToRect(morph.origin.negated().extent(morph.extent));
+    return morph.owner.getGlobalTransform().inverse().transformDirection(renderedPosition.subPt(ownBounds.topLeft()));
   }
 
   /**
@@ -2150,9 +2192,13 @@ export default class Renderer {
     let node = this.getNodeForMorph(morph);
     if (!node) node = this.renderMorph(morph);
     else this.renderStylingChanges(morph);
-    const textNode = morph.renderingState.textLayer;
-    const prevParent = textNode.parentNode;
-    textNode.remove();
+    const liveTextNode = morph.renderingState.textLayer;
+    const prevParent = liveTextNode.parentNode;
+    const textNode = morph.embeddedMorphMap.size ? liveTextNode.cloneNode(false) : liveTextNode;
+    if (textNode !== liveTextNode) {
+      // Reuse the inert line renderer without copying live embedded contents.
+      textNode.append(...this.renderWholeText(morph, true));
+    } else textNode.remove();
     this.ensurePlaceholder();
     this.placeholder.className = 'Text';
     textNode.style.width = 'max-content';
@@ -2177,15 +2223,8 @@ export default class Renderer {
     textNode.style.removeProperty('position');
     const bounds = new Rectangle(domMeasure.x, domMeasure.y, Math.ceil(domMeasure.width), Math.ceil(domMeasure.height));
 
-    const embeddedMorphs = morph.textAndAttributes.filter(m => m?.isMorph);
-    for (let m of embeddedMorphs) {
-      const node = this.getNodeForMorph(m);
-      const domMeasure = node.getBoundingClientRect();
-      m._owner = morph;
-      m.setProperty('position', pt(domMeasure.x, domMeasure.y));
-    }
-
-    prevParent.appendChild(textNode);
+    if (textNode === liveTextNode) prevParent.appendChild(textNode);
+    else textNode.remove();
     this.updateNodeScrollFromMorph(morph);
 
     if (morph.allFontsLoaded() && document.fonts.status !== 'loading') {
