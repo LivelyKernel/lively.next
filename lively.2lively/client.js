@@ -73,8 +73,10 @@ export default class L2LClient extends L2LConnection {
     const def = this.default();
 
     if (!def) {
+      const serverURL = globalThis.SERVER_URL || globalThis.SYSTEM_BASE_URL ||
+        (typeof document !== 'undefined' ? document.location.origin : determineLocation());
       return L2LClient.ensure({
-        url: resource(determineLocation()).join('/lively-socket.io').url,
+        url: resource(serverURL).join('/lively-socket.io').url,
         namespace: 'l2l',
         info
       });

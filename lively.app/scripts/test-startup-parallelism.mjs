@@ -105,3 +105,85 @@ await test('failed bootstrap input leaves the dashboard loader installed', async
     assert.equal(f.swaps(), 0);
   } finally { await f.finish(); }
 });
+
+const clientSource = await readFile(new URL('lively.2lively/client.js', root), 'utf8');
+const browserClient = clientSource.slice(clientSource.indexOf('  static forLivelyInBrowser ('),
+  clientSource.indexOf('  static default ()'));
+const determineLocation = clientSource.slice(clientSource.indexOf('function determineLocation ()'),
+  clientSource.indexOf('\nlet _clients;'));
+/** Run the browser client factory against the dashboard's loader and backend roots. */
+function browserClientFixture (globals = {}, defaultClient) {
+  const context = {
+    System: { baseURL: 'http://localhost:9012/dashboard/' },
+    document: { location: { origin: 'http://localhost:9012' } },
+    obj: { equals: () => false },
+    resource: url => ({ join: path => ({ url: url.replace(/\/$/, '') + '/' + path.replace(/^\//, '') }) }),
+    ...globals
+  };
+  const Client = runInNewContext(`${determineLocation}; (class L2LClient { ${browserClient} })`, context);
+  Client.default = () => defaultClient;
+  Client.ensure = options => options;
+  return Client;
+}
+for (const [name, globals, expected] of [
+  ['dashboard', {}, 'http://localhost:9012/lively-socket.io'],
+  ['custom server subdirectory', { SERVER_URL: 'https://server.test/lively/' }, 'https://server.test/lively/lively-socket.io'],
+  ['configured system root', { SYSTEM_BASE_URL: 'https://server.test/lively/' }, 'https://server.test/lively/lively-socket.io'],
+  ['native desktop', { SERVER_URL: 'http://127.0.0.1:9011', SYSTEM_BASE_URL: 'file:///app/', document: { location: { origin: 'null' } } }, 'http://127.0.0.1:9011/lively-socket.io'],
+  ['native file root', { SYSTEM_BASE_URL: 'file:///app/', document: { location: { origin: 'null' } } }, 'file:///app/lively-socket.io']
+]) {
+  await test(`browser L2L uses the canonical endpoint for ${name}`, () => {
+    const result = browserClientFixture(globals).forLivelyInBrowser({ world: 'project' });
+    assert.equal(result.url, expected);
+    assert.equal(result.namespace, 'l2l');
+    assert.equal(result.info.world, 'project');
+  });
+}
+await test('browser L2L retains a deliberately configured default client', () => {
+  const client = { origin: 'https://custom.test', isRegistered: () => false };
+  const Client = browserClientFixture({}, client);
+  Client.ensure = () => { throw new Error('existing default client replaced'); };
+  assert.equal(Client.forLivelyInBrowser({ world: 'project' }), client);
+});
+
+const worldLoading = await readFile(new URL('lively.morphic/world-loading.js', root), 'utf8');
+const setupL2L = worldLoading.slice(worldLoading.indexOf('export async function setupLively2Lively ('),
+  worldLoading.indexOf('\nexport async function setupLivelyShell (')).replace(/^export /, '');
+/** Keep registration pending while world setup imports its services. */
+function worldL2LFixture () {
+  const ready = Promise.withResolvers();
+  ready.promise.catch(() => {});
+  const events = [];
+  const client = {
+    once (event) { events.push(event); },
+    whenRegistered () { events.push('waiting'); return ready.promise; }
+  };
+  const modules = {
+    'lively.modules': { importPackage: async () => {} },
+    'lively.user': { currentUser: () => ({ login: 'user' }) },
+    'lively.2lively/client.js': { default: { forLivelyInBrowser: () => client } }
+  };
+  const setup = runInNewContext(`(${setupL2L})`, {
+    System: { import: async name => modules[name] }, console: { log () {} }
+  });
+  return { ready, client, events, run: () => setup({ name: 'project' }) };
+}
+await test('world setup waits for L2L registration before returning its shell client', async () => {
+  const f = worldL2LFixture();
+  let finished = false;
+  const result = f.run().then(client => { finished = true; return client; });
+  try {
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(finished, false, 'project Git commands can run before the shell client is connected');
+    assert.deepEqual(f.events, ['registered', 'waiting']);
+  } finally { f.ready.resolve(f.client); }
+  assert.equal(await result, f.client);
+});
+await test('world setup reports a failed L2L registration', async () => {
+  const f = worldL2LFixture();
+  const result = f.run().catch(error => error);
+  const failure = new Error('registration timed out');
+  await new Promise(resolve => setImmediate(resolve));
+  f.ready.reject(failure);
+  assert.equal(await result, failure);
+});

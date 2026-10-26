@@ -40,6 +40,7 @@ export async function setupLively2Lively (world) {
     reportWorldLoad(world, user);
   });
 
+  await client.whenRegistered(30 * 1000);
   return client;
 }
 
