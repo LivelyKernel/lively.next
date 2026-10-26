@@ -77,12 +77,12 @@ const nodeResolve = createResolver.sync({
   symlinks: true
 });
 
-function resolveModuleId (moduleName, importer = __filename, context = 'systemjs-node') {
+function resolveModuleId (moduleName, importer, context = 'systemjs-node') {
   if (moduleName.startsWith('file:')) return fileURLToPath(moduleName);
   if (isAlreadyResolved(moduleName) || path.isAbsolute(moduleName) || moduleName === '@empty') return moduleName;
-  if (moduleName.startsWith('./') || moduleName.startsWith('../')) return null;
+  if (!importer && (moduleName.startsWith('./') || moduleName.startsWith('../'))) return null;
   if (builtinModules.includes(moduleName) || moduleName.startsWith('node:')) return moduleName;
-  const parent = importer.startsWith('file:') ? fileURLToPath(importer) : importer;
+  const parent = importer?.startsWith('file:') ? fileURLToPath(importer) : importer || __filename;
   const resolve = context === 'systemjs-browser' ? browserResolve : nodeResolve;
   const basedir = path.isAbsolute(parent) ? path.dirname(parent) : process.cwd();
   const resolved = resolve(basedir, moduleName);

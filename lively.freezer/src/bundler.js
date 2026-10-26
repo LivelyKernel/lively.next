@@ -381,16 +381,12 @@ export default class LivelyRollup {
   }
 
   /**
-   * Dispatches the responsibility of resolving relative imports to the loaded SystemJS.
+   * Resolve relative imports with the target conditions and package mappings.
    * @param { string } moduleId - The module from where the import happens.
    * @param { string } path - The relative path to be imported.
    */
-  // FIXME: the reason this is async is because we still keep the browser resolver around...
   resolveRelativeImport (moduleId, path) {
-    if (!path.startsWith('.')) return this.resolver.normalizeFileName(path);
-    // how to achieve that without the nasty file handle
-    return this.resolver.normalizeFileName(
-      string.joinPath(this.resolver.normalizeFileName(moduleId), '..', path));
+    return this.resolver.resolveModuleId(path, moduleId, this.getResolutionContext());
   }
 
   /**
