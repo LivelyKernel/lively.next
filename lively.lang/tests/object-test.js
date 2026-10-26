@@ -224,6 +224,28 @@ describe('object', function () {
          '}');
     });
 
+    it('escapes backslashes in string literals', function () {
+      const value = 'path\\backslash\nnext line';
+      const inspected = inspect({ value }, { quote: "'" });
+      expect(Function(`return (${inspected})`)().value).to.equal(value); // eslint-disable-line no-new-func
+    });
+
+    for (const [name, value] of [
+      ['carriage returns', 'a\rb'],
+      ['CRLF', 'a\r\nb'],
+      ['Unicode line separators', 'a\u2028b'],
+      ['Unicode paragraph separators', 'a\u2029b']
+    ]) {
+      it(`escapes ${name} in string literals`, () => {
+        for (const quote of ["'", '"']) {
+          const inspected = inspect({ value }, { quote });
+          expect(inspected, `inspect must escape ${name}`).not.match(/[\r\u2028\u2029]/);
+          expect(Function(`return (${inspected})`)().value, // eslint-disable-line no-new-func
+            `inspect must round-trip ${name} with ${quote} quoting`).equals(value);
+        }
+      });
+    }
+
     it('observes maxDepth when printing', function () {
       expect(inspect(obj1, { maxDepth: 1 })).to.equal(
         '{\n' +

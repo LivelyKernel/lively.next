@@ -5,10 +5,12 @@ import module from 'lively.modules/src/module.js';
 import { withAllViewModelsDo } from 'lively.morphic/components/policy.js';
 import { ComponentChangeTracker } from './change-tracker.js';
 import { findComponentDef, getComponentNode, scanForNamesInGenerator } from './helpers.js';
-import { replaceComponentDefinition, Reconciliation, createInitialComponentDefinition } from './reconciliation.js';
+import { replaceComponentDefinition, createInitialComponentDefinition, ensureComponentNamesInSource } from './component-definition.js';
 import { parse } from 'lively.ast';
 import { once } from 'lively.bindings';
 import { evalAsSpec } from 'lively.morphic/components/core.js';
+import { ComponentSourceDiagnosticKind, ComponentSourceDiagnosticSeverity, parseComponentSource } from './reconciliation/source-adapter.js';
+import { ComponentInvariantKind } from './reconciliation/invariants.js';
 
 const metaSymbol = Symbol.for('lively-module-meta');
 const exprSerializer = new ExpressionSerializer();
@@ -70,16 +72,40 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
     super.init(generatorFunctionOrInlinePolicy, meta);
     this.subscribeToParent();
     this.refreshDependants();
-    this.previouslyRemovedMorphs = new WeakMap();
     this.checkForGeneratedNames();
     return this;
   }
 
   ensureNamesInSourceCode () {
-    if (this._hasGeneratedNames) {
-      this._hasGeneratedNames = false;
-      Reconciliation.ensureNamesInSourceCode(this);
+    const source = this.targetModule._source;
+    if (typeof source !== 'string') return !this._hasGeneratedNames;
+    let namedSource = source;
+    while (true) {
+      const resolveComponentDocument = this._cachedComponent._changeTracker.projectionalComponentDocumentResolver();
+      const parsed = parseComponentSource({
+        source: namedSource,
+        moduleId: this.moduleName,
+        exportName: this.componentName,
+        parentDocument: this._cachedComponent._changeTracker.projectionalRuntimeParentDocument([], {}),
+        resolveComponentDocument,
+        normalizeModuleId: (id, from) => this._cachedComponent._changeTracker.projectionalModuleId(id, from)
+      });
+      const invalidNames = parsed.diagnostics
+        .filter(diagnostic => diagnostic.kind === ComponentSourceDiagnosticKind.INVALID_NODE_NAME)
+        .map(diagnostic => diagnostic.range);
+      if (parsed.diagnostics.some(diagnostic =>
+        diagnostic.severity === ComponentSourceDiagnosticSeverity.ERROR &&
+        diagnostic.kind !== ComponentSourceDiagnosticKind.INVALID_NODE_NAME &&
+        diagnostic.kind !== ComponentInvariantKind.DUPLICATE_SIBLING_NAME)) break;
+      const updated = ensureComponentNamesInSource(namedSource, this.componentName, this.stylePolicy.spec, invalidNames, resolveComponentDocument);
+      if (updated === namedSource) break;
+      namedSource = updated;
     }
+    if (namedSource !== source) {
+      this._cachedComponent._changeTracker.writeProjectionalModuleSource(this.targetModule, namedSource);
+    }
+    this._hasGeneratedNames = false;
+    return true;
   }
 
   checkForGeneratedNames () {
@@ -96,11 +122,7 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   }
 
   recordRemovedMorph (removedMorph, meta) {
-    this.previouslyRemovedMorphs.set(removedMorph, meta);
-
-    once(removedMorph, 'removeMorph', () => {
-      this.previouslyRemovedMorphs.delete(removedMorph);
-    });
+    (this.previouslyRemovedMorphs ||= new WeakMap()).set(removedMorph, meta);
   }
 
   /**
@@ -128,7 +150,9 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
    * @param { Morph } [c] - The component morph.
    */
   ensureComponentMorphUpToDate (c) {
+    c?._changeTracker?.dispose();
     if (c?.world()) {
+      this.ensureComponentDefBackup();
       const sceneGraph = c.world().sceneGraph;
       const pos = c.position;
       const prevOwner = c.owner;
@@ -145,14 +169,26 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   /**
    * In order to reliably reset any unintended changes that happen due to
    * direct manipulation this method allows to take a snapshot of the current
-   * component definition as code.
+   * component definition as code. Source must be loaded before starting a session;
+   * keep validation synchronous for module re-evaluation and makeDirty callers.
    */
-  async ensureComponentDefBackup () {
-    if (this._backupComponentDef) return;
-    const { moduleId, exportedName } = this[metaSymbol];
-    const source = await this.targetModule.source();
-    const { start, end } = findComponentDef(await this.targetModule.ast(), exportedName);
-    this._backupComponentDef = source.slice(start, end);
+  ensureComponentDefBackup () {
+    const { moduleId, exportedName } = this[metaSymbol] || {};
+    const source = moduleId && this.targetModule._source;
+    // A cleared cache says nothing about the declaration; validate after source() loads it.
+    if (moduleId && source == null) return;
+    const declaration = typeof source === 'string' && exportedName &&
+      findComponentDef(parse(source), exportedName);
+    if (!declaration) {
+      this.stopEditSession();
+      const error = new Error(`Internal component editing error: ${exportedName || 'the component'} has no backing source declaration. This is a bug.`);
+      error.isInternalComponentError = true;
+      $world.logError(error);
+      throw error;
+    }
+    if (!this._backupComponentDef) {
+      this._backupComponentDef = source.slice(declaration.start, declaration.end);
+    }
   }
 
   /**
@@ -174,15 +210,34 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
    * @returns { Promise<Morph> } The component morph.
    */
   async edit (alive = false) {
-    const c = this.getComponentMorph(alive);
+    if (this._cachedComponent?._changeTracker?._wasInWorld && !this._cachedComponent.world()) {
+      this.stopEditSession();
+    }
+    if (this[metaSymbol]?.moduleId) await this.targetModule.source();
     this.ensureComponentDefBackup();
+    const c = this.getComponentMorph(alive);
     if (!c._changeTracker) { new ComponentChangeTracker(c, this); }
-    return await c._changeTracker.whenReady() && c;
+    await c._changeTracker.whenReady();
+    this.ensureNamesInSourceCode();
+    return c;
   }
 
   stopEditSession () {
+    const component = this._cachedComponent;
+    component?._changeTracker?.dispose();
+    delete this.previouslyRemovedMorphs;
     this._backupComponentDef = null;
     this._cachedComponent = null;
+    if (component && !component.world()) {
+      // History retains the detached morph, but not an active editing session.
+      once(component, 'onOwnerChanged', () => {
+        if (!component.world() || !component.env.undoManager.applyCount || this._cachedComponent) return;
+        this._cachedComponent = component;
+        this.ensureComponentDefBackup();
+        new ComponentChangeTracker(component, this);
+        this.ensureNamesInSourceCode();
+      });
+    }
   }
 
   /**
@@ -243,12 +298,13 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
   }
 
   getSourceCode () {
+    this._cachedComponent?._changeTracker?.dispose();
     this._cachedComponent = null; // ensure to recreate the component morph
     return System.lint(createInitialComponentDefinition(this.getComponentMorph()))[0];
   }
 
   makeDirty () {
-    this.ensureComponentDefBackup();
+    if (!this._backupComponentDef) this.ensureComponentDefBackup();
     this._dirty = true;
   }
 
@@ -265,7 +321,6 @@ export class InteractiveComponentDescriptor extends ComponentDescriptor {
           .get(descr);
     }
     obj.adoptObject(descr, InteractiveComponentDescriptor);
-    if (!descr.previouslyRemovedMorphs) descr.previouslyRemovedMorphs = new WeakMap();
     return descr;
   }
 }

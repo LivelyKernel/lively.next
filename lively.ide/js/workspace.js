@@ -86,6 +86,7 @@ export default class Workspace extends Window {
     const menuItems = [
       ...this.defaultWindowItems,
       { isDivider: true },
+      ['Edit component…', () => this.execCommand('[workspace] edit component')],
       ['Set Workspace File...', () => this.execCommand('[workspace] query for file')]
     ];
     this.targetMorph.world().openMenu(menuItems);
@@ -140,6 +141,61 @@ export default class Workspace extends Window {
   get commands () {
     return [
       EvalBackendChooser.default.activateEvalBackendCommand(this),
+
+      {
+        name: '[workspace] edit component',
+        async exec (workspace, { componentName } = {}) {
+          if (workspace.systemInterface.name !== 'local') {
+            throw new Error('Component editing requires a local workspace.');
+          }
+          const editor = workspace.targetMorph;
+          const sourcePlugin = editor.pluginFind(p => p.isComponentSourceEditorPlugin);
+          // Evaluating the buffer replaces descriptors, so retain active sessions.
+          if (!sourcePlugin?.sessions.size) {
+            const result = await workspace.jsPlugin.runEval(workspace.content);
+            if (result.isError) {
+              throw result.value instanceof Error ? result.value : new Error(String(result.value));
+            }
+          }
+          const [{ module }, { getComponentDeclsFromScope }, { InteractiveComponentDescriptor }, { ComponentEditButton }] = await Promise.all([
+            System.import('lively.modules'),
+            System.import('lively.ide/components/helpers.js'),
+            System.import('lively.ide/components/editor.js'),
+            System.import('lively.ide/js/browser/ui.cp.js')
+          ]);
+          const moduleId = workspace.jsPlugin.evalEnvironment.targetModule;
+          module(moduleId).setSource(editor.textString);
+          const declarations = await getComponentDeclsFromScope(moduleId);
+          let selected = componentName
+            ? declarations.find(([, declaration]) => declaration.declarations[0].id.name === componentName)
+            : declarations.length === 1 && declarations[0];
+          if (!selected && !componentName && declarations.length) {
+            const { selected: [choice] } = await workspace.world().filterableListPrompt(
+              'Edit component', declarations.map(entry => ({
+                isListItem: true,
+                string: entry[1].declarations[0].id.name,
+                value: entry
+              })), { requester: workspace });
+            if (!choice) return;
+            selected = choice;
+          }
+          if (!selected) {
+            throw new Error(componentName
+              ? `No component declaration named ${componentName} in this workspace.`
+              : 'No component declarations in this workspace.');
+          }
+          const [descriptor, declaration] = selected;
+          const interactive = InteractiveComponentDescriptor.ensureInteractive(descriptor);
+          if (interactive._cachedComponent?._changeTracker) return interactive._cachedComponent;
+          const button = part(ComponentEditButton, {
+            name: 'edit component btn', componentDescriptor: interactive, declaration, epiMorph: true
+          });
+          editor.addMorph(button);
+          await button.positionInLine(false);
+          await button.expand();
+          return interactive._cachedComponent;
+        }
+      },
 
       {
         name: '[workspace] query for file',

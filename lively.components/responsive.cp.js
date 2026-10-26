@@ -524,9 +524,8 @@ export class ResponsiveLayoutHaloModel extends ViewModel {
 
   refreshChangeTrackers () {
     if (!this.target._changeTracker) return;
-    this.target._changeTracker.processChangeInComponent({
-      prop: 'master',
-      meta: { reconcileChanges: true },
+    return this.target._changeTracker.setProperty({
+      property: 'master',
       target: this.target,
       value: this.targetStylePolicy
     });

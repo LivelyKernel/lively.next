@@ -1857,7 +1857,8 @@ export class ConstraintLayout extends Layout {
   }
 
   getSpec () {
-    if (!this.container) return this.config;
+    const renderingMode = this.renderViaCSS !== true ? { renderViaCSS: this.renderViaCSS } : {};
+    if (!this.container) return { ...obj.dissoc(this.config, ['renderViaCSS']), ...renderingMode };
     const submorphSettings = [];
     for (let m of this.layoutableSubmorphs) {
       const settings = this.settingsFor(m);
@@ -1867,7 +1868,8 @@ export class ConstraintLayout extends Layout {
     return {
       submorphSettings,
       reactToSubmorphAnimations: this.reactToSubmorphAnimations,
-      lastExtent: this.lastExtent
+      lastExtent: this.lastExtent,
+      ...renderingMode
     };
   }
 
@@ -3180,7 +3182,8 @@ export class GridLayout extends Layout {
    * @return { GridLayoutSpec }
    */
   getSpec () {
-    if (!this.container) return this.config;
+    const renderingMode = this.renderViaCSS !== true ? { renderViaCSS: this.renderViaCSS } : {};
+    if (!this.container || !this.grid) return { ...obj.dissoc(this.config, ['renderViaCSS']), ...renderingMode };
     const grid = [];
     const rows = [];
     const columns = [];
@@ -3223,7 +3226,7 @@ export class GridLayout extends Layout {
         groups[typeof cell.state.morph === 'string' ? cell.state.morph : cell.morph.name] = obj.select(cell, ['align', 'resize']);
       }
     }
-    return { autoAssign: false, grid, rows, columns, groups };
+    return { autoAssign: false, grid, rows, columns, groups, ...renderingMode };
   }
 
   /**

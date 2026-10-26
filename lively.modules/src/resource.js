@@ -131,7 +131,10 @@ function livelyProtocol (proceed, url) {
     write (source) {
       const m = morphForLivelyId(id);
       if (!m) return Promise.reject(`Could not save morph ${id}`);
-      m.textString = source;
+      const write = () => { m.textString = source; };
+      if (m.withMetaDo) {
+        m.withMetaDo({ componentSourceUpdate: true }, () => m.dontRecordChangesWhile(write));
+      } else write();
       return Promise.resolve(this);
     }
   };

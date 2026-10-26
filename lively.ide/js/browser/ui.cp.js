@@ -42,6 +42,7 @@ function ensureAnchor (control) {
     ...editor.screenLineRange(editor.indexToPosition(declaration.start)).end
   });
   connect(anchor, 'position', control, 'positionInLine', {
+    isEpiConnection: true,
     updater: ($upd) => $upd()
   });
   return anchor;
@@ -155,15 +156,19 @@ class ComponentEditControlModel extends ViewModel {
     view.leftCenter = await positionForAnchor(editor, anchor, view);
   }
 
-  resetComponentDef () {
-    if (this.componentDescriptor?.isDirty()) this.componentDescriptor.reset();
+  async resetComponentDef () {
+    if (!this.componentDescriptor?.isDirty()) return;
+    try { await this.componentDescriptor.reset(); } catch (error) { this.view.showError(error); }
   }
 
-  toggleDerivedInstance (active) {
+  async toggleDerivedInstance (active) {
     if (active) {
       try {
         const pos = this.componentMorph.position;
         noUpdate(() => this.componentMorph.remove());
+        const backup = this.componentDescriptor._backupComponentDef;
+        this.componentDescriptor.stopEditSession();
+        this.componentDescriptor._backupComponentDef = backup;
         this.world().sceneGraph?.refresh();
         this.instanceMorph = part(this.componentDescriptor).openInWorld();
         this.instanceMorph.position = pos;
@@ -178,6 +183,11 @@ class ComponentEditControlModel extends ViewModel {
       const pos = this.instanceMorph.position;
       this.cleanupInstance();
       this.world().sceneGraph?.refresh();
+      disconnect(this.componentMorph, 'stop editing', this, 'terminateEditSession');
+      disconnect(this.componentMorph, 'behaviorChanged', this, 'updateControlButtons');
+      this.componentMorph = await this.componentDescriptor.edit();
+      once(this.componentMorph, 'stop editing', this, 'terminateEditSession');
+      connect(this.componentMorph, 'behaviorChanged', this, 'updateControlButtons');
       this.componentMorph.openInWorld();
       this.world().sceneGraph?.refresh();
       this.componentMorph.position = pos;
@@ -196,7 +206,11 @@ class ComponentEditControlModel extends ViewModel {
 
   async terminateEditSession () {
     const mod = module(this.componentDescriptor.moduleName);
-    if (mod._source) {
+    const sourcePlugin = this.editor?.pluginFind(plugin => plugin.isComponentSourceEditorPlugin);
+    const browser = this.editor?.owner;
+    // Surrounding manual edits still belong to the browser's explicit save workflow.
+    if (mod._source && mod._source === this.editor?.textString &&
+        !sourcePlugin?.hasTextEdits && !(browser?.isBrowser && browser.hasUnsavedChanges())) {
       mod.changeSource(mod._source, {
         doSave: true, doEval: false
       });
@@ -300,7 +314,7 @@ class ComponentEditControlModel extends ViewModel {
     }
     editButton.scale = 1;
     editButton.opacity = 1;
-    otherBrowsers.forEach(b => b.relayout());
+    otherBrowsers.forEach(b => b.relayout?.());
   }
 }
 
@@ -380,6 +394,7 @@ class ComponentEditButtonMorph extends Morph {
     } = this;
     const btnPlaceholder = editor.addMorph(part(ComponentEditControls, { // eslint-disable-line no-use-before-define
       name: 'component edit control',
+      epiMorph: true,
       viewModel: {
         componentMorph,
         componentDescriptor,
@@ -416,7 +431,7 @@ class ComponentEditButtonMorph extends Morph {
     }
     const btnPlaceholder = await this.ensureEditControlsFor(componentMorph);
     await this.animateSwapWithPlaceholder(btnPlaceholder, componentMorph);
-    otherBrowsers.forEach(b => b.relayout());
+    otherBrowsers.forEach(b => b.relayout?.());
   }
 
   async positionInLine (transition = !!this.componentDescriptor?._cachedComponent) {
