@@ -541,18 +541,19 @@ export class TopBarModel extends ViewModel {
     if (evt.targetMorph !== target) return false;
     if (target._shapeRequest && type && !target._yieldedShape) {
       const position = target.localize($world.firstHand.position);
+      let createdShape;
       switch (type) {
         case Image:
-          target.addMorph(morph({
+          createdShape = morph({
             type,
             position,
             extent: pt(150, 150),
             fill: Color.transparent
-          }));
+          });
           break;
         case Text:
           if (evt.targetMorph.isText) return;
-          const textMorph = morph({
+          createdShape = morph({
             type,
             position,
             readOnly: true,
@@ -560,9 +561,12 @@ export class TopBarModel extends ViewModel {
             dynamicCursorColoring: true,
             fill: Color.rgbHex('FFFFFF')
           });
-          textMorph.addPlugin(new RichTextPlugin());
-          target.addMorph(textMorph);
+          createdShape.addPlugin(new RichTextPlugin());
           break;
+      }
+      if (createdShape) {
+        const undo = !target.undoInProgress && target.undoStart('create-shape');
+        try { target.addMorph(createdShape); } finally { if (undo) target.undoStop('create-shape'); }
       }
     }
     if (target._yieldedShape && target._yieldedShape.owner) {
