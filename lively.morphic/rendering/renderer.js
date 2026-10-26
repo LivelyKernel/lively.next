@@ -605,8 +605,8 @@ export default class Renderer {
   renderStylingChanges (morph) {
     const rs = morph.renderingState;
     if (morph._requestMasterStyling) {
-      morph.master && morph.master.applyIfNeeded(true);
       morph._requestMasterStyling = false;
+      morph.master && morph.master.applyIfNeeded(true);
     }
 
     const node = this.getNodeForMorph(morph);
