@@ -1414,7 +1414,7 @@ class CopyHaloItem extends RoundHaloItem {
         const snap = await createMorphSnapshot(m, { addPreview: false, testLoad: false, moduleManager });
         snap.copyMeta = { offset: m.worldPoint(pt(0, 0)).subPt(origin) };
         snapshots.push(snap);
-        html += m.renderPreview();
+        html += m.renderPreview({ inlineDefaults: true });
       }
 
       html += '</body></html>';

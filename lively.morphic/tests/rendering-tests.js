@@ -77,7 +77,7 @@ describe('rendering', function () {
     it('shape influences node style', () => {
       const style = env.renderer.getNodeForMorph(ellipse).style;
       expect(style.borderRadius).match(/50%/);
-      expect(style.position).equals('absolute');
+      expect(env.domEnv.window.getComputedStyle(env.renderer.getNodeForMorph(ellipse)).position).equals('absolute');
     });
 
     it('morph type influences node structure', () => {

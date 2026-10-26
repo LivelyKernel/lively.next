@@ -2683,7 +2683,7 @@ ${((height / 2) - (bh / height) * (height / 2)) + (y * height) - (height / 2)})`
 
     const {
       width = 100, height = 100, center = true, ignoreMorphs = [],
-      asNode = false, enforceGoalBounds = false
+      asNode = false, enforceGoalBounds = false, inlineDefaults = false
     } = opts;
     const {
       scale, position, origin, rotation
@@ -2729,7 +2729,14 @@ ${((height / 2) - (bh / height) * (height / 2)) + (y * height) - (height / 2)})`
         .filter(Boolean);
       const isMorph = cssClasses.includes('Morph');
       if (!isMorph) return;
+      if (inlineDefaults) {
+        const renderedMorph = morph.getMorphWithId(node.id);
+        const previewTransform = node.style.transform;
+        if (renderedMorph) applyStylingToNode(renderedMorph, node, true);
+        if (renderedMorph === morph) node.style.transform = previewTransform;
+      }
       node.className = arr.withoutAll(cssClasses, ['morph', 'Morph']).join(' ');
+      node.classList.add('morph-preview');
       if (ignoreMorphs.find(m => m.id === node.id)) node.remove();
       node.id = '';
     },
