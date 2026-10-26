@@ -1,5 +1,5 @@
 /* global System */
-import { nodes, isValidIdentifier } from 'lively.ast';
+import { nodes, isValidIdentifier, parse, walk, transform } from 'lively.ast';
 const { funcCall, member, literal } = nodes;
 import { evalCodeTransform, evalCodeTransformOfSystemRegisterSetters } from 'lively.vm';
 import { string, obj, properties } from 'lively.lang';
@@ -7,6 +7,7 @@ import { classToFunctionTransform } from 'lively.classes';
 
 import module, { detectModuleFormat } from './module.js';
 import { BrowserModuleTranslationCache, NodeModuleTranslationCache } from './cache.js';
+import { resource } from 'lively.resources';
 
 function isNodeRuntime (System) {
   try {
@@ -49,6 +50,22 @@ let exceptions = [
 
 function getExceptions () { return exceptions; }
 function setExceptions (v) { return exceptions = v; }
+
+/** Resolve CDN import metadata before either transpiler substitutes the virtual module ID. */
+export function resolveEsmImportMeta (moduleId, source) {
+  if (!moduleId.startsWith('esm://') || !source.includes('import') || !source.includes('meta')) return source;
+  const moduleResource = resource(moduleId);
+  const url = new URL(moduleResource.path(), moduleResource.getEsmURL()).href;
+  const replacements = [];
+  walk.simple(parse(source), {
+    MetaProperty (node) {
+      if (node.meta.name === 'import') {
+        replacements.push({ target: node, replacementFunc: () => `({url:${JSON.stringify(url)}})` });
+      }
+    }
+  });
+  return transform.replaceNodes(replacements, source).source;
+}
 
 function applyKnownModuleFixups (loadName, source) {
   // Whitelisted runtime fixups for known jspm transpilation/runtime issues.
@@ -266,7 +283,7 @@ export async function customTranslate (load) {
     return load.source;
   }
 
-  load.source = applyKnownModuleFixups(load.name, String(load.source));
+  load.source = resolveEsmImportMeta(load.name, applyKnownModuleFixups(load.name, String(load.source)));
 
   const start = load.metadata.ts = Date.now();
 
