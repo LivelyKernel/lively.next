@@ -52,7 +52,7 @@ export default class TestRunner {
       await promise.waitFor(()=> !!window.chai && !!window.Mocha);
       const { default: TestRunner } = await System.import("lively.ide/test-runner.js");
       const runner = new TestRunner();
-      // Headless results are returned as JSON; rebuilding an invisible view blocks rendering.
+      // Headless runs collect results without rendering the growing progress UI.
       runner.update = () => Promise.resolve();
       const results = await runner.runTestsInPackage('${module_to_test}');
       results.forEach(r => {

@@ -44,13 +44,9 @@ export function concatAttributePair (text1, attr1, text2, attr2, seperator = '')
   const isObj2 = typeof text2 !== 'string';
 
   if (isObj1 || isObj2) {
-    const result = [];
-    if (isObj1) {
-      result.push(text1, attr1);
-    } else result.push(text1 + seperator, attr1);
-    if (isObj2) {
-      result.push(text2, attr2);
-    } else result.push(text2 + seperator, attr2);
+    const result = [isObj1 ? text1 : text1 + seperator, attr1];
+    if (isObj1 && seperator) result.push(seperator, attr1);
+    result.push(text2, attr2);
     return result;
   }
 
