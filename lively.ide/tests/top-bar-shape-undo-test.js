@@ -1,0 +1,127 @@
+/* global describe, it, beforeEach, afterEach, System, xdescribe */
+import { expect } from 'mocha-es6';
+import { signal } from 'lively.bindings';
+import { Color, pt } from 'lively.graphics';
+import { MorphicEnv, morph, part } from 'lively.morphic';
+import { createDOMEnvironment } from 'lively.morphic/rendering/dom-helper.js';
+import { LivelyWorld } from '../world.js';
+import { TopBar } from '../studio/top-bar.cp.js';
+
+const describeInBrowser = System.get('@system-env').browser ? describe : xdescribe;
+
+describeInBrowser('top bar shape creation undo', () => {
+  let env, world, model, previousWorld, hand;
+
+  beforeEach(async () => {
+    previousWorld = System.global.$world;
+    env = MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment()));
+    world = morph({ type: LivelyWorld, extent: pt(1000, 1000) });
+    await env.setWorld(world);
+    System.global.$world = world;
+    const topBar = part(TopBar);
+    world.addMorph(topBar);
+    model = topBar.viewModel;
+    model.attachToTarget(world);
+    hand = world.handForPointerId(1);
+    hand.position = pt(200, 200);
+    env.undoManager.reset();
+  });
+
+  afterEach(async () => {
+    model?.detachFromTarget(world);
+    await MorphicEnv.popDefault().uninstall();
+    System.global.$world = previousWorld;
+  });
+
+  /** Enter creation mode through the component's button binding. */
+  function chooseShape (type) {
+    if (type === 'Text') signal(model.ui.textModeButton, 'onMouseDown', {});
+    else {
+      model.currentShapeMode = type;
+      signal(model.ui.shapeModeButton, 'onMouseDown', {});
+    }
+  }
+
+  /** Use world coordinates while supporting creation inside an owner. */
+  function event (targetMorph = world, position = hand.position) {
+    return {
+      targetMorph, position,
+      positionIn: target => target.localize(position),
+      targetMorphs: [targetMorph],
+      state: {},
+      stop () {},
+      leftMouseButtonPressed: () => true
+    };
+  }
+
+  /** Dispatch the target bindings that complete a single click. */
+  function click () {
+    const before = new Set(world.submorphs);
+    signal(world, 'onMouseDown', event());
+    signal(world, 'onMouseUp', event());
+    return world.submorphs.find(m => !before.has(m));
+  }
+
+  for (const type of ['Text', 'Image']) {
+    it(`undoes and redoes click-created ${type} with its identity and order`, () => {
+      chooseShape(type);
+      const shape = click();
+      expect(shape, 'actual top-bar creation binding').to.be.ok;
+      const bounds = shape.bounds();
+      const index = world.submorphs.indexOf(shape);
+      const sibling = world.addMorph({ fill: Color.red, extent: pt(10, 10) });
+      expect(env.undoManager.undos).to.have.length(1);
+      expect(env.undoManager.undoInProgress).equals(null);
+      env.undoManager.undo();
+      expect(shape.owner).equals(null);
+      expect(sibling.owner).equals(world);
+      env.undoManager.redo();
+      expect(world.submorphs[index]).equals(shape);
+      expect(world.submorphs[index + 1]).equals(sibling);
+      expect(shape.bounds()).equals(bounds);
+      if (type === 'Text') expect(shape.editorPlugin.shortName).equals('richText');
+    });
+  }
+
+  it('keeps movement and click creation as separate undo steps', async () => {
+    const moved = world.addMorph({ position: pt(20, 30), extent: pt(60, 60) });
+    const halo = await world.showHaloFor(moved);
+    halo.dragHalo().init();
+    halo.dragHalo().update(pt(10, 15));
+    halo.dragHalo().stop();
+    chooseShape('Text');
+    const shape = click();
+    expect(env.undoManager.undos).to.have.length(2);
+    env.undoManager.undo();
+    expect(shape.owner).equals(null);
+    expect(moved.position).equals(pt(30, 45));
+    env.undoManager.undo();
+    expect(moved.position).equals(pt(20, 30));
+    env.undoManager.redo();
+    env.undoManager.redo();
+    expect(moved.position).equals(pt(30, 45));
+    expect(shape.owner).equals(world);
+  });
+
+  it('does not close an existing undo group', () => {
+    chooseShape('Text');
+    const group = world.undoStart('existing gesture');
+    const shape = click();
+    expect(env.undoManager.undoInProgress).equals(group);
+    expect(env.undoManager.undos).to.have.length(0);
+    world.undoStop();
+    env.undoManager.undo();
+    expect(shape.owner).equals(null);
+  });
+
+  it('does not record a cancelled click or a rectangle click without a drag', () => {
+    chooseShape('Text');
+    signal(world, 'onMouseDown', event());
+    model.onKeyDown({ key: 'Escape', isAltDown: () => false, isCommandKey: () => false });
+    signal(world, 'onMouseUp', event());
+    chooseShape('Rectangle');
+    expect(click()).equals(undefined);
+    expect(env.undoManager.undos).to.have.length(0);
+    expect(env.undoManager.undoInProgress).equals(null);
+  });
+});
