@@ -16,7 +16,7 @@ import KeyHandler from '../events/KeyHandler.js';
 import { UndoManager } from '../undo.js';
 import Layout from './layout.js';
 import textCommands from './commands.js';
-import { textAndAttributesWithSubRanges } from './attributes.js';
+import { textAndAttributesWithSubRanges, textCacheLimits } from './attributes.js';
 import { serializeMorph, deserializeMorph } from '../serialization.js';
 import { getSvgVertices } from '../rendering/property-dom-mapping.js';
 import { getClassName } from 'lively.serializer2';
@@ -181,7 +181,7 @@ export class Text extends Morph {
         group: '_rendering',
         after: ['readOnly'],
         initialize () {
-          if (!this.readOnly || this.needsDocument) this.backWithDocument();
+          if (!this.readOnly || this.needsDocument || this.showLineNumbers) this.backWithDocument();
         }
       },
 
@@ -270,13 +270,13 @@ export class Text extends Morph {
         after: ['borderWidth', 'borderColor', 'borderRadius', 'borderStyle'],
         set (readOnly) {
           if (!readOnly) {
-            this.backedUpSelectionMode = this.selectionMode;
+            if (!this.showLineNumbers || this.selectionMode !== 'lively') this.backedUpSelectionMode = this.selectionMode;
             this.backWithDocument();
             this.selectionMode = 'lively';
             this.backedUpNativeCursor = this.nativeCursor;
             this.nativeCursor = 'text';
           } else {
-            if (!this.needsDocument) {
+            if (!this.needsDocument && !this.showLineNumbers) {
               this.removeDocument();
               if (this.backedUpSelectionMode) this.selectionMode = this.backedUpSelectionMode;
               else this.selectionMode = 'none';
@@ -303,6 +303,27 @@ export class Text extends Morph {
           }
           this.setProperty('needsDocument', needsDocument);
         }
+      },
+
+      showLineNumbers: {
+        group: 'text',
+        isStyleProp: true,
+        defaultValue: false,
+        after: ['readOnly', 'needsDocument'],
+        set (value) {
+          this.setProperty('showLineNumbers', value);
+          if (value) {
+            this.backWithDocument();
+            if (this.selectionMode === 'native') {
+              this.backedUpSelectionMode = 'native';
+              this.selectionMode = 'lively';
+            }
+          } else if (this.readOnly && !this.needsDocument && this.document) {
+            this.removeDocument();
+            this.selectionMode = this.backedUpSelectionMode || 'none';
+          }
+        },
+        doc: 'Show one-based document line numbers in a gutter that stays fixed when scrolling horizontally.'
       },
 
       selectable: {
@@ -476,6 +497,10 @@ export class Text extends Morph {
           }
         },
         set (textAndAttributes) {
+          if (!this._isDowngrading) {
+            delete this.renderingState.cachedStaticLines;
+            this.invalidateDocumentBackup();
+          }
           if (obj.isArray(textAndAttributes) && textAndAttributes.find(m => m?.doit)) { this.needsDocument = true; }
           const previousTextAndAttributes = this._isDowngrading ? [] : !this.document && this.textAndAttributes;
           if (this.document) {
@@ -596,7 +621,7 @@ export class Text extends Morph {
         type: 'Enum',
         values: ['none', 'native', 'lively'],
         defaultValue: 'none',
-        after: ['document', 'needsDocument'],
+        after: ['document', 'needsDocument', 'showLineNumbers'],
         isStyleProp: true,
         set (mode) {
           if (mode === 'native') {
@@ -604,9 +629,10 @@ export class Text extends Morph {
               $world.setStatusMessage('Only possible for non-editable texts.');
               return;
             }
-            if (this.needsDocument) {
+            if (this.needsDocument || this.showLineNumbers) {
               // mixing documents with native selection does not work,
               // since it is obstructing the scroll
+              if (this.showLineNumbers) this.backedUpSelectionMode = 'native';
               this.selectionMode = 'lively';
               return;
             }
@@ -1228,6 +1254,7 @@ export class Text extends Morph {
 
     if (selector) {
       textChange = selector === 'replace';
+      if (textChange) delete this.renderingState.cachedStaticLines;
       if (textChange && (!this.fixedHeight || !this.fixedWidth)) { enforceFit = true; }
       hardLayoutChange = selector === 'addTextAttribute';
       if (textChange || hardLayoutChange) delete this._allFontsLoaded;
@@ -1264,7 +1291,8 @@ export class Text extends Morph {
         case 'fixedWidth':
           hardLayoutChange = change.prevValue !== change.value;
           break;
-        case 'lineWrapping': hardLayoutChange = true; break;
+        case 'lineWrapping':
+        case 'showLineNumbers': hardLayoutChange = true; break;
         case 'borderWidth':
           this.renderingState.cursorChange = true;
         case 'fixedHeight':
@@ -1335,7 +1363,8 @@ export class Text extends Morph {
     const isGeometricTransform = prop === 'position' ||
                                prop === 'extent' ||
                                prop === 'scale' ||
-                               prop === 'rotation';
+                               prop === 'rotation' ||
+                               prop === 'origin';
 
     // update the displacement shape if the bounds of a displacing morph changed
     if (this.displacingMorphMap.get(submorph) &&
@@ -1349,25 +1378,28 @@ export class Text extends Morph {
     }
 
     const { anchor: submorphAnchor } = this.embeddedMorphMap.get(submorph) || {};
-    if (submorphAnchor &&
+    if (this.embeddedMorphMap.has(submorph) &&
         isGeometricTransform) {
       if (prop === 'position') {
         // embedded morphs are fixed, so we just revert the position and are done
-        this._positioningSubmorph = submorph;
-        submorph.position = change.prevValue;
-        this._positioningSubmorph = null;
+        if (submorphAnchor) {
+          this._positioningSubmorph = submorph;
+          submorph.position = change.prevValue;
+          this._positioningSubmorph = null;
+        }
         return;
       }
-      const currentBounds = submorph.bounds();
-      const lastBounds = submorph._lastBounds; // infer last bounds from the actual change
-      const row = submorphAnchor.position.row;
-      const line = this.document.getLine(row);
-      if (!lastBounds ||
-          lastBounds.height !== currentBounds.height ||
-          lastBounds.bottom() !== currentBounds.bottom()) {
+      if (submorphAnchor) {
+        const line = this.document.getLine(submorphAnchor.position.row);
+        this.textLayout.resetLineCharBoundsCacheOfLine(line);
         line.hasEstimatedExtent = true;
-        submorph._lastBounds = currentBounds;
+        // Inline styling already reflows the live line; rebuilding it reloads iframes.
+        this.renderingState.renderedTextAndAttributes = null;
+      } else {
+        this.renderingState.needsRemeasure = true;
+        delete this._cachedBounds;
       }
+      this.makeDirty();
     }
   }
 
@@ -1722,6 +1754,20 @@ export class Text extends Morph {
 
   defaultCharExtent () { return this.textLayout.defaultCharExtent(this); }
 
+  get lineNumberGutterWidth () {
+    if (!this.showLineNumbers || !this.document) return 0;
+    const digits = Math.max(2, String(this.document.rowCount).length);
+    return Math.ceil(this.fontMetric.sizeFor(this.defaultTextStyle, '8'.repeat(digits), true).width) + 12;
+  }
+
+  get textPadding () {
+    const padding = this.padding;
+    const gutterWidth = this.lineNumberGutterWidth;
+    return gutterWidth
+      ? Rectangle.inset(padding.left() + gutterWidth, padding.top(), padding.right(), padding.bottom())
+      : padding;
+  }
+
   get scrollExtent () {
     let domExtent;
     if (!this.document && !this.renderingState.scrollLayer && ['auto', 'scroll'].includes(this.clipMode)) {
@@ -1737,8 +1783,8 @@ export class Text extends Morph {
     // rms: See: morph>>scrollExtent
     const modelExtent = this.textBounds()
       .extent()
-      .addPt(this.padding.topLeft())
-      .addPt(this.padding.bottomRight())
+      .addPt(this.textPadding.topLeft())
+      .addPt(this.textPadding.bottomRight())
       .addPt(this.scrollbarOffset)
       .maxPt(super.scrollExtent);
     return domExtent ? domExtent.maxPt(modelExtent) : modelExtent;
@@ -1857,6 +1903,9 @@ export class Text extends Morph {
     let defaultTextStyle;
     if (this.document) defaultTextStyle = this.defaultTextStyle;
     else resetStyle = false;
+    delete this.renderingState.cachedStaticLines;
+    delete this._documentBackup;
+    delete this._documentBackupEndPosition;
     this.document = doc;
     this.document.lines.forEach(line => line.lineNeedsRerender = true);
     this.textLayout.reset();
@@ -2284,6 +2333,15 @@ export class Text extends Morph {
   // TextAttributes
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
+  invalidateDocumentBackup () {
+    const end = this._documentBackup?.endPosition || this._documentBackupEndPosition;
+    if (this.document || !end) return;
+    const range = { start: { row: 0, column: 0 }, end };
+    this.anchors.forEach(anchor => anchor.onDelete(range));
+    delete this._documentBackup;
+    delete this._documentBackupEndPosition;
+  }
+
   /**
    * This removes a Document and a TextLayout from a Text.
    * These are necessary for features like interactive editing, but are expensive.
@@ -2295,6 +2353,14 @@ export class Text extends Morph {
 
     this._isDowngrading = true;
     const textAndAttributes = this.document.textAndAttributes;
+    if (this.document.stringSize <= textCacheLimits.characters &&
+        this.document.rowCount <= textCacheLimits.lines &&
+        textAndAttributes.length <= 2 * textCacheLimits.attributeRuns) {
+      this._documentBackup = this.document;
+    } else {
+      // Preserve anchor invalidation on static edits without retaining the tree.
+      this._documentBackupEndPosition = this.document.endPosition;
+    }
     this.getProperty('selection')?.uninstall();
     for (const [embedded, entry] of this.embeddedMorphMap) {
       if (!entry.anchor) continue;
@@ -2303,7 +2369,6 @@ export class Text extends Morph {
       entry.anchor.embeddedMorph = null;
       entry.anchor = null;
     }
-    this.anchors.forEach(anchor => anchor.onDelete(this.documentRange));
     this.document = null;
     delete this.renderingState.needsScrollLayerAdded;
     this.renderingState.needsScrollLayerRemoved = true;
@@ -2324,17 +2389,22 @@ export class Text extends Morph {
     if (this.document) return;
 
     this._isUpgrading = true;
-    this.document = Document.fromString('', {
-      maxLeafSize: 50,
-      minLeafSize: 25,
-      maxNodeSize: 35,
-      minNodeSize: 7
-    });
-
-    this.document.insertTextAndAttributes(this.textAndAttributes, { row: 0, column: 0 });
+    delete this._documentBackupEndPosition;
+    if (this._documentBackup) {
+      this.document = this._documentBackup;
+      delete this._documentBackup;
+    } else {
+      this.document = Document.fromString('', {
+        maxLeafSize: 50,
+        minLeafSize: 25,
+        maxNodeSize: 35,
+        minNodeSize: 7
+      });
+      this.document.insertTextAndAttributes(this.textAndAttributes, { row: 0, column: 0 });
+    }
 
     this.textLayout = new Layout();
-    this.textLayout.estimateLineExtents(this);
+    this.textLayout.estimateLineExtents(this, true);
 
     delete this.renderingState.needsScrollLayerRemoved;
     this.renderingState.needsScrollLayerAdded = true;
@@ -2391,10 +2461,13 @@ export class Text extends Morph {
   }
 
   removePlainTextAttribute (attr, value = null) {
-    this.textAndAttributes.forEach(ta => {
-      if (value) ta && ta[attr] === value && delete ta[attr];
-      else ta && delete ta[attr];
+    let changed = false;
+    this.textAndAttributes.forEach((ta, i) => {
+      if (i % 2 === 0 || !ta || !Object.prototype.hasOwnProperty.call(ta, attr) || value && ta[attr] !== value) return;
+      delete ta[attr];
+      changed = true;
     });
+    if (changed) this.onAttributesChanged(this.documentRange);
   }
 
   removeTextAttribute (attr, range = this.selection) {
@@ -2459,6 +2532,11 @@ export class Text extends Morph {
   }
 
   onAttributesChanged (range, resetLayout = true) {
+    delete this.renderingState.cachedStaticLines;
+    if (!this.document) {
+      this.invalidateDocumentBackup();
+      this.renderingState.renderedTextAndAttributes = null;
+    }
     if (resetLayout) this.invalidateTextLayout(false, false);
     if (this.document) {
       for (let i of arr.range(range.start.row, range.end.row, 1)) {
@@ -2573,8 +2651,8 @@ export class Text extends Morph {
         return sel.start.row === sel.end.row
           ? start.union(end)
           : rect(
-            pt(this.padding.left(), start.top()),
-            pt(this.width - this.padding.left(), end.bottom())
+            pt(this.textPadding.left(), start.top()),
+            pt(this.width - this.textPadding.left(), end.bottom())
           );
       })
       .reduce((all, ea) => ea.union(all));
@@ -2619,7 +2697,7 @@ export class Text extends Morph {
     if (n === 0) return pos;
 
     // raw char bounds are without text padding so subtract it from goalX as well
-    if (typeof goalX === 'number') goalX -= this.padding.left();
+    if (typeof goalX === 'number') goalX -= this.textPadding.left();
 
     let nextRow = pos.row; let nextCol = pos.column;
 
@@ -2750,7 +2828,7 @@ export class Text extends Morph {
 
   alignRowAtTop (row = this.cursorPosition.row, offset = pt(0, 0)) {
     const charBounds = this.charBoundsFromTextPosition({ row, column: 0 });
-    const pos = charBounds.topLeft().addXY(-this.padding.left(), 0);
+    const pos = charBounds.topLeft().addXY(-this.textPadding.left(), 0);
     this.scroll = pos.addPt(offset);
   }
 
@@ -2765,7 +2843,7 @@ export class Text extends Morph {
     const { scroll } = this;
     const viewBounds = this.innerBounds()
       .translatedBy(scroll)
-      .insetByRect(this.padding)
+      .insetByRect(this.textPadding)
       .insetBy(this.borderWidth);
     let charBounds = this.charBoundsFromTextPosition(pos);
 
@@ -2843,7 +2921,7 @@ export class Text extends Morph {
   alignRow (row, how = 'center') {
     // how = "center", "bottom", "top";
     if (!this.isClip()) return;
-    const { scroll, padding } = this;
+    const { scroll, textPadding: padding } = this;
     const paddedBounds = this.innerBounds().insetByRect(padding).translatedBy(scroll);
     const charBounds = this.charBoundsFromTextPosition({ row, column: 0 });
     const deltaY = how === 'top' || how === 'bottom'
@@ -2884,7 +2962,7 @@ export class Text extends Morph {
       if (fixedHeight && fixedWidth) return;
       if (!this.textLayout) return; /* not init'ed yet */
 
-      const textBounds = this.textBounds().outsetByRect(this.padding);
+      const textBounds = this.textBounds().outsetByRect(this.textPadding);
       this.withMetaDo({ metaInteraction: true }, () => {
         if (!fixedHeight && this.height !== textBounds.height) this.height = textBounds.height;
         if (!fixedWidth && this.width !== textBounds.width) this.width = textBounds.width;
@@ -2922,7 +3000,7 @@ export class Text extends Morph {
   }
 
   get defaultLineHeight () {
-    const p = this.padding;
+    const p = this.textPadding;
     return p.top() + p.bottom() +
       this.fontMetric.defaultLineHeight({
         fontSize: this.fontSize,
@@ -2963,6 +3041,12 @@ export class Text extends Morph {
   patchSpecialProps (node, renderer, patchStyle) {
     if (this.renderingState.needsScrollLayerAdded || this.renderingState.needsScrollLayerRemoved) {
       renderer.handleScrollLayer(node, this);
+    }
+
+    const gutterWidth = this.lineNumberGutterWidth;
+    if ((this.renderingState.lineNumberGutterWidth || 0) !== gutterWidth) {
+      this.renderingState.lineNumberGutterWidth = gutterWidth;
+      this.invalidateTextLayout(true, true);
     }
 
     const currentTextLayerStyleObject = this.styleObject();
@@ -3048,11 +3132,12 @@ export class Text extends Morph {
         this.renderingState.scroll = this.scroll;
       }
     }
+    renderer.patchLineNumberLayer(node, this);
   }
 
   styleObject () {
     const {
-      padding: { x: padLeft, y: padTop, width: padWidth, height: padHeight },
+      textPadding: { x: padLeft, y: padTop, width: padWidth, height: padHeight },
       _fontStyleToRender,
       _fontWeightToRender,
       _fontFamilyToRender,
@@ -3351,8 +3436,8 @@ export class Text extends Morph {
     const { startRow, endRow } = this.whatsVisible;
     const realEndRow = Math.min(this.documentEndPosition.row, endRow);
     const doc = this.document;
-    const padLeft = this.padding.left();
-    const padTop = this.padding.top();
+    const padLeft = this.textPadding.left();
+    const padTop = this.textPadding.top();
 
     const grid = arr.range(startRow, realEndRow).reduce((bounds, row) => {
       const charBounds = this.textLayout.charBoundsOfRow(this, row).slice();
@@ -3757,7 +3842,7 @@ export class Text extends Morph {
   // command helper
 
   textPageHeight () {
-    const { height, padding, borderWidthBottom, borderWidthTop } = this;
+    const { height, textPadding: padding, borderWidthBottom, borderWidthTop } = this;
     return height - padding.top() - padding.bottom() - borderWidthBottom - borderWidthTop;
   }
 
@@ -3776,7 +3861,7 @@ export class Text extends Morph {
     const row = this.textLayout[
       direction === 'down' ? 'lastFullVisibleLine' : 'firstFullVisibleLine'
     ](this);
-    const { cursorPosition: { column }, padding } = this;
+    const { cursorPosition: { column }, textPadding: padding } = this;
     if (!select) this.cursorPosition = { row, column };
     else this.selection.lead = { row, column };
     if (direction === 'down') {

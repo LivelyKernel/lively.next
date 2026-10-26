@@ -66,7 +66,7 @@ export default class Layout {
   estimateExtentOfLine (morph, line, transform = morph.getGlobalTransform()) {
     const {
       fontMetric, lineWrapping,
-      padding, debug, defaultTextStyle
+      textPadding: padding, debug, defaultTextStyle
     } = morph;
     let { x: morphWidth, y: morphHeight } = morph.getProperty('extent');
 
@@ -88,7 +88,9 @@ export default class Layout {
       for (let j = 0, column = 0; j < textAttributes.length; j += 2) {
         inlineMorph = textAttributes[j];
         if (inlineMorph && inlineMorph.isMorph) {
-          inlineMorph.position = this.pixelPositionFor(morph, { row: line.row, column }).subPt(morph.origin);
+          const bounds = inlineMorph.getTransform().transformRectToRect(inlineMorph.innerBounds());
+          const offset = bounds.topLeft().subPt(inlineMorph.position);
+          inlineMorph.position = this.pixelPositionFor(morph, { row: line.row, column }).addXY(morph.borderWidthLeft, morph.borderWidthTop).subPt(morph.origin).subPt(offset);
           column++;
         } else if (inlineMorph) {
           column += inlineMorph.length;
@@ -161,7 +163,7 @@ export default class Layout {
   textBounds (morph) {
     const {
       document: doc,
-      padding,
+      textPadding: padding,
       borderWidthLeft,
       borderWidthRight,
       borderWidthTop,
@@ -263,7 +265,9 @@ export default class Layout {
     const line = doc.getLine(row);
 
     const cached = this.lineCharBoundsCache.get(line);
-    if (cached) return cached;
+    const canCache = morph.canBeMeasuredViaCanvas || !line.lineNeedsRerender ||
+                     !line.textAndAttributes.some(part => part?.isMorph);
+    if (cached && canCache) return cached;
     const { fontMetric } = morph;
     let charBounds;
 
@@ -283,7 +287,7 @@ export default class Layout {
       // delay measuring until next render
       return charBounds;
     }
-    this.lineCharBoundsCache.set(line, charBounds);
+    if (canCache) this.lineCharBoundsCache.set(line, charBounds);
     return charBounds;
   }
 
@@ -330,7 +334,7 @@ export default class Layout {
       console.warn(`Cannot compute bounds for line ${row}/${column}`);
       bounds = new Rectangle(0, 0, 0, 0);
     }
-    const { document: doc, padding } = morph;
+    const { document: doc, textPadding: padding } = morph;
     bounds.x = bounds.x + padding.left();
     bounds.y = bounds.y + doc.computeVerticalOffsetOf(row) + padding.top();
 
@@ -343,7 +347,7 @@ export default class Layout {
 
   textPositionFromPoint (morph, point) {
     let { x, y } = point.addPt(morph.origin);
-    const { document: doc, padding } = morph;
+    const { document: doc, textPadding: padding } = morph;
     const padL = padding.left();
     const padT = padding.top();
 

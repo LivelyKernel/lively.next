@@ -1,5 +1,8 @@
 import { eqPosition, lessPosition } from './position.js';
 
+// Bound the optional document and DOM caches used for text mode switches.
+export const textCacheLimits = Object.freeze({ characters: 100000, lines: 1000, attributeRuns: 1000 });
+
 /*
 
 let t = Date.now()
