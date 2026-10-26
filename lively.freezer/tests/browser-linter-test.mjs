@@ -13,8 +13,17 @@ const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lively-browser-linter
 let build;
 let runtimeBuild;
 try {
+  await fs.writeFile(path.join(directory, 'package.json'), JSON.stringify({ name: 'browser-editor-fixture', version: '1.0.0' }));
   const entry = path.join(directory, 'entry.js');
-  await fs.writeFile(entry, `export { default as lint } from ${JSON.stringify(resolver.normalizeFileName('lively.ide/js/linter.js'))};`);
+  await fs.writeFile(entry, `
+    export { default as lint } from ${JSON.stringify(resolver.normalizeFileName('lively.ide/js/linter.js'))};
+    export { default as types } from ${JSON.stringify(resolver.normalizeFileName('@babel/types'))};
+    export { default as babel } from ${JSON.stringify(resolver.normalizeFileName('@babel/core'))};
+    export { default as commonjs } from ${JSON.stringify(resolver.normalizeFileName('@babel/plugin-transform-modules-commonjs'))};
+    var hasRequiredState;
+    export { hasRequiredState };
+    export function saveState(value) { hasRequiredState = value; }
+  `);
   const plugin = lively({
     resolver, asBrowserModule: true, useSwc: true, isResurrectionBuild: true,
     minify: false, compress: false, includeLivelyAssets: false, includePolyfills: false
@@ -49,13 +58,27 @@ try {
   };
   context.BootstrapSystem = context.System;
   runInContext(output.find(chunk => chunk.type === 'chunk').code, context, { filename: 'browser-linter.js' });
+  exports.saveState('preserved');
+  runInContext(output.find(chunk => chunk.type === 'chunk').code, context, { filename: 'browser-linter-reloaded.js' });
+  assert.equal(exports.hasRequiredState, 'preserved', 'Ordinary captured module state must survive re-evaluation');
   const [formatted, messages] = exports.lint('const unused={answer:42}\ndebugger');
   assert.equal(formatted, 'const unused = { answer: 42 };\ndebugger;\n');
   assert.deepEqual(Array.from(messages, message => message.ruleId).sort(), ['no-debugger', 'no-unused-vars']);
   assert.ok(messages.every(message => message.severity === 1));
   assert.equal(exports.lint('debugger', { 'no-debugger': 'off' })[1].length, 0);
+  const identifier = exports.types.identifier('answer');
+  assert.ok(exports.types.isIdentifier(identifier, { name: 'answer' }));
+  assert.ok(exports.types.STANDARDIZED_TYPES.includes('Identifier'));
+  assert.ok(exports.types.FLIPPED_ALIAS_KEYS.Standardized.includes('Identifier'));
+  exports.types.assertIdentifier(identifier, { name: 'answer' });
+  const transformed = exports.babel.transformSync('export const answer = 42;', {
+    babelrc: false, configFile: false, plugins: [exports.commonjs]
+  });
+  const transformedContext = createContext({ exports: {} });
+  runInContext(transformed.code, transformedContext);
+  assert.equal(transformedContext.exports.answer, 42);
   for (const global of ['process', 'require', 'module']) assert.equal(context[global], undefined, `${global} must not be supplied by Node`);
-  console.log('Browser linter bundle formats code, reports diagnostics, and applies custom rules without Node globals.');
+  console.log('Reloaded browser editor dependencies preserve captured state, lint code, and run Babel types/plugins without Node globals.');
 } finally {
   await build?.close();
   await runtimeBuild?.close();

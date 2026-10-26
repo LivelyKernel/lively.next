@@ -60,7 +60,7 @@ export function lively (args) {
         return null;
       }
     },
-    transform: async (source, id) => {
+    async transform (source, id) {
       if (id === '\0polyfill-node.path.js') {
         // The installed path shim is POSIX-only; expose Node's POSIX alias.
         return {
@@ -70,6 +70,10 @@ export function lively (args) {
         };
       }
       if (id.startsWith('\0')) return null;
+      if (isResurrectionBuild && this.getModuleInfo(id)?.meta.commonjs?.isCommonJS === 'withRequireFunction') {
+        // Generated require guards must restart with Rollup's fresh exports objects.
+        source = source.replace(/^var (hasRequired[\w$]+);$/m, 'var $1 = false;');
+      }
       try {
         return await bundler.transform(source, id);
       } catch (err) {
