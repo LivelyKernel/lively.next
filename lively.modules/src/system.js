@@ -837,6 +837,12 @@ function instantiate_triggerOnLoadCallbacks (proceed, load) {
     }
     const modId = load.name;
     const mod = classHolder.module(System, modId);
+    if (mod._source) {
+      // Wait for linking to finish so circular imports have their export keys.
+      mod.warnAboutMissingImports().catch(err => {
+        if (System.debug) console.warn(`Cannot check imports of ${modId}: ${err}`);
+      });
+    }
     const callbacks = System.get('@lively-env').onLoadCallbacks;
 
     for (let i = callbacks.length; i--;) {

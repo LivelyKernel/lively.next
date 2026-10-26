@@ -1,0 +1,96 @@
+/* global System, beforeEach, afterEach, describe, it */
+import { expect } from 'mocha-es6';
+import { resource } from 'lively.resources';
+import { projectAsset } from '../helpers.js';
+import { prepareSystem } from 'lively.modules/tests/helpers.js';
+import { removeSystem } from 'lively.modules/src/system.js';
+import { setupBabelTranspiler } from 'lively.source-transform/babel/plugin.js';
+import { getValueExpr } from 'lively.ide/components/helpers.js';
+
+describe('project asset URLs', () => {
+  let freezerRuntime;
+  beforeEach(() => {
+    freezerRuntime = lively.FreezerRuntime;
+    lively.FreezerRuntime = null;
+  });
+  afterEach(() => { lively.FreezerRuntime = freezerRuntime; });
+
+  it('resolves the caller from its captured module metadata', () => {
+    const recorder = {
+      __currentLivelyModule: { id: 'http://localhost/local_projects/test-project/ui/component.cp.js' },
+      projectAsset
+    };
+    expect(recorder.projectAsset('image.svg')).equals('/local_projects/test-project/assets/image.svg');
+  });
+
+  it('accepts explicit module URLs for native or namespace imports', () => {
+    expect(projectAsset('image.svg', 'https://example.test/local_projects/test-project/ui/main.js'))
+      .equals('/local_projects/test-project/assets/image.svg');
+  });
+
+  it('resolves real captured module calls after asynchronous work', async () => {
+    const id = 'local://project-asset-tests/local_projects/asset-project/ui/module.js';
+    const helperId = System.normalizeSync('lively.project/helpers.js');
+    const system = prepareSystem('project-asset-tests', 'local://project-asset-tests/');
+    setupBabelTranspiler(system);
+    system.set(helperId, system.newModule({ projectAsset }));
+    await resource(id).ensureExistance(`import { projectAsset as asset } from ${JSON.stringify(helperId)};\nexport async function url() { await Promise.resolve(); return asset('nested/icon.svg'); }`);
+    try {
+      const mod = await system.import(id);
+      expect(await mod.url()).equals('/local_projects/asset-project/assets/nested/icon.svg');
+    } finally {
+      removeSystem('project-asset-tests');
+      await resource('local://project-asset-tests/').remove();
+    }
+  });
+
+  it('resolves explicit import.meta.url in ordinary module source', async () => {
+    const id = 'local://project-asset-tests/local_projects/asset-project/ui/explicit.js';
+    const helperId = System.normalizeSync('lively.project/helpers.js');
+    const system = prepareSystem('project-asset-tests-explicit', 'local://project-asset-tests/');
+    setupBabelTranspiler(system);
+    system.set(helperId, system.newModule({ projectAsset }));
+    await resource(id).ensureExistance(`import { projectAsset } from ${JSON.stringify(helperId)};\nexport var url = projectAsset('nested/icon.svg', import.meta.url);`);
+    try {
+      expect((await system.import(id)).url).equals('/local_projects/asset-project/assets/nested/icon.svg');
+    } finally {
+      removeSystem('project-asset-tests-explicit');
+      await resource('local://project-asset-tests/').remove();
+    }
+  });
+
+  it('accepts the Firefox legacy stack format for existing one-argument calls', () => {
+    const OriginalError = globalThis.Error;
+    let url;
+    try {
+      globalThis.Error = class extends OriginalError {
+        constructor () {
+          super();
+          this.stack = 'projectAsset@http://localhost/lively.project/helpers.js:8:12\nrender@http://localhost/local_projects/firefox-project/ui/main.js:12:4';
+        }
+      };
+      url = projectAsset('image.svg');
+    } finally { globalThis.Error = OriginalError; }
+    expect(url).equals('/local_projects/firefox-project/assets/image.svg');
+  });
+
+  it('reports the missing module context instead of parsing an Error stack', () => {
+    expect(() => projectAsset('image.svg', 'https://example.test/lively.project/helpers.js'))
+      .throws(/projectAsset requires a module URL inside local_projects/);
+  });
+
+  it('preserves the frozen asset path without module metadata', () => {
+    lively.FreezerRuntime = {};
+    expect(projectAsset('asset-project__image.svg')).equals('./assets/asset-project__image.svg');
+  });
+
+  it('includes explicit caller metadata in generated component image expressions', () => {
+    const previousProject = $world.openedProject;
+    try {
+      $world.openedProject = { name: 'asset-project' };
+      const expr = getValueExpr('imageUrl', '/local_projects/asset-project/assets/icon.svg');
+      expect(expr.__expr__).equals("projectAsset('icon.svg', import.meta.url)");
+      expect(expr.bindings).deep.equals({ 'lively.project': ['projectAsset'] });
+    } finally { $world.openedProject = previousProject; }
+  });
+});

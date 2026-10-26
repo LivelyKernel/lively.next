@@ -653,7 +653,9 @@ class ModuleInterface {
 
           if (key === undefined) return depExports;
 
-          if (!Object.hasOwnProperty.bind(depExports)(key)) { console.warn(`import from ${depId}: Has no export ${key}!`); }
+          if (!Object.prototype.hasOwnProperty.call(depExports, key)) {
+            self.warnAboutMissingImport(depId, key, depExports);
+          }
 
           return depExports[key];
         }
@@ -806,6 +808,28 @@ class ModuleInterface {
 
   async imports () { return query.imports(await this.scope()); }
   async exports () { return query.exports(await this.scope()).filter(exp => exp.local !== '__esModule'); }
+
+  warnAboutMissingImport (depId, key, depExports) {
+    const available = Object.keys(depExports).filter(name => name !== '__esModule');
+    let hint = '';
+    if (key !== 'default' && depExports.default != null &&
+        Object.prototype.hasOwnProperty.call(depExports.default, key)) {
+      const property = /^[A-Za-z_$][\w$]*$/.test(key) ? `.${key}` : `[${JSON.stringify(key)}]`;
+      hint = ` The default export has that property: import pkg from ${JSON.stringify(depId)} and use pkg${property}.`;
+    }
+    console.warn(`Import of ${key} from ${depId} in ${this.id} failed: no such export. Available exports: ${available.join(', ') || '(none)'}.${hint}`);
+  }
+
+  async warnAboutMissingImports () {
+    for (const { imported, fromModule } of await this.imports()) {
+      if (!imported || imported === '*') continue;
+      const depId = this.System.decanonicalize(fromModule, this.id);
+      const depExports = this.System.get(depId);
+      if (depExports && !Object.prototype.hasOwnProperty.call(depExports, imported)) {
+        this.warnAboutMissingImport(depId, imported, depExports);
+      }
+    }
+  }
 
   async addImports (specs) {
     let source = await this.source();

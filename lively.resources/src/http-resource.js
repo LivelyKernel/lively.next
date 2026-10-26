@@ -147,12 +147,31 @@ function defaultOrigin () {
   return System.baseURL || document.location.origin;
 }
 
-function makeRequest (resource, method = 'GET', body, headers = {}, onProgress = () => {}) {
+function requestError (resource, method, cause, requestURL = resource.url) {
+  const proxy = requestURL === resource.url ? '' : ` via proxy ${requestURL}`;
+  const hint = cause?.name === 'TypeError'
+    ? ' Check network connectivity and the server\'s CORS policy; browsers do not expose the exact CORS failure to JavaScript.'
+    : '';
+  const error = new Error(`Cannot ${method} ${resource.url}${proxy}: ${cause?.message || cause}.${hint}`);
+  error.name = cause?.name || 'Error';
+  error.cause = cause;
+  return error;
+}
+
+function requestSignal ({ signal, timeout }) {
+  if (timeout === undefined) return signal;
+  const timed = AbortSignal.timeout(timeout);
+  return signal ? AbortSignal.any([signal, timed]) : timed;
+}
+
+async function makeRequest (resource, method = 'GET', body, headers = {}, onProgress = () => {}) {
   let url = resource.url;
   var { useCors, useProxy, headers: moreHeaders } = resource;
   var useCors = typeof useCors !== 'undefined' ? useCors : true;
   var useProxy = typeof useProxy !== 'undefined' ? useProxy : true;
   const fetchOpts = { method };
+  const signal = requestSignal(resource);
+  if (signal) fetchOpts.signal = signal;
 
   if (useProxy) {
     Object.assign(headers, {
@@ -169,7 +188,11 @@ function makeRequest (resource, method = 'GET', body, headers = {}, onProgress =
   fetchOpts.redirect = 'follow';
   fetchOpts.headers = { ...headers, ...moreHeaders };
 
-  return fetch(url, fetchOpts);
+  try {
+    return await fetch(url, fetchOpts);
+  } catch (err) {
+    throw requestError(resource, method, err, url);
+  }
 }
 
 export function upload (resource, body) {
@@ -179,8 +202,7 @@ export function upload (resource, body) {
   } = resource;
   const xhr = new XMLHttpRequest();
   const res = promise.deferred();
-
-  xhr.open('PUT', url);
+  const signal = requestSignal(resource);
 
   if (useProxy) {
     Object.assign(headers, {
@@ -192,16 +214,32 @@ export function upload (resource, body) {
     url = resource.proxyDomain || defaultOrigin();
   }
 
+  xhr.open('PUT', url);
+  const cleanup = () => signal?.removeEventListener('abort', abort);
+  const fail = cause => {
+    cleanup();
+    res.reject(requestError(resource, 'PUT', cause, url));
+  };
+  const abort = () => xhr.abort();
+  xhr.onerror = () => fail(new TypeError('Network request failed'));
+  xhr.onabort = () => fail(signal?.reason || new DOMException('Request aborted', 'AbortError'));
+  xhr.ontimeout = () => fail(new DOMException('Request timed out', 'TimeoutError'));
   for (const header in headers) { xhr.setRequestHeader(header, headers[header]); }
   xhr.upload.addEventListener('progress', onProgress);
   xhr.responseType = 'json';
   xhr.onload = () => {
+    cleanup();
     onLoad(xhr.response);
     res.resolve(xhr);
   };
 
   if (useCors) xhr.withCredentials = true;
-  xhr.send(body);
+  if (signal?.aborted) {
+    fail(signal.reason);
+    return res.promise;
+  }
+  signal?.addEventListener('abort', abort, { once: true });
+  try { xhr.send(body); } catch (err) { fail(err); }
   return res.promise;
 }
 
@@ -214,6 +252,8 @@ export default class WebDAVResource extends Resource {
     this.proxyDomain = opts.proxyDomain || undefined;
     this.useCors = opts.hasOwnProperty('useCors') ? opts.useCors : false;
     this.headers = opts.headers || {};
+    this.signal = opts.signal;
+    this.timeout = opts.timeout;
     this.binary = this.isFile() ? binaryExtensions.includes(this.ext()) : false;
     this.errorOnHTTPStatusCodes = opts.hasOwnProperty('errorOnHTTPStatusCodes')
       ? opts.errorOnHTTPStatusCodes
@@ -232,7 +272,7 @@ export default class WebDAVResource extends Resource {
     if (proxyDomain !== undefined) this.proxyDomain = proxyDomain;
     return this.useProxy
       ? this
-      : new this.constructor(this.url, { headers: this.headers, useCors: this.useCors, useProxy: true, proxyDomain: this.proxyDomain });
+      : new this.constructor(this.url, { headers: this.headers, useCors: this.useCors, useProxy: true, proxyDomain: this.proxyDomain, signal: this.signal, timeout: this.timeout });
   }
 
   noErrorOnHTTPStatusCodes () { this.errorOnHTTPStatusCodes = false; return this; }
