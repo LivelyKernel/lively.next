@@ -63,27 +63,27 @@ function ensureFileFormat(url) {
 
 // The freezer calls resolution synchronously, including outside Rollup hooks.
 // Delegate package conditions to the maintained resolver rather than parsing exports.
-const browserResolve = createResolver.sync({
-  conditionNames: ['browser', 'import', 'default'],
-  mainFields: ['browser', 'module', 'main'],
-  aliasFields: ['browser'],
-  extensions: ['.js', '.mjs', '.cjs', '.json', '.node'],
-  symlinks: true
-});
-const nodeResolve = createResolver.sync({
-  conditionNames: ['node', 'import', 'default'],
-  mainFields: ['main'],
-  extensions: ['.js', '.mjs', '.cjs', '.json', '.node'],
-  symlinks: true
-});
+const packageResolvers = new Map();
 
-function resolveModuleId (moduleName, importer, context = 'systemjs-node') {
+function resolveModuleId (moduleName, importer, context = 'systemjs-node', isRequire = false) {
   if (moduleName.startsWith('file:')) return fileURLToPath(moduleName);
   if (isAlreadyResolved(moduleName) || path.isAbsolute(moduleName) || moduleName === '@empty') return moduleName;
   if (!importer && (moduleName.startsWith('./') || moduleName.startsWith('../'))) return null;
   if (builtinModules.includes(moduleName) || moduleName.startsWith('node:')) return moduleName;
   const parent = importer?.startsWith('file:') ? fileURLToPath(importer) : importer || __filename;
-  const resolve = context === 'systemjs-browser' ? browserResolve : nodeResolve;
+  const key = `${context}:${isRequire}`;
+  let resolve = packageResolvers.get(key);
+  if (!resolve) {
+    const browser = context === 'systemjs-browser';
+    resolve = createResolver.sync({
+      conditionNames: [browser ? 'browser' : 'node', isRequire ? 'require' : 'import', 'default'],
+      mainFields: browser ? (isRequire ? ['browser', 'main'] : ['browser', 'module', 'main']) : ['main'],
+      aliasFields: browser ? ['browser'] : [],
+      extensions: ['.js', '.mjs', '.cjs', '.json', '.node'],
+      symlinks: true
+    });
+    packageResolvers.set(key, resolve);
+  }
   const basedir = path.isAbsolute(parent) ? path.dirname(parent) : process.cwd();
   const resolved = resolve(basedir, moduleName);
   return resolved === false ? '@empty' : resolved;
@@ -332,8 +332,8 @@ function supportingPlugins(context = 'node', self) {
     },
     {
        name: 'lively-resolve',
-       resolveId (id, importer) {
-         return self.resolveId.call(this, id, importer);
+       resolveId (id, importer, options) {
+         return self.resolveId.call(this, id, importer, options);
        }
     }, // but only do resolutions so that polyfills does not screw us up
     context == 'browser' && nodePolyfills(), // only if we bundle for the browser
