@@ -810,6 +810,7 @@ class ModuleInterface {
   async exports () { return query.exports(await this.scope()).filter(exp => exp.local !== '__esModule'); }
 
   warnAboutMissingImport (depId, key, depExports) {
+    if (depId === '@empty') return;
     const available = Object.keys(depExports).filter(name => name !== '__esModule');
     let hint = '';
     if (key !== 'default' && depExports.default != null &&
