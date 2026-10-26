@@ -738,7 +738,11 @@ export class Project {
       const file = resource(join(this.url, '.github/workflows', name));
       const previous = await file.exists() ? await file.read() : '';
       const generated = await this.fillPipelineTemplate(definition, onPush);
-      updates.push({ file, content: preserveWorkflowCustomizations(previous, generated) });
+      try {
+        updates.push({ file, content: preserveWorkflowCustomizations(previous, generated) });
+      } catch (error) {
+        throw new Error(`${name}: ${error.message}`);
+      }
     }
     // Validate every custom section before replacing any workflow.
     for (const { file, content } of updates) await (await file.ensureExistance()).write(content);
