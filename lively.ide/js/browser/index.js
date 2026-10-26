@@ -2223,11 +2223,12 @@ export class BrowserModel extends ViewModel {
     // make sure that we want to change the tab when the currently edited file is not saved
     if (this.selectedModule && this.hasUnsavedChanges()) {
       const proceed = await this.warnForUnsavedChanges();
-      // at this point the tabs has technically already been created
-      // we need to circumvent some of the connections inside of the tab system
       if (!proceed) {
-        prev.setProperty('selected', true);
-        curr.closeSilently();
+        noUpdate({ sourceObj: this.ui.tabs, sourceAttribute: 'onSelectedTabChange' }, () => {
+          prev.selected = true;
+        });
+        if (!curr.content) curr.closeSilently();
+        if (this.ui.tabs.tabs.length === 1) prev.closeable = false;
         return;
       }
     }
