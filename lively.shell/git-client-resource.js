@@ -1,7 +1,7 @@
 /* global fetch */
 /* eslint-disable no-console */
 import ShellClientResource from './client-resource.js';
-import { runCommand } from 'lively.ide/shell/shell-interface.js';
+import { runCommand } from './client-command.js';
 import L2LClient from 'lively.2lively/client.js';
 
 export default class GitShellResource extends ShellClientResource {
@@ -61,8 +61,8 @@ export default class GitShellResource extends ShellClientResource {
     return cmd.output.trim().replace('\n', '');
   }
 
-  runCommand (cmd) {
-    return runCommand(cmd, this.options);
+  runCommand (cmd, options = {}) {
+    return runCommand(cmd, { ...this.options, ...options });
   }
 
   async isGitRepository () {
@@ -229,8 +229,8 @@ export default class GitShellResource extends ShellClientResource {
   }
 
   async commitRepo (message, tag = false, tagName, filesToCommit = '.') {
-    let cmdString = `git add ${filesToCommit} && git commit -m "${message}"`;
-    let cmd = this.runCommand(cmdString);
+    let cmdString = `git add ${filesToCommit} && git commit --cleanup=verbatim --file=-`;
+    let cmd = this.runCommand(cmdString, { stdin: message.endsWith('\n') ? message : message + '\n' });
     await cmd.whenDone();
     if (cmd.exitCode !== 0 && !cmd.stdout.includes('nothing to commit')) throw Error('Error committing');
     else if (tag) {
