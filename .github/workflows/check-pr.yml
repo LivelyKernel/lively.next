@@ -148,6 +148,10 @@ jobs:
           node --experimental-import-meta-resolve lively.app/scripts/test-package-payload.mjs
           node --experimental-import-meta-resolve lively.app/scripts/test-downloads.mjs
           node lively.app/scripts/test-desktop-resources.mjs
+      - name: Check owned test-server cleanup
+        run: node scripts/tests/test-server-lifecycle-test.cjs
+      - name: Check headless profile isolation
+        run: node scripts/tests/headless-profile-test.cjs
       - name: Check failed-test diagnostics
         run: node scripts/tests/test-diagnostics-test.cjs
       - name: Check affected-package test selection
