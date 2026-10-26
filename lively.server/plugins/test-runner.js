@@ -44,6 +44,8 @@ export default class TestRunner {
       await promise.waitFor(()=> !!window.chai && !!window.Mocha);
       const { default: TestRunner } = await System.import("lively.ide/test-runner.js");
       const runner = new TestRunner();
+      // Headless runs collect results without rendering the growing progress UI.
+      runner.update = () => Promise.resolve();
       const results = await runner.runTestsInPackage('${module_to_test}');
       results.forEach(r => {
         r.tests?.forEach(t => {
