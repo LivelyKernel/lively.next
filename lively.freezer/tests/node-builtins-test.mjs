@@ -15,13 +15,13 @@ try {
     assert.deepEqual(await nodeResolver.resolveId(`${prefix}path`), { id: `${prefix}path`, external: true });
     const entry = path.join(directory, 'entry.js');
     await fs.writeFile(entry, `
-      import path from '${prefix}path';
+      import path, { posix } from '${prefix}path';
       import fs from '${prefix}fs';
       import cjs from './require.cjs';
-      globalThis.builtinResult = [path.join('a', 'b'), typeof fs.readFile, cjs];
-      globalThis.builtinPromise = import('${prefix}path').then(module => module.basename('/a/b'));
+      globalThis.builtinResult = [path.join('a', 'b'), typeof fs.readFile, cjs, posix === path, path.posix === path];
+      globalThis.builtinPromise = import('${prefix}path').then(module => module.posix.basename('/a/b'));
     `);
-    await fs.writeFile(path.join(directory, 'require.cjs'), `module.exports = require('${prefix}path').basename('/a/b');`);
+    await fs.writeFile(path.join(directory, 'require.cjs'), `module.exports = require('${prefix}path').posix.dirname('/a/b');`);
     const build = await rollup({
       input: entry,
       plugins: [lively({
@@ -34,7 +34,7 @@ try {
       const { output } = await build.generate({ format: 'iife', inlineDynamicImports: true });
       const sandbox = {};
       runInNewContext(output.find(chunk => chunk.type === 'chunk').code, sandbox);
-      assert.deepEqual(Array.from(sandbox.builtinResult), ['a/b', 'undefined', 'b']);
+      assert.deepEqual(Array.from(sandbox.builtinResult), ['a/b', 'undefined', '/a', true, true]);
       assert.equal(await sandbox.builtinPromise, 'b');
     } finally {
       await build.close();
