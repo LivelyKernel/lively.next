@@ -8,6 +8,34 @@ import module from '../src/module.js';
 import { registerPackage } from '../src/packages/package.js';
 import { runEval } from 'lively.vm';
 import { createFiles, resource } from 'lively.resources';
+import { resolveEsmImportMeta } from '../src/instrumentation.js';
+
+describe('CDN import metadata', () => {
+  it('resolves relative assets using either provider', () => {
+    for (const provider of ['ga.jspm.io', 'esm.sh']) {
+      const id = `esm://${provider}/npm:fixture@1.0.0/index.js`;
+      const source = "new URL('./bindings.wasm', import.meta.url).href";
+      const prepared = resolveEsmImportMeta(id, source);
+      expect(new Function('return ' + prepared)()).equals(`https://${provider}/npm:fixture@1.0.0/bindings.wasm`);
+    }
+  });
+
+  it('supports import.meta objects and preserves strings, comments, and computed URL access', () => {
+    const id = 'esm://ga.jspm.io/npm:fixture@1.0.0/index.js';
+    const source = "(function () { /* import.meta */ const text = 'import.meta.url'; const meta = import . meta; return [text, meta['url']]; })()";
+    const prepared = resolveEsmImportMeta(id, source);
+    expect(new Function('return ' + prepared)()).deep.equals(['import.meta.url', id.replace('esm:', 'https:')]);
+    expect(prepared).includes('/* import.meta */');
+  });
+
+  it('leaves local module URLs and modules without import metadata unchanged', () => {
+    const source = 'export const url = import.meta.url;';
+    expect(resolveEsmImportMeta('file:///project/index.js', source)).equals(source);
+    expect(resolveEsmImportMeta('https://lively.example/index.js', source)).equals(source);
+    const plain = "export const text = 'import.meta.url';";
+    expect(resolveEsmImportMeta('esm://ga.jspm.io/index.js', plain)).equals(plain);
+  });
+});
 
 let dir = 'local://lively.modules-instrumentation-test/';
 let testProjectDir = dir + 'test-project-dir/';

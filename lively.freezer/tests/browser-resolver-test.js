@@ -4,6 +4,13 @@ import { parse } from 'lively.ast';
 import BrowserResolver from '../src/resolvers/browser.js';
 
 describe('freezer browser resolver', () => {
+  it('returns a usable file URL synchronously for generated runtime assets', () => {
+    const file = 'lively.freezer/src/util/system.0.21.js';
+    const url = BrowserResolver.normalizeFileName(file);
+    expect(url).equals(System.decanonicalize(file));
+    expect(new URL(url).pathname).includes('/src/util/system.0.21.js');
+  });
+
   it('preserves the freezer plugin when Rollup supplies the resolution context', () => {
     const freezerPlugin = { name: 'freezer fixture' };
     const plugins = BrowserResolver.supportingPlugins('browser', freezerPlugin);

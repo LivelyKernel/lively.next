@@ -13,8 +13,8 @@ function resolveModuleId (moduleName, importer) {
 
 function ensureFileFormat (url) { return url; }
 
-async function normalizeFileName (fileName) {
-  return await System.normalize(fileName);
+function normalizeFileName (fileName) {
+  return System.decanonicalize(fileName);
 }
 
 function decanonicalizeFileName (fileName) {
