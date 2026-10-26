@@ -58,6 +58,11 @@
   },
   "systemjs": {
     "main": "index.js",
+    "meta": {
+      "lib/acorn-decorators.mjs": {
+        "instrument": false
+      }
+    },
     "map": {
       "astq": {
         "node": "@empty"
