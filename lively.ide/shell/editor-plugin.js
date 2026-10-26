@@ -8,12 +8,12 @@ import { shellCompleters } from './completers.js';
 import './mode.js';
 import { Snippet } from '../text/snippets.js';
 
-let defaultDir;
-Promise.resolve(defaultDirectory()).then(dir => defaultDir = dir);
+let defaultDir, defaultDirRequest;
 
 export default class ShellEditorPlugin extends CodeMirrorEnabledEditorPlugin {
   constructor () {
     super();
+    if (!defaultDirRequest) defaultDirRequest = defaultDirectory().then(dir => defaultDir = dir);
     this.state = { cwd: defaultDir, command: null };
   }
 
