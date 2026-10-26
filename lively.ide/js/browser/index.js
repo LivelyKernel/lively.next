@@ -1978,14 +1978,12 @@ export class BrowserModel extends ViewModel {
           await system.packageConfChange(content, module.url);
           this.updatePackageDependencies();
         } else {
+          await system.coreInterface.resourceWrite(module.url, content);
           if (ext === 'md') {
-            // the preview does not get unset when it is closed
-            // we thus need to check whether the window that contains the preview is currently member of the world
-            if (this.editorPlugin.isMarkdownEditorPlugin && this.editorPlugin.textMorph._mdPreviewMorph && this.editorPlugin.textMorph._mdPreviewMorph.owner.owner) {
+            if (this.editorPlugin.isMarkdownEditorPlugin && sourceEditor._mdPreviewMorph?.world()) {
               await this.renderMarkdown(false);
             }
           }
-          await system.coreInterface.resourceWrite(module.url, content);
         }
         metaInfoText.showSaved();
       // js save
