@@ -18,9 +18,19 @@ function customSections (source) {
   return sections;
 }
 
+function generatedContent (source) {
+  return source
+    .replace(/^[ \t]*# lively.next:custom[^\n]*\n?/gm, '')
+    .replace(/^(          ref: )(?:[a-f\d]{7,40}|%LIVELY_VERSION%)[ \t]*$/gm, '$1%LIVELY_VERSION%')
+    .replace(/[ \t]+$/gm, '').trimEnd();
+}
+
 export function preserveWorkflowCustomizations (previous, generated) {
   const custom = customSections(previous);
   const slots = customSections(generated);
+  if (previous.trim() && !custom.size && generatedContent(previous) !== generatedContent(generated)) {
+    throw new Error('Unmarked workflow may contain custom steps. Move custom steps into the lively.next:custom sections from the current template before regenerating; the existing workflows have been kept.');
+  }
   for (const id of custom.keys()) {
     if (!slots.has(id)) throw new Error(`No destination for custom workflow section: ${id}`);
   }

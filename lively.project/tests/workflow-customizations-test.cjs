@@ -50,6 +50,11 @@ const fileName = name => `/project/.github/workflows/${name}`;
   const beforeInvalid = new Map(files);
   await assert.rejects(() => runner.regeneratePipelines(), /custom.*section|section.*custom/i);
   assert.deepEqual(files, beforeInvalid, 'validate all workflows before overwriting any file');
+  files.set(fileName(names[2]), previous);
+  files.set(fileName(names[1]), 'name: Build Project\njobs:\n  build:\n    steps:\n      - run: echo legacy-custom-step\n');
+  const beforeLegacy = new Map(files);
+  await assert.rejects(() => runner.regeneratePipelines(), /unmarked.*workflow.*custom|custom.*workflow.*unmarked/i);
+  assert.deepEqual(files, beforeLegacy, 'never overwrite legacy custom steps without markers');
   assert.throws(() => merge(custom('removed', 'keep me\n'), template('before-tests')), /custom.*section|section.*custom/i);
   assert.throws(() => merge(custom('before-tests') + custom('before-tests'), template('before-tests')), /custom.*section|section.*custom/i);
   assert.throws(() => merge('      # lively.next:custom start before-tests\nkeep me\n', template('before-tests')), /custom.*section|section.*custom/i);
@@ -63,6 +68,10 @@ const fileName = name => `/project/.github/workflows/${name}`;
     const customized = actual.replace(custom(id).trimEnd(), custom(id, '      - run: echo keep-custom-step\n').trimEnd());
     assert.match(merge(customized, actual.replaceAll('%LIVELY_VERSION%', 'fresh-runtime')), /keep-custom-step/);
     assert.equal(merge(actual, actual), actual, name + ' sections are valid');
+    const legacy = actual.replace(/^[ \t]*# lively.next:custom[^\n]*\n?/gm, '').trimEnd();
+    assert.equal(merge(legacy.replaceAll('%LIVELY_VERSION%', 'abcdef1234567'), actual.replaceAll('%LIVELY_VERSION%', '1234567abcdef')),
+      actual.replaceAll('%LIVELY_VERSION%', '1234567abcdef'), name + ' unchanged legacy workflows migrate with runtime updates');
+    assert.throws(() => merge(legacy + '\n      - run: echo legacy-custom-step\n', actual), /unmarked.*workflow.*custom|custom.*workflow.*unmarked/i);
   }
   console.log('Workflow regeneration preserves custom steps, updates pins and leaves all files intact on invalid sections');
 })().catch(err => { console.error(err); process.exitCode = 1; });

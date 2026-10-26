@@ -16,9 +16,12 @@ custom steps between the existing markers, for example in
 ```
 
 Regenerating pipelines preserves those sections while updating the generated
-steps, runtime version and dependency checkouts around them. Existing workflows
-can use the same markers before their next regeneration. Edits outside marked
-sections belong to the generated template and are replaced.
+steps, runtime version and dependency checkouts around them. Unchanged generated
+workflows migrate automatically. If an older workflow has unmarked edits,
+regeneration stops and keeps every existing workflow. Move the custom steps
+into marked sections using the current templates before regenerating. Once a
+workflow uses markers, edits outside marked sections belong to the generated
+template and are replaced.
 
 All workflows have `before-project`, before project checkout. Test workflows
 also have `before-tests` and `after-tests`. Build workflows have `before-build`
