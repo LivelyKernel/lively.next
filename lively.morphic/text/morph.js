@@ -3083,8 +3083,8 @@ export class Text extends Morph {
   // rendering
   applyLayoutIfNeeded () {
     if (this._requestMasterStyling) {
-      this.master && this.master.applyIfNeeded(true);
       this._requestMasterStyling = false;
+      this.master && this.master.applyIfNeeded(true);
     }
     this.fitIfNeeded();
     super.applyLayoutIfNeeded();
