@@ -548,7 +548,7 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
   const modelProps = morph.viewModel?.propertiesAndPropertySettings().properties;
   const spec = morph.spec(skipUnchangedFromDefault);
   for (const name of exposedProps) {
-    if (typeof morph[name] === 'function' || modelProps[name]?.readOnly) continue;
+    if (typeof morph[name] === 'function' || modelProps[name]?.readOnly || modelProps[name]?.serialize === false) continue;
     if (morph.viewModel.__lookupGetter__(name) && !morph.viewModel.__lookupSetter__(name)) continue;
     spec[name] = morph[name];
   }
