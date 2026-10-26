@@ -7,7 +7,7 @@ We are further planning to release plugins for other bundlers such as ESBuild or
 
 ## Adding HTML to the page head
 
-In a project's `build.js`, set `autoRun.head` on the existing `lively` plugin configuration. The string is inserted into the generated `index.html` inside `<head>`, before the frozen app starts:
+In a project's `tools/build.mjs`, set `autoRun.head` on the existing `lively` plugin configuration. The string is inserted into the generated `index.html` inside `<head>`, before the frozen app starts:
 
 ```js
 lively({
