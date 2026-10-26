@@ -1,8 +1,9 @@
 /* global describe, it, beforeEach, afterEach, System, xdescribe */
 import { expect } from 'mocha-es6';
+import sinon from 'sinon';
 import { signal } from 'lively.bindings';
 import { Color, pt } from 'lively.graphics';
-import { MorphicEnv, morph } from 'lively.morphic';
+import { Morph, MorphicEnv, morph } from 'lively.morphic';
 import { Inspector } from '../../js/inspector/index.js';
 import { InspectionTree } from '../../js/inspector/context.js';
 import { LivelyWorld } from '../../world.js';
@@ -10,7 +11,7 @@ import { LivelyWorld } from '../../world.js';
 const describeInBrowser = System.get('@system-env').browser ? describe : xdescribe;
 
 describeInBrowser('inspector border properties', () => {
-  let env, world, target, inspector, renderer, tree, inspectedMorph, root, previousWorld, previousRenderer, previousTitle;
+  let env, world, target, inspector, renderer, tree, inspectedMorph, root, previousWorld, previousRenderer, previousTitle, popupFade;
 
   beforeEach(() => {
     previousWorld = System.global.$world;
@@ -22,6 +23,10 @@ describeInBrowser('inspector border properties', () => {
     world = new LivelyWorld({ extent: pt(1000, 1000) });
     env.setWorld(world, root);
     System.global.$world = world;
+    // These tests check property bindings; the native inspector workflow covers the visual fade.
+    popupFade = sinon.stub(Morph.prototype, 'fadeIntoWorld').callsFake(async function (position) {
+      return this.openInWorld(position);
+    });
     target = world.addMorph(morph({
       position: pt(40, 50), extent: pt(200, 100),
       borderWidth: { top: 1, left: 2, right: 3, bottom: 4 },
@@ -45,6 +50,7 @@ describeInBrowser('inspector border properties', () => {
     try {
       inspector?.closeOpenWidget();
     } finally {
+      popupFade?.restore();
       if (MorphicEnv.default() === env) MorphicEnv.popDefault();
       env.uninstallSystemChangeHandlers();
       env.renderer?.placeholder?.remove();
