@@ -1414,7 +1414,7 @@ class CopyHaloItem extends RoundHaloItem {
         const snap = await createMorphSnapshot(m, { addPreview: false, testLoad: false, moduleManager });
         snap.copyMeta = { offset: m.worldPoint(pt(0, 0)).subPt(origin) };
         snapshots.push(snap);
-        html += m.renderPreview();
+        html += m.renderPreview({ inlineDefaults: true });
       }
 
       html += '</body></html>';
@@ -2261,15 +2261,16 @@ export default class Halo extends Morph {
   // ui events
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-  onDragStart (evt) {
+  onDragStart (evt, startPosition = evt.position) {
     this.dragHalo().init();
-    this._lastDragPos = evt.startPosition;
+    this._lastDragPos = startPosition;
   }
 
   onDrag (evt) {
     if (!this.world()) return;
     this.dragHalo().update(evt.state.dragDelta);
     this.dragHalo().visible = false;
+    this._lastDragPos = evt.position;
   }
 
   onDragEnd (evt) {

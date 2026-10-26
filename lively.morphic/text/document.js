@@ -99,7 +99,10 @@ class TreeNode {
     if (sumChildrenStringSize != stringSize) { report.push({ error: `Sum of child stringSize is not stringSIze of ${this}: ${sumChildrenStringSize} != ${stringSize}` }); }
 
     const sumChildrenHeight = arr.sum(arr.pluck(children, 'height'));
-    if (num.roundTo(sumChildrenHeight, 1) != num.roundTo(height, 1)) { report.push({ error: `Sum of child Height is not Height of ${this}: ${sumChildrenHeight} != ${num.roundTo(height, 1)}` }); }
+    const heightTolerance = Math.max(1e-7, Number.EPSILON * Math.max(Math.abs(height), Math.abs(sumChildrenHeight)) * children.length);
+    if (!Number.isFinite(height) || !Number.isFinite(sumChildrenHeight) || Math.abs(sumChildrenHeight - height) > heightTolerance) {
+      report.push({ error: `Sum of child Height is not Height of ${this}: ${sumChildrenHeight} != ${height}` });
+    }
 
     const maxWidth = children.length ? Math.max.apply(null, arr.pluck(children, 'width')) : 0;
     const hasEstimatedLine = children.find(child => child.isLine && child.hasEstimatedExtent);
@@ -147,7 +150,7 @@ class InnerTreeNode extends TreeNode {
 
   resize (n, height, stringSize) {
     this.size = this.size + n;
-    this.height = this.height + height;
+    this.height = arr.sum(arr.pluck(this.children, 'height'));
     this.stringSize = this.stringSize + stringSize;
     let maxWidth = 0;
     for (let i = 0; i < this.children.length; i++) {
@@ -525,6 +528,8 @@ class InnerTreeNode extends TreeNode {
           thisOrParent.size = thisOrParent.size - mySize;
           thisOrParent.stringSize = thisOrParent.stringSize - myStringSize;
         });
+      mergeTarget.resize(0, 0, 0);
+      this.resize(0, 0, 0);
     } else {
       // if this node can't be merged with a sibling than at least try to
       // steal nodes from a sibling to fill me up!
@@ -581,6 +586,8 @@ class InnerTreeNode extends TreeNode {
         newChildren.forEach(ea => ea.parent = this);
         if (stealLeft) this.children.unshift(...newChildren);
         else this.children.push(...newChildren);
+        stealTarget.resize(0, 0, 0);
+        this.resize(0, 0, 0);
       }
     }
 
@@ -654,6 +661,7 @@ class InnerTreeNode extends TreeNode {
     if (otherNode.children.length > maxChildren) { otherNode.balanceAfterGrowth(); }
     if (this.children.length > maxChildren) { this.balanceAfterGrowth(); }
 
+    this.parent.resize(0, 0, 0);
     this.parent.balanceAfterGrowth();
   }
 
@@ -861,9 +869,9 @@ export class Line extends TreeNode {
     this.hasEstimatedExtent = isEstimated;
 
     if (width !== newWidth || height !== newHeight) {
-      const heightDelta = newHeight - height;
       while (parent) {
-        parent.height = parent.height + heightDelta;
+        // Sum the bounded child list instead of accumulating measurement drift.
+        parent.height = arr.sum(arr.pluck(parent.children, 'height'));
         if (newWidth >= parent.width) {
           parent.width = newWidth;
         } else if (width === parent.width) {
