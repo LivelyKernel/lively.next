@@ -43,11 +43,14 @@
 //                            how the property works
 //   readOnly: BOOL         - optional, if set prevents that the property is mutated. Also
 //                            prevents the serializer from storing that value state.
+//   min, max: NUMBER       - optional bounds for primitive numeric values
+//   isFloat: BOOL          - false rounds numeric values to the nearest allowed integer
 // }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 import * as obj from 'lively.lang/object.js';
+import { clamp } from 'lively.lang/number.js';
 import { getClassHierarchy } from './util.js';
 
 const defaultPropertiesSettingKey = 'propertySettings';
@@ -61,6 +64,19 @@ const defaultPropertySettings = {
   defaultGetter: null,
   valueStoreProperty: '_state'
 };
+
+function constrainNumericValue (value, descriptor) {
+  if (typeof value !== 'number' || Number.isNaN(value)) return value;
+  let min = typeof descriptor.min === 'number' ? descriptor.min : -Infinity;
+  let max = typeof descriptor.max === 'number' ? descriptor.max : Infinity;
+  if (descriptor.isFloat === false) {
+    value = Math.round(value);
+    min = Math.ceil(min);
+    max = Math.floor(max);
+  }
+  if (min > max) throw new RangeError('Numeric property bounds contain no allowed values');
+  return clamp(value, min, max);
+}
 
 function hasManagedProperties (klass) {
   return klass.hasOwnProperty(defaultPropertiesKey);
@@ -116,6 +132,10 @@ function prepareClassForProperties (klass, propertySettings, properties) {
         let setter = descriptor.set ||
                   (typeof defaultSetter === 'function' && function (val) { defaultSetter.call(this, key, val); }) ||
                   function (val) { this[valueStoreProperty][key] = val; };
+        if (typeof descriptor.min === 'number' || typeof descriptor.max === 'number' || descriptor.isFloat === false) {
+          const originalSetter = setter;
+          setter = function (value) { return originalSetter.call(this, constrainNumericValue(value, descriptor)); };
+        }
         setter._wasGenerated = true;
         myProto.__defineSetter__(key, setter);
       }
@@ -175,7 +195,7 @@ function ensurePropertyInitializer (klass) {
         for (const key in propDescriptors) {
           const descr = propDescriptors[key];
           if (descr.hasOwnProperty('defaultValue')) {
-            let val = descr.defaultValue;
+            let val = constrainNumericValue(descr.defaultValue, descr);
             if (Array.isArray(val)) val = val.slice();
             defaults[key] = val;
           }
@@ -208,8 +228,7 @@ function propertiesAndSettingsInHierarchyOf (klass) {
     }
     // "deep" merge
     for (let name in current) {
-      if (!properties.hasOwnProperty(name)) properties[name] = current[name];
-      else Object.assign(properties[name], current[name]);
+      properties[name] = { ...properties[name], ...current[name] };
     }
   }
 
@@ -231,7 +250,7 @@ function prepareInstanceForProperties (instance, propertySettings, properties, v
 
     let derived = descriptor.derived; let foldable = !!descriptor.foldable;
     let defaultValue = typeof descriptor.defaultValue !== 'undefined'
-      ? descriptor.defaultValue
+      ? constrainNumericValue(descriptor.defaultValue, descriptor)
       : undefined;
     if (Array.isArray(defaultValue)) defaultValue = defaultValue.slice();
     if (!derived && !foldable) instance[valueStoreProperty][key] = defaultValue;
