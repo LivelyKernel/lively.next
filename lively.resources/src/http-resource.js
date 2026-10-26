@@ -147,7 +147,18 @@ function defaultOrigin () {
   return System.baseURL || document.location.origin;
 }
 
-function makeRequest (resource, method = 'GET', body, headers = {}, onProgress = () => {}) {
+function requestError (resource, method, cause, requestURL = resource.url) {
+  const proxy = requestURL === resource.url ? '' : ` via proxy ${requestURL}`;
+  const hint = cause?.name === 'TypeError'
+    ? ' Check network connectivity and the server\'s CORS policy; browsers do not expose the exact CORS failure to JavaScript.'
+    : '';
+  const error = new Error(`Cannot ${method} ${resource.url}${proxy}: ${cause?.message || cause}.${hint}`);
+  error.name = cause?.name || 'Error';
+  error.cause = cause;
+  return error;
+}
+
+async function makeRequest (resource, method = 'GET', body, headers = {}, onProgress = () => {}) {
   let url = resource.url;
   var { useCors, useProxy, headers: moreHeaders } = resource;
   var useCors = typeof useCors !== 'undefined' ? useCors : true;
@@ -169,7 +180,11 @@ function makeRequest (resource, method = 'GET', body, headers = {}, onProgress =
   fetchOpts.redirect = 'follow';
   fetchOpts.headers = { ...headers, ...moreHeaders };
 
-  return fetch(url, fetchOpts);
+  try {
+    return await fetch(url, fetchOpts);
+  } catch (err) {
+    throw requestError(resource, method, err, url);
+  }
 }
 
 export function upload (resource, body) {
