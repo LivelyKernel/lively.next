@@ -2,23 +2,31 @@
 import { expect } from 'mocha-es6';
 import { signal } from 'lively.bindings';
 import { Color, pt } from 'lively.graphics';
-import { MorphicEnv, morph, part } from 'lively.morphic';
-import { createDOMEnvironment } from 'lively.morphic/rendering/dom-helper.js';
+import { MorphicEnv, component, morph, part } from 'lively.morphic';
+import { without } from 'lively.morphic/components/core.js';
 import { LivelyWorld } from '../world.js';
 import { TopBar } from '../studio/top-bar.cp.js';
 
 const describeInBrowser = System.get('@system-env').browser ? describe : xdescribe;
+const ShapeTestTopBar = component(TopBar, { submorphs: [without('right UI wrapper')] });
 
 describeInBrowser('top bar shape creation undo', () => {
-  let env, world, model, previousWorld, hand;
+  let env, world, model, previousWorld, previousRenderer, hand, root;
 
-  beforeEach(async () => {
+  beforeEach(() => {
+    env = world = model = hand = root = null;
     previousWorld = System.global.$world;
-    env = MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment()));
+    previousRenderer = System.global.renderer;
+    // The browser already has morphic CSS. Use its document without another
+    // iframe stylesheet request in every beforeEach hook.
+    env = MorphicEnv.pushDefault(new MorphicEnv());
+    root = env.domEnv.document.createElement('div');
+    env.domEnv.document.body.appendChild(root);
     world = morph({ type: LivelyWorld, extent: pt(1000, 1000) });
-    await env.setWorld(world);
+    env.setWorld(world, root);
     System.global.$world = world;
-    const topBar = part(TopBar);
+    // Login/network widgets start unrelated async work after their world closes.
+    const topBar = part(ShapeTestTopBar);
     world.addMorph(topBar);
     model = topBar.viewModel;
     model.attachToTarget(world);
@@ -28,9 +36,19 @@ describeInBrowser('top bar shape creation undo', () => {
   });
 
   afterEach(async () => {
-    model?.detachFromTarget(world);
-    await MorphicEnv.popDefault().uninstall();
-    System.global.$world = previousWorld;
+    try {
+      model?.detachFromTarget(world);
+    } finally {
+      if (env) {
+        if (MorphicEnv.default() === env) MorphicEnv.popDefault();
+        env.uninstallSystemChangeHandlers();
+        env.renderer?.placeholder?.remove();
+        await env.uninstall();
+      }
+      root?.remove();
+      System.global.$world = previousWorld;
+      System.global.renderer = previousRenderer;
+    }
   });
 
   /** Enter creation mode through the component's button binding. */
