@@ -61,6 +61,14 @@ export function lively (args) {
       }
     },
     transform: async (source, id) => {
+      if (id === '\0polyfill-node.path.js') {
+        // The installed path shim is POSIX-only; expose Node's POSIX alias.
+        return {
+          code: source.replace('export default {', 'export const posix = {') +
+            '\nposix.posix = posix;\nexport default posix;\n',
+          ast: null, map: null
+        };
+      }
       if (id.startsWith('\0')) return null;
       try {
         return await bundler.transform(source, id);
