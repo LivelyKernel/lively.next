@@ -53,6 +53,19 @@ try {
   write('lively-system-interface/index.js', 'changed backend');
   git('add', '.'); git('commit', '-m', 'backend');
   assert.deepEqual(select(), ['lively-system-interface']);
+  git('update-ref', 'refs/remotes/origin/main', 'HEAD');
+  git('mv', 'lively.a/index.js', 'lively.d/from-a.js');
+  git('commit', '-m', 'move across packages');
+  assert.deepEqual(select(), packages.sort(), 'both sides of a rename affect tests');
+  git('update-ref', 'refs/remotes/origin/main', 'HEAD');
+  git('rm', 'lively.d/from-a.js');
+  git('commit', '-m', 'delete file');
+  assert.deepEqual(select(), ['lively.d']);
+  git('update-ref', 'refs/remotes/origin/main', 'HEAD');
+  git('rm', '-r', 'lively.d');
+  write('package.json', { workspaces: packages.filter(name => name !== 'lively.d') });
+  git('add', '.'); git('commit', '-m', 'remove workspace');
+  assert.deepEqual(select(), packages.filter(name => name !== 'lively.d').sort());
   console.log('Affected-test selection: transitive cycles, dependency kinds, backend package, shared tooling and docs passed');
 } finally {
   fs.rmSync(fixture, { recursive: true, force: true });
