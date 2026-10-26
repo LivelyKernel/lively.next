@@ -5,6 +5,25 @@ Apps in `lively.next` use custom source transformation and access to meta inform
 In order to do that, the `Freezer` provides a custom rollup plugin that can be added to rollup bundling tasks.
 We are further planning to release plugins for other bundlers such as ESBuild or Webpack such that `lively.next` can be used in various different projects.
 
+## Adding HTML to the page head
+
+In a project's `build.js`, set `autoRun.head` on the existing `lively` plugin configuration. The string is inserted into the generated `index.html` inside `<head>`, before the frozen app starts:
+
+```js
+lively({
+  resolver,
+  // Keep the project's other plugin options here.
+  autoRun: {
+    title: 'My app',
+    head: '<script src="https://www.gstatic.com/charts/loader.js"></script>'
+  }
+})
+```
+
+This can also contain `<meta>`, `<link>`, or `<style>` elements. Rebuild the project after changing the configuration. A world's `__head_html__` property is not read by the project build script.
+
+When calling `bundleModule` from `lively.freezer` directly, pass the same configuration as `htmlConfig`, for example `{ htmlConfig: { title: 'My app', head: '<meta name="theme-color" content="#f1c40f">' } }`.
+
 ## Resurrection Builds
 
 lively.freezer provides the option to produce a bundle that ships with module meta annotations. 
