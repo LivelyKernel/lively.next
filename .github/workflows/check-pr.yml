@@ -148,6 +148,8 @@ jobs:
           node --experimental-import-meta-resolve lively.app/scripts/test-package-payload.mjs
           node --experimental-import-meta-resolve lively.app/scripts/test-downloads.mjs
           node lively.app/scripts/test-desktop-resources.mjs
+      - name: Check affected-package test selection
+        run: node scripts/tests/affected-tests-test.cjs
       - name: Run CI Test Script for Changed Folders
         run:  ./scripts/test.sh $(./scripts/tests_for_branch.sh)
       - name: Start the lively server

@@ -100,36 +100,7 @@ if [ -d "$CHROME_PROFILE_DIR" ]; then
   touch "$CHROME_PROFILE_DIR/.gitkeep"
 fi
 
-testfiles=(
-"lively.lang"
-"lively.resources"
-"lively.bindings"
-"lively.notifications"
-"lively.classes"
-"lively.serializer2"
-"lively.storage"
-"lively.ast"
-"lively.source-transform"
-"lively.vm"
-"lively.modules"
-"lively-system-interface"
-"lively.graphics"
-"lively.morphic"
-"lively.components"
-"lively.ide"
-"lively.halos"
-"lively.user"
-"lively.2lively"
-"lively.changesets"
-"lively.git"
-"lively.server"
-"lively.shell"
-"lively.collab"
-"lively.traits" 
-"lively.freezer"
-"lively.headless"
-"lively.keyboard"
-)
+testfiles=($(node -e 'console.log(require("./scripts/test-packages.json").join(" "))'))
 
 # To easily handle the case where we run the tests for a PR but no relevant files changed.
 # Challenge here is to differentiate this case from the one where we want to run the tests in all packages.
