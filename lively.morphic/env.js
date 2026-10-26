@@ -46,8 +46,11 @@ export class MorphicEnv {
     this.objPool = null;
     this.synchronizer = null;
 
-    this.changeManager = new ChangeManager();
     this.undoManager = new UndoManager();
+    this.changeManager = new ChangeManager({
+      undoManager: this.undoManager,
+      resolveMorph: id => this.world?.getMorphWithId(id)
+    });
 
     this.installSystemChangeHandlers();
 
