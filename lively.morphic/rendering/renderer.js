@@ -342,6 +342,7 @@ export default class Renderer {
 
     applyAttributesToNode(morph, node);
     applyStylingToNode(morph, node);
+    if (morph.hideScrollbars) node.classList.add('hiddenScrollbar');
 
     if (morph.submorphs.length === 0) {
       if (immediatePatchSpecialProps) morph.patchSpecialProps && morph.patchSpecialProps(node, this);
