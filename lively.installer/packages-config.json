@@ -113,8 +113,7 @@
   },
   {
     "name": "lively.freezer",
-    "repoURL": "https://github.com/LivelyKernel/lively.freezer",
-    "wantsServerInterface": true
+    "repoURL": "https://github.com/LivelyKernel/lively.freezer"
   },
   {
     "name": "lively.collab",
