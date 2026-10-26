@@ -16,6 +16,9 @@ describe('missing import diagnostics', () => {
     await createFiles(dir, {
       'dependency.js': 'export default { answer: 42 }; export var optional;',
       'named-only.js': 'export var answer = 42;',
+      'empty.js': 'export {};',
+      'disabled.js': "import optional, { named } from 'disabled'; export var result = [optional, named];",
+      'missing-from-empty.js': "import optional, { named } from './empty.js'; export var result = [optional, named];",
       'cycle-a.js': "import { b } from './cycle-b.js'; export var a = 1; export function read() { return b; }",
       'cycle-b.js': "import { a } from './cycle-a.js'; export var b = 2; export function read() { return a; }",
       'missing.js': "import { answer } from './dependency.js'; export var result = answer;",
@@ -58,6 +61,30 @@ describe('missing import diagnostics', () => {
     await promise.delay(100);
     expect(exports.result).deep.equals([42, undefined, 42]);
     expect(warnings).deep.equals([]);
+  });
+
+  it('accepts default and named imports intentionally mapped to @empty', async () => {
+    system.config({ map: { disabled: '@empty' } });
+    const exports = await system.import(dir + 'disabled.js');
+    const recorder = module(system, dir + 'eval.js').recorder;
+    expect(recorder._moduleImport('disabled', 'default')).equals(undefined);
+    expect(recorder._moduleImport('disabled', 'named')).equals(undefined);
+    await promise.delay(100);
+    expect(exports.result).deep.equals([undefined, undefined]);
+    expect(warnings).deep.equals([]);
+  });
+
+  it('still diagnoses missing exports from ordinary empty modules', async () => {
+    await system.import(dir + 'missing-from-empty.js');
+    await promise.delay(100);
+    expect(warnings.join('\n')).includes(`Import of default from ${dir}empty.js`);
+    expect(warnings.join('\n')).includes(`Import of named from ${dir}empty.js`);
+    warnings.length = 0;
+    const recorder = module(system, dir + 'eval.js').recorder;
+    recorder._moduleImport('./empty.js', 'default');
+    recorder._moduleImport('./empty.js', 'named');
+    expect(warnings.join('\n')).includes(`Import of default from ${dir}empty.js`);
+    expect(warnings.join('\n')).includes(`Import of named from ${dir}empty.js`);
   });
 
   it('waits for circular modules to initialize before diagnosing their imports', async () => {
