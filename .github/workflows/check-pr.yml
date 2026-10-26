@@ -152,6 +152,8 @@ jobs:
         run: node scripts/tests/test-server-lifecycle-test.cjs
       - name: Check headless profile isolation
         run: node scripts/tests/headless-profile-test.cjs
+      - name: Check package test backend selection
+        run: node scripts/tests/test-package-backend-test.cjs
       - name: Check failed-test diagnostics
         run: node scripts/tests/test-diagnostics-test.cjs
       - name: Check affected-package test selection
