@@ -35,12 +35,12 @@ export function lively (args) {
   return {
     name: 'rollup-plugin-lively',
     buildStart () { return bundler.buildStart(this); },
-    async resolveId (id, importer) {
+    async resolveId (id, importer, options) {
       if (importer?.startsWith('\0') || id.startsWith('\0')) return null;
-      const res = await bundler.resolveId(map[id] || id, importer);
+      const res = await bundler.resolveId(map[id] || id, importer, !!options?.custom?.['node-resolve']?.isRequire);
       if (res && isBuiltin(res, bundler.resolver)) {
         if (!bundler.asBrowserModule) return { id: res, external: true };
-        if (res.startsWith('node:')) return this.resolve(res.slice(5), importer, { skipSelf: true });
+        if (res.startsWith('node:')) return this.resolve(res.slice(5), importer, { ...options, skipSelf: true });
         // The existing browser polyfill runs after Lively's resolver.
         return null;
       }
