@@ -81,4 +81,32 @@ describe('system browser tabs', function () {
     expect(browser.ui.sourceEditor.textString).equals(source);
     expect(browser.editorPlugin.isCSSEditorPlugin).equals(true);
   });
+
+  it('does not re-list unchanged directories when switching between loaded modules', async () => {
+    browser = (await browse({ packageName: 'lively.lang', moduleName: 'index.js' })).viewModel;
+    const tabs = browser.ui.tabs;
+    const first = tabs.selectedTab;
+    const second = tabs.addTab('Array', {
+      config: { packageName: 'lively.lang', moduleName: 'array.js' },
+      history: { left: [], right: [], navigationInProgress: null }
+    }, false);
+    const system = browser.systemInterface;
+    const core = system.coreInterface;
+    const list = core.resourceDirList;
+    const resources = system.resourcesOfPackage;
+    let listings = 0, packageResources = 0;
+    core.resourceDirList = function (...args) { listings++; return list.apply(this, args); };
+    system.resourcesOfPackage = function (...args) { packageResources++; return resources.apply(this, args); };
+    try {
+      await selectTab(second);
+      await selectTab(first);
+      await selectTab(second);
+      expect(browser.selectedModule.nameInPackage).equals('array.js');
+      expect(listings).equals(0);
+      expect(packageResources).equals(0);
+    } finally {
+      core.resourceDirList = list;
+      system.resourcesOfPackage = resources;
+    }
+  });
 });
