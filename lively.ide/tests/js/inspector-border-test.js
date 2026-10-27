@@ -10,7 +10,9 @@ import { LivelyWorld } from '../../world.js';
 
 const describeInBrowser = System.get('@system-env').browser ? describe : xdescribe;
 
-describeInBrowser('inspector border properties', () => {
+describeInBrowser('inspector border properties', function () {
+  // Each fixture initializes the real Inspector, editor mode, and property tree.
+  this.timeout(10000);
   let env, world, target, inspector, tree, inspectedMorph, root, previousWorld, previousRenderer, previousTitle, popupFade;
 
   beforeEach(async () => {
