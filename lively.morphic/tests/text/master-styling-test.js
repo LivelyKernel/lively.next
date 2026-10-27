@@ -16,6 +16,7 @@ describe('master styling during text measurement', () => {
       const apply = master.applyIfNeeded;
       let applying = false;
       let applications = 0;
+      let reentries = 0;
       try {
         await label.whenFontLoaded();
         env.forceUpdate();
@@ -25,7 +26,10 @@ describe('master styling during text measurement', () => {
         // Exercise the real DOM fallback independently of the font heuristic.
         Object.defineProperty(label, 'canBeMeasuredViaCanvas', { get: () => false });
         master.applyIfNeeded = function (...args) {
-          expect(applying, 'DOM measurement re-entered master styling').equals(false);
+          if (applying) {
+            reentries++;
+            if (reentries > 3) return;
+          }
           applying = true;
           applications++;
           try { return apply.apply(this, args); } finally { applying = false; }
@@ -37,6 +41,7 @@ describe('master styling during text measurement', () => {
         if (entry === 'renderStylingChanges') env.renderer.renderStylingChanges(label);
         else label.applyLayoutIfNeeded();
 
+        expect(reentries, 'DOM measurement re-entered master styling').equals(0);
         expect(applications).equals(1);
         expect(label._requestMasterStyling).equals(false);
         expect(label.fontColor).equals(Color.blue);
