@@ -18,20 +18,40 @@ function customSections (source) {
   return sections;
 }
 
-function generatedContent (source) {
-  return source
+function generatedContent (source, generatedDependencies) {
+  source = source
     .replace(/\r\n/g, '\n')
     .replace(/[ \t]+$/gm, '')
     .replace(/^[ \t]*# lively.next:custom[^\n]*\n?/gm, '')
-    .replace(/(          cache-name: lively-repo(?:-with-build)?\n          ref: )[^\n]+/g, '$1%LIVELY_VERSION%')
-    .replace(/(          repository: LivelyKernel\/lively.next\n          ref: )[^\n]+/g, '$1%LIVELY_VERSION%')
     .replace('%ACTION_TRIGGER%', '')
     .replace(/^on:\n  push:\n    branches:\n      - main\n/m, 'on:\n')
     .replace('%TOKEN_PERMISSIONS%', '')
     .replace(/^(  id-token: write)\n  contents: read$/m, '$1')
     .replace('%PROJECT_DEPENDENCIES%', '')
-    .replace(/\n      - name: Checkout Project Dependencies\n        uses: actions\/checkout@v4\n        with:\n          repository: [^\n]+\n          path: local_projects\/[^\n]+\/(?:\n          ssh-key: \$\{\{ secrets\.[\w]+ \}\})?/g, '')
     .trimEnd();
+  const refs = /((?:          cache-name: lively-repo(?:-with-build)?|          repository: LivelyKernel\/lively.next)\n          ref: )([^\n]+)/g;
+  const versions = [...source.matchAll(refs)].map(match => match[2]);
+  // The generator uses the same commit in both caches and the Lively checkout.
+  if (versions.length && (versions.length !== 3 || new Set(versions).size !== 1 || !/^(?:[a-f\d]{7,40}|%LIVELY_VERSION%)$/.test(versions[0]))) return null;
+  source = source.replace(refs, '$1%LIVELY_VERSION%');
+  const project = source.match(/      - name: Checkout Project Repository\n        uses: actions\/checkout@v4\n        with:\n          ref: \$\{\{ github.ref \}\}\n          path: local_projects\/[^\n]+/);
+  if (!project) return { content: source, dependencies: new Set() };
+  const start = project.index + project[0].length;
+  const checkout = /\n      - name: Checkout Project Dependencies\n        uses: actions\/checkout@v4\n        with:\n          repository: ([^\n]+)\n          path: local_projects\/([^\n]+)\/(?:\n          ssh-key: \$\{\{ secrets\.([\w]+) \}\})?/y;
+  let end = start;
+  const seen = new Set();
+  while (true) {
+    checkout.lastIndex = end;
+    const dependency = checkout.exec(source);
+    if (!dependency) break;
+    const [, repository, name, secret] = dependency;
+    if (seen.has(name) || generatedDependencies && !generatedDependencies.has(name) ||
+        repository !== name.replace(/--.*/, '') + '/' + name.replace(/.*--/, '') ||
+        secret && secret !== name.replaceAll('/', '_').replaceAll('-', '_')) return null;
+    seen.add(name);
+    end = checkout.lastIndex;
+  }
+  return { content: source.slice(0, start) + source.slice(end), dependencies: seen };
 }
 
 /** Reconstruct the generated templates preceding the pinned Bun workspace setup. */
@@ -46,12 +66,29 @@ function beforeBunWorkspaces (source) {
     .replace(/bun run --cwd (local_projects\/[^\n ]+) build-minified/, 'npm run build-minified --prefix $1');
 }
 
+/** Reconstruct the Node 20 templates used before Bun and Rust were required. */
+function beforeBunAndRust (source) {
+  return beforeBunWorkspaces(source)
+    .replace("node-version: '24'", "node-version: '20.10'")
+    .replace('      - name: Setup bun\n        uses: oven-sh/setup-bun@v2\n', '')
+    .replace('      - name: Setup Rust toolchain\n        uses: dtolnay/rust-toolchain@stable\n        with:\n          targets: wasm32-wasip1\n', '');
+}
+
+/** Reconstruct the generated install step used before retry-on-CDN-failure. */
+function beforeInstallRetry (source) {
+  return beforeBunAndRust(source)
+    .replace('      - name: Prepare to install `lively.next`\n        run: chmod a+x ./install.sh\n', '')
+    .replace(/        uses: nick-fields\/retry@v3\n        with:\n          timeout_minutes: 15\n          max_attempts: 5\n          retry_on: error\n          command: (\.\/install.sh(?: --freezer-only)?)/, '        run: |\n          chmod a+x ./install.sh\n          $1');
+}
+
 export function preserveWorkflowCustomizations (previous, generated, onPreserved = console.warn) {
   const custom = customSections(previous);
   const slots = customSections(generated);
   const current = generatedContent(generated);
-  const old = generatedContent(previous);
-  if (previous.trim() && !custom.size && old !== current && old !== beforeBunWorkspaces(current)) {
+  // An unknown checkout could be a custom step or a removed dependency; keep either.
+  const old = generatedContent(previous, current?.dependencies);
+  if (previous.trim() && !custom.size && (old === null || current === null ||
+      ![current.content, beforeBunWorkspaces(current.content), beforeBunAndRust(current.content), beforeInstallRetry(current.content)].includes(old.content))) {
     onPreserved('Unmarked custom or older workflow kept unchanged: runtime, trigger and dependency updates were not applied. Move custom steps into lively.next:custom sections from the current templates (lively.project/README.md) to enable updates.');
     return previous;
   }

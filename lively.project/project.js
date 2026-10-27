@@ -723,7 +723,7 @@ export class Project {
     reloadPackage(System, this.package.url);
   }
 
-  async regeneratePipelines () {
+  async regeneratePipelines ({ showWarnings = true } = {}) {
     if (!lively.isInOfflineMode) {
       await this.checkPagesSupport();
       await this.gitResource.activateGitHubPages(currentUserToken(), this.name, this.repoOwner);
@@ -748,7 +748,7 @@ export class Project {
     }
     // Validate every custom section before replacing any workflow.
     for (const { file, content } of updates) await (await file.ensureExistance()).write(content);
-    if (warnings.length) {
+    if (showWarnings && warnings.length) {
       const message = warnings.join('\n');
       console.warn(message);
       $world.setStatusMessage(message, StatusMessageWarning);
@@ -811,7 +811,7 @@ export class Project {
     this.increaseVersion(increaseLevel);
     try {
       const hasRemote = await this.gitResource.hasRemote();
-      if (hasRemote && needsPipelines) await this.regeneratePipelines();
+      if (hasRemote && needsPipelines) await this.regeneratePipelines({ showWarnings: false });
       await this.saveConfigData();
       if (hasRemote) {
         if (!lively.isInOfflineMode && !initialSave) await this.gitResource.pullRepo();
