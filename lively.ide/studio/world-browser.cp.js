@@ -925,7 +925,7 @@ export class WorldPreviewModel extends ViewModel {
   }
 
   openEntity () {
-    this._worldBrowser.fadeOut();
+    if (lively.FreezerRuntime) this._worldBrowser.fadeOut();
     return this.loadEntity();
   }
 
@@ -935,7 +935,8 @@ export class WorldPreviewModel extends ViewModel {
 
   async transitionToLivelyWorld (commit, projectName) {
     if (!lively.FreezerRuntime) {
-      document.location = pathForBrowserHistory(projectName || commit.name, '?', !!projectName);
+      const query = new URLSearchParams(document.location.search).get('fastLoad') === 'false' ? '?fastLoad=false' : '?';
+      document.location = pathForBrowserHistory(projectName || commit.name, query, !!projectName);
       return;
     }
     const progress = this._worldBrowser.progressIndicator;

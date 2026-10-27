@@ -6,7 +6,7 @@ import { resource } from 'lively.resources';
 import { WorldBrowserModel, WorldPreviewModel } from '../studio/world-browser.cp.js';
 
 describe('world browser session transitions', () => {
-  let previous, routes, bootstrapCalls;
+  let previous, routes, bootstrapCalls, fades;
   beforeEach(() => {
     const frozenRuntime = lively.FreezerRuntime || lively.frozenModules;
     previous = {
@@ -21,6 +21,7 @@ describe('world browser session transitions', () => {
     };
     routes = [];
     bootstrapCalls = [];
+    fades = 0;
     lively.FreezerRuntime = false;
     lively.isResurrectionBuild = false;
     lively.doNotUseFastLoad = false;
@@ -37,7 +38,7 @@ describe('world browser session transitions', () => {
   /** Exercise the tile's Open binding while keeping the test document alive. */
   async function open (target, project = false, progress, frozen = false) {
     const { WorldPreviewTile, ProjectPreviewTile } = lively.modules.module('lively.ide/studio/world-browser.cp.js').recorder;
-    const browser = { fadeOut () {}, progressIndicator: progress };
+    const browser = { fadeOut () { fades++; }, progressIndicator: progress };
     const tile = part(project ? ProjectPreviewTile : WorldPreviewTile, {
       ...(!project && { defaultViewModel: WorldPreviewModel }),
       viewModel: { _worldBrowser: browser, ...(project ? { _project: { _name: target } } : { _commit: target }) }
@@ -89,6 +90,7 @@ describe('world browser session transitions', () => {
       const name = project ? 'owner--A project & more' : 'A playground & more';
       await open(project ? name : { name, _id: 'selected-commit' }, project);
       expect(bootstrapCalls).deep.equals([]);
+      expect(fades, 'keep the browser visible if beforeunload cancels navigation').equals(0);
       expect(routes.length).equals(1);
       const destination = new URL(routes[0], document.location.origin);
       expect(destination.pathname).equals(project ? '/projects/load' : '/worlds/load');
@@ -102,10 +104,21 @@ describe('world browser session transitions', () => {
       const target = project ? 'owner--project' : { name: 'playground', _id: 'selected-commit' };
       await open(target, project, progress, true);
       expect(routes).deep.equals([]);
+      expect(fades).equals(1);
       expect(bootstrapCalls.length).equals(1);
       expect(bootstrapCalls[0].progress).equals(progress);
       expect(bootstrapCalls[0][project ? 'projectName' : 'commit']).equals(target);
       expect(bootstrapCalls[0].fastLoad).equals(true);
+    });
+
+    it('preserves explicit fastLoad=false in an active resurrection session for a ' + (project ? 'project' : 'playground'), async () => {
+      lively.isResurrectionBuild = true;
+      window.history.replaceState({}, '', '?fastLoad=false&snapshot=old-session');
+      await open(project ? 'owner--project' : { name: 'playground', _id: 'selected-commit' }, project);
+      expect(bootstrapCalls).deep.equals([]);
+      const destination = new URL(routes[0], document.location.origin);
+      expect(destination.searchParams.get('fastLoad')).equals('false');
+      expect(destination.searchParams.has('snapshot')).equals(false);
     });
   }
 });
