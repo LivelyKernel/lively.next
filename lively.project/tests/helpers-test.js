@@ -5,6 +5,7 @@ import { projectAsset } from '../helpers.js';
 import { prepareSystem } from 'lively.modules/tests/helpers.js';
 import { removeSystem } from 'lively.modules/src/system.js';
 import { setupBabelTranspiler } from 'lively.source-transform/babel/plugin.js';
+import { setupSwcTranspiler } from 'lively.source-transform/swc/transpiler-setup.js';
 import { getValueExpr } from 'lively.ide/components/helpers.js';
 
 describe('project asset URLs', () => {
@@ -15,49 +16,43 @@ describe('project asset URLs', () => {
   });
   afterEach(() => { lively.FreezerRuntime = freezerRuntime; });
 
-  it('resolves the caller from its captured module metadata', () => {
-    const recorder = {
-      __currentLivelyModule: { id: 'http://localhost/local_projects/test-project/ui/component.cp.js' },
-      projectAsset
-    };
-    expect(recorder.projectAsset('image.svg')).equals('/local_projects/test-project/assets/image.svg');
-  });
-
   it('accepts explicit module URLs for native or namespace imports', () => {
     expect(projectAsset('image.svg', 'https://example.test/local_projects/test-project/ui/main.js'))
       .equals('/local_projects/test-project/assets/image.svg');
   });
 
-  it('resolves real captured module calls after asynchronous work', async () => {
-    const id = 'local://project-asset-tests/local_projects/asset-project/ui/module.js';
-    const helperId = System.normalizeSync('lively.project/helpers.js');
-    const system = prepareSystem('project-asset-tests', 'local://project-asset-tests/');
-    setupBabelTranspiler(system);
-    system.set(helperId, system.newModule({ projectAsset }));
-    await resource(id).ensureExistance(`import { projectAsset as asset } from ${JSON.stringify(helperId)};\nexport async function url() { await Promise.resolve(); return asset('nested/icon.svg'); }`);
-    try {
-      const mod = await system.import(id);
-      expect(await mod.url()).equals('/local_projects/asset-project/assets/nested/icon.svg');
-    } finally {
-      removeSystem('project-asset-tests');
-      await resource('local://project-asset-tests/').remove();
+  for (const [name, setup] of [['Babel', setupBabelTranspiler], ['SWC', setupSwcTranspiler]]) {
+    for (const explicit of [true, false]) {
+      it(`resolves ${explicit ? 'explicit caller URLs' : 'legacy stack URLs'} through ${name} after asynchronous work`, async () => {
+        const systemName = `project-asset-${name}-${explicit}`;
+        const base = `local://${systemName}/`;
+        const id = base + 'local_projects/asset-project/ui/module.js';
+        const helperId = System.normalizeSync('lively.project/helpers.js');
+        const system = prepareSystem(systemName, base);
+        await setup(system);
+        system.set(helperId, system.newModule({ projectAsset }));
+        const caller = explicit ? ', import.meta.url' : '';
+        await resource(id).ensureExistance(`import { projectAsset as asset } from ${JSON.stringify(helperId)};
+import * as helpers from ${JSON.stringify(helperId)};
+export var top = asset('top.svg'${caller});
+export async function urls() {
+  await Promise.resolve();
+  return [asset('nested/icon.svg'${caller}), helpers.projectAsset('namespace.svg'${caller})];
+}`);
+        try {
+          const mod = await system.import(id);
+          expect(mod.top).equals('/local_projects/asset-project/assets/top.svg');
+          expect(await mod.urls()).deep.equals([
+            '/local_projects/asset-project/assets/nested/icon.svg',
+            '/local_projects/asset-project/assets/namespace.svg'
+          ]);
+        } finally {
+          removeSystem(systemName);
+          await resource(base).remove();
+        }
+      });
     }
-  });
-
-  it('resolves explicit import.meta.url in ordinary module source', async () => {
-    const id = 'local://project-asset-tests/local_projects/asset-project/ui/explicit.js';
-    const helperId = System.normalizeSync('lively.project/helpers.js');
-    const system = prepareSystem('project-asset-tests-explicit', 'local://project-asset-tests/');
-    setupBabelTranspiler(system);
-    system.set(helperId, system.newModule({ projectAsset }));
-    await resource(id).ensureExistance(`import { projectAsset } from ${JSON.stringify(helperId)};\nexport var url = projectAsset('nested/icon.svg', import.meta.url);`);
-    try {
-      expect((await system.import(id)).url).equals('/local_projects/asset-project/assets/nested/icon.svg');
-    } finally {
-      removeSystem('project-asset-tests-explicit');
-      await resource('local://project-asset-tests/').remove();
-    }
-  });
+  }
 
   it('accepts the Firefox legacy stack format for existing one-argument calls', () => {
     const OriginalError = globalThis.Error;

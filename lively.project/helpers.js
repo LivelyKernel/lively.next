@@ -1,5 +1,5 @@
-/** Pass the caller's module URL explicitly for native or namespace imports. */
-export function projectAsset (fileName, module = this?.__currentLivelyModule) {
+/** Pass import.meta.url as the second argument for a stable caller URL. */
+export function projectAsset (fileName, module) {
   // The bundler takes care of moving all assets for us.
   if (globalThis.lively?.FreezerRuntime) {
     return './assets/' + fileName;
