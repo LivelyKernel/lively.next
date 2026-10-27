@@ -104,6 +104,9 @@ export function wrapModuleResolution (System) {
   if (!isHookInstalled(System, 'newModule', 'newModule_volatile')) {
     installHook(System, 'newModule', newModule_volatile, 'newModule_volatile');
   }
+  if (!isHookInstalled(System, 'register', 'register_ownExports')) {
+    installHook(System, 'register', register_ownExports, 'register_ownExports');
+  }
 
   if (!System.registry['REGISTRY']._originalRegistry) {
     const { proxy: wrappedRegistry, revoke } = Proxy.revocable(System.registry['REGISTRY'], {
@@ -154,6 +157,7 @@ export function unwrapModuleResolution (System) {
   removeHook(System, 'decanonicalize', 'decanonicalizeHook');
   removeHook(System, 'normalizeSync', 'decanonicalizeHook');
   removeHook(System, 'newModule', 'newModule_volatile');
+  removeHook(System, 'register', 'register_ownExports');
   const wrappedRegistry = System.registry['REGISTRY'];
   if (wrappedRegistry._originalRegistry) {
     Object.getOwnPropertySymbols(System.registry).map(sym => {
@@ -771,6 +775,17 @@ function normalize_packageOfURL (url, System) {
     : null;
   const systemPackage = pName && System.CONFIG.packages[pName];
   return systemPackage ? { systemPackage, packageURL: pName } : null;
+}
+
+function register_ownExports (proceed, ...args) {
+  const System = this;
+  const declare = args.pop();
+  return proceed(...args, function (exporter, context) {
+    const exports = System.REGISTER_INTERNAL.records[context?.id]?.linkRecord?.moduleObj;
+    // SystemJS otherwise skips exports equal to inherited Object.prototype values.
+    if (exports) Object.setPrototypeOf(exports, null);
+    return declare.call(this, exporter, context);
+  });
 }
 
 function normalizeCjsUseDefaultNamespace (exports) {

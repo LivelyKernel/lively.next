@@ -17,6 +17,24 @@ describe('missing import diagnostics', () => {
       'dependency.js': 'export default { answer: 42 }; export var optional;',
       'named-only.js': 'export var answer = 42;',
       'empty.js': 'export {};',
+      'prototype-map.js': `"format register";
+System.register([], function (exporter) {
+  return { execute: function () {
+    exporter({ toString: Object.prototype.toString, hasOwnProperty: Object.prototype.hasOwnProperty });
+    exporter('update', function (value) { exporter('toString', value); });
+  } };
+});`,
+      'prototype-single.js': `"format register";
+System.register([], function (exporter) {
+  return { execute: function () {
+    exporter('toString', Object.prototype.toString);
+    exporter('hasOwnProperty', Object.prototype.hasOwnProperty);
+    exporter('update', function (value) { exporter('toString', value); });
+  } };
+});`,
+      'consume-map.js': "import { toString, hasOwnProperty } from './prototype-map.js'; export function values() { return [toString, hasOwnProperty]; }",
+      'consume-single.js': "import { toString, hasOwnProperty } from './prototype-single.js'; export function values() { return [toString, hasOwnProperty]; }",
+      'missing-prototypes.js': "import { toString, hasOwnProperty } from './empty.js'; export var result = [toString, hasOwnProperty];",
       'disabled.js': "import optional, { named } from 'disabled'; export var result = [optional, named];",
       'missing-from-empty.js': "import optional, { named } from './empty.js'; export var result = [optional, named];",
       'cycle-a.js': "import { b } from './cycle-b.js'; export var a = 1; export function read() { return b; }",
@@ -94,5 +112,28 @@ describe('missing import diagnostics', () => {
     expect(a.read()).equals(2);
     expect(b.read()).equals(1);
     expect(warnings).deep.equals([]);
+  });
+
+  for (const mode of ['map', 'single']) {
+    it(`preserves explicit Object.prototype exports and their live bindings (${mode})`, async () => {
+      const dependency = await system.import(dir + `prototype-${mode}.js`);
+      const consumer = await system.import(dir + `consume-${mode}.js`);
+      expect(Object.prototype.hasOwnProperty.call(dependency, 'toString')).equals(true);
+      expect(Object.prototype.hasOwnProperty.call(dependency, 'hasOwnProperty')).equals(true);
+      expect(consumer.values()).deep.equals([Object.prototype.toString, Object.prototype.hasOwnProperty]);
+      const replacement = () => 'changed';
+      dependency.update(replacement);
+      expect(dependency.toString).equals(replacement);
+      expect(consumer.values()[0]).equals(replacement);
+      await promise.delay(100);
+      expect(warnings).deep.equals([]);
+    });
+  }
+
+  it('still warns when Object.prototype names are not exported', async () => {
+    await system.import(dir + 'missing-prototypes.js');
+    await promise.delay(100);
+    expect(warnings.join('\n')).includes(`Import of toString from ${dir}empty.js`);
+    expect(warnings.join('\n')).includes(`Import of hasOwnProperty from ${dir}empty.js`);
   });
 });
