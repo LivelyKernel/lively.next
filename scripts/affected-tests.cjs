@@ -4,7 +4,6 @@ const { execFileSync } = require('node:child_process');
 
 const root = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim();
 const readJSON = file => JSON.parse(fs.readFileSync(path.join(root, file), 'utf8'));
-const testPackages = readJSON('scripts/test-packages.json');
 const packages = readJSON('package.json').workspaces.map(directory => ({
   directory,
   ...readJSON(`${directory}/package.json`)
@@ -30,5 +29,5 @@ do {
     }
   }
 } while (added);
-const selected = testPackages.filter(name => packages.some(pkg => pkg.name === name) && (shared || affected.has(name)));
+const selected = packages.filter(pkg => shared || affected.has(pkg.name)).map(pkg => pkg.name);
 console.log(selected.length ? selected.join(' ') : 'none');

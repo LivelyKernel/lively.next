@@ -29,7 +29,9 @@ export function preserveWorkflowCustomizations (previous, generated) {
   const custom = customSections(previous);
   const slots = customSections(generated);
   if (previous.trim() && !custom.size && generatedContent(previous) !== generatedContent(generated)) {
-    throw new Error('Unmarked workflow may contain custom steps. Move custom steps into the lively.next:custom sections from the current template before regenerating; the existing workflows have been kept.');
+    // Historical generated files and user edits cannot be distinguished safely.
+    // Keep either intact without preventing project save or an upgrade.
+    return previous;
   }
   for (const id of custom.keys()) {
     if (!slots.has(id)) throw new Error(`No destination for custom workflow section: ${id}`);
