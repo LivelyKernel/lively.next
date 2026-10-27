@@ -5,7 +5,7 @@ import { pt, rect } from 'lively.graphics';
 import { WorldMiniMap } from '../world-mini-map.cp.js';
 
 describe('world minimap geometry', () => {
-  let map, model, originalWorld;
+  let map, model, originalWorld, owner;
 
   beforeEach(() => {
     map = part(WorldMiniMap);
@@ -15,9 +15,12 @@ describe('world minimap geometry', () => {
 
   afterEach(() => {
     globalThis.$world = originalWorld;
+    owner?.remove();
+    owner = null;
     map.remove();
   });
 
+  /** Provide controlled canvas coordinates for navigation-only checks. */
   function setWorld (morphs, scale = 1, offset = pt(0, 0)) {
     globalThis.$world = {
       scaleFactor: scale,
@@ -50,12 +53,13 @@ describe('world minimap geometry', () => {
         }
       };
       await model.drawMorphs();
-      const expected = [pt(0, 0), pt(target.width, 0), pt(0, target.height), target.extent].map(point => {
+      const ownBox = target.origin.negated().extent(target.extent);
+      const expected = [ownBox.topLeft(), ownBox.topRight(), ownBox.bottomLeft(), ownBox.bottomRight()].map(point => {
         const position = $world.screenToWorld(target.getGlobalTransform().transformPoint(point));
         return pt(model.widthFromCanvasSpaceToMapSpace(position.x + model.balanceNegativeLeft + model.widthCorrection / 2), model.heightFromCanvasSpaceToMapSpace(position.y + model.balanceNegativeTop + model.heightCorrection / 2));
       });
       expect(rendered.length).equals(4);
-      rendered.forEach((point, index) => expect(point.dist(expected[index])).below(0.001));
+      rendered.forEach(point => expect(Math.min(...expected.map(corner => point.dist(corner)))).below(0.001));
     });
   }
 
@@ -64,10 +68,44 @@ describe('world minimap geometry', () => {
     const child = parent.addMorph(new Morph({ position: pt(-200, -150), origin: pt(20, 10), extent: pt(50, 40), rotation: Math.PI / 4, scale: 2 }));
     setWorld([parent]);
     model.updateMapSpace();
-    const bounds = child.getGlobalTransform().transformRectToRect(child.innerBounds());
+    const bounds = child.globalBounds();
     expect(model.balanceNegativeLeft).closeTo(-bounds.left(), 0.001);
     expect(model.balanceNegativeTop).closeTo(-bounds.top(), 0.001);
   });
+
+  for (const transformed of [false, true]) {
+    it('matches actual rendered bounds for origins' + (transformed ? ' under nested rotation and scale' : ''), async () => {
+      owner = new Morph({ position: pt(150, 100), origin: pt(35, 20), extent: pt(80, 60),
+        rotation: transformed ? Math.PI / 5 : 0, scale: transformed ? 1.5 : 1 }).openInWorld();
+      const child = owner.addMorph(new Morph({ position: pt(10, 10), origin: pt(8, 4), extent: pt(25, 20),
+        rotation: transformed ? -Math.PI / 7 : 0, scale: transformed ? 0.8 : 1 }));
+      model.ratio = 4 / 3;
+      map.extent = pt(300, 225);
+      owner.env.forceUpdate();
+      const painted = new Map();
+      const render = model.renderMorphPreviewOnCanvas;
+      model.renderMorphPreviewOnCanvas = function (morph, x, y, width, height, context) {
+        render.call(this, morph, x, y, width, height, context);
+        if (morph !== owner && morph !== child) return;
+        const t = context.getTransform();
+        const points = [pt(x, y), pt(x + width, y), pt(x, y + height), pt(x + width, y + height)]
+          .map(p => pt(t.a * p.x + t.c * p.y + t.e, t.b * p.x + t.d * p.y + t.f));
+        painted.set(morph, [pt(Math.min(...points.map(p => p.x)), Math.min(...points.map(p => p.y))),
+          pt(Math.max(...points.map(p => p.x)), Math.max(...points.map(p => p.y)))]);
+      };
+      await model.drawMorphs();
+      const worldDOM = $world.env.renderer.getNodeForMorph($world).getBoundingClientRect();
+      for (const morph of [owner, child]) {
+        const dom = morph.env.renderer.getNodeForMorph(morph).getBoundingClientRect();
+        const expected = [pt(dom.left - worldDOM.left, dom.top - worldDOM.top), pt(dom.right - worldDOM.left, dom.bottom - worldDOM.top)]
+          .map(p => $world.screenToWorld(p))
+          .map(p => pt(model.widthFromCanvasSpaceToMapSpace(p.x + model.balanceNegativeLeft + model.widthCorrection / 2),
+            model.heightFromCanvasSpaceToMapSpace(p.y + model.balanceNegativeTop + model.heightCorrection / 2)));
+        expect(painted.has(morph)).equals(true);
+        painted.get(morph).forEach((point, index) => expect(point.dist(expected[index])).below(0.5, 'canvas preview must match the DOM renderer'));
+      }
+    });
+  }
 
   it('keeps the viewport and map navigation aligned while zoomed and scrolled', () => {
     setWorld([], 2, pt(-90, 80));

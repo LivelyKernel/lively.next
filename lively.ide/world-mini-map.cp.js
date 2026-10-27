@@ -74,7 +74,7 @@ class MiniMapModel extends ViewModel {
 
     // Include each morph's own transformed box, including children outside their owners.
     const bounds = $world.morphsInWorldWithSubmorphs.map(m =>
-      m.getGlobalTransform().transformRectToRect(m.innerBounds()));
+      m.getGlobalTransform().transformRectToRect(m.origin.negated().extent(m.extent)));
     const xPositionsForMin = bounds.map(b => $world.screenToWorld(b.topLeft()).x);
     const xPositionsForMax = bounds.map(b => $world.screenToWorld(b.bottomRight()).x);
     const maxX = max(xPositionsForMax) || 0;
@@ -201,7 +201,7 @@ class MiniMapModel extends ViewModel {
           transform.c * scaleX, transform.d * scaleY,
           (position.x + widthBalancing) * 300 / virtualWidthDivisor,
           (position.y + topBalancing) * this.view.height / virtualHeightDivisor);
-        this.renderMorphPreviewOnCanvas(m, 0, 0, m.width, m.height, context);
+        this.renderMorphPreviewOnCanvas(m, -m.origin.x, -m.origin.y, m.width, m.height, context);
       });
     } finally {
       context.restore();
