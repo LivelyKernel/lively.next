@@ -46,7 +46,8 @@ function generatedContent (source, generatedDependencies) {
     if (!dependency) break;
     const [, repository, name, secret] = dependency;
     if (generatedDependencies && !generatedDependencies.has(name)) return { content: null, unknownDependency: name };
-    if (seen.has(name) || generatedDependencies && generatedDependencies.get(name) !== !!secret ||
+    if (secret && generatedDependencies && !generatedDependencies.get(name)) return { content: null, publicDependencyWithKey: name };
+    if (seen.has(name) ||
         repository !== name.replace(/--.*/, '') + '/' + name.replace(/.*--/, '') ||
         secret && secret !== name.replaceAll('/', '_').replaceAll('-', '_')) return null;
     seen.set(name, !!secret);
@@ -90,8 +91,9 @@ export function preserveWorkflowCustomizations (previous, generated, onPreserved
   const old = generatedContent(previous, current?.dependencies);
   if (previous.trim() && !custom.size && (old === null || current === null ||
       ![current.content, beforeBunWorkspaces(current.content), beforeBunAndRust(current.content), beforeInstallRetry(current.content)].includes(old.content))) {
-    const checkout = old?.unknownDependency ? `Unknown dependency checkout "${old.unknownDependency}" kept unchanged. ` : '';
-    onPreserved(checkout + 'Unmarked custom or older workflow kept unchanged: runtime, trigger and dependency updates were not applied. Move custom steps into lively.next:custom sections from the current templates (lively.project/README.md) to enable updates.');
+    const reason = old?.unknownDependency ? `Unknown dependency checkout "${old.unknownDependency}" kept unchanged. `
+      : old?.publicDependencyWithKey ? `Dependency checkout "${old.publicDependencyWithKey}" has an SSH key, but is configured as public; workflow kept unchanged. ` : '';
+    onPreserved(reason + 'Unmarked custom or older workflow kept unchanged: runtime, trigger and dependency updates were not applied. Move custom steps into lively.next:custom sections from the current templates (lively.project/README.md) to enable updates.');
     return previous;
   }
   for (const id of custom.keys()) {
