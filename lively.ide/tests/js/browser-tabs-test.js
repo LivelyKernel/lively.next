@@ -82,7 +82,7 @@ describe('system browser tabs', function () {
     expect(browser.editorPlugin.isCSSEditorPlugin).equals(true);
   });
 
-  it('does not re-list unchanged directories when switching between loaded modules', async () => {
+  it('reuses loaded package nodes and inventories while revalidating tab directories', async () => {
     browser = (await browse({ packageName: 'lively.lang', moduleName: 'index.js' })).viewModel;
     const tabs = browser.ui.tabs;
     const first = tabs.selectedTab;
@@ -94,6 +94,8 @@ describe('system browser tabs', function () {
     const core = system.coreInterface;
     const list = core.resourceDirList;
     const resources = system.resourcesOfPackage;
+    const packageNode = browser.ui.columnView.getExpandedPath().find(node => node.type === 'package');
+    const indexNode = packageNode.subNodes.find(node => node.name === 'index.js');
     let listings = 0, packageResources = 0;
     core.resourceDirList = function (...args) { listings++; return list.apply(this, args); };
     system.resourcesOfPackage = function (...args) { packageResources++; return resources.apply(this, args); };
@@ -102,7 +104,9 @@ describe('system browser tabs', function () {
       await selectTab(first);
       await selectTab(second);
       expect(browser.selectedModule.nameInPackage).equals('array.js');
-      expect(listings).equals(0);
+      expect(listings).equals(3);
+      expect(browser.ui.columnView.getExpandedPath().find(node => node.type === 'package')).equals(packageNode);
+      expect(packageNode.subNodes.find(node => node.name === 'index.js')).equals(indexNode);
       expect(packageResources).equals(0);
     } finally {
       core.resourceDirList = list;
