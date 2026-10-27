@@ -26,7 +26,7 @@ When calling `bundleModule` from `lively.freezer` directly, pass the same config
 
 ## Connections in frozen apps
 
-Importing the shell editor plugin does not request the shell working directory. Creating a `ShellEditorPlugin` instance requests it and requires a shell connection.
+Importing the shell editor plugin or creating a `ShellEditorPlugin` instance does not request the shell working directory. When no directory is set, opening its directory chooser requests the shell's default directory and requires a shell connection.
 
 This does not prevent UI code from explicitly opening connections. In particular, `UserFlapModel.setupNetworkIndicator` calls `L2LClient.forLivelyInBrowser` to display the server status. A frozen app that includes this flap or custom UI derived from it still needs a compatible server or must omit that connection-dependent UI. The general deployment request in #1720 remains open.
 
