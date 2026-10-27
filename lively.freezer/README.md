@@ -24,6 +24,12 @@ This can also contain `<meta>`, `<link>`, or `<style>` elements. Rebuild the pro
 
 When calling `bundleModule` from `lively.freezer` directly, pass the same configuration as `htmlConfig`, for example `{ htmlConfig: { title: 'My app', head: '<meta name="theme-color" content="#f1c40f">' } }`.
 
+## Connections in frozen apps
+
+Importing the shell editor plugin does not request the shell working directory. Creating a `ShellEditorPlugin` instance requests it and requires a shell connection.
+
+This does not prevent UI code from explicitly opening connections. In particular, `UserFlapModel.setupNetworkIndicator` calls `L2LClient.forLivelyInBrowser` to display the server status. A frozen app that includes this flap or custom UI derived from it still needs a compatible server or must omit that connection-dependent UI. The general deployment request in #1720 remains open.
+
 ## Resurrection Builds
 
 lively.freezer provides the option to produce a bundle that ships with module meta annotations. 
