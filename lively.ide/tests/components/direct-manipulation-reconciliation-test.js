@@ -55,6 +55,7 @@ const Example = component({
   submorphs: [{
     type: Text,
     name: 'label',
+    needsDocument: true,
     fill: Color.yellow,
     textAndAttributes: ['before', null, morph({
       name: 'embedded badge',
@@ -130,7 +131,7 @@ describe('projectional component direct manipulation', function () {
         ? value.constructor?.name || 'object'
         : value]
     ));
-    return new Error(`${error.message}; rejected change: ${JSON.stringify({
+    return new Error(`${error.message || error.name}; rejected change: ${JSON.stringify({
       prop: change?.prop,
       selector: change?.selector,
       target: change?.target?.name,
@@ -990,7 +991,7 @@ describe('projectional component direct manipulation', function () {
   });
 
   it('persists explicit selection mode changes while ignoring transient changes', async () => {
-    // The label embeds a morph and needs a document, so its selection mode is 'lively'.
+    // Interactive replacement needs an explicit document now that embedded morphs support static text.
     const label = editable.get('label');
     label.selectionMode = 'lively';
     await finishDirectManipulation();
@@ -1148,42 +1149,54 @@ describe('projectional component direct manipulation', function () {
     expect(Subject.derive().get('leaf child').borderWidth.top).equals(2);
   });
 
-  it('reconciles rich text with an embedded morph through undo and redo', async () => {
-    const label = editable.get('label');
-    const replacement = morph({
-      name: 'replacement badge',
-      fill: Color.orange
+  for (const staticText of [false, true]) {
+    it(`reconciles ${staticText ? 'static ' : ''}rich text with an embedded morph through undo and redo`, async () => {
+      if (staticText) {
+        releaseEditSessions();
+        await componentModule.changeSource(initialSource.replace('    needsDocument: true,\n', ''));
+        descriptor = componentModule.recorder.Example;
+        editable = await editComponent(descriptor);
+      }
+      const label = editable.get('label');
+      expect(!!label.document).equals(!staticText);
+      const sourceBefore = componentModule._source;
+      const replacement = morph({
+        name: 'replacement badge',
+        fill: Color.orange
+      });
+
+      editable.undoStart('replace component rich text');
+      label.withMetaDo({ reconcileChanges: true }, () => {
+        label.textAndAttributes = [
+          'after', { fontWeight: 'bold' },
+          replacement, null
+        ];
+      });
+      await finishDirectManipulation();
+      editable.undoStop();
+
+      expect(label.textString.startsWith('after')).to.be.true;
+      expect(label.textAndAttributes).includes(replacement);
+      expect(componentModule._source).matches(/["']after["']/);
+      expect(componentModule._source).matches(/name:\s*["']replacement badge["']/);
+      expect(componentModule._source).includes('fill: Color.orange');
+      expect(descriptor.derive().get('replacement badge').fill).equals(Color.orange);
+
+      await undo();
+      expect(componentModule._source).equals(sourceBefore);
+      expect(label.textString.startsWith('before')).to.be.true;
+      expect(label.textAndAttributes.find(value => value?.isMorph)?.name)
+        .equals('embedded badge');
+
+      await redo();
+      expect(label.textString.startsWith('after')).to.be.true;
+      expect(label.textAndAttributes.find(value => value?.isMorph)?.name)
+        .equals('replacement badge');
+      expect(componentModule._source).matches(/name:\s*["']replacement badge["']/);
+      expect(!!label.document).equals(!staticText);
+      expect(!!part(descriptor).get('label').document).equals(!staticText);
     });
-
-    editable.undoStart('replace component rich text');
-    label.withMetaDo({ reconcileChanges: true }, () => {
-      label.textAndAttributes = [
-        'after', { fontWeight: 'bold' },
-        replacement, null
-      ];
-    });
-    await finishDirectManipulation();
-    editable.undoStop();
-
-    expect(label.textString.startsWith('after')).to.be.true;
-    expect(label.textAndAttributes).includes(replacement);
-    expect(componentModule._source).matches(/["']after["']/);
-    expect(componentModule._source).matches(/name:\s*["']replacement badge["']/);
-    expect(componentModule._source).includes('fill: Color.orange');
-    expect(descriptor.derive().get('replacement badge').fill).equals(Color.orange);
-
-    await undo();
-    expect(componentModule._source).equals(initialSource);
-    expect(label.textString.startsWith('before')).to.be.true;
-    expect(label.textAndAttributes.find(value => value?.isMorph)?.name)
-      .equals('embedded badge');
-
-    await redo();
-    expect(label.textString.startsWith('after')).to.be.true;
-    expect(label.textAndAttributes.find(value => value?.isMorph)?.name)
-      .equals('replacement badge');
-    expect(componentModule._source).matches(/name:\s*["']replacement badge["']/);
-  });
+  }
 
   it('reconciles an interactive text replacement through its native undo group', async () => {
     const label = editable.get('label');
