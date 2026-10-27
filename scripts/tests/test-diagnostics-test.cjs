@@ -69,6 +69,7 @@ async function check () {
   assert.equal(disposed, 1, 'dispose the browser on ordinary assertion failures');
   assert.equal(JSON.parse(data)[0].browserErrors, 'BROWSER_SENTINEL');
   const { output, written } = runCLI(data);
+  assert.equal(output.join('\n').split('STACK_SENTINEL').length - 1, 1, 'CI prints each assertion stack once');
   assert.match(output.join('\n'), /STACK_SENTINEL/);
   assert.match(output.join('\n'), /BROWSER_SENTINEL/);
   assert.match(output.join('\n'), /SUMMARY-failed:1/);

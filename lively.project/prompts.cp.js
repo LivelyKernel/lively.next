@@ -469,17 +469,24 @@ class ProjectSavePrompt extends AbstractPromptModel {
   async viewDidLoad () {
     const { promptTitle, branchInput } = this.ui;
     this.view.visible = false;
+    this.ui.okButton.disable();
     const li = $world.showLoadingIndicatorFor(null, 'Setting up Save operation...');
-    const dependencies = await this.project.generateFlatDependenciesList();
-    const localDeps = dependencies.some(d => !d.hasRemote);
-    this.ui.dependencyStatusInfo.visible = localDeps;
-    branchInput.deactivate();
-    const currentBranchName = await this.project.gitResource.branchName();
-    promptTitle.textAndAttributes = ['Save Project\n', null, '(currently on', { fontSize: 16 }, ` ${currentBranchName}`, { fontSize: 16, fontColor: Color.lively }, ')', null];
-    await this.project.saveConfigData();
-    if (await this.project.hasRemoteConfigured()) this.project.regeneratePipelines();
-    li.remove();
-    this.view.visible = true;
+    try {
+      const dependencies = await this.project.generateFlatDependenciesList();
+      const localDeps = dependencies.some(d => !d.hasRemote);
+      this.ui.dependencyStatusInfo.visible = localDeps;
+      branchInput.deactivate();
+      const currentBranchName = await this.project.gitResource.branchName();
+      promptTitle.textAndAttributes = ['Save Project\n', null, '(currently on', { fontSize: 16 }, ` ${currentBranchName}`, { fontSize: 16, fontColor: Color.lively }, ')', null];
+      await this.project.saveConfigData();
+      if (await this.project.hasRemoteConfigured()) await this.project.regeneratePipelines();
+      this.ui.okButton.enable();
+    } catch (err) {
+      this.view.setStatusMessage(err.message || String(err), StatusMessageError);
+    } finally {
+      li.remove();
+      this.view.visible = true;
+    }
   }
 
   cancelSave () {
@@ -493,6 +500,7 @@ class ProjectSavePrompt extends AbstractPromptModel {
   }
 
   async resolve (force) {
+    if (this.ui.okButton.viewModel.deactivated) return;
     if (!force && this.ui.description.isFocused()) {
       this.ui.description.insertText('\n');
       return;
