@@ -133,10 +133,7 @@ export class PropertyControl extends DraggableTreeLabel {
       return [
         ...this.renderGrabbableKey(args),
         ' ...', {
-          onMouseDown: () => {
-            args.target[args.keyString] = args.value.valueOf();
-            args.node.rerender();
-          }
+          onMouseDown: () => args.tree.uncollapse(args.node)
         }
       ];
     }

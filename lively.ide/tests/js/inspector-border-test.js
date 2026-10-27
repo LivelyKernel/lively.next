@@ -3,17 +3,17 @@ import { expect } from 'mocha-es6';
 import sinon from 'sinon';
 import { signal } from 'lively.bindings';
 import { Color, pt } from 'lively.graphics';
-import { Morph, MorphicEnv, morph } from 'lively.morphic';
-import { Inspector } from '../../js/inspector/index.js';
-import { InspectionTree } from '../../js/inspector/context.js';
+import { promise } from 'lively.lang';
+import { Morph, MorphicEnv, morph, part } from 'lively.morphic';
+import { SystemInspector } from '../../js/inspector/ui.cp.js';
 import { LivelyWorld } from '../../world.js';
 
 const describeInBrowser = System.get('@system-env').browser ? describe : xdescribe;
 
 describeInBrowser('inspector border properties', () => {
-  let env, world, target, inspector, renderer, tree, inspectedMorph, root, previousWorld, previousRenderer, previousTitle, popupFade;
+  let env, world, target, inspector, tree, inspectedMorph, root, previousWorld, previousRenderer, previousTitle, popupFade;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     previousWorld = System.global.$world;
     previousRenderer = System.global.renderer;
     previousTitle = document.title;
@@ -34,21 +34,18 @@ describeInBrowser('inspector border properties', () => {
       borderColor: { top: Color.red, left: Color.green, right: Color.blue, bottom: Color.black },
       borderStyle: { top: 'solid', left: 'dotted', right: 'dashed', bottom: 'double' }
     }));
-    inspector = new Inspector();
-    renderer = {
-      ui: { propertyTree: { owner: inspector } },
-      renderPropertyControl: args => inspector.renderPropertyControl(args),
-      refreshSelectedLine () {}
-    };
-    tree = InspectionTree.forObject(target, renderer);
-    tree.collapse(tree.root, false);
+    inspector = world.addMorph(part(SystemInspector, { viewModel: { targetObject: target } })).viewModel;
+    await inspector.editorModeInitialized;
+    await promise.waitFor(5000, () => !inspector.isUpdating());
+    inspector.view.stopStepping();
+    tree = inspector.ui.propertyTree.treeData;
     inspectedMorph = tree.root.children[0];
-    tree.collapse(inspectedMorph, false);
   });
 
   afterEach(async () => {
     try {
       inspector?.closeOpenWidget();
+      inspector?.onWindowClose();
     } finally {
       popupFade?.restore();
       if (MorphicEnv.default() === env) MorphicEnv.popDefault();
@@ -67,12 +64,14 @@ describeInBrowser('inspector border properties', () => {
     const node = inspectedMorph.children.find(node => node.key === key);
     if (!member) return node;
     tree.collapse(node, false);
+    inspector.ui.propertyTree.update(true);
     return node.children.find(node => node.key === member);
   }
 
   /** Open the popup through the rendered property value's mouse handler. */
   async function clickValue (node) {
-    const rendered = node.display(renderer);
+    inspector.ui.propertyTree.selectedNode = node;
+    const rendered = node.display(inspector);
     const attributes = rendered.find(value => !value?.isMorph && value?.onMouseDown);
     expect(attributes, 'property value has an edit handler').to.be.ok;
     await attributes.onMouseDown({ positionIn: () => pt(100, 100) });
@@ -82,7 +81,7 @@ describeInBrowser('inspector border properties', () => {
   it('renders mixed border values without changing their individual members', () => {
     for (const key of ['borderWidth', 'borderRadius', 'borderColor', 'borderStyle']) {
       const original = target[key];
-      const rendered = propertyNode(key).display(renderer);
+      const rendered = propertyNode(key).display(inspector);
       expect(Array.isArray(rendered), key + ' renders in the property tree').equals(true);
       for (const member of propertyNode(key).spec.foldable) expect(target[key][member]).equals(original[member]);
     }
@@ -93,7 +92,19 @@ describeInBrowser('inspector border properties', () => {
       const node = propertyNode(key);
       tree.collapse(node, false);
       expect(node.children.map(child => child.key).sort()).deep.equals([...node.spec.foldable].sort());
-      for (const child of node.children) expect(Array.isArray(child.display(renderer))).equals(true);
+      for (const child of node.children) expect(Array.isArray(child.display(inspector))).equals(true);
+    }
+  });
+
+  it('expands a mixed whole-value hotspot without overwriting its members', async () => {
+    for (const key of ['borderWidth', 'borderRadius', 'borderColor', 'borderStyle']) {
+      const node = propertyNode(key);
+      const original = target[key];
+      await clickValue(node);
+      for (const member of node.spec.foldable) expect(target[key][member]).equals(original[member]);
+      expect(node.isCollapsed).equals(false);
+      expect(node.children.map(child => child.key).sort()).deep.equals([...node.spec.foldable].sort());
+      expect(inspector.openWidget).not.to.be.ok;
     }
   });
 
