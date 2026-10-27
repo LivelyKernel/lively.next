@@ -446,7 +446,8 @@ export default class TestRunner extends HTMLMorph {
 
     // Allows us to access the testing configurations stored in packages-config.js
     const pkgsConf = await packagesConfig();
-    const wantsServerInterface = pkgsConf.find(p => p.name === packageName)?.wantsServerInterface;
+    const wantsServerInterface = pkg.lively?.wantsServerInterface ??
+      pkgsConf.find(p => p.name === packageName)?.wantsServerInterface;
     this.updateEvalBackendForPackage(wantsServerInterface);
 
     const testModuleURLs = await findTestModulesInPackage(this.systemInterface, packageName);

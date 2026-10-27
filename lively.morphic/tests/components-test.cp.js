@@ -647,6 +647,13 @@ describe('spec based components', () => {
 });
 
 describe('components', () => {
+  it('keeps skipped style values out of instantiated component properties', () => {
+    const descriptor = component({name: 'skipped style test', extent: pt(100, 80)});
+    const instance = part(descriptor, {extent: Symbol.for('lively.skip-property')});
+    expect(instance.extent.isPoint).equals(true);
+    expect(instance.master.ensureSubSpecFor(new Morph({name: 'outside this component'}))).equals(null);
+    instance.remove();
+  });
   afterEach(() => {
     detach(c3);
   });

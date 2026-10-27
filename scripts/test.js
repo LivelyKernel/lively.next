@@ -1,6 +1,7 @@
 /*
 This script can be used to run the test in a selected package.
-The script assumes that a lively server is running locally on port 9011.
+The HTTP server defaults to localhost:9011. Set LIVELY_TEST_SERVER_READY_URL
+to use the same server URL as scripts/test.sh.
 This script gets used by `test.sh`. To invoke tests, run `test.sh`.
 You should rarely (never) want to invoke this script here directly.
 
@@ -17,8 +18,44 @@ const fs = require('fs');
 const CI = !!process.env.CI;
 
 const targetPackage = process.argv[2];
+const testServerURL = new URL(process.env.LIVELY_TEST_SERVER_READY_URL || 'http://localhost:9011/');
 let passed = 0; let failed = 0; let skipped = 0;
 let markdownListOfFailingTests = '';
+
+function githubCommandValue (value) {
+  return String(value)
+    .replace(/%/g, '%25')
+    .replace(/\r/g, '%0D')
+    .replace(/\n/g, '%0A');
+}
+
+function truncate (value, maxLength = 8000) {
+  const str = String(value);
+  return str.length > maxLength ? `${str.slice(0, maxLength)}...` : str;
+}
+
+function shortJSON (value) {
+  try {
+    return JSON.stringify(value).slice(0, 1000);
+  } catch (_) {
+    return String(value).slice(0, 1000);
+  }
+}
+
+function testFailureDetails (test) {
+  const details = [test.fullTitle];
+  const err = test.error;
+  if (!err) return details.join('\n');
+
+  const message = err.message || err;
+  if (message) details.push(message);
+  if (err.expected !== undefined && err.actual !== undefined) {
+    details.push(`EXPECTED: ${shortJSON(err.expected)}`);
+    details.push(`ACTUAL: ${shortJSON(err.actual)}`);
+  }
+  if (err.stack && err.stack !== message) details.push(err.stack);
+  return details.join('\n');
+}
 
 if (CI) {
   console.log(`Running Tests for ${targetPackage} 📦`);
@@ -27,8 +64,8 @@ if (CI) {
   console.log('');
 }
 const options = {
-  hostname: 'localhost',
-  port: 9011,
+  hostname: testServerURL.hostname,
+  port: testServerURL.port,
   path: '/subserver/TestRunner/' + targetPackage,
   method: 'GET'
 };
@@ -57,7 +94,7 @@ const req = http.request(options, res => {
           errorOutput += `\nRecent browser console errors:\n${data.browserErrors}`;
         }
         if (CI) {
-          console.log(`::error:: Running the tests produced the following error:\n${errorOutput}`);
+          console.log(`::error title=${githubCommandValue(`Tests failed for ${targetPackage}`)}::${githubCommandValue(errorOutput)}`);
           fs.appendFileSync('summary.txt', `❌ Running the tests produced the following error:\n${errorOutput}\n`);
         }
         else console.log(`❌ Running the tests produced the following error:\n${errorOutput}`);
@@ -105,19 +142,23 @@ const req = http.request(options, res => {
             failed += 1;
             if (CI) {
               console.log(`${test.fullTitle} failed ❌`);
+              console.log(`::error title=${githubCommandValue(`Test failed in ${targetPackage}`)}::${githubCommandValue(truncate(testFailureDetails(test)))}`);
               markdownListOfFailingTests = markdownListOfFailingTests + `- ${test.fullTitle} failed ❌\n`;
             } else {
               console.log(`${test.fullTitle} failed ❌`);
             }
             if (test.error) {
-              console.log(`  ERROR: ${test.error.message || test.error}`);
-              if (test.error.actual !== undefined && test.error.expected !== undefined) {
-                console.log(`  EXPECTED: ${JSON.stringify(test.error.expected).slice(0, 500)}`);
-                console.log(`  ACTUAL:   ${JSON.stringify(test.error.actual).slice(0, 500)}`);
-              }
+              const details = testFailureDetails(test);
+              console.log(details);
+              if (CI) markdownListOfFailingTests += `\n\`\`\`text\n${details}\n\`\`\`\n`;
             }
           }
         });
+        if (testfile.browserErrors) {
+          const details = `Recent browser console errors:\n${testfile.browserErrors}`;
+          console.log(details);
+          if (CI) markdownListOfFailingTests += `\n\`\`\`text\n${details}\n\`\`\`\n`;
+        }
         if (CI) console.log('::endgroup::');
         else console.log('');
       });
@@ -132,7 +173,7 @@ const req = http.request(options, res => {
     } catch (err) {
       console.log('SUMMARY-INDICATE-FAILURE');
       if (CI) {
-        console.log(`::error:: Running the tests produced the following error:\n"${err}"`);
+        console.log(`::error title=${githubCommandValue(`Could not parse test results for ${targetPackage}`)}::${githubCommandValue(err)}`);
         fs.appendFileSync('test_output.md', `\n---\n❌ Running the tests for **${targetPackage}** produced the following error:\n"${err}"\n`);
       } else {
         console.log(`❌ Running the tests produced the following error:\n"${err}"`);

@@ -455,6 +455,7 @@ export async function bootstrap ({
       lively.frozenModules = lively.FreezerRuntime;
     }
     lively.FreezerRuntime = false;
+    System.debuggerInterception ??= true;
     const landingPageUrl = document.location;
     try {
       const opts = {

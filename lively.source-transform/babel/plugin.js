@@ -960,6 +960,126 @@ export function getScopeFromPath (path) {
   };
 }
 
+function captureRuntimeClosures(program, options) {
+  if (!options.currentModuleAccessor || !options.sourceAccessorName) return;
+  // The recorder already owns its Module. Resolving it from inside a resolver
+  // hook would recursively invoke that same hook while creating a closure.
+  const recorderName = options.varRecorderName || options.topLevelVarRecorderName;
+  const module = recorderName
+    ? t.MemberExpression(t.Identifier(recorderName), t.Identifier('__currentLivelyModule'))
+    : options.currentModuleAccessor;
+  const cells = new Map(), insertions = new Map(), functions = [];
+  if (options.module?.debuggingEnabled) program.traverse({ ObjectExpression: {exit(path) {
+    const accessors = [];
+    for (const property of path.get('properties')) {
+      if (!property.isObjectMethod()) continue;
+      let usesSuper = false;
+      property.traverse({Super() { usesSuper = true; }});
+      if (usesSuper) continue;
+      const method = property.node;
+      const func = t.FunctionExpression(null, method.params, method.body, method.generator, method.async);
+      func.start = method.start; func.end = method.end;
+      func.extra = {...method.extra, livelyDebugMethod: true, livelyDebugName: method.computed ? '' : method.key.name || method.key.value};
+      if (method.kind === 'method') property.replaceWith(t.ObjectProperty(method.key, func, method.computed));
+      else {
+        let key = method.computed ? null : t.StringLiteral(String(method.key.name || method.key.value));
+        if (!key) {
+          key = path.scope.generateUidIdentifier('debugKey');
+          path.scope.push({id: t.cloneNode(key)});
+          method.key = t.AssignmentExpression('=', t.cloneNode(key), t.CallExpression(t.MemberExpression(t.cloneNode(module, true), t.Identifier('debugPropertyKey')), [method.key]));
+        }
+        accessors.push(t.ArrayExpression([t.cloneNode(key), t.StringLiteral(method.kind), func]));
+        // Keep key/value evaluation in its original context (including await/yield).
+        property.get('body').replaceWith(t.BlockStatement([]));
+      }
+    }
+    if (accessors.length) {
+      path.replaceWith(t.CallExpression(t.MemberExpression(t.cloneNode(module, true), t.Identifier('recordDebugAccessors')), [path.node, t.ArrayExpression(accessors)]));
+      path.skip();
+    }
+  }}});
+  program.traverse({Function(path) { if (!path.isMethod()) functions.push(path); }});
+  const insert = (block, statement) => {
+    const statements = insertions.get(block) || [];
+    statements.push(statement); insertions.set(block, statements);
+  };
+  for (const path of functions) {
+    const fn = path.node, captures = new Map();
+    const parent = path.parentPath;
+    if (path.isFunctionDeclaration() && (!fn.id || !parent.isBlockStatement())) continue;
+    if (!Number.isFinite(fn.start) || !Number.isFinite(fn.end)) continue;
+    let usesClassSuper = false;
+    if (path.isArrowFunctionExpression()) {
+      let usesSuper = false;
+      path.traverse({
+        Function(inner) { if (!inner.isArrowFunctionExpression()) inner.skip(); },
+        Class(inner) { inner.skip(); },
+        Super() { usesSuper = true; }
+      });
+      if (usesSuper) {
+        const home = path.findParent(parent => parent.isFunction() && !parent.isArrowFunctionExpression() || parent.isClassProperty() || parent.isClassPrivateProperty());
+        usesClassSuper = home?.isClassMethod() || home?.isClassProperty() || home?.isClassPrivateProperty();
+        // Native object-super arrows need their home object, which capture does not retain.
+        if (!usesClassSuper) continue;
+      }
+    }
+    path.traverse({ReferencedIdentifier(ref) {
+      const binding = ref.scope.getBinding(ref.node.name);
+      if (!binding || binding.scope === program.scope || binding.identifier.start >= fn.start && binding.identifier.end <= fn.end) return;
+      const owner = binding.scope.path;
+      const block = owner.isBlockStatement() ? owner : owner.get('body');
+      if (!block?.isBlockStatement() || fn.start < block.node.start || fn.end > block.node.end) return;
+      let cell = cells.get(binding);
+      if (!cell) {
+        const name = binding.identifier.name, kind = binding.kind === 'const' ? 'const' : binding.kind === 'var' ? 'var' : 'let';
+        const identifier = program.scope.generateUidIdentifier('debugCell');
+        const parameter = program.scope.generateUidIdentifier('bindingValue');
+        const source = 'const ' + identifier.name + ' = {kind: ' + JSON.stringify(kind) + ', get initialized() { try { void ' + name + '; return true; } catch (error) { if (error.name === "ReferenceError") return false; throw error; } }, get value() { return ' + name + '; }, set value(' + parameter.name + ') { ' + name + ' = ' + parameter.name + '; }, get __only_serialize__() { return this.initialized ? ["kind", "initialized", "value"] : ["kind", "initialized"]; }};';
+        cell = identifier; cells.set(binding, cell);
+        insert(block, babel.parse(source).program.body[0]);
+      }
+      captures.set(ref.node.name, cell);
+    }});
+    const name = fn.extra?.livelyDebugName || fn.id?.name || (parent.isVariableDeclarator() ? parent.node.id.name : parent.isObjectProperty() && !parent.node.computed ? parent.node.key.name || parent.node.key.value : '');
+    const call = t.CallExpression(t.MemberExpression(t.cloneNode(module, true), t.Identifier(fn.extra?.livelyDebugMethod ? 'recordDebugMethod' : 'recordDebugClosure')), [
+      path.isFunctionDeclaration() ? t.cloneNode(fn.id) : fn,
+      t.ObjectExpression([...captures].map(([name, cell]) => t.ObjectProperty(t.StringLiteral(name), t.cloneNode(cell)))),
+      t.NumericLiteral(fn.start), t.NumericLiteral(fn.end), t.Identifier(options.sourceAccessorName), t.StringLiteral(String(name ?? ''))
+    ]);
+    let lexicalFlags = 0;
+    if (path.isArrowFunctionExpression()) {
+      path.traverse({
+        Function(inner) { if (!inner.isArrowFunctionExpression()) inner.skip(); },
+        ThisExpression(ref) {
+          const field = ref.findParent(parent => parent.isClassProperty() || parent.isClassPrivateProperty());
+          if (!field || field.node.start < fn.start) lexicalFlags |= 1;
+        },
+        Super() { lexicalFlags |= 1; },
+        ReferencedIdentifier(ref) {
+          if (ref.node.name !== 'arguments') return;
+          const binding = ref.scope.getBinding('arguments');
+          if (!binding || binding.identifier.start < fn.start || binding.identifier.end > fn.end) lexicalFlags |= 2;
+        }
+      });
+      call.arguments.push(lexicalFlags & 1 ? t.ThisExpression() : t.Identifier('undefined'));
+      // Resolve arguments at creation only when the arrow actually uses them.
+      call.arguments.push(lexicalFlags & 2 ? t.ConditionalExpression(t.BinaryExpression('===', t.UnaryExpression('typeof', t.Identifier('arguments')), t.StringLiteral('undefined')), t.Identifier('undefined'), t.Identifier('arguments')) : t.Identifier('undefined'));
+      if (usesClassSuper && options.topLevelVarRecorder && options.transformES6Classes !== false)
+        call.arguments.push(t.Identifier('__lively_class__'));
+    }
+    while (call.arguments.length < 9) call.arguments.push(t.Identifier('undefined'));
+    call.arguments.push(t.BooleanLiteral(parent.isExportDefaultDeclaration() ||
+      parent.isVariableDeclarator() && parent.scope === program.scope));
+    call.arguments.push(t.NumericLiteral(lexicalFlags));
+    if (path.isFunctionDeclaration()) {
+      insert(parent, t.ExpressionStatement(t.AssignmentExpression('=', t.cloneNode(fn.id), call)));
+    } else path.replaceWith(call);
+  }
+  // Babel keeps directive prologues separately from the body.
+  for (const [block, statements] of insertions) block.unshiftContainer('body', statements);
+  program.scope.crawl();
+}
+
 function evalCodeTransform (path, state, options) {
   // A: Rewrite the component definitions to create component descriptors.
   let { moduleName } = options;
@@ -1000,6 +1120,8 @@ function evalCodeTransform (path, state, options) {
         }
       }));
   }
+
+  if (options.module?.retainRuntimeClosures || options.module?.debuggingEnabled) captureRuntimeClosures(path, options);
 
   // 3. capture top level vars into topLevelVarRecorder "environment"
 

@@ -491,6 +491,7 @@ export class LivelyWorld extends World {
 
   async initializeStudio () {
     let { openNewProjectPrompt, openNewWorldPrompt, projectToBeOpened } = this;
+    System.debuggerInterception ??= true;
 
     let anonymousMode;
     const { askForWorldName } = resource(document.location.href).query();
@@ -498,7 +499,7 @@ export class LivelyWorld extends World {
     else anonymousMode = !askForWorldName;
 
     if (!this.metadata) { // not entered when loading an existing world snapshot
-      let worldName;
+      let worldName = this.name;
       if (openNewWorldPrompt) { // We open a non-existing world without being anonymous
         if (!anonymousMode) worldName = await this.askForName();
         else if (anonymousMode) worldName = 'aLivelyWorld';

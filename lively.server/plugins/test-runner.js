@@ -1,8 +1,12 @@
 import { HeadlessSession } from 'lively.headless';
 import { promise } from 'lively.lang';
 
+const TEST_RUNNER_EVAL_TIMEOUT = Number(process.env.LIVELY_TEST_RUNNER_EVAL_TIMEOUT) || 5 * 60 * 1000;
+const TEST_RUNNER_OPEN_TIMEOUT = Number(process.env.LIVELY_TEST_RUNNER_OPEN_TIMEOUT) || 5 * 60 * 1000;
+
 export default class TestRunner {
   async setup (livelyServer) {
+    this.baseURL = `http://localhost:${livelyServer.port}`;
     console.log('[Test Runner] Started');
   }
 
@@ -12,8 +16,11 @@ export default class TestRunner {
       let attempts = 1;
       while (true) {
         try {
-          this.headlessSession = new HeadlessSession();
-          await this.headlessSession.open('http://localhost:9011/worlds/load?name=__newWorld__&askForWorldName=false&fastLoad=false',  (sess) => sess.runEval(`typeof $world !== 'undefined' && $world.isWorld && $world._uiInitialized`, { timeout: 5000 }).catch(() => false));
+          this.headlessSession = new HeadlessSession({
+            aliveTimeout: TEST_RUNNER_OPEN_TIMEOUT,
+            args: ['--js-flags=--expose-gc']
+          });
+          await this.headlessSession.open(this.baseURL + '/worlds/load?name=__newWorld__&askForWorldName=false&fastLoad=false',  (sess) => sess.runEval(`typeof $world !== 'undefined' && $world.isWorld && $world._uiInitialized`, { timeout: 5000 }).catch(() => false));
         } catch (err) {
           if (attempts < 3) {
             attempts++;
@@ -32,12 +39,24 @@ export default class TestRunner {
       const { localInterface } = await System.import("lively-system-interface");
       const { loadPackage } = await System.import("lively-system-interface/commands/packages.js");
       const packageToTestLoaded = localInterface.coreInterface.getPackages().find(pkg => pkg.name === '${module_to_test}');
+      const packageAddress = packageToTestLoaded?.url || '${this.baseURL}/local_projects/${module_to_test}';
+      const packageIsLocalProject = packageAddress.startsWith('${this.baseURL}/local_projects/');
       if (!packageToTestLoaded){
+        const repositoryPackage = resource('${this.baseURL}/${module_to_test}/');
+        const localProjectPackage = resource('${this.baseURL}/local_projects/${module_to_test}/');
+        const packageBase = await repositoryPackage.join('package.json').exists()
+          ? repositoryPackage
+          : localProjectPackage;
         await loadPackage(localInterface.coreInterface, {
           name: '${module_to_test}',
-          address: 'http://localhost:9011/local_projects/${module_to_test}',
+          address: packageBase.asFile().url,
           type: 'package'
         });
+      } else if (packageIsLocalProject) {
+        // Packages discovered during bootstrap can retain a stale cached
+        // package.json. Reload so current project-scoped import maps are active
+        // before the test files themselves are imported.
+        await localInterface.coreInterface.reloadPackage(packageAddress);
       }
       $world.handForPointerId(1);
       await System.import('mocha-es6/index.js');
@@ -64,15 +83,25 @@ export default class TestRunner {
         })
       });
       JSON.stringify(results);
-      `)
+      `, { timeout: TEST_RUNNER_EVAL_TIMEOUT })
+      const browserErrors = this.headlessSession.summarizeRecentConsoleErrors();
+      if (browserErrors) {
+        const files = JSON.parse(results);
+        for (const file of files) {
+          if (file.tests?.some(test => test.type === 'test' && test.state && test.state !== 'succeeded')) {
+            file.browserErrors = browserErrors;
+          }
+        }
+        results = JSON.stringify(files);
+      }
     } catch (err) {
       const browserErrors = this.headlessSession?.summarizeRecentConsoleErrors();
       results = JSON.stringify({
-        error: err.message,
+        error: err.stack || err.message || String(err),
         browserErrors
       });
     } finally {
-      await this.headlessSession.dispose();
+      await this.headlessSession?.dispose();
       return results;
     }
   }
