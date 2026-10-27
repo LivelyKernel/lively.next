@@ -160,11 +160,29 @@ const fileName = name => `/project/.github/workflows/${name}`;
     for (const name of names) assert.doesNotMatch(files.get(fileName(name)), /Checkout Project Dependencies/, 'marked workflows apply dependency removals');
   }
   const privateDependencies = [{ name: 'me--private', hasRemote: true, privateRepo: true }];
+  for (const originallyPrivate of [false, true]) {
+    files.clear(); warnings.length = 0;
+    dependencies = [{ ...privateDependencies[0], privateRepo: originallyPrivate }];
+    settings('abcdef1234567', false);
+    await project.regeneratePipelines();
+    for (const name of names) files.set(fileName(name), files.get(fileName(name))
+      .replace(/^[ \t]*# lively.next:custom[^\n]*\n?/gm, '')
+      .replace('\n          ssh-key: ${{ secrets.me__private }}', ''));
+    dependencies = privateDependencies;
+    settings('1234567abcdef', true);
+    await project.regeneratePipelines();
+    for (const name of names) {
+      assert.match(files.get(fileName(name)), /1234567abcdef/, `${name} updates pins when a private checkout needs a key`);
+      assert.match(files.get(fileName(name)), /push:/, `${name} updates triggers when a private checkout needs a key`);
+      assert.match(files.get(fileName(name)), /secrets.me__private/, `${name} ${originallyPrivate ? 'restores a missing private key' : 'adds a key when a dependency becomes private'}`);
+    }
+    assert.equal(warnings.length, 0, 'adding a required private key loses no user content');
+  }
   const extraCheckout = '\n      - name: Checkout Project Dependencies\n        uses: actions/checkout@v4\n        with:\n          repository: me/tool\n          path: local_projects/me--tool/\n          ssh-key: ${{ secrets.TOOL_KEY }}\n';
   const edits = [
     ['renamed secret', privateDependencies, text => text.replace('secrets.me__private', 'secrets.MY_DEPLOY_KEY')],
     ['secret added to public dependency', [{ name: 'me--public', hasRemote: true, privateRepo: false }], text => text.replace('path: local_projects/me--public/', 'path: local_projects/me--public/\n          ssh-key: ${{ secrets.me__public }}')],
-    ['secret removed from private dependency', privateDependencies, text => text.replace('\n          ssh-key: ${{ secrets.me__private }}', '')],
+    ['dependency changed to public', privateDependencies, text => text],
     ['changed checkout path', privateDependencies, text => text.replace('path: local_projects/me--private/', 'path: local_projects/me--private-v2/')],
     ['forked repository', privateDependencies, text => text.replace('repository: me/private', 'repository: myfork/private')],
     ['extra checkout after steps', [], text => text.trimEnd() + extraCheckout],
@@ -182,12 +200,14 @@ const fileName = name => `/project/.github/workflows/${name}`;
     const previous = edit(files.get(file).replace(/^[ \t]*# lively.next:custom[^\n]*\n?/gm, ''));
     files.set(file, previous);
     dependencies = label === 'ambiguous removed dependency' ? [] : initialDependencies;
+    if (label === 'dependency changed to public') dependencies = initialDependencies.map(dep => ({ ...dep, privateRepo: false }));
     settings('1234567abcdef', false);
     await project.regeneratePipelines({ showWarnings: false });
     assert.equal(warnings.length, 0, 'save preparation defers preservation warnings');
     assert.equal(await project.save({ message: 'test', needsPipelines: true }), true, 'custom unmarked workflows do not block project save');
     assert.equal(files.get(file), previous, label + ' must survive byte-for-byte');
     assert.equal(warnings.length, 1, label + ' gets one warning in the save flow');
+    if (label === 'secret added to public dependency' || label === 'dependency changed to public') assert.match(warnings[0], /has an SSH key, but is configured as public/, 'explain the ambiguous credential change');
     if (label === 'ambiguous removed dependency') assert.match(warnings[0], /Unknown dependency checkout "me--private"/, 'name the checkout that cannot be safely removed');
   }
   assert.equal(legacyWarnings.length, 1, 'show a warning when an unmarked custom workflow cannot be updated');
