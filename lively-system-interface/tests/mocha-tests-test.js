@@ -3,7 +3,7 @@ import { expect } from 'mocha-es6';
 import { resource } from 'lively.resources';
 import { module } from 'lively.modules';
 import { string } from 'lively.lang';
-import { loadMochaTestFile, runMochaTests } from 'lively-system-interface/commands/mocha-tests.js';
+import { loadMochaTestFile, runMochaTests } from '../commands/mocha-tests.js';
 
 /**
  * Run a separate suite through the real Mocha reporter.
@@ -14,7 +14,7 @@ async function runFixture (source) {
   const directory = resource(System.baseURL).join('local_projects/mocha-pending-' + string.newUUID() + '/');
   const file = directory.join('fixture-test.js');
   await directory.ensureExistance();
-  await file.write("import { expect } from 'mocha-es6';\n" + source);
+  await file.write(`import { expect } from ${JSON.stringify(System.decanonicalize('mocha-es6/index.js'))};\n` + source);
   try {
     const { testsByFile } = await loadMochaTestFile(file.url);
     const changes = [], errors = [];

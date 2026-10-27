@@ -84,14 +84,24 @@ export default class TestRunner {
       });
       JSON.stringify(results);
       `, { timeout: TEST_RUNNER_EVAL_TIMEOUT })
+      const browserErrors = this.headlessSession.summarizeRecentConsoleErrors();
+      if (browserErrors) {
+        const files = JSON.parse(results);
+        for (const file of files) {
+          if (file.tests?.some(test => test.type === 'test' && test.state && test.state !== 'succeeded')) {
+            file.browserErrors = browserErrors;
+          }
+        }
+        results = JSON.stringify(files);
+      }
     } catch (err) {
       const browserErrors = this.headlessSession?.summarizeRecentConsoleErrors();
       results = JSON.stringify({
-        error: err.message,
+        error: err.stack || err.message || String(err),
         browserErrors
       });
     } finally {
-      await this.headlessSession.dispose();
+      await this.headlessSession?.dispose();
       return results;
     }
   }

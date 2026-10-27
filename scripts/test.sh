@@ -28,14 +28,16 @@ start_test_server() {
 
   while (( attempt <= SERVER_START_MAX_ATTEMPTS )); do
     # start a new lively.next server
-    ./start-server.sh > /tmp/lively-next-test-server.log 2>&1 &
+    set -m
+    ./start-server.sh > "$SERVER_LOG" 2>&1 &
     SERVER_PID=$!
+    set +m
     if node ./scripts/wait-for-server.js "$SERVER_READY_URL" "$SERVER_READY_TIMEOUT" 1000 "$SERVER_PID"; then
       return 0
     fi
 
     echo "Lively server start attempt $attempt/$SERVER_START_MAX_ATTEMPTS failed. Recent server output:"
-    tail -80 /tmp/lively-next-test-server.log 2>/dev/null || true
+    tail -80 "$SERVER_LOG" 2>/dev/null || true
     stop_test_server
     ((attempt++))
   done
@@ -46,28 +48,41 @@ start_test_server() {
 
 stop_test_server() {
   if [ -n "$SERVER_PID" ]; then
-    kill "$SERVER_PID" 2>/dev/null || true
+    node ./scripts/stop-process-tree.cjs "$SERVER_PID"
     wait "$SERVER_PID" 2>/dev/null || true
     SERVER_PID=
   fi
-  pkill -f "bin/start-server.js.*9011" 2>/dev/null || true
-  pkill -f "start-server.sh" 2>/dev/null || true
 }
+
+cleanup() {
+  if [ -n "$TEST_CLIENT_PID" ]; then
+    node ./scripts/stop-process-tree.cjs "$TEST_CLIENT_PID"
+    wait "$TEST_CLIENT_PID" 2>/dev/null || true
+  fi
+  stop_test_server
+  rm -f "$SERVER_LOG" "$RESULT_LOG"
+}
+
+SERVER_LOG=$(mktemp "${TMPDIR:-/tmp}/lively-next-test-server.XXXXXX")
+RESULT_LOG=$(mktemp "${TMPDIR:-/tmp}/lively-next-test-results.XXXXXX")
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 run_package_tests() {
   local package="$1"
   local attempt=1
-  local output
-
   while true; do
-    output=$(node --dns-result-order ipv4first ./scripts/test.js "$package")
+    node --dns-result-order ipv4first ./scripts/test.js "$package" > "$RESULT_LOG" &
+    TEST_CLIENT_PID=$!
+    wait "$TEST_CLIENT_PID" || echo 'SUMMARY-INDICATE-FAILURE' >> "$RESULT_LOG"
+    TEST_CLIENT_PID=
+    output=$(cat "$RESULT_LOG")
     if ! echo "$output" | grep -Eq "ECONNREFUSED|ECONNRESET|socket hang up"; then
-      echo "$output"
       return 0
     fi
 
     if (( attempt >= TEST_RESULT_MAX_ATTEMPTS )); then
-      echo "$output"
       return 0
     fi
 
@@ -75,7 +90,6 @@ run_package_tests() {
     if [ "$CI" ]; then
       stop_test_server >&2
       start_test_server >&2 || {
-        echo "$output"
         return 0
       }
     else
@@ -85,52 +99,7 @@ run_package_tests() {
   done
 }
 
-# Clean up any lingering headless Chrome processes and lock files
-# These can remain from previous test runs and block new browser instances
-echo "Cleaning up any lingering Chrome processes..."
-pkill -f "chrome.*--headless" 2>/dev/null || true
-pkill -f "chromium.*--headless" 2>/dev/null || true
-
-# Remove Chrome singleton files if they exist
-CHROME_PROFILE_DIR="lively.headless/chrome-data-dir"
-if [ -d "$CHROME_PROFILE_DIR" ]; then
-  echo "Resetting Chrome profile directory: $CHROME_PROFILE_DIR"
-  rm -rf "$CHROME_PROFILE_DIR"
-  mkdir -p "$CHROME_PROFILE_DIR"
-  touch "$CHROME_PROFILE_DIR/.gitkeep"
-fi
-
-testfiles=(
-"lively.context"
-"lively.lang"
-"lively.resources"
-"lively.bindings"
-"lively.notifications"
-"lively.classes"
-"lively.serializer2"
-"lively.storage"
-"lively.ast"
-"lively.source-transform"
-"lively.vm"
-"lively.modules"
-"lively-system-interface"
-"lively.graphics"
-"lively.morphic"
-"lively.components"
-"lively.ide"
-"lively.halos"
-"lively.user"
-"lively.2lively"
-"lively.changesets"
-"lively.git"
-"lively.server"
-"lively.shell"
-"lively.collab"
-"lively.traits" 
-"lively.freezer"
-"lively.headless"
-"lively.keyboard"
-)
+testfiles=($(node -e 'console.log(require("./scripts/test-packages.json").join(" "))'))
 
 # To easily handle the case where we run the tests for a PR but no relevant files changed.
 # Challenge here is to differentiate this case from the one where we want to run the tests in all packages.
@@ -188,7 +157,7 @@ for package in "${testfiles[@]}"; do
     }
   fi
   # echo output without the summary stats
-  output=$(run_package_tests "$package")
+  run_package_tests "$package"
   
   if uname | grep 'Linux' > /dev/null; then
     echo "$output" | sed -s -e 's/SUMMARY.*$//g'
@@ -223,13 +192,6 @@ if [ "$STARTED_SERVER" = "1" ];
 then
     stop_test_server
 fi
-
-# Clean up any headless Chrome processes that may have been started during tests
-echo "Cleaning up Chrome processes after tests..."
-pkill -f "chrome.*--headless" 2>/dev/null || true
-pkill -f "chromium.*--headless" 2>/dev/null || true
-pkill -f "chrome.*lively.headless/chrome-data-dir" 2>/dev/null || true
-pkill -f "chromium.*lively.headless/chrome-data-dir" 2>/dev/null || true
 
 ((ALL_TESTS=GREEN_TESTS + RED_TESTS + SKIPPED_TESTS))
 if [ ! "$1" ];

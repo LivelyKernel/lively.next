@@ -54,7 +54,6 @@ export class HeadlessSession {
 
   async ensureBrowser () {
       const newBrowser = (this.constructor.browser = await puppeteer.launch({
-         userDataDir: packagePath + 'chrome-data-dir',
          protocolTimeout: this.options.protocolTimeout,
          ...containerized ? { executablePath: 'chromium' } : {},
          headless: 'new',

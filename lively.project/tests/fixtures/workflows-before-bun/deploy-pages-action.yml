@@ -1,0 +1,84 @@
+name: Deploy Project to GitHub Pages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "build-and-deploy"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup `node`
+        uses: actions/setup-node@v3
+        with:
+          node-version: '24'
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip1
+      - name: Restore `lively.next` repo
+        id: cache-lively
+        uses: actions/cache/restore@v3
+        env:
+          cache-name: lively-repo
+          ref: abcdef1234567
+        with:
+          path: .
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ env.ref }}
+      - name: Checkout `lively.next`
+        if: ${{ steps.cache-lively.outputs.cache-hit != 'true' }}
+        uses: actions/checkout@v4
+        with:
+          repository: LivelyKernel/lively.next
+          ref: abcdef1234567
+      - name: Prepare to install `lively.next`
+        run: chmod a+x ./install.sh
+      - name: Install `lively.next`
+        if: ${{ steps.cache-lively.outputs.cache-hit != 'true' }}
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 15
+          max_attempts: 5
+          retry_on: error
+          command: ./install.sh --freezer-only
+      - name: Save `lively` repo in cache
+        if: ${{ steps.cache-lively.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v3
+        env:
+          cache-name: lively-repo
+          ref: abcdef1234567
+        with:
+          path: .
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ env.ref }}
+      - name: Checkout Project Repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          path: local_projects/me--project
+      - name: Build Project
+        run: npm run build-minified --prefix local_projects/me--project
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: local_projects/me--project/build
+  deploy:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v2
+      - name: Delete uploaded Artifact
+        uses: geekyeggo/delete-artifact@v2
+        with:
+          name: github-pages

@@ -148,14 +148,17 @@ const req = http.request(options, res => {
               console.log(`${test.fullTitle} failed ❌`);
             }
             if (test.error) {
-              console.log(`  ERROR: ${test.error.message || test.error}`);
-              if (test.error.actual !== undefined && test.error.expected !== undefined) {
-                console.log(`  EXPECTED: ${JSON.stringify(test.error.expected).slice(0, 500)}`);
-                console.log(`  ACTUAL:   ${JSON.stringify(test.error.actual).slice(0, 500)}`);
-              }
+              const details = testFailureDetails(test);
+              if (!CI) console.log(details);
+              if (CI) markdownListOfFailingTests += `\n\`\`\`text\n${details}\n\`\`\`\n`;
             }
           }
         });
+        if (testfile.browserErrors) {
+          const details = `Recent browser console errors:\n${testfile.browserErrors}`;
+          console.log(details);
+          if (CI) markdownListOfFailingTests += `\n\`\`\`text\n${details}\n\`\`\`\n`;
+        }
         if (CI) console.log('::endgroup::');
         else console.log('');
       });

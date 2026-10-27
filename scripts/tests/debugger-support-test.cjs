@@ -32,6 +32,7 @@ test('TestRunner passes configured open and evaluation timeouts to its real head
     async open(_, ready) { await ready(this); }
     async runEval(code, opts) { if (code.includes('runTestsInPackage')) { evalOptions = opts; return '[]'; } return true; }
     async dispose() {}
+    summarizeRecentConsoleErrors() { return ''; }
   }
   const source = read('lively.server/plugins/test-runner.js').replace(/^import .*;\n/gm, '').replace('export default class', 'class');
   const Runner = new Function('HeadlessSession', 'promise', 'process', source + '\nreturn TestRunner;')(
@@ -87,6 +88,7 @@ test('CI TestRunner requests GC for retention assertions', async () => {
     async open() {}
     async runEval() { return '[]'; }
     async dispose() {}
+    summarizeRecentConsoleErrors() { return ''; }
   }
   const source = read('lively.server/plugins/test-runner.js').replace(/^import .*;\n/gm, '').replace('export default class', 'class');
   const Runner = new Function('HeadlessSession', 'promise', 'process', source + '\nreturn TestRunner;')(

@@ -5,6 +5,7 @@ import { resource } from 'lively.resources';
 import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
 import { loadPackage } from 'lively-system-interface/commands/packages.js';
 import { workflowDefinition } from './templates/test-action.js';
+import { preserveWorkflowCustomizations } from './templates/workflow-customizations.js';
 import { VersionChecker } from 'lively.ide/studio/version-checker.cp.js';
 import { StatusMessageConfirm, StatusMessageWarning, StatusMessageError } from 'lively.halos/components/messages.cp.js';
 import { join } from 'lively.modules/src/url-helpers.js';
@@ -722,25 +723,36 @@ export class Project {
     reloadPackage(System, this.package.url);
   }
 
-  async regeneratePipelines () {
+  async regeneratePipelines ({ showWarnings = true } = {}) {
     if (!lively.isInOfflineMode) {
       await this.checkPagesSupport();
       await this.gitResource.activateGitHubPages(currentUserToken(), this.name, this.repoOwner);
     }
-    let pipelineFile, content;
     const livelyConfig = this.config.lively;
-
-    pipelineFile = join(this.url, '.github/workflows/ci-tests.yml');
-    content = await this.fillPipelineTemplate(workflowDefinition, livelyConfig.testOnPush);
-    await (await resource(pipelineFile).ensureExistance()).write(content);
-
-    pipelineFile = join(this.url, '.github/workflows/build-upload-action.yml');
-    content = await this.fillPipelineTemplate(buildRemoteScript, livelyConfig.buildOnPush);
-    await (await resource(pipelineFile).ensureExistance()).write(content);
-
-    pipelineFile = join(this.url, '.github/workflows/deploy-pages-action.yml');
-    content = await this.fillPipelineTemplate(deployScript, livelyConfig.deployOnPush);
-    await (await resource(pipelineFile).ensureExistance()).write(content);
+    const updates = [];
+    const warnings = [];
+    for (const [name, definition, onPush] of [
+      ['ci-tests.yml', workflowDefinition, livelyConfig.testOnPush],
+      ['build-upload-action.yml', buildRemoteScript, livelyConfig.buildOnPush],
+      ['deploy-pages-action.yml', deployScript, livelyConfig.deployOnPush]
+    ]) {
+      const file = resource(join(this.url, '.github/workflows', name));
+      const previous = await file.exists() ? await file.read() : '';
+      const generated = await this.fillPipelineTemplate(definition, onPush);
+      try {
+        const content = preserveWorkflowCustomizations(previous, generated, message => warnings.push(`${name}: ${message}`));
+        updates.push({ file, content });
+      } catch (error) {
+        throw new Error(`${name}: ${error.message}`);
+      }
+    }
+    // Validate every custom section before replacing any workflow.
+    for (const { file, content } of updates) await (await file.ensureExistance()).write(content);
+    if (showWarnings && warnings.length) {
+      const message = warnings.join('\n');
+      console.warn(message);
+      $world.setStatusMessage(message, StatusMessageWarning);
+    }
   }
 
   async fillPipelineTemplate (workflowDefinition, triggerOnPush = false) {
@@ -799,7 +811,7 @@ export class Project {
     this.increaseVersion(increaseLevel);
     try {
       const hasRemote = await this.gitResource.hasRemote();
-      if (hasRemote && needsPipelines) await this.regeneratePipelines();
+      if (hasRemote && needsPipelines) await this.regeneratePipelines({ showWarnings: false });
       await this.saveConfigData();
       if (hasRemote) {
         if (!lively.isInOfflineMode && !initialSave) await this.gitResource.pullRepo();
