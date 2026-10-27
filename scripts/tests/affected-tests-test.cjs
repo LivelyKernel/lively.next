@@ -15,15 +15,16 @@ try {
   git('init', '-b', 'main');
   git('config', 'user.name', 'test');
   git('config', 'user.email', 'test@example.invalid');
-  const packages = ['lively.a', 'lively.b', 'lively.c', 'lively.d', 'lively-system-interface'];
+  const packages = ['lively.a', 'lively.b', 'lively.c', 'lively.d', 'lively-system-interface', 'lively.unlisted'];
   write('package.json', { workspaces: packages });
-  write('scripts/test-packages.json', packages);
+  write('scripts/test-packages.json', packages.filter(name => name !== 'lively.unlisted'));
   const manifests = [
     { dependencies: { 'lively.c': '*' } },
     { devDependencies: { 'lively.a': '*' } },
     { optionalDependencies: { 'lively.b': '*' } },
     {},
-    { peerDependencies: { 'lively.b': '*' } }
+    { peerDependencies: { 'lively.b': '*' } },
+    {}
   ];
   packages.forEach((name, index) => {
     write(`${name}/package.json`, { name, ...manifests[index] });
@@ -38,6 +39,10 @@ try {
     cwd: fixture, env: { ...process.env, GITHUB_BASE_REF: 'main' }, encoding: 'utf8'
   }).trim().split(/\s+/).sort();
   assert.deepEqual(select(), ['none']);
+  write('lively.unlisted/index.js', 'changed uncatalogued package');
+  git('add', '.'); git('commit', '-m', 'uncatalogued');
+  assert.deepEqual(select(), ['lively.unlisted'], 'changed workspaces cannot disappear from test selection');
+  git('update-ref', 'refs/remotes/origin/main', 'HEAD');
   write('lively.a/index.js', 'changed');
   git('add', '.'); git('commit', '-m', 'dependency');
   assert.deepEqual(select(), ['lively-system-interface', 'lively.a', 'lively.b', 'lively.c'].sort());
@@ -56,7 +61,7 @@ try {
   git('update-ref', 'refs/remotes/origin/main', 'HEAD');
   git('mv', 'lively.a/index.js', 'lively.d/from-a.js');
   git('commit', '-m', 'move across packages');
-  assert.deepEqual(select(), packages.sort(), 'both sides of a rename affect tests');
+  assert.deepEqual(select(), packages.filter(name => name !== 'lively.unlisted').sort(), 'both sides of a rename affect tests');
   git('update-ref', 'refs/remotes/origin/main', 'HEAD');
   git('rm', 'lively.d/from-a.js');
   git('commit', '-m', 'delete file');

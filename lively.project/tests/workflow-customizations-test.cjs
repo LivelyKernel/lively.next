@@ -53,8 +53,8 @@ const fileName = name => `/project/.github/workflows/${name}`;
   files.set(fileName(names[2]), previous);
   files.set(fileName(names[1]), 'name: Build Project\njobs:\n  build:\n    steps:\n      - run: echo legacy-custom-step\n');
   const beforeLegacy = new Map(files);
-  await assert.rejects(() => runner.regeneratePipelines(), /unmarked.*workflow.*custom|custom.*workflow.*unmarked/i);
-  assert.deepEqual(files, beforeLegacy, 'never overwrite legacy custom steps without markers');
+  await runner.regeneratePipelines();
+  assert.equal(files.get(fileName(names[1])), beforeLegacy.get(fileName(names[1])), 'keep unmarked custom workflows without blocking project save or upgrade');
   assert.throws(() => merge(custom('removed', 'keep me\n'), template('before-tests')), /custom.*section|section.*custom/i);
   assert.throws(() => merge(custom('before-tests') + custom('before-tests'), template('before-tests')), /custom.*section|section.*custom/i);
   assert.throws(() => merge('      # lively.next:custom start before-tests\nkeep me\n', template('before-tests')), /custom.*section|section.*custom/i);
@@ -71,7 +71,11 @@ const fileName = name => `/project/.github/workflows/${name}`;
     const legacy = actual.replace(/^[ \t]*# lively.next:custom[^\n]*\n?/gm, '').trimEnd();
     assert.equal(merge(legacy.replaceAll('%LIVELY_VERSION%', 'abcdef1234567'), actual.replaceAll('%LIVELY_VERSION%', '1234567abcdef')),
       actual.replaceAll('%LIVELY_VERSION%', '1234567abcdef'), name + ' unchanged legacy workflows migrate with runtime updates');
-    assert.throws(() => merge(legacy + '\n      - run: echo legacy-custom-step\n', actual), /unmarked.*workflow.*custom|custom.*workflow.*unmarked/i);
+    const customizedLegacy = legacy + '\n      - run: echo legacy-custom-step\n';
+    assert.equal(merge(customizedLegacy, actual), customizedLegacy, 'keep unmarked custom workflows verbatim');
+    const olderGenerated = legacy.replace('actions/checkout@v4', 'actions/checkout@v3')
+      .replace('node-version: \'24.20.0\'', 'node-version: \'20\'');
+    assert.equal(merge(olderGenerated, actual), olderGenerated, 'historical generated workflows do not block an upgrade');
   }
   console.log('Workflow regeneration preserves custom steps, updates pins and leaves all files intact on invalid sections');
 })().catch(err => { console.error(err); process.exitCode = 1; });

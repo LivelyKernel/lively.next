@@ -1,4 +1,7 @@
 [
+  "lively.context",
+  "lively.project",
+  "lively.installer",
   "lively.lang",
   "lively.resources",
   "lively.bindings",
