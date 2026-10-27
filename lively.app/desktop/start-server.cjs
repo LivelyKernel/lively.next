@@ -555,6 +555,71 @@ function emitError (msg) {
   });
 }
 
+function bootUrlForPort (port) {
+  const bootUrl = process.env.LIVELY_APP_BOOT_URL || '/dashboard/';
+  if (/^https?:\/\//.test(bootUrl)) return bootUrl;
+  const path = String(bootUrl || '/dashboard/');
+  return 'http://127.0.0.1:' + port + (path.startsWith('/') ? path : '/' + path);
+}
+
+// Retained-environment debugging reads closure scopes through NW.js's Blink
+// inspector (chromium-args --remote-debugging-port). It is on by default in
+// both desktop modes; LIVELY_APP_FUNCTION_SCOPES=0 disables it.
+function functionScopesEnabled () {
+  return process.env.LIVELY_APP_FUNCTION_SCOPES !== '0';
+}
+
+/** Restrict scope inspection to the same desktop entry pages and origin as the menu bridge. */
+function trustedFunctionScopePage (page) {
+  try {
+    const { fileURLToPath } = require('node:url');
+    const url = new URL(page.location.href);
+    if (module.exports.desktopOrigin && url.origin === module.exports.desktopOrigin) return true;
+    if (url.protocol !== 'file:') return false;
+    const file = fs.realpathSync(fileURLToPath(url));
+    const entries = [path.join(__dirname, 'boot.html'), path.join(__dirname, '..', 'boot.html')];
+    const base = module.exports.livelyNative?.baseURL;
+    if (base) for (const entry of ['landing-page', 'loading-screen']) {
+      entries.push(fileURLToPath(base + 'lively.freezer/' + entry + '/index.html'));
+    }
+    return entries.some(entry => fs.existsSync(entry) && fs.realpathSync(entry) === file);
+  } catch (_) { return false; }
+}
+
+function installFunctionScopeReader (win) {
+  if (!functionScopesEnabled()) return;
+  const { captureRendererFunctionBindings } = require('./function-scopes.cjs');
+  const cdpPort = Number(process.env.LIVELY_APP_CDP_PORT || 9222);
+  const install = () => {
+    const page = win.window;
+    if (!trustedFunctionScopePage(page)) {
+      if (page.livelyDesktop?.debugger) delete page.livelyDesktop.debugger.captureFunctionBindings;
+      return;
+    }
+    const desktop = page.livelyDesktop || (page.livelyDesktop = new page.Object());
+    const debuggerBridge = desktop.debugger || (desktop.debugger = new page.Object());
+    // Keep the backend functions in a closure: functions, promises, errors and
+    // the binding container exposed to the page must belong to its own realm.
+    debuggerBridge.captureFunctionBindings = page.Function('capture', 'trusted', `
+      return async function captureFunctionBindings(func, names) {
+        try {
+          if (!trusted()) throw new Error('Function scopes require a trusted desktop page');
+          const bindings = await capture(func, names);
+          const result = {};
+          for (const key of Reflect.ownKeys(bindings)) {
+            Object.defineProperty(result, key, Object.getOwnPropertyDescriptor(bindings, key));
+          }
+          return result;
+        } catch (error) { throw new Error(String(error.message || error)); }
+      };
+    `)((func, names) => captureRendererFunctionBindings(page, func, names, cdpPort),
+      () => win.window === page && trustedFunctionScopePage(page));
+  };
+  win.on('loaded', install);
+  // The boot page may have finished loading before this window was resolved.
+  if (win.window.document?.readyState === 'complete') install();
+}
+
 // ---------------------------------------------------------------------------
 // 5. Boot
 // ---------------------------------------------------------------------------
@@ -688,6 +753,7 @@ function emitError (msg) {
       });
       findWindow();
     });
+    installFunctionScopeReader(win);
     const navigate = () => win.window.livelyBoot.navigate(dashboardURL);
     if (win.window.livelyBoot) navigate();
     else win.once('loaded', navigate);
@@ -789,8 +855,8 @@ function emitError (msg) {
 
   emitStatus('Server ready, loading lively...');
 
-  const dashboardUrl = 'http://127.0.0.1:' + port + '/dashboard/';
-  module.exports.desktopOrigin = new URL(dashboardUrl).origin;
+  const dashboardUrl = bootUrlForPort(port);
+  module.exports.desktopOrigin = 'http://127.0.0.1:' + port;
   if (typeof nw === 'undefined') {
     log('NW.js global not available; server is ready for direct smoke mode.');
     return;
@@ -807,6 +873,74 @@ function emitError (msg) {
   }
 
   const win = (await new Promise(resolve => nw.Window.getAll(resolve)))[0];
+  let inspectorChild = null;
+  let inspectorStartScheduled = false;
+  let inspectorStarted = false;
+
+  function startInspectorService (trigger) {
+    if (closing || inspectorStarted || (process.env.LIVELY_APP_INSPECTOR_SERVICE !== '1' || functionScopesEnabled())) return;
+    inspectorStarted = true;
+    const cdpPort = Number(process.env.LIVELY_APP_CDP_PORT || 9222);
+    const inspectorPort = Number.isFinite(cdpPort) && cdpPort > 0 ? cdpPort : 9222;
+    log('starting inspector service after ' + trigger + ' on CDP port ' + inspectorPort);
+    inspectorChild = spawn(nodeBin, [
+      '--no-warnings',
+      '-r', path.join(desktopDir, 'watchdog.cjs'),
+      path.join(desktopDir, 'inspector-service-runner.cjs'),
+      '--cdpPort=' + inspectorPort
+    ], {
+      cwd: rootDir,
+      env: childEnv,
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+    inspectorChild.stdout.on('data', d => log('inspector: ' + d.toString().trimEnd()));
+    inspectorChild.stderr.on('data', d => log('inspector err: ' + d.toString().trimEnd()));
+    inspectorChild.on('error', err => {
+      log('inspector: service failed to start: ' + (err.stack || err));
+    });
+    inspectorChild.on('exit', (code, signal) => {
+      log('inspector: service exited (code=' + code + ', signal=' + signal + ')');
+      try {
+        const debuggerBridge = win.window.livelyDesktop && win.window.livelyDesktop.debugger;
+        if (debuggerBridge && typeof debuggerBridge.setServiceAttached === 'function') {
+          debuggerBridge.setServiceAttached(false);
+        } else if (debuggerBridge) {
+          debuggerBridge.inspectorServiceAttached = false;
+        }
+      } catch (_) {}
+    });
+  }
+
+  function scheduleInspectorStart (trigger) {
+    if (inspectorStartScheduled || inspectorStarted || (process.env.LIVELY_APP_INSPECTOR_SERVICE !== '1' || functionScopesEnabled())) return;
+    inspectorStartScheduled = true;
+    const timer = setTimeout(() => {
+      inspectorStartScheduled = false;
+      startInspectorService(trigger);
+    }, Number(process.env.LIVELY_APP_INSPECTOR_START_DELAY || 500));
+    if (timer && typeof timer.unref === 'function') timer.unref();
+  }
+
+  installFunctionScopeReader(win);
+
+  if (process.env.LIVELY_APP_INSPECTOR_SERVICE === '1' && !functionScopesEnabled()) {
+    win.once('loaded', function () {
+      let href = '';
+      try { href = String(win.window.location && win.window.location.href || ''); } catch (_) {}
+      log('window loaded after server boot: ' + (href || '(unknown location)'));
+      if (/^https?:\/\//.test(href)) scheduleInspectorStart('initial page load');
+      else log('inspector service waiting for HTTP page before attaching');
+    });
+    const fallbackTimer = setTimeout(() => {
+      let href = '';
+      try { href = String(win.window.location && win.window.location.href || ''); } catch (_) {}
+      if (/^https?:\/\//.test(href)) {
+        log('inspector service load-event fallback at ' + href);
+        scheduleInspectorStart('load-event fallback');
+      }
+    }, Number(process.env.LIVELY_APP_INSPECTOR_FALLBACK_DELAY || 15000));
+    if (fallbackTimer && typeof fallbackTimer.unref === 'function') fallbackTimer.unref();
+  }
 
   const navigate = () => {
     win.window.livelyBoot.setDashboardUrl(dashboardUrl);
@@ -819,6 +953,7 @@ function emitError (msg) {
     log('Window closing, killing server...');
     closing = true;
     clearTimeout(restartTimer);
+    if (inspectorChild) inspectorChild.kill('SIGTERM');
     if (currentChild) currentChild.kill('SIGTERM');
     setTimeout(() => this.close(true), 2000);
   });

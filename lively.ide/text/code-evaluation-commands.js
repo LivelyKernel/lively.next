@@ -125,8 +125,7 @@ export const codeEvaluationCommands = [
         err = result.error ? result.error : result.isError ? result.value : null;
       } catch (e) { err = e; }
       morph.selection.collapseToEnd();
-      // morph.insertTextAndSelect(err ? err.stack || String(err) : String(result.value));
-      const isColor = result.value && result.value.isColor;
+      const isColor = !err && result?.value && result.value.isColor;
       if (isColor) {
         morph.selection.text = String(result.value);
         const embeddedMorph = new Morph({

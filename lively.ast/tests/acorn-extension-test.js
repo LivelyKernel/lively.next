@@ -4,10 +4,21 @@ import { expect } from "mocha-es6";
 import { withMozillaAstDo, rematchAstWithSource } from "../lib/mozilla-ast-visitor-interface.js";
 import { parse } from "../lib/parser.js";
 import { arr } from "lively.lang";
-import { acorn, walk, findSiblings, findNodeByAstIndex, findStatementOfNode, copy } from "../lib/acorn-extension.js";
+import { acorn, walk, addAstIndex, findSiblings, findNodeByAstIndex, findStatementOfNode, copy } from "../lib/acorn-extension.js";
 import stringify from "../lib/stringify.js";
 
 describe('walk extension', function() {
+
+  it("exposes legacy helpers on acorn walk", function() {
+    expect(walk.addAstIndex).equals(addAstIndex);
+    expect(walk.findNodeByAstIndex).equals(findNodeByAstIndex);
+    expect(walk.findStatementOfNode).equals(findStatementOfNode);
+    expect(walk.copy).equals(copy);
+    expect(acorn.walk.addAstIndex).equals(addAstIndex);
+    expect(acorn.walk.findNodeByAstIndex).equals(findNodeByAstIndex);
+    expect(acorn.walk.findStatementOfNode).equals(findStatementOfNode);
+    expect(acorn.walk.copy).equals(copy);
+  });
 
   it("finds siblings", function() {
     var src = 'function foo() {\nvar a;\nvar b;\nvar c;\nvar d;\n}';

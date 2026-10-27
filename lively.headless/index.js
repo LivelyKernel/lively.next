@@ -64,6 +64,7 @@ export class HeadlessSession {
           // However, removing this option lead to instant crashes of chromium on some of our machines and in CI.
           // Wo do not know why that is, since the flag was not necessary previous to the introduction of the docker setup.
           "--no-sandbox",
+          ...(this.options.args || [])
          ]
        }));
        return this.constructor.browser || newBrowser;

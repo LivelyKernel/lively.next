@@ -16,4 +16,12 @@ fi
 # Resolver hooks in NODE_OPTIONS run in NW.js's renderer and crash Blink.
 unset NODE_OPTIONS
 
-exec "$NW_BIN" "$SCRIPT_DIR" "$@"
+NW_ARGS=()
+if [ -n "${LIVELY_APP_CDP_PORT:-}" ]; then
+  NW_ARGS+=("--remote-debugging-port=$LIVELY_APP_CDP_PORT")
+fi
+if [ "${LIVELY_APP_HEADLESS:-}" = "1" ]; then
+  NW_ARGS+=(--headless=new --disable-gpu)
+fi
+
+exec "$NW_BIN" "${NW_ARGS[@]}" "$SCRIPT_DIR" "$@"

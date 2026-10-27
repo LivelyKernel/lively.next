@@ -136,6 +136,7 @@ jobs:
           node --experimental-import-meta-resolve lively.freezer/tests/package-resolution-test.cjs
           node --experimental-import-meta-resolve lively.freezer/tests/dynamic-system-import-test.mjs
           node --experimental-import-meta-resolve lively.freezer/tests/swc-state-test.mjs
+          node lively.freezer/tests/debugger-bootstrap-test.mjs
           node --experimental-import-meta-resolve lively.freezer/tests/minify-test.cjs
           node --experimental-import-meta-resolve lively.freezer/tests/project-bundle-test.mjs
           node --experimental-import-meta-resolve lively.server/tests/browser-import-map-cache-test.mjs
@@ -145,6 +146,7 @@ jobs:
           node --experimental-import-meta-resolve lively.project/tests/package-install-test.mjs
           node --experimental-import-meta-resolve lively.installer/tests/runtime-roots-test.mjs
           node lively.morphic/tests/rollup-build-test.cjs
+          node lively.installer/tests/puppeteer-install-test.mjs
           node --experimental-import-meta-resolve lively.app/scripts/test-package-payload.mjs
           node --experimental-import-meta-resolve lively.app/scripts/test-downloads.mjs
           node lively.app/scripts/test-desktop-resources.mjs
@@ -160,6 +162,11 @@ jobs:
         run: node scripts/tests/test-diagnostics-test.cjs
       - name: Check affected-package test selection
         run: node scripts/tests/affected-tests-test.cjs
+      - name: Run desktop Node unit tests
+        run: |
+          node lively.app/scripts/test-unit.cjs
+          node scripts/tests/debugger-support-test.cjs
+          node --experimental-import-meta-resolve lively.context/tests/native-bootstrap-test.mjs
       - name: Run CI Test Script for Changed Folders
         run:  ./scripts/test.sh $(./scripts/tests_for_branch.sh)
       - name: Start the lively server
