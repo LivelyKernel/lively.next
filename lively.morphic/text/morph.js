@@ -31,6 +31,8 @@ import { availableFonts } from '../rendering/fonts.js';
  * Most of the time, this will just work for you. To toggle between a state where editing is possible and impossible, use the `readOnly` property.
  * When interactive editing is activated, you can use all features of text in lively, such as markers (think: syntax highlighting).
  * When interactive editing is deactivated, you can enable native selection of text.
+ * Mode switches retain inactive documents and string-only static lines by default.
+ * Use `clearModeSwitchCache()` to release them, or `cacheModeSwitches = false` to disable retention.
  *
  * **SOME TECHNICAL NOTES**
  * You should refrain from manipulating the Document of a Text manually, if you are not exactly sure what you are doing.
@@ -264,6 +266,18 @@ export class Text extends Morph {
         }
       },
 
+      cacheModeSwitches: {
+        group: 'text',
+        defaultValue: true,
+        after: ['renderingState'],
+        before: ['readOnly'],
+        set (enabled) {
+          this.setProperty('cacheModeSwitches', enabled);
+          if (!enabled) this.clearModeSwitchCache();
+        },
+        doc: 'Retain inactive documents and string-only static lines across mode switches. Disabling releases existing caches.'
+      },
+
       readOnly: {
         group: 'text',
         defaultValue: true,
@@ -429,7 +443,7 @@ export class Text extends Morph {
         after: ['document', 'textAndAttributes'],
         derived: true,
         get () {
-          return this.document ? this.document.textString : this.textAndAttributes.map((text, i) => i % 2 === 0 ? text : '').join('');
+          return this.document ? this.document.textString : this.textAndAttributes.map((text, i) => i % 2 === 0 ? (text?.isMorph ? objectReplacementChar : text) : '').join('');
         },
         set (value) {
           if (this.document) {
@@ -476,8 +490,12 @@ export class Text extends Morph {
           }
         },
         set (textAndAttributes) {
+          if (!this._isDowngrading) {
+            delete this.renderingState.cachedStaticLines;
+            this.invalidateDocumentBackup();
+          }
           if (obj.isArray(textAndAttributes) && textAndAttributes.find(m => m?.doit)) { this.needsDocument = true; }
-          if (obj.isArray(textAndAttributes) && textAndAttributes.find(m => m?.isMorph)) { this.needsDocument = true; }
+          const previousTextAndAttributes = this._isDowngrading ? [] : !this.document && this.textAndAttributes;
           if (this.document) {
             this.replace(
               { start: { row: 0, column: 0 }, end: this.documentEndPosition },
@@ -490,6 +508,11 @@ export class Text extends Morph {
             this.renderingState.needsFit = true;
           }
           this.setProperty('textAndAttributes', textAndAttributes);
+          if (!this.document) {
+            this._updateEmbeddedMorphsDuringReplace(
+              textAndAttributes.filter((part, i) => i % 2 === 0 && part?.isMorph),
+              { start: { row: 0, column: 0 } }, textAndAttributes, previousTextAndAttributes);
+          }
           if (this.world()) this.whenFontLoaded().then(() => this.fit());
         }
       },
@@ -541,6 +564,7 @@ export class Text extends Morph {
         set (val) {
           const maxScroll = this.scrollExtent.subXY(this.width, this.height);
           this.setProperty('scroll', val.minPt(maxScroll).maxPt(pt(0, 0)));
+          Morph.prototype.makeDirty.call(this);
         }
       },
 
@@ -1192,14 +1216,6 @@ export class Text extends Morph {
     return !this.document;
   }
 
-  get submorphs () {
-    if (!this.document) {
-      const embeddedMorphs = this.textAndAttributes.filter(m => m?.isMorph);
-      if (embeddedMorphs.length > 0) return [...super.submorphs, ...embeddedMorphs];
-    }
-    return super.submorphs;
-  }
-
   makeDirty () {
     if (this._positioningSubmorph) return;
     this.renderingState.needsRemeasure = true;
@@ -1207,7 +1223,8 @@ export class Text extends Morph {
   }
 
   requestTextLayoutMeasuring () {
-    this.renderingState.renderedTextAndAttributes = null;
+    this.renderingState.needsRemeasure = true;
+    if (this.document || this.renderingState.needsScrollLayerRemoved) this.renderingState.renderedTextAndAttributes = null;
   }
 
   static icon (iconName, props = { prefix: '', suffix: '' }) {
@@ -1230,6 +1247,7 @@ export class Text extends Morph {
 
     if (selector) {
       textChange = selector === 'replace';
+      if (textChange) delete this.renderingState.cachedStaticLines;
       if (textChange && (!this.fixedHeight || !this.fixedWidth)) { enforceFit = true; }
       hardLayoutChange = selector === 'addTextAttribute';
       if (textChange || hardLayoutChange) delete this._allFontsLoaded;
@@ -1382,8 +1400,9 @@ export class Text extends Morph {
       const idx = textAndAttributes.findIndex(m => m === morph);
       if (idx !== -1) {
         const removeCount = idx !== textAndAttributes.length - 1 ? 2 : 1;
-        textAndAttributes.splice(idx, removeCount);
-        this.textAndAttributes = textAndAttributes;
+        const next = textAndAttributes.slice();
+        next.splice(idx, removeCount);
+        this.textAndAttributes = next;
       }
     }
     if (embeddedMorphMap && embeddedMorphMap.has(morph)) {
@@ -1725,13 +1744,37 @@ export class Text extends Morph {
   defaultCharExtent () { return this.textLayout.defaultCharExtent(this); }
 
   get scrollExtent () {
+    let domExtent;
+    if (!this.document && !this.renderingState.scrollLayer && ['auto', 'scroll'].includes(this.clipMode)) {
+      const node = this.env.renderer?.getNodeForMorph(this);
+      const clientWidth = node?.isConnected ? node.clientWidth : 0;
+      const clientHeight = clientWidth ? node.clientHeight : 0;
+      if (clientWidth && clientHeight) {
+        domExtent = this.extent.addXY(node.scrollWidth - clientWidth, node.scrollHeight - clientHeight);
+        if (!this.renderingState.needsRemeasure &&
+            this.renderingState.renderedTextAndAttributes === this.textAndAttributes) return domExtent;
+      }
+    }
     // rms: See: morph>>scrollExtent
-    return this.textBounds()
+    const modelExtent = this.textBounds()
       .extent()
       .addPt(this.padding.topLeft())
       .addPt(this.padding.bottomRight())
       .addPt(this.scrollbarOffset)
       .maxPt(super.scrollExtent);
+    return domExtent ? domExtent.maxPt(modelExtent) : modelExtent;
+  }
+
+  get scrollbarVisible () {
+    if (!this.document && !this.renderingState.scrollLayer && !this.hideScrollbars && this.clipMode === 'auto') {
+      const node = this.env.renderer?.getNodeForMorph(this);
+      const clientWidth = node?.isConnected ? node.clientWidth : 0;
+      const clientHeight = clientWidth ? node.clientHeight : 0;
+      if (clientWidth && clientHeight) {
+        return { horizontal: node.scrollWidth > clientWidth, vertical: node.scrollHeight > clientHeight };
+      }
+    }
+    return super.scrollbarVisible;
   }
 
   get commands () {
@@ -1835,6 +1878,9 @@ export class Text extends Morph {
     let defaultTextStyle;
     if (this.document) defaultTextStyle = this.defaultTextStyle;
     else resetStyle = false;
+    delete this.renderingState.cachedStaticLines;
+    delete this._documentBackup;
+    delete this._documentBackupEndPosition;
     this.document = doc;
     this.document.lines.forEach(line => line.lineNeedsRerender = true);
     this.textLayout.reset();
@@ -2064,9 +2110,9 @@ export class Text extends Morph {
             this.removeAnchor(existing.anchor);
             disconnect(existing.anchor, 'position', content, 'position');
           }
-          embeddedMorphMap.set(content, { ...existing, anchor: null });
+          embeddedMorphMap.delete(content);
         }
-        content.remove();
+        if (content.owner === this) content.remove();
       }
     }
     if (morphsInAddedText.length) {
@@ -2090,11 +2136,17 @@ export class Text extends Morph {
         // to infer the movement). We therefore need to replace these anchor at all times
 
         if (embeddedMorphMap) {
+          if (!this.document) {
+            embeddedMorphMap.set(morph, { anchor: null });
+            continue;
+          }
           let anchor;
           if (embeddedMorphMap.has(morph)) {
             ({ anchor } = embeddedMorphMap.get(morph));
-            if (anchor) anchor.position = start;
-            continue;
+            if (anchor) {
+              anchor.position = start;
+              continue;
+            }
           }
           anchor = this.addAnchor({ id: 'embedded-' + morph.id, ...start });
           embeddedMorphMap.set(morph, { anchor });
@@ -2257,9 +2309,29 @@ export class Text extends Morph {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   /**
-   * This removes a Document and a TextLayout from a Text.
-   * These are necessary for features like interactive editing, but are expensive.
-   * Thus, we try to only keep them around when they are necessary.
+   * Release inactive mode-switch caches without changing content, anchors or the
+   * active document/DOM. Future switches may cache again unless cacheModeSwitches is false.
+   */
+  clearModeSwitchCache () {
+    if (this._documentBackup) this._documentBackupEndPosition = this._documentBackup.endPosition;
+    delete this._documentBackup;
+    delete this.renderingState.cachedStaticLines;
+    // A visible Line retains its whole document tree through its parent links.
+    if (!this.document) this.renderingState.visibleLines = [];
+  }
+
+  invalidateDocumentBackup () {
+    const end = this._documentBackup?.endPosition || this._documentBackupEndPosition;
+    if (this.document || !end) return;
+    const range = { start: { row: 0, column: 0 }, end };
+    this.anchors.forEach(anchor => anchor.onDelete(range));
+    delete this._documentBackup;
+    delete this._documentBackupEndPosition;
+  }
+
+  /**
+   * Switch to static text, removing the active Document and TextLayout.
+   * The inactive Document is retained for reuse when cacheModeSwitches is enabled.
    * This is an internal function and you should probably not call it yourself!
    */
   removeDocument () {
@@ -2267,8 +2339,18 @@ export class Text extends Morph {
 
     this._isDowngrading = true;
     const textAndAttributes = this.document.textAndAttributes;
-    this.textString = '';
+    this._documentBackup = this.document;
+    this.getProperty('selection')?.uninstall();
+    for (const [embedded, entry] of this.embeddedMorphMap) {
+      if (!entry.anchor) continue;
+      this.removeAnchor(entry.anchor);
+      disconnect(entry.anchor, 'position', embedded, 'position');
+      entry.anchor.embeddedMorph = null;
+      entry.anchor = null;
+    }
     this.document = null;
+    if (!this.cacheModeSwitches) this.clearModeSwitchCache();
+    delete this.renderingState.needsScrollLayerAdded;
     this.renderingState.needsScrollLayerRemoved = true;
     this.requestTextLayoutMeasuring();
     this.textLayout = null;
@@ -2287,21 +2369,31 @@ export class Text extends Morph {
     if (this.document) return;
 
     this._isUpgrading = true;
-    this.document = Document.fromString('', {
-      maxLeafSize: 50,
-      minLeafSize: 25,
-      maxNodeSize: 35,
-      minNodeSize: 7
-    });
-
-    this.document.insertTextAndAttributes(this.textAndAttributes, { row: 0, column: 0 });
+    delete this._documentBackupEndPosition;
+    if (this._documentBackup) {
+      this.document = this._documentBackup;
+      delete this._documentBackup;
+    } else {
+      this.document = Document.fromString('', {
+        maxLeafSize: 50,
+        minLeafSize: 25,
+        maxNodeSize: 35,
+        minNodeSize: 7
+      });
+      this.document.insertTextAndAttributes(this.textAndAttributes, { row: 0, column: 0 });
+    }
 
     this.textLayout = new Layout();
-    this.textLayout.estimateLineExtents(this);
+    this.textLayout.estimateLineExtents(this, true);
 
+    delete this.renderingState.needsScrollLayerRemoved;
     this.renderingState.needsScrollLayerAdded = true;
     this.renderingState.needsLinesToBeCleared = true;
     this._isUpgrading = false;
+    const textAndAttributes = this.document.textAndAttributes;
+    this._updateEmbeddedMorphsDuringReplace(
+      textAndAttributes.filter((part, i) => i % 2 === 0 && part?.isMorph),
+      { start: { row: 0, column: 0 } }, textAndAttributes, []);
     if (this.env.renderer) {
       this.env.forceUpdate(this);
     } else {
@@ -2349,10 +2441,13 @@ export class Text extends Morph {
   }
 
   removePlainTextAttribute (attr, value = null) {
-    this.textAndAttributes.forEach(ta => {
-      if (value) ta && ta[attr] === value && delete ta[attr];
-      else ta && delete ta[attr];
+    let changed = false;
+    this.textAndAttributes.forEach((ta, i) => {
+      if (i % 2 === 0 || !ta || !Object.prototype.hasOwnProperty.call(ta, attr) || value && ta[attr] !== value) return;
+      delete ta[attr];
+      changed = true;
     });
+    if (changed) this.onAttributesChanged(this.documentRange);
   }
 
   removeTextAttribute (attr, range = this.selection) {
@@ -2417,6 +2512,11 @@ export class Text extends Morph {
   }
 
   onAttributesChanged (range, resetLayout = true) {
+    delete this.renderingState.cachedStaticLines;
+    if (!this.document) {
+      this.invalidateDocumentBackup();
+      this.renderingState.renderedTextAndAttributes = null;
+    }
     if (resetLayout) this.invalidateTextLayout(false, false);
     if (this.document) {
       for (let i of arr.range(range.start.row, range.end.row, 1)) {
@@ -2997,8 +3097,13 @@ export class Text extends Morph {
          !obj.equals(this.renderingState.letterSpacing, this.letterSpacing)) {
         renderer.patchLineHeightAndLetterSpacing(node, this);
       }
-      if (!obj.equals(this.renderingState.renderedTextAndAttributes, this.textAndAttributes)) {
+      if (!obj.equals(this.renderingState.renderedTextAndAttributes, this.textAndAttributes) ||
+          this.textAndAttributes.some(part => part?.isMorph && part.renderingState.needsRerender)) {
         renderer.renderTextAndAttributes(node, this);
+      }
+      if (!obj.equals(this.renderingState.scroll, this.scroll)) {
+        renderer.updateNodeScrollFromMorph(this);
+        this.renderingState.scroll = this.scroll;
       }
     }
   }

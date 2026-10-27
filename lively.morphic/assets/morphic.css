@@ -22,8 +22,17 @@ textarea.lively-text-input.debug {
 }
 
 /*-=- generic morphic -=-*/
-.Morph {
+.Morph,
+.morph-preview {
   outline: none;
+  position: absolute;
+  background: white;
+  border: 0 solid white;
+  border-radius: 0;
+  transform-origin: 0 0;
+  transform: rotate(0rad) scale(1,1);
+  pointer-events: auto;
+  cursor: auto;
   /*for aliasing issue in chrome: http://stackoverflow.com/questions/6492027/css-transform-jagged-edges-in-chrome*/
   /* -webkit-backface-visibility: hidden; */
 
@@ -37,6 +46,11 @@ textarea.lively-text-input.debug {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+}
+
+.Morph.Path,
+.morph-preview.Path {
+  background: none;
 }
 
 .Morph img {

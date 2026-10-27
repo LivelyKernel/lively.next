@@ -1,6 +1,7 @@
 /*
 This script can be used to run the test in a selected package.
-The script assumes that a lively server is running locally on port 9011.
+The HTTP server defaults to localhost:9011. Set LIVELY_TEST_SERVER_READY_URL
+to use the same server URL as scripts/test.sh.
 This script gets used by `test.sh`. To invoke tests, run `test.sh`.
 You should rarely (never) want to invoke this script here directly.
 
@@ -17,6 +18,7 @@ const fs = require('fs');
 const CI = !!process.env.CI;
 
 const targetPackage = process.argv[2];
+const testServerURL = new URL(process.env.LIVELY_TEST_SERVER_READY_URL || 'http://localhost:9011/');
 let passed = 0; let failed = 0; let skipped = 0;
 let markdownListOfFailingTests = '';
 
@@ -62,8 +64,8 @@ if (CI) {
   console.log('');
 }
 const options = {
-  hostname: 'localhost',
-  port: 9011,
+  hostname: testServerURL.hostname,
+  port: testServerURL.port,
   path: '/subserver/TestRunner/' + targetPackage,
   method: 'GET'
 };
