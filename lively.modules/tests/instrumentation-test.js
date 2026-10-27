@@ -35,6 +35,35 @@ describe('CDN import metadata', () => {
     const plain = "export const text = 'import.meta.url';";
     expect(resolveEsmImportMeta('esm://ga.jspm.io/index.js', plain)).equals(plain);
   });
+
+  it('rewrites metadata inside class static blocks without parsing their grammar', () => {
+    const id = 'esm://ga.jspm.io/npm:fixture@1.0.0/modern.js';
+    const source = '(function () { class A { static { this.url = import.meta.url; } } return A.url; })()';
+    expect(new Function('return ' + resolveEsmImportMeta(id, source))()).equals(id.replace('esm:', 'https:'));
+  });
+
+  it('preserves import attributes and modern modules without metadata', () => {
+    const id = 'esm://esm.sh/fixture@1.0.0/modern.js';
+    const attributes = "import data from './data.json' with { type: 'json' };";
+    const source = attributes + '\nexport const url = import.meta.url;';
+    const prepared = resolveEsmImportMeta(id, source);
+    expect(prepared.startsWith(attributes)).equals(true);
+    expect(prepared).includes(JSON.stringify(id.replace('esm:', 'https:')));
+    const plain = "export class A { static { this.text = 'import metadata'; } }";
+    expect(resolveEsmImportMeta(id, plain)).equals(plain);
+  });
+
+  it('distinguishes metadata from property names, regexes, and template text', () => {
+    const id = 'esm://ga.jspm.io/fixture.js';
+    const source = "(function () { const obj = {import: {meta: 42}}; return [obj.import.meta, obj?.import.meta, /import.meta/.source, `import.meta ${import.meta.url}`]; })()";
+    const prepared = resolveEsmImportMeta(id, source);
+    expect(new Function('return ' + prepared)()).deep.equals([42, 42, 'import.meta', 'import.meta https://ga.jspm.io/fixture.js']);
+  });
+
+  it('leaves unrecognized syntax for the configured transpiler to handle', () => {
+    const source = 'export const metadata = import.meta; const unfinished = "';
+    expect(resolveEsmImportMeta('esm://ga.jspm.io/fixture.js', source)).equals(source);
+  });
 });
 
 let dir = 'local://lively.modules-instrumentation-test/';
