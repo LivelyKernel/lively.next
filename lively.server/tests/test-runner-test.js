@@ -41,6 +41,33 @@ describe('test runner server URLs', () => {
     const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
     expect(() => new AsyncFunction(code), 'generated browser code must parse').not.throw();
   });
+
+  for (const repositoryPackage of [true, false]) {
+    it('loads an unregistered ' + (repositoryPackage ? 'workspace' : 'local project') + ' at the configured port', async () => {
+      const code = calls.find(({ name }) => name === 'runEval').argument;
+      const loaded = [];
+      const localInterface = { coreInterface: { getPackages: () => [] } };
+      class BrowserRunner {
+        async runTestsInPackage () { return []; }
+      }
+      const imports = {
+        'lively.resources': { resource: url => ({
+          join: () => ({ exists: async () => repositoryPackage }),
+          asFile: () => ({ url: url.replace(/\/$/, '') })
+        }) },
+        'lively.lang': { promise: { waitFor: async condition => expect(condition()).to.be.ok } },
+        'lively-system-interface': { localInterface },
+        'lively-system-interface/commands/packages.js': { loadPackage: async (_, spec) => loaded.push(spec) },
+        'mocha-es6/index.js': {},
+        'lively.ide/test-runner.js': { default: BrowserRunner }
+      };
+      const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+      await new AsyncFunction('System', '$world', 'window', code)(
+        { import: async name => imports[name] }, { handForPointerId () {} }, { chai: {}, Mocha: {} });
+      expect(loaded).deep.equals([{ name: 'pkg', type: 'package', address:
+        'http://localhost:19050/' + (repositoryPackage ? '' : 'local_projects/') + 'pkg' }]);
+    });
+  }
 });
 
 describe('test script server URL', () => {
