@@ -89,7 +89,7 @@ function classFieldsInitialization (nodes, options) {
 
 function constructorTemplate (name, fields, options) {
   const n = options.nodes;
-  return n.funcExpr(name ? n.id(name) : null, [n.id('__first_arg__')],
+  const constructor = n.funcExpr(name ? n.id(name) : null, [n.id('__first_arg__')],
     n.block([n.ifStmt(
       n.logicalExpr(
         '&&',
@@ -103,12 +103,15 @@ function constructorTemplate (name, fields, options) {
               n.member(
                 n.member(n.id('this'), n.funcCall(n.member(n.id('Symbol'), n.id('for')), [n.literal('lively-instance-initialize')]), true),
                 n.id('apply')), [n.id('this'), n.id('arguments')]))]))]));
+  constructor[methodKindSymbol] = 'proto';
+  return constructor;
 }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 const isTransformedClassVarDeclSymbol = Symbol();
 const methodKindSymbol = Symbol();
+const propertiesGetterSymbol = Symbol();
 const tempLivelyClassVar = '__lively_class__';
 const tempLivelyClassHolderVar = '__lively_classholder__';
 
@@ -120,6 +123,7 @@ function splitExportDefaultWithClass (node, classHolder, options) {
 }
 
 function replaceSuper (node, state, path, options) {
+  if (state.currentMethod === null) return node;
   // just super
   console.assert(node.type === 'Super');
   const n = options.nodes;
@@ -140,6 +144,7 @@ function replaceSuper (node, state, path, options) {
 }
 
 function replaceSuperMethodCall (node, state, path, options) {
+  if (state.currentMethod === null) return node;
   // like super.foo()
   console.assert(node.type === 'CallExpression');
   console.assert(node.callee.object.type === 'Super');
@@ -156,6 +161,7 @@ function replaceSuperMethodCall (node, state, path, options) {
 }
 
 function replaceDirectSuperCall (node, state, path, options) {
+  if (state.currentMethod === null) return node;
   // like super()
   console.assert(node.type === 'CallExpression');
   console.assert(node.callee.type === 'Super');
@@ -173,6 +179,7 @@ function replaceDirectSuperCall (node, state, path, options) {
 }
 
 function replaceSuperGetter (node, state, path, options) {
+  if (state.currentMethod === null) return node;
   console.assert(node.type === 'MemberExpression');
   console.assert(node.object.type === 'Super');
   const n = options.nodes;
@@ -184,6 +191,7 @@ function replaceSuperGetter (node, state, path, options) {
 }
 
 function replaceSuperSetter (node, state, path, options) {
+  if (state.currentMethod === null) return node;
   console.assert(node.type === 'AssignmentExpression');
   console.assert(node.left.object.type === 'Super');
   const n = options.nodes;
@@ -276,7 +284,10 @@ function replaceClass (node, state, options) {
     } else {
       console.warn(`[lively.classes] classToFunctionTransform encountered unknown class property with kind ${kind}, ignoring it, ${JSON.stringify(propNode)} -> ${stringify(propNode)}`);
     }
-    if (decl) (classSide ? props.clazz : props.inst).push(decl);
+    if (decl) {
+      if (classSide && kind === 'get' && (key.name || key.value) === 'properties') value[propertiesGetterSymbol] = true;
+      (classSide ? props.clazz : props.inst).push(decl);
+    }
     return props;
   }, {
     inst: [],
@@ -340,7 +351,7 @@ function replaceClass (node, state, options) {
                 '=',
                 n.member(n.id(tempLivelyClassHolderVar), classId),
                 constructorTemplate(classId.name, fields, options)))
-          )]
+          ), n.varDecl(n.id(classId.name), n.id(tempLivelyClassVar), 'const')]
         : classId
           ? [n.varDecl(classId, constructorTemplate(classId.name, fields, options)), n.varDecl(n.id(tempLivelyClassVar), classId)]
           : [n.varDecl(n.id(tempLivelyClassVar), constructorTemplate(null, fields, options))],
@@ -399,6 +410,9 @@ class ClassReplaceVisitor extends Visitor {
 
   // FIXME: this is an extremely obscure way of implementing a custom visitor
   accept (node, state, path) {
+    if (node.type === 'Property' && (node.method || node.kind === 'get' || node.kind === 'set') && !state.currentMethod?.[propertiesGetterSymbol]) {
+      state = {...state, currentMethod: null};
+    }
     if (isFunctionNode(node)) {
       state = {
         ...state,
@@ -455,7 +469,7 @@ export function classToFunctionTransformBabel (path, state, options) {
   function handleFunctionDefinition (path, state) {
     const { nodes: n } = options;
     const { classHolder, currentMethodStack, currentMethod } = state;
-    currentMethodStack.push(path.node[methodKindSymbol] ? path.node : currentMethod);
+    currentMethodStack.push(path.isObjectMethod() && !currentMethod?.[propertiesGetterSymbol] ? null : path.node[methodKindSymbol] ? path.node : currentMethod);
     state.currentMethod = arr.last(currentMethodStack);
   }
 
@@ -475,7 +489,7 @@ export function classToFunctionTransformBabel (path, state, options) {
   });
 
   path.traverse({
-    'ArrowFunctionExpression|FunctionDeclaration|FunctionExpression': {
+    'ArrowFunctionExpression|FunctionDeclaration|FunctionExpression|ObjectMethod': {
       enter: handleFunctionDefinition,
       exit (path, state) {
         state.currentMethodStack.pop();

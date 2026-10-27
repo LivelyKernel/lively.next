@@ -1053,6 +1053,7 @@ export class Text extends Morph {
   get __only_serialize__ () {
     return arr.withoutAll(super.__only_serialize__, [
       'document',
+      'textAndAttributes',
       'undoManager',
       'markers',
       'textLayout',
@@ -1713,6 +1714,7 @@ export class Text extends Morph {
 
   invalidateTextLayout (resetCharBoundsCache = false, resetLineHeights = false) {
     const rs = this.renderingState;
+    rs.markers = null;
     if (!this.fixedWidth || !this.fixedHeight) rs.needsFit = true;
     const tl = this.textLayout;
     if (tl) {
