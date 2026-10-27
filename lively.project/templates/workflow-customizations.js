@@ -20,17 +20,39 @@ function customSections (source) {
 
 function generatedContent (source) {
   return source
+    .replace(/\r\n/g, '\n')
+    .replace(/[ \t]+$/gm, '')
     .replace(/^[ \t]*# lively.next:custom[^\n]*\n?/gm, '')
-    .replace(/^(          ref: )(?:[a-f\d]{7,40}|%LIVELY_VERSION%)[ \t]*$/gm, '$1%LIVELY_VERSION%')
-    .replace(/[ \t]+$/gm, '').trimEnd();
+    .replace(/(          cache-name: lively-repo(?:-with-build)?\n          ref: )[^\n]+/g, '$1%LIVELY_VERSION%')
+    .replace(/(          repository: LivelyKernel\/lively.next\n          ref: )[^\n]+/g, '$1%LIVELY_VERSION%')
+    .replace('%ACTION_TRIGGER%', '')
+    .replace(/^on:\n  push:\n    branches:\n      - main\n/m, 'on:\n')
+    .replace('%TOKEN_PERMISSIONS%', '')
+    .replace(/^(  id-token: write)\n  contents: read$/m, '$1')
+    .replace('%PROJECT_DEPENDENCIES%', '')
+    .replace(/\n      - name: Checkout Project Dependencies\n        uses: actions\/checkout@v4\n        with:\n          repository: [^\n]+\n          path: local_projects\/[^\n]+\/(?:\n          ssh-key: \$\{\{ secrets\.[\w]+ \}\})?/g, '')
+    .trimEnd();
 }
 
-export function preserveWorkflowCustomizations (previous, generated) {
+/** Reconstruct the generated templates preceding the pinned Bun workspace setup. */
+function beforeBunWorkspaces (source) {
+  const cache = source.includes('id: cache-lively-with-build') ? 'cache-lively-with-build' : 'cache-lively';
+  return source
+    .replace("node-version: '24.20.0'", "node-version: '24'")
+    .replace('        with:\n          bun-version: 1.4.2\n', '')
+    .replace('dtolnay/rust-toolchain@1.95.0', 'dtolnay/rust-toolchain@stable')
+    .replace('      - name: Install `lively.next`\n', `      - name: Install \`lively.next\`\n        if: \${{ steps.${cache}.outputs.cache-hit != 'true' }}\n`)
+    .replace(/      - name: Install Project Dependencies\n        run: node lively.project\/package-install.mjs local_projects\/[^\n]+\n/, '')
+    .replace(/bun run --cwd (local_projects\/[^\n ]+) build-minified/, 'npm run build-minified --prefix $1');
+}
+
+export function preserveWorkflowCustomizations (previous, generated, onPreserved = console.warn) {
   const custom = customSections(previous);
   const slots = customSections(generated);
-  if (previous.trim() && !custom.size && generatedContent(previous) !== generatedContent(generated)) {
-    // Historical generated files and user edits cannot be distinguished safely.
-    // Keep either intact without preventing project save or an upgrade.
+  const current = generatedContent(generated);
+  const old = generatedContent(previous);
+  if (previous.trim() && !custom.size && old !== current && old !== beforeBunWorkspaces(current)) {
+    onPreserved('Unmarked custom or older workflow kept unchanged: runtime, trigger and dependency updates were not applied. Move custom steps into lively.next:custom sections from the current templates (lively.project/README.md) to enable updates.');
     return previous;
   }
   for (const id of custom.keys()) {
