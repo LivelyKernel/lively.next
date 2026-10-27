@@ -19,7 +19,7 @@ async function check () {
   }
   const source = fs.readFileSync(path.join(root, 'lively.server/plugins/test-runner.js'), 'utf8')
     .replace(/^import .*;\n/gm, '').replace('export default class TestRunner', 'class TestRunner');
-  const Runner = vm.runInNewContext(`${source}\nTestRunner`, { HeadlessSession: Session, console, promise: {} });
+  const Runner = vm.runInNewContext(`${source}\nTestRunner`, { HeadlessSession: Session, console, promise: {}, process: { env: {} } });
   const data = await new Runner().run('pkg');
   assert.equal(disposed, 1, 'dispose the browser on ordinary assertion failures');
   assert.equal(JSON.parse(data)[0].browserErrors, 'BROWSER_SENTINEL');
@@ -46,6 +46,8 @@ async function check () {
   assert.match(output.join('\n'), /STACK_SENTINEL/);
   assert.match(output.join('\n'), /BROWSER_SENTINEL/);
   assert.match(output.join('\n'), /SUMMARY-failed:1/);
+  assert.match(output.join('\n'), /EXPECTED: 2/);
+  assert.match(output.join('\n'), /ACTUAL: 1/);
   assert.match(written.map(entry => entry.text).join('\n'), /STACK_SENTINEL/);
   assert.match(written.map(entry => entry.text).join('\n'), /BROWSER_SENTINEL/);
   records[0].tests[0].state = 'succeeded';

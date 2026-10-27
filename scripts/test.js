@@ -148,11 +148,9 @@ const req = http.request(options, res => {
               console.log(`${test.fullTitle} failed ❌`);
             }
             if (test.error) {
-              const details = [test.error.stack || test.error.message || String(test.error)];
-              if (test.error.expected !== undefined) details.push(`EXPECTED: ${JSON.stringify(test.error.expected)}`);
-              if (test.error.actual !== undefined) details.push(`ACTUAL: ${JSON.stringify(test.error.actual)}`);
-              console.log(details.join('\n'));
-              if (CI) markdownListOfFailingTests += `\n\`\`\`text\n${details.join('\n')}\n\`\`\`\n`;
+              const details = testFailureDetails(test);
+              console.log(details);
+              if (CI) markdownListOfFailingTests += `\n\`\`\`text\n${details}\n\`\`\`\n`;
             }
           }
         });
