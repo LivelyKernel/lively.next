@@ -32,6 +32,13 @@
   "scripts": {
     "build": "node tools/build.js"
   },
+  "lively": {
+    "ide": {
+      "exclude": [
+        "examples"
+      ]
+    }
+  },
   "systemjs": {
     "nodeRequirePackages": [
       "chai",

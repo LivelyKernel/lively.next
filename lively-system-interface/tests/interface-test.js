@@ -1,6 +1,15 @@
-/* global describe, it */
+/* global describe, it, System */
 import { expect } from 'mocha-es6';
 import { RemoteCoreInterface } from '../interfaces/interface.js';
+import { LocalCoreInterface } from '../interfaces/local-system.js';
+
+describe('package resource discovery', () => {
+  it('excludes intentionally failing Mocha examples while retaining package source', async () => {
+    const resources = await new LocalCoreInterface().resourcesOfPackage(System.baseURL + 'mocha-es6');
+    expect(resources.some(({ nameInPackage }) => nameInPackage === 'index.js'), 'package source must remain discoverable').equals(true);
+    expect(resources.some(({ nameInPackage }) => nameInPackage.startsWith('examples/')), 'examples must not enter package test discovery').equals(false);
+  });
+});
 
 describe('remote module API', () => {
   const accessor = new RemoteCoreInterface().livelyModulesAccessor();
