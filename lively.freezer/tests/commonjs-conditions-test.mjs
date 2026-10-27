@@ -7,7 +7,7 @@ import { rollup } from '@rollup/wasm-node';
 import { lively } from '../src/plugins/rollup.js';
 import resolver from '../src/resolvers/node.cjs';
 
-const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lively-require-conditions-'));
+const directory = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'lively-require-conditions-')));
 const pkg = path.join(directory, 'node_modules', 'conditional');
 let build;
 try {

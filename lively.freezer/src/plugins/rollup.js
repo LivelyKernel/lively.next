@@ -38,7 +38,7 @@ export function lively (args) {
     async resolveId (id, importer, options) {
       if (importer?.startsWith('\0') || id.startsWith('\0')) return null;
       id = map[id] || id;
-      if (bundler.asBrowserModule && id === 'eslint' && importer?.endsWith('/lively.ide/js/linter.js')) {
+      if (bundler.asBrowserModule && id === 'eslint' && importer?.replace(/\\/g, '/').endsWith('/lively.ide/js/linter.js')) {
         // The live import map exposes eslint; frozen linting only needs its browser-safe core.
         id = 'eslint/lib/linter/linter.js';
       }
