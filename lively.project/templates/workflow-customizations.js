@@ -35,20 +35,21 @@ function generatedContent (source, generatedDependencies) {
   if (versions.length && (versions.length !== 3 || new Set(versions).size !== 1 || !/^(?:[a-f\d]{7,40}|%LIVELY_VERSION%)$/.test(versions[0]))) return null;
   source = source.replace(refs, '$1%LIVELY_VERSION%');
   const project = source.match(/      - name: Checkout Project Repository\n        uses: actions\/checkout@v4\n        with:\n          ref: \$\{\{ github.ref \}\}\n          path: local_projects\/[^\n]+/);
-  if (!project) return { content: source, dependencies: new Set() };
+  if (!project) return { content: source, dependencies: new Map() };
   const start = project.index + project[0].length;
   const checkout = /\n      - name: Checkout Project Dependencies\n        uses: actions\/checkout@v4\n        with:\n          repository: ([^\n]+)\n          path: local_projects\/([^\n]+)\/(?:\n          ssh-key: \$\{\{ secrets\.([\w]+) \}\})?/y;
   let end = start;
-  const seen = new Set();
+  const seen = new Map();
   while (true) {
     checkout.lastIndex = end;
     const dependency = checkout.exec(source);
     if (!dependency) break;
     const [, repository, name, secret] = dependency;
-    if (seen.has(name) || generatedDependencies && !generatedDependencies.has(name) ||
+    if (generatedDependencies && !generatedDependencies.has(name)) return { content: null, unknownDependency: name };
+    if (seen.has(name) || generatedDependencies && generatedDependencies.get(name) !== !!secret ||
         repository !== name.replace(/--.*/, '') + '/' + name.replace(/.*--/, '') ||
         secret && secret !== name.replaceAll('/', '_').replaceAll('-', '_')) return null;
-    seen.add(name);
+    seen.set(name, !!secret);
     end = checkout.lastIndex;
   }
   return { content: source.slice(0, start) + source.slice(end), dependencies: seen };
@@ -89,7 +90,8 @@ export function preserveWorkflowCustomizations (previous, generated, onPreserved
   const old = generatedContent(previous, current?.dependencies);
   if (previous.trim() && !custom.size && (old === null || current === null ||
       ![current.content, beforeBunWorkspaces(current.content), beforeBunAndRust(current.content), beforeInstallRetry(current.content)].includes(old.content))) {
-    onPreserved('Unmarked custom or older workflow kept unchanged: runtime, trigger and dependency updates were not applied. Move custom steps into lively.next:custom sections from the current templates (lively.project/README.md) to enable updates.');
+    const checkout = old?.unknownDependency ? `Unknown dependency checkout "${old.unknownDependency}" kept unchanged. ` : '';
+    onPreserved(checkout + 'Unmarked custom or older workflow kept unchanged: runtime, trigger and dependency updates were not applied. Move custom steps into lively.next:custom sections from the current templates (lively.project/README.md) to enable updates.');
     return previous;
   }
   for (const id of custom.keys()) {

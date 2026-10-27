@@ -163,6 +163,8 @@ const fileName = name => `/project/.github/workflows/${name}`;
   const extraCheckout = '\n      - name: Checkout Project Dependencies\n        uses: actions/checkout@v4\n        with:\n          repository: me/tool\n          path: local_projects/me--tool/\n          ssh-key: ${{ secrets.TOOL_KEY }}\n';
   const edits = [
     ['renamed secret', privateDependencies, text => text.replace('secrets.me__private', 'secrets.MY_DEPLOY_KEY')],
+    ['secret added to public dependency', [{ name: 'me--public', hasRemote: true, privateRepo: false }], text => text.replace('path: local_projects/me--public/', 'path: local_projects/me--public/\n          ssh-key: ${{ secrets.me__public }}')],
+    ['secret removed from private dependency', privateDependencies, text => text.replace('\n          ssh-key: ${{ secrets.me__private }}', '')],
     ['changed checkout path', privateDependencies, text => text.replace('path: local_projects/me--private/', 'path: local_projects/me--private-v2/')],
     ['forked repository', privateDependencies, text => text.replace('repository: me/private', 'repository: myfork/private')],
     ['extra checkout after steps', [], text => text.trimEnd() + extraCheckout],
@@ -186,6 +188,7 @@ const fileName = name => `/project/.github/workflows/${name}`;
     assert.equal(await project.save({ message: 'test', needsPipelines: true }), true, 'custom unmarked workflows do not block project save');
     assert.equal(files.get(file), previous, label + ' must survive byte-for-byte');
     assert.equal(warnings.length, 1, label + ' gets one warning in the save flow');
+    if (label === 'ambiguous removed dependency') assert.match(warnings[0], /Unknown dependency checkout "me--private"/, 'name the checkout that cannot be safely removed');
   }
   assert.equal(legacyWarnings.length, 1, 'show a warning when an unmarked custom workflow cannot be updated');
   assert.match(legacyWarnings[0], /build-upload-action.yml/);
