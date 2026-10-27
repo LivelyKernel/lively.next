@@ -20,6 +20,13 @@
   "bin": {
     "mocha-es6": "bin/mocha-es6.js"
   },
+  "lively": {
+    "ide": {
+      "exclude": [
+        "examples"
+      ]
+    }
+  },
   "systemjs": {
     "nodeRequirePackages": [
       "chai",
