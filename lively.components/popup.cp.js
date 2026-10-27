@@ -1,6 +1,5 @@
 import { Color, pt } from 'lively.graphics';
 import { Polygon, TilingLayout, Label, Icon, ShadowObject, component } from 'lively.morphic';
-import { Button } from 'lively.components';
 
 const PopupLight = component({
   name: 'popup/light',

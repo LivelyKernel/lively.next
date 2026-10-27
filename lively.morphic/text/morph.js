@@ -429,7 +429,7 @@ export class Text extends Morph {
         after: ['document', 'textAndAttributes'],
         derived: true,
         get () {
-          return this.document ? this.document.textString : this.textAndAttributes.map((text, i) => i % 2 === 0 ? text : '').join('');
+          return this.document ? this.document.textString : this.textAndAttributes.map((text, i) => i % 2 === 0 ? (text?.isMorph ? objectReplacementChar : text) : '').join('');
         },
         set (value) {
           if (this.document) value = (value !== null) ? String(value) : '';
@@ -488,7 +488,7 @@ export class Text extends Morph {
             return;
           }
           if (obj.isArray(textAndAttributes) && textAndAttributes.find(m => m?.doit)) { this.needsDocument = true; }
-          if (obj.isArray(textAndAttributes) && textAndAttributes.find(m => m?.isMorph)) { this.needsDocument = true; }
+          const previousTextAndAttributes = this._isDowngrading ? [] : !this.document && this.textAndAttributes;
           if (this.document) {
             this.withMetaDo({ partOfTextAndAttributesAssignment: true }, () =>
               this.replace(
@@ -496,12 +496,19 @@ export class Text extends Morph {
                 textAndAttributes,
                 false
               ));
+            this.setProperty('textAndAttributes', textAndAttributes);
           } else {
             if (textAndAttributes.length === 0) textAndAttributes = ['', null];
             if (typeof textAndAttributes === 'string') textAndAttributes = [textAndAttributes, null];
             this.renderingState.needsFit = true;
+            this.groupChangesWhile(null, () => {
+              this.setProperty('textAndAttributes', textAndAttributes);
+              this.withMetaDo({ partOfTextAndAttributesAssignment: true }, () =>
+                this._updateEmbeddedMorphsDuringReplace(
+                  textAndAttributes.filter((part, i) => i % 2 === 0 && part?.isMorph),
+                  { start: { row: 0, column: 0 } }, textAndAttributes, previousTextAndAttributes));
+            });
           }
-          this.setProperty('textAndAttributes', textAndAttributes);
           if (this.world()) this.whenFontLoaded().then(() => this.fit());
         }
       },
@@ -553,6 +560,7 @@ export class Text extends Morph {
         set (val) {
           const maxScroll = this.scrollExtent.subXY(this.width, this.height);
           this.setProperty('scroll', val.minPt(maxScroll).maxPt(pt(0, 0)));
+          Morph.prototype.makeDirty.call(this);
         }
       },
 
@@ -1203,14 +1211,6 @@ export class Text extends Morph {
     return !this.document;
   }
 
-  get submorphs () {
-    if (!this.document) {
-      const embeddedMorphs = this.textAndAttributes.filter(m => m?.isMorph);
-      if (embeddedMorphs.length > 0) return [...super.submorphs, ...embeddedMorphs];
-    }
-    return super.submorphs;
-  }
-
   makeDirty () {
     if (this._positioningSubmorph) return;
     this.renderingState.needsRemeasure = true;
@@ -1218,7 +1218,8 @@ export class Text extends Morph {
   }
 
   requestTextLayoutMeasuring () {
-    this.renderingState.renderedTextAndAttributes = null;
+    this.renderingState.needsRemeasure = true;
+    if (this.document || this.renderingState.needsScrollLayerRemoved) this.renderingState.renderedTextAndAttributes = null;
   }
 
   static icon (iconName, props = { prefix: '', suffix: '' }) {
@@ -1393,8 +1394,9 @@ export class Text extends Morph {
       const idx = textAndAttributes.findIndex(m => m === morph);
       if (idx !== -1) {
         const removeCount = idx !== textAndAttributes.length - 1 ? 2 : 1;
-        textAndAttributes.splice(idx, removeCount);
-        this.textAndAttributes = textAndAttributes;
+        const next = textAndAttributes.slice();
+        next.splice(idx, removeCount);
+        this.textAndAttributes = next;
       }
     }
     if (embeddedMorphMap && embeddedMorphMap.has(morph)) {
@@ -1750,13 +1752,37 @@ export class Text extends Morph {
   defaultCharExtent () { return this.textLayout.defaultCharExtent(this); }
 
   get scrollExtent () {
+    let domExtent;
+    if (!this.document && !this.renderingState.scrollLayer && ['auto', 'scroll'].includes(this.clipMode)) {
+      const node = this.env.renderer?.getNodeForMorph(this);
+      const clientWidth = node?.isConnected ? node.clientWidth : 0;
+      const clientHeight = clientWidth ? node.clientHeight : 0;
+      if (clientWidth && clientHeight) {
+        domExtent = this.extent.addXY(node.scrollWidth - clientWidth, node.scrollHeight - clientHeight);
+        if (!this.renderingState.needsRemeasure &&
+            this.renderingState.renderedTextAndAttributes === this.textAndAttributes) return domExtent;
+      }
+    }
     // rms: See: morph>>scrollExtent
-    return this.textBounds()
+    const modelExtent = this.textBounds()
       .extent()
       .addPt(this.padding.topLeft())
       .addPt(this.padding.bottomRight())
       .addPt(this.scrollbarOffset)
       .maxPt(super.scrollExtent);
+    return domExtent ? domExtent.maxPt(modelExtent) : modelExtent;
+  }
+
+  get scrollbarVisible () {
+    if (!this.document && !this.renderingState.scrollLayer && !this.hideScrollbars && this.clipMode === 'auto') {
+      const node = this.env.renderer?.getNodeForMorph(this);
+      const clientWidth = node?.isConnected ? node.clientWidth : 0;
+      const clientHeight = clientWidth ? node.clientHeight : 0;
+      if (clientWidth && clientHeight) {
+        return { horizontal: node.scrollWidth > clientWidth, vertical: node.scrollHeight > clientHeight };
+      }
+    }
+    return super.scrollbarVisible;
   }
 
   get commands () {
@@ -2096,9 +2122,9 @@ export class Text extends Morph {
             this.removeAnchor(existing.anchor);
             disconnect(existing.anchor, 'position', content, 'position');
           }
-          embeddedMorphMap.set(content, { ...existing, anchor: null });
+          embeddedMorphMap.delete(content);
         }
-        content.remove();
+        if (content.owner === this) content.remove();
       }
     }
     if (morphsInAddedText.length) {
@@ -2122,11 +2148,17 @@ export class Text extends Morph {
         // to infer the movement). We therefore need to replace these anchor at all times
 
         if (embeddedMorphMap) {
+          if (!this.document) {
+            embeddedMorphMap.set(morph, { anchor: null });
+            continue;
+          }
           let anchor;
           if (embeddedMorphMap.has(morph)) {
             ({ anchor } = embeddedMorphMap.get(morph));
-            if (anchor) anchor.position = start;
-            continue;
+            if (anchor) {
+              anchor.position = start;
+              continue;
+            }
           }
           anchor = this.addAnchor({ id: 'embedded-' + morph.id, ...start });
           embeddedMorphMap.set(morph, { anchor });
@@ -2299,8 +2331,17 @@ export class Text extends Morph {
 
     this._isDowngrading = true;
     const textAndAttributes = this.document.textAndAttributes;
-    this.textString = '';
+    this.getProperty('selection')?.uninstall();
+    for (const [embedded, entry] of this.embeddedMorphMap) {
+      if (!entry.anchor) continue;
+      this.removeAnchor(entry.anchor);
+      disconnect(entry.anchor, 'position', embedded, 'position');
+      entry.anchor.embeddedMorph = null;
+      entry.anchor = null;
+    }
+    this.anchors.forEach(anchor => anchor.onDelete(this.documentRange));
     this.document = null;
+    delete this.renderingState.needsScrollLayerAdded;
     this.renderingState.needsScrollLayerRemoved = true;
     this.requestTextLayoutMeasuring();
     this.textLayout = null;
@@ -2331,9 +2372,14 @@ export class Text extends Morph {
     this.textLayout = new Layout();
     this.textLayout.estimateLineExtents(this);
 
+    delete this.renderingState.needsScrollLayerRemoved;
     this.renderingState.needsScrollLayerAdded = true;
     this.renderingState.needsLinesToBeCleared = true;
     this._isUpgrading = false;
+    const textAndAttributes = this.document.textAndAttributes;
+    this._updateEmbeddedMorphsDuringReplace(
+      textAndAttributes.filter((part, i) => i % 2 === 0 && part?.isMorph),
+      { start: { row: 0, column: 0 } }, textAndAttributes, []);
     if (this.env.renderer) {
       this.env.forceUpdate(this);
     } else {
@@ -3051,8 +3097,13 @@ export class Text extends Morph {
          !obj.equals(this.renderingState.letterSpacing, this.letterSpacing)) {
         renderer.patchLineHeightAndLetterSpacing(node, this);
       }
-      if (!obj.equals(this.renderingState.renderedTextAndAttributes, this.textAndAttributes)) {
+      if (!obj.equals(this.renderingState.renderedTextAndAttributes, this.textAndAttributes) ||
+          this.textAndAttributes.some(part => part?.isMorph && part.renderingState.needsRerender)) {
         renderer.renderTextAndAttributes(node, this);
+      }
+      if (!obj.equals(this.renderingState.scroll, this.scroll)) {
+        renderer.updateNodeScrollFromMorph(this);
+        this.renderingState.scroll = this.scroll;
       }
     }
   }
