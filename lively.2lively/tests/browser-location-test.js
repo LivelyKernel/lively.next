@@ -6,10 +6,12 @@ describe('browser connection location', function () {
   it('connects to the server root when the frozen dashboard has a nested base URL', function () {
     const baseURL = System.baseURL, originalDefault = L2LClient.default, originalEnsure = L2LClient.ensure;
     const originalRuntimeRoot = globalThis.SYSTEM_BASE_URL;
+    const hadServerURL = 'SERVER_URL' in globalThis, originalServerURL = globalThis.SERVER_URL;
     const hadNative = 'livelyNative' in globalThis, originalNative = globalThis.livelyNative;
     const hadDocument = typeof document !== 'undefined';
     if (!hadDocument) globalThis.document = {location: {origin: 'http://example.test'}};
     try {
+      delete globalThis.SERVER_URL;
       delete globalThis.SYSTEM_BASE_URL;
       delete globalThis.livelyNative;
       System.config({baseURL: 'http://example.test/dashboard/'});
@@ -23,7 +25,12 @@ describe('browser connection location', function () {
       globalThis.livelyNative = {baseURL: 'file:///C:/Users/RUNNER~1/runtime-root/'};
       expect(L2LClient.forLivelyInBrowser().url).equals('file:///C:/Users/RUNNER~1/runtime-root/lively-socket.io',
         'native desktop pages connect at the runtime root that livelyNative.isLocal routes in-process');
+      globalThis.SERVER_URL = 'http://custom-server.test/deploy/';
+      expect(L2LClient.forLivelyInBrowser().url).equals('http://custom-server.test/deploy/lively-socket.io',
+        'an explicit SERVER_URL keeps precedence over runtime detection');
     } finally {
+      if (hadServerURL) globalThis.SERVER_URL = originalServerURL;
+      else delete globalThis.SERVER_URL;
       if (originalRuntimeRoot === undefined) delete globalThis.SYSTEM_BASE_URL;
       else globalThis.SYSTEM_BASE_URL = originalRuntimeRoot;
       System.config({baseURL});

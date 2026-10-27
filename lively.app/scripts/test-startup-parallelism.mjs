@@ -119,6 +119,7 @@ function browserClientFixture (globals = {}, defaultClient) {
     System: { baseURL: 'http://localhost:9012/dashboard/' },
     document: { location: { origin: 'http://localhost:9012' } },
     obj: { equals: () => false },
+    urlHelper: { root: url => new URL('/', url).href },
     resource: url => ({ join: path => ({ url: url.replace(/\/$/, '') + '/' + path.replace(/^\//, '') }) }),
     ...globals
   };
@@ -131,7 +132,8 @@ for (const [name, globals, expected] of [
   ['dashboard', {}, 'http://localhost:9012/lively-socket.io'],
   ['custom server subdirectory', { SERVER_URL: 'https://server.test/lively/' }, 'https://server.test/lively/lively-socket.io'],
   ['configured system root', { SYSTEM_BASE_URL: 'https://server.test/lively/' }, 'https://server.test/lively/lively-socket.io'],
-  ['native desktop', { SERVER_URL: 'http://127.0.0.1:9011', SYSTEM_BASE_URL: 'file:///app/', document: { location: { origin: 'null' } } }, 'http://127.0.0.1:9011/lively-socket.io'],
+  ['native desktop', { SERVER_URL: 'http://127.0.0.1:9011', SYSTEM_BASE_URL: 'file:///app/', livelyNative: { baseURL: 'file:///native-app/' }, document: { location: { origin: 'null' } } }, 'http://127.0.0.1:9011/lively-socket.io'],
+  ['native runtime root', { SYSTEM_BASE_URL: 'file:///app/', livelyNative: { baseURL: 'file:///native-app/' }, document: { location: { origin: 'null' } } }, 'file:///native-app/lively-socket.io'],
   ['native file root', { SYSTEM_BASE_URL: 'file:///app/', document: { location: { origin: 'null' } } }, 'file:///app/lively-socket.io']
 ]) {
   await test(`browser L2L uses the canonical endpoint for ${name}`, () => {
