@@ -134,24 +134,33 @@ export class PackageTreeData extends TreeData {
     this.showHiddenFolders = showHiddenFolders;
   }
 
-  get __dont_serialize__ () { return [...super.__dont_serialize__, '_childListings']; }
+  get __dont_serialize__ () { return [...super.__dont_serialize__, '_childListings', '_moduleListings']; }
 
   invalidate (node = this.root) {
     if (node === this.root) this._childListings = new WeakMap();
     else this._childListings?.delete(node);
+    this._moduleListings = new Map();
   }
 
   async loadChildren (node, load) {
     const cache = this._childListings || (this._childListings = new WeakMap());
     let pending = cache.get(node);
-    if (!pending) {
-      pending = Promise.resolve().then(load);
+    if (!pending || (node !== this.root && pending.settled)) {
+      pending = { promise: Promise.resolve().then(load), settled: false };
       cache.set(node, pending);
     }
     try {
-      const children = await pending;
+      const children = await pending.promise;
       if (this._childListings !== cache || cache.get(node) !== pending) return this.loadChildren(node, load);
-      return (node.subNodes = children);
+      const previous = new Map((node.subNodes || []).map(child => [child.url, child]));
+      node.subNodes = children.map(child => {
+        const existing = previous.get(child.url);
+        return existing ? Object.assign(existing, child, { isCollapsed: existing.isCollapsed }) : child;
+      });
+      // Directory contents can change outside this browser or process. Share
+      // concurrent reads, but revalidate membership whenever a column reopens.
+      pending.settled = true;
+      return node.subNodes;
     } catch (err) {
       if (cache.get(node) === pending) cache.delete(node);
       throw err;
@@ -428,13 +437,19 @@ export class PackageTreeData extends TreeData {
       const gitIgnoreContents = await this.systemInterface.coreInterface.resourceRead(resource(selectedPkg.url).join('.gitignore').url);
       if (gitIgnoreContents) { gitignore.push(...gitIgnoreContents.split('\n')); }
     }
-    const files = await this.systemInterface.resourcesOfPackage(selectedPkg.url, ['node_modules', 'build', 'assets', 'objectdb', '.git', ...gitignore]);
-    await this.systemInterface.getPackage(selectedPkg.url);
-    const loadedModules = {};
-    files.forEach(file => {
-      loadedModules[file.url] = file;
-    });
-    return loadedModules;
+    const key = JSON.stringify([selectedPkg.url, gitignore]);
+    const listings = this._moduleListings || (this._moduleListings = new Map());
+    if (!listings.has(key)) {
+      listings.set(key, (async () => {
+        const files = await this.systemInterface.resourcesOfPackage(selectedPkg.url, ['node_modules', 'build', 'assets', 'objectdb', '.git', ...gitignore]);
+        await this.systemInterface.getPackage(selectedPkg.url);
+        return Object.fromEntries(files.map(file => [file.url, file]));
+      })());
+    }
+    try { return await listings.get(key); } catch (error) {
+      listings.delete(key);
+      throw error;
+    }
   }
 
   async listEditableFilesInDir (folderLocation) {

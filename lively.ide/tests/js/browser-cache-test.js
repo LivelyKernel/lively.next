@@ -13,6 +13,7 @@ describe('system browser directory cache', function () {
   const packageURL = baseURL + 'pkg/';
   let browser, columnView, data, counts, observer;
 
+  /** Select a path through the real Muller column expansion flow. */
   async function expand (url) {
     await columnView.setExpandedPath(node => node === data.root || (node.url && url.startsWith(node.url)), data.root, false);
   }
@@ -62,27 +63,27 @@ describe('system browser directory cache', function () {
     await resource(baseURL).remove();
   });
 
-  it('reuses package and directory listings across Muller path round trips', async () => {
+  it('reuses package nodes and module inventories while revalidating directory listings', async () => {
     await expand(packageURL + 'src/a.js');
     const packageNode = data.root.subNodes[0];
     const directory = packageNode.subNodes.find(node => node.name === 'src');
     await expand(packageURL + 'src/b.js');
     await expand(packageURL + 'src/a.js');
     expect(counts.packages).equals(1);
-    expect(counts.directories).deep.equals({ [packageURL]: 1, [packageURL + 'src/']: 1 });
-    expect(counts.resources).equals(2);
+    expect(counts.directories).deep.equals({ [packageURL]: 3, [packageURL + 'src/']: 3 });
+    expect(counts.resources).equals(1);
     expect(data.root.subNodes[0]).equals(packageNode);
     expect(packageNode.subNodes.find(node => node.name === 'src')).equals(directory);
   });
 
-  it('caches empty directories and shares pending directory reads', async () => {
+  it('shares pending directory reads and revalidates empty directories on reopening', async () => {
     await expand(packageURL);
     const directory = data.root.subNodes[0].subNodes.find(node => node.name === 'empty');
     await Promise.all([data.collapse(directory, false), data.collapse(directory, false)]);
     await data.collapse(directory, true);
     await data.collapse(directory, false);
     expect(directory.subNodes).deep.equals([]);
-    expect(counts.directories[directory.url]).equals(1);
+    expect(counts.directories[directory.url]).equals(2);
   });
 
   it('retries a failed listing instead of retaining a rejected read', async () => {
@@ -179,6 +180,6 @@ describe('system browser directory cache', function () {
     await expand(url);
     const module = columnView.getExpandedPath().find(node => node.url === url);
     expect(module.subNodes.map(node => node.name)).deep.equals(['changed']);
-    expect(counts.directories[packageURL + 'src/']).equals(1);
+    expect(counts.directories[packageURL + 'src/']).equals(3);
   });
 });
