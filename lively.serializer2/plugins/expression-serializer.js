@@ -527,6 +527,21 @@ function traverseSubmorphs (morph, exported, path, styleProto, subopts) {
   if (exported.submorphs?.length === 0) delete exported.submorphs;
 }
 
+/** Keep runtime references and cycles out of exposed component data. */
+function isExposedData (value, exprSerializer, ancestors = new Set()) {
+  if (obj.isPrimitive(value)) return true;
+  if (typeof value !== 'object' || value.isMorph || ancestors.has(value)) return false;
+  if (typeof value.__serialize__ === 'function') {
+    try { return exprSerializer.isSerializedExpression(exprSerializer.embedValue(value)); } catch (error) { return false; }
+  }
+  const prototype = Object.getPrototypeOf(value);
+  if (!Array.isArray(value) && prototype !== Object.prototype && prototype !== null) return false;
+  ancestors.add(value);
+  const result = Object.values(value).every(entry => isExposedData(entry, exprSerializer, ancestors));
+  ancestors.delete(value);
+  return result;
+}
+
 /**
  * Traverses the props returned by the spec() call of a morph and prepares them
  * accordingly (e.g. in case we want to turn the spec into an expression).
@@ -544,13 +559,21 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
     onlyIncludeStyleProps, asExpression, skipUnchangedFromMaster
   } = opts;
   const { properties } = morph.propertiesAndPropertySettings();
-  const exposedProps = morph.viewModel?.exposedPropertyNames || [];
-  const modelProps = morph.viewModel?.propertiesAndPropertySettings().properties;
+  const exposedProps = asExpression ? morph.viewModel?.exposedPropertyNames || [] : [];
   const spec = morph.spec(skipUnchangedFromDefault);
-  for (const name of exposedProps) {
-    if (typeof morph[name] === 'function' || modelProps[name]?.readOnly || modelProps[name]?.serialize === false) continue;
-    if (morph.viewModel.__lookupGetter__(name) && !morph.viewModel.__lookupSetter__(name)) continue;
-    spec[name] = morph[name];
+  for (const exposure of asExpression ? morph.viewModel?.expose || [] : []) {
+    const [name, redirect] = Array.isArray(exposure) ? exposure : [exposure];
+    if (typeof name !== 'string') continue;
+    let target = morph.viewModel;
+    if (redirect?.model) target = morph.getSubmorphNamed(redirect.model).viewModel;
+    else if (redirect?.target) target = morph.getSubmorphNamed(redirect.target);
+    const descriptor = target.propertiesAndPropertySettings().properties[name];
+    if (descriptor?.readOnly || descriptor?.derived || descriptor?.serialize === false) continue;
+    if (target.__lookupGetter__(name) && !target.__lookupSetter__(name)) continue;
+    const value = morph[name];
+    if (!isExposedData(value, opts.exprSerializer)) continue;
+    if (skipUnchangedFromDefault && obj.equals(value, target.defaultProperties[name])) continue;
+    spec[name] = value;
   }
 
   for (const name in spec) {

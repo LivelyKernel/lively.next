@@ -1,9 +1,10 @@
 /* global System, describe, it */
 import { expect } from 'mocha-es6';
 import { Color } from 'lively.graphics';
-import { component, part, ComponentDescriptor, ViewModel } from 'lively.morphic';
+import { component, part, ComponentDescriptor, ViewModel, Label, Morph } from 'lively.morphic';
 import { ExpressionSerializer, serializeSpec } from 'lively.serializer2';
 import { LabeledCheckboxLight } from 'lively.components/checkbox.cp.js';
+import { Tab } from 'lively.ide/studio/tabs.cp.js';
 
 const moduleId = import.meta.url.replace(System.baseURL, '');
 
@@ -26,6 +27,7 @@ export class ExposedLabelModel extends ViewModel {
       enabled: { defaultValue: true },
       details: { defaultValue: null },
       tone: { defaultValue: Color.blue },
+      immutable: { defaultValue: 'read only', readOnly: true },
       transientValue: { defaultValue: null, serialize: false }
     };
   }
@@ -54,6 +56,37 @@ export const NestedLabels = ComponentDescriptor.for(() => component({
 export const DerivedLabels = ComponentDescriptor.for(() => component(NestedLabels, {
   submorphs: [{ name: 'nested', label: 'derived label' }]
 }), { moduleId, exportedName: 'DerivedLabels' });
+
+export class ReadOnlyCaption extends Label {
+  static get properties () {
+    return { readonlyCaptionValue: { defaultValue: 'read only', readOnly: true } };
+  }
+}
+
+export class RedirectedLabelModel extends ViewModel {
+  static get properties () {
+    return {
+      expose: {
+        get () {
+          return [
+            ['label', { model: 'nested' }],
+            ['immutable', { model: 'nested' }],
+            ['transientValue', { model: 'nested' }],
+            ['readonlyCaptionValue', { target: 'caption' }]
+          ];
+        }
+      }
+    };
+  }
+}
+
+export const RedirectedLabel = ComponentDescriptor.for(() => component({
+  name: 'redirected label',
+  defaultViewModel: RedirectedLabelModel,
+  submorphs: [part(ExposedLabel, { name: 'nested', transientValue: 'session only' }), {
+    type: ReadOnlyCaption, name: 'caption'
+  }]
+}), { moduleId, exportedName: 'RedirectedLabel' });
 
 describe('exposed component properties', () => {
   it('accepts and round-trips the reported labeled checkbox example', () => {
@@ -135,5 +168,64 @@ describe('exposed component properties', () => {
     const restored = new ExpressionSerializer().deserializeExprObj(expression);
     expect(restored.get('nested').label).equals('changed after instantiation');
     expect(restored.get('caption').textString).equals('changed after instantiation');
+  });
+
+  it('keeps exposed values out of non-expression specs', () => {
+    const label = part(ExposedLabel, { label: 'ordinary spec', details: { answer: 42 } });
+    const spec = serializeSpec(label);
+    expect(spec).not.property('label');
+    expect(spec).not.property('details');
+  });
+
+  it('round-trips a tab without serializing its external morph content', () => {
+    const content = new Morph({ name: 'external tab content' });
+    const tab = part(Tab, { caption: 'a tab', content });
+    const expression = serializeSpec(tab, { asExpression: true, exposeMasterRefs: true });
+    expect(expression.__expr__).not.includes('content:');
+    expect(expression.__expr__).not.includes('external tab content');
+    const restored = new ExpressionSerializer().deserializeExprObj(expression);
+    expect(restored.caption).equals('a tab');
+    expect(restored.content).equals(undefined);
+    expect(tab.content).equals(content);
+  });
+
+  it('skips runtime objects, functions, morph references and cycles in exposed data', () => {
+    const external = new Morph({ name: 'external target' });
+    const cyclic = {};
+    cyclic.self = cyclic;
+    const label = part(ExposedLabel);
+    for (const value of [{ target: external }, [external], { callback: () => 23 }, new Map(), cyclic]) {
+      label.details = value;
+      const expression = serializeSpec(label, { asExpression: true, exposeMasterRefs: true });
+      expect(expression.__expr__).not.includes('details:');
+      const restored = new ExpressionSerializer().deserializeExprObj(expression);
+      expect(restored.details).equals(null);
+      expect(label.details).equals(value);
+    }
+  });
+
+  it('respects skipUnchangedFromDefault for exposed values', () => {
+    const label = part(ExposedLabel);
+    const options = { asExpression: true, exposeMasterRefs: true };
+    const minimal = serializeSpec(label, { ...options, skipUnchangedFromDefault: true });
+    expect(minimal.__expr__).not.matches(/\b(?:label|enabled|details|tone):/);
+    const complete = serializeSpec(label, { ...options, skipUnchangedFromDefault: false });
+    expect(complete.__expr__).matches(/\blabel:/);
+    expect(complete.__expr__).matches(/\benabled:/);
+    expect(complete.__expr__).matches(/\btone:/);
+    label.enabled = false;
+    const changed = serializeSpec(label, { ...options, skipUnchangedFromDefault: true });
+    expect(changed.__expr__).matches(/\benabled:\s*false/);
+  });
+
+  it('respects readOnly and serialize settings on redirected models and morphs', () => {
+    const label = part(RedirectedLabel, { label: 'redirected data' });
+    const expression = serializeSpec(label, { asExpression: true, exposeMasterRefs: true });
+    expect(expression.__expr__).not.matches(/\b(?:immutable|transientValue|readonlyCaptionValue):/);
+    const restored = new ExpressionSerializer().deserializeExprObj(expression);
+    expect(restored.label).equals('redirected data');
+    expect(restored.immutable).equals('read only');
+    expect(restored.readonlyCaptionValue).equals('read only');
+    expect(restored.get('nested').transientValue).equals('session only');
   });
 });
