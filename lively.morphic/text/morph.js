@@ -489,16 +489,18 @@ export class Text extends Morph {
                 textAndAttributes,
                 false
               ));
+            this.setProperty('textAndAttributes', textAndAttributes);
           } else {
             if (textAndAttributes.length === 0) textAndAttributes = ['', null];
             if (typeof textAndAttributes === 'string') textAndAttributes = [textAndAttributes, null];
             this.renderingState.needsFit = true;
-          }
-          this.setProperty('textAndAttributes', textAndAttributes);
-          if (!this.document) {
-            this._updateEmbeddedMorphsDuringReplace(
-              textAndAttributes.filter((part, i) => i % 2 === 0 && part?.isMorph),
-              { start: { row: 0, column: 0 } }, textAndAttributes, previousTextAndAttributes);
+            this.groupChangesWhile(null, () => {
+              this.setProperty('textAndAttributes', textAndAttributes);
+              this.withMetaDo({ partOfTextAndAttributesAssignment: true }, () =>
+                this._updateEmbeddedMorphsDuringReplace(
+                  textAndAttributes.filter((part, i) => i % 2 === 0 && part?.isMorph),
+                  { start: { row: 0, column: 0 } }, textAndAttributes, previousTextAndAttributes));
+            });
           }
           if (this.world()) this.whenFontLoaded().then(() => this.fit());
         }
