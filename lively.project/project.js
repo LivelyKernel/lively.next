@@ -730,6 +730,7 @@ export class Project {
     }
     const livelyConfig = this.config.lively;
     const updates = [];
+    const warnings = [];
     for (const [name, definition, onPush] of [
       ['ci-tests.yml', workflowDefinition, livelyConfig.testOnPush],
       ['build-upload-action.yml', buildRemoteScript, livelyConfig.buildOnPush],
@@ -739,13 +740,19 @@ export class Project {
       const previous = await file.exists() ? await file.read() : '';
       const generated = await this.fillPipelineTemplate(definition, onPush);
       try {
-        updates.push({ file, content: preserveWorkflowCustomizations(previous, generated) });
+        const content = preserveWorkflowCustomizations(previous, generated, message => warnings.push(`${name}: ${message}`));
+        updates.push({ file, content });
       } catch (error) {
         throw new Error(`${name}: ${error.message}`);
       }
     }
     // Validate every custom section before replacing any workflow.
     for (const { file, content } of updates) await (await file.ensureExistance()).write(content);
+    if (warnings.length) {
+      const message = warnings.join('\n');
+      console.warn(message);
+      $world.setStatusMessage(message, StatusMessageWarning);
+    }
   }
 
   async fillPipelineTemplate (workflowDefinition, triggerOnPush = false) {
