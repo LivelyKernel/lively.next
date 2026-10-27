@@ -762,6 +762,26 @@ describe('morph inside textAndAttributes', () => {
     expect(t.embeddedMorphs).to.include(m);
   });
 
+  it('notifies text owners after grouped static text changes', async () => {
+    m.remove();
+    m = text('label', { readOnly: true });
+    sut.addMorph(m);
+    const notifications = [];
+    const original = sut.onSubmorphChange;
+    sut.onSubmorphChange = function (change, submorph) {
+      const notification = original.call(this, change, submorph);
+      notifications.push(notification);
+      return notification;
+    };
+    try {
+      expect(m.document).to.be.undefined;
+      m.textString = 'updated label';
+      expect(m.textString).equals('updated label');
+      expect(notifications.length).to.be.greaterThan(0);
+      await Promise.all(notifications);
+    } finally { sut.onSubmorphChange = original; }
+  });
+
   it('layout is updated on morph resize', async () => {
     m.env.forceUpdate();
     sut.insertText([m, null, '\n', null], { column: 0, row: 1 });
