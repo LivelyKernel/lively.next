@@ -43,8 +43,10 @@
 //                            how the property works
 //   readOnly: BOOL         - optional, if set prevents that the property is mutated. Also
 //                            prevents the serializer from storing that value state.
-//   min, max: NUMBER       - optional bounds for primitive numeric values
-//   isFloat: BOOL          - false rounds numeric values to the nearest allowed integer
+//   min, max: NUMBER       - optional numeric bounds, advisory by default
+//   isFloat: BOOL          - optional numeric editor hint, advisory by default
+//   enforceNumericConstraints: BOOL - true clamps numbers to min/max and rounds
+//                                    them when isFloat is false
 // }
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -66,7 +68,7 @@ const defaultPropertySettings = {
 };
 
 function constrainNumericValue (value, descriptor) {
-  if (typeof value !== 'number' || Number.isNaN(value)) return value;
+  if (descriptor.enforceNumericConstraints !== true || typeof value !== 'number' || Number.isNaN(value)) return value;
   let min = typeof descriptor.min === 'number' ? descriptor.min : -Infinity;
   let max = typeof descriptor.max === 'number' ? descriptor.max : Infinity;
   if (descriptor.isFloat === false) {
@@ -132,7 +134,7 @@ function prepareClassForProperties (klass, propertySettings, properties) {
         let setter = descriptor.set ||
                   (typeof defaultSetter === 'function' && function (val) { defaultSetter.call(this, key, val); }) ||
                   function (val) { this[valueStoreProperty][key] = val; };
-        if (typeof descriptor.min === 'number' || typeof descriptor.max === 'number' || descriptor.isFloat === false) {
+        if (descriptor.enforceNumericConstraints === true) {
           const originalSetter = setter;
           setter = function (value) { return originalSetter.call(this, constrainNumericValue(value, descriptor)); };
         }

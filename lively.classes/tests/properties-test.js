@@ -190,7 +190,7 @@ describe('properties', function () {
     };
 
     it('clamps assignments, defaults and initialization values', () => {
-      const props = { progress: { min: 0, max: 1, isFloat: true, defaultValue: -1 } };
+      const props = { progress: { enforceNumericConstraints: true, min: 0, max: 1, isFloat: true, defaultValue: -1 } };
       const obj = instance(props);
       expect(obj.progress).equals(0);
       obj.progress = -0.5;
@@ -206,8 +206,8 @@ describe('properties', function () {
 
     it('rounds only explicitly integer properties within their bounds', () => {
       const obj = instance({
-        count: { isFloat: false, min: 0.2, max: 3.8, defaultValue: 0 },
-        fontSize: { min: 1, defaultValue: 12.5 }
+        count: { enforceNumericConstraints: true, isFloat: false, min: 0.2, max: 3.8, defaultValue: 0 },
+        fontSize: { enforceNumericConstraints: true, min: 1, defaultValue: 12.5 }
       });
       expect(obj.count).equals(1);
       obj.count = 2.6;
@@ -216,15 +216,15 @@ describe('properties', function () {
       expect(obj.count).equals(3);
       obj.fontSize = 13.25;
       expect(obj.fontSize).equals(13.25);
-      expect(() => instance({ count: { min: 0.1, max: 0.9, isFloat: false, defaultValue: 0 } }))
+      expect(() => instance({ count: { enforceNumericConstraints: true, min: 0.1, max: 0.9, isFloat: false, defaultValue: 0 } }))
         .throws(RangeError, 'Numeric property bounds contain no allowed values');
     });
 
     it('passes constrained values to custom and default setters', () => {
       const calls = [];
       const obj = instance({
-        custom: { min: 0, set (value) { calls.push(['custom', this, value]); } },
-        shared: { max: 1 }
+        custom: { enforceNumericConstraints: true, min: 0, set (value) { calls.push(['custom', this, value]); } },
+        shared: { enforceNumericConstraints: true, max: 1 }
       }, null, { defaultSetter (key, value) { calls.push([key, this, value]); } });
       obj.custom = -1;
       obj.shared = 2;
@@ -233,8 +233,8 @@ describe('properties', function () {
 
     it('keeps custom validation and folded object values', () => {
       const obj = instance({
-        scale: { min: 0, set (value) { if (typeof value !== 'number') throw new Error('invalid scale'); this._scale = value; } },
-        border: { min: 0, foldable: ['left', 'right'], set (value) { this._border = value; }, get () { return this._border; } }
+        scale: { enforceNumericConstraints: true, min: 0, set (value) { if (typeof value !== 'number') throw new Error('invalid scale'); this._scale = value; } },
+        border: { enforceNumericConstraints: true, min: 0, foldable: ['left', 'right'], set (value) { this._border = value; }, get () { return this._border; } }
       });
       expect(() => { obj.scale = 'bad'; }).throws('invalid scale');
       const border = { left: 2, right: 3 };
@@ -249,7 +249,7 @@ describe('properties', function () {
     });
 
     it('keeps subclass bounds separate from superclass descriptors', () => {
-      const descriptors = { progress: { min: 0, max: 10, defaultValue: 0 } };
+      const descriptors = { progress: { enforceNumericConstraints: true, min: 0, max: 10, defaultValue: 0 } };
       class Parent { static get properties () { return descriptors; } }
       class Child extends Parent { static get properties () { return { progress: { max: 1 } }; } }
       const child = new Child().initializeProperties();
@@ -267,7 +267,7 @@ describe('properties', function () {
         get native () { return this._native; }
       }
       const { propertySettings } = propertiesAndSettingsInHierarchyOf(NativeAccessors);
-      const props = { native: { max: 1 }, fixed: { readOnly: true, min: 0, defaultValue: 1 } };
+      const props = { native: { enforceNumericConstraints: true, max: 1 }, fixed: { enforceNumericConstraints: true, readOnly: true, min: 0, defaultValue: 1 } };
       prepareClassForProperties(NativeAccessors, propertySettings, props);
       const obj = new NativeAccessors();
       prepareInstanceForProperties(obj, propertySettings, props);
@@ -275,6 +275,33 @@ describe('properties', function () {
       expect(obj.native).equals(4);
       expect(obj.fixed).equals(1);
       expect(NativeAccessors.prototype.__lookupSetter__('fixed')).equals(undefined);
+    });
+
+    it('keeps bounds and integer hints advisory unless enforcement is opted into', () => {
+      const props = { value: { min: 0, max: 1, isFloat: false, defaultValue: -0.5 } };
+      const obj = instance(props);
+      expect(obj.value).equals(-0.5);
+      obj.value = 1.5;
+      expect(obj.value).equals(1.5);
+      expect(instance(props, { value: -1 }).value).equals(-1);
+      class Defaults { static get properties () { return props; } }
+      expect(new Defaults().defaultProperties.value).equals(-0.5);
+    });
+
+    it('lets subclasses keep inherited bounds advisory', () => {
+      class Parent {
+        static get properties () {
+          return { value: { enforceNumericConstraints: true, min: 0, defaultValue: -1 } };
+        }
+      }
+      class Child extends Parent {
+        static get properties () { return { value: { enforceNumericConstraints: false } }; }
+      }
+      const child = new Child().initializeProperties();
+      expect(child.value).equals(-1);
+      child.value = -2;
+      expect(child.value).equals(-2);
+      expect(new Parent().initializeProperties().value).equals(0);
     });
   });
 
