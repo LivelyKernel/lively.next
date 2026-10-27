@@ -175,6 +175,8 @@ jobs:
         run: node scripts/tests/headless-profile-test.cjs
       - name: Check project workflow customizations
         run: node lively.project/tests/workflow-customizations-test.cjs
+      - name: Check project save setup
+        run: node lively.project/tests/project-save-prompt-test.cjs
       - name: Check package test backend selection
         run: node scripts/tests/test-package-backend-test.cjs
       - name: Check failed-test diagnostics

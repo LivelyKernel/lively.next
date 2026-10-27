@@ -149,7 +149,7 @@ const req = http.request(options, res => {
             }
             if (test.error) {
               const details = testFailureDetails(test);
-              console.log(details);
+              if (!CI) console.log(details);
               if (CI) markdownListOfFailingTests += `\n\`\`\`text\n${details}\n\`\`\`\n`;
             }
           }
