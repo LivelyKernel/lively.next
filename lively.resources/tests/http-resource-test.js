@@ -8,14 +8,15 @@ describe('http request failures', () => {
   afterEach(() => { globalThis.fetch = originalFetch; });
 
   it('adds method and resource URL while preserving the network error', async () => {
-    const cause = new TypeError('Failed to fetch');
+    const cause = new TypeError('Failed to fetch.');
     globalThis.fetch = async () => { throw cause; };
     let error;
     try { await resource('https://example.test/missing.txt').read(); } catch (err) { error = err; }
     expect(error).to.be.instanceOf(Error);
     expect(error.message).includes('GET https://example.test/missing.txt');
     expect(error.message).includes('Failed to fetch');
-    expect(error.message).includes('CORS');
+    expect(error.message.includes('CORS')).equals(!System.get('@system-env').node);
+    expect(error.message).not.includes('..');
     expect(error.cause).equals(cause);
   });
 
@@ -100,6 +101,54 @@ describe('http request cancellation', () => {
     try { await resource('https://example.test/file.txt', { timeout: 1 }).read(); } catch (err) { error = err; }
     expect(error.name).equals('TimeoutError');
     expect(error.cause.name).equals('TimeoutError');
+  });
+
+  it('treats a null timeout as no timeout and keeps the caller signal', async () => {
+    const controller = new AbortController();
+    let signal;
+    globalThis.fetch = async (url, options) => {
+      signal = options.signal;
+      await new Promise(resolve => setTimeout(resolve, 20));
+      if (signal?.aborted) throw signal.reason;
+      return { ok: true, text: async () => 'content' };
+    };
+    expect(await resource('https://example.test/file.txt', { timeout: null, signal: controller.signal }).read())
+      .equals('content');
+    expect(signal).equals(controller.signal);
+  });
+
+  it('rejects invalid timeouts with request context before fetching or uploading', async () => {
+    let sent = false;
+    globalThis.fetch = () => { sent = true; };
+    globalThis.XMLHttpRequest = class {
+      constructor () { this.upload = { addEventListener () {} }; }
+      open () {}
+      setRequestHeader () {}
+      send () { sent = true; }
+    };
+    for (const timeout of [NaN, -1, Infinity, '10']) {
+      for (const operation of ['read', 'write']) {
+        let error;
+        try { await resource('https://example.test/file.txt', { timeout })[operation]('content'); } catch (err) { error = err; }
+        expect(error.message).includes(`${operation === 'read' ? 'GET' : 'PUT'} https://example.test/file.txt`);
+        expect(error.message).includes('timeout');
+        expect(error.cause).to.be.instanceOf(Error);
+        expect(error.message).not.includes('CORS');
+      }
+    }
+    expect(sent).equals(false);
+  });
+
+  it('keeps request context when cancellation happens while reading the body', async () => {
+    const cause = new DOMException('Canceled while reading body', 'AbortError');
+    globalThis.fetch = async () => ({ ok: true, text: async () => { throw cause; } });
+    for (const [operation, method] of [['read', 'GET'], ['post', 'POST'], ['dirList', 'PROPFIND']]) {
+      let error;
+      try { await resource('https://example.test/file.txt')[operation](); } catch (err) { error = err; }
+      expect(error.name).equals('AbortError');
+      expect(error.cause).equals(cause);
+      expect(error.message).includes(`${method} https://example.test/file.txt`);
+    }
   });
 
   it('applies the timeout when a caller signal is also supplied', async () => {

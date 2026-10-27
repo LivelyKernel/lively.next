@@ -147,21 +147,29 @@ function defaultOrigin () {
   return System.baseURL || document.location.origin;
 }
 
-function requestError (resource, method, cause, requestURL = resource.url) {
+function requestError (resource, method, cause, requestURL = resource.useProxy ? resource.proxyDomain || defaultOrigin() : resource.url) {
   const proxy = requestURL === resource.url ? '' : ` via proxy ${requestURL}`;
-  const hint = cause?.name === 'TypeError'
+  const hint = !isNode && cause?.name === 'TypeError'
     ? ' Check network connectivity and the server\'s CORS policy; browsers do not expose the exact CORS failure to JavaScript.'
     : '';
-  const error = new Error(`Cannot ${method} ${resource.url}${proxy}: ${cause?.message || cause}.${hint}`);
+  const message = String(cause?.message || cause);
+  const error = new Error(`Cannot ${method} ${resource.url}${proxy}: ${message}${/[.!?]$/.test(message) ? '' : '.'}${hint}`);
   error.name = cause?.name || 'Error';
   error.cause = cause;
   return error;
 }
 
 function requestSignal ({ signal, timeout }) {
-  if (timeout === undefined) return signal;
+  if (timeout == null) return signal;
+  if (!Number.isSafeInteger(timeout) || timeout < 0) {
+    throw new RangeError('Request timeout must be a non-negative safe integer in milliseconds');
+  }
   const timed = AbortSignal.timeout(timeout);
   return signal ? AbortSignal.any([signal, timed]) : timed;
+}
+
+async function readBody (resource, method, response, type = 'text') {
+  try { return await response[type](); } catch (err) { throw requestError(resource, method, err); }
 }
 
 async function makeRequest (resource, method = 'GET', body, headers = {}, onProgress = () => {}) {
@@ -170,8 +178,6 @@ async function makeRequest (resource, method = 'GET', body, headers = {}, onProg
   var useCors = typeof useCors !== 'undefined' ? useCors : true;
   var useProxy = typeof useProxy !== 'undefined' ? useProxy : true;
   const fetchOpts = { method };
-  const signal = requestSignal(resource);
-  if (signal) fetchOpts.signal = signal;
 
   if (useProxy) {
     Object.assign(headers, {
@@ -189,6 +195,8 @@ async function makeRequest (resource, method = 'GET', body, headers = {}, onProg
   fetchOpts.headers = { ...headers, ...moreHeaders };
 
   try {
+    const signal = requestSignal(resource);
+    if (signal) fetchOpts.signal = signal;
     return await fetch(url, fetchOpts);
   } catch (err) {
     throw requestError(resource, method, err, url);
@@ -202,7 +210,7 @@ export function upload (resource, body) {
   } = resource;
   const xhr = new XMLHttpRequest();
   const res = promise.deferred();
-  const signal = requestSignal(resource);
+  let signal;
 
   if (useProxy) {
     Object.assign(headers, {
@@ -214,6 +222,10 @@ export function upload (resource, body) {
     url = resource.proxyDomain || defaultOrigin();
   }
 
+  try { signal = requestSignal(resource); } catch (err) {
+    res.reject(requestError(resource, 'PUT', err, url));
+    return res.promise;
+  }
   xhr.open('PUT', url);
   const cleanup = () => signal?.removeEventListener('abort', abort);
   const fail = cause => {
@@ -282,10 +294,10 @@ export default class WebDAVResource extends Resource {
     // Callers can inspect status and headers after read() consumes the body.
     this.lastResponse = res;
     if (!res.ok && this.errorOnHTTPStatusCodes) { throw new Error(`Cannot read ${this.url}: ${res.statusText} ${res.status}`); }
-    if (!this.binary) return res.text();
-    if (this.binary === 'blob') return res.blob();
-    if (typeof res.arrayBuffer === 'function') return res.arrayBuffer();
-    if (typeof res.buffer === 'function') return res.buffer(); // node only
+    if (!this.binary) return readBody(this, 'GET', res);
+    if (this.binary === 'blob') return readBody(this, 'GET', res, 'blob');
+    if (typeof res.arrayBuffer === 'function') return readBody(this, 'GET', res, 'arrayBuffer');
+    if (typeof res.buffer === 'function') return readBody(this, 'GET', res, 'buffer'); // node only
     throw new Error(`Don't now how to read binary resource ${this}'`);
   }
 
@@ -326,7 +338,7 @@ export default class WebDAVResource extends Resource {
       });
 
     if (!res.ok && this.errorOnHTTPStatusCodes) { throw new Error(`Error in dirList for ${this.url}: ${res.statusText}`); }
-    const xmlString = await res.text();
+    const xmlString = await readBody(this, 'PROPFIND', res);
     const root = this.root();
     // list of properties for all resources in the multistatus list
     return readXMLPropfindResult(xmlString).map(props =>
@@ -366,9 +378,9 @@ export default class WebDAVResource extends Resource {
     if (typeof body !== 'string') body = JSON.stringify(body);
     const res = await makeRequest(this, 'POST', body, {});
     this.lastResponse = res;
-    let text; let json;
+    const text = await readBody(this, 'POST', res);
+    let json;
     let parsed = false;
-    try { text = await res.text(); } catch (err) {}
     if (text && res.headers.get('content-type') === 'application/json') {
       try { json = JSON.parse(text); parsed = true; } catch (err) {}
     }

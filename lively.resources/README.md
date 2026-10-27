@@ -16,6 +16,9 @@ await file.readJson();
 ```
 
 Either cancellation or the timeout ends the request when both are supplied.
+An omitted or `null` timeout leaves requests without a time limit. Other values
+must be non-negative safe integers in milliseconds; invalid values reject with
+the method and URL in the error, before starting a request.
 These options follow resources derived with `join`, `parent`, `withQuery` and
 `makeProxied`. Request errors identify the method and URL, retain their original
 error as `cause`, and preserve `AbortError` or `TimeoutError` names.
