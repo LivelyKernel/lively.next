@@ -153,6 +153,8 @@ jobs:
           node lively.app/scripts/test-desktop-resources.mjs
       - name: Run CI Test Script for Changed Folders
         run:  ./scripts/test.sh $(./scripts/tests_for_branch.sh)
+      - name: Check project asset browser regressions
+        run: ./scripts/test.sh lively.project
       - name: Start the lively server
         run: |
           chmod a+x ./start-server.sh
