@@ -208,8 +208,6 @@ export function upload (resource, body) {
     useProxy = true, useCors = true, url,
     onLoad, headers, onProgress
   } = resource;
-  const xhr = new XMLHttpRequest();
-  const res = promise.deferred();
   let signal;
 
   if (useProxy) {
@@ -223,9 +221,10 @@ export function upload (resource, body) {
   }
 
   try { signal = requestSignal(resource); } catch (err) {
-    res.reject(requestError(resource, 'PUT', err, url));
-    return res.promise;
+    return Promise.reject(requestError(resource, 'PUT', err, url));
   }
+  const xhr = new XMLHttpRequest();
+  const res = promise.deferred();
   xhr.open('PUT', url);
   const cleanup = () => signal?.removeEventListener('abort', abort);
   const fail = cause => {

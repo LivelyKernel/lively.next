@@ -118,10 +118,10 @@ describe('http request cancellation', () => {
   });
 
   it('rejects invalid timeouts with request context before fetching or uploading', async () => {
-    let sent = false;
+    let sent = false; let created = false;
     globalThis.fetch = () => { sent = true; };
     globalThis.XMLHttpRequest = class {
-      constructor () { this.upload = { addEventListener () {} }; }
+      constructor () { created = true; this.upload = { addEventListener () {} }; }
       open () {}
       setRequestHeader () {}
       send () { sent = true; }
@@ -137,6 +137,7 @@ describe('http request cancellation', () => {
       }
     }
     expect(sent).equals(false);
+    expect(created).equals(false);
   });
 
   it('keeps request context when cancellation happens while reading the body', async () => {
