@@ -113,8 +113,8 @@ const req = http.request(options, res => {
             }
             if (test.error) {
               const details = [test.error.stack || test.error.message || String(test.error)];
-              if (test.error.expected !== undefined) details.push(`EXPECTED: ${JSON.stringify(test.error.expected)}`);
-              if (test.error.actual !== undefined) details.push(`ACTUAL: ${JSON.stringify(test.error.actual)}`);
+              if (test.error.expected !== undefined) details.push(`EXPECTED: ${JSON.stringify(test.error.expected).slice(0, 1000)}`);
+              if (test.error.actual !== undefined) details.push(`ACTUAL: ${JSON.stringify(test.error.actual).slice(0, 1000)}`);
               console.log(details.join('\n'));
               if (CI) markdownListOfFailingTests += `\n\`\`\`text\n${details.join('\n')}\n\`\`\`\n`;
             }

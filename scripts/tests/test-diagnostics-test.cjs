@@ -5,28 +5,11 @@ const vm = require('node:vm');
 const { EventEmitter } = require('node:events');
 const root = path.resolve(__dirname, '../..');
 
-async function check () {
-  let disposed = 0;
-  const records = [{ file: '/pkg/tests/failing-test.js', tests: [{
-    type: 'test', state: 'failed', fullTitle: 'ordinary assertion',
-    error: { message: 'failure message', stack: 'STACK_SENTINEL\nat failing-test.js:1:1', actual: 1, expected: 2 }
-  }] }];
-  class Session {
-    async open () {}
-    async runEval () { return JSON.stringify(records); }
-    summarizeRecentConsoleErrors () { return 'BROWSER_SENTINEL'; }
-    async dispose () { disposed++; }
-  }
-  const source = fs.readFileSync(path.join(root, 'lively.server/plugins/test-runner.js'), 'utf8')
-    .replace(/^import .*;\n/gm, '').replace('export default class TestRunner', 'class TestRunner');
-  const Runner = vm.runInNewContext(`${source}\nTestRunner`, { HeadlessSession: Session, console, promise: {} });
-  const data = await new Runner().run('pkg');
-  assert.equal(disposed, 1, 'dispose the browser on ordinary assertion failures');
-  assert.equal(JSON.parse(data)[0].browserErrors, 'BROWSER_SENTINEL');
+function runCLI (data, ci = true) {
   const output = []; const written = [];
   vm.runInNewContext(fs.readFileSync(path.join(root, 'scripts/test.js'), 'utf8'), {
     URL,
-    process: { argv: ['node', 'test.js', 'pkg'], env: { CI: 'true' } },
+    process: { argv: ['node', 'test.js', 'pkg'], env: ci ? { CI: 'true' } : {} },
     console: { log: (...parts) => output.push(parts.join(' ')) },
     require (name) {
       if (name === 'fs') return { appendFileSync: (file, text) => written.push({ file, text }) };
@@ -43,9 +26,54 @@ async function check () {
       } };
     }
   });
+  return { output, written };
+}
+
+function checkAssertionBounds () {
+  const data = JSON.stringify([{ file: '/pkg/tests/large-assertion-test.js', tests: [{
+    type: 'test', state: 'failed', fullTitle: 'large assertion values',
+    error: { message: 'values differ', stack: 'LARGE_STACK_SENTINEL',
+      expected: 'EXPECTED_HEAD|' + 'e'.repeat(5000) + '|EXPECTED_TAIL',
+      actual: 'ACTUAL_HEAD|' + 'a'.repeat(5000) + '|ACTUAL_TAIL' }
+  }] }]);
+  const text = runCLI(data, false).output.join('\n');
+  for (const label of ['EXPECTED', 'ACTUAL']) {
+    const values = text.split('\n').filter(line => line.startsWith(label + ': ')).map(line => line.slice(label.length + 2));
+    assert.ok(values.length, `CLI retains ${label} values`);
+    for (const value of values) {
+      assert.ok(value.startsWith('"' + label + '_HEAD|'), `${label} retains its useful prefix`);
+      assert.ok(value.length <= 1000, `CLI ${label} must be bounded to 1000 characters, got ${value.length}`);
+    }
+    assert.ok(!text.includes(label + '_TAIL'), `${label} omits the oversized tail`);
+  }
+  console.log('Assertion bounds: CLI output retains useful prefixes within 1000 characters');
+}
+
+async function check () {
+  checkAssertionBounds();
+  let disposed = 0;
+  const records = [{ file: '/pkg/tests/failing-test.js', tests: [{
+    type: 'test', state: 'failed', fullTitle: 'ordinary assertion',
+    error: { message: 'failure message', stack: 'STACK_SENTINEL\nat failing-test.js:1:1', actual: 1, expected: 2 }
+  }] }];
+  class Session {
+    async open () {}
+    async runEval () { return JSON.stringify(records); }
+    summarizeRecentConsoleErrors () { return 'BROWSER_SENTINEL'; }
+    async dispose () { disposed++; }
+  }
+  const source = fs.readFileSync(path.join(root, 'lively.server/plugins/test-runner.js'), 'utf8')
+    .replace(/^import .*;\n/gm, '').replace('export default class TestRunner', 'class TestRunner');
+  const Runner = vm.runInNewContext(`${source}\nTestRunner`, { HeadlessSession: Session, console, promise: {}, process: { env: {} } });
+  const data = await new Runner().run('pkg');
+  assert.equal(disposed, 1, 'dispose the browser on ordinary assertion failures');
+  assert.equal(JSON.parse(data)[0].browserErrors, 'BROWSER_SENTINEL');
+  const { output, written } = runCLI(data);
   assert.match(output.join('\n'), /STACK_SENTINEL/);
   assert.match(output.join('\n'), /BROWSER_SENTINEL/);
   assert.match(output.join('\n'), /SUMMARY-failed:1/);
+  assert.match(output.join('\n'), /EXPECTED: 2/);
+  assert.match(output.join('\n'), /ACTUAL: 1/);
   assert.match(written.map(entry => entry.text).join('\n'), /STACK_SENTINEL/);
   assert.match(written.map(entry => entry.text).join('\n'), /BROWSER_SENTINEL/);
   records[0].tests[0].state = 'succeeded';
