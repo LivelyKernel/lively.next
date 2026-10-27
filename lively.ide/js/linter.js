@@ -3,7 +3,7 @@
  */
 
 import config from 'eslint-config-standard';
-import { Linter } from 'eslint/lib/linter/linter.js';
+import { Linter } from 'eslint';
 
 const rules = {
   // These are all rules from the default ruleset that are fixable
