@@ -8,7 +8,7 @@ import { lively } from '../src/plugins/rollup.js';
 import LivelyRollup from '../src/bundler.js';
 import resolver from '../src/resolvers/node.cjs';
 
-const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lively-browser-relative-'));
+const directory = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'lively-browser-relative-')));
 const pkg = path.join(directory, 'node_modules', 'browser-relative');
 let build;
 try {

@@ -9,6 +9,17 @@ import { lively } from '../src/plugins/rollup.js';
 import resolver from '../src/resolvers/node.cjs';
 import { runtimeDefinition } from '../src/util/runtime.js';
 
+// Check Windows importers on every host before building the real dependency graph.
+const aliasResolver = { ...resolver, setStatus () {}, resolvePackage: () => null, resolveModuleId: id => id };
+for (const importer of ['/repo/lively.ide/js/linter.js', String.raw`C:\repo\lively.ide\js\linter.js`]) {
+  assert.equal(await lively({ resolver: aliasResolver }).resolveId('eslint', importer), 'eslint/lib/linter/linter.js');
+  assert.equal(await lively({ resolver: aliasResolver, asBrowserModule: false }).resolveId('eslint', importer), 'eslint');
+  assert.equal(await lively({ resolver: aliasResolver, map: { eslint: 'custom-linter' } }).resolveId('eslint', importer), 'custom-linter');
+}
+for (const importer of ['/repo/lively.ide/js/other.js', String.raw`C:\repo\other\js\linter.js`, undefined]) {
+  assert.equal(await lively({ resolver: aliasResolver }).resolveId('eslint', importer), 'eslint');
+}
+
 const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'lively-browser-linter-'));
 let build;
 let runtimeBuild;
