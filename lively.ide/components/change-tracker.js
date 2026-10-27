@@ -709,6 +709,10 @@ export class ComponentChangeTracker {
     const recorded = undoManager?.undoInProgress?.recorder?.changes;
     const target = context.resolveMorph?.(command.sourceOperation.targetId);
     if (!Array.isArray(recorded) || !target) return committedChanges;
+    // Static assignments record one group containing the text property and
+    // embedded-morph maintenance. Own that group instead of its unrecorded leaves.
+    const group = context.committedChange;
+    if (group?.changes?.length && recorded.includes(group)) return [group];
 
     // Document-backed TextMorphs implement a textAndAttributes assignment via
     // replace(). The change engine records both the semantic property change
