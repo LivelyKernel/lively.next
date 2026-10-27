@@ -477,7 +477,7 @@ class ProjectSavePrompt extends AbstractPromptModel {
     const currentBranchName = await this.project.gitResource.branchName();
     promptTitle.textAndAttributes = ['Save Project\n', null, '(currently on', { fontSize: 16 }, ` ${currentBranchName}`, { fontSize: 16, fontColor: Color.lively }, ')', null];
     await this.project.saveConfigData();
-    if (await this.project.hasRemoteConfigured()) this.project.regeneratePipelines();
+    if (await this.project.hasRemoteConfigured()) await this.project.regeneratePipelines({ showWarnings: false });
     li.remove();
     this.view.visible = true;
   }
