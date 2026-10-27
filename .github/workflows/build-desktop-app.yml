@@ -427,9 +427,13 @@ jobs:
           name: lively.next-win-x64-staging
           path: dist
 
+      - name: Test Windows archive failures
+        run: ./scripts/tests/windows-archive-test.ps1
+
       - name: Extract raw Windows bundle
         run: |
           tar -xf dist/lively.next-win-x64.zip -C dist
+          if ($LASTEXITCODE -ne 0) { throw "Windows staging archive extraction failed" }
           if (-not (Test-Path dist/lively.next-win-x64/lively.next.exe)) {
             throw "Extracted Windows bundle is missing lively.next.exe"
           }
@@ -536,11 +540,21 @@ jobs:
         run: |
           $archive = "$PWD/dist/lively.next-win-x64.zip"
           if (Test-Path $archive) { Remove-Item $archive -Force }
-          tar -a -c -f $archive -C dist lively.next-win-x64
+          Push-Location dist
+          try {
+            7z a -tzip -mm=Deflate $archive lively.next-win-x64
+            if ($LASTEXITCODE -ne 0) { throw "Windows archive creation failed" }
+          } finally {
+            Pop-Location
+          }
+          $entries = (7z l -ba $archive | Measure-Object).Count
+          if ($LASTEXITCODE -ne 0) { throw "Windows archive listing failed" }
+          Write-Host "Windows archive: $((Get-Item $archive).Length) bytes; $entries entries"
           $relocated = Join-Path $env:RUNNER_TEMP "lively windows raw relocated"
           if (Test-Path $relocated) { Remove-Item $relocated -Recurse -Force }
           New-Item -ItemType Directory -Force $relocated | Out-Null
-          tar -xf $archive -C $relocated
+          7z x $archive "-o$relocated" -y
+          if ($LASTEXITCODE -ne 0) { throw "Windows archive extraction failed" }
           node ./lively.app/scripts/smoke-desktop-bundle.mjs `
             --bundleDir="$relocated/lively.next-win-x64" `
             --platform=win

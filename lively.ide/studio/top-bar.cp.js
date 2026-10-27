@@ -528,6 +528,7 @@ export class TopBarModel extends ViewModel {
   }
 
   handleShapeCreation (evt) {
+    this._haloDragStartPosition = null;
     if (this._customDrag) {
       this._customDrag = false;
       $world.halos()[0]?.onDragEnd();
@@ -652,6 +653,7 @@ export class TopBarModel extends ViewModel {
   }
 
   handleHaloSelection (evt) {
+    this._haloDragStartPosition = evt.position;
     const world = $world;
     const target = this.primaryTarget || world;
     if (this._showHaloPreview && this._currentlyHighlighted && world.halos().length === 0) {
@@ -724,11 +726,11 @@ export class TopBarModel extends ViewModel {
     if (evt.leftMouseButtonPressed() &&
       !this._customDrag &&
       !evt.state.draggedMorph &&
-      evt.startPosition &&
-      evt.startPosition.subPt(evt.position).r() > 25 &&
+      this._haloDragStartPosition &&
+      this._haloDragStartPosition.subPt(evt.position).r() > 25 &&
       halo &&
       halo.fullContainsPoint(evt.position)) {
-      halo.onDragStart(evt);
+      halo.onDragStart(evt, this._haloDragStartPosition);
       this._customDrag = true;
     }
   }
