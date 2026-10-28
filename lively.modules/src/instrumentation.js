@@ -57,7 +57,7 @@ export function resolveEsmImportMeta (moduleId, source) {
   let tokens;
   try {
     // Tokenization also handles newer grammar such as static blocks and import attributes.
-    tokens = Array.from(acorn.tokenizer(source, { ecmaVersion: 2022, sourceType: 'module' }));
+    tokens = Array.from(acorn.Parser.tokenizer(source, { ecmaVersion: 'latest', sourceType: 'module', allowHashBang: true }));
   } catch (err) {
     // Let the configured transpiler handle syntax the tokenizer does not recognize.
     return source;

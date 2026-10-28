@@ -42,6 +42,22 @@ describe('CDN import metadata', () => {
     expect(new Function('return ' + resolveEsmImportMeta(id, source))()).equals(id.replace('esm:', 'https:'));
   });
 
+  it('resolves CDN assets in classes with private fields and methods', () => {
+    const id = 'esm://ga.jspm.io/npm:fixture@1.0.0/private.js';
+    const source = "(function () { class Asset { #url = import.meta.url; #load() { return new URL('./bindings.wasm', this.#url).href; } load() { return this.#load(); } } return new Asset().load(); })()";
+    const prepared = resolveEsmImportMeta(id, source);
+    expect(new Function('return ' + prepared)()).equals('https://ga.jspm.io/npm:fixture@1.0.0/bindings.wasm');
+  });
+
+  it('preserves a hashbang while resolving CDN import metadata', () => {
+    const id = 'esm://esm.sh/fixture@1.0.0/bin.js';
+    const hashbang = '#!/usr/bin/env node\n';
+    const source = hashbang + "new URL('./bindings.wasm', import.meta.url).href";
+    const prepared = resolveEsmImportMeta(id, source);
+    expect(prepared.startsWith(hashbang)).equals(true);
+    expect(new Function('return ' + prepared.slice(hashbang.length))()).equals('https://esm.sh/fixture@1.0.0/bindings.wasm');
+  });
+
   it('preserves import attributes and modern modules without metadata', () => {
     const id = 'esm://esm.sh/fixture@1.0.0/modern.js';
     const attributes = "import data from './data.json' with { type: 'json' };";
