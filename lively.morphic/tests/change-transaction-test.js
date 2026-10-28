@@ -123,6 +123,62 @@ describe('morphic transaction kernel', () => {
     expect(operation.after).deep.equals({ nested: { value: 2 } });
   });
 
+  for (const prototype of [Object.prototype, null]) {
+    it(`preserves own __proto__ data with ${prototype ? 'ordinary' : 'null'} prototypes during capture and replay`, () => {
+      const before = JSON.parse('{"__proto__":{"value":1},"nested":[1]}');
+      const after = JSON.parse('{"__proto__":{"value":2},"nested":[2]}');
+      Object.setPrototypeOf(before, prototype);
+      Object.setPrototypeOf(after, prototype);
+      const operation = new SetMorphProperty({ targetId: 'target', property: 'state', before, after });
+      const target = { state: before };
+      const context = createContext({ target });
+
+      for (const endpoint of [operation.before, operation.after]) {
+        expect(Object.hasOwn(endpoint, '__proto__')).equals(true);
+        expect(Object.getPrototypeOf(endpoint)).equals(prototype);
+        expect(Object.isFrozen(endpoint.__proto__)).equals(true);
+      }
+      after.__proto__.value = 9;
+      expect(operation.after.__proto__.value).equals(2);
+      for (const [replay, value] of [[operation, 2], [operation.invert(), 1], [operation, 2]]) {
+        replay.apply(context);
+        expect(Object.hasOwn(target.state, '__proto__')).equals(true);
+        expect(Object.getPrototypeOf(target.state)).equals(prototype);
+        expect(target.state.__proto__.value).equals(value);
+        expect(target.state.nested).deep.equals([value]);
+        expect(Object.isFrozen(target.state)).equals(false);
+      }
+    });
+  }
+
+  it('preserves array holes, length and extra own keys in snapshots', () => {
+    const before = [1];
+    before.length = 4;
+    const key = Symbol('extra snapshot data');
+    before[key] = { value: 3 };
+    Object.defineProperty(before, '__proto__', {
+      value: { value: 1 }, enumerable: true, configurable: true, writable: true
+    });
+    const operation = new SetMorphProperty({ targetId: 'target', property: 'state', before, after: [2] });
+    const target = { state: before };
+    const context = createContext({ target });
+
+    operation.apply(context);
+    operation.invert().apply(context);
+    expect(Array.isArray(target.state)).equals(true);
+    expect(Object.getPrototypeOf(target.state)).equals(Array.prototype);
+    expect(target.state.length).equals(4);
+    expect(1 in target.state).equals(false);
+    expect(target.state[0]).equals(1);
+    expect(Object.hasOwn(target.state, '__proto__')).equals(true);
+    expect(target.state.__proto__).deep.equals({ value: 1 });
+    expect(target.state[key]).deep.equals({ value: 3 });
+    expect(Object.isFrozen(operation.before)).equals(true);
+    target.state.push(5);
+    expect(target.state.length).equals(5);
+    expect(operation.before.length).equals(4);
+  });
+
   it('supports explicit reference semantics for identity-bearing values', () => {
     const before = [];
     const after = [];
@@ -354,6 +410,29 @@ describe('morphic transaction kernel', () => {
     expect(error.message).equals('transaction failed');
     expect(firstTarget.value).equals(0);
     expect(secondTarget.value).equals(0);
+    expect(manager._atomicFrame).equals(null);
+    expect(notifications).deep.equals([]);
+  });
+
+  it('rolls back own __proto__ data without changing the original failure', () => {
+    const before = JSON.parse('{"__proto__":{"value":1}}');
+    const after = JSON.parse('{"__proto__":{"value":2}}');
+    const target = { value: before };
+    const manager = createManager({ target });
+    const notifications = [];
+    manager.addCommittedChangeListener(changeSet => notifications.push(changeSet));
+    const cause = new Error('failure after the property write');
+
+    const error = captureError(() => manager.transaction({ undoable: false }, transaction => {
+      transaction.perform(valueOperation('target', before, after));
+      expect(target.value.__proto__.value).equals(2);
+      throw cause;
+    }));
+
+    expect(error).equals(cause);
+    expect(Object.hasOwn(target.value, '__proto__')).equals(true);
+    expect(Object.getPrototypeOf(target.value)).equals(Object.prototype);
+    expect(target.value.__proto__.value).equals(1);
     expect(manager._atomicFrame).equals(null);
     expect(notifications).deep.equals([]);
   });

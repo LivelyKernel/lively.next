@@ -34,7 +34,11 @@ export function cloneSnapshotContainers (value, freeze = false, seen = new WeakM
     : Object.create(Object.getPrototypeOf(value));
   seen.set(value, clone);
   Reflect.ownKeys(value).forEach(key => {
-    clone[key] = cloneSnapshotContainers(value[key], freeze, seen);
+    const copied = cloneSnapshotContainers(value[key], freeze, seen);
+    // Assignment would invoke Object.prototype's legacy __proto__ setter.
+    if (key === '__proto__') {
+      Object.defineProperty(clone, key, { value: copied, writable: true, enumerable: true, configurable: true });
+    } else clone[key] = copied;
   });
   return freeze ? Object.freeze(clone) : clone;
 }
