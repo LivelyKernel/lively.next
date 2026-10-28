@@ -107,6 +107,26 @@ describe('world minimap geometry', () => {
     });
   }
 
+  it('keeps the viewport stroke visible at different world scales and sizes', async () => {
+    const widths = [];
+    const render = model.renderMorphPreviewOnCanvas;
+    model.renderMorphPreviewOnCanvas = function (morph, x, y, width, height, context) {
+      render.call(this, morph, x, y, width, height, context);
+      if (morph.name === 'viewport') {
+        const transform = context.getTransform();
+        widths.push(context.lineWidth * Math.hypot(transform.a, transform.b));
+      }
+    };
+    for (const size of [400, 40000]) {
+      for (const scale of [1, 2]) {
+        setWorld([new Morph({ extent: pt(size, size) })], scale);
+        await model.drawMorphs();
+      }
+    }
+    expect(widths.length).equals(4);
+    widths.forEach(width => expect(width).closeTo(2, 0.001));
+  });
+
   it('keeps the viewport and map navigation aligned while zoomed and scrolled', () => {
     setWorld([], 2, pt(-90, 80));
     model.updateMapSpace();

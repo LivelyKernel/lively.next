@@ -158,7 +158,7 @@ class MiniMapModel extends ViewModel {
       name: 'viewport',
       position: bounds.topLeft(),
       extent: bounds.extent(),
-      borderWidth: 15,
+      borderWidth: 2 / this.widthFromCanvasSpaceToMapSpace(1 / $world.scaleFactor),
       borderColor: Color.lively,
       fill: Color.transparent
     });
