@@ -1,5 +1,6 @@
 /* global System, describe, it */
 import { expect } from 'mocha-es6';
+import { connect } from 'lively.bindings';
 import { Color } from 'lively.graphics';
 import { component, part, ComponentDescriptor, ViewModel, Label, Morph } from 'lively.morphic';
 import { ExpressionSerializer, serializeSpec } from 'lively.serializer2';
@@ -226,6 +227,19 @@ describe('exposed component properties', () => {
     const expression = serializeSpec(label, { asExpression: true, exposeMasterRefs: true });
     expect(expression.__expr__).includes('renamed target data');
     expect(expression.__expr__).not.matches(/\b(?:immutable|transientValue|readonlyCaptionValue):/);
+  });
+
+  it('keeps redirected property settings when bindings wrap the exposed getter', () => {
+    const label = part(RedirectedLabel, { label: 'connected target data' });
+    const connections = ['label', 'immutable', 'transientValue', 'readonlyCaptionValue']
+      .map(name => connect(label, name, {}, 'value'));
+    try {
+      label.get('nested').name = 'renamed nested';
+      label.get('caption').name = 'renamed caption';
+      const expression = serializeSpec(label, { asExpression: true, exposeMasterRefs: true });
+      expect(expression.__expr__).includes('connected target data');
+      expect(expression.__expr__).not.matches(/\b(?:immutable|transientValue|readonlyCaptionValue):/);
+    } finally { connections.forEach(connection => connection.disconnect()); }
   });
 
   it('respects readOnly and serialize settings on redirected models and morphs', () => {
