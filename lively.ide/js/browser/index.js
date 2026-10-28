@@ -2663,6 +2663,8 @@ export class BrowserModel extends ViewModel {
         () => { this.showPackageVersionNumber(!td.showPkgVersion); }],
       [[...(td.showHiddenFolders ? checked : unchecked), ' ' + 'Show Hidden Folders', { float: 'none' }],
         () => { this.showHiddenFolders(!td.showHiddenFolders); }],
+      [[...(ed.showLineNumbers ? checked : unchecked), ' ' + 'Display Line Numbers', { float: 'none' }],
+        () => { ed.execCommand('toggle line numbers'); }],
       [[...(ed.textMap ? checked : unchecked), ' ' + 'Display Code Map', { float: 'none' }],
         () => { this.toggleTextMap(!ed.textMap); }]
     ].filter(Boolean);
