@@ -190,7 +190,11 @@ export async function bundleModule (moduleId, {
   htmlConfig,
   useTerser
 }) {
-  const { default: jsonPlugin } = await System.import('@rollup/plugin-json', import.meta.url);
+  const importer = new URL(import.meta.url, System.baseURL).href;
+  const [{ rollup }, { default: jsonPlugin }] = await Promise.all([
+    System.import('rollup', importer),
+    System.import('@rollup/plugin-json', importer)
+  ]);
   // fixme: maybe its better to make the plugin devoid of state...?
   const bundle = await rollup({
     input: moduleId,
