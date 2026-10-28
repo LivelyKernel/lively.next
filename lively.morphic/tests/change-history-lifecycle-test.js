@@ -66,13 +66,18 @@ function domain (mode = 'complete', phase = 'success', target = null) {
 describe('morphic domain recovery and history lifecycle', function () {
   this.timeout(5000);
   let env, manager, undo, world;
+  let previousWorld;
   beforeEach(async () => {
+    previousWorld = globalThis.$world;
     env = MorphicEnv.pushDefault(new MorphicEnv(await defaultDOMEnv()));
     world = new World({ extent: pt(600, 400) });
     await env.setWorld(world);
     manager = env.changeManager; undo = env.undoManager;
   });
-  afterEach(() => { undo.clearHistory?.(); MorphicEnv.popDefault().uninstall(); });
+  afterEach(() => {
+    try { undo.clearHistory?.(); MorphicEnv.popDefault().uninstall(); }
+    finally { globalThis.$world = previousWorld; }
+  });
 
   for (const mode of ['complete', 'wrong-state', 'restored-then-throws']) {
     for (const phase of ['apply', 'rollback', 'partial']) {

@@ -16,12 +16,17 @@ function failureOf (callback) {
 describe('morphic typed text transactions', function () {
   this.timeout(10000);
   let env, manager;
+  let previousWorld;
   beforeEach(async () => {
+    previousWorld = globalThis.$world;
     env = MorphicEnv.pushDefault(new MorphicEnv(await defaultDOMEnv()));
     await env.setWorld(new World({ extent: pt(600, 400) }));
     manager = env.changeManager;
   });
-  afterEach(() => MorphicEnv.popDefault().uninstall());
+  afterEach(() => {
+    try { MorphicEnv.popDefault().uninstall(); }
+    finally { globalThis.$world = previousWorld; }
+  });
   const text = (value = 'hello\nworld') => new Text({ readOnly: false, textString: value, fixedWidth: true, fixedHeight: true, extent: pt(400, 200) });
 
   it('captures text and prior attributes before document mutation', () => {
@@ -137,7 +142,23 @@ describe('morphic typed text transactions', function () {
     expect(target.textString).equals('XY');
   });
 
-  it('keeps a static text document upgrade and embedding in one canonical edit', () => {
+  it('keeps transaction and replay text after switching out of read-only mode', () => {
+    const target = text('before');
+    target.readOnly = true;
+    manager.transaction({ scope: target }, () => { target.textString = 'after'; });
+    target.readOnly = false;
+    expect(target.textString).equals('after');
+    target.readOnly = true;
+    env.undoManager.undo();
+    target.readOnly = false;
+    expect(target.textString).equals('before');
+    target.readOnly = true;
+    env.undoManager.redo();
+    target.readOnly = false;
+    expect(target.textString).equals('after');
+  });
+
+  it('keeps static text embedding document-free in one canonical edit', () => {
     const target = new Text({ textString: 'abcd', fixedWidth: true, fixedHeight: true });
     const embedded = morph();
     const parent = morph({ submorphs: [morph(), embedded, morph()] });
@@ -146,11 +167,15 @@ describe('morphic typed text transactions', function () {
     expect(result.changeSet.operations).to.have.length(1);
     expect(result.changeSet.operations[0].kind).equals('replace-text');
     expect(embedded.owner).equals(target);
+    expect(target.document).not.to.be.ok;
+    expect(target.needsDocument).equals(false);
     env.undoManager.undo();
     expect(target.textString).equals('abcd');
     expect(parent.submorphs).deep.equals(siblings);
     env.undoManager.redo();
     expect(embedded.owner).equals(target);
+    expect(target.document).not.to.be.ok;
+    expect(target.needsDocument).equals(false);
   });
 
   it('recovers a partially completed static text document upgrade', () => {
@@ -162,7 +187,7 @@ describe('morphic typed text transactions', function () {
     const original = target.backWithDocument;
     const cause = new Error('after document upgrade');
     target.backWithDocument = function () { original.call(this); this.backWithDocument = original; throw cause; };
-    expect(failureOf(() => manager.transaction({ scope: [target, parent] }, () => { target.textAndAttributes = [embedded, null]; }))).equals(cause);
+    expect(failureOf(() => manager.transaction({ scope: [target, parent] }, () => { target.textAndAttributes = [embedded, { doit: { code: '1 + 1' } }]; }))).equals(cause);
     expect(target.document).equals(document);
     expect(target.textLayout).equals(layout);
     expect(target.needsDocument).equals(false);
