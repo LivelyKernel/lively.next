@@ -527,6 +527,21 @@ function traverseSubmorphs (morph, exported, path, styleProto, subopts) {
   if (exported.submorphs?.length === 0) delete exported.submorphs;
 }
 
+/** Keep runtime references and cycles out of exposed component data. */
+function isExposedData (value, exprSerializer, ancestors = new Set()) {
+  if (obj.isPrimitive(value)) return true;
+  if (typeof value !== 'object' || value.isMorph || ancestors.has(value)) return false;
+  if (typeof value.__serialize__ === 'function') {
+    try { return exprSerializer.isSerializedExpression(exprSerializer.embedValue(value)); } catch (error) { return false; }
+  }
+  const prototype = Object.getPrototypeOf(value);
+  if (!Array.isArray(value) && prototype !== Object.prototype && prototype !== null) return false;
+  ancestors.add(value);
+  const result = Object.values(value).every(entry => isExposedData(entry, exprSerializer, ancestors));
+  ancestors.delete(value);
+  return result;
+}
+
 /**
  * Traverses the props returned by the spec() call of a morph and prepares them
  * accordingly (e.g. in case we want to turn the spec into an expression).
@@ -544,8 +559,25 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
     onlyIncludeStyleProps, asExpression, skipUnchangedFromMaster
   } = opts;
   const { properties } = morph.propertiesAndPropertySettings();
+  const exposedProps = asExpression ? morph.viewModel?.exposedPropertyNames || [] : [];
+  const spec = morph.spec(skipUnchangedFromDefault);
+  for (const exposure of asExpression ? morph.viewModel?.expose || [] : []) {
+    const name = Array.isArray(exposure) ? exposure[0] : exposure;
+    if (typeof name !== 'string') continue;
+    // Bindings retain the original accessor in their private property slot.
+    const target = morph.__lookupGetter__(name)?.exposedPropertyTarget ||
+      morph.__lookupGetter__('$$' + name)?.exposedPropertyTarget || morph.viewModel;
+    const descriptor = target.propertiesAndPropertySettings().properties[name];
+    if (descriptor?.readOnly || descriptor?.derived || descriptor?.serialize === false) continue;
+    if (target.__lookupGetter__(name) && !target.__lookupSetter__(name)) continue;
+    const value = morph[name];
+    if (!isExposedData(value, opts.exprSerializer)) continue;
+    if (skipUnchangedFromDefault && obj.equals(value, target.defaultProperties[name])) continue;
+    spec[name] = value;
+  }
 
-  for (const name in morph.spec(skipUnchangedFromDefault)) {
+  for (const name in spec) {
+    if (asExpression && name === 'viewModel') continue;
     let v = morph[name];
     let styleProtoVal = styleProto?.[name];
 
@@ -553,6 +585,7 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
     if (name !== 'name' && skipUnchangedFromMaster && obj.equals(v, styleProtoVal)) continue;
     if (masterInScope &&
         !morph.__only_serialize__.includes(name) &&
+        !exposedProps.includes(name) &&
         !(name === 'name' && asExpression)) continue;
     if (name === 'textAndAttributes') continue;
 
@@ -564,7 +597,7 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
     }
 
     let folded;
-    if (styleProto && (folded = properties[name].foldable)) {
+    if (styleProto && (folded = properties[name]?.foldable)) {
       let unchanged = true;
       for (let subProp of folded) {
         if (!obj.equals(v[subProp], styleProtoVal?.[subProp] || styleProtoVal)) {
@@ -613,7 +646,7 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
       exported[name] = serializeNestedProp(name, val, opts, ['topLeft', 'topRight', 'bottomRight', 'bottomLeft']);
       continue;
     }
-    if (onlyIncludeStyleProps && !properties[name]?.isStyleProp) continue;
+    if (onlyIncludeStyleProps && !properties[name]?.isStyleProp && !exposedProps.includes(name)) continue;
     if (val && val.isMorph) {
       exported[name] = serializeSpec(val, { // eslint-disable-line no-use-before-define
         ...opts,
@@ -714,11 +747,13 @@ function insertConnections (exported, opts) {
  * Carrys over any function members that are attached to the morph.
  * @param { Morph } aMorph - The morph to extract function members from.
  * @param { object } exported - The spec to populate with the function values.
+ * @param { object } opts - The spec serialization options.
  */
-function handleFunctionMembers (aMorph, exported) {
+function handleFunctionMembers (aMorph, exported, opts) {
   Object.keys(aMorph).forEach(name => {
     if (typeof aMorph[name] !== 'function') return;
     if (aMorph[name].isConnectionWrapper) return;
+    if (opts.asExpression && aMorph.viewModel?.exposedPropertyNames.includes(name)) return;
     exported[name] = aMorph[name];
   });
 }
@@ -939,7 +974,7 @@ export function serializeSpec (morph, opts = {}) {
   }
 
   if (keepFunctions) {
-    handleFunctionMembers(morph, exported);
+    handleFunctionMembers(morph, exported, subopts);
   }
 
   handleTypeInfo(morph, exported, subopts);
