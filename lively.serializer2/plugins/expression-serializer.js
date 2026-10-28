@@ -564,7 +564,9 @@ function handleSpecProps (morph, exported, styleProto, path, masterInScope, opts
   for (const exposure of asExpression ? morph.viewModel?.expose || [] : []) {
     const name = Array.isArray(exposure) ? exposure[0] : exposure;
     if (typeof name !== 'string') continue;
-    const target = morph.__lookupGetter__(name)?.exposedPropertyTarget || morph.viewModel;
+    // Bindings retain the original accessor in their private property slot.
+    const target = morph.__lookupGetter__(name)?.exposedPropertyTarget ||
+      morph.__lookupGetter__('$$' + name)?.exposedPropertyTarget || morph.viewModel;
     const descriptor = target.propertiesAndPropertySettings().properties[name];
     if (descriptor?.readOnly || descriptor?.derived || descriptor?.serialize === false) continue;
     if (target.__lookupGetter__(name) && !target.__lookupSetter__(name)) continue;
