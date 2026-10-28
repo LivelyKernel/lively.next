@@ -163,38 +163,41 @@ export function applyTextEdit (target, operation, context, { recovering = false 
     }
   }
   const after = cloneSnapshotContainers(operation.after);
-  if (!target.document && after.some(entry => entry?.isMorph || entry?.doit)) target.needsDocument = true;
+  if (!target.document && after.some(entry => entry?.doit)) target.needsDocument = true;
   if (!target.document) {
+    delete target.renderingState.cachedStaticLines;
+    target.invalidateDocumentBackup();
     target.setProperty('textAndAttributes', after);
     target.renderingState.needsFit = true;
-    return;
-  }
-  const range = new Range(operation.range);
-  const insertedRange = new Range(operation.insertedRange);
-  replaceDocument(target, operation);
-  if (operation.invalidateTextLayout) {
-    target.invalidateTextLayout(false, false);
-    target.textLayout.resetLineCharBoundsCacheOfRange(target, insertedRange);
-  }
-  if (!operation.attributesOnly) {
-    if (!eqPosition(range.end, insertedRange.end)) {
-      const deleting = lessPosition(insertedRange.end, range.end);
-      const [changed] = deleting ? range.subtract(insertedRange) : insertedRange.subtract(range);
-      target.anchors.forEach(anchor => deleting ? anchor.onDelete(changed) : anchor.onInsert(changed));
-      if (target.selectable) {
-        if (target._multiSelection) target._multiSelection.updateFromAnchors();
-        else if (target.getProperty('selection')) target.selection.updateFromAnchors();
-      }
+    target._updateEmbeddedMorphsDuringReplace(embeddedMorphs(after), operation.insertedRange, after, operation.before);
+  } else {
+    const range = new Range(operation.range);
+    const insertedRange = new Range(operation.insertedRange);
+    replaceDocument(target, operation);
+    if (operation.invalidateTextLayout) {
+      target.invalidateTextLayout(false, false);
+      target.textLayout.resetLineCharBoundsCacheOfRange(target, insertedRange);
     }
-    target._updateEmbeddedMorphsDuringReplace(embeddedMorphs(after), insertedRange, after, operation.before);
-  } else target.onAttributesChanged(range);
+    if (!operation.attributesOnly) {
+      if (!eqPosition(range.end, insertedRange.end)) {
+        const deleting = lessPosition(insertedRange.end, range.end);
+        const [changed] = deleting ? range.subtract(insertedRange) : insertedRange.subtract(range);
+        target.anchors.forEach(anchor => deleting ? anchor.onDelete(changed) : anchor.onInsert(changed));
+        if (target.selectable) {
+          if (target._multiSelection) target._multiSelection.updateFromAnchors();
+          else if (target.getProperty('selection')) target.selection.updateFromAnchors();
+        }
+      }
+      target._updateEmbeddedMorphsDuringReplace(embeddedMorphs(after), insertedRange, after, operation.before);
+    } else target.onAttributesChanged(range);
+  }
   for (const entry of operation.embedded.slice().sort((a, b) => (a.after?.index || 0) - (b.after?.index || 0))) {
     if (!entry.after) continue; // First application captures the actual setter/layout result.
     const morph = context.resolveMorph(entry.morphId);
     if (!attachmentsEqual(attachmentOf(morph), entry.after)) context.moveMorph(morph, attachmentOf(morph), entry.after);
   }
-  if (operation.fullAssignment) target.setProperty('textAndAttributes', after);
-  if (operation.consistencyCheck) target.consistencyCheck();
+  if (operation.fullAssignment && target.document) target.setProperty('textAndAttributes', after);
+  if (operation.consistencyCheck && target.document) target.consistencyCheck();
 }
 
 /** Exact typed text state for source-unit verification. */

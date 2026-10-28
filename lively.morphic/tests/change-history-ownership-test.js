@@ -38,13 +38,18 @@ function countOwnershipWork (fn) {
 describe('morphic history ownership', function () {
   this.timeout(5000);
   let env, manager, undo;
+  let previousWorld;
   beforeEach(async () => {
+    previousWorld = globalThis.$world;
     env = MorphicEnv.pushDefault(new MorphicEnv(await defaultDOMEnv()));
     await env.setWorld(new World({ extent: pt(600, 400) }));
     manager = env.changeManager;
     undo = env.undoManager;
   });
-  afterEach(() => MorphicEnv.popDefault().uninstall());
+  afterEach(() => {
+    try { MorphicEnv.popDefault().uninstall(); }
+    finally { globalThis.$world = previousWorld; }
+  });
 
   it('lazy delivery: does no ownership work for an unused context', () => {
     const target = morph();

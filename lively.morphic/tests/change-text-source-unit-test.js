@@ -16,12 +16,17 @@ function failureOf (callback) {
 describe('same-Text source-unit composition', function () {
   this.timeout(10000);
   let env, manager;
+  let previousWorld;
   beforeEach(async () => {
+    previousWorld = globalThis.$world;
     env = MorphicEnv.pushDefault(new MorphicEnv(await defaultDOMEnv()));
     await env.setWorld(new World({ extent: pt(600, 400) }));
     manager = env.changeManager;
   });
-  afterEach(() => MorphicEnv.popDefault().uninstall());
+  afterEach(() => {
+    try { MorphicEnv.popDefault().uninstall(); }
+    finally { globalThis.$world = previousWorld; }
+  });
   const text = value => new Text({ readOnly: false, textString: value, fixedWidth: true, fixedHeight: true, extent: pt(400, 200) });
   const cases = [
     { name: 'disjoint edits', before: 'abcd', source: t => t.insertText('X', { row: 0, column: 1 }, false), reaction: t => t.insertText('Y', { row: 0, column: 4 }, false), after: 'aXbcYd' },
