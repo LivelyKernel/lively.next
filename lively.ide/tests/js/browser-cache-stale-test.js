@@ -8,6 +8,7 @@ describe('system browser directory revalidation', function () {
   this.timeout(120000);
   let a, b, directory;
   afterEach(async () => {
+    await Promise.all([a?.whenModuleUpdated(), b?.whenModuleUpdated()]);
     a?.view.getWindow()?.remove(); b?.view.getWindow()?.remove();
     if (directory) { await localInterface.removePackage(directory.asFile().url); await directory.remove(); }
     a = b = directory = null;
@@ -40,6 +41,7 @@ describe('system browser directory revalidation', function () {
     const pkgNode = a.ui.columnView.getExpandedPath().find(n => n.type === 'package');
     a.world = () => ({ prompt: async () => 'created' });
     await a.interactivelyAddNewModule(pkgNode.url, 'js');
+    await a.whenModuleUpdated();
     expect(await namesSeenBy(a), 'creating window').includes('created.js');
     expect(await namesSeenBy(b), 'other window').includes('created.js');
   });
