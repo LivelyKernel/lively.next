@@ -120,6 +120,17 @@ describe('export lookup', () => {
     expect(exported).containSubset({ local: 'x', moduleId: file1m });
   });
 
+  it('does not execute unloaded script assets while looking up exports', async () => {
+    const id = testProjectDir + 'unloaded-script.js';
+    await resource(id).write('throw new Error("Export lookup must not execute an unloaded asset");');
+    const mod = module(S, id);
+    expect(mod.isLoaded()).equals(false);
+    const result = await ExportLookup.forSystem(S).rawExportsOfModule(id);
+    expect(result.rawExports.error).equals(undefined);
+    expect(result.rawExports.exports).deep.equals([]);
+    expect(mod.isLoaded()).equals(false);
+  });
+
   describe('excludes', () => {
     beforeEach(async () => {
       await createFiles(testProject2Dir, testProject2Spec);
