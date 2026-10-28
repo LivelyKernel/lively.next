@@ -477,13 +477,15 @@ export class ViewModel {
         let redirected;
         if (model) redirected = this.view.getSubmorphNamed(model).viewModel;
         if (target) redirected = this.view.getSubmorphNamed(target);
+        const get = () => {
+          const val = redirected[subProp];
+          if (obj.isFunction(val)) return val.bind(redirected);
+          return val;
+        };
+        get.exposedPropertyTarget = redirected;
         Object.defineProperty(this.view, subProp, {
           configurable: true,
-          get: () => {
-            const val = redirected[subProp];
-            if (obj.isFunction(val)) return val.bind(redirected);
-            return val;
-          },
+          get,
           // if read only prop then an error will be thrown on the viewModel which is a little confusing
           // but fine for now
           set: (v) => { return redirected[subProp] = v; }
