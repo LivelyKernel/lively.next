@@ -35,13 +35,24 @@ export function lively (args) {
   return {
     name: 'rollup-plugin-lively',
     buildStart () { return bundler.buildStart(this); },
-    resolveId: async (id, importer) => {
+    async resolveId (id, importer, options) {
       if (importer?.startsWith('\0') || id.startsWith('\0')) return null;
-      let res = await bundler.resolveId(map[id] || id, importer);
+      id = map[id] || id;
+      if (bundler.asBrowserModule && id === 'eslint' && importer?.replace(/\\/g, '/').endsWith('/lively.ide/js/linter.js')) {
+        // The live import map exposes eslint; frozen linting only needs its browser-safe core.
+        id = 'eslint/lib/linter/linter.js';
+      }
+      const res = await bundler.resolveId(id, importer, !!options?.custom?.['node-resolve']?.isRequire);
+      if (res && isBuiltin(res, bundler.resolver)) {
+        if (!bundler.asBrowserModule) return { id: res, external: true };
+        if (res.startsWith('node:')) return this.resolve(res.slice(5), importer, { ...options, skipSelf: true });
+        // The existing browser polyfill runs after Lively's resolver.
+        return null;
+      }
       return res;
     },
     resolveDynamicImport: async (node, importer) => {
-      if (typeof node === 'string' && isBuiltin(node, bundler.resolver)) return node.replace('node:', '');
+      if (typeof node === 'string' && isBuiltin(node, bundler.resolver)) return null;
       let res = await bundler.resolveDynamicImport(node, importer);
       return res;
     },
@@ -54,8 +65,20 @@ export function lively (args) {
         return null;
       }
     },
-    transform: async (source, id) => {
+    async transform (source, id) {
+      if (id === '\0polyfill-node.path.js') {
+        // The installed path shim is POSIX-only; expose Node's POSIX alias.
+        return {
+          code: source.replace('export default {', 'export const posix = {') +
+            '\nposix.posix = posix;\nexport default posix;\n',
+          ast: null, map: null
+        };
+      }
       if (id.startsWith('\0')) return null;
+      if (isResurrectionBuild && this.getModuleInfo(id)?.meta.commonjs?.isCommonJS === 'withRequireFunction') {
+        // Generated require guards must restart with Rollup's fresh exports objects.
+        source = source.replace(/^var (hasRequired[\w$]+);$/m, 'var $1 = false;');
+      }
       try {
         return await bundler.transform(source, id);
       } catch (err) {

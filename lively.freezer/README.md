@@ -5,6 +5,31 @@ Apps in `lively.next` use custom source transformation and access to meta inform
 In order to do that, the `Freezer` provides a custom rollup plugin that can be added to rollup bundling tasks.
 We are further planning to release plugins for other bundlers such as ESBuild or Webpack such that `lively.next` can be used in various different projects.
 
+## Adding HTML to the page head
+
+In a project's `tools/build.mjs`, set `autoRun.head` on the existing `lively` plugin configuration. The string is inserted into the generated `index.html` inside `<head>`, before the frozen app starts:
+
+```js
+lively({
+  resolver,
+  // Keep the project's other plugin options here.
+  autoRun: {
+    title: 'My app',
+    head: '<script src="https://www.gstatic.com/charts/loader.js"></script>'
+  }
+})
+```
+
+This can also contain `<meta>`, `<link>`, or `<style>` elements. Rebuild the project after changing the configuration. A world's `__head_html__` property is not read by the project build script.
+
+When calling `bundleModule` from `lively.freezer` directly, pass the same configuration as `htmlConfig`, for example `{ htmlConfig: { title: 'My app', head: '<meta name="theme-color" content="#f1c40f">' } }`.
+
+## Connections in frozen apps
+
+Importing the shell editor plugin or creating a `ShellEditorPlugin` instance does not request the shell working directory. When no directory is set, opening its directory chooser requests the shell's default directory and requires a shell connection.
+
+This does not prevent UI code from explicitly opening connections. In particular, `UserFlapModel.setupNetworkIndicator` calls `L2LClient.forLivelyInBrowser` to display the server status. A frozen app that includes this flap or custom UI derived from it still needs a compatible server or must omit that connection-dependent UI. The general deployment request in #1720 remains open.
+
 ## Resurrection Builds
 
 lively.freezer provides the option to produce a bundle that ships with module meta annotations. 

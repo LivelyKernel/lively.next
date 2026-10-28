@@ -381,16 +381,12 @@ export default class LivelyRollup {
   }
 
   /**
-   * Dispatches the responsibility of resolving relative imports to the loaded SystemJS.
+   * Resolve relative imports with the target conditions and package mappings.
    * @param { string } moduleId - The module from where the import happens.
    * @param { string } path - The relative path to be imported.
    */
-  // FIXME: the reason this is async is because we still keep the browser resolver around...
-  resolveRelativeImport (moduleId, path) {
-    if (!path.startsWith('.')) return this.resolver.normalizeFileName(path);
-    // how to achieve that without the nasty file handle
-    return this.resolver.normalizeFileName(
-      string.joinPath(this.resolver.normalizeFileName(moduleId), '..', path));
+  resolveRelativeImport (moduleId, path, isRequire = false) {
+    return this.resolver.resolveModuleId(path, moduleId, this.getResolutionContext(), isRequire);
   }
 
   /**
@@ -959,8 +955,9 @@ export default class LivelyRollup {
    * @param { string } id - The module id to be resolved.
    * @param { string } importer - The module id that is importing said module.
    */
-  resolveId (id, importer) {
-    if (this.resolved[resolutionId(id, importer)]) return this.resolved[resolutionId(id, importer)];
+  resolveId (id, importer, isRequire = false) {
+    const cacheKey = (isRequire ? 'require ' : '') + resolutionId(id, importer);
+    if (this.resolved[cacheKey]) return this.resolved[cacheKey];
     if (id === ROOT_ID) return id;
     // Handle synthetic root modules for multi-entry builds
     if (id.startsWith('__rootModule__:')) return id;
@@ -969,7 +966,7 @@ export default class LivelyRollup {
     // declare the compiler's runtime dependency.
     if (id === 'lively.classes/runtime.js') return this.resolver.resolveModuleId(id, undefined, this.getResolutionContext());
     // handle standalone
-    if (!importer) return this.resolver.resolveModuleId(id, importer, this.getResolutionContext());
+    if (!importer) return this.resolver.resolveModuleId(id, importer, this.getResolutionContext(), isRequire);
 
     const importingPackage = this.modulePackageFor(importer);
     // honor the systemjs options within the package config
@@ -1011,9 +1008,9 @@ export default class LivelyRollup {
 
     if (id.startsWith('.')) { // handle some kind of relative import
       try {
-        absolutePath = this.resolveRelativeImport(importer, id);
+        absolutePath = this.resolveRelativeImport(importer, id, isRequire);
         if (this.belongsToExcludedPackage(absolutePath)) return null;
-        return this.resolved[resolutionId(id, importer)] = absolutePath;
+        return this.resolved[cacheKey] = absolutePath;
       } catch (err) {
         return null;
       }
@@ -1021,9 +1018,9 @@ export default class LivelyRollup {
 
     // Resolve from the importing module so separate dependency instances stay separate.
 
-    absolutePath = this.resolver.resolveModuleId(id, importer, this.getResolutionContext());
+    absolutePath = this.resolver.resolveModuleId(id, importer, this.getResolutionContext(), isRequire);
     if (this.belongsToExcludedPackage(absolutePath)) return id;
-    return this.resolved[resolutionId(id, importer)] = absolutePath;
+    return this.resolved[cacheKey] = absolutePath;
   }
 
   belongsToExcludedPackage (id) {

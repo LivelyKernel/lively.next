@@ -81,12 +81,15 @@ export class Project {
     let finishCheck;
     ({ promise: lively.checkedProjectVersionRelation, resolve: finishCheck } = promise.deferred());
     lively.projectRepoPull = (async () => {
-      const gitResource = await this.ensureGitResource(fullName);
       // Initialization needs to be done here, since the one in the world loading step comes too late.
       // However we are setting up shell and l2l for a different world, thereby requiring us to initialize both twice...
       const l2lClient = await setupLively2Lively($world);
-      if (l2lClient) await setupLivelyShell({ l2lClient });
+      if (l2lClient) {
+        await l2lClient.whenRegistered(30 * 1000);
+        await setupLivelyShell({ l2lClient });
+      }
 
+      const gitResource = await this.ensureGitResource(fullName);
       await Project.resetConfigFiles(gitResource);
       Project.projectDirectory(fullName).then(
         dir => dir.join('package.json').readJson().then(

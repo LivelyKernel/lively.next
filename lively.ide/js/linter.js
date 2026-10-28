@@ -3,7 +3,7 @@
  */
 
 import config from 'eslint-config-standard';
-import eslint from 'eslint';
+import { Linter } from 'eslint';
 
 const rules = {
   // These are all rules from the default ruleset that are fixable
@@ -123,7 +123,7 @@ config.rules = rules;
  * @returns { Array.<string, LinterMessage[]> }
  */
 export default function lint (code, customRules = {}) {
-  const linter = new eslint.Linter();
+  const linter = new Linter();
   const linterOutput = linter.verifyAndFix(code, { ...config, rules: { ...config.rules, ...customRules } });
   return [linterOutput.output, linterOutput.messages];
 }

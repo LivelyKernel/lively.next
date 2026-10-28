@@ -107,3 +107,45 @@ await test('failed bootstrap input leaves the dashboard loader installed', async
     assert.equal(f.swaps(), 0);
   } finally { await f.finish(); }
 });
+
+const clientSource = await readFile(new URL('lively.2lively/client.js', root), 'utf8');
+const browserClient = clientSource.slice(clientSource.indexOf('  static forLivelyInBrowser ('),
+  clientSource.indexOf('  static default ()'));
+const determineLocation = clientSource.slice(clientSource.indexOf('function determineLocation ()'),
+  clientSource.indexOf('\nlet _clients;'));
+/** Run the browser client factory against the dashboard's loader and backend roots. */
+function browserClientFixture (globals = {}, defaultClient) {
+  const context = {
+    System: { baseURL: 'http://localhost:9012/dashboard/' },
+    document: { location: { origin: 'http://localhost:9012' } },
+    obj: { equals: () => false },
+    urlHelper: { root: url => new URL('/', url).href },
+    resource: url => ({ join: path => ({ url: url.replace(/\/$/, '') + '/' + path.replace(/^\//, '') }) }),
+    ...globals
+  };
+  const Client = runInNewContext(`${determineLocation}; (class L2LClient { ${browserClient} })`, context);
+  Client.default = () => defaultClient;
+  Client.ensure = options => options;
+  return Client;
+}
+for (const [name, globals, expected] of [
+  ['dashboard', {}, 'http://localhost:9012/lively-socket.io'],
+  ['custom server subdirectory', { SERVER_URL: 'https://server.test/lively/' }, 'https://server.test/lively/lively-socket.io'],
+  ['configured system root', { SYSTEM_BASE_URL: 'https://server.test/lively/' }, 'https://server.test/lively/lively-socket.io'],
+  ['native desktop', { SERVER_URL: 'http://127.0.0.1:9011', SYSTEM_BASE_URL: 'file:///app/', livelyNative: { baseURL: 'file:///native-app/' }, document: { location: { origin: 'null' } } }, 'http://127.0.0.1:9011/lively-socket.io'],
+  ['native runtime root', { SYSTEM_BASE_URL: 'file:///app/', livelyNative: { baseURL: 'file:///native-app/' }, document: { location: { origin: 'null' } } }, 'file:///native-app/lively-socket.io'],
+  ['native file root', { SYSTEM_BASE_URL: 'file:///app/', document: { location: { origin: 'null' } } }, 'file:///app/lively-socket.io']
+]) {
+  await test(`browser L2L uses the canonical endpoint for ${name}`, () => {
+    const result = browserClientFixture(globals).forLivelyInBrowser({ world: 'project' });
+    assert.equal(result.url, expected);
+    assert.equal(result.namespace, 'l2l');
+    assert.equal(result.info.world, 'project');
+  });
+}
+await test('browser L2L retains a deliberately configured default client', () => {
+  const client = { origin: 'https://custom.test', isRegistered: () => false };
+  const Client = browserClientFixture({}, client);
+  Client.ensure = () => { throw new Error('existing default client replaced'); };
+  assert.equal(Client.forLivelyInBrowser({ world: 'project' }), client);
+});
