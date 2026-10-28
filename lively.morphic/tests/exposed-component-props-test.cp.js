@@ -218,6 +218,16 @@ describe('exposed component properties', () => {
     expect(changed.__expr__).matches(/\benabled:\s*false/);
   });
 
+  it('serializes redirected values after their original targets are renamed', () => {
+    const label = part(RedirectedLabel, { label: 'renamed target data' });
+    label.get('nested').name = 'renamed nested';
+    label.get('caption').name = 'renamed caption';
+    expect(label.label).equals('renamed target data');
+    const expression = serializeSpec(label, { asExpression: true, exposeMasterRefs: true });
+    expect(expression.__expr__).includes('renamed target data');
+    expect(expression.__expr__).not.matches(/\b(?:immutable|transientValue|readonlyCaptionValue):/);
+  });
+
   it('respects readOnly and serialize settings on redirected models and morphs', () => {
     const label = part(RedirectedLabel, { label: 'redirected data' });
     const expression = serializeSpec(label, { asExpression: true, exposeMasterRefs: true });
