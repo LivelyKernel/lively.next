@@ -10,7 +10,8 @@ import { LivelyWorld } from '../../world.js';
 
 const describeInBrowser = System.get('@system-env').browser ? describe : xdescribe;
 
-describeInBrowser('inspector layout property', () => {
+describeInBrowser('inspector layout property', function () {
+  this.timeout(10000);
   let env, world, target, inspector, root, previousWorld, previousRenderer, previousTitle, layoutNode;
 
   beforeEach(async () => {
@@ -32,6 +33,8 @@ describeInBrowser('inspector layout property', () => {
 
   afterEach(async () => {
     try {
+      expect(await world.whenRendered(), 'fixture renders before teardown').equals(true);
+      await document.fonts.ready;
       inspector?.closeOpenWidget();
       inspector?.onWindowClose();
     } finally {

@@ -46,6 +46,8 @@ describeInBrowser('inspector border properties', function () {
 
   afterEach(async () => {
     try {
+      expect(await world.whenRendered(), 'fixture renders before teardown').equals(true);
+      await document.fonts.ready;
       inspector?.closeOpenWidget();
       inspector?.onWindowClose();
     } finally {
