@@ -134,6 +134,39 @@ export class PackageTreeData extends TreeData {
     this.showHiddenFolders = showHiddenFolders;
   }
 
+  get __dont_serialize__ () { return [...super.__dont_serialize__, '_childListings', '_moduleListings']; }
+
+  invalidate (node = this.root) {
+    if (node === this.root) this._childListings = new WeakMap();
+    else this._childListings?.delete(node);
+    this._moduleListings = new Map();
+  }
+
+  async loadChildren (node, load) {
+    const cache = this._childListings || (this._childListings = new WeakMap());
+    let pending = cache.get(node);
+    if (!pending || (node !== this.root && pending.settled)) {
+      pending = { promise: Promise.resolve().then(load), settled: false };
+      cache.set(node, pending);
+    }
+    try {
+      const children = await pending.promise;
+      if (this._childListings !== cache || cache.get(node) !== pending) return this.loadChildren(node, load);
+      const previous = new Map((node.subNodes || []).map(child => [child.url, child]));
+      node.subNodes = children.map(child => {
+        const existing = previous.get(child.url);
+        return existing ? Object.assign(existing, child, { isCollapsed: existing.isCollapsed }) : child;
+      });
+      // Directory contents can change outside this browser or process. Share
+      // concurrent reads, but revalidate membership whenever a column reopens.
+      pending.settled = true;
+      return node.subNodes;
+    } catch (err) {
+      if (cache.get(node) === pending) cache.delete(node);
+      throw err;
+    }
+  }
+
   get columnView () {
     return this.root.browser.ui.columnView;
   }
@@ -404,13 +437,19 @@ export class PackageTreeData extends TreeData {
       const gitIgnoreContents = await this.systemInterface.coreInterface.resourceRead(resource(selectedPkg.url).join('.gitignore').url);
       if (gitIgnoreContents) { gitignore.push(...gitIgnoreContents.split('\n')); }
     }
-    const files = await this.systemInterface.resourcesOfPackage(selectedPkg.url, ['node_modules', 'build', 'assets', 'objectdb', '.git', ...gitignore]);
-    await this.systemInterface.getPackage(selectedPkg.url);
-    const loadedModules = {};
-    files.forEach(file => {
-      loadedModules[file.url] = file;
-    });
-    return loadedModules;
+    const key = JSON.stringify([selectedPkg.url, gitignore]);
+    const listings = this._moduleListings || (this._moduleListings = new Map());
+    if (!listings.has(key)) {
+      listings.set(key, (async () => {
+        const files = await this.systemInterface.resourcesOfPackage(selectedPkg.url, ['node_modules', 'build', 'assets', 'objectdb', '.git', ...gitignore]);
+        await this.systemInterface.getPackage(selectedPkg.url);
+        return Object.fromEntries(files.map(file => [file.url, file]));
+      })());
+    }
+    try { return await listings.get(key); } catch (error) {
+      listings.delete(key);
+      throw error;
+    }
   }
 
   async listEditableFilesInDir (folderLocation) {
@@ -430,7 +469,7 @@ export class PackageTreeData extends TreeData {
   async collapse (node, bool) {
     if (node === this.root) {
       bool = false; // never collapse root
-      node.subNodes = await this.listAllPackages();
+      await this.loadChildren(node, () => this.listAllPackages());
       node.listControl = node.listControl || await System.import('lively.ide/js/browser/ui.cp.js').then(b => part(b.BrowserPackageControls));
       node.listControl.focusOn(this.root.browser);
     }
@@ -438,7 +477,7 @@ export class PackageTreeData extends TreeData {
     node.isDirty = true;
     if (!bool) {
       if (node.type === 'package') {
-        node.subNodes = await this.listEditableFilesInPackage(node.url);
+        await this.loadChildren(node, () => this.listEditableFilesInPackage(node.url));
         node.listControl = node.listControl || await System.import('lively.ide/js/browser/ui.cp.js').then(b => part(b.BrowserDirectoryControls));
         node.listControl.focusOn(this.root.browser, node.url);
       }
@@ -453,7 +492,7 @@ export class PackageTreeData extends TreeData {
       }
 
       if (node.type === 'directory') {
-        node.subNodes = await this.listEditableFilesInDir(node.url);
+        await this.loadChildren(node, () => this.listEditableFilesInDir(node.url));
         node.listControl = node.listControl || await System.import('lively.ide/js/browser/ui.cp.js').then(b => part(b.BrowserDirectoryControls));
         node.listControl.focusOn(this.root.browser, node.url);
       }
@@ -587,9 +626,12 @@ export class BrowserModel extends ViewModel {
             'interactivelyRemoveSelectedItem',
             'searchForModuleAndSelect',
             'updateModuleList',
+            'refreshTree',
             'onWindowClose',
             'onModuleLoaded',
             'onModuleChanged',
+            'onModuleUnloaded',
+            'onPackageChanged',
             'showDependencyPackages',
             'showPackageVersionNumber',
             'showHiddenFolders',
@@ -976,7 +1018,8 @@ export class BrowserModel extends ViewModel {
     const { columnView } = this.ui;
     const treeData = columnView.treeData;
     treeData.showDependencyPackages = bool;
-    treeData.root.subNodes = await columnView.treeData.listAllPackages();
+    treeData.invalidate();
+    await treeData.collapse(treeData.root, false);
     await this.selectPackageNamed(null, true);
   }
 
@@ -986,7 +1029,7 @@ export class BrowserModel extends ViewModel {
     treeData.showHiddenFolders = bool;
     // save state to reconstruct after exchanging tree data
     const browseState = this.browseSpec();
-    await columnView.setTreeData(new PackageTreeData({ browser: this }, { showHiddenFolders: bool, showDependencyPackages: treeData.showDependencyPackages }));
+    await columnView.setTreeData(new PackageTreeData({ browser: this }, { showHiddenFolders: bool, showDependencyPackages: treeData.showDependencyPackages, showPkgVersion: treeData.showPkgVersion }));
     await this.browse(browseState); // reconstruct state
   }
 
@@ -1448,6 +1491,7 @@ export class BrowserModel extends ViewModel {
         if (isLoadedNow) {
           Object.assign(pack, p);
           m.isLoaded = true;
+          m.isDirty = true;
           await this.updateModuleList();
           this.state.moduleUpdateInProgress = null;
           await this.selectModuleNamed(m.url);
@@ -1466,6 +1510,7 @@ export class BrowserModel extends ViewModel {
       this.historyRecord();
 
       m.isLoaded = true;
+      m.isDirty = true;
       this.updateModuleList();
       this.state.selectedModule = m;
       await this.reviveFrozenModuleIfNeeded();
@@ -1731,12 +1776,18 @@ export class BrowserModel extends ViewModel {
 
   async updateModuleList (m) {
     const { columnView } = this.ui;
-    if (m) {
-      // clear siblings
-      const parent = columnView.treeData.parentNode(m);
-      await columnView.treeData.collapse(parent, false);
-    }
+    if (m) return this.refreshTree();
     await columnView.refresh(false);
+  }
+
+  async refreshTree () {
+    const { columnView } = this.ui;
+    const data = columnView.treeData;
+    const path = columnView.getExpandedPath().map(node => obj.select(node, ['url', 'type', 'name']));
+    data.invalidate();
+    await columnView.setExpandedPath((node, depth) => node === data.root || (node.url
+      ? node.url === path[depth]?.url
+      : node.type === path[depth]?.type && node.name === path[depth]?.name), data.root, false);
   }
 
   async updateCodeEntities (mod) {
@@ -2266,6 +2317,7 @@ export class BrowserModel extends ViewModel {
   // system events
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   async onModuleChanged (evt) {
+    this.onPackageChanged(evt);
     if (this.state.isSaving) return;
 
     const m = modules.module(evt.module);
@@ -2286,28 +2338,11 @@ export class BrowserModel extends ViewModel {
     }
   }
 
-  async onModuleLoaded (evt) {
-    if (this.state.isSaving) return;
+  onModuleLoaded (evt) { this.onPackageChanged(evt); }
 
-    const m = modules.module(evt.module);
-    const { selectedPackage } = this;
+  onModuleUnloaded (evt) { this.onPackageChanged(evt); }
 
-    if (!selectedPackage || !m.package() || m.package().address !== selectedPackage.address) { }
-
-    // fixme: add new module to list
-    // let mInList = this.ui.moduleList.values.find(ea => ea.url === m.id);
-    // if (!mInList) {
-    //   await this.updateModuleList();
-    //   mInList = this.ui.moduleList.values.find(ea => ea.url === m.id);
-    // }
-    //
-    // if (selectedModule && selectedModule.url === m.id && mInList) {
-    //   if (this.hasUnsavedChanges()) {
-    //     this.addModuleChangeWarning(m.id);
-    //     this.state.sourceHash = string.hashCode(await m.source());
-    //   } else await this.ui.sourceEditor.saveExcursion(() => this.onModuleSelected(mInList));
-    // }
-  }
+  onPackageChanged () { this.ui.columnView.treeData?.invalidate(); }
 
   addModuleChangeWarning (mid) {
     this.state.moduleChangeWarning = mid;
@@ -2499,8 +2534,10 @@ export class BrowserModel extends ViewModel {
     await coreInterface.resourceMkdir(dirPath);
     // uncollapse the parent node of the dir
     const parentNode = columnView.getExpandedPath().find(n => n.url === dir);
-    if (parentNode) await td.collapse(parentNode, false);
-    columnView.selectNode(parentNode.subNodes.find(n => n.url === dirPath));
+    if (!parentNode) return;
+    td.invalidate(parentNode);
+    await td.collapse(parentNode, false);
+    await columnView.selectNode(parentNode.subNodes.find(n => n.url === dirPath));
   }
 
   async interactivelyAddNewModule (dir, type) {
@@ -2530,8 +2567,10 @@ export class BrowserModel extends ViewModel {
 
     // uncollapse the parent node of the dir
     const parentNode = columnView.getExpandedPath().find(n => n.url === dir);
-    if (parentNode) await td.collapse(parentNode, false);
-    columnView.selectNode(parentNode.subNodes.find(n => n.url === dirPath));
+    if (!parentNode) return;
+    td.invalidate(parentNode);
+    await td.collapse(parentNode, false);
+    await columnView.selectNode(parentNode.subNodes.find(n => n.url === dirPath));
   }
 
   async interactivelyBrowseHistory () {
@@ -2572,7 +2611,6 @@ export class BrowserModel extends ViewModel {
   async interactivelyRemoveSelectedItem (dir) {
     const { selectedPackage, ui: { columnView }, systemInterface } = this;
     const coreInterface = systemInterface.coreInterface;
-    const td = columnView.treeData;
     if (!dir || !selectedPackage) return;
     const parentNode = columnView.getExpandedPath().find(n => n.url === dir);
     const selectedNodeInDir = parentNode.subNodes.find(n => !n.isCollapsed);
@@ -2612,8 +2650,7 @@ export class BrowserModel extends ViewModel {
       }
       await coreInterface.resourceRemove(selectedNodeInDir.url);
     }
-    if (parentNode) await td.collapse(parentNode, false);
-    this.updateModuleList();
+    await this.refreshTree();
   }
 
   browseSnippetForSelection () {
@@ -2653,6 +2690,7 @@ export class BrowserModel extends ViewModel {
     const m = this.selectedModule;
 
     return [
+      { command: 'refresh browser', target: this, showKeyShortcuts: false },
       p && { command: 'open browse snippet', target: this, showKeyShortcuts: false },
       m && { command: 'open selected module in text editor', target: this, showKeyShortcuts: false },
       (m || p) && { isDivider: true },

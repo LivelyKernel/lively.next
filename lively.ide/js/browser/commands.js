@@ -37,6 +37,10 @@ export default function browserCommands (browser) {
 
   return [
     {
+      name: 'refresh browser',
+      exec: browser => browser.refreshTree()
+    },
+    {
       name: 'focus list with selection',
       exec: () => browser.focusColumnView()
     },
@@ -287,6 +291,7 @@ export default function browserCommands (browser) {
           return true;
         }
 
+        await browser.refreshTree();
         await browser.selectPackageNamed(pkg.name, true);
         return true;
       }
@@ -305,6 +310,7 @@ export default function browserCommands (browser) {
           return true;
         }
 
+        await browser.refreshTree();
         await browser.selectPackageNamed(null, true);
 
         return true;
