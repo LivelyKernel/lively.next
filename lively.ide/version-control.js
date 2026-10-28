@@ -6,16 +6,15 @@ import { commit, branch, localBranchesOf, gitHubBranches } from 'lively.changese
 import { activeCommit } from 'lively.changesets/src/commit.js';
 import { getAuthor, setAuthor, getGitHubToken, setGitHubToken } from 'lively.changesets/src/settings.js';
 import { subscribe, unsubscribe } from 'lively.notifications';
-import { part } from 'lively.morphic';
+import { part, GridLayout, TilingLayout } from 'lively.morphic';
 import { morph, Morph } from '../index.js';
 import { Window } from '../widgets.js';
 import CodeEditor from './code-editor.js';
-import { GridLayout, HorizontalLayout } from '../layout.js';
 
 function pad (m) { // Morph -> Morph
   return {
     name: m.name + 'Padded',
-    layout: new HorizontalLayout({ spacing: 6 }),
+    layout: new TilingLayout({ axis: 'row', spacing: 6 }),
     submorphs: [m]
   };
 }
@@ -390,7 +389,7 @@ export default class VersionControl extends Window {
     const labelStyle = { fontSize: 11 };
     return morph({
       name: 'filePanel',
-      layout: new HorizontalLayout({ spacing: 6 }),
+      layout: new TilingLayout({ axis: 'row', spacing: 6 }),
       submorphs: [
         { type: 'text', textString: 'show:', ...labelStyle },
         part(Checkbox, { name: 'allChkBox', viewModel: { checked: true } }),
@@ -405,7 +404,7 @@ export default class VersionControl extends Window {
     const btnStyle = { fontSize: 11, borderRadius: 0, extent: pt(40, 20) };
     return morph({
       name: 'commitPanel',
-      layout: new HorizontalLayout({ spacing: 6 }),
+      layout: new TilingLayout({ axis: 'row', spacing: 6 }),
       submorphs: [
         { type: 'button', label: 'load', name: 'loadBtn', ...btnStyle },
         { type: 'button', label: 'commit', name: 'commitBtn', ...btnStyle },
