@@ -90,6 +90,7 @@ let testProjectSpec = {
   'file3.js': 'var zzz = 4; System.global.z = zzz / 2;',
   'file4.js': 'export default class Foo { static bar() {} }; Foo.bar();',
   'file5.js': "import Foo from './file4.js'; class Bar extends Foo {}",
+  'formatter.js': 'exports.format = value => `}export default ${value}`;',
   'package.json': JSON.stringify({
     name: 'test-project-1',
     version: '1.2.3',
@@ -124,6 +125,11 @@ describe('instrumentation', () => {
   it('gets access to internal module state', async () => {
     expect(module1).to.have.nested.property('recorder.y', 1);
     expect(module1).to.have.nested.property('recorder.x', 3);
+  });
+
+  it('loads CommonJS formatter strings through SystemJS', async () => {
+    const formatter = await S.import(testProjectDir + 'formatter.js');
+    expect(formatter.format(42)).equals('}export default 42');
   });
 
   it('modules can (re)define captures', async () => {

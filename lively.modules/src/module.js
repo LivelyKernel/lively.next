@@ -40,6 +40,9 @@ export const detectModuleFormat = (function () {
         for (const token of acorn.Parser.tokenizer(source, { ecmaVersion: 'latest', allowHashBang: true })) {
           if (['import', 'export'].includes(token.type.label) && starts.has(token.start)) return 'esm';
         }
+        // Keep SystemJS from reclassifying CommonJS formatter strings as ESM.
+        if (!/\b(?:define|System(?:JS)?\.register)\s*\(/.test(source) &&
+            /(?:^|[^\w$.])(?:exports\s*[.\[]|module\s*(?:\.exports|\[['"]exports['"]\])|require\s*\(\s*['"`])/.test(source)) return 'cjs';
       } catch (error) {
         // Preserve detection during parser bootstrap and for unsupported grammar.
         return 'esm';

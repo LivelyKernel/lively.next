@@ -10,7 +10,7 @@ describe('module format detection', () => {
       '/* export default 42; */ module.exports = 42;',
       'exports.source = `}import value from "other"`;',
       'exports.source = /}export default/;'
-    ]) expect(detectModuleFormat(source), source).equals('global');
+    ]) expect(detectModuleFormat(source), source).not.equals('esm');
   });
 
   it('recognizes real module syntax after formatter strings and modern syntax', () => {
@@ -27,5 +27,10 @@ describe('module format detection', () => {
     expect(detectModuleFormat('export default 42;', { format: 'cjs' })).equals('cjs');
     expect(detectModuleFormat('"format cjs"; exports.source = `}export default 42`;')).equals('cjs');
     expect(detectModuleFormat('"format esm"; const value = 42;')).equals('esm');
+  });
+
+  it('preserves SystemJS detection of AMD and register wrappers', () => {
+    expect(detectModuleFormat('define(function (require, exports) { exports.source = `}export default 42`; });')).equals('global');
+    expect(detectModuleFormat('System.register([], function (exports) { return { execute() { exports("source", `}export default 42`); } }; });')).equals('global');
   });
 });

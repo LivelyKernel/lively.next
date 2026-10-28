@@ -372,7 +372,7 @@ export async function customTranslate (load) {
   mod.recorderName = '__lvVarRecorder';
   if (mod.recorder === System.global) { mod.unloadEnv(); }
   load.metadata['lively.modules instrumented'] = true;
-  if (isEsm) load.metadata.format = 'esm';
+  if (isEsm || format === 'cjs') load.metadata.format = format;
   load.metadata.module = mod;
 
   if (!instrumented) {
