@@ -1530,11 +1530,11 @@ export default class LivelyRollup {
     if (this.minify && opts.format !== 'esm' && !this.sourceMap) {
       this.resolver.setStatus({ status: 'Minifying chunks...' });
 
-      if (this.useTerser) {
-        // Babel and Terser run on the Node host.
+      if (this.useTerser || this.resolver.isBrowserResolver) {
+        // Browser builds reuse the Node host for minification and compression.
         await Promise.all(modules.map(async (chunk, i) => {
           try {
-            const { min: minifiedCode } = await compileOnServer(chunk.code, this.resolver);
+            const { min: minifiedCode } = await compileOnServer(chunk.code, this.resolver, this.useTerser);
             chunk.code = minifiedCode.replace("'use strict';", '');
           } catch (err) {
             console.warn(`\x1b[33m       [!] Minification failed for chunk ${i}: ${err.message}\x1b[0m`);

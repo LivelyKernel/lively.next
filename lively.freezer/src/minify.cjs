@@ -1,7 +1,11 @@
 const babel = require('@babel/core');
 const { minify } = require('terser');
 
-module.exports = async function (code) {
+module.exports = async function (code, useTerser = true) {
+  if (!useTerser) {
+    const { swcMinify } = await import('./bundler-swc.js');
+    return { code, min: (await swcMinify(code)).code };
+  }
   const transformed = babel.transformSync(code, {
     babelrc: false,
     configFile: false,

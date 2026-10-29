@@ -1,5 +1,5 @@
 /* global System */
-import { nodes, isValidIdentifier } from 'lively.ast';
+import { nodes, isValidIdentifier, acorn, transform } from 'lively.ast';
 const { funcCall, member, literal } = nodes;
 import { evalCodeTransform, evalCodeTransformOfSystemRegisterSetters } from 'lively.vm';
 import { string, obj, properties } from 'lively.lang';
@@ -7,6 +7,7 @@ import { classToFunctionTransform } from 'lively.classes';
 
 import module, { detectModuleFormat } from './module.js';
 import { BrowserModuleTranslationCache, NodeModuleTranslationCache } from './cache.js';
+import { resource } from 'lively.resources';
 
 function isNodeRuntime (System) {
   try {
@@ -47,6 +48,33 @@ let exceptions = [
 
 function getExceptions () { return exceptions; }
 function setExceptions (v) { return exceptions = v; }
+
+/** Resolve CDN import metadata before either transpiler substitutes the virtual module ID. */
+export function resolveEsmImportMeta (moduleId, source) {
+  if (!moduleId.startsWith('esm://') || !source.includes('import') || !source.includes('meta')) return source;
+  const moduleResource = resource(moduleId);
+  const url = new URL(moduleResource.path(), moduleResource.getEsmURL()).href;
+  let tokens;
+  try {
+    // Tokenization also handles newer grammar such as static blocks and import attributes.
+    tokens = Array.from(acorn.Parser.tokenizer(source, { ecmaVersion: 'latest', sourceType: 'module', allowHashBang: true }));
+  } catch (err) {
+    // Let the configured transpiler handle syntax the tokenizer does not recognize.
+    return source;
+  }
+  const replacements = [];
+  for (let i = 0; i < tokens.length - 2; i++) {
+    if (tokens[i].type.label === 'import' && tokens[i + 1].type.label === '.' &&
+        tokens[i + 2].type.label === 'name' && tokens[i + 2].value === 'meta' &&
+        !['.', '?.'].includes(tokens[i - 1]?.type.label)) {
+      replacements.push({
+        target: { start: tokens[i].start, end: tokens[i + 2].end },
+        replacementFunc: () => `({url:${JSON.stringify(url)}})`
+      });
+    }
+  }
+  return transform.replaceNodes(replacements, source).source;
+}
 
 function applyKnownModuleFixups (loadName, source) {
   // Whitelisted runtime fixups for known jspm transpilation/runtime issues.
@@ -264,7 +292,7 @@ export async function customTranslate (load) {
     return load.source;
   }
 
-  load.source = applyKnownModuleFixups(load.name, String(load.source));
+  load.source = resolveEsmImportMeta(load.name, applyKnownModuleFixups(load.name, String(load.source)));
 
   const start = load.metadata.ts = Date.now();
 
@@ -344,7 +372,7 @@ export async function customTranslate (load) {
   mod.recorderName = '__lvVarRecorder';
   if (mod.recorder === System.global) { mod.unloadEnv(); }
   load.metadata['lively.modules instrumented'] = true;
-  if (isEsm) load.metadata.format = 'esm';
+  if (isEsm || format === 'cjs') load.metadata.format = format;
   load.metadata.module = mod;
 
   if (!instrumented) {

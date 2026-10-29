@@ -1,5 +1,5 @@
 import { arr, obj, graph, string } from 'lively.lang';
-import { parse, fuzzyParse, query } from 'lively.ast';
+import { parse, fuzzyParse, query, acorn } from 'lively.ast';
 import { computeRequireMap } from './dependencies.js';
 import { moduleSourceChange } from './change.js';
 import { scheduleModuleExportsChange, runScheduledExportChanges } from './import-export.js';
@@ -29,10 +29,25 @@ export const detectModuleFormat = (function () {
       return metadata.format;
     }
 
-    if (esmFormatCommentRegExp.test(source.slice(0, 5000)) ||
-     !cjsFormatCommentRegExp.test(source.slice(0, 5000)) && esmRegEx.test(source)) { return 'esm'; }
-
+    if (esmFormatCommentRegExp.test(source.slice(0, 5000))) return 'esm';
     if (cjsFormatCommentRegExp.test(source.slice(0, 5000))) { return 'cjs'; }
+
+    const matches = [...source.matchAll(new RegExp(esmRegEx.source, 'g'))];
+    if (matches.length) {
+      try {
+        // Formatter strings and comments can contain text such as "}export default".
+        const starts = new Set(matches.map(match => match.index + match[1].length));
+        for (const token of acorn.Parser.tokenizer(source, { ecmaVersion: 'latest', allowHashBang: true })) {
+          if (['import', 'export'].includes(token.type.label) && starts.has(token.start)) return 'esm';
+        }
+        // Keep SystemJS from reclassifying CommonJS formatter strings as ESM.
+        if (!/\b(?:define|System(?:JS)?\.register)\s*\(/.test(source) &&
+            /(?:^|[^\w$.])(?:exports\s*[.\[]|module\s*(?:\.exports|\[['"]exports['"]\])|require\s*\(\s*['"`])/.test(source)) return 'cjs';
+      } catch (error) {
+        // Preserve detection during parser bootstrap and for unsupported grammar.
+        return 'esm';
+      }
+    }
 
     return 'global';
   };

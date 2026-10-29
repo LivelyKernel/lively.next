@@ -8,6 +8,79 @@ import module from '../src/module.js';
 import { registerPackage } from '../src/packages/package.js';
 import { runEval } from 'lively.vm';
 import { createFiles, resource } from 'lively.resources';
+import { resolveEsmImportMeta } from '../src/instrumentation.js';
+
+describe('CDN import metadata', () => {
+  it('resolves relative assets using either provider', () => {
+    for (const provider of ['ga.jspm.io', 'esm.sh']) {
+      const id = `esm://${provider}/npm:fixture@1.0.0/index.js`;
+      const source = "new URL('./bindings.wasm', import.meta.url).href";
+      const prepared = resolveEsmImportMeta(id, source);
+      expect(new Function('return ' + prepared)()).equals(`https://${provider}/npm:fixture@1.0.0/bindings.wasm`);
+    }
+  });
+
+  it('supports import.meta objects and preserves strings, comments, and computed URL access', () => {
+    const id = 'esm://ga.jspm.io/npm:fixture@1.0.0/index.js';
+    const source = "(function () { /* import.meta */ const text = 'import.meta.url'; const meta = import . meta; return [text, meta['url']]; })()";
+    const prepared = resolveEsmImportMeta(id, source);
+    expect(new Function('return ' + prepared)()).deep.equals(['import.meta.url', id.replace('esm:', 'https:')]);
+    expect(prepared).includes('/* import.meta */');
+  });
+
+  it('leaves local module URLs and modules without import metadata unchanged', () => {
+    const source = 'export const url = import.meta.url;';
+    expect(resolveEsmImportMeta('file:///project/index.js', source)).equals(source);
+    expect(resolveEsmImportMeta('https://lively.example/index.js', source)).equals(source);
+    const plain = "export const text = 'import.meta.url';";
+    expect(resolveEsmImportMeta('esm://ga.jspm.io/index.js', plain)).equals(plain);
+  });
+
+  it('rewrites metadata inside class static blocks without parsing their grammar', () => {
+    const id = 'esm://ga.jspm.io/npm:fixture@1.0.0/modern.js';
+    const source = '(function () { class A { static { this.url = import.meta.url; } } return A.url; })()';
+    expect(new Function('return ' + resolveEsmImportMeta(id, source))()).equals(id.replace('esm:', 'https:'));
+  });
+
+  it('resolves CDN assets in classes with private fields and methods', () => {
+    const id = 'esm://ga.jspm.io/npm:fixture@1.0.0/private.js';
+    const source = "(function () { class Asset { #url = import.meta.url; #load() { return new URL('./bindings.wasm', this.#url).href; } load() { return this.#load(); } } return new Asset().load(); })()";
+    const prepared = resolveEsmImportMeta(id, source);
+    expect(new Function('return ' + prepared)()).equals('https://ga.jspm.io/npm:fixture@1.0.0/bindings.wasm');
+  });
+
+  it('preserves a hashbang while resolving CDN import metadata', () => {
+    const id = 'esm://esm.sh/fixture@1.0.0/bin.js';
+    const hashbang = '#!/usr/bin/env node\n';
+    const source = hashbang + "new URL('./bindings.wasm', import.meta.url).href";
+    const prepared = resolveEsmImportMeta(id, source);
+    expect(prepared.startsWith(hashbang)).equals(true);
+    expect(new Function('return ' + prepared.slice(hashbang.length))()).equals('https://esm.sh/fixture@1.0.0/bindings.wasm');
+  });
+
+  it('preserves import attributes and modern modules without metadata', () => {
+    const id = 'esm://esm.sh/fixture@1.0.0/modern.js';
+    const attributes = "import data from './data.json' with { type: 'json' };";
+    const source = attributes + '\nexport const url = import.meta.url;';
+    const prepared = resolveEsmImportMeta(id, source);
+    expect(prepared.startsWith(attributes)).equals(true);
+    expect(prepared).includes(JSON.stringify(id.replace('esm:', 'https:')));
+    const plain = "export class A { static { this.text = 'import metadata'; } }";
+    expect(resolveEsmImportMeta(id, plain)).equals(plain);
+  });
+
+  it('distinguishes metadata from property names, regexes, and template text', () => {
+    const id = 'esm://ga.jspm.io/fixture.js';
+    const source = "(function () { const obj = {import: {meta: 42}}; return [obj.import.meta, obj?.import.meta, /import.meta/.source, `import.meta ${import.meta.url}`]; })()";
+    const prepared = resolveEsmImportMeta(id, source);
+    expect(new Function('return ' + prepared)()).deep.equals([42, 42, 'import.meta', 'import.meta https://ga.jspm.io/fixture.js']);
+  });
+
+  it('leaves unrecognized syntax for the configured transpiler to handle', () => {
+    const source = 'export const metadata = import.meta; const unfinished = "';
+    expect(resolveEsmImportMeta('esm://ga.jspm.io/fixture.js', source)).equals(source);
+  });
+});
 
 let dir = 'local://lively.modules-instrumentation-test/';
 let testProjectDir = dir + 'test-project-dir/';
@@ -17,6 +90,7 @@ let testProjectSpec = {
   'file3.js': 'var zzz = 4; System.global.z = zzz / 2;',
   'file4.js': 'export default class Foo { static bar() {} }; Foo.bar();',
   'file5.js': "import Foo from './file4.js'; class Bar extends Foo {}",
+  'formatter.js': 'exports.format = value => `}export default ${value}`;',
   'package.json': JSON.stringify({
     name: 'test-project-1',
     version: '1.2.3',
@@ -51,6 +125,11 @@ describe('instrumentation', () => {
   it('gets access to internal module state', async () => {
     expect(module1).to.have.nested.property('recorder.y', 1);
     expect(module1).to.have.nested.property('recorder.x', 3);
+  });
+
+  it('loads CommonJS formatter strings through SystemJS', async () => {
+    const formatter = await S.import(testProjectDir + 'formatter.js');
+    expect(formatter.format(42)).equals('}export default 42');
   });
 
   it('modules can (re)define captures', async () => {

@@ -13,8 +13,8 @@ function resolveModuleId (moduleName, importer) {
 
 function ensureFileFormat (url) { return url; }
 
-async function normalizeFileName (fileName) {
-  return await System.normalize(fileName);
+function normalizeFileName (fileName) {
+  return System.decanonicalize(fileName);
 }
 
 function decanonicalizeFileName (fileName) {
@@ -87,7 +87,7 @@ async function load (url) {
   return await fetchFile(url);
 }
 
-function supportingPlugins (self) {
+function supportingPlugins (context, self) {
   return [
     self,
     commonjs({
@@ -96,7 +96,7 @@ function supportingPlugins (self) {
       transformMixedEsModules: true,
       dynamicRequireRoot: System.baseURL
     }),
-    nodePolyfills()
+    nodePolyfills({ include: /[/\\]node_modules[/\\].*\.[cm]?js$/ })
   ];
 }
 
