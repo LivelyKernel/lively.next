@@ -458,7 +458,7 @@ export class PackageTreeData extends TreeData {
         node.listControl.focusOn(this.root.browser, node.url);
       }
 
-      if (node.type === 'js') {
+      if (node.type === 'js' || node.type === 'mjs') {
         node.subNodes = await this.listModuleScope(node.url);
       }
 
@@ -486,7 +486,7 @@ export class PackageTreeData extends TreeData {
 
   isLeaf ({ type, isDeclaration, children }) {
     if (isDeclaration) return !children;
-    return !['package', 'directory', 'js', 'json', 'md'].includes(type);
+    return !['package', 'directory', 'js', 'mjs', 'json', 'md'].includes(type);
   }
 }
 
@@ -959,7 +959,7 @@ export class BrowserModel extends ViewModel {
     excluded.push('.git', 'node_modules', '.module_cache', 'assets');
     try {
       return (await this.systemInterface.resourcesOfPackage(p.address, excluded))
-        .filter(({ url }) => (url.endsWith('.js') || url.endsWith('.json') || url.endsWith('.jsx')) &&
+        .filter(({ url }) => (url.endsWith('.js') || url.endsWith('.mjs') || url.endsWith('.json') || url.endsWith('.jsx')) &&
                         !excluded.some(ex => ex instanceof RegExp ? ex.test(url) : url.includes(ex)))
         .map((ea) => { ea.name = ea.url; return ea; });
     } catch (e) { this.view.showError(e); return []; }
@@ -1435,7 +1435,7 @@ export class BrowserModel extends ViewModel {
         await this.loadES6Mocha();
       }
 
-      if (!m.isLoaded && m.name.endsWith('.js')) {
+      if (!m.isLoaded && (m.name.endsWith('.js') || m.name.endsWith('.mjs'))) {
         let err;
 
         try { await system.importModule(m.url); } catch (e) { err = e; }
@@ -1644,10 +1644,10 @@ export class BrowserModel extends ViewModel {
   async onCodeEntitySelected (entity) {
     if (!entity) return;
     const { sourceEditor } = this.ui;
-    if (this.selectedModule.type === 'js' || this.selectedModule.type === 'json') {
+    if (['js', 'mjs', 'json'].includes(this.selectedModule.type)) {
       const moduleType = this.selectedModule.type;
-      const start = sourceEditor.indexToPosition(moduleType === 'js' ? entity.node.start : entity.start);
-      const end = sourceEditor.indexToPosition(moduleType === 'js' ? entity.node.end : entity.end);
+      const start = sourceEditor.indexToPosition(moduleType === 'json' ? entity.start : entity.node.start);
+      const end = sourceEditor.indexToPosition(moduleType === 'json' ? entity.end : entity.node.end);
       const isComponent = await this.isComponentEntity(entity);
       sourceEditor.cursorPosition = start;
       sourceEditor.flash({ start, end }, { id: 'codeentity', time: 1000, fill: Color.rgb(200, 235, 255) });
@@ -1973,19 +1973,17 @@ export class BrowserModel extends ViewModel {
     try {
       sourceEditor.cleanupSnippetsExpansions();
       // deal with non-js code, this needs to be cleaned up as well!
-      if (ext !== 'js' && ext !== 'jsx') {
+      if (!['js', 'mjs', 'jsx'].includes(ext)) {
         if (module.nameInPackage === 'package.json') {
           await system.packageConfChange(content, module.url);
           this.updatePackageDependencies();
         } else {
+          await system.coreInterface.resourceWrite(module.url, content);
           if (ext === 'md') {
-            // the preview does not get unset when it is closed
-            // we thus need to check whether the window that contains the preview is currently member of the world
-            if (this.editorPlugin.isMarkdownEditorPlugin && this.editorPlugin.textMorph._mdPreviewMorph && this.editorPlugin.textMorph._mdPreviewMorph.owner.owner) {
+            if (this.editorPlugin.isMarkdownEditorPlugin && sourceEditor._mdPreviewMorph?.world()) {
               await this.renderMarkdown(false);
             }
           }
-          await system.coreInterface.resourceWrite(module.url, content);
         }
         metaInfoText.showSaved();
       // js save
@@ -2223,11 +2221,12 @@ export class BrowserModel extends ViewModel {
     // make sure that we want to change the tab when the currently edited file is not saved
     if (this.selectedModule && this.hasUnsavedChanges()) {
       const proceed = await this.warnForUnsavedChanges();
-      // at this point the tabs has technically already been created
-      // we need to circumvent some of the connections inside of the tab system
       if (!proceed) {
-        prev.setProperty('selected', true);
-        curr.closeSilently();
+        noUpdate({ sourceObj: this.ui.tabs, sourceAttribute: 'onSelectedTabChange' }, () => {
+          prev.selected = true;
+        });
+        if (!curr.content) curr.closeSilently();
+        if (this.ui.tabs.tabs.length === 1) prev.closeable = false;
         return;
       }
     }
