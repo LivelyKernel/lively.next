@@ -33,6 +33,8 @@ jobs:
         run: node lively.freezer/tests/package-resolution-test.cjs
       - name: Check dynamic import paths
         run: node lively.freezer/tests/dynamic-system-import-test.mjs
+      - name: Check native project asset collection
+        run: node lively.freezer/tests/project-assets-test.mjs
       - name: Check project bundles
         run: node lively.freezer/tests/project-bundle-test.mjs
       - name: Check native resolver
@@ -138,6 +140,7 @@ jobs:
           node --experimental-import-meta-resolve lively.freezer/tests/swc-state-test.mjs
           node --experimental-import-meta-resolve lively.freezer/tests/minify-test.cjs
           node --experimental-import-meta-resolve lively.freezer/tests/project-bundle-test.mjs
+          node --experimental-import-meta-resolve lively.freezer/tests/project-assets-test.mjs
           node --experimental-import-meta-resolve lively.server/tests/browser-import-map-cache-test.mjs
           node --experimental-import-meta-resolve lively.server/tests/source-hashes-test.mjs
           node lively.app/scripts/test-startup-parallelism.mjs
@@ -150,6 +153,8 @@ jobs:
           node lively.app/scripts/test-desktop-resources.mjs
       - name: Run CI Test Script for Changed Folders
         run:  ./scripts/test.sh $(./scripts/tests_for_branch.sh)
+      - name: Check project asset browser regressions
+        run: ./scripts/test.sh lively.project
       - name: Start the lively server
         run: |
           chmod a+x ./start-server.sh
