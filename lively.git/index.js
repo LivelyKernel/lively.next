@@ -97,7 +97,6 @@ export class GitHubAPIWrapper {
   }
 
   static async deleteDeployKey (repoOwner, repoName, title) {
-  // TODO: If this is called with a non-existing key bad things happen!
     const resKeyList = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/keys`, {
       method: 'GET',
       headers: {
@@ -105,17 +104,28 @@ export class GitHubAPIWrapper {
         'X-GitHub-Api-Version': '2022-11-28'
       }
     });
+    if (!resKeyList.ok) {
+      throw new Error(`Failed to list deploy keys for ${repoOwner}/${repoName}: HTTP ${resKeyList.status}`);
+    }
     const deployKeys = await resKeyList.json();
-    const keyIdToRemove = deployKeys.find(key => key.title === title).id;
+    if (!Array.isArray(deployKeys) || deployKeys.some(key =>
+      !key || typeof key.title !== 'string' || !Number.isSafeInteger(key.id) || key.id <= 0)) {
+      throw new Error(`Invalid deploy key list for ${repoOwner}/${repoName}`);
+    }
+    const keyToRemove = deployKeys.find(key => key.title === title);
+    if (!keyToRemove) return;
 
-    const resKeyDeletion = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/keys/${keyIdToRemove}`, {
+    const resKeyDeletion = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/keys/${keyToRemove.id}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${currentUserToken()}`,
         'X-GitHub-Api-Version': '2022-11-28'
       }
     });
+    if (!resKeyDeletion.ok) {
+      throw new Error(`Failed to delete deploy key for ${repoOwner}/${repoName}: HTTP ${resKeyDeletion.status}`);
     }
+  }
 
   static async listGithubBranches (repoOwner, repoName) {
     const token = currentUserToken();

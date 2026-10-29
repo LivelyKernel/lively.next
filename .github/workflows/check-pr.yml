@@ -143,6 +143,7 @@ jobs:
           node lively.app/scripts/test-startup-parallelism.mjs
           node lively.app/scripts/test-desktop-smoke.mjs
           node --experimental-import-meta-resolve lively.project/tests/package-install-test.mjs
+          node --experimental-import-meta-resolve lively.git/tests/deploy-key-test.mjs
           node --experimental-import-meta-resolve lively.installer/tests/runtime-roots-test.mjs
           node lively.morphic/tests/rollup-build-test.cjs
           node --experimental-import-meta-resolve lively.app/scripts/test-package-payload.mjs
