@@ -104,6 +104,9 @@ export function wrapModuleResolution (System) {
   if (!isHookInstalled(System, 'newModule', 'newModule_volatile')) {
     installHook(System, 'newModule', newModule_volatile, 'newModule_volatile');
   }
+  if (!isHookInstalled(System, 'register', 'register_ownExports')) {
+    installHook(System, 'register', register_ownExports, 'register_ownExports');
+  }
 
   if (!System.registry['REGISTRY']._originalRegistry) {
     const { proxy: wrappedRegistry, revoke } = Proxy.revocable(System.registry['REGISTRY'], {
@@ -154,6 +157,7 @@ export function unwrapModuleResolution (System) {
   removeHook(System, 'decanonicalize', 'decanonicalizeHook');
   removeHook(System, 'normalizeSync', 'decanonicalizeHook');
   removeHook(System, 'newModule', 'newModule_volatile');
+  removeHook(System, 'register', 'register_ownExports');
   const wrappedRegistry = System.registry['REGISTRY'];
   if (wrappedRegistry._originalRegistry) {
     Object.getOwnPropertySymbols(System.registry).map(sym => {
@@ -773,6 +777,17 @@ function normalize_packageOfURL (url, System) {
   return systemPackage ? { systemPackage, packageURL: pName } : null;
 }
 
+function register_ownExports (proceed, ...args) {
+  const System = this;
+  const declare = args.pop();
+  return proceed(...args, function (exporter, context) {
+    const exports = System.REGISTER_INTERNAL.records[context?.id]?.linkRecord?.moduleObj;
+    // SystemJS otherwise skips exports equal to inherited Object.prototype values.
+    if (exports) Object.setPrototypeOf(exports, null);
+    return declare.call(this, exporter, context);
+  });
+}
+
 function normalizeCjsUseDefaultNamespace (exports) {
   if (!exports || (!exports.__useDefault && !exports.default)) return exports;
   if (typeof exports !== 'object' && typeof exports !== 'function') return exports;
@@ -837,6 +852,12 @@ function instantiate_triggerOnLoadCallbacks (proceed, load) {
     }
     const modId = load.name;
     const mod = classHolder.module(System, modId);
+    if (mod._source) {
+      // Wait for linking to finish so circular imports have their export keys.
+      mod.warnAboutMissingImports().catch(err => {
+        if (System.debug) console.warn(`Cannot check imports of ${modId}: ${err}`);
+      });
+    }
     const callbacks = System.get('@lively-env').onLoadCallbacks;
 
     for (let i = callbacks.length; i--;) {
