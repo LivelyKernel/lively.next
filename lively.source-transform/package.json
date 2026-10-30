@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "mocha-es6 tests/*-test.js",
+    "test:node": "node tests/run-node-tests.mjs",
+    "test:parity": "node tests/parity-test.mjs",
     "build": "node tools/build.js"
   },
   "repository": {

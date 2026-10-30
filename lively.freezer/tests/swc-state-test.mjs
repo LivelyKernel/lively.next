@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { createContext, runInContext } from 'node:vm';
 import { transformSync } from '@swc/core';
 import { LivelySwcTransform } from '../src/bundler-swc.js';
@@ -107,3 +108,44 @@ const liveHelpers = module.swcTransform(helpersSource, {
 });
 await checkResourceReplay(liveHelpers.code);
 console.log('Frozen and live SWC resource registrations survive module re-execution.');
+
+// Exercise host-resolved binding IDs through the actual plugin and module lowering.
+{
+  const recorder = {};
+  const exports = {};
+  const { code } = transformSync(`
+    let value = 9;
+    const readers = [];
+    for (let value of [1, 2]) readers.push(() => value);
+    function nested() {
+      let value = 2;
+      const inner = () => { let value = 3; return value; };
+      return [value, inner(), value];
+    }
+    const named = function value(n) { return n ? value(n - 1) + 1 : 0; };
+    export const observed = [nested(), readers.map(read => read()), value, named(3)];
+    export default function count(n) { return n ? count(n - 1) + 1 : 0; }
+  `, {
+    filename: 'plugin-host-bindings.js', swcrc: false, configFile: false,
+    jsc: {
+      parser: { syntax: 'ecmascript' }, target: 'es2015',
+      experimental: { plugins: [[fileURLToPath(new URL('../swc-plugin/lively_swc_plugin.wasm', import.meta.url)), {
+        captureObj: '_rec', moduleId: 'plugin-host-bindings.js',
+        exclude: ['_rec', 'lively', '__contextModule__', 'Object', 'undefined'],
+        enableComponentTransform: false, enableNamespaceTransform: false,
+        enableDynamicImportTransform: false, enableSystemjsTransform: false
+      }]] }
+    },
+    module: { type: 'commonjs' }
+  });
+  runInContext(code, createContext({
+    exports, lively: { FreezerRuntime: { recorderFor: () => recorder } },
+    __contextModule__: { id: 'plugin-host-bindings.js' }
+  }));
+  assert.deepEqual(JSON.parse(JSON.stringify(exports.observed)), [[2, 3, 2], [1, 2], 9, 3]);
+  assert.equal(recorder.value, 9);
+  assert.equal(exports.default(3), 3);
+  assert.equal(recorder.default, exports.default);
+  assert.equal(recorder.count, exports.default);
+}
+console.log('Packaged SWC plugin preserves lexical identities through host resolution and module lowering.');

@@ -1,6 +1,7 @@
 /* global process */
 import babel from '@babel/core';
 import t from '@babel/types';
+import { transformDynamicImports, staticImportValue } from 'lively.source-transform/babel/transforms/dynamic-import.js';
 import { resource } from 'lively.resources';
 import * as ast from 'lively.ast';
 import * as classes from 'lively.classes';
@@ -682,9 +683,9 @@ export default class LivelyRollup {
             !t.isIdentifier(callee.object, { name: 'System' }) ||
             !t.isIdentifier(callee.property, { name: 'import' }) ||
             path.node.arguments.length !== 1) return;
-        const specifier = path.get('arguments.0').evaluate();
-        if (specifier.confident && typeof specifier.value === 'string' &&
-            this.excludedModules.some(pkg => specifier.value === pkg || specifier.value.startsWith(`${pkg}/`))) {
+        const specifier = staticImportValue(path.node.arguments[0]);
+        if (typeof specifier === 'string' &&
+            this.excludedModules.some(pkg => specifier === pkg || specifier.startsWith(`${pkg}/`))) {
           replacements.push({ start: callee.start, end: callee.end });
         }
       }
@@ -702,41 +703,18 @@ export default class LivelyRollup {
    * @param { string } moduleId - The module id.
    */
   instrumentDynamicLoads (parsed, moduleId) {
-    return ast.ReplaceVisitor.run(parsed, (node) => {
-      if (node.type === 'CallExpression' && node.callee.type === 'MemberExpression') {
-        if (node.callee.property.name === 'import' && node.callee.object.name === 'System' && node.arguments.length === 1) {
-          // evaluate the imported expression on the spot
-          // this forces lively.modules into the system. This can not be supported
-          try {
-            const resolvedImport = eval(ast.stringify(node.arguments[0]));
-            if (resolvedImport) this.hasDynamicImports = true;
-            return ast.parse(`import(${JSON.stringify(resolvedImport)})`).body[0].expression;
-          } catch (err) {
-            return node;
-          }
-        }
-      }
-      return node;
+    return ast.ReplaceVisitor.run(parsed, node => {
+      if (node.type !== 'CallExpression' || node.callee.type !== 'MemberExpression' || node.callee.computed ||
+          node.callee.property.name !== 'import' || node.callee.object.name !== 'System' || node.arguments.length !== 1) return node;
+      const specifier = staticImportValue(node.arguments[0]);
+      if (typeof specifier !== 'string' || !specifier.length) return node;
+      this.hasDynamicImports = true;
+      return ast.parse(`import(${JSON.stringify(specifier)})`).body[0].expression;
     });
   }
 
   babel_instrumentDynamicLoads (path) {
-    const self = this;
-    path.traverse({
-      CallExpression (path) {
-        if (path.get('callee').type === 'MemberExpression' && path.get('arguments').length === 1) {
-          const { property, object } = path.get('callee').node;
-          if (property.name === 'import' && object.name === 'System') {
-            try {
-              const resolvedImport = eval(path.get('arguments')[0].getSource());
-              if (resolvedImport) self.hasDynamicImports = true;
-              path.replaceWith(babel.parse(`import(${JSON.stringify(resolvedImport)})`).program.body[0].expression);
-            } catch (err) {
-            }
-          }
-        }
-      }
-    });
+    transformDynamicImports(path, { onImport: () => { this.hasDynamicImports = true; } });
   }
 
   getInvalidLocalExports (source) {

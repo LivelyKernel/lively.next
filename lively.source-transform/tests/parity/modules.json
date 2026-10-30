@@ -1,0 +1,357 @@
+[
+  {
+    "name": "component source range and recorder",
+    "source": "const C=component({answer:23});",
+    "config": {
+      "moduleId": "test.cp.js"
+    },
+    "setup": "function component(value){return value;} component.for=(factory,meta,...args)=>({value:factory(),meta,count:args.length}); const System={};",
+    "evaluate": "[C.value.answer,C.meta.module,C.meta.export,C.meta.range,C.count]",
+    "expected": [
+      23,
+      "test.cp.js",
+      "C",
+      {
+        "start": 6,
+        "end": 30
+      },
+      3
+    ],
+    "pass": "component"
+  },
+  {
+    "name": "component UTF16 range",
+    "source": "const label=\"😀é\"; const C=component({});",
+    "config": {
+      "moduleId": "unicode.cp.js"
+    },
+    "setup": "function component(value){return value;} component.for=(factory,meta,...args)=>({value:factory(),meta,count:args.length}); const System={};",
+    "evaluate": "C.meta.range",
+    "expected": {
+      "start": 25,
+      "end": 40
+    },
+    "pass": "component"
+  },
+  {
+    "name": "nested component stays local",
+    "source": "function make(){const C=component({});return C;} const result=make();",
+    "config": {
+      "moduleId": "test.cp.js"
+    },
+    "setup": "function component(value){return value;} component.for=(factory,meta,...args)=>({value:factory(),meta,count:args.length}); const System={};",
+    "evaluate": "[result.meta.export,result.count]",
+    "expected": [
+      "C",
+      1
+    ],
+    "pass": "component"
+  },
+  {
+    "name": "standalone component preserves program",
+    "source": "const before=1; component({}); const after=2;",
+    "config": {
+      "moduleId": "test.cp.js"
+    },
+    "setup": "function component(value){return value;} component.for=(factory,meta,...args)=>({value:factory(),meta,count:args.length}); const System={};",
+    "evaluate": "[before,after]",
+    "expected": [
+      1,
+      2
+    ],
+    "contains": [
+      "component.for"
+    ],
+    "pass": "component"
+  },
+  {
+    "name": "excluded component has no recorder",
+    "source": "const C=component({});",
+    "config": {
+      "moduleId": "test.cp.js",
+      "exclude": [
+        "C"
+      ]
+    },
+    "setup": "function component(value){return value;} component.for=(factory,meta,...args)=>({value:factory(),meta,count:args.length}); const System={};",
+    "evaluate": "C.count",
+    "expected": 1,
+    "pass": "component"
+  },
+  {
+    "name": "namespace import",
+    "source": "import * as tools from \"./tools.js\"; tools.use();",
+    "config": {},
+    "structural": true,
+    "pass": "namespace"
+  },
+  {
+    "name": "mixed default namespace",
+    "source": "import first,* as tools from \"./tools.js\"; tools.use(first);",
+    "config": {},
+    "structural": true,
+    "pass": "namespace"
+  },
+  {
+    "name": "namespace reexport",
+    "source": "export * as tools from \"./tools.js\";",
+    "config": {},
+    "structural": true,
+    "pass": "namespace"
+  },
+  {
+    "name": "namespace resolved id",
+    "source": "import * as tools from \"./tools.js\"; tools.use();",
+    "config": {
+      "resolvedImports": {
+        "./tools.js": "pkg/tools.js"
+      }
+    },
+    "structural": true,
+    "pass": "namespace"
+  },
+  {
+    "name": "namespace export all",
+    "source": "export * from \"./tools.js\";",
+    "config": {},
+    "structural": true,
+    "pass": "namespace"
+  },
+  {
+    "name": "namespace collision",
+    "source": "const tools_namespace=1; import * as tools from \"./tools.js\"; tools.use();",
+    "config": {},
+    "structural": true,
+    "pass": "namespace"
+  },
+  {
+    "name": "namespace and reexport order",
+    "source": "import * as tools from \"./tools.js\"; export * as stuff from \"./stuff.js\"; tools.use();",
+    "config": {},
+    "structural": true,
+    "pass": "namespace"
+  },
+  {
+    "name": "dynamic import literal",
+    "source": "System.import(\"./dep.js\");",
+    "structural": true,
+    "pass": "dynamic-import"
+  },
+  {
+    "name": "dynamic import concatenation",
+    "source": "System.import(\"./\"+\"dep.js\");",
+    "structural": true,
+    "pass": "dynamic-import"
+  },
+  {
+    "name": "dynamic import numeric concatenation",
+    "source": "System.import(\"./\"+(1+2)+\".js\");",
+    "structural": true,
+    "pass": "dynamic-import"
+  },
+  {
+    "name": "dynamic import template literal",
+    "source": "System.import(`./dep.js`);",
+    "structural": true,
+    "pass": "dynamic-import"
+  },
+  {
+    "name": "dynamic import dynamic identifier",
+    "source": "System.import(name);",
+    "structural": true,
+    "pass": "dynamic-import"
+  },
+  {
+    "name": "dynamic import dynamic template",
+    "source": "System.import(`./${name}.js`);",
+    "structural": true,
+    "pass": "dynamic-import"
+  },
+  {
+    "name": "dynamic import spread preserved",
+    "source": "System.import(...paths);",
+    "structural": true,
+    "pass": "dynamic-import"
+  },
+  {
+    "name": "multiple variables",
+    "source": "export var first=1,second=2;",
+    "structural": true,
+    "pass": "export-split"
+  },
+  {
+    "name": "destructured export",
+    "source": "export const {first,other:second}=source;",
+    "structural": true,
+    "pass": "export-split"
+  },
+  {
+    "name": "named reexport",
+    "source": "export {value as answer} from \"./dep.js\";",
+    "structural": true,
+    "pass": "exported-import-capture"
+  },
+  {
+    "name": "default reexport",
+    "source": "export {default as answer} from \"./dep.js\";",
+    "structural": true,
+    "pass": "exported-import-capture"
+  },
+  {
+    "name": "default exported name",
+    "source": "export {value as default} from \"./dep.js\";",
+    "structural": true,
+    "pass": "exported-import-capture"
+  },
+  {
+    "name": "reexport collision",
+    "source": "const answer=1; export {value as answer} from \"./dep.js\";",
+    "structural": true,
+    "pass": "exported-import-capture"
+  },
+  {
+    "name": "namespace reexport capture",
+    "source": "export * as tools from \"./dep.js\";",
+    "structural": true,
+    "pass": "exported-import-capture"
+  },
+  {
+    "name": "local export capture",
+    "source": "const value=1;export {value as answer};",
+    "structural": true,
+    "pass": "exported-import-capture"
+  },
+  {
+    "name": "export all capture",
+    "source": "export * from \"./dep.js\";",
+    "structural": true,
+    "pass": "exported-import-capture"
+  },
+  {
+    "name": "SystemJS CJS namespace normalization",
+    "source": "System.register([],function(_export,_context){var value;return {setters:[function(dep){value=dep;}],execute:function(){}};});",
+    "setup": "let registration; const environment={pendingExportChanges:{}}; const System={register(...args){registration=args.at(-1)(()=>{},{});},get(id){return id===\"@lively-env\"?environment:{};}}; const SystemJS=System;",
+    "evaluate": "(()=>{registration.setters[0]({__useDefault:true,default:{answer:23},existing:4});return [_rec.value.answer,_rec.value.existing,_rec.value.__useDefault];})()",
+    "expected": [
+      23,
+      4,
+      true
+    ],
+    "pass": "systemjs"
+  },
+  {
+    "name": "SystemJS alias recognized",
+    "source": "SystemJS.register([],function(_export,_context){var value;return {setters:[function(dep){value=dep;}],execute:function(){}};});",
+    "setup": "let registration; const environment={pendingExportChanges:{}}; const System={register(...args){registration=args.at(-1)(()=>{},{});},get(id){return id===\"@lively-env\"?environment:{};}}; const SystemJS=System;",
+    "evaluate": "(()=>{registration.setters[0](7);return _rec.value;})()",
+    "expected": 7,
+    "pass": "systemjs"
+  },
+  {
+    "name": "SystemJS existing default parameter",
+    "source": "System.register([],function(_export,_context){var value;return {setters:[function(dep={}){value=dep;}],execute:function(){}};});",
+    "setup": "let registration; const environment={pendingExportChanges:{}}; const System={register(...args){registration=args.at(-1)(()=>{},{});},get(id){return id===\"@lively-env\"?environment:{};}}; const SystemJS=System;",
+    "evaluate": "(()=>{registration.setters[0]();return typeof _rec.value;})()",
+    "expected": "object",
+    "pass": "systemjs"
+  },
+  {
+    "name": "SystemJS exclusions",
+    "source": "System.register([],function(_export,_context){var value;return {setters:[function(dep){value=dep;}],execute:function(){}};});",
+    "config": {
+      "exclude": [
+        "value"
+      ]
+    },
+    "setup": "let registration; const environment={pendingExportChanges:{}}; const System={register(...args){registration=args.at(-1)(()=>{},{});},get(id){return id===\"@lively-env\"?environment:{};}}; const SystemJS=System;",
+    "evaluate": "(()=>{registration.setters[0](7);return Object.hasOwn(_rec,\"value\");})()",
+    "expected": false,
+    "pass": "systemjs"
+  },
+  {
+    "name": "SystemJS import capture flag",
+    "source": "System.register([],function(_export,_context){var value;return {setters:[function(dep){value=dep;}],execute:function(){}};});",
+    "config": {
+      "captureImports": false
+    },
+    "setup": "let registration; const environment={pendingExportChanges:{}}; const System={register(...args){registration=args.at(-1)(()=>{},{});},get(id){return id===\"@lively-env\"?environment:{};}}; const SystemJS=System;",
+    "evaluate": "(()=>{registration.setters[0](7);return Object.hasOwn(_rec,\"value\");})()",
+    "expected": false,
+    "pass": "systemjs"
+  },
+  {
+    "name": "SystemJS setter wrapper",
+    "source": "System.register([],function(_export,_context){var value;return {setters:[function(dep){value=dep;}],execute:function(){}};});",
+    "config": {
+      "declarationWrapper": "_rec[\"define\"]"
+    },
+    "setup": "let registration; const environment={pendingExportChanges:{}}; const System={register(...args){registration=args.at(-1)(()=>{},{});},get(id){return id===\"@lively-env\"?environment:{};}}; const SystemJS=System; _rec.define=(name,kind,value,rec)=>({name,kind,value,same:rec===_rec});",
+    "evaluate": "(()=>{registration.setters[0](7);return _rec.value;})()",
+    "expected": {
+      "name": "value",
+      "kind": "var",
+      "value": 7,
+      "same": true
+    },
+    "pass": "systemjs"
+  },
+  {
+    "name": "SystemJS deferred reexport update",
+    "source": "System.register([],function(_export,_context){var value;return {setters:[function(dep){value=dep.value;}],execute:function(){_export(\"answer\",value);}};});",
+    "config": {
+      "moduleId": "test.js"
+    },
+    "setup": "let registration; const environment={pendingExportChanges:{}}; const System={register(...args){registration=args.at(-1)(()=>{},{});},get(id){return id===\"@lively-env\"?environment:{};}}; const SystemJS=System;",
+    "evaluate": "(()=>{registration.setters[0]({value:1});registration.execute();registration.setters[0]({value:9});return environment.pendingExportChanges[\"test.js\"];})()",
+    "expected": {
+      "answer": 9
+    },
+    "pass": "systemjs"
+  },
+  {
+    "name": "SystemJS compound setter assignment",
+    "source": "System.register([],function(_export,_context){var value=2;return {setters:[function(dep){value+=dep;}],execute:function(){}};});",
+    "setup": "let registration; const environment={pendingExportChanges:{}}; const System={register(...args){registration=args.at(-1)(()=>{},{});},get(id){return id===\"@lively-env\"?environment:{};}}; const SystemJS=System;",
+    "evaluate": "(()=>{registration.setters[0](7);return _rec.value;})()",
+    "expected": 9,
+    "pass": "systemjs"
+  },
+  {
+    "name": "namespace default exported name",
+    "pass": "namespace",
+    "source": "export * as default from \"./tools.js\";",
+    "structural": true
+  },
+  {
+    "name": "namespace quoted exported name",
+    "pass": "namespace",
+    "source": "export * as \"with-dash\" from \"./tools.js\";",
+    "structural": true
+  },
+  {
+    "name": "export wildcard capture collision",
+    "pass": "exported-import-capture",
+    "source": "const __captured1__=1;export * from \"./dep.js\";",
+    "structural": true
+  },
+  {
+    "name": "dynamic import number formatting",
+    "pass": "dynamic-import",
+    "source": "System.import(\"./\"+1e21+\"/\"+1e-7+\".js\");",
+    "structural": true
+  },
+  {
+    "name": "SystemJS hoists recorder and source before setters",
+    "pass": "systemjs",
+    "source": "const targetRecorder=_rec;System.register([],function(){var _rec,source,value;return {setters:[function(dep){value=dep;}],execute:function(){_rec=targetRecorder;source=\"original\";return [source,_rec.value];}};});",
+    "config": {
+      "sourceAccessorName": "source"
+    },
+    "setup": "let registration; const System={register(deps,factory){registration=factory(()=>{},{});registration.setters[0](7);}}; const SystemJS=System;",
+    "evaluate": "registration.execute()",
+    "expected": [
+      "original",
+      7
+    ]
+  }
+]
