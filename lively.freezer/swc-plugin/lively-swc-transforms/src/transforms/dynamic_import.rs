@@ -18,29 +18,86 @@ impl DynamicImportTransform {
     }
 }
 
-fn resolve_static_import_specifier(expr: &Expr) -> Option<String> {
+enum StaticImportValue {
+    String(String),
+    Number(f64),
+}
+
+fn static_import_value(expr: &Expr) -> Option<StaticImportValue> {
     match expr {
-        Expr::Lit(Lit::Str(s)) => Some(s.value.to_string()),
-        Expr::Tpl(tpl) if tpl.exprs.is_empty() => {
-            let mut result = String::new();
-            for quasi in &tpl.quasis {
-                let cooked = quasi.cooked.as_ref()?;
-                result.push_str(&cooked.to_string());
-            }
-            Some(result)
-        }
+        Expr::Lit(Lit::Str(value)) => Some(StaticImportValue::String(value.value.to_string())),
+        Expr::Lit(Lit::Num(value)) => Some(StaticImportValue::Number(value.value)),
+        Expr::Tpl(value) if value.exprs.is_empty() => Some(StaticImportValue::String(
+            value
+                .quasis
+                .iter()
+                .map(|part| part.cooked.as_ref().map(ToString::to_string))
+                .collect::<Option<Vec<_>>>()?
+                .join(""),
+        )),
         Expr::Bin(BinExpr {
             op: BinaryOp::Add,
             left,
             right,
             ..
         }) => {
-            let left = resolve_static_import_specifier(left)?;
-            let right = resolve_static_import_specifier(right)?;
-            Some(format!("{left}{right}"))
+            let left = static_import_value(left)?;
+            let right = static_import_value(right)?;
+            match (left, right) {
+                (StaticImportValue::Number(left), StaticImportValue::Number(right)) => {
+                    Some(StaticImportValue::Number(left + right))
+                }
+                (left, right) => Some(StaticImportValue::String(format!(
+                    "{}{}",
+                    static_import_string(left),
+                    static_import_string(right)
+                ))),
+            }
         }
-        Expr::Paren(ParenExpr { expr, .. }) => resolve_static_import_specifier(expr),
+        Expr::Paren(value) => static_import_value(&value.expr),
         _ => None,
+    }
+}
+
+fn static_import_string(value: StaticImportValue) -> String {
+    match value {
+        StaticImportValue::String(value) => value,
+        StaticImportValue::Number(value) => {
+            if value == 0.0 {
+                return "0".to_owned();
+            }
+            if value.is_infinite() {
+                return if value.is_sign_positive() {
+                    "Infinity"
+                } else {
+                    "-Infinity"
+                }
+                .to_owned();
+            }
+            if value.is_nan() {
+                return "NaN".to_owned();
+            }
+            if value.abs() >= 1e21 || value.abs() < 1e-6 {
+                let text = format!("{value:e}");
+                return text
+                    .split_once('e')
+                    .map(|(value, exponent)| {
+                        format!(
+                            "{value}e{}{exponent}",
+                            if exponent.starts_with('-') { "" } else { "+" }
+                        )
+                    })
+                    .unwrap();
+            }
+            value.to_string()
+        }
+    }
+}
+
+fn resolve_static_import_specifier(expr: &Expr) -> Option<String> {
+    match static_import_value(expr)? {
+        StaticImportValue::String(value) => Some(value),
+        StaticImportValue::Number(_) => None,
     }
 }
 

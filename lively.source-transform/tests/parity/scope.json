@@ -1,0 +1,203 @@
+[
+  {
+    "name": "uninitialized bindings retain own falsy recorder values",
+    "source": "var zero, no, empty, nothing;",
+    "recorder": {
+      "zero": 0,
+      "no": false,
+      "empty": "",
+      "nothing": null
+    },
+    "evaluate": "[_rec.zero, _rec.no, _rec.empty, _rec.nothing]",
+    "expected": [
+      0,
+      false,
+      "",
+      null
+    ]
+  },
+  {
+    "name": "uninitialized bindings do not inherit recorder values",
+    "source": "var inherited;",
+    "setup": "Object.setPrototypeOf(_rec, {inherited: 7});",
+    "evaluate": "Object.hasOwn(_rec, \"inherited\") && _rec.inherited === undefined",
+    "expected": true
+  },
+  {
+    "name": "array holes defaults and rest retain their indices",
+    "source": "var [, x, , y = 4, ...rest] = [1, 2, 3, undefined, 5, 6];",
+    "evaluate": "[_rec.x, _rec.y, _rec.rest]",
+    "expected": [
+      2,
+      4,
+      [
+        5,
+        6
+      ]
+    ]
+  },
+  {
+    "name": "excluded object binding remains local among captured siblings",
+    "source": "var {keep, skip} = {keep: 2, skip: 3}; var result = keep + skip;",
+    "config": {
+      "exclude": [
+        "skip"
+      ]
+    },
+    "evaluate": "[_rec.keep, _rec.result, Object.hasOwn(_rec, \"skip\")]",
+    "expected": [
+      2,
+      5,
+      false
+    ]
+  },
+  {
+    "name": "excluded nested binding remains local",
+    "source": "var [keep, {skip}] = [2, {skip: 3}]; var result = keep + skip;",
+    "config": {
+      "exclude": [
+        "skip"
+      ]
+    },
+    "evaluate": "[_rec.keep, _rec.result, Object.hasOwn(_rec, \"skip\")]",
+    "expected": [
+      2,
+      5,
+      false
+    ]
+  },
+  {
+    "name": "object shorthand defaults aliases and rest use declaration wrapper",
+    "source": "var {x = 3, y: z, ...rest} = {y: 4, k: 5};",
+    "config": {
+      "declarationWrapper": "_rec.define"
+    },
+    "setup": "const calls = []; _rec.define = (name, kind, value) => { calls.push([name, kind]); return value; };",
+    "evaluate": "[_rec.x, _rec.z, _rec.rest, calls]",
+    "expected": [
+      3,
+      4,
+      {
+        "k": 5
+      },
+      [
+        [
+          "x",
+          "var"
+        ],
+        [
+          "z",
+          "var"
+        ],
+        [
+          "rest",
+          "var"
+        ]
+      ]
+    ]
+  },
+  {
+    "name": "bare hoisted var shadows module binding before declaration",
+    "source": "var x = 9; function read() { return x; var x; } var result = read();",
+    "evaluate": "[_rec.x, _rec.result === undefined]",
+    "expected": [
+      9,
+      true
+    ]
+  },
+  {
+    "name": "literal initialized hoisted var shadows module binding",
+    "source": "var x = 9; function read() { var result = x; var x = 2; return result; } var result = read();",
+    "evaluate": "[_rec.x, _rec.result === undefined]",
+    "expected": [
+      9,
+      true
+    ]
+  },
+  {
+    "name": "arrow hoisted var shadows module binding",
+    "source": "var x = 9; var read = () => { var result = x; var x = 2; return result; }; var result = read();",
+    "evaluate": "[_rec.x, _rec.result === undefined]",
+    "expected": [
+      9,
+      true
+    ]
+  },
+  {
+    "name": "block lexical declaration shadows before initialization",
+    "source": "var x = 9; function read() { { try { return x; } catch (error) { return error.name; } let x = 2; } } var result = read();",
+    "evaluate": "[_rec.x, _rec.result]",
+    "expected": [
+      9,
+      "ReferenceError"
+    ]
+  },
+  {
+    "name": "block local binding does not hide outer binding afterwards",
+    "source": "var x = 9; function read() { { let x = 2; } return x; } var result = read();",
+    "evaluate": "[_rec.x, _rec.result]",
+    "expected": [
+      9,
+      9
+    ]
+  },
+  {
+    "name": "function and catch parameters remain local",
+    "source": "var x = 9; function read(x) { try { throw 3; } catch (error) { return x + error; } } var result = read(2);",
+    "evaluate": "[_rec.x, _rec.result]",
+    "expected": [
+      9,
+      5
+    ]
+  },
+  {
+    "name": "destructuring assignment expression returns original RHS",
+    "source": "var x; var source = {x: 3}; var result = ({x} = source);",
+    "evaluate": "[_rec.result === _rec.source, _rec.x]",
+    "expected": [
+      true,
+      3
+    ]
+  },
+  {
+    "name": "nested assignment defaults array rest and object rest preserve RHS",
+    "source": "var x, y, rest, tail; var source = {nest: [undefined, 2, 3], keep: 4, extra: 5}; var result = ({nest: [x = 7, ...tail], keep: y, ...rest} = source);",
+    "evaluate": "[_rec.result === _rec.source, _rec.x, _rec.y, _rec.tail, _rec.rest]",
+    "expected": [
+      true,
+      7,
+      4,
+      [
+        2,
+        3
+      ],
+      {
+        "extra": 5
+      }
+    ]
+  },
+  {
+    "name": "assignment wrappers change captured targets while exclusions remain local",
+    "source": "var x, skip; var source = {a: 3, b: 4}; var result = ({a: x, b: skip} = source);",
+    "config": {
+      "exclude": [
+        "skip"
+      ],
+      "declarationWrapper": "_rec.define"
+    },
+    "setup": "const calls = []; _rec.define = (name, kind, value) => { if (kind === \"assignment\") { calls.push([name, value]); return value * 10; } return value; };",
+    "evaluate": "[_rec.result === _rec.source, _rec.x, skip, Object.hasOwn(_rec, \"skip\"), calls]",
+    "expected": [
+      true,
+      30,
+      4,
+      false,
+      [
+        [
+          "x",
+          3
+        ]
+      ]
+    ]
+  }
+]

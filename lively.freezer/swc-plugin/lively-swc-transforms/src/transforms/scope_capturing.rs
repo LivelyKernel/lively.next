@@ -1,10 +1,11 @@
 use std::collections::{HashMap, HashSet};
-use swc_common::{Span, SyntaxContext, DUMMY_SP};
+use swc_common::{sync::Lrc, Span, SyntaxContext, DUMMY_SP};
 use swc_ecma_ast::*;
 use swc_ecma_visit::{Visit, VisitMut, VisitMutWith, VisitWith};
 
 use crate::utils::ast_helpers::*;
 use crate::utils::scope_analyzer::ScopeAnalyzer;
+use crate::utils::source_position::source_position;
 
 /// Transform that captures top-level variables into a recorder object
 ///
@@ -45,6 +46,8 @@ pub struct ScopeCapturingTransform {
 
     /// Original module source, embedded into source metadata when present.
     original_source: Option<String>,
+
+    source_map: Option<Lrc<dyn swc_common::SourceMapper>>,
 
     /// Top-level variables that should be captured
     capturable_vars: HashSet<Id>,
@@ -132,6 +135,11 @@ impl Visit for OriginalRefNameCollector {
         if let AssignTarget::Simple(SimpleAssignTarget::Ident(binding_ident)) = &assign.left {
             self.add_ref(binding_ident.id.sym.as_ref());
         } else {
+            if let AssignTarget::Pat(pattern) = &assign.left {
+                for (name, _) in extract_idents_from_pat(&pattern.clone().into()) {
+                    self.add_ref(name.as_ref());
+                }
+            }
             assign.left.visit_with(self);
         }
 
@@ -333,6 +341,7 @@ impl ScopeCapturingTransform {
             current_module_accessor,
             source_accessor_name,
             original_source,
+            source_map: None,
             capturable_vars: HashSet::new(),
             exported_vars: HashSet::new(),
             renamed_exports: HashMap::new(),
@@ -353,8 +362,20 @@ impl ScopeCapturingTransform {
         }
     }
 
+    pub fn with_source_map(mut self, source_map: Lrc<dyn swc_common::SourceMapper>) -> Self {
+        self.source_map = Some(source_map);
+        self
+    }
+
+    fn source_position(&self, position: swc_common::BytePos) -> usize {
+        self.source_map
+            .as_ref()
+            .map(|cm| source_position(cm.as_ref(), position))
+            .unwrap_or_else(|| position.0.saturating_sub(1) as usize)
+    }
+
     /// Check if an identifier should be captured
-    fn should_capture(&self, id: &Id) -> bool {
+    fn should_ref_be_captured(&self, id: &Id) -> bool {
         // Note: Babel captures inside ALL functions including nested ones.
         // No fn_depth skip here.
 
@@ -466,7 +487,7 @@ impl ScopeCapturingTransform {
                 "start",
                 Expr::Lit(Lit::Num(Number {
                     span: DUMMY_SP,
-                    value: span.lo.0.saturating_sub(1) as f64,
+                    value: self.source_position(span.lo) as f64,
                     raw: None,
                 })),
             ),
@@ -474,7 +495,7 @@ impl ScopeCapturingTransform {
                 "end",
                 Expr::Lit(Lit::Num(Number {
                     span: DUMMY_SP,
-                    value: span.hi.0.saturating_sub(1) as f64,
+                    value: self.source_position(span.hi) as f64,
                     raw: None,
                 })),
             ),
@@ -556,10 +577,16 @@ impl ScopeCapturingTransform {
     }
 
     /// Check if a pattern includes any capturable identifiers
+    fn should_decl_be_captured(&self, id: &Id) -> bool {
+        !self.excluded.contains(id.0.as_ref())
+            && id.0.as_ref() != self.capture_obj.as_str()
+            && self.capturable_vars.contains(id)
+    }
+
     fn should_capture_pattern(&self, pat: &Pat) -> bool {
         extract_idents_from_pat(pat)
             .into_iter()
-            .any(|id| self.should_capture(&id))
+            .any(|id| self.should_decl_be_captured(&id))
     }
 
     /// Create a default initializer for an uninitialized binding
@@ -573,7 +600,7 @@ impl ScopeCapturingTransform {
     }
 
     /// Transform a pattern into statements assigning to the capture object
-    fn transform_pattern_to_stmts(
+    fn transform_pattern(
         &self,
         pat: &Pat,
         init: Option<Box<Expr>>,
@@ -584,7 +611,7 @@ impl ScopeCapturingTransform {
 
         match pat {
             Pat::Ident(BindingIdent { id, .. }) => {
-                if self.should_capture(&id.to_id()) {
+                if self.should_decl_be_captured(&id.to_id()) {
                     let member = self.create_captured_member(id.sym.as_ref());
                     let init_expr =
                         init.unwrap_or_else(|| Box::new(self.create_default_init(id.sym.as_ref())));
@@ -626,288 +653,14 @@ impl ScopeCapturingTransform {
                 }
             }
             Pat::Array(ArrayPat { elems, .. }) => {
-                // For array destructuring: var [a, b] = arr
-                // Create temp variable: var _tmp = arr
-                // Then: a = _tmp[0], b = _tmp[1]
-                if let Some(init_expr) = init {
-                    let temp_name = format!("_tmp_{}", rand_id());
-                    let temp_ident = create_ident_expr(&temp_name);
-
-                    // First assignment: _tmp = init
-                    stmts.push(Stmt::Decl(create_var_decl(
-                        VarDeclKind::Var,
-                        &temp_name,
-                        Some(*init_expr),
-                    )));
-
-                    // Then assign each element
-                    for (i, elem) in elems.iter().enumerate() {
-                        if let Some(elem_pat) = elem {
-                            if let Pat::Rest(rest_pat) = elem_pat {
-                                let slice_call = create_call_expr(
-                                    create_member_expr(temp_ident.clone(), "slice"),
-                                    vec![to_expr_or_spread(Expr::Lit(Lit::Num(Number {
-                                        span: DUMMY_SP,
-                                        value: i as f64,
-                                        raw: None,
-                                    })))],
-                                );
-                                let rest_stmts = self.transform_pattern_to_stmts(
-                                    &rest_pat.arg,
-                                    Some(Box::new(slice_call)),
-                                    declaration_kind,
-                                    meta.clone(),
-                                );
-                                stmts.extend(rest_stmts);
-                            } else {
-                                let indexed = create_computed_member_expr(
-                                    temp_ident.clone(),
-                                    Expr::Lit(Lit::Num(Number {
-                                        span: DUMMY_SP,
-                                        value: i as f64,
-                                        raw: None,
-                                    })),
-                                );
-                                let elem_stmts = self.transform_pattern_to_stmts(
-                                    elem_pat,
-                                    Some(Box::new(indexed)),
-                                    declaration_kind,
-                                    meta.clone(),
-                                );
-                                stmts.extend(elem_stmts);
-                            }
-                        }
-                    }
-                }
+                stmts.extend(self.transform_array_pattern(elems, init, declaration_kind, meta));
             }
             Pat::Object(ObjectPat { props, .. }) => {
-                // For object destructuring: var {a, b: c} = obj
-                // Create temp variable: var _tmp = obj
-                // Then: a = _tmp.a, c = _tmp.b
-                if let Some(init_expr) = init {
-                    let temp_name = format!("_tmp_{}", rand_id());
-                    let temp_ident = create_ident_expr(&temp_name);
-
-                    // First assignment: _tmp = init
-                    stmts.push(Stmt::Decl(create_var_decl(
-                        VarDeclKind::Var,
-                        &temp_name,
-                        Some(*init_expr),
-                    )));
-
-                    let known_keys: Vec<String> = props
-                        .iter()
-                        .filter_map(|prop| match prop {
-                            ObjectPatProp::KeyValue(kv) => match &kv.key {
-                                PropName::Ident(id) => Some(id.sym.to_string()),
-                                PropName::Str(s) => Some(s.value.to_string()),
-                                _ => None,
-                            },
-                            ObjectPatProp::Assign(assign) => Some(assign.key.sym.to_string()),
-                            ObjectPatProp::Rest(_) => None,
-                        })
-                        .collect();
-
-                    // Then assign each property
-                    for prop in props {
-                        match prop {
-                            ObjectPatProp::KeyValue(kv) => {
-                                let key_name: String = match &kv.key {
-                                    PropName::Ident(id) => (&*id.sym).to_owned(),
-                                    PropName::Str(s) => s.value.to_string(),
-                                    _ => continue,
-                                };
-
-                                let member = create_member_expr(temp_ident.clone(), &key_name);
-                                let prop_stmts = self.transform_pattern_to_stmts(
-                                    &kv.value,
-                                    Some(Box::new(member)),
-                                    declaration_kind,
-                                    meta.clone(),
-                                );
-                                stmts.extend(prop_stmts);
-                            }
-                            ObjectPatProp::Assign(assign) => {
-                                let key_name = assign.key.sym.to_string();
-                                let member = create_member_expr(temp_ident.clone(), &key_name);
-
-                                let value = if let Some(ref default) = assign.value {
-                                    // Handle default value: {a = 5} = obj
-                                    // Keep parity with legacy transform:
-                                    // value === undefined ? default : value
-                                    Expr::Cond(CondExpr {
-                                        span: DUMMY_SP,
-                                        test: Box::new(Expr::Bin(BinExpr {
-                                            span: DUMMY_SP,
-                                            op: BinaryOp::EqEqEq,
-                                            left: Box::new(member.clone()),
-                                            right: Box::new(create_ident_expr("undefined")),
-                                        })),
-                                        cons: default.clone(),
-                                        alt: Box::new(member),
-                                    })
-                                } else {
-                                    member
-                                };
-
-                                if self.should_capture(&assign.key.to_id()) {
-                                    let captured = self.create_captured_member(&key_name);
-
-                                    stmts.push(Stmt::Expr(ExprStmt {
-                                        span: DUMMY_SP,
-                                        expr: Box::new(create_assign_expr(
-                                            expr_to_assign_target(captured),
-                                            value,
-                                        )),
-                                    }));
-                                } else {
-                                    let kind = match declaration_kind {
-                                        "let" => VarDeclKind::Let,
-                                        "const" => VarDeclKind::Const,
-                                        _ => VarDeclKind::Var,
-                                    };
-                                    stmts.push(Stmt::Decl(create_var_decl_with_ident(
-                                        kind,
-                                        assign.key.id.clone(),
-                                        Some(value),
-                                    )));
-                                }
-                            }
-                            ObjectPatProp::Rest(rest) => {
-                                // Handle rest properties: {...rest}
-                                // Legacy transform materializes a new object and copies unknown keys.
-                                if let Pat::Ident(BindingIdent { id: rest_ident, .. }) = &*rest.arg
-                                {
-                                    stmts.push(Stmt::Decl(create_var_decl(
-                                        VarDeclKind::Var,
-                                        rest_ident.sym.as_ref(),
-                                        Some(create_object_lit(vec![])),
-                                    )));
-
-                                    if self.should_capture(&rest_ident.to_id()) {
-                                        let captured =
-                                            self.create_captured_member(rest_ident.sym.as_ref());
-                                        stmts.push(Stmt::Expr(ExprStmt {
-                                            span: DUMMY_SP,
-                                            expr: Box::new(create_assign_expr(
-                                                expr_to_assign_target(captured),
-                                                Expr::Ident(rest_ident.clone()),
-                                            )),
-                                        }));
-                                    }
-
-                                    let key_ident = Ident::new(
-                                        "__key".into(),
-                                        DUMMY_SP,
-                                        SyntaxContext::empty(),
-                                    );
-                                    let mut for_body_stmts: Vec<Stmt> = known_keys
-                                        .iter()
-                                        .map(|key| {
-                                            Stmt::If(IfStmt {
-                                                span: DUMMY_SP,
-                                                test: Box::new(Expr::Bin(BinExpr {
-                                                    span: DUMMY_SP,
-                                                    op: BinaryOp::EqEqEq,
-                                                    left: Box::new(Expr::Ident(key_ident.clone())),
-                                                    right: Box::new(create_string_expr(key)),
-                                                })),
-                                                cons: Box::new(Stmt::Continue(ContinueStmt {
-                                                    span: DUMMY_SP,
-                                                    label: None,
-                                                })),
-                                                alt: None,
-                                            })
-                                        })
-                                        .collect();
-
-                                    let rest_member = create_computed_member_expr(
-                                        Expr::Ident(rest_ident.clone()),
-                                        Expr::Ident(key_ident.clone()),
-                                    );
-                                    let source_member = create_computed_member_expr(
-                                        temp_ident.clone(),
-                                        Expr::Ident(key_ident.clone()),
-                                    );
-                                    for_body_stmts.push(Stmt::Expr(ExprStmt {
-                                        span: DUMMY_SP,
-                                        expr: Box::new(create_assign_expr(
-                                            expr_to_assign_target(rest_member),
-                                            source_member,
-                                        )),
-                                    }));
-
-                                    let for_in = Stmt::ForIn(ForInStmt {
-                                        span: DUMMY_SP,
-                                        left: ForHead::VarDecl(Box::new(VarDecl {
-                                            span: DUMMY_SP,
-                                            ctxt: SyntaxContext::empty(),
-                                            kind: VarDeclKind::Var,
-                                            declare: false,
-                                            decls: vec![VarDeclarator {
-                                                span: DUMMY_SP,
-                                                name: Pat::Ident(BindingIdent {
-                                                    id: key_ident,
-                                                    type_ann: None,
-                                                }),
-                                                init: None,
-                                                definite: false,
-                                            }],
-                                        })),
-                                        right: Box::new(temp_ident.clone()),
-                                        body: Box::new(Stmt::Block(BlockStmt {
-                                            span: DUMMY_SP,
-                                            ctxt: SyntaxContext::empty(),
-                                            stmts: for_body_stmts,
-                                        })),
-                                    });
-
-                                    let iife = Expr::Call(CallExpr {
-                                        span: DUMMY_SP,
-                                        ctxt: SyntaxContext::empty(),
-                                        callee: Callee::Expr(Box::new(Expr::Fn(FnExpr {
-                                            ident: None,
-                                            function: Box::new(Function {
-                                                params: vec![],
-                                                decorators: vec![],
-                                                span: DUMMY_SP,
-                                                ctxt: SyntaxContext::empty(),
-                                                body: Some(BlockStmt {
-                                                    span: DUMMY_SP,
-                                                    ctxt: SyntaxContext::empty(),
-                                                    stmts: vec![for_in],
-                                                }),
-                                                is_generator: false,
-                                                is_async: false,
-                                                type_params: None,
-                                                return_type: None,
-                                            }),
-                                        }))),
-                                        args: vec![],
-                                        type_args: None,
-                                    });
-
-                                    stmts.push(Stmt::Expr(ExprStmt {
-                                        span: DUMMY_SP,
-                                        expr: Box::new(iife),
-                                    }));
-                                } else {
-                                    let rest_stmts = self.transform_pattern_to_stmts(
-                                        &rest.arg,
-                                        Some(Box::new(temp_ident.clone())),
-                                        declaration_kind,
-                                        meta.clone(),
-                                    );
-                                    stmts.extend(rest_stmts);
-                                }
-                            }
-                        }
-                    }
-                }
+                stmts.extend(self.transform_object_pattern(props, init, declaration_kind, meta));
             }
             Pat::Rest(RestPat { arg, .. }) => {
                 // Rest pattern in function params or arrays
-                let rest_stmts = self.transform_pattern_to_stmts(arg, init, declaration_kind, meta);
+                let rest_stmts = self.transform_pattern(arg, init, declaration_kind, meta);
                 stmts.extend(rest_stmts);
             }
             Pat::Assign(AssignPat { left, right, .. }) => {
@@ -924,7 +677,7 @@ impl ScopeCapturingTransform {
                         cons: right.clone(),
                         alt: init_expr,
                     });
-                    let assign_stmts = self.transform_pattern_to_stmts(
+                    let assign_stmts = self.transform_pattern(
                         left,
                         Some(Box::new(value)),
                         declaration_kind,
@@ -932,7 +685,7 @@ impl ScopeCapturingTransform {
                     );
                     stmts.extend(assign_stmts);
                 } else {
-                    let assign_stmts = self.transform_pattern_to_stmts(
+                    let assign_stmts = self.transform_pattern(
                         left,
                         Some(right.clone()),
                         declaration_kind,
@@ -947,164 +700,411 @@ impl ScopeCapturingTransform {
         stmts
     }
 
-    fn transform_assignment_pattern_to_stmts(
+    fn transform_array_pattern(
         &self,
-        pat: &Pat,
+        elems: &[Option<Pat>],
         init: Option<Box<Expr>>,
+        declaration_kind: &str,
+        meta: Option<Expr>,
     ) -> Vec<Stmt> {
         let mut stmts = Vec::new();
+        // For array destructuring: var [a, b] = arr
+        // Create temp variable: var _tmp = arr
+        // Then: a = _tmp[0], b = _tmp[1]
+        if let Some(init_expr) = init {
+            let temp_name = format!("_tmp_{}", rand_id());
+            let temp_ident = create_ident_expr(&temp_name);
 
-        match pat {
-            Pat::Ident(BindingIdent { id, .. }) => {
-                let init_expr = init.unwrap_or_else(|| Box::new(create_ident_expr("undefined")));
-                let (target, value) = if self.should_capture(&id.to_id()) {
-                    (
-                        self.create_captured_member(id.sym.as_ref()),
-                        self.wrap_live_declaration(id.sym.as_ref(), "assignment", *init_expr, None),
-                    )
-                } else {
-                    (Expr::Ident(id.clone()), *init_expr)
-                };
-                let mut assignment = create_assign_expr(expr_to_assign_target(target), value);
-                if self.exported_vars.contains(&id.to_id()) && self.should_capture(&id.to_id()) {
-                    assignment = create_assign_expr(
-                        expr_to_assign_target(Expr::Ident(id.clone())),
-                        assignment,
-                    );
-                }
-                stmts.push(Stmt::Expr(ExprStmt {
-                    span: DUMMY_SP,
-                    expr: Box::new(assignment),
-                }));
-            }
-            Pat::Array(ArrayPat { elems, .. }) => {
-                if let Some(init_expr) = init {
-                    let temp_name = format!("_tmp_{}", rand_id());
-                    let temp_ident = create_ident_expr(&temp_name);
+            // First assignment: _tmp = init
+            stmts.push(Stmt::Decl(create_var_decl(
+                VarDeclKind::Var,
+                &temp_name,
+                Some(*init_expr),
+            )));
 
-                    stmts.push(Stmt::Decl(create_var_decl(
-                        VarDeclKind::Var,
-                        &temp_name,
-                        Some(*init_expr),
-                    )));
-
-                    for (i, elem) in elems.iter().enumerate() {
-                        if let Some(elem_pat) = elem {
-                            let value = if let Pat::Rest(rest_pat) = elem_pat {
-                                let slice_call = create_call_expr(
-                                    create_member_expr(temp_ident.clone(), "slice"),
-                                    vec![to_expr_or_spread(Expr::Lit(Lit::Num(Number {
-                                        span: DUMMY_SP,
-                                        value: i as f64,
-                                        raw: None,
-                                    })))],
-                                );
-                                self.transform_assignment_pattern_to_stmts(
-                                    &rest_pat.arg,
-                                    Some(Box::new(slice_call)),
-                                )
-                            } else {
-                                let indexed = create_computed_member_expr(
-                                    temp_ident.clone(),
-                                    Expr::Lit(Lit::Num(Number {
-                                        span: DUMMY_SP,
-                                        value: i as f64,
-                                        raw: None,
-                                    })),
-                                );
-                                self.transform_assignment_pattern_to_stmts(
-                                    elem_pat,
-                                    Some(Box::new(indexed)),
-                                )
-                            };
-                            stmts.extend(value);
-                        }
+            // Then assign each element
+            for (i, elem) in elems.iter().enumerate() {
+                if let Some(elem_pat) = elem {
+                    if let Pat::Rest(rest_pat) = elem_pat {
+                        let slice_call = create_call_expr(
+                            create_member_expr(temp_ident.clone(), "slice"),
+                            vec![to_expr_or_spread(Expr::Lit(Lit::Num(Number {
+                                span: DUMMY_SP,
+                                value: i as f64,
+                                raw: None,
+                            })))],
+                        );
+                        let rest_stmts = self.transform_pattern(
+                            &rest_pat.arg,
+                            Some(Box::new(slice_call)),
+                            declaration_kind,
+                            meta.clone(),
+                        );
+                        stmts.extend(rest_stmts);
+                    } else {
+                        let indexed = create_computed_member_expr(
+                            temp_ident.clone(),
+                            Expr::Lit(Lit::Num(Number {
+                                span: DUMMY_SP,
+                                value: i as f64,
+                                raw: None,
+                            })),
+                        );
+                        let elem_stmts = self.transform_pattern(
+                            elem_pat,
+                            Some(Box::new(indexed)),
+                            declaration_kind,
+                            meta.clone(),
+                        );
+                        stmts.extend(elem_stmts);
                     }
                 }
             }
-            Pat::Object(ObjectPat { props, .. }) => {
-                if let Some(init_expr) = init {
-                    let temp_name = format!("_tmp_{}", rand_id());
-                    let temp_ident = create_ident_expr(&temp_name);
+        }
 
-                    stmts.push(Stmt::Decl(create_var_decl(
-                        VarDeclKind::Var,
-                        &temp_name,
-                        Some(*init_expr),
-                    )));
+        stmts
+    }
 
-                    for prop in props {
-                        match prop {
-                            ObjectPatProp::KeyValue(kv) => {
-                                let key_name: String = match &kv.key {
-                                    PropName::Ident(id) => (&*id.sym).to_owned(),
-                                    PropName::Str(s) => s.value.to_string(),
-                                    _ => continue,
-                                };
-                                let member = create_member_expr(temp_ident.clone(), &key_name);
-                                stmts.extend(self.transform_assignment_pattern_to_stmts(
-                                    &kv.value,
-                                    Some(Box::new(member)),
-                                ));
+    fn transform_object_pattern(
+        &self,
+        props: &[ObjectPatProp],
+        init: Option<Box<Expr>>,
+        declaration_kind: &str,
+        meta: Option<Expr>,
+    ) -> Vec<Stmt> {
+        let mut stmts = Vec::new();
+        // For object destructuring: var {a, b: c} = obj
+        // Create temp variable: var _tmp = obj
+        // Then: a = _tmp.a, c = _tmp.b
+        if let Some(init_expr) = init {
+            let temp_name = format!("_tmp_{}", rand_id());
+            let temp_ident = create_ident_expr(&temp_name);
+
+            // First assignment: _tmp = init
+            stmts.push(Stmt::Decl(create_var_decl(
+                VarDeclKind::Var,
+                &temp_name,
+                Some(*init_expr),
+            )));
+
+            let known_keys: Vec<String> = props
+                .iter()
+                .filter_map(|prop| match prop {
+                    ObjectPatProp::KeyValue(kv) => match &kv.key {
+                        PropName::Ident(id) => Some(id.sym.to_string()),
+                        PropName::Str(s) => Some(s.value.to_string()),
+                        _ => None,
+                    },
+                    ObjectPatProp::Assign(assign) => Some(assign.key.sym.to_string()),
+                    ObjectPatProp::Rest(_) => None,
+                })
+                .collect();
+
+            // Then assign each property
+            for prop in props {
+                match prop {
+                    ObjectPatProp::KeyValue(kv) => {
+                        let key_name: String = match &kv.key {
+                            PropName::Ident(id) => (&*id.sym).to_owned(),
+                            PropName::Str(s) => s.value.to_string(),
+                            _ => continue,
+                        };
+
+                        let member = create_member_expr(temp_ident.clone(), &key_name);
+                        let prop_stmts = self.transform_pattern(
+                            &kv.value,
+                            Some(Box::new(member)),
+                            declaration_kind,
+                            meta.clone(),
+                        );
+                        stmts.extend(prop_stmts);
+                    }
+                    ObjectPatProp::Assign(assign) => {
+                        let key_name = assign.key.sym.to_string();
+                        let member = create_member_expr(temp_ident.clone(), &key_name);
+
+                        let value = if let Some(ref default) = assign.value {
+                            // Handle default value: {a = 5} = obj
+                            // Keep parity with legacy transform:
+                            // value === undefined ? default : value
+                            Expr::Cond(CondExpr {
+                                span: DUMMY_SP,
+                                test: Box::new(Expr::Bin(BinExpr {
+                                    span: DUMMY_SP,
+                                    op: BinaryOp::EqEqEq,
+                                    left: Box::new(member.clone()),
+                                    right: Box::new(create_ident_expr("undefined")),
+                                })),
+                                cons: default.clone(),
+                                alt: Box::new(member),
+                            })
+                        } else {
+                            member
+                        };
+
+                        if self.should_decl_be_captured(&assign.key.to_id()) {
+                            let captured = self.create_captured_member(&key_name);
+
+                            stmts.push(Stmt::Expr(ExprStmt {
+                                span: DUMMY_SP,
+                                expr: Box::new(create_assign_expr(
+                                    expr_to_assign_target(captured),
+                                    self.wrap_live_declaration(
+                                        &key_name,
+                                        declaration_kind,
+                                        value,
+                                        meta.clone(),
+                                    ),
+                                )),
+                            }));
+                        } else {
+                            let kind = match declaration_kind {
+                                "let" => VarDeclKind::Let,
+                                "const" => VarDeclKind::Const,
+                                _ => VarDeclKind::Var,
+                            };
+                            stmts.push(Stmt::Decl(create_var_decl_with_ident(
+                                kind,
+                                assign.key.id.clone(),
+                                Some(value),
+                            )));
+                        }
+                    }
+                    ObjectPatProp::Rest(rest) => {
+                        // Handle rest properties: {...rest}
+                        // Legacy transform materializes a new object and copies unknown keys.
+                        if let Pat::Ident(BindingIdent { id: rest_ident, .. }) = &*rest.arg {
+                            let captured = self.should_decl_be_captured(&rest_ident.to_id());
+                            // Keep the rest object's construction local while the recorder is initialized.
+                            let local_name = if captured {
+                                format!("_tmp_{}_rest", rand_id())
+                            } else {
+                                rest_ident.sym.to_string()
+                            };
+                            let local = create_ident_expr(&local_name);
+                            stmts.push(Stmt::Decl(create_var_decl(
+                                VarDeclKind::Var,
+                                &local_name,
+                                Some(create_object_lit(vec![])),
+                            )));
+
+                            if captured {
+                                let captured = self.create_captured_member(rest_ident.sym.as_ref());
+                                stmts.push(Stmt::Expr(ExprStmt {
+                                    span: DUMMY_SP,
+                                    expr: Box::new(create_assign_expr(
+                                        expr_to_assign_target(captured),
+                                        self.wrap_live_declaration(
+                                            rest_ident.sym.as_ref(),
+                                            declaration_kind,
+                                            local.clone(),
+                                            meta.clone(),
+                                        ),
+                                    )),
+                                }));
                             }
-                            ObjectPatProp::Assign(assign) => {
-                                let key_name = assign.key.sym.to_string();
-                                let member = create_member_expr(temp_ident.clone(), &key_name);
-                                let value = if let Some(ref default) = assign.value {
-                                    Expr::Cond(CondExpr {
+
+                            let key_ident =
+                                Ident::new("__key".into(), DUMMY_SP, SyntaxContext::empty());
+                            let mut for_body_stmts: Vec<Stmt> = known_keys
+                                .iter()
+                                .map(|key| {
+                                    Stmt::If(IfStmt {
                                         span: DUMMY_SP,
                                         test: Box::new(Expr::Bin(BinExpr {
                                             span: DUMMY_SP,
                                             op: BinaryOp::EqEqEq,
-                                            left: Box::new(member.clone()),
-                                            right: Box::new(create_ident_expr("undefined")),
+                                            left: Box::new(Expr::Ident(key_ident.clone())),
+                                            right: Box::new(create_string_expr(key)),
                                         })),
-                                        cons: default.clone(),
-                                        alt: Box::new(member),
+                                        cons: Box::new(Stmt::Continue(ContinueStmt {
+                                            span: DUMMY_SP,
+                                            label: None,
+                                        })),
+                                        alt: None,
                                     })
-                                } else {
-                                    member
-                                };
-                                stmts.extend(self.transform_assignment_pattern_to_stmts(
-                                    &Pat::Ident(assign.key.clone()),
-                                    Some(Box::new(value)),
-                                ));
-                            }
-                            ObjectPatProp::Rest(rest) => {
-                                stmts.extend(self.transform_assignment_pattern_to_stmts(
-                                    &rest.arg,
-                                    Some(Box::new(temp_ident.clone())),
-                                ));
-                            }
+                                })
+                                .collect();
+
+                            let rest_member = create_computed_member_expr(
+                                local.clone(),
+                                Expr::Ident(key_ident.clone()),
+                            );
+                            let source_member = create_computed_member_expr(
+                                temp_ident.clone(),
+                                Expr::Ident(key_ident.clone()),
+                            );
+                            for_body_stmts.push(Stmt::Expr(ExprStmt {
+                                span: DUMMY_SP,
+                                expr: Box::new(create_assign_expr(
+                                    expr_to_assign_target(rest_member),
+                                    source_member,
+                                )),
+                            }));
+
+                            let for_in = Stmt::ForIn(ForInStmt {
+                                span: DUMMY_SP,
+                                left: ForHead::VarDecl(Box::new(VarDecl {
+                                    span: DUMMY_SP,
+                                    ctxt: SyntaxContext::empty(),
+                                    kind: VarDeclKind::Var,
+                                    declare: false,
+                                    decls: vec![VarDeclarator {
+                                        span: DUMMY_SP,
+                                        name: Pat::Ident(BindingIdent {
+                                            id: key_ident,
+                                            type_ann: None,
+                                        }),
+                                        init: None,
+                                        definite: false,
+                                    }],
+                                })),
+                                right: Box::new(temp_ident.clone()),
+                                body: Box::new(Stmt::Block(BlockStmt {
+                                    span: DUMMY_SP,
+                                    ctxt: SyntaxContext::empty(),
+                                    stmts: for_body_stmts,
+                                })),
+                            });
+
+                            let iife = Expr::Call(CallExpr {
+                                span: DUMMY_SP,
+                                ctxt: SyntaxContext::empty(),
+                                callee: Callee::Expr(Box::new(Expr::Fn(FnExpr {
+                                    ident: None,
+                                    function: Box::new(Function {
+                                        params: vec![],
+                                        decorators: vec![],
+                                        span: DUMMY_SP,
+                                        ctxt: SyntaxContext::empty(),
+                                        body: Some(BlockStmt {
+                                            span: DUMMY_SP,
+                                            ctxt: SyntaxContext::empty(),
+                                            stmts: vec![for_in],
+                                        }),
+                                        is_generator: false,
+                                        is_async: false,
+                                        type_params: None,
+                                        return_type: None,
+                                    }),
+                                }))),
+                                args: vec![],
+                                type_args: None,
+                            });
+
+                            stmts.push(Stmt::Expr(ExprStmt {
+                                span: DUMMY_SP,
+                                expr: Box::new(iife),
+                            }));
+                        } else {
+                            let rest_stmts = self.transform_pattern(
+                                &rest.arg,
+                                Some(Box::new(temp_ident.clone())),
+                                declaration_kind,
+                                meta.clone(),
+                            );
+                            stmts.extend(rest_stmts);
                         }
                     }
                 }
             }
-            Pat::Rest(RestPat { arg, .. }) => {
-                stmts.extend(self.transform_assignment_pattern_to_stmts(arg, init));
-            }
-            Pat::Assign(AssignPat { left, right, .. }) => {
-                if let Some(init_expr) = init {
-                    let value = Expr::Cond(CondExpr {
-                        span: DUMMY_SP,
-                        test: Box::new(Expr::Bin(BinExpr {
-                            span: DUMMY_SP,
-                            op: BinaryOp::EqEqEq,
-                            left: init_expr.clone(),
-                            right: Box::new(create_ident_expr("undefined")),
-                        })),
-                        cons: right.clone(),
-                        alt: init_expr,
-                    });
-                    stmts.extend(
-                        self.transform_assignment_pattern_to_stmts(left, Some(Box::new(value))),
-                    );
-                }
-            }
-            _ => {}
         }
 
         stmts
+    }
+
+    // Preserve native destructuring semantics, including its expression result.
+    fn capture_assignment_pattern(&self, pat: &mut Pat) {
+        match pat {
+            Pat::Ident(binding) if self.should_ref_be_captured(&binding.id.to_id()) => {
+                let name = binding.id.sym.as_ref();
+                let target = self.create_captured_member(name);
+                if !self.should_wrap_live_declarations()
+                    && !self.exported_vars.contains(&binding.id.to_id())
+                {
+                    *pat = Pat::Expr(Box::new(target));
+                    return;
+                }
+                let mut value_name = "__lively_assignment_value__".to_string();
+                while self
+                    .declaration_wrapper
+                    .as_ref()
+                    .is_some_and(|wrapper| wrapper.contains(&value_name))
+                {
+                    value_name.push('_');
+                }
+                let value = create_ident_expr(&value_name);
+                let assignment = create_assign_expr(
+                    expr_to_assign_target(target),
+                    self.wrap_live_declaration(name, "assignment", value, None),
+                );
+                let assignment = if self.exported_vars.contains(&binding.id.to_id()) {
+                    create_assign_expr(
+                        expr_to_assign_target(Expr::Ident(binding.id.clone())),
+                        assignment,
+                    )
+                } else {
+                    assignment
+                };
+                let setter = Prop::Setter(SetterProp {
+                    span: DUMMY_SP,
+                    key: PropName::Ident(IdentName::new("value".into(), DUMMY_SP)),
+                    this_param: None,
+                    param: Box::new(Pat::Ident(BindingIdent {
+                        id: Ident::new(value_name.into(), DUMMY_SP, SyntaxContext::empty()),
+                        type_ann: None,
+                    })),
+                    body: Some(BlockStmt {
+                        span: DUMMY_SP,
+                        ctxt: SyntaxContext::empty(),
+                        stmts: vec![Stmt::Expr(ExprStmt {
+                            span: DUMMY_SP,
+                            expr: Box::new(assignment),
+                        })],
+                    }),
+                });
+                let object = Expr::Object(ObjectLit {
+                    span: DUMMY_SP,
+                    props: vec![PropOrSpread::Prop(Box::new(setter))],
+                });
+                *pat = Pat::Expr(Box::new(create_member_expr(object, "value")));
+            }
+            Pat::Array(array) => {
+                for element in array.elems.iter_mut().flatten() {
+                    self.capture_assignment_pattern(element);
+                }
+            }
+            Pat::Object(object) => {
+                for property in &mut object.props {
+                    match property {
+                        ObjectPatProp::KeyValue(property) => {
+                            self.capture_assignment_pattern(&mut property.value)
+                        }
+                        ObjectPatProp::Rest(rest) => self.capture_assignment_pattern(&mut rest.arg),
+                        ObjectPatProp::Assign(assign) => {
+                            let key = PropName::Ident(assign.key.id.clone().into());
+                            let mut value = Pat::Ident(assign.key.clone());
+                            self.capture_assignment_pattern(&mut value);
+                            if let Some(default) = &assign.value {
+                                value = Pat::Assign(AssignPat {
+                                    span: DUMMY_SP,
+                                    left: Box::new(value),
+                                    right: default.clone(),
+                                });
+                            }
+                            // Shorthand properties cannot contain member assignment targets.
+                            *property = ObjectPatProp::KeyValue(KeyValuePatProp {
+                                key,
+                                value: Box::new(value),
+                            });
+                        }
+                    }
+                }
+            }
+            Pat::Assign(assign) => self.capture_assignment_pattern(&mut assign.left),
+            Pat::Rest(rest) => self.capture_assignment_pattern(&mut rest.arg),
+            _ => {}
+        }
     }
 
     /// Enter a new scope
@@ -1124,7 +1124,7 @@ impl ScopeCapturingTransform {
     fn prescan_var_decls_in_block(&mut self, stmts: &[Stmt]) {
         use swc_ecma_visit::Visit;
         struct VarCollector {
-            /// Names from `var x = fn()/obj/array/...` (substantial init)
+            /// Function-local var bindings, including declarations in nested blocks.
             var_names: Vec<String>,
             /// Names from `function x() {}` declarations
             fn_decl_names: Vec<String>,
@@ -1133,26 +1133,8 @@ impl ScopeCapturingTransform {
             fn visit_var_decl(&mut self, decl: &VarDecl) {
                 if matches!(decl.kind, VarDeclKind::Var) {
                     for d in &decl.decls {
-                        // Only collect vars that have a NON-TRIVIAL initializer.
-                        // `var a;` (no init) or `var a = simple` are hoisting
-                        // artifacts that Babel ignores. But `var Le = function(t){...}`
-                        // is a genuinely new binding that should shadow.
-                        let has_substantial_init = d.init.as_ref().map_or(false, |init| {
-                            matches!(
-                                &**init,
-                                Expr::Fn(_)
-                                    | Expr::Arrow(_)
-                                    | Expr::Class(_)
-                                    | Expr::Call(_)
-                                    | Expr::New(_)
-                                    | Expr::Object(_)
-                                    | Expr::Array(_)
-                            )
-                        });
-                        if has_substantial_init {
-                            for (sym, _) in extract_idents_from_pat(&d.name) {
-                                self.var_names.push(sym.to_string());
-                            }
+                        for (sym, _) in extract_idents_from_pat(&d.name) {
+                            self.var_names.push(sym.to_string());
                         }
                     }
                 }
@@ -1178,14 +1160,7 @@ impl ScopeCapturingTransform {
         for name in &collector.fn_decl_names {
             self.declare_in_nearest_function_scope(name);
         }
-        // Var declarations with substantial initializers ALWAYS shadow.
-        // The has_substantial_init check already filters out bare `var a;`
-        // (hoisting artifacts that Babel ignores), so no capturable_vars
-        // check is needed here.
-        // - fs.js: `var Le = function(t){...}(parent)` inside dew() —
-        //   Call init (substantial) → shadows even though Le is module-level.
-        // - @babel/generator: `var a;` inside s() — no init → not collected
-        //   → module-level `a` stays captured.
+        // All var declarations are hoisted, including bare and literal initializers.
         for name in &collector.var_names {
             self.declare_in_nearest_function_scope(name);
         }
@@ -1553,14 +1528,14 @@ impl ScopeCapturingTransform {
                 if will_replace_func_decls {
                     return; // Will be handled by replace_function_declarations_with_wrapper
                 }
-                if self.should_capture(&fn_decl.ident.to_id()) {
+                if self.should_ref_be_captured(&fn_decl.ident.to_id()) {
                     self.hoisted_function_captures
                         .push(self.create_function_capture_assignment(fn_decl));
                 }
             }
             ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(export_decl)) => {
                 if let Decl::Fn(fn_decl) = &export_decl.decl {
-                    if self.should_capture(&fn_decl.ident.to_id()) {
+                    if self.should_ref_be_captured(&fn_decl.ident.to_id()) {
                         self.hoisted_function_captures
                             .push(self.create_function_capture_assignment(fn_decl));
                     }
@@ -1841,7 +1816,7 @@ impl ScopeCapturingTransform {
                         } else {
                             None
                         };
-                        let stmts = self.transform_pattern_to_stmts(
+                        let stmts = self.transform_pattern(
                             &decl.name,
                             init.clone(),
                             declaration_kind,
@@ -2040,7 +2015,7 @@ impl ScopeCapturingTransform {
 
                 match &export_decl.decl {
                     Decl::Class(class_decl) => {
-                        if self.should_capture(&class_decl.ident.to_id()) {
+                        if self.should_ref_be_captured(&class_decl.ident.to_id()) {
                             items.push(self.create_class_capture_assignment(class_decl));
                         }
                     }
@@ -2049,7 +2024,7 @@ impl ScopeCapturingTransform {
                             let ids = extract_idents_from_pat(&decl.name);
                             for (sym, ctxt) in ids {
                                 let id = (sym.clone(), ctxt);
-                                if !self.should_capture(&id) {
+                                if !self.should_ref_be_captured(&id) {
                                     continue;
                                 }
                                 let name = sym.to_string();
@@ -2076,7 +2051,7 @@ impl ScopeCapturingTransform {
                 vec![ModuleItem::Stmt(Stmt::Decl(Decl::Fn(fn_decl)))]
             }
             ModuleItem::Stmt(Stmt::Decl(Decl::Class(class_decl))) => {
-                if self.should_capture(&class_decl.ident.to_id()) {
+                if self.should_ref_be_captured(&class_decl.ident.to_id()) {
                     vec![
                         ModuleItem::Stmt(Stmt::Decl(Decl::Class(class_decl.clone()))),
                         self.create_class_capture_assignment(&class_decl),
@@ -2512,7 +2487,8 @@ impl VisitMut for ScopeCapturingTransform {
             _ => None,
         }
         .filter(|(binding, _)| {
-            self.exported_vars.contains(&binding.to_id()) && self.should_capture(&binding.to_id())
+            self.exported_vars.contains(&binding.to_id())
+                && self.should_ref_be_captured(&binding.to_id())
         })
         .map(|(binding, postfix)| (binding.clone(), postfix));
 
@@ -2540,7 +2516,7 @@ impl VisitMut for ScopeCapturingTransform {
                 }
             }
             Expr::Ident(ident) => {
-                if self.should_capture(&ident.to_id()) {
+                if self.should_ref_be_captured(&ident.to_id()) {
                     *expr = self.create_captured_member(ident.sym.as_ref());
                     return;
                 }
@@ -2595,47 +2571,17 @@ impl VisitMut for ScopeCapturingTransform {
         }
     }
 
-    fn visit_mut_stmt(&mut self, stmt: &mut Stmt) {
-        if let Stmt::Expr(expr_stmt) = stmt {
-            let assign_expr = match &mut *expr_stmt.expr {
-                Expr::Assign(assign) => Some(assign),
-                Expr::Paren(paren) => match &mut *paren.expr {
-                    Expr::Assign(assign) => Some(assign),
-                    _ => None,
-                },
-                _ => None,
-            };
-            if let Some(assign) = assign_expr {
-                if assign.op == AssignOp::Assign {
-                    if let AssignTarget::Pat(assign_pat) = &assign.left {
-                        let pat: Pat = assign_pat.clone().into();
-                        if self.should_capture_pattern(&pat) {
-                            assign.right.visit_mut_with(self);
-                            let right = std::mem::replace(
-                                &mut assign.right,
-                                Box::new(Expr::Invalid(Invalid { span: DUMMY_SP })),
-                            );
-                            let stmts =
-                                self.transform_assignment_pattern_to_stmts(&pat, Some(right));
-                            *stmt = Stmt::Block(BlockStmt {
-                                span: DUMMY_SP,
-                                ctxt: SyntaxContext::empty(),
-                                stmts,
-                            });
-                            return;
-                        }
-                    }
-                }
-            }
+    fn visit_mut_assign_expr(&mut self, assign: &mut AssignExpr) {
+        if let AssignTarget::Pat(pattern) = &assign.left {
+            let mut pat: Pat = pattern.clone().into();
+            self.capture_assignment_pattern(&mut pat);
+            assign.left =
+                AssignTarget::try_from(pat).expect("valid destructuring assignment target");
         }
 
-        stmt.visit_mut_children_with(self);
-    }
-
-    fn visit_mut_assign_expr(&mut self, assign: &mut AssignExpr) {
         if let AssignTarget::Simple(SimpleAssignTarget::Ident(binding_ident)) = &assign.left {
             let id = binding_ident.id.to_id();
-            if self.should_capture(&id) {
+            if self.should_ref_be_captured(&id) {
                 let name = binding_ident.id.sym.to_string();
                 let member = self.create_captured_member(&name);
                 assign.left = expr_to_assign_target(member);
@@ -2655,7 +2601,7 @@ impl VisitMut for ScopeCapturingTransform {
 
     fn visit_mut_update_expr(&mut self, update: &mut UpdateExpr) {
         if let Expr::Ident(ident) = &*update.arg {
-            if self.should_capture(&ident.to_id()) {
+            if self.should_ref_be_captured(&ident.to_id()) {
                 update.arg = Box::new(self.create_captured_member(ident.sym.as_ref()));
             }
         }
@@ -2666,7 +2612,7 @@ impl VisitMut for ScopeCapturingTransform {
     fn visit_mut_prop(&mut self, prop: &mut Prop) {
         match prop {
             Prop::Shorthand(ident) => {
-                if self.should_capture(&ident.to_id()) {
+                if self.should_ref_be_captured(&ident.to_id()) {
                     let key = PropName::Ident(ident.clone().into());
                     let value = Box::new(self.create_captured_member(ident.sym.as_ref()));
                     *prop = Prop::KeyValue(KeyValueProp { key, value });
@@ -2727,6 +2673,9 @@ impl VisitMut for ScopeCapturingTransform {
                 },
             }
         }
+        if let Some(body) = &cons.body {
+            self.prescan_var_decls_in_block(&body.stmts);
+        }
         cons.visit_mut_children_with(self);
         self.exit_scope();
     }
@@ -2755,6 +2704,9 @@ impl VisitMut for ScopeCapturingTransform {
         self.enter_scope(true);
         for param in &arrow.params {
             self.declare_pattern_in_current_scope(param);
+        }
+        if let BlockStmtOrExpr::BlockStmt(body) = &*arrow.body {
+            self.prescan_var_decls_in_block(&body.stmts);
         }
         arrow.visit_mut_children_with(self);
         self.exit_scope();
@@ -2804,6 +2756,22 @@ impl VisitMut for ScopeCapturingTransform {
 
     fn visit_mut_block_stmt(&mut self, block: &mut BlockStmt) {
         self.enter_scope(false);
+        for stmt in &block.stmts {
+            match stmt {
+                Stmt::Decl(Decl::Var(decl)) if decl.kind != VarDeclKind::Var => {
+                    for declarator in &decl.decls {
+                        self.declare_pattern_in_current_scope(&declarator.name);
+                    }
+                }
+                Stmt::Decl(Decl::Class(decl)) => {
+                    self.declare_in_current_scope(decl.ident.sym.as_ref())
+                }
+                Stmt::Decl(Decl::Fn(decl)) => {
+                    self.declare_in_current_scope(decl.ident.sym.as_ref())
+                }
+                _ => {}
+            }
+        }
         block.visit_mut_children_with(self);
         self.exit_scope();
     }
@@ -2994,6 +2962,60 @@ mod tests {
     // --- Basic variable capturing (matching Babel capturing-test.js) ---
 
     #[test]
+    fn scope_definition_metadata_uses_file_relative_utf16_offsets() {
+        let cm = Lrc::new(SourceMap::default());
+        cm.new_source_file(FileName::Anon.into(), "preceding file".to_string());
+        let source = "// 😀\nfunction café() { return \"🦄\"; }";
+        let fm = cm.new_source_file(FileName::Anon.into(), source.to_string());
+        let module = parse_file_as_module(
+            &fm,
+            Syntax::Es(Default::default()),
+            Default::default(),
+            None,
+            &mut vec![],
+        )
+        .unwrap();
+        let ModuleItem::Stmt(Stmt::Decl(Decl::Fn(function))) = &module.body[0] else {
+            panic!("expected function declaration");
+        };
+        let transform = ScopeCapturingTransform::new(
+            "_rec".into(),
+            Some("define".into()),
+            vec![],
+            true,
+            true,
+            false,
+            "test.js".into(),
+            None,
+            None,
+            None,
+            None,
+            HashMap::new(),
+        )
+        .with_source_map(cm);
+        let Expr::Object(metadata) = transform.source_loc_from_span(function.function.span) else {
+            panic!("expected metadata object");
+        };
+        let offsets: Vec<f64> = metadata
+            .props
+            .iter()
+            .map(|prop| {
+                let PropOrSpread::Prop(prop) = prop else {
+                    panic!("unexpected spread")
+                };
+                let Prop::KeyValue(prop) = prop.as_ref() else {
+                    panic!("expected field")
+                };
+                let Expr::Lit(Lit::Num(value)) = prop.value.as_ref() else {
+                    panic!("expected offset")
+                };
+                value.value
+            })
+            .collect();
+        assert_eq!(offsets, vec![6.0, source.encode_utf16().count() as f64]);
+    }
+
+    #[test]
     fn test_simple_var() {
         let output = transform_code("var x = 1;");
         assert!(
@@ -3011,6 +3033,53 @@ mod tests {
             "uninitialized var should not read inherited globals: {}",
             output
         );
+    }
+
+    #[test]
+    fn test_object_pattern_leaves_use_definition_wrapper() {
+        let output = transform_code_live_module("var { x = 3, y: z, ...rest } = value;");
+        for name in ["x", "z", "rest"] {
+            assert!(
+                output.contains(&format!("[\"defVar_test\"](\"{}\", \"var\",", name)),
+                "every captured pattern binding must notify the wrapper: {}",
+                output
+            );
+        }
+    }
+
+    #[test]
+    fn test_array_pattern_holes_preserve_element_indices() {
+        let output = transform_code("var [, x, , y = 4, ...rest] = source;");
+        assert!(output.contains("[1]"), "{}", output);
+        assert!(output.contains("[3] === undefined ? 4"), "{}", output);
+        assert!(output.contains(".slice(4)"), "{}", output);
+    }
+
+    #[test]
+    fn test_all_function_var_bindings_shadow_before_declaration() {
+        for declaration in ["var x;", "var x = 2;"] {
+            let output = transform_code(&format!(
+                "var x = 9; function read() {{ return x; {} }}",
+                declaration
+            ));
+            assert!(output.contains("return x;"), "{}", output);
+            assert!(!output.contains("return __varRecorder__.x"), "{}", output);
+        }
+    }
+
+    #[test]
+    fn test_arrow_var_bindings_shadow_before_declaration() {
+        let output = transform_code("var x = 9; var read = () => { return x; var x = 2; };");
+        assert!(output.contains("return x;"), "{}", output);
+        assert!(!output.contains("return __varRecorder__.x"), "{}", output);
+    }
+
+    #[test]
+    fn test_block_lexical_binding_shadows_before_initialization() {
+        let output =
+            transform_code("var x = 9; function read() { { use(x); let x = 2; } return x; }");
+        assert!(output.contains(".use(x)"), "{}", output);
+        assert!(output.contains("return __varRecorder__.x;"), "{}", output);
     }
 
     #[test]
@@ -3050,21 +3119,21 @@ mod tests {
         );
         assert!(
             output.contains(
-                "__varRecorder__.A = __varRecorder__[\"defVar_test\"](\"A\", \"assignment\", _tmp_"
+                "__varRecorder__.A = __varRecorder__[\"defVar_test\"](\"A\", \"assignment\", __lively_assignment_value__"
             ),
             "destructuring assignment should update A through defVar: {}",
             output
         );
         assert!(
             output.contains(
-                "__varRecorder__.B = __varRecorder__[\"defVar_test\"](\"B\", \"assignment\", _tmp_"
+                "__varRecorder__.B = __varRecorder__[\"defVar_test\"](\"B\", \"assignment\", __lively_assignment_value__"
             ),
             "destructuring assignment should update B through defVar: {}",
             output
         );
         assert!(
             !output.contains("({ A, B }"),
-            "captured destructuring assignment should be expanded: {}",
+            "captured destructuring targets should be rewritten: {}",
             output
         );
     }
