@@ -796,6 +796,17 @@ describe('declarations', () => {
     '_rec.x = _define("x", "assignment", 23, _rec);'
   );
 
+  testVarTfm(
+    'property assignments stay unwrapped when undefined is a global',
+    { ...opts, dontTransform: ['undefined'] },
+    'var object = {}; object.value = undefined; object["other"] = 7; x = 23;',
+    `_rec.object = _define("object", "var", {}, _rec);
+var object = _rec.object;
+_rec.object.value = undefined;
+_rec.object["other"] = 7;
+_rec.x = _define("x", "assignment", 23, _rec);`
+  );
+
   testVarTfm('define call works for exports 1', opts, 'export var x = 23;',
     'export var x = 23;\n_rec.x = _define("x", "assignment", x, _rec);');
 

@@ -88,7 +88,7 @@ function getRefs (scope, options) {
     if (ref.type === 'ArrayPattern') return ref.get('elements').flatMap(extractRef);
     if (ref.type === 'AssignmentPattern') return extractRef(ref.get('left'));
     if (ref.type === 'RestElement') return extractRef(ref.get('argument'));
-    return [ref];
+    return ref.type === 'Identifier' ? [ref] : [];
   }
 
   return bindings.map(binding =>
