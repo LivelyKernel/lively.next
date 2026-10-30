@@ -4,7 +4,7 @@ pub mod utils;
 
 use config::LivelyTransformConfig;
 use swc_common::sync::Lrc;
-use swc_ecma_visit::VisitMutWith;
+use swc_ecma_visit::{VisitMutWith, VisitWith};
 use transforms::*;
 
 /// Main transform visitor that orchestrates all lively transforms.
@@ -12,6 +12,7 @@ use transforms::*;
 pub struct LivelyTransformVisitor {
     config: LivelyTransformConfig,
     source_map: Option<Lrc<dyn swc_common::SourceMapper>>,
+    host_unresolved_mark: Option<swc_common::Mark>,
 }
 
 impl LivelyTransformVisitor {
@@ -19,6 +20,7 @@ impl LivelyTransformVisitor {
         Self {
             config,
             source_map: None,
+            host_unresolved_mark: None,
         }
     }
 
@@ -26,10 +28,19 @@ impl LivelyTransformVisitor {
         self.source_map = Some(source_map);
         self
     }
+
+    /// The SWC plugin receives an AST already resolved by its compiler host.
+    pub fn with_resolved_bindings(mut self, unresolved_mark: swc_common::Mark) -> Self {
+        self.host_unresolved_mark = Some(unresolved_mark);
+        self
+    }
 }
 
 impl swc_ecma_visit::VisitMut for LivelyTransformVisitor {
     fn visit_mut_program(&mut self, program: &mut swc_ecma_ast::Program) {
+        if self.config.enable_scope_capture && self.host_unresolved_mark.is_none() {
+            program.visit_with(&mut transforms::scope_capturing::ClearAnalysisContexts);
+        }
         // Apply transforms in the correct order:
 
         // 1. Split export variable declarations first (preprocessing)
@@ -117,6 +128,9 @@ impl swc_ecma_visit::VisitMut for LivelyTransformVisitor {
             );
             if let Some(cm) = &self.source_map {
                 scope_transform = scope_transform.with_source_map(cm.clone());
+            }
+            if let Some(mark) = self.host_unresolved_mark {
+                scope_transform = scope_transform.with_resolved_bindings(mark);
             }
             program.visit_mut_with(&mut scope_transform);
         }

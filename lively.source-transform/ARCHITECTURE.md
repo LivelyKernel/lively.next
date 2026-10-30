@@ -27,7 +27,7 @@ Rust paths below are relative to
 | Import/export bindings during scope capture | `babel/transforms/exported-import-capture.js`; ESTree scope pass | scope pass import/export helpers |
 | Supplemental freezer export captures after scope rewriting | `transforms/exported-import-capture.js` | `transforms/exported_import_capture.rs` |
 | System.register setters, namespace interop, recorder hoisting and deferred exports | `babel/transforms/systemjs.js`; ESTree `transforms/systemjs.js` | `transforms/systemjs.rs`, shared by both native hosts |
-| Binding resolution | Babel scopes; ESTree `lively.ast` queries | `utils/scope_analyzer.rs` |
+| Binding resolution | Babel scopes; ESTree `lively.ast` queries | SWC resolver binding IDs; `utils/scope_analyzer.rs` selects module declarations |
 | Source ranges | Parser offsets (UTF-16) | `utils/source_position.rs` using the host SourceMapper |
 
 `babel/transforms/index.js` exports the named passes for direct inspection.
@@ -67,6 +67,15 @@ then supplemental export capture. Namespace-generated bindings are excluded from
 capture. SystemJS rewriting of SWC-generated registrations runs after module
 lowering, with resolver contexts preserved.
 
+Scope capture uses SWC-resolved binding identities for lexical shadowing, hoisting
+and original free references. Parser entrypoints resolve temporarily immediately
+before capture, then remove those analysis contexts so the browser can resolve
+the final generated module normally. The plugin explicitly supplies its host
+unresolved mark and retains existing contexts; resolved input without that mode
+is rejected before scope capture. Loop-header exclusions use binding IDs so they
+do not hide unrelated same-named outer bindings. Pattern binding extraction and
+common expression construction reuse `swc_ecma_utils`.
+
 The JS evaluation and freezer drivers assemble the passes for their respective
 tasks. Their frontend ordering is not mechanically identical: Babel establishes
 reference identities before replacing classes, while SWC resolves bindings on
@@ -84,7 +93,8 @@ source during transpilation.
 
 `tests/parity/*.json` defines source, native-style configuration and observations
 once. `tests/parity-test.mjs` runs the production JS routines and the native
-visitor through the Cargo `parity` example. Class/scope cases use Babel, ESTree
+visitor through the Cargo `parity` example, both from parser ASTs and from
+pre-resolved ASTs representing the plugin host. Class/scope cases use Babel, ESTree
 and Rust; supplemental export cases use ESTree and Rust; whole-pipeline cases
 use `livelyPreTranspile` and the complete native visitor. SystemJS cases also
 exercise both JS frontends. Rust browser tests cover the post-module adapter.

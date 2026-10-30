@@ -199,5 +199,47 @@
         ]
       ]
     ]
+  },
+  {
+    "name": "loop bindings retain per iteration closures and do not escape",
+    "source": "var x = 9; var readers = []; for (let x of [1, 2]) readers.push(() => x); var result = [readers.map(read => read()), x];",
+    "evaluate": "[_rec.x, _rec.result]",
+    "expected": [
+      9,
+      [
+        [
+          1,
+          2
+        ],
+        9
+      ]
+    ]
+  },
+  {
+    "name": "named function expression recursion shadows only inside the function",
+    "source": "var recur = 9; var read = function recur(n) { return n ? recur(n - 1) + 1 : 0; }; var result = [read(3), recur];",
+    "evaluate": "[_rec.recur, _rec.result]",
+    "expected": [
+      9,
+      [
+        3,
+        9
+      ]
+    ]
+  },
+  {
+    "name": "nested lexical scopes retain distinct bindings with the same name",
+    "source": "var x = 9; function read() { let x = 2; var inner; { let x = 3; inner = () => x; } return [x, inner()]; } var result = [read(), x];",
+    "evaluate": "[_rec.x, _rec.result]",
+    "expected": [
+      9,
+      [
+        [
+          2,
+          3
+        ],
+        9
+      ]
+    ]
   }
 ]

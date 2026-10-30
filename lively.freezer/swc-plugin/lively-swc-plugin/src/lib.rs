@@ -18,6 +18,7 @@ pub fn process_transform(
     .unwrap_or_default();
 
     let mut visitor = LivelyTransformVisitor::new(config)
+        .with_resolved_bindings(metadata.unresolved_mark)
         .with_source_map(swc_core::common::sync::Lrc::new(metadata.source_map));
     program.visit_mut_with(&mut visitor);
     program

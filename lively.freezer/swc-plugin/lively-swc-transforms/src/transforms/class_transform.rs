@@ -1351,4 +1351,69 @@ mod tests {
         assert!(output.contains("start: 9"), "{output}");
         assert!(output.contains("end: 19"), "{output}");
     }
+
+    #[test]
+    fn resolved_class_and_superclass_references_keep_binding_ids() {
+        use swc_common::{Globals, Mark, GLOBALS};
+        use swc_ecma_transforms_base::resolver;
+
+        GLOBALS.set(&Globals::new(), || {
+            let cm = Lrc::new(SourceMap::default());
+            let fm = cm.new_source_file(
+                FileName::Anon.into(),
+                "var Base; class Outer extends Base { make() { return class Inner extends Outer { self() { return Inner; } }; } static self() { return Outer; } }".to_string(),
+            );
+            let mut module = parse_file_as_module(
+                &fm,
+                Syntax::Es(Default::default()),
+                Default::default(),
+                None,
+                &mut vec![],
+            )
+            .unwrap();
+            module.visit_mut_with(&mut resolver(Mark::new(), Mark::new(), false));
+
+            #[derive(Default)]
+            struct Idents(Vec<Ident>);
+            impl Visit for Idents {
+                fn visit_ident(&mut self, ident: &Ident) {
+                    if matches!(ident.sym.as_ref(), "Base" | "Outer" | "Inner") {
+                        self.0.push(ident.clone());
+                    }
+                }
+            }
+            let mut original = Idents::default();
+            module.visit_with(&mut original);
+            assert_eq!(original.0.len(), 7);
+            assert!(original
+                .0
+                .iter()
+                .all(|ident| ident.ctxt != SyntaxContext::empty()));
+
+            module.visit_mut_with(&mut ClassTransform::new(
+                ClassToFunctionConfig {
+                    class_holder: "__varRecorder__".into(),
+                    function_node: "initializeES6ClassForLively".into(),
+                    current_module_accessor: "module.id".into(),
+                    source_accessor_name: None,
+                },
+                "test/module.js".into(),
+                None,
+                None,
+            ));
+
+            let mut transformed = Idents::default();
+            module.visit_with(&mut transformed);
+            for original in original.0 {
+                assert!(
+                    transformed.0.iter().any(|ident| {
+                        ident.span == original.span && ident.to_id() == original.to_id()
+                    }),
+                    "lost binding identity at {:?}: {:?}",
+                    original.span,
+                    original.to_id(),
+                );
+            }
+        });
+    }
 }

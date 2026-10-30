@@ -2,7 +2,8 @@
 import './node-bootstrap.mjs';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
-import { spawnSync } from 'node:child_process';
+import { execFile, spawnSync } from 'node:child_process';
+import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 // Load package graphs after the flatn ESM hook has been installed.
 const [
@@ -63,10 +64,11 @@ const executable = build.stdout.trim().split('\n').map(line => JSON.parse(line))
   .find(message => message.target?.name === 'parity' && message.executable)?.executable;
 assert.ok(executable, 'Cargo did not report the parity executable');
 if (process.env.PARITY_TRACE) console.log('Executing native cases', executable, JSON.stringify(cases).length);
-const native = spawnSync(executable, [], {
-  input: JSON.stringify(cases), encoding: 'utf8', maxBuffer: 32 * 1024 * 1024, timeout: 60000
+const execution = promisify(execFile)(executable, [], {
+  encoding: 'utf8', maxBuffer: 32 * 1024 * 1024, timeout: 60000
 });
-assert.equal(native.status, 0, native.stderr || String(native.error));
+execution.child.stdin.end(JSON.stringify(cases));
+const native = await execution;
 const outputs = JSON.parse(native.stdout);
 assert.equal(outputs.length, cases.length);
 
@@ -150,7 +152,8 @@ for (let i = 0; i < cases.length; i++) {
   const output = outputs[i];
   assert.equal(output.name, fixture.name);
   assert.ok(!output.error, `${fixture.name}: ${output.error}`);
-  const backends = { rust: output.code };
+  assert.ok(!output.resolvedError, `${fixture.name} [rustResolved]: ${output.resolvedError}`);
+  const backends = { rust: output.code, rustResolved: output.resolvedCode };
   if (fixture.pass !== 'exported-import-capture') backends.babel = babelTransform(fixture);
   if (['scope', 'classes', 'systemjs', 'exported-import-capture'].includes(fixture.pass)) backends.estree = estreeTransform(fixture);
   for (const [backend, code] of Object.entries(backends)) {

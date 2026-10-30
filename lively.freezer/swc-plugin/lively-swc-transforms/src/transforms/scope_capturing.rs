@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
-use swc_common::{sync::Lrc, Span, SyntaxContext, DUMMY_SP};
+use swc_common::{sync::Lrc, Globals, Mark, Span, SyntaxContext, DUMMY_SP, GLOBALS};
 use swc_ecma_ast::*;
+use swc_ecma_transforms_base::resolver;
 use swc_ecma_visit::{Visit, VisitMut, VisitMutWith, VisitWith};
 
 use crate::utils::ast_helpers::*;
@@ -62,11 +63,11 @@ pub struct ScopeCapturingTransform {
     /// generates recorder/System wrapper code. This mirrors Babel's
     /// refsToReplace shape: generated identifiers are not captured just
     /// because the mutation visitor later sees them.
-    original_ref_names: HashSet<String>,
+    original_global_refs: HashSet<Id>,
 
     /// Bindings introduced by `for` headers. Babel leaves those local, even
     /// when the declaration is a top-level `var`.
-    loop_header_vars: HashSet<String>,
+    loop_header_vars: HashSet<Id>,
 
     /// Top-level imported bindings
     imported_vars: HashSet<Id>,
@@ -78,13 +79,8 @@ pub struct ScopeCapturingTransform {
     /// Top-level function capture assignments that must run before body code
     hoisted_function_captures: Vec<ModuleItem>,
 
-    /// Current depth (0 = module level, >0 = nested)
-    depth: usize,
-    /// Function nesting depth (0 = module level, >0 = inside function body)
-    fn_depth: usize,
-
-    /// Lexically declared variable names in nested scopes (for shadowing detection)
-    scope_stack: Vec<ScopeFrame>,
+    /// Plugin hosts already resolve bindings; parser callers use temporary analysis contexts.
+    host_unresolved_mark: Option<Mark>,
 
     /// Collected export metadata for __module_exports__ (resurrection builds only).
     /// Entries follow the same format as the Babel path:
@@ -103,214 +99,33 @@ pub struct ScopeCapturingTransform {
     current_var_decl_stack: Vec<HashSet<String>>,
 }
 
-struct ScopeFrame {
-    names: HashSet<String>,
-    is_function_scope: bool,
+/// Collect only source globals. Resolved local references have their binding's
+/// identity, so shadowing and hoisting need no additional scope simulation.
+struct GlobalRefCollector {
+    unresolved: SyntaxContext,
+    refs: HashSet<Id>,
 }
-
-#[derive(Default)]
-struct OriginalRefNameCollector {
-    names: HashSet<String>,
-    scopes: Vec<HashSet<String>>,
-}
-
-impl Visit for OriginalRefNameCollector {
-    fn visit_module(&mut self, module: &Module) {
-        self.scopes.clear();
-        self.scopes.push(HashSet::new());
-        self.predeclare_module_items(&module.body);
-        module.visit_children_with(self);
-    }
-
-    fn visit_expr(&mut self, expr: &Expr) {
-        if let Expr::Ident(ident) = expr {
-            self.add_ref(ident.sym.as_ref());
-            return;
+impl Visit for GlobalRefCollector {
+    fn visit_ident(&mut self, ident: &Ident) {
+        if ident.ctxt == self.unresolved {
+            self.refs.insert(ident.to_id());
         }
-
-        expr.visit_children_with(self);
-    }
-
-    fn visit_assign_expr(&mut self, assign: &AssignExpr) {
-        if let AssignTarget::Simple(SimpleAssignTarget::Ident(binding_ident)) = &assign.left {
-            self.add_ref(binding_ident.id.sym.as_ref());
-        } else {
-            if let AssignTarget::Pat(pattern) = &assign.left {
-                for (name, _) in extract_idents_from_pat(&pattern.clone().into()) {
-                    self.add_ref(name.as_ref());
-                }
-            }
-            assign.left.visit_with(self);
-        }
-
-        assign.right.visit_with(self);
-    }
-
-    fn visit_update_expr(&mut self, update: &UpdateExpr) {
-        update.arg.visit_with(self);
-    }
-
-    fn visit_prop(&mut self, prop: &Prop) {
-        match prop {
-            Prop::Shorthand(ident) => {
-                self.add_ref(ident.sym.as_ref());
-            }
-            Prop::Getter(getter) => {
-                getter.key.visit_with(self);
-                if let Some(body) = &getter.body {
-                    self.enter_scope();
-                    self.predeclare_stmts(&body.stmts);
-                    body.visit_with(self);
-                    self.exit_scope();
-                }
-            }
-            Prop::Setter(setter) => {
-                setter.key.visit_with(self);
-                self.enter_scope();
-                if let Some(param) = &setter.this_param {
-                    self.declare_pat(param);
-                }
-                self.declare_pat(&setter.param);
-                if let Some(body) = &setter.body {
-                    self.predeclare_stmts(&body.stmts);
-                    body.visit_with(self);
-                }
-                self.exit_scope();
-            }
-            _ => prop.visit_children_with(self),
-        }
-    }
-
-    fn visit_function(&mut self, func: &Function) {
-        self.enter_scope();
-        for param in &func.params {
-            self.declare_pat(&param.pat);
-        }
-        if let Some(body) = &func.body {
-            self.predeclare_stmts(&body.stmts);
-            body.visit_with(self);
-        }
-        self.exit_scope();
-    }
-
-    fn visit_arrow_expr(&mut self, arrow: &ArrowExpr) {
-        self.enter_scope();
-        for param in &arrow.params {
-            self.declare_pat(param);
-        }
-        arrow.body.visit_with(self);
-        self.exit_scope();
-    }
-
-    fn visit_block_stmt(&mut self, block: &BlockStmt) {
-        self.enter_scope();
-        self.predeclare_stmts(&block.stmts);
-        block.visit_children_with(self);
-        self.exit_scope();
-    }
-
-    fn visit_catch_clause(&mut self, clause: &CatchClause) {
-        self.enter_scope();
-        if let Some(param) = &clause.param {
-            self.declare_pat(param);
-        }
-        clause.body.visit_with(self);
-        self.exit_scope();
     }
 }
 
-impl OriginalRefNameCollector {
-    fn enter_scope(&mut self) {
-        self.scopes.push(HashSet::new());
+pub(crate) struct ClearAnalysisContexts;
+impl Visit for ClearAnalysisContexts {
+    fn visit_syntax_context(&mut self, context: &SyntaxContext) {
+        assert_eq!(
+            *context,
+            SyntaxContext::empty(),
+            "resolved input requires with_resolved_bindings"
+        );
     }
-
-    fn exit_scope(&mut self) {
-        self.scopes.pop();
-    }
-
-    fn declare(&mut self, name: &str) {
-        if let Some(scope) = self.scopes.last_mut() {
-            scope.insert(name.to_string());
-        }
-    }
-
-    fn is_declared(&self, name: &str) -> bool {
-        self.scopes.iter().rev().any(|scope| scope.contains(name))
-    }
-
-    fn add_ref(&mut self, name: &str) {
-        if !self.is_declared(name) {
-            self.names.insert(name.to_string());
-        }
-    }
-
-    fn declare_pat(&mut self, pat: &Pat) {
-        for (sym, _) in extract_idents_from_pat(pat) {
-            self.declare(sym.as_ref());
-        }
-    }
-
-    fn predeclare_module_items(&mut self, items: &[ModuleItem]) {
-        for item in items {
-            match item {
-                ModuleItem::Stmt(stmt) => self.predeclare_stmt(stmt),
-                ModuleItem::ModuleDecl(ModuleDecl::Import(import)) => {
-                    for spec in &import.specifiers {
-                        match spec {
-                            ImportSpecifier::Named(named) => self.declare(named.local.sym.as_ref()),
-                            ImportSpecifier::Default(default) => {
-                                self.declare(default.local.sym.as_ref())
-                            }
-                            ImportSpecifier::Namespace(ns) => self.declare(ns.local.sym.as_ref()),
-                        }
-                    }
-                }
-                ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(export)) => {
-                    self.predeclare_decl(&export.decl);
-                }
-                ModuleItem::ModuleDecl(ModuleDecl::ExportDefaultDecl(export)) => match &export.decl
-                {
-                    DefaultDecl::Class(class) => {
-                        if let Some(ident) = &class.ident {
-                            self.declare(ident.sym.as_ref());
-                        }
-                    }
-                    DefaultDecl::Fn(func) => {
-                        if let Some(ident) = &func.ident {
-                            self.declare(ident.sym.as_ref());
-                        }
-                    }
-                    _ => {}
-                },
-                _ => {}
-            }
-        }
-    }
-
-    fn predeclare_stmts(&mut self, stmts: &[Stmt]) {
-        for stmt in stmts {
-            self.predeclare_stmt(stmt);
-        }
-    }
-
-    fn predeclare_stmt(&mut self, stmt: &Stmt) {
-        match stmt {
-            Stmt::Decl(decl) => self.predeclare_decl(decl),
-            _ => {}
-        }
-    }
-
-    fn predeclare_decl(&mut self, decl: &Decl) {
-        match decl {
-            Decl::Class(class) => self.declare(class.ident.sym.as_ref()),
-            Decl::Fn(func) => self.declare(func.ident.sym.as_ref()),
-            Decl::Var(var) => {
-                for declarator in &var.decls {
-                    self.declare_pat(&declarator.name);
-                }
-            }
-            _ => {}
-        }
+}
+impl VisitMut for ClearAnalysisContexts {
+    fn visit_mut_syntax_context(&mut self, context: &mut SyntaxContext) {
+        *context = SyntaxContext::empty();
     }
 }
 
@@ -345,19 +160,14 @@ impl ScopeCapturingTransform {
             capturable_vars: HashSet::new(),
             exported_vars: HashSet::new(),
             renamed_exports: HashMap::new(),
-            original_ref_names: HashSet::new(),
+            original_global_refs: HashSet::new(),
             loop_header_vars: HashSet::new(),
             imported_vars: HashSet::new(),
             import_sources: HashMap::new(),
             hoisted_function_captures: Vec::new(),
             collected_exports: Vec::new(),
             resolved_imports,
-            depth: 0,
-            fn_depth: 0,
-            scope_stack: vec![ScopeFrame {
-                names: HashSet::new(),
-                is_function_scope: true,
-            }],
+            host_unresolved_mark: None,
             current_var_decl_stack: Vec::new(),
         }
     }
@@ -376,22 +186,6 @@ impl ScopeCapturingTransform {
 
     /// Check if an identifier should be captured
     fn should_ref_be_captured(&self, id: &Id) -> bool {
-        // Note: Babel captures inside ALL functions including nested ones.
-        // No fn_depth skip here.
-
-        // Never rewrite identifiers that are shadowed in a nested lexical scope.
-        // This keeps locals (params/vars/lets) untouched while still rewriting
-        // references to captured top-level bindings in nested functions/blocks.
-        if self
-            .scope_stack
-            .iter()
-            .skip(1)
-            .rev()
-            .any(|scope| scope.names.contains(id.0.as_ref()))
-        {
-            return false;
-        }
-
         // Keep references to other bindings in this declaration list local.
         // Self-references must read the existing recorder value on re-execution.
         // Example:
@@ -429,7 +223,7 @@ impl ScopeCapturingTransform {
             return false;
         }
 
-        if self.loop_header_vars.contains(id.0.as_ref()) {
+        if self.loop_header_vars.contains(id) {
             return false;
         }
 
@@ -447,7 +241,7 @@ impl ScopeCapturingTransform {
         // Capture top-level declarations and free/global references that were
         // present in the original module. Do not capture identifiers that only
         // appear after this pass generates recorder/System wrapper code.
-        self.capturable_vars.contains(id) || self.original_ref_names.contains(id.0.as_ref())
+        self.capturable_vars.contains(id) || self.original_global_refs.contains(id)
     }
 
     /// Create a member expression to the capture object: __varRecorder__.name
@@ -1107,91 +901,9 @@ impl ScopeCapturingTransform {
         }
     }
 
-    /// Enter a new scope
-    fn enter_scope(&mut self, is_function_scope: bool) {
-        self.depth += 1;
-        self.scope_stack.push(ScopeFrame {
-            names: HashSet::new(),
-            is_function_scope,
-        });
-    }
-
-    /// Pre-scan a block of statements for `var` declarations and add them
-    /// to the current (function) scope. This simulates JS var hoisting —
-    /// `var` names are visible from the start of the function, not just
-    /// from the declaration position. Without this, `should_capture` might
-    /// incorrectly capture a reference that appears before the `var` decl.
-    fn prescan_var_decls_in_block(&mut self, stmts: &[Stmt]) {
-        use swc_ecma_visit::Visit;
-        struct VarCollector {
-            /// Function-local var bindings, including declarations in nested blocks.
-            var_names: Vec<String>,
-            /// Names from `function x() {}` declarations
-            fn_decl_names: Vec<String>,
-        }
-        impl Visit for VarCollector {
-            fn visit_var_decl(&mut self, decl: &VarDecl) {
-                if matches!(decl.kind, VarDeclKind::Var) {
-                    for d in &decl.decls {
-                        for (sym, _) in extract_idents_from_pat(&d.name) {
-                            self.var_names.push(sym.to_string());
-                        }
-                    }
-                }
-            }
-            fn visit_fn_decl(&mut self, decl: &FnDecl) {
-                self.fn_decl_names.push(decl.ident.sym.to_string());
-            }
-            // Don't descend into nested functions — their vars are separate
-            fn visit_function(&mut self, _: &Function) {}
-            fn visit_arrow_expr(&mut self, _: &ArrowExpr) {}
-        }
-        let mut collector = VarCollector {
-            var_names: vec![],
-            fn_decl_names: vec![],
-        };
-        for stmt in stmts {
-            stmt.visit_children_with(&mut collector);
-        }
-        // Function declarations inside nested functions ALWAYS shadow,
-        // even if the name exists at module level (capturable_vars).
-        // e.g. crypto.js: `function x() {}` inside dew() is a genuinely
-        // different binding from module-level `var x`.
-        for name in &collector.fn_decl_names {
-            self.declare_in_nearest_function_scope(name);
-        }
-        // All var declarations are hoisted, including bare and literal initializers.
-        for name in &collector.var_names {
-            self.declare_in_nearest_function_scope(name);
-        }
-    }
-
-    fn declare_in_current_scope(&mut self, name: &str) {
-        if let Some(scope) = self.scope_stack.last_mut() {
-            scope.names.insert(name.to_string());
-        }
-    }
-
-    fn declare_in_nearest_function_scope(&mut self, name: &str) {
-        if let Some(scope) = self
-            .scope_stack
-            .iter_mut()
-            .rev()
-            .find(|scope| scope.is_function_scope)
-        {
-            scope.names.insert(name.to_string());
-        }
-    }
-
-    fn declare_pattern_in_current_scope(&mut self, pat: &Pat) {
-        for (sym, _) in extract_idents_from_pat(pat) {
-            self.declare_in_current_scope(sym.as_ref());
-        }
-    }
-
     fn collect_loop_header_vars(&mut self, module: &Module) {
         struct Collector {
-            names: HashSet<String>,
+            names: HashSet<Id>,
             fn_depth: usize,
         }
 
@@ -1212,8 +924,8 @@ impl ScopeCapturingTransform {
                 if self.fn_depth == 0 {
                     if let Some(VarDeclOrExpr::VarDecl(var_decl)) = &stmt.init {
                         for decl in &var_decl.decls {
-                            for (sym, _) in extract_idents_from_pat(&decl.name) {
-                                self.names.insert(sym.to_string());
+                            for id in extract_idents_from_pat(&decl.name) {
+                                self.names.insert(id);
                             }
                         }
                     }
@@ -1226,14 +938,14 @@ impl ScopeCapturingTransform {
                     match &stmt.left {
                         ForHead::VarDecl(var_decl) => {
                             for decl in &var_decl.decls {
-                                for (sym, _) in extract_idents_from_pat(&decl.name) {
-                                    self.names.insert(sym.to_string());
+                                for id in extract_idents_from_pat(&decl.name) {
+                                    self.names.insert(id);
                                 }
                             }
                         }
                         ForHead::Pat(pat) => {
-                            for (sym, _) in extract_idents_from_pat(pat) {
-                                self.names.insert(sym.to_string());
+                            for id in extract_idents_from_pat(pat) {
+                                self.names.insert(id);
                             }
                         }
                         _ => {}
@@ -1247,14 +959,14 @@ impl ScopeCapturingTransform {
                     match &stmt.left {
                         ForHead::VarDecl(var_decl) => {
                             for decl in &var_decl.decls {
-                                for (sym, _) in extract_idents_from_pat(&decl.name) {
-                                    self.names.insert(sym.to_string());
+                                for id in extract_idents_from_pat(&decl.name) {
+                                    self.names.insert(id);
                                 }
                             }
                         }
                         ForHead::Pat(pat) => {
-                            for (sym, _) in extract_idents_from_pat(pat) {
-                                self.names.insert(sym.to_string());
+                            for id in extract_idents_from_pat(pat) {
+                                self.names.insert(id);
                             }
                         }
                         _ => {}
@@ -1752,12 +1464,6 @@ impl ScopeCapturingTransform {
         }
     }
 
-    /// Exit a scope
-    fn exit_scope(&mut self) {
-        self.depth -= 1;
-        self.scope_stack.pop();
-    }
-
     /// Transform a module item at module level, allowing expansion into multiple items
     fn transform_module_item(&self, item: ModuleItem) -> Vec<ModuleItem> {
         match item {
@@ -2090,11 +1796,7 @@ impl ScopeCapturingTransform {
                         span: DUMMY_SP,
                         expr: Box::new(create_assign_expr(
                             expr_to_assign_target(self.create_captured_member(&name)),
-                            Expr::Ident(Ident::new(
-                                name.as_str().into(),
-                                DUMMY_SP,
-                                SyntaxContext::empty(),
-                            )),
+                            Expr::Ident(id.clone()),
                         )),
                     }));
                     // __rec.default = name (Babel always captures default)
@@ -2102,21 +1804,13 @@ impl ScopeCapturingTransform {
                         span: DUMMY_SP,
                         expr: Box::new(create_assign_expr(
                             expr_to_assign_target(self.create_captured_member("default")),
-                            Expr::Ident(Ident::new(
-                                name.as_str().into(),
-                                DUMMY_SP,
-                                SyntaxContext::empty(),
-                            )),
+                            Expr::Ident(id.clone()),
                         )),
                     }));
                     let export_stmt =
                         ModuleItem::ModuleDecl(ModuleDecl::ExportDefaultExpr(ExportDefaultExpr {
                             span: DUMMY_SP,
-                            expr: Box::new(Expr::Ident(Ident::new(
-                                name.as_str().into(),
-                                DUMMY_SP,
-                                SyntaxContext::empty(),
-                            ))),
+                            expr: Box::new(Expr::Ident(id.clone())),
                         }));
                     vec![decl_item, capture_name, capture_default, export_stmt]
                 } else {
@@ -2288,18 +1982,24 @@ impl ScopeCapturingTransform {
 
         module.body = new_body;
     }
-}
+    /// Preserve binding identities supplied by a resolving compiler host.
+    pub fn with_resolved_bindings(mut self, unresolved_mark: Mark) -> Self {
+        self.host_unresolved_mark = Some(unresolved_mark);
+        self
+    }
 
-impl VisitMut for ScopeCapturingTransform {
-    fn visit_mut_module(&mut self, module: &mut Module) {
+    fn transform_module(&mut self, module: &mut Module, unresolved_mark: Mark) {
         // First pass: analyze scope to determine capturable variables
         let mut analyzer = ScopeAnalyzer::new();
         use swc_ecma_visit::VisitWith;
         module.visit_with(&mut analyzer);
 
-        let mut original_refs = OriginalRefNameCollector::default();
-        module.visit_with(&mut original_refs);
-        self.original_ref_names = original_refs.names;
+        let mut globals = GlobalRefCollector {
+            unresolved: SyntaxContext::empty().apply_mark(unresolved_mark),
+            refs: HashSet::new(),
+        };
+        module.visit_with(&mut globals);
+        self.original_global_refs = globals.refs;
 
         self.imported_vars.clear();
         self.import_sources.clear();
@@ -2384,7 +2084,6 @@ impl VisitMut for ScopeCapturingTransform {
         }
 
         // Second pass: transform the module
-        self.depth = 0;
         self.hoisted_function_captures.clear();
         for item in &module.body {
             self.collect_hoisted_function_capture(item);
@@ -2469,6 +2168,30 @@ impl VisitMut for ScopeCapturingTransform {
                 + 1; // +1 to go after the recorder init
             let insert_pos = insert_pos.min(module.body.len());
             module.body.insert(insert_pos, module_exports_stmt);
+        }
+    }
+}
+
+impl VisitMut for ScopeCapturingTransform {
+    fn visit_mut_module(&mut self, module: &mut Module) {
+        if let Some(unresolved_mark) = self.host_unresolved_mark {
+            self.transform_module(module, unresolved_mark);
+            return;
+        }
+        // Parser entrypoints have a clean AST. Use SWC for analysis, then leave
+        // output contexts clean for the host's final resolver after code generation.
+        // Never clear or re-resolve the plugin host's existing binding identities.
+        module.visit_with(&mut ClearAnalysisContexts);
+        let mut analyze = || {
+            let unresolved = Mark::new();
+            module.visit_mut_with(&mut resolver(unresolved, Mark::new(), false));
+            self.transform_module(module, unresolved);
+            module.visit_mut_with(&mut ClearAnalysisContexts);
+        };
+        if GLOBALS.is_set() {
+            analyze();
+        } else {
+            GLOBALS.set(&Globals::default(), analyze);
         }
     }
 
@@ -2619,161 +2342,10 @@ impl VisitMut for ScopeCapturingTransform {
                     return;
                 }
             }
-            Prop::Getter(getter) => {
-                getter.key.visit_mut_with(self);
-                self.fn_depth += 1;
-                self.enter_scope(true);
-                if let Some(body) = &getter.body {
-                    self.prescan_var_decls_in_block(&body.stmts);
-                }
-                if let Some(body) = &mut getter.body {
-                    body.visit_mut_with(self);
-                }
-                self.exit_scope();
-                self.fn_depth -= 1;
-                return;
-            }
-            Prop::Setter(setter) => {
-                setter.key.visit_mut_with(self);
-                self.fn_depth += 1;
-                self.enter_scope(true);
-                if let Some(this_param) = &setter.this_param {
-                    self.declare_pattern_in_current_scope(this_param);
-                }
-                self.declare_pattern_in_current_scope(&setter.param);
-                if let Some(body) = &setter.body {
-                    self.prescan_var_decls_in_block(&body.stmts);
-                }
-                if let Some(body) = &mut setter.body {
-                    body.visit_mut_with(self);
-                }
-                self.exit_scope();
-                self.fn_depth -= 1;
-                return;
-            }
             _ => {}
         }
 
         prop.visit_mut_children_with(self);
-    }
-
-    // Scope tracking for constructors (separate AST node from Function)
-    fn visit_mut_constructor(&mut self, cons: &mut Constructor) {
-        self.enter_scope(true);
-        for param in &cons.params {
-            match param {
-                ParamOrTsParamProp::Param(p) => self.declare_pattern_in_current_scope(&p.pat),
-                ParamOrTsParamProp::TsParamProp(tp) => match &tp.param {
-                    TsParamPropParam::Ident(id) => {
-                        self.declare_in_current_scope(id.id.sym.as_ref())
-                    }
-                    TsParamPropParam::Assign(assign) => {
-                        self.declare_pattern_in_current_scope(&assign.left)
-                    }
-                },
-            }
-        }
-        if let Some(body) = &cons.body {
-            self.prescan_var_decls_in_block(&body.stmts);
-        }
-        cons.visit_mut_children_with(self);
-        self.exit_scope();
-    }
-
-    // Scope tracking for nested functions/blocks
-    fn visit_mut_function(&mut self, func: &mut Function) {
-        self.fn_depth += 1;
-        self.enter_scope(true);
-        for param in &func.params {
-            self.declare_pattern_in_current_scope(&param.pat);
-        }
-        // Pre-scan: hoist all `var` declarations in the function body
-        // to the function scope BEFORE transforming. This ensures
-        // `should_capture` sees var-hoisted names even when the var
-        // declaration appears later in the source (JS var hoisting).
-        if let Some(body) = &func.body {
-            self.prescan_var_decls_in_block(&body.stmts);
-        }
-        func.visit_mut_children_with(self);
-        self.exit_scope();
-        self.fn_depth -= 1;
-    }
-
-    fn visit_mut_arrow_expr(&mut self, arrow: &mut ArrowExpr) {
-        self.fn_depth += 1;
-        self.enter_scope(true);
-        for param in &arrow.params {
-            self.declare_pattern_in_current_scope(param);
-        }
-        if let BlockStmtOrExpr::BlockStmt(body) = &*arrow.body {
-            self.prescan_var_decls_in_block(&body.stmts);
-        }
-        arrow.visit_mut_children_with(self);
-        self.exit_scope();
-        self.fn_depth -= 1;
-    }
-
-    fn visit_mut_for_stmt(&mut self, stmt: &mut ForStmt) {
-        self.enter_scope(false);
-        if let Some(VarDeclOrExpr::VarDecl(var_decl)) = &stmt.init {
-            for decl in &var_decl.decls {
-                self.declare_pattern_in_current_scope(&decl.name);
-            }
-        }
-        stmt.visit_mut_children_with(self);
-        self.exit_scope();
-    }
-
-    fn visit_mut_for_in_stmt(&mut self, stmt: &mut ForInStmt) {
-        self.enter_scope(false);
-        match &stmt.left {
-            ForHead::VarDecl(var_decl) => {
-                for decl in &var_decl.decls {
-                    self.declare_pattern_in_current_scope(&decl.name);
-                }
-            }
-            ForHead::Pat(pat) => self.declare_pattern_in_current_scope(pat),
-            _ => {}
-        }
-        stmt.visit_mut_children_with(self);
-        self.exit_scope();
-    }
-
-    fn visit_mut_for_of_stmt(&mut self, stmt: &mut ForOfStmt) {
-        self.enter_scope(false);
-        match &stmt.left {
-            ForHead::VarDecl(var_decl) => {
-                for decl in &var_decl.decls {
-                    self.declare_pattern_in_current_scope(&decl.name);
-                }
-            }
-            ForHead::Pat(pat) => self.declare_pattern_in_current_scope(pat),
-            _ => {}
-        }
-        stmt.visit_mut_children_with(self);
-        self.exit_scope();
-    }
-
-    fn visit_mut_block_stmt(&mut self, block: &mut BlockStmt) {
-        self.enter_scope(false);
-        for stmt in &block.stmts {
-            match stmt {
-                Stmt::Decl(Decl::Var(decl)) if decl.kind != VarDeclKind::Var => {
-                    for declarator in &decl.decls {
-                        self.declare_pattern_in_current_scope(&declarator.name);
-                    }
-                }
-                Stmt::Decl(Decl::Class(decl)) => {
-                    self.declare_in_current_scope(decl.ident.sym.as_ref())
-                }
-                Stmt::Decl(Decl::Fn(decl)) => {
-                    self.declare_in_current_scope(decl.ident.sym.as_ref())
-                }
-                _ => {}
-            }
-        }
-        block.visit_mut_children_with(self);
-        self.exit_scope();
     }
 
     fn visit_mut_var_decl(&mut self, var_decl: &mut VarDecl) {
@@ -2781,17 +2353,6 @@ impl VisitMut for ScopeCapturingTransform {
         for decl in &var_decl.decls {
             for (sym, _) in extract_idents_from_pat(&decl.name) {
                 current_names.insert(sym.to_string());
-            }
-        }
-        if self.depth > 0 {
-            for decl in &var_decl.decls {
-                if matches!(var_decl.kind, VarDeclKind::Var) {
-                    for (sym, _) in extract_idents_from_pat(&decl.name) {
-                        self.declare_in_nearest_function_scope(sym.as_ref());
-                    }
-                } else {
-                    self.declare_pattern_in_current_scope(&decl.name);
-                }
             }
         }
         for decl in &mut var_decl.decls {
@@ -2803,44 +2364,6 @@ impl VisitMut for ScopeCapturingTransform {
             decl.visit_mut_children_with(self);
             self.current_var_decl_stack.pop();
         }
-    }
-
-    fn visit_mut_fn_expr(&mut self, fn_expr: &mut FnExpr) {
-        if let Some(ident) = &fn_expr.ident {
-            // Named fn expressions: the name is visible inside the function
-            // but declared in a scope between the outer and inner scopes.
-            self.enter_scope(false);
-            self.declare_in_current_scope(ident.sym.as_ref());
-        }
-        // visit_mut_function handles entering the function scope + params
-        fn_expr.visit_mut_children_with(self);
-        if fn_expr.ident.is_some() {
-            self.exit_scope();
-        }
-    }
-
-    fn visit_mut_fn_decl(&mut self, fn_decl: &mut FnDecl) {
-        if self.depth > 0 {
-            self.declare_in_current_scope(fn_decl.ident.sym.as_ref());
-        }
-        // visit_mut_function handles entering the function scope + params
-        fn_decl.visit_mut_children_with(self);
-    }
-
-    fn visit_mut_class_decl(&mut self, class_decl: &mut ClassDecl) {
-        if self.depth > 0 {
-            self.declare_in_current_scope(class_decl.ident.sym.as_ref());
-        }
-        class_decl.visit_mut_children_with(self);
-    }
-
-    fn visit_mut_catch_clause(&mut self, catch: &mut CatchClause) {
-        self.enter_scope(false);
-        if let Some(param) = &catch.param {
-            self.declare_pattern_in_current_scope(param);
-        }
-        catch.visit_mut_children_with(self);
-        self.exit_scope();
     }
 }
 
