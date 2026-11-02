@@ -15,13 +15,18 @@ function failureOf (fn) {
 describe('morphic source-unit reactions', function () {
   this.timeout(10000);
   let manager, undo;
+  let previousWorld;
   beforeEach(async () => {
+    previousWorld = globalThis.$world;
     const env = MorphicEnv.pushDefault(new MorphicEnv(await defaultDOMEnv()));
     await env.setWorld(new World({ extent: pt(600, 400) }));
     manager = env.changeManager;
     undo = env.undoManager;
   });
-  afterEach(() => MorphicEnv.popDefault().uninstall());
+  afterEach(() => {
+    try { MorphicEnv.popDefault().uninstall(); }
+    finally { globalThis.$world = previousWorld; }
+  });
 
   for (const exit of ['commit', 'rollback', 'thenable']) {
     it(`retains no source-unit bookkeeping on the manager after ${exit}`, () => {
