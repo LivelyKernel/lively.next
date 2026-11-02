@@ -45,13 +45,53 @@ async function teardown () {
 }
 
 import { join } from 'path';
-import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync, rmdirSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync, rmdirSync, mkdtempSync, rmSync } from 'fs';
+import { tmpdir } from 'os';
+import { execFileSync } from 'child_process';
+import GitShellResource from '../git-client-resource.js';
 let shellProjDir = System.decanonicalize('lively.shell/').replace('file://', '');
 let testDir = join(shellProjDir, 'test-tmp-dir');
 
 describe('shell client resource', function () {
   before(() => setup());
   after(() => teardown());
+
+  describe('git commit messages', () => {
+    let directory, repository;
+    const git = (...args) => execFileSync('git', args, { cwd: directory, encoding: 'utf8' });
+
+    beforeEach(() => {
+      directory = mkdtempSync(join(tmpdir(), 'lively-commit-message-'));
+      git('init', '--quiet');
+      git('config', 'user.name', 'Lively Test');
+      git('config', 'user.email', 'test@example.invalid');
+      git('config', 'core.hooksPath', join(directory, 'no-hooks'));
+      writeFileSync(join(directory, 'fixture.txt'), 'test');
+      repository = Object.create(GitShellResource.prototype);
+      repository.options = { cwd: directory, l2lClient };
+    });
+
+    afterEach(() => rmSync(directory, { recursive: true, force: true }));
+
+    for (const message of [
+      'Keep "double", \'single\' and “curly” quotes',
+      'Keep $PATH, ${PATH}, $(touch expanded), `touch expanded` and \\slashes',
+      '  Keep leading spaces\n\nKeep a multiline body  \n'
+    ]) {
+      it('preserves literal message: ' + JSON.stringify(message), async () => {
+        await repository.commitRepo(message);
+        const commit = git('cat-file', 'commit', 'HEAD');
+        const body = commit.slice(commit.indexOf('\n\n') + 2);
+        expect(body).equals(message.endsWith('\n') ? message : message + '\n');
+        expect(existsSync(join(directory, 'expanded'))).equals(false);
+      });
+    }
+
+    it('tags the commit after passing its message through stdin', async () => {
+      await repository.commitRepo('Keep "release" literal', true, '1.2.3');
+      expect(git('rev-parse', 'v1.2.3').trim()).equals(git('rev-parse', 'HEAD').trim());
+    });
+  });
 
   describe('with test dir', () => {
     beforeEach(() => {
