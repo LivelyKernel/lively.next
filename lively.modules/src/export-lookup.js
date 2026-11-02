@@ -170,8 +170,7 @@ export default class ExportLookup {
         else if (mod._frozenModule) {
           result.exports = this.getExportSpec(mod.id);
         } else result.exports = await mod.exports();
-      } else {
-        await mod.load();
+      } else if (mod.isLoaded()) {
         let moduleRecord = mod._recorder;
         result.exports = [];
         for (let key of mod._frozenModule ? moduleRecord.__module_exports__ : obj.keys(moduleRecord)) {

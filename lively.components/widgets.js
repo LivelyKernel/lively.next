@@ -4,7 +4,7 @@ import { signal, connect, disconnect } from 'lively.bindings';
 import {
   Morph,
   ShadowObject,
-  HorizontalLayout,
+  TilingLayout,
   Path,
   Ellipse,
   Label,
@@ -351,7 +351,7 @@ export class DropDownSelector extends Morph {
       },
       layout: {
         initialize () {
-          this.layout = new HorizontalLayout({ spacing: this.padding });
+          this.layout = new TilingLayout({ axis: 'row', spacing: this.padding });
         }
       },
       submorphs: {
