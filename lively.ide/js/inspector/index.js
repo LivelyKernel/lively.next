@@ -11,7 +11,7 @@ import { InteractiveMorphSelector, MorphHighlighter } from 'lively.halos';
 import { ensureDefaultImports, generateReferenceExpression } from './helpers.js';
 import { InstructionWidget, DraggedProp } from './ui.cp.js';
 import { ColorPicker } from '../../styling/color-picker.cp.js';
-import { ShadowPopupLight, PositionPopupLight, PaddingPopup, parameterizedNumberPopupLight } from '../../studio/controls/popups.cp.js';
+import { ShadowPopupLight, PositionPopupLight, PaddingPopup, parameterizedNumberPopupLight, LayoutPopup } from '../../studio/controls/popups.cp.js';
 
 ensureDefaultImports();
 
@@ -128,6 +128,15 @@ export class PropertyControl extends DraggableTreeLabel {
 
   static render (args) {
     let propertyControl;
+
+    if (args.spec.foldable && isMultiValue(args.value, args.spec.foldable)) {
+      return [
+        ...this.renderGrabbableKey(args),
+        ' ...', {
+          onMouseDown: () => args.tree.uncollapse(args.node)
+        }
+      ];
+    }
 
     if (!args.spec.type) {
       args.spec = {
@@ -256,7 +265,7 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   static renderGrabbableKey (args, isDraggable = true) {
-    const { keyString, target, value } = args;
+    const { keyString, target, value, node } = args;
     isDraggable = target.isMorph && isDraggable;
     const dragHandlers = {
       onDragStart: (evt) => {
@@ -284,7 +293,7 @@ export class PropertyControl extends DraggableTreeLabel {
           ...isDraggable ? dragHandlers : {}
         })
         : ['  ', null],
-      `${keyString}:`, {
+      `${node?.keyString || keyString}:`, {
         'vertical-align': 'top',
         ...isDraggable ? dragHandlers : {}
       }
@@ -376,7 +385,7 @@ export class PropertyControl extends DraggableTreeLabel {
       const editor = part(parameterizedNumberPopupLight({
         title: keyString,
         tooltip: keyString,
-        value: target[keyString],
+        value: target[keyString]?.valueOf(),
         min: widgetState.min,
         max: widgetState.max,
         baseFactor: widgetState.baseFactor,
@@ -443,14 +452,15 @@ export class PropertyControl extends DraggableTreeLabel {
   }
 
   static renderLayoutControl (args) {
-    const { valueString, value } = args;
+    const { valueString, value, target, node, tree } = args;
     return [
       ...this.renderGrabbableKey(args),
       ` ${value ? valueString : 'No Layout'}`, {
-        onMouseDown: () => {
-          // TODO: add layout popup?! Similar to the on in the popup
-          // In case of no layout or constraint layout present, no popup available
-          // However in case of the tiling layout we could provide controls
+        onMouseDown: async (evt) => {
+          const editor = part(LayoutPopup, { viewModel: { targetMorph: target } });
+          connect(editor.get('layout control'), 'layout changed', node, 'rerender');
+          await editor.fadeIntoWorld(evt.positionIn(target.world()));
+          tree.owner.openWidget = editor;
         }
       }];
   }
@@ -580,6 +590,8 @@ export class Inspector extends ViewModel {
         defaultValue: false, serialize: false
       },
 
+      editorModeInitialized: { serialize: false },
+
       expose: {
         get () {
           return ['isInspector', 'onWindowClose', 'commands', 'keybindings', 'openWidget', 'targetObject', 'relayout'];
@@ -651,7 +663,7 @@ export class Inspector extends ViewModel {
       label: ['this ', null, ...rightArrow, ' selection', null]
     }];
 
-    codeEditor.changeEditorMode('js').then(() =>
+    this.editorModeInitialized = codeEditor.changeEditorMode('js').then(() =>
       codeEditor.evalEnvironment = {
         targetModule: 'lively://lively.morphic/inspector',
         get context () {
@@ -777,6 +789,7 @@ export class Inspector extends ViewModel {
   }
 
   async toggleWindowStyle (animated = true) {
+    await this.editorModeInitialized;
     const duration = 300; let theme; let styleClasses;
     const { codeEditor } = this.ui;
     const editorPlugin = codeEditor.pluginFind(p => p.runEval);
