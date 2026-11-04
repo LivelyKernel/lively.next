@@ -1,14 +1,17 @@
-export function projectAsset (fileName) {
+/** Pass import.meta.url as the second argument for a stable caller URL. */
+export function projectAsset (fileName, module) {
   // The bundler takes care of moving all assets for us.
-  if (lively.FreezerRuntime) {
+  if (globalThis.lively?.FreezerRuntime) {
     return './assets/' + fileName;
   }
 
-  // Uses Error() to generate the stacktrace from this function being called.
-  // Afterwards, we find out from within which project we were called.
-  // This is the project of which we need to construct the asset path!
-  const callStack = (new Error()).stack;
-  const callingProject = callStack.match(new RegExp('\\(.*\\/local_projects\\/(?<callingProject>[a-zA-Z_\\-\\d]+)\\/.*\\.js')).groups.callingProject;
+  // Older component source calls this without metadata; stack URLs work across
+  // Chromium and Firefox without depending on their frame formatting.
+  const moduleId = (typeof module === 'string' ? module : module?.id || module?.url) || new Error().stack;
+  const callingProject = moduleId?.match(/\/local_projects\/([^/]+)\//)?.[1];
+  if (!callingProject) {
+    throw new Error('projectAsset requires a module URL inside local_projects; pass import.meta.url as its second argument.');
+  }
 
   return '/local_projects/' + callingProject + '/assets/' + fileName;
 }
