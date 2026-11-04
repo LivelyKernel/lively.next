@@ -102,17 +102,17 @@ export default class FreezerPromptModel extends AbstractPromptModel {
       bindings: {
         get () {
           return [{
-            signal: 'onMouseDown', handler: 'onMouseDown'
+            target: 'add package button', signal: 'fire', handler: 'addExcludedPackage'
           }, {
-            model: 'add package button', signal: 'fire', handler: 'addExcludedPackage'
+            target: 'remove package button', signal: 'fire', handler: 'removeExcludedPackage'
           }, {
-            model: 'remove package button', signal: 'fire', handler: 'removeExcludedPackage'
+            target: 'confirm excluded package', signal: 'fire', handler: 'confirmExcludedPackage'
           }, {
-            model: 'confirm excluded package', signal: 'fire', handler: 'confirmExcludedPackage'
+            target: 'package list', signal: 'selection', handler: 'updateRemovePackageButton'
           }, {
-            model: 'cancel button', signal: 'fire', handler: 'cancel'
+            target: 'cancel button', signal: 'fire', handler: 'cancel'
           }, {
-            model: 'ok button', signal: 'fire', handler: 'resolve'
+            target: 'ok button', signal: 'fire', handler: 'resolve'
           }];
         }
       }
@@ -125,12 +125,11 @@ export default class FreezerPromptModel extends AbstractPromptModel {
   }
 
   focus () {
-    this.ui.compilerSelector.selection = 'Google Closure';
     this.ui.dirInput.focus();
   }
 
   resolve () {
-    const { dirInput, packageList, compilerSelector } = this.ui;
+    const { compilerSelector } = this.ui;
     return super.resolve({
       location: this.directory,
       minify: compilerSelector.selection !== 'None',
@@ -180,11 +179,12 @@ export default class FreezerPromptModel extends AbstractPromptModel {
   removeExcludedPackage () {
     const { packageList } = this.ui;
     packageList.removeItem(packageList.selectedItems[0]);
+    this.updateRemovePackageButton();
   }
 
-  async confirmExcludedPackage () {
+  confirmExcludedPackage () {
     this.ui.packageList.addItem(this.ui.packageInput.input);
-    await this.displayPackageInput(false);
+    this.displayPackageInput(false);
     this.ui.packageInput.input = '';
   }
 
@@ -195,37 +195,18 @@ export default class FreezerPromptModel extends AbstractPromptModel {
       .find(pkg => pkg.name == pkgName);
   }
 
-  onMouseUp (evt) {
-    const {
-      packageInput,
-      addPackageButton,
-      removePackageButton,
-      confirmPackageButton,
-      packageList
-    } = this.ui;
-
-    this.ui.removePackageButton.deactivated = !this.ui.packageList.selections.length;
+  updateRemovePackageButton () {
+    const { packageList, removePackageButton } = this.ui;
+    if (packageList.selectedItems[0]) removePackageButton.enable();
+    else removePackageButton.disable();
   }
 
-  async displayPackageInput (show) {
-    const { packageInput, packageList, confirmPackageButton } = this.ui;
-    const duration = 200;
-
-    if (show) {
-      packageInput.animate({
-        visible: true, top: packageList.bottom + 10, duration
-      });
-      await confirmPackageButton.animate({
-        visible: true, top: packageList.bottom + 15, duration
-      });
-    } else {
-      confirmPackageButton.animate({
-        visible: false, bottom: packageList.bottom - 5, duration
-      });
-      await packageInput.animate({
-        visible: false, bottom: packageList.bottom, duration
-      });
-    }
+  displayPackageInput (show) {
+    const { packageInput, packageList, confirmExcludedPackage } = this.ui;
+    packageInput.top = packageList.bottom + 10;
+    confirmExcludedPackage.top = packageList.bottom + 15;
+    packageInput.visible = confirmExcludedPackage.visible = show;
+    if (show) packageInput.focus();
   }
 }
 
@@ -317,13 +298,13 @@ const FreezerPrompt = component(LightPrompt, {
         extent: pt(127.3, 25.9),
         position: pt(104.4, 0),
         viewModel: {
-          selection: 'Google Closure',
-          items: ['Google Closure', 'Terser + Babel', 'None'],
+          selection: 'SWC',
+          items: ['SWC', 'Terser + Babel', 'None'],
           listAlign: 'selection',
           listMaster: SystemList,
           openListInWorld: true
         }
-      }), { textAlign: 'left' }, '   \n', { fontSize: 5 }, '\nSelect the compiler to be used to compress the resulting bundle. Generally speaking Google Closure will yield smaller bundles but may break some parts of your bundle due to aggressive optimization. Terser + Babel is less aggressive but may fail with very large bundles > 10MB.', null]
+      }), { textAlign: 'left' }, '   \n', { fontSize: 5 }, '\nSWC and Terser + Babel minify on the Lively server. SWC is the default; Terser + Babel also transpiles the bundle. Select None to keep the JavaScript unminified.', null]
   }), add({
     type: Label,
     name: 'excluded package label',
@@ -389,7 +370,7 @@ const FreezerPrompt = component(LightPrompt, {
       extent: pt(25, 21.9),
       viewModel: { label: Icon.textAttribute('check') },
       position: pt(0, 126.1),
-      tooltip: 'add a new method',
+      tooltip: 'Confirm excluded package',
       visible: false
     }), part(DefaultList, {
       name: 'package list',
@@ -405,15 +386,16 @@ const FreezerPrompt = component(LightPrompt, {
       name: 'add package button',
       extent: pt(25, 25),
       position: pt(383.1, 125.2),
-      tooltip: 'add a new method',
+      tooltip: 'Add excluded package',
       submorphs: [
         { name: 'label', value: Icon.textAttribute('plus') }
       ]
     }), part(DarkButton, {
       name: 'remove package button',
+      viewModel: { deactivated: true },
       extent: pt(25, 25),
       position: pt(414, 125),
-      tooltip: 'remove a method or class',
+      tooltip: 'Remove selected excluded package',
       submorphs: [
         { name: 'label', value: Icon.textAttribute('minus') }
       ]

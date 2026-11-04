@@ -185,7 +185,10 @@ export async function setupSwcTranspiler (System) {
 
     if (
       shortName.includes('lively.source-transform/swc/') ||
-      shortName.includes('lively.source-transform/tests/')
+      shortName.includes('lively.source-transform/tests/') ||
+      // Rollup's minified bundle reuses names in nested scopes. SWC's scope
+      // capture currently rewrites some local assignments into module writes.
+      /^esm:\/\/[^/]+\/(?:npm:)?@rollup\/browser@/.test(load.name || '')
     ) {
       return babelTranslate.call(this, load, opts);
     }

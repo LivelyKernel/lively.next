@@ -107,12 +107,7 @@ function clearWorldSnapshot (snap) {
  */
 async function promptForFreezing (targetOrModule, requester, title = 'Freeze Part', excludedModules = false) {
   const freezerPrompt = part(FreezerPrompt, {
-    submorphs: [
-      {
-        name: 'prompt title',
-        textAndAttributes: [title, null]
-      }
-    ]
+    viewModel: { title }
   });
   const userName = currentUsername();
   const previouslyExcludedPackages = excludedModules || Path('metadata.excludedPackages').get(targetOrModule) || DEFAULT_EXCLUDED_MODULES;
@@ -195,7 +190,11 @@ export async function bundleModule (moduleId, {
   htmlConfig,
   useTerser
 }) {
-  const { default: jsonPlugin } = await System.import('@rollup/plugin-json');
+  const importer = new URL(import.meta.url, System.baseURL).href;
+  const [{ rollup }, { default: jsonPlugin }] = await Promise.all([
+    System.import('rollup', importer),
+    System.import('@rollup/plugin-json', importer)
+  ]);
   // fixme: maybe its better to make the plugin devoid of state...?
   const bundle = await rollup({
     input: moduleId,

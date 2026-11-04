@@ -1553,7 +1553,12 @@ export function setupBabelTranspiler (System) {
   }
 
   function translate (load, opts) {
-    const { code, map } = new BabelTranspiler(this, load.name, {}).transpileModule(load.source, { ...opts, module: load.metadata.module });
+    const { code, map } = new BabelTranspiler(this, load.name, {}).transpileModule(load.source, {
+      ...opts,
+      // CDN dependencies use native classes rather than Lively's class system.
+      ...(load.name?.startsWith('esm://') ? { transformES6Classes: false } : {}),
+      module: load.metadata.module
+    });
     load.metadata.sourceMap = map;
     return code;
   }

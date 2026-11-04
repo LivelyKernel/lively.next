@@ -3,6 +3,7 @@ import { expect } from 'mocha-es6';
 import { parse } from 'lively.ast';
 import { initWasm, isAvailable, swcTransform } from '../swc/browser-transform.js';
 import { setupSwcTranspiler } from '../swc/transpiler-setup.js';
+import { setupBabelTranspiler } from '../babel/plugin.js';
 
 const moduleId = 'lively.source-transform/tests/wasm-test-input.js';
 
@@ -41,6 +42,71 @@ function expectIncludes (code, expected) {
     `Expected transformed code to include:\n${expected}\n\nActual:\n${code}`
   );
 }
+
+describe('CDN transpiler compatibility', function () {
+  /** Execute a CDN dependency through the configured translator. */
+  async function checkCdnClasses (setup, id) {
+    const modules = new Map();
+    const recorder = {};
+    const exports = {};
+    let declaration;
+    const environment = {
+      moduleEnv: () => ({ id, recorder }),
+      evaluationStart () {},
+      evaluationEnd () {}
+    };
+    const testSystem = {
+      baseURL: System.baseURL,
+      _loader: {},
+      newModule: module => module,
+      set: (id, module) => modules.set(id, module),
+      get: id => id === '@lively-env' ? environment : id === '@system-env' ? { browser: true } : modules.get(id),
+      config (config) { Object.assign(this, config); },
+      register (dependencies, factory) {
+        declaration = factory((name, value) => {
+          if (typeof name === 'object') Object.assign(exports, name);
+          else exports[name] = value;
+          return value;
+        }, { id });
+      }
+    };
+    recorder.System = testSystem;
+    recorder.define = (name, kind, value) => value;
+    await setup(testSystem);
+    const source = `
+      export const Example = class Self { clone() { return new Self(); } };
+      const pattern = /^ok$/;
+      export function check() {
+        let pattern;
+        pattern = {};
+        return pattern;
+      }
+      export function test() { check(); return pattern.test('ok'); }
+    `;
+    const module = {
+      id, recorder, recorderName: '__lvVarRecorder', varDefinitionCallbackName: 'define', dontTransform: [],
+      embedOriginalCode: false, shortName: () => id, nextEvalId: () => 1
+    };
+    const code = await testSystem.translate({ name: id, source, metadata: { module } });
+    new Function('System', 'SystemJS', code)(testSystem, testSystem);
+    await declaration.execute();
+    expect(new exports.Example().clone()).instanceOf(exports.Example);
+    expect(recorder.Example).equals(exports.Example);
+    expect(exports.test()).equals(true);
+  }
+
+  it('preserves native CDN class names and recorder exports with Babel', async () => {
+    await checkCdnClasses(setupBabelTranspiler, 'esm://ga.jspm.io/npm:fixture@1.0.0/index.js');
+  });
+
+  it('uses Babel for Rollup browser CDN bundles with shadowed local assignments', async function () {
+    if (typeof document === 'undefined' || location.search.includes('babelOnly')) this.skip();
+    for (const id of [
+      'esm://ga.jspm.io/npm:@rollup/browser@4.27.3/dist/es/rollup.browser.js',
+      'esm://esm.sh/@rollup/browser@4.27.3/dist/es/rollup.browser.js'
+    ]) await checkCdnClasses(setupSwcTranspiler, id);
+  });
+});
 
 describe('wasm transform', function () {
   before(async function () {

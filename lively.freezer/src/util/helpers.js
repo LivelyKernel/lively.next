@@ -117,10 +117,10 @@ export async function evalOnServer (code) {
   return await remoteInterface.runEvalAndStringify(code, { classTransform: classes.classToFunctionTransform });
 }
 
-export async function compileOnServer (code, resolver) {
-  resolver.setStatus({ status: 'Transpiling and minifying source...' });
-  if (isNode) return runEval(`require('lively.freezer/src/minify.cjs')(${JSON.stringify(code)})`);
-  return evalOnServer(`System._nodeRequire(System._nodeRequire('node:url').fileURLToPath(new URL('lively.freezer/src/minify.cjs', System.baseURL)))(${JSON.stringify(code)})`);
+export async function compileOnServer (code, resolver, useTerser = true) {
+  resolver.setStatus({ status: useTerser ? 'Transpiling and minifying source...' : 'Minifying source with SWC...' });
+  if (isNode) return runEval(`require('lively.freezer/src/minify.cjs')(${JSON.stringify(code)}, ${JSON.stringify(useTerser)})`);
+  return evalOnServer(`System._nodeRequire(System._nodeRequire('node:url').fileURLToPath(new URL('lively.freezer/src/minify.cjs', System.baseURL)))(${JSON.stringify(code)}, ${JSON.stringify(useTerser)})`);
 }
 
 /**
