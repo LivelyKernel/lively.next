@@ -94,12 +94,19 @@ defineMode('markdown', function (cmCfg, modeCfg) {
   }
 
   function switchBlock (stream, state, f) {
+    state.listParagraph = false;
     state.f = state.block = f;
     return f(stream, state);
   }
 
   function lineIsEmpty (line) {
     return !line || !/\S/.test(line.string);
+  }
+
+  function startsBlock (stream) {
+    return stream.match(atxHeaderRE, false) || stream.match(hrRE, false) ||
+      stream.match(listRE, false) || stream.peek() === '>' ||
+      (modeCfg.fencedCodeBlocks && stream.match(fencedCodeRE, false));
   }
 
   // Blocks
@@ -127,6 +134,7 @@ defineMode('markdown', function (cmCfg, modeCfg) {
     // Mark this line as blank
     state.prevLine = state.thisLine;
     state.thisLine = null;
+    state.listParagraph = false;
     return null;
   }
 
@@ -144,11 +152,12 @@ defineMode('markdown', function (cmCfg, modeCfg) {
       lineIndentation = state.indentation;
       state.indentationDiff = state.indentation;
       if (prevLineIsList) {
+        const lazyContinuation = state.listParagraph && !lineIsEmpty(state.prevLine) && !startsBlock(stream);
         state.list = null;
         // While this list item's marker's indentation is less than the deepest
         //  list item's content's indentation,pop the deepest list item
         //  indentation off the stack, and update block indentation state
-        while (lineIndentation < state.listStack[state.listStack.length - 1]) {
+        while (!lazyContinuation && lineIndentation < state.listStack[state.listStack.length - 1]) {
           state.listStack.pop();
           if (state.listStack.length) {
             state.indentation = state.listStack[state.listStack.length - 1];
@@ -162,6 +171,7 @@ defineMode('markdown', function (cmCfg, modeCfg) {
         }
       }
     }
+    state.listParagraph = false;
 
     let match = null;
     if (state.indentationDiff >= 4 && (prevLineIsIndentedCode || lineIsEmpty(state.prevLine))) {
@@ -196,6 +206,7 @@ defineMode('markdown', function (cmCfg, modeCfg) {
 
       state.indentation = lineIndentation + stream.current().length;
       state.list = true;
+      state.listParagraph = /\S/.test(stream.string.slice(stream.pos)) && !startsBlock(stream);
 
       // Add this list item's content's indentation to the stack
       state.listStack.push(state.indentation);
@@ -217,6 +228,7 @@ defineMode('markdown', function (cmCfg, modeCfg) {
       return getType(state);
     }
 
+    state.listParagraph = state.list !== false;
     return switchInline(stream, state, state.inline);
   }
 
@@ -685,6 +697,7 @@ defineMode('markdown', function (cmCfg, modeCfg) {
         hr: false,
         taskList: false,
         list: false,
+        listParagraph: false,
         listStack: [],
         quote: 0,
         trailingSpace: 0,
@@ -721,6 +734,7 @@ defineMode('markdown', function (cmCfg, modeCfg) {
         hr: s.hr,
         taskList: s.taskList,
         list: s.list,
+        listParagraph: s.listParagraph,
         listStack: s.listStack.slice(0),
         quote: s.quote,
         indentedCode: s.indentedCode,

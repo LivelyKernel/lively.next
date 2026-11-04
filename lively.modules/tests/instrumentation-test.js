@@ -17,11 +17,16 @@ let testProjectSpec = {
   'file3.js': 'var zzz = 4; System.global.z = zzz / 2;',
   'file4.js': 'export default class Foo { static bar() {} }; Foo.bar();',
   'file5.js': "import Foo from './file4.js'; class Bar extends Foo {}",
+  'file6.mjs': 'export let answer = 42;',
+  'file7.mjs': 'export class NativeMap extends Map {}',
   'package.json': JSON.stringify({
     name: 'test-project-1',
     version: '1.2.3',
     main: 'file1.js',
-    systemjs: { meta: { 'file3.js': { format: 'global', exports: 'z' } } }
+    systemjs: { meta: {
+      'file3.js': { format: 'global', exports: 'z' },
+      'file7.mjs': { instrument: false }
+    } }
   })
 };
 
@@ -51,6 +56,24 @@ describe('instrumentation', () => {
   it('gets access to internal module state', async () => {
     expect(module1).to.have.nested.property('recorder.y', 1);
     expect(module1).to.have.nested.property('recorder.x', 3);
+  });
+
+  it('captures mjs bindings for evaluation and live source changes', async () => {
+    const id = testProjectDir + 'file6.mjs';
+    await S.import(id);
+    const m = module(S, id);
+    expect(m.recorder).to.have.property('answer', 42);
+    expect((await runEval('answer', { System: S, targetModule: id })).value).equals(42);
+    await m.changeSource('export let answer = 43;');
+    expect((await runEval('answer', { System: S, targetModule: id })).value).equals(43);
+    expect((await S.import(id)).answer).equals(43);
+    expect(await resource(id).read()).equals('export let answer = 43;');
+  });
+
+  it('preserves native mjs classes when their package disables instrumentation', async () => {
+    await registerPackage(S, testProjectDir);
+    const { NativeMap } = await S.import(testProjectDir + 'file7.mjs');
+    expect(new NativeMap([['answer', 42]]).get('answer')).equals(42);
   });
 
   it('modules can (re)define captures', async () => {

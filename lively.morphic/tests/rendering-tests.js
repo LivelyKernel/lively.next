@@ -1,6 +1,6 @@
 /* global it, describe, beforeEach, afterEach,System */
 import { createDOMEnvironment } from '../rendering/dom-helper.js';
-import { morph, config, MorphicEnv } from '../index.js';
+import { morph, Morph, component, part, config, MorphicEnv } from '../index.js';
 import { expect } from 'mocha-es6';
 import { pt, Color, rect } from 'lively.graphics';
 import { num, promise } from 'lively.lang';
@@ -96,6 +96,31 @@ describe('rendering', function () {
   });
 
   describe('scroll', () => {
+    for (const componentInstance of [false, true]) {
+      it(`hides scrollbars on the first render of a ${componentInstance ? 'component' : 'morph'}`, () => {
+        const spec = {
+          extent: pt(80, 80), clipMode: 'auto', hideScrollbars: true,
+          submorphs: [{ extent: pt(200, 200) }]
+        };
+        const scrollable = componentInstance ? part(component(spec)) : new Morph(spec);
+        world.addMorph(scrollable);
+        env.forceUpdate();
+        const node = env.renderer.getNodeForMorph(scrollable);
+        expect(node.classList.contains('hiddenScrollbar'), 'first render').equals(true);
+        scrollable.hideScrollbars = false;
+        env.forceUpdate();
+        expect(node.classList.contains('hiddenScrollbar'), 'show scrollbars').equals(false);
+        scrollable.hideScrollbars = true;
+        env.forceUpdate();
+        expect(node.classList.contains('hiddenScrollbar'), 'hide scrollbars again').equals(true);
+        scrollable.addStyleClass('custom-scrollable');
+        env.forceUpdate();
+        expect(node.classList.contains('hiddenScrollbar'), 'style class update').equals(true);
+        expect(node.classList.contains('custom-scrollable')).equals(true);
+        expect(scrollable.styleClasses).not.includes('hiddenScrollbar');
+      });
+    }
+
     it('scroll extent', () => {
       expect(submorph1.scrollExtent).equals(pt(100, 100).addPt(HTMLScrollbarOffset), '1');
       submorph1.clipMode = 'auto';
