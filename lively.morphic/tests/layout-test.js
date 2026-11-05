@@ -7,6 +7,7 @@ import { Morph, morph, TilingLayout, GridLayout, MorphicEnv } from '../index.js'
 import { pt, Rectangle, Point, Color, rect } from 'lively.graphics';
 import { arr, fun } from 'lively.lang';
 import { ConstraintLayout } from '../layout.js';
+import { ExpressionSerializer } from 'lively.serializer2';
 
 let world, m, env, grid, layout;
 
@@ -549,6 +550,49 @@ describe('layout', () => {
       expect(m1.position).equals(pt(200, 0));
     });
 
+    it('serializes a grid with a container before it is initialized', () => {
+      const container = morph();
+      const layout = new GridLayout({
+        autoAssign: true,
+        columnCount: 2,
+        rowCount: 1,
+        renderViaCSS: false
+      });
+      layout.container = container;
+
+      const serialized = layout.__serialize__().__expr__;
+      expect(serialized).includes('"autoAssign": true');
+      expect(serialized).includes('"columnCount": 2');
+      expect(serialized).includes('"rowCount": 1');
+      expect(serialized).not.includes('"grid"');
+    });
+
+    it('preserves the non-default grid rendering mode in specs, copies and serialization', () => {
+      expect(m.layout.renderViaCSS).equals(false);
+      expect(m.layout.getSpec().renderViaCSS).equals(false);
+      expect(m.layout.copy().renderViaCSS).equals(false);
+      const restored = new ExpressionSerializer().deserializeExprObj(m.layout.__serialize__());
+      expect(restored.renderViaCSS).equals(false);
+      expect(restored.getSpec().grid).deep.equals(m.layout.getSpec().grid);
+    });
+
+    it('uses the current grid rendering mode in detached and initialized specs', () => {
+      const layout = new GridLayout({ grid: [['m1']], renderViaCSS: false });
+      for (const attached of [false, true]) {
+        if (attached) {
+          m.layout = layout;
+          m.layout.apply();
+        }
+        for (const mode of [true, false]) {
+          layout.renderViaCSS = mode;
+          expect(layout.copy().renderViaCSS).equals(mode);
+          expect(new ExpressionSerializer().deserializeExprObj(layout.__serialize__()).renderViaCSS).equals(mode);
+          if (mode) expect(layout.getSpec()).not.haveOwnProperty('renderViaCSS');
+          else expect(layout.getSpec().renderViaCSS).equals(false);
+        }
+      }
+    });
+
     it('allows morphs to take up multiple cells', () => {
       const [m1, m2, m3] = m.submorphs; // eslint-disable-line no-unused-vars
       m.layout = new GridLayout({
@@ -908,6 +952,30 @@ describe('layout', () => {
     }).openInWorld());
 
     afterEach(() => container.remove());
+
+    it('omits the default constraint rendering mode from specs and serialization', () => {
+      for (const config of [{}, { renderViaCSS: true }]) {
+        const layout = new ConstraintLayout(config);
+        expect(layout.getSpec()).not.haveOwnProperty('renderViaCSS');
+        expect(layout.__serialize__().__expr__).not.includes('renderViaCSS');
+        container.layout = layout;
+        expect(layout.getSpec()).not.haveOwnProperty('renderViaCSS');
+        const serialized = layout.__serialize__();
+        expect(serialized.__expr__).not.includes('renderViaCSS');
+        expect(new ExpressionSerializer().deserializeExprObj(serialized).renderViaCSS).equals(true);
+        expect(layout.copy().renderViaCSS).equals(true);
+      }
+    });
+
+    it('preserves the rendering mode in its attached spec', () => {
+      for (const layout of [new ConstraintLayout({ renderViaCSS: false }), container.layout]) {
+        expect(layout.getSpec().renderViaCSS).equals(false);
+        expect(layout.copy().renderViaCSS).equals(false);
+        const serialized = layout.__serialize__();
+        expect(serialized.__expr__).includes('renderViaCSS');
+        expect(new ExpressionSerializer().deserializeExprObj(serialized).renderViaCSS).equals(false);
+      }
+    });
 
     it('does not resize by default', () => {
       checkJSAndCSS(container, () => {
