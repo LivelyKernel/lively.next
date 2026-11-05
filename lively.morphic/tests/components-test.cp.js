@@ -5,7 +5,7 @@ import { Color, pt } from 'lively.graphics';
 import { tree, grid, obj } from 'lively.lang';
 import { serialize } from 'lively.serializer2';
 import { ComponentDescriptor, TilingLayout, Text, Morph, morph } from 'lively.morphic';
-import { component, ViewModel, without, part, add } from '../components/core.js';
+import { component, ViewModel, without, part, add, replace } from '../components/core.js';
 import { StylePolicy, sanitizeSpec, BreakpointStore, PolicyApplicator } from '../components/policy.js';
 import { getDefaultValuesFor } from '../helpers.js';
 
@@ -935,6 +935,32 @@ describe('components', () => {
     expect(m.textString).to.eql('hello world');
   });
 
+  it('normalizes text overrides whose nested spec inherits its type', () => {
+    const Base = ComponentDescriptor.for(() => component({
+      name: 'base with nested text',
+      submorphs: [{
+        type: Text,
+        name: 'message',
+        textString: 'inherited text'
+      }]
+    }), {
+      exportedName: 'BaseWithNestedText',
+      moduleId
+    });
+    const Derived = ComponentDescriptor.for(() => component(Base, {
+      name: 'derived with nested text override',
+      submorphs: [{
+        name: 'message',
+        textAndAttributes: ['reconciled text', null]
+      }]
+    }), {
+      exportedName: 'DerivedWithNestedText',
+      moduleId
+    });
+
+    expect(part(Derived).get('message').textString).to.eql('reconciled text');
+  });
+
   it('properly assigns custom generated names in case of a conflict', () => {
     const C = ComponentDescriptor.for(() => component(c6, {
       submorphs: [
@@ -954,6 +980,86 @@ describe('components', () => {
     expect(m.submorphs[1].name).not.to.eql('c1');
     expect(m.submorphs[0].submorphs[0].name).to.eql('c2');
     expect(m.submorphs[0].submorphs[1].name).not.to.eql('c2');
+  });
+
+  it('resolves before references to morphs introduced by later add commands', () => {
+    const Base = ComponentDescriptor.for(() => component({
+      name: 'base with existing morph',
+      submorphs: [{ name: 'existing' }]
+    }), {
+      exportedName: 'Base',
+      moduleId
+    });
+    const Derived = ComponentDescriptor.for(() => component(Base, {
+      name: 'derived with chained additions',
+      submorphs: [
+        add({ name: 'first' }, 'second'),
+        add({ name: 'second' }, 'existing')
+      ]
+    }), {
+      exportedName: 'Derived',
+      moduleId
+    });
+
+    expect(part(Derived).submorphs.map(m => m.name)).to.eql([
+      'first',
+      'second',
+      'existing'
+    ]);
+  });
+
+  it('T10b replaces with a fresh plain morph and forces the target name', () => {
+    const Base = ComponentDescriptor.for(() => component({
+      name: 'base with replaceable morph',
+      submorphs: [
+        { type: Text, name: 'before', textString: 'text' },
+        { name: 'existing' }
+      ]
+    }), {
+      exportedName: 'ReplaceBase',
+      moduleId
+    });
+    const Derived = ComponentDescriptor.for(() => component(Base, {
+      name: 'derived with renamed replacement',
+      submorphs: [
+        replace('before', { name: 'after' }),
+        add({ name: 'inserted' }, 'before')
+      ]
+    }), {
+      exportedName: 'ReplaceDerived',
+      moduleId
+    });
+    const instance = part(Derived);
+
+    expect(instance.submorphs.map(m => m.name)).to.eql([
+      'inserted',
+      'before',
+      'existing'
+    ]);
+    expect(instance.get('before').isText).not.equals(true);
+    expect(instance.get('before').textString).equals(undefined);
+  });
+
+  it('T10b preserves a fresh part policy when replacing the target', () => {
+    const Replacement = ComponentDescriptor.for(() => component({
+      name: 'replacement', fill: Color.orange, submorphs: [{ name: 'part child' }]
+    }), { exportedName: 'ReplacementPart', moduleId });
+    const Base = ComponentDescriptor.for(() => component({
+      name: 'base', submorphs: [{ type: Text, name: 'old', textString: 'old text' }]
+    }), { exportedName: 'PartReplacementBase', moduleId });
+    let replacementPolicy;
+    const Derived = ComponentDescriptor.for(() => component(Base, {
+      submorphs: [replace('old', (replacementPolicy = part(Replacement)))]
+    }), { exportedName: 'PartReplacementDerived', moduleId });
+    const replacement = part(Derived).get('old');
+
+    // Inline parts already supply a policy; D's plain-spec regression is separate.
+    expect(replacementPolicy.isPolicyApplicator, 'T10b: an inline part already has a policy').equals(true);
+    expect(replacementPolicy.parent, 'T10b: the replacement must retain its own master').equals(Replacement.stylePolicy);
+    expect(replacement, 'T10b: the fresh part must use the old target name').not.equals(null);
+    expect(replacement.get('part child'), 'T10b: the fresh part must retain its children').not.equals(null);
+    expect(replacement.fill, 'T10b: the fresh part must retain its own style').equals(Color.orange);
+    expect(replacement.isText, 'T10b: the fresh part must not inherit the old Text type').not.equals(true);
   });
 });
 
