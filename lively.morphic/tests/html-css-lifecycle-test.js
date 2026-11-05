@@ -11,9 +11,9 @@ describe('HTML CSS serialization lifecycle', () => {
     const container = new Morph({ submorphs: [new HTMLMorph({ html: '<span class="c">x</span>', cssDeclaration: '.c { color: rgb(0, 128, 0); }' })] });
     const copy = deserialize(serialize(container));
     const html = copy.submorphs[0];
-    $world.addMorph(copy);
+    copy.openInWorld();
     try {
-      await html.whenRendered();
+      expect(await html.whenRendered()).equals(true);
       expect(!!styleFor(html.document, html.id)).equals(true);
       expect(getComputedStyle(html.domNode.firstChild).color).equals('rgb(0, 128, 0)');
     } finally { copy.remove(); }
@@ -23,9 +23,9 @@ describe('HTML CSS serialization lifecycle', () => {
     const container = new Morph({ submorphs: [new HTMLMorph({ shareCss: true, html: '<span class="c">x</span>', cssDeclaration: '.c { color: rgb(0, 128, 0); }' })] });
     const copy = deserialize(serialize(container));
     const html = copy.submorphs[0];
-    $world.addMorph(copy);
+    copy.openInWorld();
     try {
-      await html.whenRendered();
+      expect(await html.whenRendered()).equals(true);
       expect(html.shareCss).equals(true);
       expect(getComputedStyle(html.domNode.firstChild).color).equals('rgb(0, 128, 0)');
     } finally { copy.remove(); }

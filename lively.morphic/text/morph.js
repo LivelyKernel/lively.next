@@ -528,16 +528,18 @@ export class Text extends Morph {
                 textAndAttributes,
                 false
               ));
+            this.setProperty('textAndAttributes', textAndAttributes);
           } else {
             if (textAndAttributes.length === 0) textAndAttributes = ['', null];
             if (typeof textAndAttributes === 'string') textAndAttributes = [textAndAttributes, null];
             this.renderingState.needsFit = true;
-          }
-          this.setProperty('textAndAttributes', textAndAttributes);
-          if (!this.document) {
-            this._updateEmbeddedMorphsDuringReplace(
-              textAndAttributes.filter((part, i) => i % 2 === 0 && part?.isMorph),
-              { start: { row: 0, column: 0 } }, textAndAttributes, previousTextAndAttributes);
+            this.groupChangesWhile(null, () => {
+              this.setProperty('textAndAttributes', textAndAttributes);
+              this.withMetaDo({ partOfTextAndAttributesAssignment: true }, () =>
+                this._updateEmbeddedMorphsDuringReplace(
+                  textAndAttributes.filter((part, i) => i % 2 === 0 && part?.isMorph),
+                  { start: { row: 0, column: 0 } }, textAndAttributes, previousTextAndAttributes));
+            });
           }
           if (this.world()) this.whenFontLoaded().then(() => this.fit());
         }
@@ -1372,7 +1374,7 @@ export class Text extends Morph {
     if (change.prop !== 'position' && this.embeddedMorphMap.has(submorph)) this.env.renderer?._intrinsicTextWidths?.delete(this);
     if (change.meta && change.meta.styleSheetChange) return;
     super.onSubmorphChange(change, submorph);
-    if (change.meta.animation) {
+    if (change.meta?.animation) {
       await change.meta.animation.asPromise();
     }
     if (this._textChange || this._positioningSubmorph === submorph) {
@@ -2051,7 +2053,8 @@ export class Text extends Morph {
     if (this.env.changeManager._textCaptureActive) {
       return this.env.changeManager._replaceText(this, new Range(range).toLiteral(), textOrtextAndAttributes, { extendTextAttributes, invalidateTextLayout, consistencyCheck });
     }
-    const prevTextAndAttributes = this.textAndAttributes;
+    const prevTextAndAttributes = this.env.changeManager.hasCommittedListenerFor(this)
+      ? this.textAndAttributes : null;
     range = range.isRange ? range : new Range(range);
 
     // convert insertion into text and attibutes
@@ -2097,7 +2100,7 @@ export class Text extends Morph {
         target: this,
         selector: 'replace',
         args: [range, textAndAttributes],
-        meta: { prevTextAndAttributes },
+        meta: prevTextAndAttributes ? { prevTextAndAttributes } : {},
         undo: {
           target: this,
           selector: 'replace',
