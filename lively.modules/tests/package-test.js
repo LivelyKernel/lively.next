@@ -53,6 +53,28 @@ describe('package loading', function () {
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
   describe('basics', () => {
+    it('picks up a package-scoped import map written after initial registration', async () => {
+      const pkg = await ensurePackage(S, project1aDir);
+      expect(pkg.systemjs?.importMap, 'the package starts without a cached import map').to.equal(undefined);
+
+      const importMap = { imports: { dependency: 'https://example.com/dependency.js' } };
+      await resource(project1aDir + '.cachedImportMap.json').writeJson(importMap);
+      await pkg.register();
+
+      expect(pkg.systemjs?.importMap, 're-registration must publish the newly written import map').to.eql({
+        ...importMap,
+        _mapUrl: resource(project1aDir + '.cachedImportMap.json').url
+      });
+    });
+
+    it('keeps package systemjs metadata in sync with applyConfig', async () => {
+      const pkg = await ensurePackage(S, project1aDir);
+      const dependency = 'https://example.com/dependency.js';
+      applyConfig(S, { systemjs: { map: { dependency } } }, 'some-project');
+
+      expect(pkg.systemjs?.map?.dependency, 'applyConfig must update package systemjs metadata').to.equal(dependency);
+    });
+
     it('loads package configs from encoded file URLs before the transpiler is configured', async () => {
       if (!System.get('@system-env').node) return;
 
@@ -415,6 +437,25 @@ describe('package loading', function () {
   });
 
   describe('reload', () => {
+    it('drops configuration fields removed from package.json', async () => {
+      const packageConfig = resource(project1aDir + 'package.json');
+      const pkg = await ensurePackage(S, project1aDir);
+      await packageConfig.writeJson({
+        ...JSON.parse(project1a['package.json']),
+        systemjs: { map: { dependency: 'https://example.com/dependency.js' } }
+      });
+      await pkg.reload();
+      expect(pkg.systemjs.map).to.have.property('dependency');
+      expect(pkg.map).to.have.property('dependency');
+
+      await packageConfig.write(project1a['package.json']);
+      await pkg.reload();
+
+      expect(pkg.systemjs).to.equal(undefined);
+      expect(pkg.runtimeConfig).to.not.have.property('systemjs');
+      expect(pkg.map).to.not.have.property('dependency');
+    });
+
     it('of package in devPackageDirs', async () => {
       let registry = PackageRegistry.ofSystem(S);
       let pkg = await ensurePackage(S, project1aDir);
