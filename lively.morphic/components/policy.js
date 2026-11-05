@@ -1032,10 +1032,22 @@ export class StylePolicy {
   instantiate (props = {}) {
     // we may be able to avoid this explicit wrapping of the policies
     // by moving that logic into the master setter at a later stage
-    const inst = morph(new PolicyApplicator(props, this).asFullySynthesizedSpec()); // eslint-disable-line no-use-before-define
+    const buildSpec = new PolicyApplicator(props, this).asFullySynthesizedSpec(); // eslint-disable-line no-use-before-define
+    const specsByViewModel = new WeakMap();
+    tree.prewalk(buildSpec, spec => {
+      if (spec.viewModel) specsByViewModel.set(spec.viewModel, spec);
+    }, spec => spec.submorphs || []);
+    const inst = morph(buildSpec);
     // FIXME: This is temporary and should be moved into the viewModel setter after transition is complete.
     withAllViewModelsDo(inst, m => {
       m.viewModel.attach(m); // as fully synthesized spec does not seem to assign all viewModels
+    });
+    withAllViewModelsDo(inst, m => {
+      const spec = specsByViewModel.get(m.viewModel);
+      const styleProps = getStylePropertiesFor(m.constructor);
+      for (const prop of m.viewModel.exposedPropertyNames) {
+        if (spec && Object.hasOwn(spec, prop) && !styleProps.includes(prop)) m[prop] = spec[prop];
+      }
     });
     return inst;
   }
