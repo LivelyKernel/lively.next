@@ -1,0 +1,33 @@
+name: JavaScript and Rust transpiler parity
+
+on:
+  pull_request:
+    paths:
+      - 'lively.source-transform/**'
+      - 'lively.classes/**'
+      - 'lively.ast/**'
+      - 'lively.freezer/src/bundler.js'
+      - 'lively.freezer/swc-plugin/**'
+      - '.github/workflows/transpiler-parity.yml'
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PUPPETEER_SKIP_DOWNLOAD: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.20.0'
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - uses: dtolnay/rust-toolchain@1.95.0
+      - run: bun install --frozen-lockfile
+      - run: cargo test --locked --manifest-path lively.freezer/swc-plugin/Cargo.toml --workspace
+      - run: bun run --cwd lively.source-transform test:node
+      - run: bun run --cwd lively.source-transform test:parity
+      - run: node --import ./lively.source-transform/tests/node-bootstrap.mjs lively.freezer/tests/dynamic-system-import-test.mjs
+      - run: node --import ./lively.source-transform/tests/node-bootstrap.mjs lively.freezer/tests/swc-state-test.mjs

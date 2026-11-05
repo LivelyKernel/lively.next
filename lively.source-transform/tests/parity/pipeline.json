@@ -1,0 +1,79 @@
+[
+  {
+    "name": "class lowering and scope capture share the recorder",
+    "pass": "pipeline",
+    "source": "class Counter { constructor() { this.value = 1; } inc() { return ++this.value; } } var instance = new Counter(); var result = instance.inc();",
+    "config": {
+      "enableScopeCapture": true,
+      "classToFunction": {
+        "classHolder": "_rec",
+        "functionNode": "initializeClass",
+        "currentModuleAccessor": "undefined"
+      }
+    },
+    "evaluate": "[_rec.Counter.name, _rec.instance.value, _rec.result, new _rec.Counter().value]",
+    "expected": ["Counter", 2, 2, 1]
+  },
+  {
+    "name": "class method reads updated captured bindings",
+    "pass": "pipeline",
+    "source": "var amount = 2; class Multiplier { multiply(value) { return value * amount; } } var instance = new Multiplier(); amount = 3; var result = instance.multiply(4);",
+    "config": {
+      "enableScopeCapture": true,
+      "classToFunction": {
+        "classHolder": "_rec",
+        "functionNode": "initializeClass",
+        "currentModuleAccessor": "undefined"
+      }
+    },
+    "evaluate": "[_rec.amount, _rec.result]",
+    "expected": [3, 12]
+  },
+  {
+    "name": "function wrapper replacement controls captured calls",
+    "pass": "pipeline",
+    "source": "function add(value) { return value + offset; } var offset = 5; var answer = add(4);",
+    "config": {
+      "enableScopeCapture": true,
+      "declarationWrapper": "_rec[\"define\"]"
+    },
+    "setup": "const calls = []; _rec.define = function(name, kind, value, recorder) { calls.push([name, kind, recorder === _rec]); return name === 'add' && kind === 'function' ? (...args) => value(...args) + 10 : value; };",
+    "evaluate": "[_rec.answer, _rec.add(1), calls.some(([name, kind, same]) => name === 'add' && kind === 'function' && same)]",
+    "expected": [19, 16, true]
+  },
+  {
+    "name": "captured functions share mutation state",
+    "pass": "pipeline",
+    "source": "var total = 1; function update(delta) { total += delta; return total; } var first = update(2); var second = update(3);",
+    "config": {"enableScopeCapture": true},
+    "evaluate": "[_rec.total, _rec.first, _rec.second]",
+    "expected": [6, 3, 6]
+  },
+  {
+    "name": "top-level superclass binding survives the complete pipeline",
+    "pass": "pipeline",
+    "source": "class Base { m() { return 3; } } class Child extends Base { m() { return super.m() + 1; } } var result = new Child().m();",
+    "config": {
+      "enableScopeCapture": true,
+      "classToFunction": {
+        "classHolder": "_rec",
+        "functionNode": "initializeClass",
+        "currentModuleAccessor": "undefined"
+      }
+    },
+    "evaluate": "[_rec.result, Object.getPrototypeOf(_rec.Child.prototype) === _rec.Base.prototype]",
+    "expected": [4, true]
+  },
+  {
+    "name": "function wrapper metadata uses UTF16 offsets after Unicode",
+    "pass": "pipeline",
+    "source": "// 😀\nfunction café() { return \"🦄\"; }\nvar answer = café();",
+    "config": {
+      "enableScopeCapture": true,
+      "declarationWrapper": "_rec[\"define\"]"
+    },
+    "setup": "const calls = []; _rec.define = (name, kind, value, recorder, meta) => { if (kind === 'function') calls.push([name, meta.start, meta.end, recorder === _rec]); return value; };",
+    "evaluate": "[_rec.answer, calls]",
+    "expected": ["🦄", [["café", 6, 38, true]]]
+  }
+]

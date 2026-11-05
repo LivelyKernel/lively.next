@@ -3,23 +3,44 @@ pub mod transforms;
 pub mod utils;
 
 use config::LivelyTransformConfig;
-use swc_ecma_visit::VisitMutWith;
+use swc_common::sync::Lrc;
+use swc_ecma_visit::{VisitMutWith, VisitWith};
 use transforms::*;
 
 /// Main transform visitor that orchestrates all lively transforms.
 /// Shared between the SWC plugin (wasm32-wasip1) and the browser WASM module.
 pub struct LivelyTransformVisitor {
     config: LivelyTransformConfig,
+    source_map: Option<Lrc<dyn swc_common::SourceMapper>>,
+    host_unresolved_mark: Option<swc_common::Mark>,
 }
 
 impl LivelyTransformVisitor {
     pub fn new(config: LivelyTransformConfig) -> Self {
-        Self { config }
+        Self {
+            config,
+            source_map: None,
+            host_unresolved_mark: None,
+        }
+    }
+
+    pub fn with_source_map(mut self, source_map: Lrc<dyn swc_common::SourceMapper>) -> Self {
+        self.source_map = Some(source_map);
+        self
+    }
+
+    /// The SWC plugin receives an AST already resolved by its compiler host.
+    pub fn with_resolved_bindings(mut self, unresolved_mark: swc_common::Mark) -> Self {
+        self.host_unresolved_mark = Some(unresolved_mark);
+        self
     }
 }
 
 impl swc_ecma_visit::VisitMut for LivelyTransformVisitor {
     fn visit_mut_program(&mut self, program: &mut swc_ecma_ast::Program) {
+        if self.config.enable_scope_capture && self.host_unresolved_mark.is_none() {
+            program.visit_with(&mut transforms::scope_capturing::ClearAnalysisContexts);
+        }
         // Apply transforms in the correct order:
 
         // 1. Split export variable declarations first (preprocessing)
@@ -36,6 +57,9 @@ impl swc_ecma_visit::VisitMut for LivelyTransformVisitor {
                 self.config.package_name.clone(),
                 self.config.package_version.clone(),
             );
+            if let Some(cm) = &self.source_map {
+                class_transform = class_transform.with_source_map(cm.clone());
+            }
             program.visit_mut_with(&mut class_transform);
         }
 
@@ -46,6 +70,9 @@ impl swc_ecma_visit::VisitMut for LivelyTransformVisitor {
                 self.config.capture_obj.clone(),
                 self.config.exclude.clone(),
             );
+            if let Some(cm) = &self.source_map {
+                component_transform = component_transform.with_source_map(cm.clone());
+            }
             program.visit_mut_with(&mut component_transform);
         }
 
@@ -74,7 +101,10 @@ impl swc_ecma_visit::VisitMut for LivelyTransformVisitor {
                 self.config.capture_obj.clone(),
                 self.config.declaration_wrapper.clone(),
                 self.config.exclude.clone(),
-            );
+            )
+            .with_module_id(self.config.module_id.clone())
+            .with_source_accessor_name(self.config.source_accessor_name.clone())
+            .with_capture_imports(self.config.capture_imports);
             program.visit_mut_with(&mut systemjs_transform);
         }
 
@@ -96,6 +126,12 @@ impl swc_ecma_visit::VisitMut for LivelyTransformVisitor {
                 self.config.module_hash,
                 self.config.resolved_imports.clone(),
             );
+            if let Some(cm) = &self.source_map {
+                scope_transform = scope_transform.with_source_map(cm.clone());
+            }
+            if let Some(mark) = self.host_unresolved_mark {
+                scope_transform = scope_transform.with_resolved_bindings(mark);
+            }
             program.visit_mut_with(&mut scope_transform);
         }
 

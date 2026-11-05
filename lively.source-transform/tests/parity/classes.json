@@ -1,0 +1,208 @@
+[
+  {
+    "name": "empty-instance-descriptors",
+    "source": "class C {}",
+    "evaluate": "calls[0].instance === undefined",
+    "expected": true,
+    "setup": "const calls = []; initializeClass = function(klass, superclass, instance, staticMethods, holder, currentModule, location) { calls.push({klass, superclass, instance, staticMethods, holder, location}); return klass; };"
+  },
+  {
+    "name": "member-descriptor-source-order",
+    "source": "class C { m() {} constructor() {} n() {} }",
+    "evaluate": "calls[0].instance.map(descriptor => typeof descriptor.key === \"symbol\" ? descriptor.key.description : descriptor.key)",
+    "expected": [
+      "m",
+      "lively-instance-initialize",
+      "n"
+    ],
+    "setup": "const calls = []; initializeClass = function(klass, superclass, instance, staticMethods, holder, currentModule, location) { calls.push({klass, superclass, instance, staticMethods, holder, location}); return klass; };"
+  },
+  {
+    "name": "method-debug-names",
+    "source": "class C { m() {} get x() { return 1; } set x(value) {} static other() {} }",
+    "evaluate": "[...calls[0].instance.map(descriptor => (descriptor.value || descriptor.get || descriptor.set).name), calls[0].staticMethods[1].value.name]",
+    "expected": [
+      "C_m_",
+      "get",
+      "set",
+      "C_other_"
+    ],
+    "setup": "const calls = []; initializeClass = function(klass, superclass, instance, staticMethods, holder, currentModule, location) { calls.push({klass, superclass, instance, staticMethods, holder, location}); return klass; };"
+  },
+  {
+    "name": "nested-super-arguments",
+    "source": "class Base { m(x) { return x + 1; } n() { return 2; } } class Child extends Base { m() { return super.m(super.n()); } }",
+    "evaluate": "new Child().m()",
+    "expected": 3
+  },
+  {
+    "name": "nested-super-setter-right-hand-side",
+    "source": "class Base { get value() { return 3; } set value(x) { this.saved = x; } } class Child extends Base { assign() { return super.value = super.value + 4; } } var child = new Child();",
+    "evaluate": "[child.assign(), child.saved]",
+    "expected": [
+      7,
+      7
+    ]
+  },
+  {
+    "name": "nested-static-super-arguments",
+    "source": "class Base { static m(x) { return x + 1; } static n() { return 2; } } class Child extends Base { static m() { return super.m(super.n()); } }",
+    "evaluate": "Child.m()",
+    "expected": 3
+  },
+  {
+    "name": "nested-direct-super-argument",
+    "source": "class Base { constructor(x) { this.x = x; } m() { return 23; } } class Child extends Base { constructor() { super(super.m()); } }",
+    "evaluate": "new Child().x",
+    "expected": 23
+  },
+  {
+    "name": "private-reference-in-field-initializer",
+    "source": "class C { #x = 23; y = this.#x; m() { return this.y; } }",
+    "evaluate": "new C().m()",
+    "expected": 23
+  },
+  {
+    "name": "super-in-field-initializer",
+    "source": "class Base { m() { return 23; } } class Child extends Base { x = super.m(); }",
+    "evaluate": "new Child().x",
+    "expected": 23
+  },
+  {
+    "name": "super-in-constructor-default-parameter",
+    "source": "class Base { constructor(x) { this.x = x; } m() { return 23; } } class Child extends Base { constructor(x = super.m()) { super(x); } }",
+    "evaluate": "new Child().x",
+    "expected": 23
+  },
+  {
+    "name": "nested-class-lowering",
+    "source": "class Outer { make() { return class Inner { m() { return 42; } }; } } var Inner = new Outer().make();",
+    "evaluate": "[new Inner().m(), Inner[Symbol.for(\"__LivelyClassName__\")]]",
+    "expected": [
+      42,
+      "Inner"
+    ]
+  },
+  {
+    "name": "nested-class-super-context",
+    "source": "class Base { m() { return 1; } } class Other { m() { return 2; } } class Outer extends Base { make() { return class Inner extends Other { m() { return super.m() + 1; } }; } } var Inner = new Outer().make();",
+    "evaluate": "new Inner().m()",
+    "expected": 3
+  },
+  {
+    "name": "class-expression-lexical-this",
+    "source": "function make() { return class { [this.key]() { return 23; } }; } var C = make.call({key: \"m\"});",
+    "evaluate": "new C().m()",
+    "expected": 23
+  },
+  {
+    "name": "named-class-expression-holder",
+    "source": "function keep(C) { return C; } var Saved = keep(class Named {});",
+    "evaluate": "Saved === _rec.Named",
+    "expected": true
+  },
+  {
+    "name": "assigned-class-expression-keeps-configured-holder",
+    "source": "var Saved = class Named {};",
+    "evaluate": "calls.length",
+    "expected": 0,
+    "setup": "const calls = []; initializeClass = function(klass, superclass, instance, staticMethods, holder, currentModule, location) { calls.push({klass, superclass, instance, staticMethods, holder, location}); return klass; }; Object.freeze(_rec);"
+  },
+  {
+    "name": "unresolved-superclass-stays-a-value",
+    "source": "class C extends External {}",
+    "evaluate": "calls[0].superclass === External",
+    "expected": true,
+    "setup": "const calls = []; initializeClass = function(klass, superclass, instance, staticMethods, holder, currentModule, location) { calls.push({klass, superclass, instance, staticMethods, holder, location}); return klass; }; function External() {}",
+    "config": {
+      "classToFunction": {
+        "currentModuleAccessor": "module"
+      }
+    }
+  },
+  {
+    "name": "top-level-superclass-reference",
+    "source": "var Base = function() {}; class C extends Base {}",
+    "evaluate": "calls[0].superclass.referencedAs",
+    "expected": "Base",
+    "setup": "const calls = []; initializeClass = function(klass, superclass, instance, staticMethods, holder, currentModule, location) { calls.push({klass, superclass, instance, staticMethods, holder, location}); return klass; };",
+    "config": {
+      "classToFunction": {
+        "currentModuleAccessor": "module"
+      }
+    }
+  },
+  {
+    "name": "outer-top-level-superclass-reference",
+    "source": "var Base = function() {}; function make() { class C extends Base {} return C; } make();",
+    "evaluate": "[calls[0].superclass.referencedAs, calls[0].holder !== _rec]",
+    "expected": [
+      "Base",
+      true
+    ],
+    "setup": "const calls = []; initializeClass = function(klass, superclass, instance, staticMethods, holder, currentModule, location) { calls.push({klass, superclass, instance, staticMethods, holder, location}); return klass; };",
+    "config": {
+      "classToFunction": {
+        "currentModuleAccessor": "module"
+      }
+    }
+  },
+  {
+    "name": "parameter-shadowed-superclass-reference",
+    "source": "var Base = function() {}; function make(Base) { class C extends Base {} return C; } make(function Local() {});",
+    "evaluate": "calls[0].superclass.name",
+    "expected": "Local",
+    "setup": "const calls = []; initializeClass = function(klass, superclass, instance, staticMethods, holder, currentModule, location) { calls.push({klass, superclass, instance, staticMethods, holder, location}); return klass; };",
+    "config": {
+      "classToFunction": {
+        "currentModuleAccessor": "module"
+      }
+    }
+  },
+  {
+    "name": "block-shadowed-superclass-reference",
+    "source": "var Base = function() {}; { let Base = function Local() {}; class C extends Base {} }",
+    "evaluate": "calls[0].superclass.name",
+    "expected": "Local",
+    "setup": "const calls = []; initializeClass = function(klass, superclass, instance, staticMethods, holder, currentModule, location) { calls.push({klass, superclass, instance, staticMethods, holder, location}); return klass; };",
+    "config": {
+      "classToFunction": {
+        "currentModuleAccessor": "module"
+      }
+    }
+  },
+  {
+    "name": "unicode-class-source-location",
+    "source": "/* 😀 */ class C {}",
+    "evaluate": "calls[0].location",
+    "expected": {
+      "start": 9,
+      "end": 19
+    },
+    "setup": "const calls = []; initializeClass = function(klass, superclass, instance, staticMethods, holder, currentModule, location) { calls.push({klass, superclass, instance, staticMethods, holder, location}); return klass; };"
+  },
+  {
+    "name": "catch-shadowed-superclass-reference",
+    "source": "var Base = function Module() {}; try { throw function Local() {}; } catch (Base) { class C extends Base {} }",
+    "evaluate": "calls[0].superclass.name",
+    "expected": "Local",
+    "setup": "const calls = []; initializeClass = function(klass, superclass, instance, staticMethods, holder, currentModule, location) { calls.push({klass, superclass, instance, staticMethods, holder, location}); return klass; };",
+    "config": {
+      "classToFunction": {
+        "currentModuleAccessor": "module"
+      }
+    }
+  },
+  {
+    "name": "lexical-loop-shadowed-superclass-reference",
+    "source": "var Base = function Module() {}; for (let Base of [function Local() {}]) { class C extends Base {} }",
+    "evaluate": "calls[0].superclass.name",
+    "expected": "Local",
+    "setup": "const calls = []; initializeClass = function(klass, superclass, instance, staticMethods, holder, currentModule, location) { calls.push({klass, superclass, instance, staticMethods, holder, location}); return klass; };",
+    "config": {
+      "classToFunction": {
+        "currentModuleAccessor": "module"
+      }
+    }
+  }
+]

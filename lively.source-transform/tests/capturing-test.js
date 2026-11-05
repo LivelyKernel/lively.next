@@ -8,7 +8,7 @@ import objectSpreadTransform from 'lively.ast/lib/object-spread-transform.js';
 
 function _testVarTfm (descr, options, code, expected, only) {
   // options = 'var y, z = foo + bar; baz.foo(z, 3)';
-  // code = '_rec.y = _rec.y || undefined;\n_rec.z = _rec.foo + _rec.bar;\n_rec.baz.foo(_rec.z, 3);'
+  // code = '_rec.y = Object.prototype.hasOwnProperty.call(_rec, "y") ? _rec.y : undefined;\n_rec.z = _rec.foo + _rec.bar;\n_rec.baz.foo(_rec.z, 3);'
   if (typeof options === 'string') {
     only = expected;
     expected = code;
@@ -75,7 +75,7 @@ function classTemplateDecl (className, superClassName, methodString, classMethod
 describe('ast.capturing', function () {
   testVarTfm('transformTopLevelVarDeclsForCapturing',
     'var y, z = foo + bar; baz.foo(z, 3)',
-    '_rec.y = _rec.y || undefined;\n_rec.z = _rec.foo + _rec.bar;\n_rec.baz.foo(_rec.z, 3);');
+    '_rec.y = Object.prototype.hasOwnProperty.call(_rec, "y") ? _rec.y : undefined;\n_rec.z = _rec.foo + _rec.bar;\n_rec.baz.foo(_rec.z, 3);');
 
   testVarTfm('transformTopLevelVarAndFuncDeclsForCapturing',
     'var z = 3, y = 4; function foo() { var x = 5; }',
@@ -704,7 +704,7 @@ f;`);
       testVarTfm('named',
         opts,
         'let name1, name2; export { name1, name2 };',
-        '_rec.name1 = _rec.name1 || undefined;\n_rec.name2 = _rec.name2 || undefined;\n_moduleExport("name1", _rec.name1);\n_moduleExport("name2", _rec.name2);');
+        '_rec.name1 = Object.prototype.hasOwnProperty.call(_rec, "name1") ? _rec.name1 : undefined;\n_rec.name2 = Object.prototype.hasOwnProperty.call(_rec, "name2") ? _rec.name2 : undefined;\n_moduleExport("name1", _rec.name1);\n_moduleExport("name2", _rec.name2);');
 
       testVarTfm('var decl, double',
         opts,
@@ -724,7 +724,7 @@ f;`);
       testVarTfm('name aliased',
         opts,
         'let name1; export { name1 as default };',
-        '_rec.name1 = _rec.name1 || undefined;\n_moduleExport("default", _rec.name1);');
+        '_rec.name1 = Object.prototype.hasOwnProperty.call(_rec, "name1") ? _rec.name1 : undefined;\n_moduleExport("default", _rec.name1);');
 
       testVarTfm('* from',
         opts,
@@ -789,7 +789,7 @@ describe('declarations', () => {
                                                        '  }\n' +
                                                        '}]', '_rec', 'undefined', 'undefined', 7, 19)}, _rec, {\n  start: 7,\n  end: 19\n});\n_rec.Foo = Foo;`);
 
-    ignoreFormatCompare(rewriteWithWrapper('var x, y; x = 23; export { x, y };'), '_rec.x = _define("x", "var", _rec.x || undefined, _rec);\n_rec.y = _define("y", "var", _rec.y || undefined, _rec);\n_rec.x = _define("x", "assignment", 23, _rec);\nvar x = _rec.x;\nvar y = _rec.y;\nexport {\n  x,\n  y\n};');
+    ignoreFormatCompare(rewriteWithWrapper('var x, y; x = 23; export { x, y };'), '_rec.x = _define("x", "var", Object.prototype.hasOwnProperty.call(_rec, "x") ? _rec.x : undefined, _rec);\n_rec.y = _define("y", "var", Object.prototype.hasOwnProperty.call(_rec, "y") ? _rec.y : undefined, _rec);\n_rec.x = _define("x", "assignment", 23, _rec);\nvar x = _rec.x;\nvar y = _rec.y;\nexport {\n  x,\n  y\n};');
   });
 
   it('wraps class decls', () => {
@@ -844,64 +844,38 @@ return {
 };
 });`;
 
-    it('captures setters of registered module', () => {
-      ignoreFormatCompare(stringify(
-        rewriteToRegisterModuleToCaptureSetters(
-          parse(input),
-          { name: '_rec', type: 'Identifier' },
-          { exclude: ['z'] })),
-        `System.register([
-  \"foo:a.js\",
-  \"http://zork/b.js\"
-], function (_export, _context) {
-  \"use strict\";
-  var x, y, z, _rec;
-  _rec = System.get(\"@lively-env\").moduleEnv(\"c.js\").recorder;
-  return {
-    setters: [
-      function (foo_a_js = {}) {
-        _rec.x = x = foo_a_js.x;
-      },
-      function (_zork_b_js = {}) {
-        _rec.y = y = _zork_b_js.default;
-        z = _zork_b_js.z;
-      }
-    ],
-    execute: function () {
-      _rec.x = 23;
+    function registerModule (options, define) {
+      const recorder = {};
+      let registration;
+      const System = {
+        register (dependencies, factory) { registration = factory(() => {}, {}); },
+        get () { return { moduleEnv: () => ({ recorder }) }; }
+      };
+      const code = stringify(rewriteToRegisterModuleToCaptureSetters(
+        parse(input), { name: '_rec', type: 'Identifier' }, options));
+      new Function('System', '_define', code)(System, define);
+      return { recorder, registration };
     }
-  };
-});`);
+
+    it('captures setters before execution and respects exclusions', () => {
+      const { recorder, registration } = registerModule({ exclude: ['z'] });
+      registration.setters[0]({ x: 3 });
+      registration.setters[1]({ default: 4, z: 5 });
+      expect(recorder).deep.equals({ x: 3, y: 4 });
+      registration.execute();
+      expect(recorder.x).equals(23);
     });
 
-    it('captures setters of registered module with declarationWrapper', () => {
-      ignoreFormatCompare(stringify(
-        rewriteToRegisterModuleToCaptureSetters(
-          parse(input),
-          { name: '_rec', type: 'Identifier' },
-          { declarationWrapper: { name: '_define', type: 'Identifier' } })),
-        `System.register([
-  \"foo:a.js\",
-  \"http://zork/b.js\"
-], function (_export, _context) {
-  \"use strict\";
-  var x, y, z, _rec;
-  _rec = System.get(\"@lively-env\").moduleEnv(\"c.js\").recorder;
-  return {
-    setters: [
-      function (foo_a_js = {}) {
-        _rec.x = _define(\"x\", \"var\", x = foo_a_js.x, _rec);
-      },
-      function (_zork_b_js = {}) {
-        _rec.y = _define(\"y\", \"var\", y = _zork_b_js.default, _rec);
-        _rec.z = _define(\"z\", \"var\", z = _zork_b_js.z, _rec);
-      }
-    ],
-    execute: function () {
-      _rec.x = 23;
-    }
-  };
-});`);
+    it('wraps each captured setter assignment', () => {
+      const calls = [];
+      const { recorder, registration } = registerModule(
+        { declarationWrapper: { name: '_define', type: 'Identifier' } },
+        (name, kind, value, rec) => { calls.push([name, kind, rec]); return value + 10; });
+      registration.setters[0]({ x: 3 });
+      registration.setters[1]({ default: 4, z: 5 });
+      expect(recorder).deep.equals({ x: 13, y: 14, z: 15 });
+      expect(calls.map(([name, kind, rec]) => [name, kind, rec === recorder])).deep.equals(
+        [['x', 'var', true], ['y', 'var', true], ['z', 'var', true]]);
     });
 
     it('schedules each named static re-export from its setter', () => {
