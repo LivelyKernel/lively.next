@@ -18,6 +18,7 @@ import { TargetScript } from './ticking.js';
 import { copyMorph } from './serialization.js';
 
 import { PolicyApplicator } from './components/policy.js';
+import { writeRecordedState } from './changes/state-guard.js';
 
 const defaultCommandHandler = new CommandHandler();
 
@@ -1251,6 +1252,10 @@ export class Morph {
     return this.env.changeManager.addMethodCallChangeDoing(spec, this, doFn);
   }
 
+  addStructuralChangeDoing (spec, doFn) {
+    return this.env.changeManager.addStructuralChangeDoing(spec, this, doFn);
+  }
+
   groupChangesWhile (groupChange, whileFn) {
     return this.env.changeManager.groupChangesWhile(this, groupChange, whileFn);
   }
@@ -1332,7 +1337,12 @@ export class Morph {
         return [target, animConfig, meta];
       });
     await Promise.all(animationConfigs.map(([target, animConfig, meta]) => {
-      return target?.withMetaDo(meta, () => target.animate(animConfig));
+      if (!target) return undefined;
+      let animation;
+      target.withMetaDo(meta, () => {
+        animation = target.animate(animConfig);
+      });
+      return animation;
     }));
   }
 
@@ -1620,15 +1630,10 @@ export class Morph {
 
     this.requestMasterStyling();
 
-    this.addMethodCallChangeDoing({
-      target: this,
+    this.addStructuralChangeDoing({
+      morph: submorph,
       selector: 'addMorphAt',
-      args: [submorph, index],
-      undo: {
-        target: this,
-        selector: 'removeMorph',
-        args: [submorph]
-      }
+      args: [submorph, index]
     }, () => {
       const prevOwner = submorph.owner;
       const submorphs = this.submorphs; let tfm;
@@ -1660,7 +1665,7 @@ export class Morph {
       submorph._owner = this;
       submorph._cachedPaths = {};
       if (tfm) this.withMetaDo({ reconcileChanges: false }, () => submorph.setTransform(tfm));
-      this._morphicState.submorphs = submorphs;
+      writeRecordedState(this, 'submorphs', submorphs);
 
       this.makeDirty();
       submorph.resumeSteppingAll();
@@ -1698,19 +1703,13 @@ export class Morph {
     const index = this.submorphs.indexOf(morph);
     if (index === -1) return;
 
-    const submorphs = this.getProperty('submorphs') || [];
-    submorphs.splice(index, 1);
-
-    this.addMethodCallChangeDoing({
-      target: this,
+    this.addStructuralChangeDoing({
+      morph,
       selector: 'removeMorph',
-      args: [morph],
-      undo: {
-        target: this,
-        selector: 'addMorphAt',
-        args: [morph, index]
-      }
+      args: [morph]
     }, () => {
+      const submorphs = this.getProperty('submorphs') || [];
+      submorphs.splice(index, 1);
       morph.suspendSteppingAll();
       morph._owner = null;
     });
@@ -1748,10 +1747,14 @@ export class Morph {
    * `remove` was introduced as a band-aid for the old master component system (before we had declarative components)
    * FIXME: can the parameter be removed?
    */
-  abandon (remove = true) {
+  abandonNode (remove = false) {
     signal(this, 'onAbandon');
     if ($world.isIDEWorld) $world.emptyCommentsFor(this);
     if (remove) this.remove();
+  }
+
+  abandon (remove = true) {
+    this.abandonNode(remove);
     this.submorphs.forEach(submorph => submorph.abandon(false)); // do not remove submorphs
   }
 
