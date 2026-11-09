@@ -878,7 +878,7 @@ export default class LivelyRollup {
     // We use the string 'projectAsset' there in regular code to enable correct reconciliation.
     const modulePath = id.replace(/\\/g, '/');
     if (!modulePath.includes('lively.ide/components/helpers.js')) {
-      const projectAssetRegex = /projectAsset\('(?<assetName>.*)'\)/g;
+      const projectAssetRegex = /projectAsset\('(?<assetName>[^']*)'(?:,\s*import\.meta\.url)?\)/g;
       const projectPath = modulePath.match(/^(.*\/local_projects\/([^/]+)\/)/);
       const currentlyTransformedProject = projectPath?.[2];
 
