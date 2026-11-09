@@ -96,8 +96,14 @@ describe('ObjectDB client resources', function () {
     System.global.fetch = async () => response('unavailable', 503, 'text/plain');
     expect((await client._GET('test').catch(err => err)).message).equals('unavailable');
     expect((await client._POST('test').catch(err => err)).message).equals('unavailable');
-    System.global.fetch = async () => { throw new Error('network failure'); };
-    expect((await client._GET('test').catch(err => err)).message).equals('network failure');
+    const networkError = new Error('network failure');
+    System.global.fetch = async () => { throw networkError; };
+    const getError = await client._GET('test').catch(err => err);
+    expect(getError.message).equals('Cannot GET http://objectdb.test/objectdb/test?: network failure.');
+    expect(getError.cause).equals(networkError);
+    const postError = await client._POST('test').catch(err => err);
+    expect(postError.message).equals('Cannot POST http://objectdb.test/objectdb/test: network failure.');
+    expect(postError.cause).equals(networkError);
   });
 
   it('runs the same workflow through a JSON-isolated native resource', async () => {
