@@ -2,9 +2,35 @@
 import { expect, chai } from 'mocha-es6';
 
 import { obj } from 'lively.lang';
+import module from 'lively.modules/src/module.js';
 import ExpressionSerializer from '../plugins/expression-serializer.js';
 
 let sut = new ExpressionSerializer({ prefix: '_prefix' });
+
+describe('expression serializer module exports', () => {
+  it('preserves exports from a live module record', () => {
+    const id = System.decanonicalize('lively.serializer2/tests/expression-serializer-test.js');
+    const record = module(System, id).record();
+    expect(record).to.be.ok;
+    expect(sut.getModuleExports(id)).equals(record.exports);
+  });
+
+  it('reads a registered namespace without a live module record', async () => {
+    const id = 'lively://expression-serializer-test/registered.js';
+    const namespace = System.newModule({ answer: 42 });
+    System.set(id, namespace);
+    const registeredModule = module(System, id);
+    try {
+      expect(registeredModule.record()).equals(null);
+      expect(sut.getModuleExports(id)).equals(namespace);
+      expect(sut.getModuleExports(id).answer).equals(42);
+    } finally { await registeredModule.unload({ forgetDeps: false }); }
+  });
+
+  it('returns no exports for an unloaded module', () => {
+    expect(sut.getModuleExports('lively://expression-serializer-test/missing.js')).deep.equals({});
+  });
+});
 
 describe('expression serializer format', () => {
   describe('encode', () => {
