@@ -253,7 +253,8 @@ export function parseComponentSource ({
   exportName,
   componentId = `${moduleId}#${exportName}`,
   parentDocument = null,
-  resolveComponentDocument = null
+  resolveComponentDocument = null,
+  normalizeModuleId = null
 }) {
   if (typeof source !== 'string') throw new Error('Component source must be a string');
   if (typeof moduleId !== 'string' || !moduleId) throw new Error('Component source requires a moduleId');
@@ -268,6 +269,9 @@ export function parseComponentSource ({
   }
   if (resolveComponentDocument !== null && typeof resolveComponentDocument !== 'function') {
     throw new Error('Component source resolveComponentDocument must be a function');
+  }
+  if (normalizeModuleId !== null && typeof normalizeModuleId !== 'function') {
+    throw new Error('Component source normalizeModuleId must be a function');
   }
 
   const diagnostics = [];
@@ -317,14 +321,22 @@ export function parseComponentSource ({
     const local = namespaceParent ? parentNode.object.name : parentName;
     const binding = importBindingsOf(moduleAst).find(binding => binding.local === local);
     let bindingModuleId = binding?.moduleId;
-    if (bindingModuleId?.startsWith('.')) {
-      try { bindingModuleId = new URL(bindingModuleId, moduleId).href; } catch (error) { bindingModuleId = null; }
+    let parentModuleId = parentDocument.moduleId;
+    if (!resolved && binding) {
+      try {
+        if (normalizeModuleId) {
+          bindingModuleId = normalizeModuleId(bindingModuleId, moduleId);
+          parentModuleId = normalizeModuleId(parentModuleId, moduleId);
+        } else if (bindingModuleId.startsWith('.')) {
+          bindingModuleId = new URL(bindingModuleId, moduleId).href;
+        }
+      } catch (error) { bindingModuleId = null; }
     }
     const matches = resolved
       ? resolved.moduleId === parentDocument.moduleId && resolved.exportName === parentDocument.exportName
       : (parentNode?.type === 'Identifier' || (namespaceParent && binding?.kind === ComponentImportKind.NAMESPACE)) &&
         (binding?.imported || parentName) === parentDocument.exportName &&
-        (!binding || bindingModuleId === parentDocument.moduleId);
+        (!binding || bindingModuleId === parentModuleId);
     if (!matches) {
       diagnostics.push(diagnostic(
         ComponentSourceDiagnosticKind.PARENT_COMPONENT_MISMATCH,
@@ -919,6 +931,7 @@ export function parseComponentSource ({
       opaqueSubmorphExpressions,
       parentDocument,
       resolveComponentDocument,
+      normalizeModuleId,
       importBindings: importBindingsOf(moduleAst),
       importDeclarationCount: moduleAst.body.filter(statement =>
         statement.type === 'ImportDeclaration').length,

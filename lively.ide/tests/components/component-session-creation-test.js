@@ -171,14 +171,20 @@ describe('component editing session creation', () => {
     expect(unhandled).to.be.empty;
   });
 
-  it('refuses A1 Workspace declarations before creating an editable session', async () => {
+  it('opens A1 Workspace declarations from their actual backing buffer', async () => {
     workspace = await $world.execCommand('open javascript workspace', { systemInterface: 'local' });
     workspace.content = `import { component } from 'lively.morphic/components/core.js';
 const WorkspaceComponent = component({ name: 'workspace component' });
 WorkspaceComponent;`;
     const result = await workspace.jsPlugin.runEval(workspace.content);
     expect(result.isError).not.equals(true);
-    await assertRefused(interactive(result.value));
+    const descriptor = interactive(result.value);
+    const editable = await descriptor.edit();
+    morphs.push(editable);
+    expect(editable._changeTracker.projectionalDocumentForCurrentSource().supported).equals(true);
+    expect(await module(System, workspace.jsPlugin.evalEnvironment.targetModule).source()).equals(workspace.content);
+    expect(logged).to.be.empty;
+    expect(unhandled).to.be.empty;
   });
 
   it('refuses A2 eval-only declarations before creating an editable session', async () => {
