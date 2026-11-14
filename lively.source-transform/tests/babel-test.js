@@ -6,15 +6,12 @@ import { string, fun } from 'lively.lang';
 import { parse, query, transform, nodes, stringify } from 'lively.ast';
 import { rewriteToCaptureTopLevelVariables, rewriteToRegisterModuleToCaptureSetters } from '../capturing.js';
 import { classToFunctionTransform } from 'lively.classes';
-import { defaultClassToFunctionConverterName } from 'lively.vm';
-import { objectSpreadTransform } from 'lively.source-transform';
-import lint from 'lively.ide/js/linter.js';
 import { livelyPreTranspile, livelyPostTranspile } from '../babel/plugin.js';
 import { classToFunctionTransformBabel } from 'lively.classes/class-to-function-transform.js';
 
 function _testVarTfm (descr, options, code, expected, only) {
   // options = 'var y, z = foo + bar; baz.foo(z, 3)';
-  // code = '_rec.y = _rec.y || undefined;\n_rec.z = _rec.foo + _rec.bar;\n_rec.baz.foo(_rec.z, 3);'
+  // code = '_rec.y = Object.prototype.hasOwnProperty.call(_rec, "y") ? _rec.y : undefined;\n_rec.z = _rec.foo + _rec.bar;\n_rec.baz.foo(_rec.z, 3);'
   if (typeof options === 'string') {
     only = expected;
     expected = code;
@@ -99,7 +96,7 @@ function classTemplateDecl (className, superClassName, methodString, classMethod
 describe('ast.capturing', function () {
   testVarTfm('transformTopLevelVarDeclsForCapturing',
     'var y, z = foo + bar; baz.foo(z, 3)',
-    '_rec.y = _rec.y || undefined;\n_rec.z = _rec.foo + _rec.bar;\n_rec.baz.foo(_rec.z, 3);');
+    '_rec.y = Object.prototype.hasOwnProperty.call(_rec, "y") ? _rec.y : undefined;\n_rec.z = _rec.foo + _rec.bar;\n_rec.baz.foo(_rec.z, 3);');
 
   testVarTfm('transformTopLevelVarAndFuncDeclsForCapturing',
     'var z = 3, y = 4; function foo() { var x = 5; }',
@@ -725,7 +722,7 @@ export { foo1, bar2 };`);
       testVarTfm('named',
         opts,
         'let name1, name2; export { name1, name2 };',
-        '_rec.name1 = _rec.name1 || undefined;\n_rec.name2 = _rec.name2 || undefined;\n_moduleExport("name1", _rec.name1);\n_moduleExport("name2", _rec.name2);');
+        '_rec.name1 = Object.prototype.hasOwnProperty.call(_rec, "name1") ? _rec.name1 : undefined;\n_rec.name2 = Object.prototype.hasOwnProperty.call(_rec, "name2") ? _rec.name2 : undefined;\n_moduleExport("name1", _rec.name1);\n_moduleExport("name2", _rec.name2);');
 
       testVarTfm('var decl, double',
         opts,
@@ -745,7 +742,7 @@ export { foo1, bar2 };`);
       testVarTfm('name aliased',
         opts,
         'let name1; export { name1 as default };',
-        '_rec.name1 = _rec.name1 || undefined;\n_moduleExport("default", _rec.name1);');
+        '_rec.name1 = Object.prototype.hasOwnProperty.call(_rec, "name1") ? _rec.name1 : undefined;\n_moduleExport("default", _rec.name1);');
 
       testVarTfm('* from',
         opts,
@@ -799,6 +796,17 @@ describe('declarations', () => {
     '_rec.x = _define("x", "assignment", 23, _rec);'
   );
 
+  testVarTfm(
+    'property assignments stay unwrapped when undefined is a global',
+    { ...opts, dontTransform: ['undefined'] },
+    'var object = {}; object.value = undefined; object["other"] = 7; x = 23;',
+    `_rec.object = _define("object", "var", {}, _rec);
+var object = _rec.object;
+_rec.object.value = undefined;
+_rec.object["other"] = 7;
+_rec.x = _define("x", "assignment", 23, _rec);`
+  );
+
   testVarTfm('define call works for exports 1', opts, 'export var x = 23;',
     'export var x = 23;\n_rec.x = _define("x", "assignment", x, _rec);');
 
@@ -819,9 +827,9 @@ describe('declarations', () => {
   testVarTfm(
     'define call works for exports 4',
     opts,
-    'var x, y; x = 23; export { x, y };', `_rec.x = _define("x", "var", _rec.x || undefined, _rec);
+    'var x, y; x = 23; export { x, y };', `_rec.x = _define("x", "var", Object.prototype.hasOwnProperty.call(_rec, "x") ? _rec.x : undefined, _rec);
 var x = _rec.x;
-_rec.y = _define("y", "var", _rec.y || undefined, _rec);
+_rec.y = _define("y", "var", Object.prototype.hasOwnProperty.call(_rec, "y") ? _rec.y : undefined, _rec);
 var y = _rec.y;
 _rec.x = _define("x", "assignment", 23, _rec);
 export { x, y };`);

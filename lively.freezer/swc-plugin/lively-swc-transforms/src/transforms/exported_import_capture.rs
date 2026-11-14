@@ -1,338 +1,229 @@
+use crate::utils::{ast_helpers::*, scope_analyzer::ScopeAnalyzer};
+use std::collections::HashSet;
 use swc_common::{SyntaxContext, DUMMY_SP};
 use swc_ecma_ast::*;
-use swc_ecma_visit::{VisitMut, VisitMutWith};
+use swc_ecma_visit::{VisitMut, VisitWith};
 
-use crate::utils::ast_helpers::*;
-
-/// Post-scope-capture pass that inserts recorder captures for exported imports.
-///
-/// This is the Rust translation of Babel's `insertCapturesForExportedImports`.
-/// It runs AFTER `ScopeCapturingTransform` and only for resurrection builds.
-///
-/// For rollup-based resurrection builds, module boundaries are erased, so
-/// information about immediate exports must be captured into the recorder
-/// so that deserialization can reconstruct the module's export map.
-///
-/// Transforms:
-/// - `export { x as a } from '...'`
-///   → `import { x as a } from '...'; export { a }; __rec.a = a;`
-///   (for default exports, also adds `__rec.x = a;`)
-///
-/// - `export const x = ...`
-///   → keeps original, adds `__rec.x = x;`
-///
-/// - `export { x, y as z }` (no source)
-///   → keeps original, adds `__rec.x = x; __rec.y = y;` (local names as keys)
-///
-/// - `export * from '...'`
-///   → keeps original, adds `import * as __captured_N__ from '...'; Object.assign(__rec, __captured_N__);`
+/// Supplemental captures after scope rewriting; mirrors captureExportedImports
+/// in babel/transforms/exported-import-capture.js and the ESTree freezer pass.
 pub struct ExportedImportCapturePass {
-    /// Capture object name, e.g. "__varRecorder__"
     capture_obj: String,
-    /// Counter for generating unique `__captured_N__` identifiers
     capture_id: usize,
+    used_names: HashSet<String>,
 }
-
 impl ExportedImportCapturePass {
     pub fn new(capture_obj: String) -> Self {
         Self {
             capture_obj,
             capture_id: 0,
+            used_names: HashSet::new(),
         }
     }
-
-    /// Create `__rec.name = value` assignment statement
-    fn create_capture_assign(&self, key: &str, value_ident: &str) -> ModuleItem {
-        let member = create_member_expr(create_ident_expr(&self.capture_obj), key);
-        let assign = create_assign_expr(
-            expr_to_assign_target(member),
-            Expr::Ident(Ident::new(
-                value_ident.into(),
-                DUMMY_SP,
-                SyntaxContext::empty(),
-            )),
-        );
+    fn unique_name(&mut self, hint: &str) -> String {
+        let mut name = hint.to_owned();
+        let mut suffix = 1;
+        while self.used_names.contains(&name) {
+            suffix += 1;
+            let base = name
+                .rfind('_')
+                .filter(|i| {
+                    !name[i + 1..].is_empty() && name[i + 1..].chars().all(|c| c.is_ascii_digit())
+                })
+                .map_or(name.as_str(), |i| &name[..i]);
+            name = format!("{base}_{suffix}");
+        }
+        self.used_names.insert(name.clone());
+        name
+    }
+    fn name(name: &ModuleExportName) -> String {
+        match name {
+            ModuleExportName::Ident(value) => value.sym.to_string(),
+            ModuleExportName::Str(value) => value.value.to_string(),
+        }
+    }
+    fn capture(&self, key: &str, value: &str) -> ModuleItem {
+        let recorder = create_ident_expr(&self.capture_obj);
+        let member = if Ident::verify_symbol(key).is_ok() || key == "default" {
+            create_member_expr(recorder, key)
+        } else {
+            create_computed_member_expr(recorder, create_string_expr(key))
+        };
         ModuleItem::Stmt(Stmt::Expr(ExprStmt {
             span: DUMMY_SP,
-            expr: Box::new(assign),
+            expr: Box::new(create_assign_expr(
+                expr_to_assign_target(member),
+                create_ident_expr(value),
+            )),
         }))
     }
-
-    /// Process a single module item, returning one or more replacement items.
+    fn named_from_source(&mut self, export: NamedExport) -> Vec<ModuleItem> {
+        let mut imports = vec![];
+        let mut exports = vec![];
+        let mut captures = vec![];
+        for specifier in &export.specifiers {
+            let (original, exported) = match specifier {
+                ExportSpecifier::Named(value) => (
+                    Some(value.orig.clone()),
+                    value.exported.clone().unwrap_or_else(|| value.orig.clone()),
+                ),
+                ExportSpecifier::Namespace(value) => (None, value.name.clone()),
+                _ => continue,
+            };
+            let exported_name = Self::name(&exported);
+            let original_name = original.as_ref().map(Self::name);
+            let hint = if exported_name == "default" {
+                original_name
+                    .as_deref()
+                    .filter(|name| *name != "default")
+                    .unwrap_or("_default")
+            } else {
+                exported_name.as_str()
+            };
+            let local = self.unique_name(if Ident::verify_symbol(hint).is_ok() {
+                hint
+            } else {
+                "__reexport__"
+            });
+            let identifier = Ident::new(local.clone().into(), DUMMY_SP, SyntaxContext::empty());
+            if let Some(original) = original {
+                imports.push(ImportSpecifier::Named(ImportNamedSpecifier {
+                    span: DUMMY_SP,
+                    local: identifier.clone(),
+                    imported: if matches!(&original,ModuleExportName::Ident(id) if id.sym.as_ref()==local) { None } else { Some(original) },
+                    is_type_only: false,
+                }));
+            } else {
+                imports.push(ImportSpecifier::Namespace(ImportStarAsSpecifier {
+                    span: DUMMY_SP,
+                    local: identifier.clone(),
+                }));
+            }
+            exports.push(ExportSpecifier::Named(ExportNamedSpecifier {
+                span: DUMMY_SP,
+                orig: ModuleExportName::Ident(identifier),
+                exported: if matches!(&exported,ModuleExportName::Ident(id) if id.sym.as_ref()==local) { None } else { Some(exported) },
+                is_type_only: false,
+            }));
+            captures.push(self.capture(&exported_name, &local));
+            if let Some(original) = original_name {
+                if original == "default" && original != exported_name {
+                    captures.push(self.capture("default", &local));
+                } else if exported_name == "default" && original != exported_name {
+                    captures.push(self.capture(&original, &local));
+                }
+            }
+        }
+        let mut result = vec![
+            ModuleItem::ModuleDecl(ModuleDecl::Import(ImportDecl {
+                span: DUMMY_SP,
+                specifiers: imports,
+                src: export.src.unwrap(),
+                type_only: false,
+                with: export.with,
+                phase: Default::default(),
+            })),
+            ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(NamedExport {
+                span: DUMMY_SP,
+                specifiers: exports,
+                src: None,
+                type_only: false,
+                with: None,
+            })),
+        ];
+        result.extend(captures);
+        result
+    }
     fn transform_item(&mut self, item: ModuleItem) -> Vec<ModuleItem> {
         match item {
-            ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(export)) if export.src.is_some() => {
-                // Case 1: `export { x as a } from '...'`
-                self.transform_export_named_with_source(&export)
+            ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(export))
+                if export.src.is_some() && !export.type_only =>
+            {
+                self.named_from_source(export)
             }
             ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(export))
-                if !export.specifiers.is_empty()
-                    && export
-                        .specifiers
-                        .iter()
-                        .any(|s| matches!(s, ExportSpecifier::Named(_))) =>
+                if export.src.is_none() && !export.type_only =>
             {
-                // Case 3: `export { x, y as z }` (no source, no declaration)
-                let original = ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(export.clone()));
-                self.transform_export_named_no_source(&export, original)
+                let mut captures = vec![];
+                for specifier in &export.specifiers {
+                    if let ExportSpecifier::Named(value) = specifier {
+                        let local = Self::name(&value.orig);
+                        let exported = value
+                            .exported
+                            .as_ref()
+                            .map(Self::name)
+                            .unwrap_or_else(|| local.clone());
+                        if exported == "default" {
+                            captures.push(self.capture("default", &local));
+                        }
+                        if local != "default" {
+                            captures.push(self.capture(&local, &local));
+                        }
+                    }
+                }
+                let mut result = vec![ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(export))];
+                result.extend(captures);
+                result
             }
-            ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(export_decl)) => {
-                // Case 2: `export const x = ...` or `export function f() {}`
-                let original = ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(export_decl.clone()));
-                self.transform_export_decl(&export_decl, original)
+            ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(export)) => {
+                let mut captures = vec![];
+                if let Decl::Var(declaration) = &export.decl {
+                    for declarator in &declaration.decls {
+                        for (name, _) in extract_idents_from_pat(&declarator.name) {
+                            captures.push(self.capture(&name, &name));
+                        }
+                    }
+                }
+                let mut result = vec![ModuleItem::ModuleDecl(ModuleDecl::ExportDecl(export))];
+                result.extend(captures);
+                result
             }
-            ModuleItem::ModuleDecl(ModuleDecl::ExportAll(export_all)) => {
-                // Case 4: `export * from '...'`
-                let original = ModuleItem::ModuleDecl(ModuleDecl::ExportAll(export_all.clone()));
-                self.transform_export_all(&export_all, original)
+            ModuleItem::ModuleDecl(ModuleDecl::ExportAll(export)) if !export.type_only => {
+                self.capture_id += 1;
+                let name = self.unique_name(&format!("__captured{}__", self.capture_id));
+                let import = ModuleItem::ModuleDecl(ModuleDecl::Import(ImportDecl {
+                    span: DUMMY_SP,
+                    specifiers: vec![ImportSpecifier::Namespace(ImportStarAsSpecifier {
+                        span: DUMMY_SP,
+                        local: Ident::new(name.clone().into(), DUMMY_SP, SyntaxContext::empty()),
+                    })],
+                    src: export.src.clone(),
+                    type_only: false,
+                    with: export.with.clone(),
+                    phase: Default::default(),
+                }));
+                let capture = ModuleItem::Stmt(Stmt::Expr(ExprStmt {
+                    span: DUMMY_SP,
+                    expr: Box::new(create_call_expr(
+                        create_member_expr(create_ident_expr("Object"), "assign"),
+                        vec![
+                            to_expr_or_spread(create_ident_expr(&self.capture_obj)),
+                            to_expr_or_spread(create_ident_expr(&name)),
+                        ],
+                    )),
+                }));
+                vec![
+                    ModuleItem::ModuleDecl(ModuleDecl::ExportAll(export)),
+                    import,
+                    capture,
+                ]
             }
             other => vec![other],
         }
     }
-
-    /// `export { x as a } from '...'`
-    /// → `import { x as a } from '...'; export { a }; __rec.a = a;`
-    fn transform_export_named_with_source(&self, export: &NamedExport) -> Vec<ModuleItem> {
-        let src = export.src.as_ref().unwrap();
-        let mut import_specs = Vec::new();
-        let mut export_specs = Vec::new();
-        let mut captures = Vec::new();
-
-        for spec in &export.specifiers {
-            if let ExportSpecifier::Named(named) = spec {
-                let orig_name = match &named.orig {
-                    ModuleExportName::Ident(id) => id.sym.to_string(),
-                    ModuleExportName::Str(s) => s.value.to_string(),
-                };
-                let exported_name = match &named.exported {
-                    Some(ModuleExportName::Ident(id)) => id.sym.to_string(),
-                    Some(ModuleExportName::Str(s)) => s.value.to_string(),
-                    None => orig_name.clone(),
-                };
-
-                // For `default` exports, use a safe local binding name since
-                // `default` is a reserved keyword and can't be a local ident.
-                // e.g. `export { a as default } from 'mod'`
-                //    → `import { a } from 'mod'; export { a as default }; __rec.default = a;`
-                // e.g. `export { default } from 'mod'`
-                //    → `import { default as _default } from 'mod'; export { _default as default }; __rec.default = _default;`
-                let local_name = if exported_name == "default" {
-                    if orig_name == "default" {
-                        "_default".to_string()
-                    } else {
-                        orig_name.clone()
-                    }
-                } else {
-                    exported_name.clone()
-                };
-
-                // import { x as local } from '...'
-                import_specs.push(ImportSpecifier::Named(ImportNamedSpecifier {
-                    span: DUMMY_SP,
-                    local: Ident::new(local_name.as_str().into(), DUMMY_SP, SyntaxContext::empty()),
-                    imported: if orig_name == local_name {
-                        None
-                    } else {
-                        Some(ModuleExportName::Ident(Ident::new(
-                            orig_name.as_str().into(),
-                            DUMMY_SP,
-                            SyntaxContext::empty(),
-                        )))
-                    },
-                    is_type_only: false,
-                }));
-
-                // export { local as exported }
-                export_specs.push(ExportSpecifier::Named(ExportNamedSpecifier {
-                    span: DUMMY_SP,
-                    orig: ModuleExportName::Ident(Ident::new(
-                        local_name.as_str().into(),
-                        DUMMY_SP,
-                        SyntaxContext::empty(),
-                    )),
-                    exported: if local_name == exported_name {
-                        None
-                    } else {
-                        Some(ModuleExportName::Ident(Ident::new(
-                            exported_name.as_str().into(),
-                            DUMMY_SP,
-                            SyntaxContext::empty(),
-                        )))
-                    },
-                    is_type_only: false,
-                }));
-
-                // __rec.exported = local (e.g. __rec.default = a, or __rec.a = a)
-                captures.push(self.create_capture_assign(&exported_name, &local_name));
-
-                // For default exports: also __rec.importName = local
-                if exported_name == "default" && orig_name != exported_name {
-                    captures.push(self.create_capture_assign(&orig_name, &local_name));
-                }
-            }
-        }
-
-        let mut items = Vec::new();
-
-        // import { x as a } from '...'
-        items.push(ModuleItem::ModuleDecl(ModuleDecl::Import(ImportDecl {
-            span: DUMMY_SP,
-            specifiers: import_specs,
-            src: Box::new(Str {
-                span: DUMMY_SP,
-                value: src.value.clone(),
-                raw: None,
-            }),
-            type_only: false,
-            with: None,
-            phase: Default::default(),
-        })));
-
-        // export { a }
-        items.push(ModuleItem::ModuleDecl(ModuleDecl::ExportNamed(
-            NamedExport {
-                span: DUMMY_SP,
-                specifiers: export_specs,
-                src: None,
-                type_only: false,
-                with: None,
-            },
-        )));
-
-        // __rec.a = a; ...
-        items.extend(captures);
-
-        items
-    }
-
-    /// `export { x, y as z }` (no source)
-    /// → keeps original, adds `__rec.x = x; __rec.y = y;` (local names as recorder keys)
-    fn transform_export_named_no_source(
-        &self,
-        export: &NamedExport,
-        original: ModuleItem,
-    ) -> Vec<ModuleItem> {
-        let mut items = vec![original];
-
-        for spec in &export.specifiers {
-            if let ExportSpecifier::Named(named) = spec {
-                let local_name = match &named.orig {
-                    ModuleExportName::Ident(id) => id.sym.to_string(),
-                    ModuleExportName::Str(s) => s.value.to_string(),
-                };
-                let exported_name = match &named.exported {
-                    Some(ModuleExportName::Ident(id)) => id.sym.to_string(),
-                    Some(ModuleExportName::Str(s)) => s.value.to_string(),
-                    None => local_name.clone(),
-                };
-
-                if exported_name == "default" {
-                    // __rec.default = local
-                    items.push(self.create_capture_assign(&exported_name, &local_name));
-                    // also __rec.local = local if local != exported
-                    if local_name != exported_name {
-                        items.push(self.create_capture_assign(&local_name, &local_name));
-                    }
-                } else {
-                    // __rec.local = local (Babel line 703 uses `imp` = local name)
-                    items.push(self.create_capture_assign(&local_name, &local_name));
-                }
-            }
-        }
-
-        items
-    }
-
-    /// `export const x = ...` / `export function f() {}` / `export class C {}`
-    /// → keeps original, adds `__rec.x = x;` for each declared name
-    fn transform_export_decl(
-        &self,
-        export_decl: &ExportDecl,
-        original: ModuleItem,
-    ) -> Vec<ModuleItem> {
-        let mut items = vec![original];
-
-        match &export_decl.decl {
-            Decl::Var(var_decl) => {
-                for decl in &var_decl.decls {
-                    let ids = extract_idents_from_pat(&decl.name);
-                    for (sym, _ctxt) in ids {
-                        let name = sym.to_string();
-                        items.push(self.create_capture_assign(&name, &name));
-                    }
-                }
-            }
-            Decl::Fn(_) => {
-                // Function declarations are already captured by the scope capture's
-                // hoisted function captures (putFunctionDeclsInFront equivalent).
-                // Adding a capture here would duplicate it.
-            }
-            Decl::Class(_) => {
-                // Class declarations are already captured by the scope capture's
-                // transform_module_item for ExportDecl. No duplicate needed.
-            }
-            _ => {}
-        }
-
-        items
-    }
-
-    /// `export * from '...'`
-    /// → keeps original, adds `import * as __captured_N__ from '...'; Object.assign(__rec, __captured_N__);`
-    fn transform_export_all(
-        &mut self,
-        export_all: &ExportAll,
-        original: ModuleItem,
-    ) -> Vec<ModuleItem> {
-        self.capture_id += 1;
-        let tmp_name = format!("__captured{}__", self.capture_id);
-
-        let import_decl = ModuleItem::ModuleDecl(ModuleDecl::Import(ImportDecl {
-            span: DUMMY_SP,
-            specifiers: vec![ImportSpecifier::Namespace(ImportStarAsSpecifier {
-                span: DUMMY_SP,
-                local: Ident::new(tmp_name.as_str().into(), DUMMY_SP, SyntaxContext::empty()),
-            })],
-            src: Box::new(Str {
-                span: DUMMY_SP,
-                value: export_all.src.value.clone(),
-                raw: None,
-            }),
-            type_only: false,
-            with: None,
-            phase: Default::default(),
-        }));
-
-        let object_assign = ModuleItem::Stmt(Stmt::Expr(ExprStmt {
-            span: DUMMY_SP,
-            expr: Box::new(create_call_expr(
-                create_member_expr(create_ident_expr("Object"), "assign"),
-                vec![
-                    to_expr_or_spread(create_ident_expr(&self.capture_obj)),
-                    to_expr_or_spread(create_ident_expr(&tmp_name)),
-                ],
-            )),
-        }));
-
-        vec![original, import_decl, object_assign]
-    }
 }
-
 impl VisitMut for ExportedImportCapturePass {
     fn visit_mut_module(&mut self, module: &mut Module) {
-        // Process each module body item, possibly expanding into multiple items.
-        let old_body = std::mem::take(&mut module.body);
-        let mut new_body = Vec::with_capacity(old_body.len());
-
-        for item in old_body {
-            let transformed = self.transform_item(item);
-            new_body.extend(transformed);
-        }
-
-        module.body = new_body;
-
-        // Continue visiting children (in case of nested modules, though unlikely)
-        module.visit_mut_children_with(self);
+        let mut bindings = ScopeAnalyzer::new();
+        module.visit_with(&mut bindings);
+        self.used_names = bindings
+            .top_level_vars
+            .into_iter()
+            .map(|(name, _)| name.to_string())
+            .collect();
+        module.body = std::mem::take(&mut module.body)
+            .into_iter()
+            .flat_map(|item| self.transform_item(item))
+            .collect();
     }
 }
 

@@ -44,7 +44,7 @@ export function getAncestryPath (path) {
 // code generation helpers
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-function varDecl (name, init = null, kind = 'var') {
+export function varDecl (name, init = null, kind = 'var') {
   if (typeof name === 'string') name = t.Identifier(name);
   return t.VariableDeclaration(kind, [t.VariableDeclarator(name, init)]);
 }
@@ -122,6 +122,7 @@ function transformArrayPattern (pattern, transformState) {
 
   for (let i = 0; i < pattern.elements.length; i++) {
     const el = pattern.elements[i];
+    if (!el) continue;
 
     // like [a]
     if (el.type === 'Identifier') {
@@ -249,9 +250,11 @@ export function transformPattern (pattern, transformState) {
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 export function shouldDeclBeCaptured (decl, options) {
-  return options.excludeDecls.indexOf(decl.id.name) === -1 &&
-    options.excludeDecls.indexOf(decl.id) === -1 &&
-    (!options.includeDecls || options.includeDecls.indexOf(decl.id.name) > -1);
+  if (options.excludeDecls.includes(decl.id)) return false;
+  return helpers.declIds([decl.id]).some(binding =>
+    !options.excludeDecls.includes(binding.name) &&
+    !options.excludeDecls.includes(binding) &&
+    (!options.includeDecls || options.includeDecls.includes(binding.name)));
 }
 
 export function shouldRefBeCaptured (ref, options) {

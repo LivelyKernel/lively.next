@@ -9,6 +9,7 @@ use swc_ecma_visit::{VisitMut, VisitMutWith};
 use wasm_bindgen::prelude::*;
 
 use lively_swc_transforms::config::LivelyTransformConfig;
+use lively_swc_transforms::transforms::SystemJsTransform;
 use lively_swc_transforms::utils::ast_helpers::*;
 use lively_swc_transforms::LivelyTransformVisitor;
 
@@ -60,11 +61,13 @@ fn transform_inner(source: &str, mut config: LivelyTransformConfig) -> Result<St
     let module_id = config.module_id.clone();
     let declaration_wrapper = config.declaration_wrapper.clone();
     let excluded = config.exclude.clone();
+    let capture_imports = config.capture_imports;
+    let source_accessor_name = config.source_accessor_name.clone();
     let has_scope_capture = config.enable_scope_capture;
     // Resolver and hygiene now keep mixed default/named imports distinct.
     // Preserve their live bindings instead of making a default-import snapshot.
     config.rewrite_mixed_default_imports = false;
-    let mut visitor = LivelyTransformVisitor::new(config);
+    let mut visitor = LivelyTransformVisitor::new(config).with_source_map(cm.clone());
     program.visit_mut_with(&mut visitor);
 
     normalize_imported_exports(&mut program);
@@ -98,19 +101,19 @@ fn transform_inner(source: &str, mut config: LivelyTransformConfig) -> Result<St
     remove_directives(&mut program);
     fix_async_execute(&mut program, has_top_level_await);
     if has_scope_capture {
-        hoist_recorder_init(&mut program, &capture_obj);
         let recorder = Ident::new(
             capture_obj.clone().into(),
             DUMMY_SP,
             SyntaxContext::empty().apply_mark(top_level_mark),
         );
-        rewrite_setters(
-            &mut program,
-            &recorder,
-            declaration_wrapper.as_deref(),
-            &excluded,
-            &renamed_exports,
-        );
+        let mut register_transform =
+            SystemJsTransform::new(capture_obj.clone(), declaration_wrapper, excluded)
+                .with_module_id(module_id.clone())
+                .with_source_accessor_name(source_accessor_name)
+                .with_capture_imports(capture_imports)
+                .with_recorder_ident(recorder)
+                .with_renamed_exports(renamed_exports);
+        program.visit_mut_with(&mut register_transform);
         insert_evaluation_hooks(&mut program, &module_id);
     }
     // Note: we intentionally do NOT insert early _export({name: void 0}) calls
@@ -540,406 +543,6 @@ fn insert_evaluation_hooks(program: &mut Program, module_id: &str) {
     }
 }
 
-/// Move `__lvVarRecorder = System.get("@lively-env").moduleEnv(...).recorder`
-/// from execute() to the factory body.  This matches what Babel's
-/// livelyPostTranspile does (lines 1307-1310 of babel/plugin.js).
-fn hoist_recorder_init(program: &mut Program, capture_obj: &str) {
-    for stmt in get_stmts_mut(program) {
-        let call = match stmt {
-            Stmt::Expr(ExprStmt { expr, .. }) => match &mut **expr {
-                Expr::Call(c) => c,
-                _ => continue,
-            },
-            _ => continue,
-        };
-
-        if call.args.len() < 2 {
-            continue;
-        }
-        let factory = match &mut *call.args[1].expr {
-            Expr::Fn(f) => f,
-            _ => continue,
-        };
-        let body = match &mut factory.function.body {
-            Some(b) => b,
-            None => continue,
-        };
-
-        // Find the return statement to get execute function
-        let return_idx = body.stmts.iter().position(|s| matches!(s, Stmt::Return(_)));
-        let return_idx = match return_idx {
-            Some(i) => i,
-            None => continue,
-        };
-
-        let execute_body = {
-            let return_stmt = &body.stmts[return_idx];
-            let ret_arg = match return_stmt {
-                Stmt::Return(ReturnStmt { arg: Some(a), .. }) => a,
-                _ => continue,
-            };
-            let obj = match &**ret_arg {
-                Expr::Object(o) => o,
-                _ => continue,
-            };
-            obj.props.iter().find_map(|prop| {
-                if let PropOrSpread::Prop(p) = prop {
-                    if let Prop::KeyValue(kv) = &**p {
-                        if let PropName::Ident(id) = &kv.key {
-                            if id.sym.as_ref() == "execute" {
-                                // Get the function body
-                                if let Expr::Fn(f) = &*kv.value {
-                                    return f.function.body.as_ref().map(|b| b.stmts.clone());
-                                }
-                            }
-                        }
-                    }
-                }
-                None
-            })
-        };
-
-        let execute_stmts = match execute_body {
-            Some(s) => s,
-            None => continue,
-        };
-
-        // Find the __lvVarRecorder = ... assignment in execute()
-        // Pattern: __lvVarRecorder = System.get("@lively-env").moduleEnv(...).recorder
-        // Note: SWC's system_js may combine assignments into comma expressions (Seq),
-        // so we also check the first expression in a SeqExpr.
-        let is_recorder_assign = |expr: &Expr| -> bool {
-            if let Expr::Assign(AssignExpr { left, .. }) = expr {
-                if let Some(SimpleAssignTarget::Ident(id)) = left.as_simple() {
-                    return id.sym.as_ref() == capture_obj;
-                }
-            }
-            false
-        };
-        let recorder_idx = execute_stmts.iter().position(|s| {
-            if let Stmt::Expr(ExprStmt { expr, .. }) = s {
-                if is_recorder_assign(expr) {
-                    return true;
-                }
-                // Also check first expr in a comma expression
-                if let Expr::Seq(seq) = &**expr {
-                    if let Some(first) = seq.exprs.first() {
-                        return is_recorder_assign(first);
-                    }
-                }
-            }
-            false
-        });
-
-        let recorder_idx = match recorder_idx {
-            Some(i) => i,
-            None => continue,
-        };
-
-        // Extract the recorder init. It may be a standalone Assign or the first
-        // expr in a SeqExpr (comma expression).
-        let orig_stmt = &execute_stmts[recorder_idx];
-        let recorder_stmt = if let Stmt::Expr(ExprStmt { expr, .. }) = orig_stmt {
-            if let Expr::Seq(seq) = &**expr {
-                // Extract first expression as standalone statement
-                if let Some(first) = seq.exprs.first() {
-                    Stmt::Expr(ExprStmt {
-                        span: DUMMY_SP,
-                        expr: Box::new((**first).clone()),
-                    })
-                } else {
-                    orig_stmt.clone()
-                }
-            } else {
-                orig_stmt.clone()
-            }
-        } else {
-            orig_stmt.clone()
-        };
-
-        // Now mutably access execute to remove/modify the statement
-        let return_stmt = &mut body.stmts[return_idx];
-        let ret_arg = match return_stmt {
-            Stmt::Return(ReturnStmt { arg: Some(a), .. }) => a,
-            _ => continue,
-        };
-        let obj = match &mut **ret_arg {
-            Expr::Object(o) => o,
-            _ => continue,
-        };
-        for prop in &mut obj.props {
-            if let PropOrSpread::Prop(p) = prop {
-                if let Prop::KeyValue(kv) = &mut **p {
-                    if let PropName::Ident(id) = &kv.key {
-                        if id.sym.as_ref() == "execute" {
-                            if let Expr::Fn(f) = &mut *kv.value {
-                                if let Some(b) = &mut f.function.body {
-                                    // If it was a SeqExpr, remove the first sub-expression
-                                    // (keep the rest as a SeqExpr or single expr)
-                                    let stmt = &mut b.stmts[recorder_idx];
-                                    if let Stmt::Expr(ExprStmt { expr, .. }) = stmt {
-                                        if let Expr::Seq(seq) = &mut **expr {
-                                            if seq.exprs.len() > 2 {
-                                                seq.exprs.remove(0);
-                                            } else if seq.exprs.len() == 2 {
-                                                // Convert from Seq([a, b]) to just b
-                                                let remaining = seq.exprs.remove(1);
-                                                *expr = remaining;
-                                            } else {
-                                                b.stmts.remove(recorder_idx);
-                                            }
-                                        } else {
-                                            b.stmts.remove(recorder_idx);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Insert recorder init in factory body, before the return statement
-        body.stmts.insert(return_idx, recorder_stmt);
-
-        break;
-    }
-}
-
-/// Rewrite setters to capture imports to __lvVarRecorder.
-/// Matches Babel's livelyPostTranspile (lines 1267-1296 of babel/plugin.js).
-///
-/// Input setter:  `function(_dep) { X = _dep.X; }`
-/// Output setter: `function(_dep = {}) { __lvVarRecorder.X = wrapper("X", "var", X = _dep.X, __lvVarRecorder); }`
-///
-/// Without wrapper: `function(_dep = {}) { __lvVarRecorder.X = X = _dep.X; }`
-fn rewrite_setters(
-    program: &mut Program,
-    capture_obj: &Ident,
-    declaration_wrapper: Option<&str>,
-    excluded: &[String],
-    renamed_exports: &std::collections::HashMap<String, String>,
-) {
-    for stmt in get_stmts_mut(program) {
-        let call = match stmt {
-            Stmt::Expr(ExprStmt { expr, .. }) => match &mut **expr {
-                Expr::Call(c) => c,
-                _ => continue,
-            },
-            _ => continue,
-        };
-
-        if call.args.len() < 2 {
-            continue;
-        }
-        let factory = match &mut *call.args[1].expr {
-            Expr::Fn(f) => f,
-            _ => continue,
-        };
-        let body = match &mut factory.function.body {
-            Some(b) => b,
-            None => continue,
-        };
-
-        // Find the return statement
-        let return_stmt = body.stmts.iter_mut().rev().find_map(|s| {
-            if let Stmt::Return(ret) = s {
-                Some(ret)
-            } else {
-                None
-            }
-        });
-        let return_stmt = match return_stmt {
-            Some(r) => r,
-            None => continue,
-        };
-        let return_obj = match &mut return_stmt.arg {
-            Some(a) => match &mut **a {
-                Expr::Object(o) => o,
-                _ => continue,
-            },
-            None => continue,
-        };
-
-        // Find the setters property
-        let setters_prop = return_obj.props.iter_mut().find_map(|prop| {
-            if let PropOrSpread::Prop(p) = prop {
-                if let Prop::KeyValue(kv) = &mut **p {
-                    if let PropName::Ident(id) = &kv.key {
-                        if id.sym.as_ref() == "setters" {
-                            return Some(&mut kv.value);
-                        }
-                    }
-                }
-            }
-            None
-        });
-
-        let setters_arr = match setters_prop {
-            Some(v) => match &mut **v {
-                Expr::Array(a) => a,
-                _ => continue,
-            },
-            None => continue,
-        };
-
-        // Rewrite each setter function
-        for elem in &mut setters_arr.elems {
-            let setter_fn = match elem {
-                Some(ExprOrSpread { expr, .. }) => match &mut **expr {
-                    Expr::Fn(f) => f,
-                    _ => continue,
-                },
-                _ => continue,
-            };
-
-            // Add default parameter: _dep → _dep = {}
-            if let Some(param) = setter_fn.function.params.first_mut() {
-                if let Pat::Ident(id) = &param.pat {
-                    let id_clone = id.clone();
-                    param.pat = Pat::Assign(AssignPat {
-                        span: DUMMY_SP,
-                        left: Box::new(Pat::Ident(id_clone)),
-                        right: Box::new(Expr::Object(ObjectLit {
-                            span: DUMMY_SP,
-                            props: vec![],
-                        })),
-                    });
-                }
-            }
-
-            // Rewrite each statement in the setter body
-            let setter_body = match &mut setter_fn.function.body {
-                Some(b) => b,
-                None => continue,
-            };
-
-            let new_stmts: Vec<Stmt> = setter_body
-                .stmts
-                .drain(..)
-                .map(|s| {
-                    // Match: X = _dep.X  (ExpressionStatement with AssignmentExpression)
-                    let expr_stmt = match &s {
-                        Stmt::Expr(es) => es,
-                        _ => return s,
-                    };
-                    let assign = match &*expr_stmt.expr {
-                        Expr::Assign(a) => a,
-                        _ => return s,
-                    };
-                    // LHS must be a simple identifier
-                    let binding = match &assign.left {
-                        AssignTarget::Simple(SimpleAssignTarget::Ident(id)) => id.id.clone(),
-                        _ => return s,
-                    };
-                    let lhs_name = binding.sym.to_string();
-
-                    // Skip excluded names
-                    if excluded.contains(&lhs_name) {
-                        return s;
-                    }
-
-                    // Keep the original assignment (always runs): X = _dep.X
-                    let orig_stmt = s.clone();
-
-                    // Build the recorder capture (guarded):
-                    // if (typeof __rec !== "undefined") __rec.X = [defVar(..., X, __rec) | X]
-                    let value_expr = Expr::Ident(binding);
-                    let rhs = if let Some(wrapper) = declaration_wrapper {
-                        let mut args = vec![
-                            to_expr_or_spread(create_string_expr(&lhs_name)),
-                            to_expr_or_spread(create_string_expr("var")),
-                            to_expr_or_spread(value_expr),
-                            to_expr_or_spread(Expr::Ident(capture_obj.clone())),
-                        ];
-                        if let Some(local) = renamed_exports.get(&lhs_name) {
-                            args.push(to_expr_or_spread(create_object_lit(vec![create_prop(
-                                "exportConflict",
-                                create_string_expr(local),
-                            )])));
-                        }
-                        Expr::Call(CallExpr {
-                            span: DUMMY_SP,
-                            ctxt: Default::default(),
-                            callee: Callee::Expr(Box::new(Expr::Member(MemberExpr {
-                                span: DUMMY_SP,
-                                obj: Box::new(Expr::Ident(capture_obj.clone())),
-                                prop: MemberProp::Computed(ComputedPropName {
-                                    span: DUMMY_SP,
-                                    expr: Box::new(Expr::Lit(Lit::Str(Str {
-                                        span: DUMMY_SP,
-                                        value: wrapper.into(),
-                                        raw: None,
-                                    }))),
-                                }),
-                            }))),
-                            args,
-                            type_args: None,
-                        })
-                    } else {
-                        value_expr
-                    };
-
-                    let capture_assign = Expr::Assign(AssignExpr {
-                        span: DUMMY_SP,
-                        op: AssignOp::Assign,
-                        left: AssignTarget::Simple(SimpleAssignTarget::Member(MemberExpr {
-                            span: DUMMY_SP,
-                            obj: Box::new(Expr::Ident(capture_obj.clone())),
-                            prop: MemberProp::Ident(IdentName {
-                                span: DUMMY_SP,
-                                sym: lhs_name.as_str().into(),
-                            }),
-                        })),
-                        right: Box::new(rhs),
-                    });
-
-                    // Two statements: 1) original assignment, 2) guarded recorder capture
-                    // Return a block to hold both.
-                    // We'll flatten this below since we need to return Vec<Stmt>.
-                    // Actually, just return both statements — we'll collect into a Vec.
-                    // For now, combine as: `X = _dep.X; if (typeof __rec !== "undefined") __rec.X = defVar("X", "var", X, __rec);`
-                    // We can't return 2 stmts from a map that expects 1. Use a block:
-                    Stmt::Block(BlockStmt {
-                        span: DUMMY_SP,
-                        ctxt: Default::default(),
-                        stmts: vec![
-                            orig_stmt,
-                            Stmt::If(IfStmt {
-                                span: DUMMY_SP,
-                                test: Box::new(Expr::Bin(BinExpr {
-                                    span: DUMMY_SP,
-                                    op: BinaryOp::NotEqEq,
-                                    left: Box::new(Expr::Unary(UnaryExpr {
-                                        span: DUMMY_SP,
-                                        op: UnaryOp::TypeOf,
-                                        arg: Box::new(Expr::Ident(capture_obj.clone())),
-                                    })),
-                                    right: Box::new(Expr::Lit(Lit::Str(Str {
-                                        span: DUMMY_SP,
-                                        value: "undefined".into(),
-                                        raw: None,
-                                    }))),
-                                })),
-                                cons: Box::new(Stmt::Expr(ExprStmt {
-                                    span: DUMMY_SP,
-                                    expr: Box::new(capture_assign),
-                                })),
-                                alt: None,
-                            }),
-                        ],
-                    })
-                })
-                .collect();
-
-            setter_body.stmts = new_stmts;
-        }
-
-        break; // Only one System.register per module
-    }
-}
-
 fn finish_output(
     cm: Lrc<SourceMap>,
     src_buf: Vec<u8>,
@@ -1034,6 +637,15 @@ Promise.resolve(execution).then(async () => {{
             "Transformed module failed:\n{}\nGenerated code:\n{}",
             String::from_utf8_lossy(&output.stderr),
             code
+        );
+    }
+
+    #[test]
+    fn namespace_setters_normalize_cjs_default_properties() {
+        assert_module_runs(
+            "import * as dependency from 'dep'; export function get() { return dependency.answer; }",
+            true,
+            "updateDependency({__useDefault:true, default:{answer:23}}); assert.equal(exportsOfModule.get(),23); assert.equal(recorder.dependency.answer,23);",
         );
     }
 

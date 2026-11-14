@@ -58,6 +58,11 @@ function ensureIdentifier (name) {
     .replace(trailingIdRe, '_');
 }
 
+function classMemberName (key) {
+  if (key.type === 'PrivateIdentifier' || key.type === 'PrivateName') return '_' + (key.id?.name || key.name);
+  return key.name || key.value || Path('property.name').get(key);
+}
+
 function classFieldsInitialization (nodes, options) {
   const { assign, member, id, exprStmt } = options.nodes;
   return nodes.map(({ key, value }) => {
@@ -215,68 +220,67 @@ function insertThisReturn (functionBody, options) {
   };
 }
 
-function replaceClass (node, state, options) {
-  console.assert(node.type === 'ClassDeclaration' || node.type === 'ClassExpression');
+// These stages mirror ClassTransform's native helpers in class_transform.rs.
+function methodDescriptor (propNode, className, options) {
   const n = options.nodes;
-  let { body: { body }, superClass, id: classId, type, start, end } = node;
-  let { addClassNameGetter = true } = options;
-  let instanceProps = n.id('undefined');
-  let classProps = n.id('undefined');
-  let className = classId ? classId.name : 'anonymous_class';
-  let evalId = options.evalId;
-  let sourceAccessorName = options.sourceAccessorName;
-  let loc = { start, end, ...node['x-lively-object-meta'] || {} };
   const validMemberIdentifiers = ['Literal', 'StringLiteral', 'Identifier', 'PrivateIdentifier', 'PrivateName', 'MemberExpression', 'CallExpression'];
+  let decl; let { key, kind, value, static: classSide } = propNode;
+  if (!value) value = propNode;
 
-  let { inst, clazz, fields } = body.reduce((props, propNode) => {
-    let decl; let { key, kind, value, static: classSide, type } = propNode;
-    if (!value) value = propNode;
+  if (!validMemberIdentifiers.includes(key.type)) {
+    console.warn(`Unexpected key in classToFunctionTransform! ${JSON.stringify(key)} -> ${stringify(propNode)}`);
+  }
 
-    if (!validMemberIdentifiers.includes(key.type)) {
-      console.warn(`Unexpected key in classToFunctionTransform! ${JSON.stringify(key)} -> ${stringify(propNode)}`);
+  // all of the cases below may contain code blocks, that potentially reference private identifiers
+  // which we translate to underscore vars. These need to be transformed as well.
+  if (kind === 'method') {
+    // The name is just for debugging purposes when it appears in
+    // native debuggers. We have to be careful about it b/c it shadows
+    // outer functions / vars, something that is totally not apparent for a user
+    // of the class syntax. That's the reason for making it a little cryptic
+    const isMemberExpr = key.type === 'MemberExpression';
+    let methodName = classMemberName(key);
+    let methodId;
+    if (isMemberExpr) {
+      methodId = n.id(className + '_' + stringify(key.property).replaceAll('.', '_') + '_');
+    } else methodId = n.id(className + '_' + ensureIdentifier(methodName || Path('arguments.0.value').get(key)) + '_');
+
+    let props = [
+      n.property('init', n.id('key'), !isMemberExpr && methodName ? n.literal(methodName) : key),
+
+      n.property('init', n.id('value'), (value = n.funcExpr(methodId, value.params, value.body, value.generator, value.async), value[methodKindSymbol] = classSide ? 'static' : 'proto', value))];
+
+    decl = n.objectLiteral(props);
+  } else if (kind === 'get' || kind === 'set') {
+    decl = n.objectLiteral([
+      n.property('init', n.id('key'), n.literal(classMemberName(key))),
+      n.property('init', n.id(kind), (value = n.funcExpr(n.id(kind), value.params, value.body, value.generator, value.async), value[methodKindSymbol] = classSide ? 'static' : 'proto', value))]);
+  } else if (kind === 'constructor') {
+    let props = [
+      n.property('init', n.id('key'), n.funcCall(n.member(n.id('Symbol'), n.id('for')), [n.literal('lively-instance-initialize')])),
+      n.property('init', n.id('value'), (value = n.funcExpr(
+        n.id(className + '_initialize_'),
+        value.params,
+        insertThisReturn(value.body, options),
+        value.generator, value.async
+      ), value[methodKindSymbol] = 'proto', value))];
+    decl = n.objectLiteral(props);
+  } else {
+    console.warn(`[lively.classes] classToFunctionTransform encountered unknown class property with kind ${kind}, ignoring it, ${JSON.stringify(propNode)} -> ${stringify(propNode)}`);
+  }
+  return decl;
+}
+
+function classMemberDescriptors (node, options) {
+  const n = options.nodes;
+  const className = node.id ? node.id.name : 'anonymous_class';
+  const { addClassNameGetter = true } = options;
+  return node.body.body.reduce((props, propNode) => {
+    if (['PropertyDefinition', 'ClassPrivateProperty', 'ClassProperty'].includes(propNode.type)) props.fields.push(propNode);
+    else {
+      const descriptor = methodDescriptor(propNode, className, options);
+      if (descriptor) (propNode.static ? props.clazz : props.inst).push(descriptor);
     }
-
-    // all of the cases below may contain code blocks, that potentially reference private identifiers
-    // which we translate to underscore vars. These need to be transformed as well.
-    if (kind === 'method') {
-      // The name is just for debugging purposes when it appears in
-      // native debuggers. We have to be careful about it b/c it shadows
-      // outer functions / vars, something that is totally not apparent for a user
-      // of the class syntax. That's the reason for making it a little cryptic
-      const isMemberExpr = key.type === 'MemberExpression';
-      let methodName = key.name || key.value || Path('property.name').get(key);
-      let methodId;
-      if (isMemberExpr) {
-        methodId = n.id(className + '_' + stringify(key.property).replaceAll('.', '_') + '_');
-      } else methodId = n.id(className + '_' + ensureIdentifier(methodName || Path('arguments.0.value').get(key)) + '_');
-
-      let props = [
-        n.property('init', n.id('key'), !isMemberExpr && methodName ? n.literal(methodName) : key),
-
-        n.property('init', n.id('value'), (value = n.funcExpr(methodId, value.params, value.body, value.generator, value.async), value[methodKindSymbol] = classSide ? 'static' : 'proto', value))];
-
-      decl = n.objectLiteral(props);
-    } else if (kind === 'get' || kind === 'set') {
-      decl = n.objectLiteral([
-        n.property('init', n.id('key'), n.literal(key.name || key.value || Path('property.name').get(key))),
-        n.property('init', n.id(kind), (value = n.funcExpr(n.id(kind), value.params, value.body, value.generator, value.async), value[methodKindSymbol] = classSide ? 'static' : 'proto', value))]);
-    } else if (kind === 'constructor') {
-      let props = [
-        n.property('init', n.id('key'), n.funcCall(n.member(n.id('Symbol'), n.id('for')), [n.literal('lively-instance-initialize')])),
-        n.property('init', n.id('value'), (value = n.funcExpr(
-          n.id(className + '_initialize_'),
-          value.params,
-          insertThisReturn(value.body, options),
-          value.generator, value.async
-        ), value[methodKindSymbol] = 'proto', value))];
-      decl = n.objectLiteral(props);
-    } else if (['PropertyDefinition', 'ClassPrivateProperty', 'ClassProperty'].includes(type)) {
-      // collect these for class field initializiation
-      props.fields.push(propNode);
-    } else {
-      console.warn(`[lively.classes] classToFunctionTransform encountered unknown class property with kind ${kind}, ignoring it, ${JSON.stringify(propNode)} -> ${stringify(propNode)}`);
-    }
-    if (decl) (classSide ? props.clazz : props.inst).push(decl);
     return props;
   }, {
     inst: [],
@@ -288,10 +292,10 @@ function replaceClass (node, state, options) {
         ]
       : []
   });
+}
 
-  if (inst.length) instanceProps = n.arrayExpr(inst);
-  if (clazz.length) classProps = n.arrayExpr(clazz);
-
+function superclassSpec (superClass, options) {
+  const n = options.nodes;
   let scope = options.scope;
   let superClassReferencedAs;
   let superClassRef;
@@ -302,7 +306,7 @@ function replaceClass (node, state, options) {
       superClassReferencedAs = superClass.property.name;
     } else {
       let found = scope?.resolvedRefMap?.get(superClass);
-      let isTopLevel = found?.decl && scope.decls?.find(([decl]) => decl === found.decl);
+      let isTopLevel = found?.decl && !scope.catches?.includes(found.decl) && scope.decls?.find(([decl]) => decl === found.decl);
       if (isTopLevel) {
         superClassRef = superClass;
         superClassReferencedAs = superClass.name;
@@ -310,10 +314,28 @@ function replaceClass (node, state, options) {
     }
   }
 
-  let superClassSpec = superClassRef
+  return superClassRef
   // this is inserting incorrect nodes into the ast since scope ist always acorn nodes
     ? n.objectLiteral([n.property('init', n.id('referencedAs'), n.literal(superClassReferencedAs)), n.property('init', n.id('value'), superClassRef)])
     : superClass || n.id('undefined');
+}
+
+function replaceClass (node, state, options) {
+  console.assert(node.type === 'ClassDeclaration' || node.type === 'ClassExpression');
+  const n = options.nodes;
+  let { superClass, id: classId, type, start, end } = node;
+  let instanceProps = n.id('undefined');
+  let classProps = n.id('undefined');
+  let evalId = options.evalId;
+  let sourceAccessorName = options.sourceAccessorName;
+  let loc = { start, end, ...node['x-lively-object-meta'] || {} };
+
+  const { inst, clazz, fields } = classMemberDescriptors(node, options);
+
+  if (inst.length) instanceProps = n.arrayExpr(inst);
+  if (clazz.length) classProps = n.arrayExpr(clazz);
+
+  const superClassSpec = superclassSpec(superClass, options);
 
   // For persistent storage and retrieval of pre-existing classes in "classHolder" object
   let { useClassHolder = classId && (type === 'ClassDeclaration' || type === 'ClassExpression') } = options; // if the class is assigned this will not work
@@ -383,7 +405,7 @@ function replaceClass (node, state, options) {
 }
 
 function replacePrivateIdentifier (node, options) {
-  return options.nodes.id('_' + node.name);
+  return options.nodes.id('_' + (node.id?.name || node.name));
 }
 
 /**
@@ -455,6 +477,8 @@ export function classToFunctionTransformBabel (path, state, options) {
   function handleFunctionDefinition (path, state) {
     const { nodes: n } = options;
     const { classHolder, currentMethodStack, currentMethod } = state;
+    state.classHolderStack.push(classHolder);
+    state.classHolder = options.nodes.objectLiteral([]);
     currentMethodStack.push(path.node[methodKindSymbol] ? path.node : currentMethod);
     state.currentMethod = arr.last(currentMethodStack);
   }
@@ -471,13 +495,15 @@ export function classToFunctionTransformBabel (path, state, options) {
   const currentMethodStack = [];
   Object.assign(state, {
     classHolder: options.classHolder || options.nodes.objectLiteral([]),
-    currentMethodStack
+    currentMethodStack,
+    classHolderStack: []
   });
 
   path.traverse({
     'ArrowFunctionExpression|FunctionDeclaration|FunctionExpression': {
       enter: handleFunctionDefinition,
       exit (path, state) {
+        state.classHolder = state.classHolderStack.pop();
         state.currentMethodStack.pop();
         state.currentMethod = arr.last(state.currentMethodStack);
       }

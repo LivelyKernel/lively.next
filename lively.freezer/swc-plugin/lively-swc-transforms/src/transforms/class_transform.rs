@@ -1,10 +1,13 @@
+use std::collections::HashSet;
 use swc_common::{sync::Lrc, FileName, SourceMap as SwcSourceMap, SyntaxContext, DUMMY_SP};
 use swc_ecma_ast::*;
 use swc_ecma_parser::{parse_file_as_expr, Syntax};
-use swc_ecma_visit::{VisitMut, VisitMutWith};
+use swc_ecma_visit::{Visit, VisitMut, VisitMutWith, VisitWith};
 
 use crate::config::ClassToFunctionConfig;
 use crate::utils::ast_helpers::*;
+use crate::utils::scope_analyzer::ScopeAnalyzer;
+use crate::utils::source_position::source_position;
 
 fn create_this_expr() -> Expr {
     Expr::This(ThisExpr { span: DUMMY_SP })
@@ -31,19 +34,22 @@ fn create_this_expr() -> Expr {
 /// ```
 pub struct ClassTransform {
     config: ClassToFunctionConfig,
+    function_node: Expr,
+    source_map: Option<Lrc<dyn swc_common::SourceMapper>>,
+    top_level_bindings: HashSet<Id>,
+    local_bindings: Vec<HashSet<Id>>,
     _module_id: String,
     _package_name: Option<String>,
     _package_version: Option<String>,
     default_class_counter: usize,
-    /// Depth > 0 means we're inside a function body. Babel still transforms
-    /// nested classes, but uses a local class holder and does not subscribe to
-    /// top-level superclass binding changes there.
+    /// Nested classes use a local class holder, while superclass subscriptions
+    /// follow binding identity independently of the function depth.
     fn_depth: u32,
 }
 
 struct SuperRewriter {
     class_name: String,
-    function_node: String,
+    function_node: Expr,
     is_static: bool,
     saw_direct_super_call: bool,
 }
@@ -63,10 +69,10 @@ fn parse_config_expr(source: &str) -> Expr {
 }
 
 impl SuperRewriter {
-    fn new(class_name: &str, function_node: &str, is_static: bool) -> Self {
+    fn new(class_name: &str, function_node: &Expr, is_static: bool) -> Self {
         Self {
             class_name: class_name.to_string(),
-            function_node: function_node.to_string(),
+            function_node: function_node.clone(),
             is_static,
             saw_direct_super_call: false,
         }
@@ -86,7 +92,7 @@ impl SuperRewriter {
     }
 
     fn function_node_expr(&self) -> Expr {
-        create_ident_expr(&self.function_node)
+        self.function_node.clone()
     }
 
     fn super_prop_expr(&self, prop: &SuperProp) -> Option<Expr> {
@@ -168,6 +174,7 @@ impl VisitMut for SuperRewriter {
                 Callee::Super(_) => {
                     let new_expr = self.replace_direct_super_call(call.args.clone());
                     *expr = new_expr;
+                    expr.visit_mut_children_with(self);
                     return;
                 }
                 Callee::Expr(callee_expr) => {
@@ -176,6 +183,7 @@ impl VisitMut for SuperRewriter {
                             let new_expr =
                                 self.replace_super_method_call(prop_expr, call.args.clone());
                             *expr = new_expr;
+                            expr.visit_mut_children_with(self);
                             return;
                         }
                     }
@@ -185,6 +193,7 @@ impl VisitMut for SuperRewriter {
             Expr::SuperProp(super_prop) => {
                 if let Some(prop_expr) = self.super_prop_expr(&super_prop.prop) {
                     *expr = self.replace_super_get(prop_expr);
+                    expr.visit_mut_children_with(self);
                     return;
                 }
             }
@@ -195,6 +204,7 @@ impl VisitMut for SuperRewriter {
                     if let Some(prop_expr) = self.super_prop_expr(&super_prop.prop) {
                         let new_expr = self.replace_super_set(prop_expr, *assign.right.clone());
                         *expr = new_expr;
+                        expr.visit_mut_children_with(self);
                         return;
                     }
                 }
@@ -209,6 +219,8 @@ impl VisitMut for SuperRewriter {
         }
         expr.visit_mut_children_with(self);
     }
+
+    fn visit_mut_class(&mut self, _: &mut Class) {}
 
     fn visit_mut_assign_expr(&mut self, assign: &mut AssignExpr) {
         if let AssignTarget::Simple(SimpleAssignTarget::Member(member_expr)) = &mut assign.left {
@@ -228,8 +240,13 @@ impl ClassTransform {
         package_name: Option<String>,
         package_version: Option<String>,
     ) -> Self {
+        let function_node = parse_config_expr(&config.function_node);
         Self {
             config,
+            function_node,
+            source_map: None,
+            top_level_bindings: HashSet::new(),
+            local_bindings: Vec::new(),
             _module_id: module_id,
             _package_name: package_name,
             _package_version: package_version,
@@ -238,57 +255,110 @@ impl ClassTransform {
         }
     }
 
+    pub fn with_source_map(mut self, source_map: Lrc<dyn swc_common::SourceMapper>) -> Self {
+        self.source_map = Some(source_map);
+        self
+    }
+
     fn private_name_to_string(&self, private_name: &PrivateName) -> String {
         format!("_{}", private_name.name.as_ref())
     }
 
+    fn source_position(&self, position: swc_common::BytePos) -> usize {
+        self.source_map
+            .as_ref()
+            .map(|cm| source_position(cm.as_ref(), position))
+            .unwrap_or_else(|| position.0.saturating_sub(1) as usize)
+    }
+
+    fn superclass_spec(&self, class: &Class) -> Expr {
+        let Some(superclass) = &class.super_class else {
+            return create_ident_expr("undefined");
+        };
+        if !self.config.current_module_accessor.is_empty() {
+            if let Expr::Ident(ident) = &**superclass {
+                let id = ident.to_id();
+                if self.top_level_bindings.contains(&id)
+                    && !self.local_bindings.iter().any(|scope| scope.contains(&id))
+                {
+                    return create_object_lit(vec![
+                        create_prop("referencedAs", create_string_expr(ident.sym.as_ref())),
+                        create_prop("value", *superclass.clone()),
+                    ]);
+                }
+            }
+        }
+        *superclass.clone()
+    }
+
+    fn method_debug_name(
+        &self,
+        class_name: &str,
+        key: &PropName,
+        kind: MethodKind,
+    ) -> Option<String> {
+        match kind {
+            MethodKind::Getter => return Some("get".to_owned()),
+            MethodKind::Setter => return Some("set".to_owned()),
+            MethodKind::Method => {}
+        }
+        let name = match key {
+            PropName::Ident(key) => key.sym.to_string(),
+            PropName::Str(key) => key.value.to_string(),
+            PropName::Num(key) => key.value.to_string(),
+            PropName::Computed(key) => match &*key.expr {
+                Expr::Member(member) => match &member.prop {
+                    MemberProp::Ident(key) => key.sym.to_string(),
+                    _ => return None,
+                },
+                Expr::Call(call) => match call.args.first().map(|arg| &*arg.expr) {
+                    Some(Expr::Lit(Lit::Str(key))) => key.value.to_string(),
+                    _ => return None,
+                },
+                Expr::Ident(key) => key.sym.to_string(),
+                Expr::Lit(Lit::Str(key)) => key.value.to_string(),
+                _ => return None,
+            },
+            _ => return None,
+        };
+        let name: String = name
+            .chars()
+            .enumerate()
+            .map(|(index, character)| {
+                if character.is_ascii_alphabetic()
+                    || character == '_'
+                    || index > 0 && character.is_ascii_digit()
+                {
+                    character
+                } else {
+                    '_'
+                }
+            })
+            .collect();
+        Some(format!("{}_{}_", class_name, name))
+    }
+
     /// Transform a class into an initializeES6ClassForLively call
-    fn transform_class(
+    fn replace_class(
         &self,
         class_ident: Option<&Ident>,
         class: &Class,
         use_class_holder: bool,
+        class_expression: bool,
     ) -> Expr {
         let class_name_for_methods = class_ident
             .map(|id| id.sym.as_ref())
             .unwrap_or("anonymous_class");
 
         // 1. Extract generic constructor template
-        let constructor = self.extract_constructor(class_ident, class);
+        let constructor = self.constructor_template(class_ident, class);
 
-        // 2. Add `{ referencedAs, value }` spec for simple identifier superclasses
-        let superclass_spec = match &class.super_class {
-            Some(super_expr) => {
-                if self.fn_depth == 0 {
-                    if let Expr::Ident(super_ident) = &**super_expr {
-                        create_object_lit(vec![
-                            create_prop(
-                                "referencedAs",
-                                create_string_expr(super_ident.sym.as_ref()),
-                            ),
-                            create_prop("value", *super_expr.clone()),
-                        ])
-                    } else {
-                        *super_expr.clone()
-                    }
-                } else {
-                    *super_expr.clone()
-                }
-            }
-            None => create_ident_expr("undefined"),
-        };
-
-        // 4. Extract method descriptors
+        let superclass_spec = self.superclass_spec(class);
         let (instance_methods, class_methods) =
-            self.extract_method_descriptors(class_name_for_methods, class);
-
-        let init_fn = parse_expr_or_ident(&self.config.function_node);
-        let class_holder_expr = if use_class_holder {
-            if self.fn_depth == 0 {
-                parse_config_expr(&self.config.class_holder)
-            } else {
-                create_object_lit(vec![])
-            }
+            self.class_member_descriptors(class_name_for_methods, class);
+        let init_fn = self.function_node.clone();
+        let class_holder_expr = if self.fn_depth == 0 {
+            parse_config_expr(&self.config.class_holder)
         } else {
             create_object_lit(vec![])
         };
@@ -383,7 +453,7 @@ impl ClassTransform {
                 "start",
                 Expr::Lit(Lit::Num(Number {
                     span: DUMMY_SP,
-                    value: class.span.lo.0.saturating_sub(1) as f64,
+                    value: self.source_position(class.span.lo) as f64,
                     raw: None,
                 })),
             ),
@@ -391,7 +461,7 @@ impl ClassTransform {
                 "end",
                 Expr::Lit(Lit::Num(Number {
                     span: DUMMY_SP,
-                    value: class.span.hi.0.saturating_sub(1) as f64,
+                    value: self.source_position(class.span.hi) as f64,
                     raw: None,
                 })),
             ),
@@ -472,11 +542,27 @@ impl ClassTransform {
             }),
         });
 
+        let iife_fn = if class_expression {
+            let Expr::Fn(function) = iife_fn else {
+                unreachable!()
+            };
+            create_arrow_fn(
+                function
+                    .function
+                    .params
+                    .into_iter()
+                    .map(|param| param.pat)
+                    .collect(),
+                BlockStmtOrExpr::BlockStmt(function.function.body.unwrap()),
+            )
+        } else {
+            iife_fn
+        };
         create_call_expr(iife_fn, vec![to_expr_or_spread(superclass_spec)])
     }
 
     /// Extract the constructor function from a class
-    fn extract_constructor(&self, class_ident: Option<&Ident>, class: &Class) -> Expr {
+    fn constructor_template(&self, class_ident: Option<&Ident>, class: &Class) -> Expr {
         // Legacy class transform always emits a generic constructor template
         // that dispatches to Symbol.for("lively-instance-initialize").
         let restorer_symbol = create_call_expr(
@@ -513,7 +599,7 @@ impl ClassTransform {
             ],
         );
 
-        let mut else_stmts = self.extract_field_initializers(class);
+        let mut else_stmts = self.class_fields_initialization(class);
         else_stmts.push(Stmt::Return(ReturnStmt {
             span: DUMMY_SP,
             arg: Some(Box::new(init_call)),
@@ -582,74 +668,59 @@ impl ClassTransform {
             .collect()
     }
 
-    fn constructor_initializer_descriptor(
-        &self,
-        class_name: &str,
-        class: &Class,
-    ) -> Option<Option<ExprOrSpread>> {
-        for member in &class.body {
-            if let ClassMember::Constructor(ctor) = member {
-                let mut body = ctor.body.clone().unwrap_or(BlockStmt {
-                    span: DUMMY_SP,
-                    ctxt: SyntaxContext::empty(),
-                    stmts: vec![],
-                });
-                // Legacy transform rewrites super accesses against the synthetic
-                // `__lively_class__` binding created inside the class IIFE.
-                let mut rewriter =
-                    SuperRewriter::new("__lively_class__", &self.config.function_node, false);
-                body.visit_mut_with(&mut rewriter);
-                if rewriter.saw_direct_super_call {
-                    body.stmts.insert(
-                        0,
-                        Stmt::Decl(create_var_decl(VarDeclKind::Var, "_this", None)),
-                    );
-                    body.stmts.push(Stmt::Return(ReturnStmt {
-                        span: DUMMY_SP,
-                        arg: Some(Box::new(create_ident_expr("_this"))),
-                    }));
-                }
+    fn constructor_initializer_descriptor(&self, class_name: &str, ctor: &Constructor) -> Expr {
+        let mut body = ctor.body.clone().unwrap_or(BlockStmt {
+            span: DUMMY_SP,
+            ctxt: SyntaxContext::empty(),
+            stmts: vec![],
+        });
+        // Legacy transform rewrites super accesses against the synthetic
+        // `__lively_class__` binding created inside the class IIFE.
+        let mut rewriter = SuperRewriter::new("__lively_class__", &self.function_node, false);
+        body.visit_mut_with(&mut rewriter);
+        Self::insert_this_return(&mut body, rewriter.saw_direct_super_call);
 
-                let init_name = format!("{}_initialize_", class_name);
-                let init_fn = Expr::Fn(FnExpr {
-                    ident: Some(Ident::new(
-                        init_name.into(),
-                        DUMMY_SP,
-                        SyntaxContext::empty(),
-                    )),
-                    function: Box::new(Function {
-                        params: self.map_constructor_params(ctor),
-                        decorators: vec![],
-                        span: DUMMY_SP,
-                        ctxt: SyntaxContext::empty(),
-                        body: Some(body),
-                        is_generator: false,
-                        is_async: false,
-                        type_params: None,
-                        return_type: None,
-                    }),
-                });
+        let init_name = format!("{}_initialize_", class_name);
+        let init_fn = Expr::Fn(FnExpr {
+            ident: Some(Ident::new(
+                init_name.into(),
+                DUMMY_SP,
+                SyntaxContext::empty(),
+            )),
+            function: Box::new(Function {
+                params: {
+                    let mut params = self.map_constructor_params(ctor);
+                    params.visit_mut_with(&mut rewriter);
+                    params
+                },
+                decorators: vec![],
+                span: DUMMY_SP,
+                ctxt: SyntaxContext::empty(),
+                body: Some(body),
+                is_generator: false,
+                is_async: false,
+                type_params: None,
+                return_type: None,
+            }),
+        });
 
-                let descriptor = create_object_lit(vec![
-                    create_prop(
-                        "key",
-                        create_call_expr(
-                            create_member_expr(create_ident_expr("Symbol"), "for"),
-                            vec![to_expr_or_spread(create_string_expr(
-                                "lively-instance-initialize",
-                            ))],
-                        ),
-                    ),
-                    create_prop("value", init_fn),
-                ]);
-                return Some(Some(to_expr_or_spread(descriptor)));
-            }
-        }
-        None
+        let descriptor = create_object_lit(vec![
+            create_prop(
+                "key",
+                create_call_expr(
+                    create_member_expr(create_ident_expr("Symbol"), "for"),
+                    vec![to_expr_or_spread(create_string_expr(
+                        "lively-instance-initialize",
+                    ))],
+                ),
+            ),
+            create_prop("value", init_fn),
+        ]);
+        descriptor
     }
 
     /// Extract class field initializers
-    fn extract_field_initializers(&self, class: &Class) -> Vec<Stmt> {
+    fn class_fields_initialization(&self, class: &Class) -> Vec<Stmt> {
         let mut stmts = Vec::new();
 
         for member in &class.body {
@@ -692,6 +763,11 @@ impl ClassTransform {
             }
         }
 
+        stmts.visit_mut_with(&mut SuperRewriter::new(
+            "__lively_class__",
+            &self.function_node,
+            false,
+        ));
         stmts
     }
 
@@ -739,94 +815,139 @@ impl ClassTransform {
         }
     }
 
-    /// Extract method descriptors as [instanceMethods, classMethods]
-    fn extract_method_descriptors(&self, class_name: &str, class: &Class) -> (Expr, Expr) {
+    fn method_descriptor(&self, class_name: &str, member: &ClassMember) -> Option<(Expr, bool)> {
+        let (key, function, kind, is_static) = match member {
+            ClassMember::Constructor(constructor) => {
+                return Some((
+                    self.constructor_initializer_descriptor(class_name, constructor),
+                    false,
+                ))
+            }
+            ClassMember::Method(method) => (
+                method.key.clone(),
+                &method.function,
+                method.kind,
+                method.is_static,
+            ),
+            ClassMember::PrivateMethod(method) => (
+                PropName::Ident(IdentName::new(
+                    self.private_name_to_string(&method.key).into(),
+                    DUMMY_SP,
+                )),
+                &method.function,
+                method.kind,
+                method.is_static,
+            ),
+            _ => return None,
+        };
+        let key_expr = self.method_key_expr(&key)?;
+        let mut function = function.clone();
+        function.visit_mut_with(&mut SuperRewriter::new(
+            "__lively_class__",
+            &self.function_node,
+            is_static,
+        ));
+        let function = Expr::Fn(FnExpr {
+            ident: self
+                .method_debug_name(class_name, &key, kind)
+                .map(|name| Ident::new(name.into(), DUMMY_SP, SyntaxContext::empty())),
+            function,
+        });
+        let property = match kind {
+            MethodKind::Method => "value",
+            MethodKind::Getter => "get",
+            MethodKind::Setter => "set",
+        };
+        Some((
+            create_object_lit(vec![
+                create_prop("key", key_expr),
+                create_prop(property, function),
+            ]),
+            is_static,
+        ))
+    }
+
+    // Mirror classMemberDescriptors: descriptors retain the original member order.
+    fn class_member_descriptors(&self, class_name: &str, class: &Class) -> (Expr, Expr) {
         let mut instance_methods = Vec::new();
-        if let Some(initializer) = self.constructor_initializer_descriptor(class_name, class) {
-            instance_methods.push(initializer);
-        }
         let mut class_methods = vec![Some(to_expr_or_spread(
             self.create_lively_class_name_descriptor(class_name),
         ))];
-
         for member in &class.body {
-            match member {
-                ClassMember::Method(method) => {
-                    if let PropName::Ident(key) = &method.key {
-                        if key.sym.as_ref() == "constructor" {
-                            continue;
-                        }
-                    }
-
-                    if let Some(key_expr) = self.method_key_expr(&method.key) {
-                        let mut function = method.function.clone();
-                        let mut rewriter = SuperRewriter::new(
-                            "__lively_class__",
-                            &self.config.function_node,
-                            method.is_static,
-                        );
-                        function.visit_mut_with(&mut rewriter);
-
-                        let mut props = vec![create_prop("key", key_expr)];
-                        let fn_expr = Expr::Fn(FnExpr {
-                            ident: None,
-                            function,
-                        });
-                        match method.kind {
-                            MethodKind::Method => props.push(create_prop("value", fn_expr)),
-                            MethodKind::Getter => props.push(create_prop("get", fn_expr)),
-                            MethodKind::Setter => props.push(create_prop("set", fn_expr)),
-                        }
-
-                        let descriptor = Some(to_expr_or_spread(create_object_lit(props)));
-                        if method.is_static {
-                            class_methods.push(descriptor);
-                        } else {
-                            instance_methods.push(descriptor);
-                        }
-                    }
-                }
-                ClassMember::PrivateMethod(method) => {
-                    let key_expr = create_string_expr(&self.private_name_to_string(&method.key));
-                    let mut function = method.function.clone();
-                    let mut rewriter = SuperRewriter::new(
-                        "__lively_class__",
-                        &self.config.function_node,
-                        method.is_static,
-                    );
-                    function.visit_mut_with(&mut rewriter);
-
-                    let fn_expr = Expr::Fn(FnExpr {
-                        ident: None,
-                        function,
-                    });
-                    let mut props = vec![create_prop("key", key_expr)];
-                    match method.kind {
-                        MethodKind::Method => props.push(create_prop("value", fn_expr)),
-                        MethodKind::Getter => props.push(create_prop("get", fn_expr)),
-                        MethodKind::Setter => props.push(create_prop("set", fn_expr)),
-                    }
-
-                    let descriptor = Some(to_expr_or_spread(create_object_lit(props)));
-                    if method.is_static {
-                        class_methods.push(descriptor);
-                    } else {
-                        instance_methods.push(descriptor);
-                    }
-                }
-                _ => {}
+            if let Some((descriptor, is_static)) = self.method_descriptor(class_name, member) {
+                let descriptors = if is_static {
+                    &mut class_methods
+                } else {
+                    &mut instance_methods
+                };
+                descriptors.push(Some(to_expr_or_spread(descriptor)));
             }
         }
-
         (
-            create_array_lit(instance_methods),
-            create_array_lit(class_methods),
+            if instance_methods.is_empty() {
+                create_ident_expr("undefined")
+            } else {
+                create_array_lit(instance_methods)
+            },
+            if class_methods.is_empty() {
+                create_ident_expr("undefined")
+            } else {
+                create_array_lit(class_methods)
+            },
         )
     }
+
+    fn insert_this_return(body: &mut BlockStmt, direct_super: bool) {
+        if direct_super {
+            body.stmts.insert(
+                0,
+                Stmt::Decl(create_var_decl(VarDeclKind::Var, "_this", None)),
+            );
+            body.stmts.push(Stmt::Return(ReturnStmt {
+                span: DUMMY_SP,
+                arg: Some(Box::new(create_ident_expr("_this"))),
+            }));
+        }
+    }
+}
+
+fn function_var_bindings(body: &BlockStmt) -> HashSet<Id> {
+    #[derive(Default)]
+    struct Vars(HashSet<Id>);
+    impl Visit for Vars {
+        fn visit_var_decl(&mut self, declaration: &VarDecl) {
+            if declaration.kind == VarDeclKind::Var {
+                for item in &declaration.decls {
+                    self.0.extend(extract_idents_from_pat(&item.name));
+                }
+            }
+            declaration.visit_children_with(self);
+        }
+        fn visit_function(&mut self, _: &Function) {}
+        fn visit_arrow_expr(&mut self, _: &ArrowExpr) {}
+        fn visit_class(&mut self, _: &Class) {}
+    }
+    let mut variables = Vars::default();
+    body.visit_with(&mut variables);
+    variables.0
+}
+
+fn lexical_loop_bindings(declaration: &VarDecl) -> HashSet<Id> {
+    if declaration.kind == VarDeclKind::Var {
+        return HashSet::new();
+    }
+    declaration
+        .decls
+        .iter()
+        .flat_map(|declarator| extract_idents_from_pat(&declarator.name))
+        .collect()
 }
 
 impl VisitMut for ClassTransform {
     fn visit_mut_module(&mut self, module: &mut Module) {
+        let mut analyzer = ScopeAnalyzer::new();
+        module.visit_with(&mut analyzer);
+        self.top_level_bindings = analyzer.top_level_vars;
         let mut new_body = Vec::with_capacity(module.body.len());
         for item in module.body.drain(..) {
             if let ModuleItem::ModuleDecl(ModuleDecl::ExportDefaultDecl(export_decl)) = item {
@@ -837,7 +958,7 @@ impl VisitMut for ClassTransform {
                         Ident::new(name.as_str().into(), DUMMY_SP, SyntaxContext::empty())
                     });
                     let transformed =
-                        self.transform_class(Some(&class_ident), &class_expr.class, true);
+                        self.replace_class(Some(&class_ident), &class_expr.class, true, false);
                     let decl = ModuleItem::Stmt(Stmt::Decl(Decl::Var(Box::new(VarDecl {
                         span: class_expr.class.span,
                         ctxt: SyntaxContext::empty(),
@@ -876,21 +997,112 @@ impl VisitMut for ClassTransform {
     }
 
     fn visit_mut_function(&mut self, f: &mut Function) {
+        let mut bindings: HashSet<Id> = f
+            .params
+            .iter()
+            .flat_map(|param| extract_idents_from_pat(&param.pat))
+            .collect();
+        if let Some(body) = &f.body {
+            bindings.extend(function_var_bindings(body));
+        }
+        self.local_bindings.push(bindings);
         self.fn_depth += 1;
         f.visit_mut_children_with(self);
         self.fn_depth -= 1;
+        self.local_bindings.pop();
     }
 
     fn visit_mut_arrow_expr(&mut self, f: &mut ArrowExpr) {
+        let mut bindings: HashSet<Id> = f.params.iter().flat_map(extract_idents_from_pat).collect();
+        if let BlockStmtOrExpr::BlockStmt(body) = &*f.body {
+            bindings.extend(function_var_bindings(body));
+        }
+        self.local_bindings.push(bindings);
         self.fn_depth += 1;
         f.visit_mut_children_with(self);
         self.fn_depth -= 1;
+        self.local_bindings.pop();
+    }
+
+    fn visit_mut_fn_expr(&mut self, function: &mut FnExpr) {
+        self.local_bindings
+            .push(function.ident.iter().map(Ident::to_id).collect());
+        function.visit_mut_children_with(self);
+        self.local_bindings.pop();
+    }
+
+    fn visit_mut_block_stmt(&mut self, block: &mut BlockStmt) {
+        let mut analyzer = ScopeAnalyzer::new();
+        for statement in &block.stmts {
+            statement.visit_with(&mut analyzer);
+        }
+        self.local_bindings.push(analyzer.top_level_vars);
+        block.visit_mut_children_with(self);
+        self.local_bindings.pop();
+    }
+
+    fn visit_mut_catch_clause(&mut self, clause: &mut CatchClause) {
+        self.local_bindings.push(
+            clause
+                .param
+                .iter()
+                .flat_map(extract_idents_from_pat)
+                .collect(),
+        );
+        clause.visit_mut_children_with(self);
+        self.local_bindings.pop();
+    }
+
+    fn visit_mut_for_stmt(&mut self, statement: &mut ForStmt) {
+        let bindings = match &statement.init {
+            Some(VarDeclOrExpr::VarDecl(declaration)) => lexical_loop_bindings(declaration),
+            _ => HashSet::new(),
+        };
+        self.local_bindings.push(bindings);
+        statement.visit_mut_children_with(self);
+        self.local_bindings.pop();
+    }
+
+    fn visit_mut_for_in_stmt(&mut self, statement: &mut ForInStmt) {
+        let bindings = match &statement.left {
+            ForHead::VarDecl(declaration) => lexical_loop_bindings(declaration),
+            _ => HashSet::new(),
+        };
+        self.local_bindings.push(bindings);
+        statement.visit_mut_children_with(self);
+        self.local_bindings.pop();
+    }
+
+    fn visit_mut_for_of_stmt(&mut self, statement: &mut ForOfStmt) {
+        let bindings = match &statement.left {
+            ForHead::VarDecl(declaration) => lexical_loop_bindings(declaration),
+            _ => HashSet::new(),
+        };
+        self.local_bindings.push(bindings);
+        statement.visit_mut_children_with(self);
+        self.local_bindings.pop();
+    }
+
+    fn visit_mut_var_declarator(&mut self, declaration: &mut VarDeclarator) {
+        if let Some(initializer) = &mut declaration.init {
+            if let Expr::Class(class) = &**initializer {
+                **initializer = self.replace_class(class.ident.as_ref(), &class.class, false, true);
+            }
+        }
+        declaration.visit_mut_children_with(self);
+    }
+
+    fn visit_mut_assign_expr(&mut self, assignment: &mut AssignExpr) {
+        if let Expr::Class(class) = &*assignment.right {
+            *assignment.right = self.replace_class(class.ident.as_ref(), &class.class, false, true);
+        }
+        assignment.visit_mut_children_with(self);
     }
 
     fn visit_mut_decl(&mut self, decl: &mut Decl) {
         if let Decl::Class(class_decl) = decl {
             let transformed =
-                self.transform_class(Some(&class_decl.ident), &class_decl.class, true);
+                self.replace_class(Some(&class_decl.ident), &class_decl.class, true, false);
             *decl = Decl::Var(Box::new(VarDecl {
                 span: class_decl.class.span,
                 ctxt: SyntaxContext::empty(),
@@ -906,6 +1118,7 @@ impl VisitMut for ClassTransform {
                     definite: false,
                 }],
             }));
+            decl.visit_mut_children_with(self);
             return;
         }
 
@@ -914,9 +1127,14 @@ impl VisitMut for ClassTransform {
 
     fn visit_mut_expr(&mut self, expr: &mut Expr) {
         if let Expr::Class(class_expr) = expr {
-            let transformed =
-                self.transform_class(class_expr.ident.as_ref(), &class_expr.class, false);
+            let transformed = self.replace_class(
+                class_expr.ident.as_ref(),
+                &class_expr.class,
+                class_expr.ident.is_some(),
+                true,
+            );
             *expr = transformed;
+            expr.visit_mut_children_with(self);
             return;
         }
         expr.visit_mut_children_with(self);
@@ -956,7 +1174,8 @@ mod tests {
             "test/module.js".to_string(),
             Some("test-package".to_string()),
             Some("1.0.0".to_string()),
-        );
+        )
+        .with_source_map(cm.clone());
 
         module.visit_mut_with(&mut transform);
 
@@ -1036,5 +1255,165 @@ mod tests {
         assert!(output.contains("var NodePath = function NodePath"));
         assert!(output.contains("new NodePath(h, p)"));
         assert!(!output.contains("new NodePath1(h, p)"));
+    }
+    #[test]
+    fn member_descriptors_keep_source_order_and_debug_names() {
+        let output = transform_code(
+            "class C { m() {} constructor() {} get x() { return 1; } set x(value) {} n() {} }",
+        );
+        let method = output.find("key: \"m\"").unwrap();
+        let constructor = output
+            .find("key: Symbol.for(\"lively-instance-initialize\")")
+            .unwrap();
+        let last = output.find("key: \"n\"").unwrap();
+        assert!(method < constructor && constructor < last, "{output}");
+        for name in [
+            "function C_m_",
+            "function get",
+            "function set",
+            "function C_n_",
+        ] {
+            assert!(output.contains(name), "{name}: {output}");
+        }
+        assert!(transform_code("class C {}").contains("superclass, undefined,"));
+    }
+
+    #[test]
+    fn replacements_rewrite_nested_super_arguments_and_assignment_values() {
+        let output = transform_code("class C extends Base { constructor() { super(super.m()); } m() { return super.m(super.n()); } set x(value) { super.x = super.y; } }");
+        assert!(!output.contains("super."), "{output}");
+        assert!(!output.contains("super("), "{output}");
+        assert!(output.matches("._get(").count() >= 5, "{output}");
+    }
+
+    #[test]
+    fn fields_and_constructor_parameters_share_expression_rewriting() {
+        let output = transform_code("class C extends Base { #x = 1; y = this.#x; z = super.m(); constructor(value = super.n()) { super(value); } }");
+        assert!(!output.contains("#x"), "{output}");
+        assert!(!output.contains("super."), "{output}");
+        assert!(output.contains("this.y = this._x"), "{output}");
+    }
+
+    #[test]
+    fn nested_classes_keep_their_own_super_context() {
+        let output = transform_code("class Outer extends Base { make() { return class Inner extends Other { m() { return super.m(); } }; } }");
+        assert!(!output.contains("class Inner"), "{output}");
+        assert!(output.contains("function Inner_m_"), "{output}");
+        assert_eq!(
+            output
+                .matches("initializeES6ClassForLively(__lively_class__,")
+                .count(),
+            2,
+            "{output}"
+        );
+    }
+
+    #[test]
+    fn class_expressions_use_lexical_iifes_and_contextual_holders() {
+        let output = transform_code(
+            "keep(class Named { [this.key]() {} }); var Assigned = class Local {}; ",
+        );
+        assert!(output.contains("=>"), "{output}");
+        assert!(output.contains("__lively_classholder__.Named"), "{output}");
+        assert!(!output.contains("__lively_classholder__.Local"), "{output}");
+    }
+
+    #[test]
+    fn superclass_subscriptions_follow_bindings_not_function_depth() {
+        let output = transform_code("var Base; class Top extends Base {} function outer() { class C extends Base {} } function shadow(Base) { class D extends Base {} } class Unknown extends Missing {}");
+        assert_eq!(
+            output.matches("referencedAs: \"Base\"").count(),
+            2,
+            "{output}"
+        );
+        assert!(!output.contains("referencedAs: \"Missing\""), "{output}");
+    }
+
+    #[test]
+    fn catch_and_lexical_loop_bindings_shadow_superclass_subscriptions() {
+        for source in [
+            "var Base; try {} catch (Base) { class C extends Base {} }",
+            "var Base; for (let Base of values) { class C extends Base {} }",
+            "var Base; for (let Base in values) { class C extends Base {} }",
+            "var Base; for (let Base; condition;) { class C extends Base {} }",
+        ] {
+            let output = transform_code(source);
+            assert!(!output.contains("referencedAs: \"Base\""), "{output}");
+        }
+        let output =
+            transform_code("var Base; for (var Base of values) { class C extends Base {} }");
+        assert!(output.contains("referencedAs: \"Base\""), "{output}");
+    }
+
+    #[test]
+    fn class_metadata_uses_utf16_source_positions() {
+        let output = transform_code("/* 😀 */ class C {}");
+        assert!(output.contains("start: 9"), "{output}");
+        assert!(output.contains("end: 19"), "{output}");
+    }
+
+    #[test]
+    fn resolved_class_and_superclass_references_keep_binding_ids() {
+        use swc_common::{Globals, Mark, GLOBALS};
+        use swc_ecma_transforms_base::resolver;
+
+        GLOBALS.set(&Globals::new(), || {
+            let cm = Lrc::new(SourceMap::default());
+            let fm = cm.new_source_file(
+                FileName::Anon.into(),
+                "var Base; class Outer extends Base { make() { return class Inner extends Outer { self() { return Inner; } }; } static self() { return Outer; } }".to_string(),
+            );
+            let mut module = parse_file_as_module(
+                &fm,
+                Syntax::Es(Default::default()),
+                Default::default(),
+                None,
+                &mut vec![],
+            )
+            .unwrap();
+            module.visit_mut_with(&mut resolver(Mark::new(), Mark::new(), false));
+
+            #[derive(Default)]
+            struct Idents(Vec<Ident>);
+            impl Visit for Idents {
+                fn visit_ident(&mut self, ident: &Ident) {
+                    if matches!(ident.sym.as_ref(), "Base" | "Outer" | "Inner") {
+                        self.0.push(ident.clone());
+                    }
+                }
+            }
+            let mut original = Idents::default();
+            module.visit_with(&mut original);
+            assert_eq!(original.0.len(), 7);
+            assert!(original
+                .0
+                .iter()
+                .all(|ident| ident.ctxt != SyntaxContext::empty()));
+
+            module.visit_mut_with(&mut ClassTransform::new(
+                ClassToFunctionConfig {
+                    class_holder: "__varRecorder__".into(),
+                    function_node: "initializeES6ClassForLively".into(),
+                    current_module_accessor: "module.id".into(),
+                    source_accessor_name: None,
+                },
+                "test/module.js".into(),
+                None,
+                None,
+            ));
+
+            let mut transformed = Idents::default();
+            module.visit_with(&mut transformed);
+            for original in original.0 {
+                assert!(
+                    transformed.0.iter().any(|ident| {
+                        ident.span == original.span && ident.to_id() == original.to_id()
+                    }),
+                    "lost binding identity at {:?}: {:?}",
+                    original.span,
+                    original.to_id(),
+                );
+            }
+        });
     }
 }

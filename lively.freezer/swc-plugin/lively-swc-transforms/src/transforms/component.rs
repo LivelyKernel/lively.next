@@ -1,5 +1,6 @@
 use crate::utils::ast_helpers::*;
-use swc_common::{Spanned, DUMMY_SP};
+use crate::utils::source_position::source_position;
+use swc_common::{sync::Lrc, DUMMY_SP};
 use swc_ecma_ast::*;
 use swc_ecma_visit::{VisitMut, VisitMutWith};
 
@@ -14,6 +15,9 @@ pub struct ComponentTransform {
     capture_obj: String,
     excluded: Vec<String>,
     depth: usize,
+    block_depth: usize,
+    declaration_kind: VarDeclKind,
+    source_map: Option<Lrc<dyn swc_common::SourceMapper>>,
 }
 
 impl ComponentTransform {
@@ -23,7 +27,15 @@ impl ComponentTransform {
             capture_obj,
             excluded,
             depth: 0,
+            block_depth: 0,
+            declaration_kind: VarDeclKind::Var,
+            source_map: None,
         }
+    }
+
+    pub fn with_source_map(mut self, source_map: Lrc<dyn swc_common::SourceMapper>) -> Self {
+        self.source_map = Some(source_map);
+        self
     }
 
     /// Check if an expression is a call to `component(...)`
@@ -58,7 +70,12 @@ impl ComponentTransform {
                         "start",
                         Expr::Lit(Lit::Num(Number {
                             span: DUMMY_SP,
-                            value: span.lo.0 as f64,
+                            value: self
+                                .source_map
+                                .as_ref()
+                                .map_or(span.lo.0.saturating_sub(1) as usize, |cm| {
+                                    source_position(cm.as_ref(), span.lo)
+                                }) as f64,
                             raw: None,
                         })),
                     ),
@@ -66,7 +83,12 @@ impl ComponentTransform {
                         "end",
                         Expr::Lit(Lit::Num(Number {
                             span: DUMMY_SP,
-                            value: span.hi.0 as f64,
+                            value: self
+                                .source_map
+                                .as_ref()
+                                .map_or(span.hi.0.saturating_sub(1) as usize, |cm| {
+                                    source_position(cm.as_ref(), span.hi)
+                                }) as f64,
                             raw: None,
                         })),
                     ),
@@ -81,7 +103,10 @@ impl ComponentTransform {
             to_expr_or_spread(create_ident_expr("System")),
         ];
 
-        if !self.excluded.contains(&export_name.to_string()) {
+        if self.depth == 0
+            && (self.block_depth == 0 || self.declaration_kind == VarDeclKind::Var)
+            && !self.excluded.contains(&export_name.to_string())
+        {
             args.push(to_expr_or_spread(create_ident_expr(&self.capture_obj)));
             args.push(to_expr_or_spread(create_string_expr(export_name)));
         }
@@ -112,20 +137,37 @@ impl VisitMut for ComponentTransform {
     }
 
     fn visit_mut_block_stmt(&mut self, block: &mut BlockStmt) {
-        if self.depth > 0 {
-            self.depth += 1;
-            block.visit_mut_children_with(self);
-            self.depth -= 1;
-            return;
-        }
+        self.block_depth += 1;
         block.visit_mut_children_with(self);
+        self.block_depth -= 1;
+    }
+
+    fn visit_mut_for_stmt(&mut self, statement: &mut ForStmt) {
+        self.block_depth += 1;
+        statement.visit_mut_children_with(self);
+        self.block_depth -= 1;
+    }
+
+    fn visit_mut_switch_stmt(&mut self, statement: &mut SwitchStmt) {
+        self.block_depth += 1;
+        statement.visit_mut_children_with(self);
+        self.block_depth -= 1;
+    }
+
+    fn visit_mut_static_block(&mut self, block: &mut StaticBlock) {
+        self.depth += 1;
+        block.visit_mut_children_with(self);
+        self.depth -= 1;
+    }
+
+    fn visit_mut_var_decl(&mut self, declaration: &mut VarDecl) {
+        let previous = self.declaration_kind;
+        self.declaration_kind = declaration.kind;
+        declaration.visit_mut_children_with(self);
+        self.declaration_kind = previous;
     }
 
     fn visit_mut_expr_stmt(&mut self, stmt: &mut ExprStmt) {
-        if self.depth > 0 {
-            stmt.visit_mut_children_with(self);
-            return;
-        }
         if self.is_component_call(&stmt.expr) {
             let metadata = create_object_lit(vec![create_prop(
                 "module",
@@ -146,16 +188,12 @@ impl VisitMut for ComponentTransform {
     }
 
     fn visit_mut_var_declarator(&mut self, declarator: &mut VarDeclarator) {
-        if self.depth > 0 {
-            declarator.visit_mut_children_with(self);
-            return;
-        }
         // Check if this is: const MyComp = component(...)
         if let Pat::Ident(BindingIdent { id, .. }) = &declarator.name {
             if let Some(init) = &mut declarator.init {
                 if self.is_component_call(init) {
                     let export_name = id.sym.to_string();
-                    let span = init.span();
+                    let span = declarator.span;
                     *init = Box::new(self.wrap_component_call(*init.clone(), &export_name, span));
                     return;
                 }

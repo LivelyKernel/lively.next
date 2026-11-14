@@ -1,5 +1,6 @@
 use swc_common::{SyntaxContext, DUMMY_SP};
 use swc_ecma_ast::*;
+use swc_ecma_utils::{find_pat_ids, for_each_binding_ident, ExprFactory};
 
 /// Exported aliases whose names belong to a different local binding.
 /// Lively definition callbacks use this to avoid overwriting those exports.
@@ -33,23 +34,13 @@ pub fn renamed_exports(module: &Module) -> std::collections::HashMap<String, Str
 
 /// Create a member expression: obj.prop
 pub fn create_member_expr(obj: Expr, prop: &str) -> Expr {
-    Expr::Member(MemberExpr {
-        span: Default::default(),
-        obj: Box::new(obj),
-        prop: MemberProp::Ident(IdentName::new(prop.into(), DUMMY_SP)),
-    })
+    obj.make_member(IdentName::new(prop.into(), DUMMY_SP))
+        .into()
 }
 
 /// Create a member expression with computed property: obj[prop]
 pub fn create_computed_member_expr(obj: Expr, prop: Expr) -> Expr {
-    Expr::Member(MemberExpr {
-        span: Default::default(),
-        obj: Box::new(obj),
-        prop: MemberProp::Computed(ComputedPropName {
-            span: Default::default(),
-            expr: Box::new(prop),
-        }),
-    })
+    obj.computed_member(prop).into()
 }
 
 /// Create an identifier expression
@@ -138,13 +129,7 @@ pub fn create_string_expr(value: &str) -> Expr {
 
 /// Create a call expression: callee(args...)
 pub fn create_call_expr(callee: Expr, args: Vec<ExprOrSpread>) -> Expr {
-    Expr::Call(CallExpr {
-        span: Default::default(),
-        ctxt: SyntaxContext::empty(),
-        callee: Callee::Expr(Box::new(callee)),
-        args,
-        type_args: None,
-    })
+    callee.as_call(DUMMY_SP, args)
 }
 
 /// Create an arrow function: (params) => body
@@ -187,72 +172,20 @@ pub fn create_array_lit(elements: Vec<Option<ExprOrSpread>>) -> Expr {
 
 /// Wrap an expression in ExprOrSpread
 pub fn to_expr_or_spread(expr: Expr) -> ExprOrSpread {
-    ExprOrSpread {
-        spread: None,
-        expr: Box::new(expr),
-    }
+    expr.as_arg()
 }
 
 /// Check if an identifier is in a specific context (e.g., function parameter)
 #[allow(dead_code)]
 pub fn is_binding_identifier(ident: &Ident, pat: &Pat) -> bool {
-    match pat {
-        Pat::Ident(BindingIdent { id, .. }) => id.sym == ident.sym,
-        Pat::Array(ArrayPat { elems, .. }) => elems
-            .iter()
-            .filter_map(|e| e.as_ref())
-            .any(|p| is_binding_identifier(ident, p)),
-        Pat::Object(ObjectPat { props, .. }) => props.iter().any(|prop| match prop {
-            ObjectPatProp::KeyValue(kv) => is_binding_identifier(ident, &kv.value),
-            ObjectPatProp::Assign(assign) => assign.key.sym == ident.sym,
-            ObjectPatProp::Rest(rest) => is_binding_identifier(ident, &rest.arg),
-        }),
-        Pat::Rest(RestPat { arg, .. }) => is_binding_identifier(ident, arg),
-        Pat::Assign(AssignPat { left, .. }) => is_binding_identifier(ident, left),
-        _ => false,
-    }
+    let mut found = false;
+    for_each_binding_ident(pat, |binding| found |= binding.sym == ident.sym);
+    found
 }
 
 /// Extract all identifiers from a pattern (for destructuring)
 pub fn extract_idents_from_pat(pat: &Pat) -> Vec<Id> {
-    let mut idents = Vec::new();
-    extract_idents_recursive(pat, &mut idents);
-    idents
-}
-
-fn extract_idents_recursive(pat: &Pat, idents: &mut Vec<Id>) {
-    match pat {
-        Pat::Ident(BindingIdent { id, .. }) => {
-            idents.push(id.to_id());
-        }
-        Pat::Array(ArrayPat { elems, .. }) => {
-            for elem in elems.iter().filter_map(|e| e.as_ref()) {
-                extract_idents_recursive(elem, idents);
-            }
-        }
-        Pat::Object(ObjectPat { props, .. }) => {
-            for prop in props {
-                match prop {
-                    ObjectPatProp::KeyValue(kv) => {
-                        extract_idents_recursive(&kv.value, idents);
-                    }
-                    ObjectPatProp::Assign(assign) => {
-                        idents.push(assign.key.to_id());
-                    }
-                    ObjectPatProp::Rest(rest) => {
-                        extract_idents_recursive(&rest.arg, idents);
-                    }
-                }
-            }
-        }
-        Pat::Rest(RestPat { arg, .. }) => {
-            extract_idents_recursive(arg, idents);
-        }
-        Pat::Assign(AssignPat { left, .. }) => {
-            extract_idents_recursive(left, idents);
-        }
-        _ => {}
-    }
+    find_pat_ids(pat)
 }
 
 /// Check if an expression is a specific identifier
@@ -306,12 +239,7 @@ pub fn create_var_decl(kind: VarDeclKind, name: &str, init: Option<Expr>) -> Dec
 /// Clone an identifier
 #[allow(dead_code)]
 pub fn clone_ident(ident: &Ident) -> Ident {
-    Ident {
-        span: ident.span,
-        ctxt: ident.ctxt,
-        sym: ident.sym.clone(),
-        optional: ident.optional,
-    }
+    ident.clone()
 }
 
 /// Convert an Expr to an AssignTarget
@@ -333,12 +261,7 @@ pub fn expr_to_assign_target(expr: Expr) -> AssignTarget {
 
 /// Create an assignment expression: left = right
 pub fn create_assign_expr(left: AssignTarget, right: Expr) -> Expr {
-    Expr::Assign(AssignExpr {
-        span: Default::default(),
-        op: AssignOp::Assign,
-        left,
-        right: Box::new(right),
-    })
+    right.make_assign_to(AssignOp::Assign, left)
 }
 
 /// Create a sequence expression: (expr1, expr2, ...)
