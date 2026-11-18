@@ -332,7 +332,8 @@ export default class WebDAVResource extends Resource {
       null, // propfindRequestPayload(),
       {
         'Content-Type': 'text/xml'
-        // rk 2016-06-24: jsDAV does not support PROPFIND via depth: 'infinity'
+        // lively.server answers PROPFIND with depth 0 or 1 only, so dirList
+        // recurses itself; see lively.server/dav-handler.js
         // 'Depth': String(depth)
       });
 

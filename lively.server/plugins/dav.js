@@ -1,6 +1,6 @@
 /* global System, process, Buffer */
 import { resource } from 'lively.resources';
-import { string, promise, fun } from 'lively.lang';
+import { string, promise } from 'lively.lang';
 import * as child from 'node:child_process';
 const tar = System._nodeRequire('tar-fs');
 import stream from 'stream';
@@ -10,6 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { computeSourceHashes } from '../source-hashes.js';
+import { handleDAVRequest, contentType } from '../dav-handler.js';
 
 const COMPRESSABLE_URLS = [
   'components_cache'
@@ -17,113 +18,10 @@ const COMPRESSABLE_URLS = [
 
 const compression = 'gzip'; // can be either 'gzip' or 'brotli' where 'brotli' takes drastically longer to compress but yields slightly smaller bundles;
 
-const STATIC_CONTENT_TYPES = {
-  '.br': 'application/octet-stream',
-  '.css': 'text/css; charset=utf-8',
-  '.gif': 'image/gif',
-  '.html': 'text/html; charset=utf-8',
-  '.ico': 'image/x-icon',
-  '.jpeg': 'image/jpeg',
-  '.jpg': 'image/jpeg',
-  '.js': 'application/javascript; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.map': 'application/json; charset=utf-8',
-  '.otf': 'font/otf',
-  '.png': 'image/png',
-  '.svg': 'image/svg+xml; charset=utf-8',
-  '.ttf': 'font/ttf',
-  '.txt': 'text/plain; charset=utf-8',
-  '.wasm': 'application/wasm',
-  '.woff': 'font/woff',
-  '.woff2': 'font/woff2'
-};
-
+/** The desktop app serves precompressed bundles without a content encoding. */
 function staticContentType (filePath) {
-  if (filePath.endsWith('.js.br') || filePath.endsWith('.js.gz')) return STATIC_CONTENT_TYPES['.js'];
-  if (filePath.endsWith('.css.br') || filePath.endsWith('.css.gz')) return STATIC_CONTENT_TYPES['.css'];
-  return STATIC_CONTENT_TYPES[path.extname(filePath).toLowerCase()] || 'application/octet-stream';
+  return contentType(/\.(js|css)\.(br|gz)$/.test(filePath) ? filePath.slice(0, -3) : filePath);
 }
-
-// FIXME...
-let DavHandler; let FsTree;
-const jsDavPlugins = {};
-
-function patchJsDAVUtilForWindowsPaths (Util) {
-  if (!Util || Util.__livelyWindowsPathPatch) return;
-
-  const originalSplitPath = Util.splitPath;
-  Util.ltrim = function (str, charlist) {
-    const string = str + '';
-    if (!charlist) return string.replace(/^\s+/, '');
-    const chars = new Set((charlist + '').split(''));
-    let start = 0;
-    while (start < string.length && chars.has(string[start])) start++;
-    return string.slice(start);
-  };
-  Util.rtrim = function (str, charlist) {
-    const string = str + '';
-    if (!charlist) return string.replace(/\s+$/, '');
-    const chars = new Set((charlist + '').split(''));
-    let end = string.length;
-    while (end > 0 && chars.has(string[end - 1])) end--;
-    return string.slice(0, end);
-  };
-  Util.trim = function (str, charlist) {
-    return Util.rtrim(Util.ltrim(str, charlist), charlist);
-  };
-
-  if (process.platform === 'win32') {
-    Util.splitPath = function (inputPath) {
-      return originalSplitPath.call(this, String(inputPath).replace(/\\/g, '/'));
-    };
-  }
-
-  Util.__livelyWindowsPathPatch = true;
-}
-
-function patchLoadedJsDAVUtilsForWindowsPaths () {
-  const cache = System._nodeRequire.cache || {};
-  Object.keys(cache)
-    .filter(id => /[\\/]jsDAV[\\/].*[\\/]lib[\\/]shared[\\/]util\.js$/i.test(id))
-    .forEach(id => patchJsDAVUtilForWindowsPaths(cache[id].exports));
-}
-
-/** Supply precise validators through jsDAV's filesystem backend API. */
-function patchJsDAVFileETags (File) {
-  if (File.__livelyETagPatch) return;
-  File.getETag = function (callback) {
-    fs.stat(this.path, { bigint: true }, (err, stat) => {
-      if (err) return callback(err);
-      const mtime = stat.mtimeNs ?? stat.mtimeMs;
-      callback(null, `"${stat.ino}-${stat.size}-${mtime}"`);
-    });
-  };
-  File.__livelyETagPatch = true;
-}
-
-(function loadJsDAV () {
-  // jsDAV shows unimportant console logs while loading, hide those...
-  const log = console.log;
-  const error = console.error;
-  console.error = (...err) => {
-    // jsDav just deliberately logs erros, and can not be turned silent
-    // so we will do that here:
-    if (typeof err[1] === 'object' && err[1].type == 'FileNotFound') {
-      console.log('[jsDav] 404 - ', err[1].message);
-    } else {
-      error(...err);
-    }
-  };
-  console.log = () => {};
-  try {
-    patchJsDAVUtilForWindowsPaths(System._nodeRequire('jsDAV/lib/shared/util'));
-    patchJsDAVFileETags(System._nodeRequire('jsDAV/lib/DAV/backends/fs/file'));
-    DavHandler = System._nodeRequire('jsDAV/lib/DAV/handler');
-    FsTree = System._nodeRequire('jsDAV/lib/DAV/backends/fs/tree');
-    jsDavPlugins.browser = System._nodeRequire('jsDAV/lib/DAV/plugins/browser.js');
-    patchLoadedJsDAVUtilsForWindowsPaths();
-  } catch (err) { console.error('cannot load jsdav:', err); } finally { console.log = log; }
-})();
 
 // use Node.js Writable, otherwise load polyfill
 let Writable = stream.Writable;
@@ -177,7 +75,6 @@ export default class LivelyDAVPlugin {
     if (process.env.ENTR_SUPPORT === '1') {
       child.execFile('sh', ['-c', `find "$1" | entr -n -r -d -s 'curl --header "x-lively-refresh-file-hashes: true" http://localhost:${port}/file-hash-regeneration.js'`, 'sh', this.options.rootDirectory], () => { });
     }
-    this.patchServerForJsDAV(server);
     this.fileHashes = {};
     this.computeFileHashes();
   }
@@ -248,18 +145,8 @@ export default class LivelyDAVPlugin {
     return res.promise;
   }
 
-  patchServerForJsDAV (server, thenDo) {
-    // this is what jsDAV expects...
-    server.tree = FsTree.new(this.options.rootDirectory);
-    server.tmpDir = './tmp'; // httpPut writes tmp files
-    server.options = {};
-    // for showing dir contents
-    server.plugins = { ...jsDavPlugins };
-
-    // https server has slightly different interface
-    if (!server.baseUri) server.baseUri = '/';
-    if (!server.getBaseUri) server.getBaseUri = () => server.baseUri;
-  }
+  /** A no-op; part of the plugin API that the DAV tests call. */
+  patchServerForJsDAV (server) {}
 
   async handleRequest (req, res, next) {
     if (req.headers['x-lively-refresh-file-hashes']) {
@@ -277,7 +164,7 @@ export default class LivelyDAVPlugin {
       path = req.headers['x-lively-proxy-path'];
       if (path.endsWith('/')) path = path.slice(0, -1);
     }
-    this.server.baseUri = path + '/';
+    const baseURI = path + '/';
     req.url = path + req.url;
 
     if (req.url === '/compressed-sources') {
@@ -304,16 +191,10 @@ export default class LivelyDAVPlugin {
 
     if (process.env.LIVELY_DESKTOP_APP === '1' && await this.tryServeStaticFile(req, res)) return;
 
-    if (req.url.endsWith('.js') || req.url.endsWith('.cjs')) {
-      if (req.method == 'PUT' || !this.fileHashes[req.url]) {
-        this._skipHashUpdate = true;
-        resource('file://' + this.options.rootDirectory).join(decodeURIComponent(req.url)).read().then(source => {
-          this.fileHashes[req.url] = string.hashCode(source);
-        }).catch(err => {
-          // ignore
-        });
-      }
-    }
+    const hashedURL = req.url;
+    const updatesHash = (hashedURL.endsWith('.js') || hashedURL.endsWith('.cjs')) &&
+      (req.method == 'PUT' || !this.fileHashes[hashedURL]);
+    if (updatesHash) this._skipHashUpdate = true;
 
     if (req.method == 'GET' &&
         req.url.endsWith('.json') &&
@@ -325,15 +206,15 @@ export default class LivelyDAVPlugin {
       res.setHeader('content-encoding', 'br');
     }
 
-    // shortcut: date-only validation keeps second precision until jsDAV is repaired upstream.
-    if (['GET', 'HEAD'].includes(req.method) && req.headers['if-none-match']) {
-      // RFC 9110: entity tags take precedence over whole-second dates.
-      delete req.headers['if-modified-since'];
-      // jsDAV's final GET check compares quoted tags literally; GET uses weak comparison.
-      req.headers['if-none-match'] = req.headers['if-none-match'].replace(/^W\//, '');
-    }
+    const target = await handleDAVRequest(req, res, { rootDirectory: this.options.rootDirectory, baseURI });
 
-    this.callDAV(req, res);
+    // Only if no error was thrown, so never for files outside the root,
+    // and after a PUT has been written, not the content it replaces.
+    if (updatesHash && target) {
+      fs.promises.readFile(target.file, 'utf8').then(source => {
+        this.fileHashes[hashedURL] = string.hashCode(source);
+      }, () => { /* removed meanwhile */ });
+    }
   }
 
   async tryServeStaticFile (req, res) {
@@ -385,17 +266,6 @@ export default class LivelyDAVPlugin {
     });
     readStream.pipe(res);
     return true;
-  }
-
-  callDAV (req, res) {
-    const handler = new DavHandler(this.server, req, res);
-    if (handler.plugins.browser) {
-      const origGetAssetUrl = handler.plugins.browser.getAssetUrl;
-      handler.plugins.browser.getAssetUrl = function (assetName) {
-        if (assetName === 'favicon.ico') { return this.handler.server.getBaseUri() + assetName; }
-        return origGetAssetUrl.call(this, assetName);
-      };
-    }
   }
 
   close () {
