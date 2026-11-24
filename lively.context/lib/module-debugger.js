@@ -55,6 +55,10 @@ export function installModuleDebugger (System, { open } = {}) {
         }
         finally { preparing = false; }
       };
+      const isAsync = compiled => {
+        const ast = compiled._cachedAst || (compiled.isInterpretableFunction && compiled.ast());
+        return !!ast?.async && !ast.generator;
+      };
       const call = (receiver, args, newTarget) => {
         if (preparing || !module.debuggingEnabled) return newTarget ? Reflect.construct(func, args, newTarget) : Reflect.apply(func, receiver, args);
         const compiled = prepare();
@@ -72,8 +76,7 @@ export function installModuleDebugger (System, { open } = {}) {
             throw error;
           }
         });
-        const ast = compiled._cachedAst || (compiled.isInterpretableFunction && compiled.ast());
-        const async = ast?.async && !ast.generator;
+        const async = isAsync(compiled);
         if (debugSupportEnabled() && !async) return invoke();
         // An async call owns its suspension. Never unwind its synchronous caller.
         if (async) return new Promise((resolve, reject) => {
@@ -92,12 +95,7 @@ export function installModuleDebugger (System, { open } = {}) {
         get (target, key, receiver) {
           if (key === Symbol.for('lively-debug-interception')) return true;
           if (key === 'toString') return target.toString.bind(target);
-          if (key === Symbol.for('lively-debug-async')) {
-            if (preparing || !module.debuggingEnabled) return false;
-            const compiled = prepare();
-            const ast = compiled._cachedAst || (compiled.isInterpretableFunction && compiled.ast());
-            return !!ast?.async && !ast.generator;
-          }
+          if (key === Symbol.for('lively-debug-async')) return !preparing && module.debuggingEnabled && isAsync(prepare());
           if (!preparing && module.debuggingEnabled && ['livelyDebuggingEnabled', '_cachedAst', '_cachedScopeObject'].includes(key)) return prepare()[key];
           return Reflect.get(target, key, receiver);
         },
