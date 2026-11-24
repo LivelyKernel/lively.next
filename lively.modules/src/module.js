@@ -13,7 +13,7 @@ import { _require, _resolve } from './nodejs.js';
 import { classHolder } from './cycle-breaker.js';
 import { regExpEscape } from 'lively.lang/string.js';
 import { searchInSource } from './search.js';
-import { declaringClassCell } from './runtime-closure.js';
+import { declaringClassCell, defineBindingCell } from './runtime-closure.js';
 
 // Used by the recorder Proxy to detect native browser functions that need
 // to be bound to the global object when stored in local variable slots.
@@ -800,9 +800,7 @@ class ModuleInterface {
       [Symbol.for('lively-local-closure')]: {value: !moduleBinding, configurable: true},
       [Symbol.for('lively-debug-bindings')]: {configurable: true, get() {
         const bindings = {};
-        for (const [name, cell] of Object.entries(cells)) Object.defineProperty(bindings, name, {
-          enumerable: true, configurable: true, get() { return cell.value; }, set(value) { cell.value = value; }
-        });
+        for (const [name, cell] of Object.entries(cells)) defineBindingCell(bindings, name, cell, {checked: false, configurable: true});
         Object.defineProperty(bindings, Symbol.for('lively-debug-binding-cells'), {value: cells, configurable: true});
         Object.defineProperty(bindings, '__lvVarRecorder', {value: mod.recorder});
         if (mod.debuggingEnabled) Object.defineProperty(bindings, Symbol.for('lively-debug-module'), {value: mod});

@@ -6,6 +6,7 @@ import { __createClosure, originalFunctions, frameFunctions, isControlSignal, ca
 import { getCurrentASTRegistry, rewriteFunction } from "lively.context";
 
 import { lexicalCaptures } from './lexical-captures.js';
+import { defineBindingCell } from '../../lively.modules/src/runtime-closure.js';
 
 let Global = typeof window !== "undefined" ? window : globalThis;
 
@@ -335,16 +336,22 @@ export async function runWithCapturedBindings(func, astRegistry, args, mapping =
     return run(func, astRegistry, args, bindings);
 }
 
+/** Add the module bindings that `ast` references to the closure `bindings` of a module function. */
 export function addRecorderBindings(bindings, ast) {
     const recorder = bindings.__lvVarRecorder;
     if (!recorder) return;
+    defineRecorderBindings(bindings, recorder, [...new Set(freeFunctionReferences(removeToplevelRecorderRefs(ast)).map(ref => ref.name))]
+        .filter(name => !Object.prototype.hasOwnProperty.call(bindings, name) && name in recorder));
+}
+
+/** Define `names` on `bindings` as live views of the module `recorder`, listed under lively-debug-module-bindings. */
+export function defineRecorderBindings(bindings, recorder, names) {
     const namesKey = Symbol.for('lively-debug-module-bindings');
     if (!bindings[namesKey]) Object.defineProperty(bindings, namesKey, {value: []});
-    for (const ref of freeFunctionReferences(removeToplevelRecorderRefs(ast))) {
-        if (Object.prototype.hasOwnProperty.call(bindings, ref.name) || !(ref.name in recorder)) continue;
-        Object.defineProperty(bindings, ref.name, {enumerable: true, configurable: true,
-            get() { return recorder[ref.name]; }, set(value) { recorder[ref.name] = value; }});
-        bindings[namesKey].push(ref.name);
+    for (const name of names) {
+        defineBindingCell(bindings, name, {get value() { return recorder[name]; }, set value(value) { recorder[name] = value; }},
+            {checked: false, configurable: true});
+        bindings[namesKey].push(name);
     }
 }
 

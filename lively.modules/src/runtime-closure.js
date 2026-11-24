@@ -1,5 +1,23 @@
 import { string } from 'lively.lang';
 
+/**
+ * Define `name` on `mapping` as an accessor of a binding cell `{kind, initialized, value}`.
+ * Checked accessors raise the TDZ and const errors themselves; cells that view a native
+ * binding are left unchecked because that binding raises them.
+ */
+export function defineBindingCell(mapping, name, cell, {checked = true, configurable = false} = {}) {
+  const ensureInitialized = () => {
+    if (checked && !cell.initialized) throw new ReferenceError("Cannot access '" + name + "' before initialization");
+  };
+  return Object.defineProperty(mapping, name, {enumerable: true, configurable,
+    get() { ensureInitialized(); return cell.value; },
+    set(value) {
+      ensureInitialized();
+      if (checked && cell.kind === 'const') throw new TypeError('Assignment to constant variable.');
+      cell.value = value;
+    }});
+}
+
 /** Keep a declaring class reference stable when an opted-in closure is saved. */
 export function declaringClassCell(declaringClass) {
   return {kind: 'const', initialized: true, value: declaringClass, __serialize__(pool) {

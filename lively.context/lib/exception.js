@@ -3,6 +3,7 @@ import { Scope, Frame, Function as AcornFunction, serializeManagedFunction } fro
 import { getCurrentASTRegistry } from "lively.context";
 import { custom, query, escodegen, parseFunction, ReplaceVisitor, withMozillaAstDo } from "lively.ast";
 import { addRecorderBindings } from './stackReification.js';
+import { defineBindingCell } from '../../lively.modules/src/runtime-closure.js';
 
 let Global = typeof window !== "undefined" ? window : globalThis;
 const debuggerState = Global[Symbol.for('lively-debugger-state')] ||= {};
@@ -83,18 +84,7 @@ export function bindingCells(mapping) {
 export { declaringClassCell } from '../../lively.modules/src/runtime-closure.js';
 
 export function restoreBindingCells(mapping, cells) {
-  for (const [name, cell] of Object.entries(cells)) Object.defineProperty(mapping, name, {
-    enumerable: true,
-    get() {
-      if (!cell.initialized) throw new ReferenceError("Cannot access '" + name + "' before initialization");
-      return cell.value;
-    },
-    set(value) {
-      if (!cell.initialized) throw new ReferenceError("Cannot access '" + name + "' before initialization");
-      if (cell.kind === 'const') throw new TypeError('Assignment to constant variable.');
-      cell.value = value;
-    }
-  });
+  for (const [name, cell] of Object.entries(cells)) defineBindingCell(mapping, name, cell);
   lexicalBindings.set(mapping, cells);
   return mapping;
 }
@@ -112,19 +102,7 @@ export function __declareLexicalBindings(mapping, declarations) {
       if (cells[name].kind !== kind) throw new TypeError("Binding kind changed for '" + name + "'; restart the frame");
       continue;
     }
-    const cell = cells[name] = { kind, initialized: false, value: undefined };
-    Object.defineProperty(mapping, name, {
-      enumerable: true,
-      get() {
-        if (!cell.initialized) throw new ReferenceError("Cannot access '" + name + "' before initialization");
-        return cell.value;
-      },
-      set(value) {
-        if (!cell.initialized) throw new ReferenceError("Cannot access '" + name + "' before initialization");
-        if (cell.kind === 'const') throw new TypeError('Assignment to constant variable.');
-        cell.value = value;
-      }
-    });
+    defineBindingCell(mapping, name, cells[name] = { kind, initialized: false, value: undefined });
   }
   lexicalBindings.set(mapping, cells);
   return mapping;

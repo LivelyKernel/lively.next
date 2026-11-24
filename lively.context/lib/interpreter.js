@@ -2,7 +2,7 @@ import { obj, arr } from "lively.lang";
 import { walk, custom, escodegen, parseFunction, query } from "lively.ast";
 import { isControlSignal, __debuggerSignal, UnwindException, __getClosure, __createLexicalScope, __declareLexicalBindings, __initializeBinding, __cloneLexicalScope, __awaitValue, __forOf, __closeIteratorsAfterCatch, bindingCells, restoreBindingCells, capturedBindingMappings, freeFunctionReferences, runtimeFunctionSource, removeRuntimeClosureAnnotations, originalFunctions } from "./exception.js";
 import { getGlobal } from "lively.vm/lib/util.js";
-import { Continuation, debugSupportEnabled } from './stackReification.js';
+import { Continuation, debugSupportEnabled, defineRecorderBindings } from './stackReification.js';
 
 import { lexicalCaptures } from './lexical-captures.js';
 
@@ -2058,13 +2058,9 @@ export class Scope {
       delete this.serializedExtraBindings;
       if (this.serializedModuleId) {
         const recorder = Global.System.get('@lively-env').moduleEnv(Global.System.decanonicalize(this.serializedModuleId)).recorder;
-        for (const name of this.serializedModuleNames) {
-          Object.defineProperty(this.mapping, name, {enumerable: true, configurable: true,
-            get() { return recorder[name]; }, set(value) { recorder[name] = value; }});
-          delete this['serializedModuleBinding_' + name];
-        }
+        defineRecorderBindings(this.mapping, recorder, this.serializedModuleNames);
+        for (const name of this.serializedModuleNames) delete this['serializedModuleBinding_' + name];
         Object.defineProperty(this.mapping, '__lvVarRecorder', {value: recorder});
-        Object.defineProperty(this.mapping, Symbol.for('lively-debug-module-bindings'), {value: this.serializedModuleNames});
         delete this.serializedModuleId;
         delete this.serializedModuleNames;
       }
