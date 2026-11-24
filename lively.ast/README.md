@@ -75,23 +75,9 @@ ast.printAst(parsed);
 ...
 ```
 
-### browser
-
-HTML:
-```html
-<script src="node_modules/dist/lively.lang.js"></script>
-<script src="dist/lively.ast.js"></script>
-```
-
-JS: like above
-
 <!---=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=--->
 
 ## Development
-
-### build dist
-
-`npm run build`
 
 ### Testing
 

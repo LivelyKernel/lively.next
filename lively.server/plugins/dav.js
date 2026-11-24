@@ -121,7 +121,6 @@ export default class LivelyDAVPlugin {
       'lively.morphic/objectdb',
       'lively.morphic/assets',
       'lively.morphic/web',
-      'lively.ast/dist',
       'lively.classes/build',
       'lively.ide/jsdom.worker.js',
       'lively.headless/chrome-data-dir',

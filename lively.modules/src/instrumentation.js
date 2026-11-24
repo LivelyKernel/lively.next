@@ -43,7 +43,7 @@ let exceptions = [
   id => !id.endsWith('.js') && !id.endsWith('.mjs') && !id.endsWith('.jsx') && !id.startsWith('https://jspm.dev') && !id.startsWith('esm://'),
   // Runtime mounts can resolve parser files outside their package metadata URL.
   id => id.endsWith('dist/acorn.js') || id.endsWith('lively.ast/lib/acorn-decorators.mjs') ||
-        id.endsWith('dist/escodegen.browser.js') || id.endsWith('bowser.js') || id.endsWith('TweenMax.min.js'),
+        id.endsWith('bowser.js') || id.endsWith('TweenMax.min.js'),
   id => id.endsWith('babel-core/browser.js') || id.endsWith('system.src.js') || id.includes('systemjs-plugin-babel')
 ];
 

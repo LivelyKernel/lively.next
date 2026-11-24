@@ -20,6 +20,9 @@ import ShellPlugin from "../plugins/remote-shell.js";
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 describe('lively.server', function() {
+  // Real sockets and file I/O share the lively server process that hosts the
+  // tests, which can be busy with other work; mocha's 2s default is too tight.
+  this.timeout(30 * 1000);
 
   before(async () => {
     await ensureFetch();
