@@ -21,6 +21,7 @@ const os = require('os');
 const { createHash } = require('crypto');
 const { spawn, execSync } = require('child_process');
 const { runVelopackStartup } = require('./updates.cjs');
+const { installFunctionScopeReader } = require('./function-scopes.cjs');
 const { desktopCacheDir, manifestName, preparePackagedSources, seedPackagedPartsbin } = require('./package-payload.cjs');
 
 // bg-script supplies its persistent window after requiring this module.
@@ -688,6 +689,7 @@ function emitError (msg) {
       });
       findWindow();
     });
+    installFunctionScopeReader(win, module.exports);
     const navigate = () => win.window.livelyBoot.navigate(dashboardURL);
     if (win.window.livelyBoot) navigate();
     else win.once('loaded', navigate);
@@ -807,6 +809,7 @@ function emitError (msg) {
   }
 
   const win = (await new Promise(resolve => nw.Window.getAll(resolve)))[0];
+  installFunctionScopeReader(win, module.exports);
 
   const navigate = () => {
     win.window.livelyBoot.setDashboardUrl(dashboardUrl);

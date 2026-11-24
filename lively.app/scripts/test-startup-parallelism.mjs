@@ -20,6 +20,7 @@ function desktopFixture () {
     desktopDataDir: () => '/data', module: { exports: {} },
     require: id => id === 'node:url' ? { pathToFileURL } : () => backend,
     nw: { Window: { getAll: callback => callback([window]) } },
+    installFunctionScopeReader: win => { if (win === window) events.push('function scopes'); },
     emitStatus () {}, emitError: message => errors.push(message), log () {} };
   return { ready, events, errors, run: () => runInNewContext(`(async () => { ${nativeBranch} })()`, context) };
 }
@@ -28,7 +29,8 @@ await test('native worker initialization overlaps dashboard navigation', { timeo
   const f = desktopFixture();
   try {
     await f.run();
-    assert.deepEqual(f.events, ['initialize', 'navigate'], 'Worker startup must begin before navigating, without waiting for readiness');
+    assert.deepEqual(f.events, ['initialize', 'function scopes', 'navigate'],
+      'Worker startup and the function-scope reader must precede navigation, without waiting for readiness');
   } finally { f.ready.resolve(); }
 });
 await test('background worker initialization failures are handled', async () => {
