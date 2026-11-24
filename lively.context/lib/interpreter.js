@@ -1384,6 +1384,13 @@ export class GeneratorThrow {
   get isGeneratorThrow() { return true; }
 }
 
+/** Put `generator` in `state` with its `frame` detached from the frame that resumed it, and pass `result` on. */
+function settleGenerator(generator, frame, state, result) {
+  generator.state = state;
+  frame.setParentFrame(null);
+  return result;
+}
+
 export class ManagedGenerator {
   constructor(frame) {
     this.frame = frame;
@@ -1449,21 +1456,12 @@ export class ManagedGenerator {
     this.state = 'executing';
     try {
       const value = frame.isResuming() ? interpreter.runFromPC(frame) : interpreter.runWithFrame(frame.func.node, frame);
-      this.state = 'done';
-      frame.setParentFrame(null);
-      return {value, done: true};
+      return settleGenerator(this, frame, 'done', {value, done: true});
     } catch (error) {
-      if (error.isGeneratorReturn) {
-        this.state = 'done';
-        frame.setParentFrame(null);
-        return {value: error.value, done: true};
-      }
-      if (error.isGeneratorThrow) { this.state = 'done'; frame.setParentFrame(null); throw error.value; }
-      if (error.isUnwindException && error.error.reason === 'yield') {
-        this.state = 'yield';
-        frame.setParentFrame(null);
-        return {value: error.error.value, done: false};
-      }
+      if (error.isGeneratorReturn) return settleGenerator(this, frame, 'done', {value: error.value, done: true});
+      if (error.isGeneratorThrow) throw settleGenerator(this, frame, 'done', error.value);
+      if (error.isUnwindException && error.error.reason === 'yield')
+        return settleGenerator(this, frame, 'yield', {value: error.error.value, done: false});
       this.state = 'debugger';
       throw error;
     }
