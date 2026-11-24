@@ -11,7 +11,7 @@
     "systemjs": "^0.21.6",
     "winston": "^3.7.2",
     "formidable": "^1.2.2",
-    "@babel/core": "7.26.10",
+    "@babel/core": "7.29.6",
     "tar-fs": "^3.0.5",
     "lively-system-interface": "workspace:*",
     "lively.2lively": "workspace:*",
