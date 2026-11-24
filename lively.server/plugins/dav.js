@@ -123,7 +123,6 @@ export default class LivelyDAVPlugin {
       'lively.morphic/assets',
       'lively.morphic/web',
       'lively.classes/build',
-      'lively.ide/jsdom.worker.js',
       'lively.headless/chrome-data-dir',
       'lively.freezer/landing-page',
       'lively.freezer/loading-screen',

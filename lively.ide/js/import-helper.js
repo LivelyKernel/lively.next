@@ -5,7 +5,7 @@ import { LoadingIndicator } from 'lively.components';
 import { config } from 'lively.morphic';
 import { fuzzyParse, query } from 'lively.ast';
 import { ImportInjector, GlobalInjector, ImportRemover } from 'lively.modules/src/import-modification.js';
-import { callService, ProgressMonitor } from '../service-worker.js';
+import { ProgressMonitor } from '../progress-monitor.js';
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // inject import or global decls into code
@@ -118,23 +118,10 @@ export async function interactivelyChooseImports (livelySystem, opts) {
           }
         }
       });
-      return config.ide.workerEnabled
-        ? callService('exportsOfModules', {
-          excludedPackages: config.ide.js.ignoredPackages,
-          livelySystem,
-          progress: new ProgressMonitor({
-            handlers: {
-              workerProgress: (stepName, progress) => {
-                li.progress = progress;
-                li.label = stepName;
-              }
-            }
-          })
-        })
-        : livelySystem.exportsOfModules({
-          excludedPackages: config.ide.js.ignoredPackages,
-          progress
-        });
+      return livelySystem.exportsOfModules({
+        excludedPackages: config.ide.js.ignoredPackages,
+        progress
+      });
     }, 'computing imports...');
 
   // 2. Ask what to import + generate insertions

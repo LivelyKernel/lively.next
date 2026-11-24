@@ -103,7 +103,6 @@ module.exports = Promise.resolve()
         "lively.halos/layout.js": "{}",
         
         "lively.ide/styling/gradient-editor.js": "{}",
-        "lively.ide/service-worker.js": "{}",
         
         'lively.components': '{}',
         'lively.components/prompts.js': "{}",

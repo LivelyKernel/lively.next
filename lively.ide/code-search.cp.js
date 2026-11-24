@@ -6,7 +6,7 @@ import { SystemList } from './styling/shared.cp.js';
 import { ButtonDefault } from 'lively.components/buttons.cp.js';
 import { Label } from 'lively.morphic/text/label.js';
 import { FilterableList, LoadingIndicator, Window } from 'lively.components';
-import { callService, ProgressMonitor } from './service-worker.js';
+import { ProgressMonitor } from './progress-monitor.js';
 import { arr, fun, obj } from 'lively.lang';
 import { show } from 'lively.halos';
 import { connect, noUpdate } from 'lively.bindings';
@@ -22,19 +22,6 @@ export async function doSearch (
   progress
 ) {
   if (searchTerm.length <= 2) { return []; }
-
-  if (!System.get('@system-env').worker && config.ide.workerEnabled) {
-    return await callService('doSearch', {
-      livelySystem,
-      searchTerm,
-      excludedModules,
-      excludedPackages,
-      includeUnloaded,
-      caseSensitive,
-      regexMode,
-      progress
-    });
-  }
 
   let searchResult = await livelySystem.searchInAllPackages(
     searchTerm, { caseSensitive, regexMode, excludedModules, excludedPackages, includeUnloaded, progress });
