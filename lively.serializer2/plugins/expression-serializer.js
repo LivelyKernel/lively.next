@@ -41,7 +41,6 @@ export default class ExpressionSerializer {
     let idx = string.indexOf(':');
     let rest = string.slice(idx + 1);
     const bindings = {};
-    const httpPlaceholder = '__HTTP_PLACEHOLDER__';
     let hasBindings = false;
 
     // 2. bindings?
@@ -49,15 +48,8 @@ export default class ExpressionSerializer {
       hasBindings = true;
       const importedVars = rest.slice(1, idx);
       rest = rest.slice(idx + 2); // skip }:
-      if (rest.includes('https:') && rest.indexOf('https:') < rest.indexOf(':')) {
-        rest = rest.replace('https:', httpPlaceholder);
-        idx = rest.indexOf(':') - httpPlaceholder.length + 'https:'.length;
-        rest = rest.replace(httpPlaceholder, 'https:');
-      } if (rest.includes('local:') && rest.indexOf('local:') < rest.indexOf(':')) {
-        rest = rest.replace('local:', httpPlaceholder);
-        idx = rest.indexOf(':') - httpPlaceholder.length + 'local:'.length;
-        rest = rest.replace(httpPlaceholder, 'local:');
-      } else idx = rest.indexOf(':'); // end of package
+      const uriPrefix = /^(?:local:\/\/|[a-z][a-z\d+.-]*:\/\/[^/]*\/(?:[a-z]:\/)?|[a-z][a-z\d+.-]*:\/\/)/i.exec(rest);
+      idx = rest.indexOf(':', uriPrefix?.[0].length || 0); // end of module, after its scheme, authority and drive
       const from = rest.slice(0, idx);
       const imports = importedVars.split(',')
         .filter(ea => Boolean(ea.trim()))
@@ -94,11 +86,18 @@ export default class ExpressionSerializer {
 
   getExpressionForFunction (func) {
     const { package: pkg, pathInPackage } = func[Symbol.for('lively-module-meta')];
-
+    const moduleId = pkg?.name ? joinPath(pkg.name, pathInPackage) : pathInPackage;
+    const recorder = this.getModuleRecorder(moduleId);
+    const exports = this.getModuleExports(moduleId);
+    const binding = recorder[func.name] === func ? func.name
+      : Object.keys(exports || {}).find(name => exports[name] === func) ||
+        (!func[Symbol.for('lively-local-closure')] && func.name);
+    if (!binding) throw new Error(`Cannot serialize ${func.name || 'anonymous function'} as a module reference: no matching binding in ${moduleId}`);
+    const name = binding === func.name && binding !== 'default' ? func.name : '__function__';
     return this.exprStringEncode({
-      __expr__: func.name,
+      __expr__: name,
       bindings: {
-        [joinPath(pkg.name, pathInPackage)]: [func.name]
+        [moduleId]: [binding === name ? name : {exported: binding, local: name}]
       }
     });
   }
@@ -132,13 +131,22 @@ export default class ExpressionSerializer {
   }
 
   getModuleRecorder (modName) {
+    if (lively.FreezerRuntime) {
+      const runtime = lively.FreezerRuntime;
+      return runtime.get(runtime.decanonicalize(modName)) || runtime.fetchStandaloneFor(modName)?.exports || {};
+    }
     const m = System.get('@lively-env').loadedModules[this.resolveModule(modName)];
     return m ? m.recorder : {};
   }
 
   getModuleExports (modName) {
+    if (lively.FreezerRuntime) {
+      const runtime = lively.FreezerRuntime;
+      const m = runtime.get(runtime.decanonicalize(modName), false) || runtime.fetchStandaloneFor(modName);
+      return m?.exports || {};
+    }
     const m = System.get('@lively-env').loadedModules[this.resolveModule(modName)];
-    return m ? m.record().exports : {};
+    return System.get(this.resolveModule(modName)) || (m ? m.record().exports : {});
   }
 
   async ensureAllBindingsLoaded (exprObj) {

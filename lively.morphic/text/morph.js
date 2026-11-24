@@ -1075,6 +1075,7 @@ export class Text extends Morph {
   get __only_serialize__ () {
     return arr.withoutAll(super.__only_serialize__, [
       'document',
+      'textAndAttributes',
       'undoManager',
       'markers',
       'textLayout',

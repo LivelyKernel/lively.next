@@ -97,12 +97,15 @@ export default class ModulePackageMapping {
   }
 
   addModuleIdToCache (moduleId) {
-    this.ensureCache();
     let { packageToModule, modulesToPackage, modulesWithoutPackage } = this;
     if (modulesToPackage[moduleId]) return modulesToPackage[moduleId];
     if (modulesWithoutPackage[moduleId]) return null;
 
-    let packageNames = Object.keys(packageToModule); let itsPackage;
+    // Single-module queries need package URLs, not the full module inventory.
+    let packageNames = this._cacheInitialized
+      ? Object.keys(packageToModule)
+      : classHolder.Package.allPackageURLs(this.System);
+    let itsPackage;
     for (let j = 0; j < packageNames.length; j++) {
       let packageName = packageNames[j];
       if (moduleId.startsWith(packageName) &&

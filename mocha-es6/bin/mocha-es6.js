@@ -107,7 +107,6 @@ async function setupLivelyModulesTestSystem() {
   modules.changeSystem(System, true);
   require("lively.source-transform/babel/plugin.js").setupBabelTranspiler(System);
   cacheMocha(System, "file://" + mochaDir);
-  mochaEs6.installSystemInstantiateHook();
   // System.debug = true;
   await registry.update();
   // The live loader and test harness must use one instrumented module graph.

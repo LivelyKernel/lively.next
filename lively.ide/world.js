@@ -491,6 +491,7 @@ export class LivelyWorld extends World {
 
   async initializeStudio () {
     let { openNewProjectPrompt, openNewWorldPrompt, projectToBeOpened } = this;
+    System.debuggerInterception ??= true;
 
     let anonymousMode;
     const { askForWorldName } = resource(document.location.href).query();
