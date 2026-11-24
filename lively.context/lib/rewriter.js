@@ -1,7 +1,7 @@
 /*global global, module, Global,LivelyDebuggingASTRegistry*/
 import { acorn, parse, walk, custom, query } from "lively.ast";
 import { obj, arr } from "lively.lang";
-import { lexicalCaptures } from "./lexical-captures.js";
+import { lexicalCaptures, lexicalDeclarations } from "./lexical-captures.js";
 
 const debuggerState = globalThis[Symbol.for('lively-debugger-state')] ||= {};
 export let LivelyDebuggingASTRegistry = debuggerState.astRegistry ||= {};
@@ -170,10 +170,9 @@ export class Rewriter {
       const body = ast.type === 'BlockStatement' || ast.type === 'Program' ? ast : ast.body;
       scope.functionBody = body;
       const directDeclarations = new Set(body.body);
-      const lexicalDeclarations = body.body.filter(n => n.type === 'VariableDeclaration' && n.kind !== 'var')
-          .flatMap(n => query.helpers.declIds(n.declarations.map(d => d.id)).map(id => [id.name, n.kind]));
-      this.registerVars(lexicalDeclarations.map(([name]) => ({ name })));
-      let hasLexicalScopes = lexicalDeclarations.length > 0;
+      const declarations = lexicalDeclarations(body.body);
+      this.registerVars(declarations.map(([name]) => ({ name })));
+      let hasLexicalScopes = declarations.length > 0;
       custom.matchNodes(ast, {
           'VariableDeclaration': function(node, state, depth, type) {
               if (node.type != type) return; // skip Expression, Statement, etc.
@@ -212,7 +211,7 @@ export class Rewriter {
           }
           return node;
       });
-      result.lexicalDeclarations = lexicalDeclarations;
+      result.lexicalDeclarations = declarations;
       result.hasLexicalScopes = hasLexicalScopes;
       result.hasBindingPatterns = body.body.some(node => node.type === 'VariableDeclaration' && node.kind !== 'var' && node.declarations.some(decl => decl.id.type !== 'Identifier'));
       return result;
@@ -273,6 +272,18 @@ export class Rewriter {
       const ref = new WeakRef(node);
       Object.defineProperty(entries, index, {enumerable: true, configurable: true, get() { return ref.deref(); }});
       return index;
+  }
+
+  /** `let __L = __createLexicalScope(parent, _, astIndex, declarations); let _L = __L[1];` */
+  lexicalScopeSetup(level, parent, astIndex, declarations) {
+      return parse('let __' + level + ' = __createLexicalScope(' + parent + ', _, ' + astIndex + ', ' + JSON.stringify(declarations) + '); let _' + level + ' = __' + level + '[1];').body;
+  }
+
+  /** `try { block } catch (error) { throw __captureLexicalScope(error, __root, __level); }` */
+  lexicalScopeGuard(block, root, level, error = '__scopeError') {
+      const guard = parse('try {} catch (' + error + ') { throw __captureLexicalScope(' + error + ', __' + root + ', __' + level + '); }').body[0];
+      guard.block = block;
+      return guard;
   }
 
   createCatchForUnwind(node, originalFunctionIdx, level) {
@@ -1498,7 +1509,7 @@ export class RewriteVisitor extends BaseVisitor {
       const valueName = '__forValue_' + n.astIndex;
       const target = this.accept(left, rewriter);
       const body = this.accept(n.body, rewriter);
-      const setup = lexical ? parse('let __' + level + ' = __createLexicalScope(__' + parent + ', _, ' + n.astIndex + ', ' + JSON.stringify([[left.name, declaration.kind]]) + '); let _' + level + ' = __' + level + '[1];').body : [];
+      const setup = lexical ? rewriter.lexicalScopeSetup(level, '__' + parent, n.astIndex, [[left.name, declaration.kind]]) : [];
       const initialize = lexical ? rewriter.newNode('CallExpression', {
           callee: {type: 'Identifier', name: '__initializeBinding'},
           arguments: [target.object, {type: 'Literal', value: left.name}, {type: 'Identifier', name: valueName}]
@@ -1540,9 +1551,7 @@ export class RewriteVisitor extends BaseVisitor {
 
   visitBlockStatement(n, rewriter) {
       const scope = arr.last(rewriter.scopes);
-      const declarations = scope.functionBody === n ? [] : n.body
-          .filter(node => node.type === 'VariableDeclaration' && node.kind !== 'var')
-          .flatMap(node => query.helpers.declIds(node.declarations.map(decl => decl.id)).map(id => [id.name, node.kind]));
+      const declarations = scope.functionBody === n ? [] : lexicalDeclarations(n.body);
       const functions = scope.functionBody === n ? [] : n.body.filter(node => node.type === 'FunctionDeclaration');
       const lexical = declarations.length || functions.length;
       const root = rewriter.lastFunctionScopeId();
@@ -1564,18 +1573,15 @@ export class RewriteVisitor extends BaseVisitor {
       // Catch/with scopes store their environment in the function's frame chain.
       const parentScope = rewriter.scopes[level - 1];
       const parentRef = parentScope.isCatchScope || parentScope.isWithScope ? '__' + root : parent;
-      const preamble = parse('let __' + level + ' = __createLexicalScope(' + parentRef + ', _, ' + n.astIndex + ', ' + JSON.stringify(declarations) + '); let _' + level + ' = __' + level + '[1];').body;
+      const preamble = rewriter.lexicalScopeSetup(level, parentRef, n.astIndex, declarations);
       if (n.body.some(node => node.type === 'VariableDeclaration' && node.kind !== 'var' && node.declarations.some(decl => decl.id.type !== 'Identifier')))
           preamble.push(...parse('let _initialize_' + level + ' = __initializationTarget(_' + level + ');').body);
       const initializers = functions.map(node => rewriter.newNode('ExpressionStatement', {
           expression: rewriter.newNode('AssignmentExpression', {operator: '=', left: rewriter.wrapVar(node.id.name),
               right: rewriter.rewriteFunctionDeclaration(node, this.registryIndex)})
       }));
-      const handler = parse('try {} catch (__scopeError) { throw __captureLexicalScope(__scopeError, __' + root + ', __' + level + '); }').body[0].handler;
       rewriter.exitScope();
-      return {...result, body: [...preamble, ...initializers, rewriter.newNode('TryStatement', {
-          block: {...result}, handler, finalizer: null
-      })]};
+      return {...result, body: [...preamble, ...initializers, rewriter.lexicalScopeGuard({...result}, root, level)]};
   }
 
   visitSequenceExpression(n, rewriter) {
@@ -1617,7 +1623,7 @@ export class RewriteVisitor extends BaseVisitor {
           const root = rewriter.lastFunctionScopeId(), parentLevel = rewriter.scopes.length - 1;
           const parent = rewriter.scopes[parentLevel].isBlockScope ? parentLevel : root;
           const level = rewriter.enterScope({isBlockScope: true}) - 1;
-          const declarations = query.helpers.declIds(n.init.declarations.map(decl => decl.id)).map(id => [id.name, n.init.kind]);
+          const declarations = lexicalDeclarations([n.init]);
           rewriter.registerVars(n.init.declarations.map(decl => decl.id));
           const init = this.accept(n.init, rewriter).expression;
           const test = n.test ? this.accept(n.test, rewriter) : rewriter.newNode('Literal', {value: true});
@@ -1629,9 +1635,8 @@ export class RewriteVisitor extends BaseVisitor {
           loop.init.declarations[loop.init.declarations.length - 1].init = init;
           loop.test = test;
           if (update) loop.update.expressions.push(update);
-          loop.body = parse('try {} catch (__scopeError) { throw __captureLexicalScope(__scopeError, __' + root + ', __' + level + '); }').body[0];
-          loop.body.block = body.type === 'BlockStatement' ? body : rewriter.newNode('BlockStatement', {body: [body]});
-          loop.body = rewriter.newNode('BlockStatement', {body: [loop.body]});
+          loop.body = rewriter.newNode('BlockStatement', {body: [rewriter.lexicalScopeGuard(
+              body.type === 'BlockStatement' ? body : rewriter.newNode('BlockStatement', {body: [body]}), root, level)]});
           loop.astIndex = n.astIndex;
           rewriter.exitScope();
           return loop;
@@ -1723,11 +1728,10 @@ export class RewriteVisitor extends BaseVisitor {
           }
       });
       if (lexical) {
-          const declarations = query.helpers.declIds(n.left.declarations.map(decl => decl.id)).map(id => [id.name, n.left.kind]);
-          const setup = parse('let __' + level + ' = __createLexicalScope(__' + parent + ', _, ' + n.astIndex + ', ' + JSON.stringify(declarations) + '); let _' + level + ' = __' + level + '[1]; __initializeBinding(_' + level + ', ' + JSON.stringify(declarations[0][0]) + ', ' + keyName + ');').body;
-          const guarded = parse('try {} catch (__forError) { throw __captureLexicalScope(__forError, __' + root + ', __' + level + '); }').body[0];
-          guarded.block = body;
-          body = {type: 'BlockStatement', body: [...setup, guarded]};
+          const declarations = lexicalDeclarations([n.left]);
+          body = {type: 'BlockStatement', body: [...rewriter.lexicalScopeSetup(level, '__' + parent, n.astIndex, declarations),
+              ...parse('__initializeBinding(_' + level + ', ' + JSON.stringify(declarations[0][0]) + ', ' + keyName + ');').body,
+              rewriter.lexicalScopeGuard(body, root, level, '__forError')]};
           rewriter.exitScope();
       }
       return {

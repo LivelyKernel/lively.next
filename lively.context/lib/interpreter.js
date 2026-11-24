@@ -1,10 +1,10 @@
 import { obj, arr } from "lively.lang";
 import { walk, custom, escodegen, parseFunction, query } from "lively.ast";
-import { isControlSignal, __debuggerSignal, UnwindException, __getClosure, __createLexicalScope, __declareLexicalBindings, __initializeBinding, __cloneLexicalScope, __awaitValue, __forOf, __closeIteratorsAfterCatch, bindingCells, restoreBindingCells, capturedBindingMappings, freeFunctionReferences, runtimeFunctionSource, removeRuntimeClosureAnnotations, originalFunctions } from "./exception.js";
+import { isControlSignal, __debuggerSignal, UnwindException, __getClosure, __declareLexicalBindings, __initializeBinding, __cloneLexicalScope, __awaitValue, __forOf, __closeIteratorsAfterCatch, bindingCells, restoreBindingCells, capturedBindingMappings, freeFunctionReferences, runtimeFunctionSource, removeRuntimeClosureAnnotations, originalFunctions } from "./exception.js";
 import { getGlobal } from "lively.vm/lib/util.js";
 import { Continuation, debugSupportEnabled, defineRecorderBindings } from './stackReification.js';
 
-import { lexicalCaptures } from './lexical-captures.js';
+import { lexicalCaptures, lexicalDeclarations } from './lexical-captures.js';
 
 let Global = getGlobal();
 
@@ -387,23 +387,14 @@ export class Interpreter {
 
   visitBlockStatement(node, state) {
     var frame = state.currentFrame;
-    const declarations = node.body.filter(n => n.type === 'VariableDeclaration' && n.kind !== 'var')
-        .flatMap(n => query.helpers.declIds(n.declarations.map(d => d.id)).map(id => [id.name, n.kind]));
-    const previousScope = frame.getScope();
-    let blockScope = previousScope;
+    const declarations = lexicalDeclarations(node.body);
+    let blockScope = frame.getScope();
     if (declarations.length) {
-      if (frame.isResuming()) {
-        let scope = previousScope;
-        while (scope && scope.lexicalNodeIndex !== node.astIndex) scope = scope.getParentScope();
-        if (scope) blockScope = scope;
+      if (!frame.isResuming()) blockScope = frame.enterLexicalScope(node.astIndex, __declareLexicalBindings({}, declarations));
+      else if (!(blockScope = frame.recordedLexicalScope(node.astIndex))) {
         // Function-body lexical declarations share the recorded function scope.
-        else if (node === frame.getOriginalAst().body) blockScope = frame.getFunctionScope();
-        else throw new Error('Missing recorded block scope at ' + node.astIndex);
-      } else {
-        const mapping = __createLexicalScope(null, frame.alreadyComputed, node.astIndex, declarations)[1];
-        blockScope = new Scope(mapping, previousScope);
-        blockScope.lexicalNodeIndex = node.astIndex;
-        frame.setScope(blockScope);
+        if (node !== frame.getOriginalAst().body) throw new Error('Missing recorded block scope at ' + node.astIndex);
+        blockScope = frame.getFunctionScope();
       }
       __declareLexicalBindings(blockScope.getMapping(), declarations);
     }
@@ -651,17 +642,8 @@ export class Interpreter {
     const lexical = node.init && node.init.type === 'VariableDeclaration' && node.init.kind !== 'var';
     let loopScope;
     if (lexical) {
-      if (frame.isResuming()) {
-        loopScope = frame.getScope();
-        while (loopScope && loopScope.lexicalNodeIndex !== node.astIndex) loopScope = loopScope.getParentScope();
-        if (!loopScope) throw new Error('Missing recorded loop scope');
-      } else {
-        const mapping = __createLexicalScope(null, frame.alreadyComputed, node.astIndex,
-          query.helpers.declIds(node.init.declarations.map(d => d.id)).map(id => [id.name, node.init.kind]))[1];
-        loopScope = new Scope(mapping, frame.getScope());
-        loopScope.lexicalNodeIndex = node.astIndex;
-        frame.setScope(loopScope);
-      }
+      if (!frame.isResuming()) loopScope = frame.enterLexicalScope(node.astIndex, __declareLexicalBindings({}, lexicalDeclarations([node.init])));
+      else if (!(loopScope = frame.recordedLexicalScope(node.astIndex))) throw new Error('Missing recorded loop scope');
     }
     node.init && this.accept(node.init, state);
 
@@ -688,12 +670,8 @@ export class Interpreter {
       }
       if (frame.returnTriggered) break;
 
-      if (lexical) {
-        const mapping = __cloneLexicalScope([frame.alreadyComputed, loopScope.getMapping(), null, node.astIndex])[1];
-        loopScope = new Scope(mapping, loopScope.getParentScope());
-        loopScope.lexicalNodeIndex = node.astIndex;
-        frame.setScope(loopScope);
-      }
+      if (lexical) loopScope = frame.enterLexicalScope(node.astIndex,
+        __cloneLexicalScope([frame.alreadyComputed, loopScope.getMapping(), null, node.astIndex])[1], loopScope.getParentScope());
 
       if (node.update) {
         this.accept(node.update, state);
@@ -733,17 +711,12 @@ export class Interpreter {
       state.result = keys[i];
       let loopScope;
       if (lexical) {
-        if (frame.isResuming()) {
-          loopScope = frame.getScope();
-          while (loopScope && loopScope.lexicalNodeIndex !== node.astIndex) loopScope = loopScope.getParentScope();
-          if (!loopScope) throw new Error('Missing recorded for-in scope');
-          if (loopScope.get(left.name) !== keys[i]) continue;
-        } else {
-          const mapping = __createLexicalScope(null, frame.alreadyComputed, node.astIndex, [[left.name, declaration.kind]])[1];
+        if (!frame.isResuming()) {
+          const mapping = __declareLexicalBindings({}, [[left.name, declaration.kind]]);
           __initializeBinding(mapping, left.name, keys[i]);
-          loopScope = new Scope(mapping, frame.getScope());
-          loopScope.lexicalNodeIndex = node.astIndex;
-        }
+          loopScope = frame.enterLexicalScope(node.astIndex, mapping);
+        } else if (!(loopScope = frame.recordedLexicalScope(node.astIndex))) throw new Error('Missing recorded for-in scope');
+        else if (loopScope.get(left.name) !== keys[i]) continue;
         frame.setScope(loopScope);
       } else if (left.type == 'Identifier') {
         if (frame.isResuming() && frame.lookup(left.name) !== state.result)
@@ -819,10 +792,7 @@ export class Interpreter {
       if (iterator.phase === 'done') break;
       if (!iterator.entered) {
         if (lexical) {
-          const mapping = __createLexicalScope(null, frame.alreadyComputed, node.astIndex, query.helpers.declIds([left]).map(id => [id.name, declaration.kind]))[1];
-          const scope = new Scope(mapping, frame.getScope());
-          scope.lexicalNodeIndex = node.astIndex;
-          frame.setScope(scope);
+          const mapping = frame.enterLexicalScope(node.astIndex, __declareLexicalBindings({}, lexicalDeclarations([declaration]))).getMapping();
           this.bindPattern(left, iterator.value, state, (id, value) => __initializeBinding(mapping, id.name, value));
         } else {
           if (declaration) this.accept(declaration, state);
@@ -844,11 +814,7 @@ export class Interpreter {
         if (unwind) frame.setPC(null);
       }
       iterator.entered = false;
-      if (lexical) {
-        let scope = frame.getScope();
-        while (scope && scope.lexicalNodeIndex !== node.astIndex) scope = scope.getParentScope();
-        frame.setScope(scope.getParentScope());
-      }
+      if (lexical) frame.setScope(frame.recordedLexicalScope(node.astIndex).getParentScope());
       if (frame.continueTriggered) frame.stopContinue(this.findNodeLabel(node, state));
       if (hasFailure || frame.breakTriggered || frame.returnTriggered || frame.continueTriggered) {
         iterator.completion = {value: state.result, returning: frame.returnTriggered, breaking: frame.breakTriggered,
@@ -1844,6 +1810,20 @@ export class Frame {
   setScope(scope) { return this.scope = scope; }
 
   getScope() { return this.scope; }
+
+  /** The innermost scope recorded for the lexical (block or loop) node at `astIndex`. */
+  recordedLexicalScope(astIndex) {
+    let scope = this.scope;
+    while (scope && scope.lexicalNodeIndex !== astIndex) scope = scope.getParentScope();
+    return scope;
+  }
+
+  /** Make a scope of `mapping` for the lexical node at `astIndex` the current scope. */
+  enterLexicalScope(astIndex, mapping, parent = this.scope) {
+    const scope = new Scope(mapping, parent);
+    scope.lexicalNodeIndex = astIndex;
+    return this.setScope(scope);
+  }
 
   getFunctionScope() {
     let scope = this.scope;

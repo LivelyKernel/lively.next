@@ -2,6 +2,12 @@ import { query, parseFunction, escodegen } from 'lively.ast';
 
 const captures = new WeakMap();
 
+/** `[name, kind]` of every let/const binding declared by the VariableDeclarations among `nodes`. */
+export function lexicalDeclarations(nodes) {
+  return nodes.filter(node => node.type === 'VariableDeclaration' && node.kind !== 'var')
+    .flatMap(node => query.helpers.declIds(node.declarations.map(decl => decl.id)).map(id => [id.name, node.kind]));
+}
+
 /** Find the lexical receiver/arguments used by an arrow, including nested arrows. */
 export function lexicalCaptures(node) {
   if (node.type !== 'ArrowFunctionExpression') return {this: false, arguments: false};
