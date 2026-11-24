@@ -30,7 +30,7 @@ const helpers = {
       const node = nodes[i];
       if (!node) continue;
       else if (node.type === 'Identifier') result.push(node);
-      else if (node.type === 'RestElement') result.push(node.argument);
+      else if (node.type === 'RestElement') helpers.declIds([node.argument], result);
       // AssignmentPattern: default arg like function(local = defaultVal) {}
       else if (node.type === 'AssignmentPattern') helpers.declIds([node.left], result);
       else if (node.type === 'ObjectPattern') {

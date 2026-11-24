@@ -1249,7 +1249,6 @@ class Visitor {
     node.body = visitor.accept(node.body, state, path.concat(['body']));
     // decorators is a list with types Decorator
     const newElements = [];
-    if (!node.decorators) debugger;
     for (let i = 0; i < node.decorators.length; i++) {
       const ea = node.decorators[i];
       const acceptedNodes = ea ? visitor.accept(ea, state, path.concat(['decorators', i])) : ea;
