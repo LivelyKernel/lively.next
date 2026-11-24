@@ -32,7 +32,7 @@ function classTemplate (className, superClassName, methodString, classMethodStri
     } else {
       return this[Symbol.for("lively-instance-initialize")].apply(this, arguments);
     }
-  };${(useClassHolder || !className) ? '' : '\n  var __lively_class__ = Foo;'}
+  };${useClassHolder ? `\n  const ${className} = __lively_class__;` : !className ? '' : '\n  var __lively_class__ = Foo;'}
   if (Object.isFrozen(__lively_classholder__) || Object.isFrozen(__lively_class__.prototype)) {
     return __lively_class__;
   }
@@ -70,6 +70,12 @@ describe('class transform', () => {
       expect(eval(stringify(classToFunctionTransform(source, opts)))).deep.equals(expected);
     });
   }
+  it('keeps the class of its methods when the outer class name is reassigned', () => {
+    const source = 'class Example { create() { return new Example(); } } var original = new Example(); Example = null; original.create() instanceof original.constructor;';
+    const transformed = stringify(classToFunctionTransform(source, opts));
+    const _rec = {};
+    expect(eval(transformed)).equals(true);
+  });
 
   it('is translated into class initializer function', () =>
     expect(stringify(classToFunctionTransform('class Foo {}', opts))).to.equal(

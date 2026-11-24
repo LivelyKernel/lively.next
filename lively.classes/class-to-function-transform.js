@@ -351,7 +351,9 @@ function replaceClass (node, state, options) {
                 '=',
                 n.member(n.id(tempLivelyClassHolderVar), classId),
                 constructorTemplate(classId.name, fields, options)))
-          )]
+          ),
+          // Like the inner binding of a class body, so that methods keep their class when the outer name is reassigned.
+          n.varDecl(n.id(classId.name), n.id(tempLivelyClassVar), 'const')]
         : classId
           ? [n.varDecl(classId, constructorTemplate(classId.name, fields, options)), n.varDecl(n.id(tempLivelyClassVar), classId)]
           : [n.varDecl(n.id(tempLivelyClassVar), constructorTemplate(null, fields, options))],

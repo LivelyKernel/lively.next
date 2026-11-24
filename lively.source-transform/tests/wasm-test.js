@@ -1,6 +1,7 @@
 /* global before, describe, it, System */
 import { expect } from 'mocha-es6';
 import { parse } from 'lively.ast';
+import { initializeClass } from 'lively.classes/runtime.js';
 import { initWasm, isAvailable, swcTransform } from '../swc/browser-transform.js';
 import { setupSwcTranspiler, SwcBrowserTranspiler } from '../swc/transpiler-setup.js';
 
@@ -53,6 +54,23 @@ describe('wasm transform', function () {
     const baseURL = typeof System !== 'undefined' ? System.baseURL : location.origin;
     await initWasm(baseURL);
     expect(isAvailable()).equals(true);
+  });
+
+  it('keeps the class of its methods when the outer class name is reassigned', async function () {
+    const source = 'class Example { create() { return new Example(); } } const original = new Example(); Example = null; export const result = original.create() instanceof original.constructor;';
+    const code = transformWithWasm(source, {
+      enableScopeCapture: false,
+      classToFunction: { classHolder: '_rec', functionNode: 'initializeES6ClassForLively', currentModuleAccessor: 'undefined' }
+    });
+    let declaration, result;
+    const testSystem = {
+      register (dependencies, declare) {
+        declaration = declare((name, value) => { result = value; return value; }, { id: moduleId });
+      }
+    };
+    new Function('System', 'initializeES6ClassForLively', '_rec', code)(testSystem, initializeClass, {});
+    await declaration.execute();
+    expect(result).equals(true);
   });
 
   it('emits parseable System.register output', function () {
