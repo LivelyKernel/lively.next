@@ -79,4 +79,35 @@ describe('reviewed morphic change regressions', () => {
     expect(env.changeManager.hasCommittedListenerFor(left)).equals(true);
   });
 
+  it('does not capture or retain unrelated document snapshots during typing and text undo', async () => {
+    const tracked = morph();
+    const editor = new Text({ readOnly: false, fixedWidth: true, fixedHeight: true,
+      extent: pt(400, 300), textString: Array(2000).fill('line').join('\n') });
+    await editor.whenFontLoaded();
+    let commits = 0;
+    env.changeManager.addCommittedChangeListener(() => { commits++; }, {
+      containsMorph: target => target === tracked || tracked.isAncestorOf(target)
+    });
+    let previousDocumentReads = 0;
+    const previousDocument = editor.textString;
+    let prototype = editor;
+    while (!Object.getOwnPropertyDescriptor(prototype, 'textAndAttributes')) prototype = Object.getPrototypeOf(prototype);
+    const getter = Object.getOwnPropertyDescriptor(prototype, 'textAndAttributes').get;
+    Object.defineProperty(editor, 'textAndAttributes', { configurable: true,
+      get () { if (editor.textString === previousDocument) previousDocumentReads++; return getter.call(this); }
+    });
+    try {
+      editor.withMetaDo({ reconcileChanges: true }, () => editor.insertText('x', { row: 0, column: 0 }));
+      expect(editor.textString.startsWith('xline')).equals(true);
+      expect(previousDocumentReads).equals(0);
+      editor.textUndo();
+      expect(editor.textString.startsWith('line')).equals(true);
+      editor.textRedo();
+      expect(editor.textString.startsWith('xline')).equals(true);
+      expect(commits).equals(0);
+      const replacements = env.changeManager.changes.filter(change => change.target === editor && change.selector === 'replace');
+      expect(replacements.length).greaterThan(0);
+      replacements.forEach(change => expect(change.meta).not.haveOwnProperty('prevTextAndAttributes'));
+    } finally { delete editor.textAndAttributes; }
+  });
 });

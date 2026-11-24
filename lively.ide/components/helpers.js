@@ -6,7 +6,6 @@ import { parse, query } from 'lively.ast';
 import { module } from 'lively.modules/index.js';
 
 export const DEFAULT_SKIPPED_ATTRIBUTES = ['metadata', 'styleClasses', 'isComponent', 'viewModel', 'activeMark', 'positionOnCanvas', 'acceptsDrops'];
-export const COMPONENTS_CORE_MODULE = 'lively.morphic/components/core.js';
 const exprSerializer = new ExpressionSerializer();
 
 export async function getComponentDeclsFromScope (modId, scope) {
@@ -29,7 +28,8 @@ export function getEligibleSourceEditorsFor (modId, modSource) {
     return m.isText && m.editorPlugin?.evalEnvironment?.targetModule === modId;
   });
   return qualifiedEditors.filter(editor => {
-    if (editor.owner.isBrowser && modSource) return !editor.owner.hasUnsavedChanges(modSource);
+    if (typeof modSource !== 'string' || editor.textString !== modSource) return false;
+    if (editor.owner?.isBrowser && modSource) return !editor.owner.hasUnsavedChanges(modSource);
     return true;
   });
 }
@@ -106,6 +106,20 @@ export function getTextAttributesExpr (textMorph) {
   let { start, end } = getProp(rootPropNode, 'textAndAttributes').value; // eslint-disable-line no-use-before-define
   if (expr.__expr__[end - 1] === ',') end--;
   expr.__expr__ = expr.__expr__.slice(start - 1, end);
+  const referencedNames = new Set(
+    query.findGlobalVarRefs(`(${expr.__expr__})`).map(({ name }) => name)
+  );
+  expr.bindings = Object.fromEntries(Object.entries(expr.bindings || {})
+    .map(([moduleId, references]) => {
+      const filtered = (Array.isArray(references) ? references : [references])
+        .filter(reference => referencedNames.has(
+          typeof reference === 'string'
+            ? reference
+            : reference?.local || reference?.exported
+        ));
+      return [moduleId, filtered];
+    })
+    .filter(([, references]) => references.length));
   return expr;
 }
 
@@ -128,7 +142,7 @@ export function getValueExpr (prop, value, depth = 0) {
   if (value && value.isPoint) value = value.roundTo(0.1);
   if (obj.isString(value) || obj.isBoolean(value)) value = JSON.stringify(value);
   if (prop === 'rotation') {
-    value = `num.toRadians(${num.toDegrees(value).toFixed(1)})`;
+    value = `num.toRadians(${num.toDegrees(value)})`;
     bindings['lively.lang'] = ['num'];
   }
   if (prop === 'blur') {
@@ -142,12 +156,14 @@ export function getValueExpr (prop, value, depth = 0) {
 
   if (prop === 'master' && value) {
     valueAsExpr = value.getConfigAsExpression();
-    if (valueAsExpr) valueAsExpr.__expr__ = indentExpression(valueAsExpr.__expr__, depth);
+    if (valueAsExpr && depth > 0) {
+      valueAsExpr.__expr__ = indentExpression(valueAsExpr.__expr__, depth);
+    }
     return valueAsExpr;
   }
   if (prop === 'layout' && value) {
     valueAsExpr = value.__serialize__();
-    valueAsExpr.__expr__ = indentExpression(valueAsExpr.__expr__, depth);
+    if (depth > 0) valueAsExpr.__expr__ = indentExpression(valueAsExpr.__expr__, depth);
     return valueAsExpr;
   }
   if (value && !value.isMorph && value.__serialize__) {
@@ -172,14 +188,6 @@ export function getValueExpr (prop, value, depth = 0) {
   return valueAsExpr;
 }
 
-export function getFoldableValueExpr (prop, foldableValue, members, depth) {
-  const withoutValueGetter = obj.extract(foldableValue, members);
-  if (new Set(obj.values(withoutValueGetter)).size > 1) {
-    return getValueExpr(prop, withoutValueGetter, depth);
-  }
-  return getValueExpr(prop, foldableValue.valueOf());
-}
-
 /******************
  * NODE RETRIEVAL *
  ******************/
@@ -201,15 +209,6 @@ export function getProp (propsNode, prop) {
    ]
  `);
   return propNode;
-}
-
-export function getParentRef (parsedComponent) {
-  const [parentNode] = query.queryNodes(parsedComponent, `
-   // CallExpression [
-         /:callee Identifier [ @name == 'component']
-      ]
- `);
-  if (parentNode.arguments.length > 1) return parentNode.arguments[0];
 }
 
 /**
@@ -272,7 +271,7 @@ export function getPropertiesNode (parsedComponent, aMorphOrName) {
          /:properties "*" [
            Property [
               /:key Identifier [ @name == 'name' ]
-           && /:value Literal [ @value == '${name}']
+           && /:value Literal [ @value == ${JSON.stringify(name)}]
            ]
          ]
        ]
@@ -290,10 +289,10 @@ function getNodeFromSubmorphs (submorphsNode, morphName) {
           && /:arguments "*" [
             ObjectExpression [
                /:properties "*" [
-                   Property [
-                      /:key Identifier [ @name == 'name' ]
-                   && /:value Literal [ @value == '${morphName}']
-                   ]
+                      Property [
+                         /:key Identifier [ @name == 'name' ]
+                      && /:value Literal [ @value == ${JSON.stringify(morphName)}]
+                      ]
                  ]
                ]
              ]
@@ -302,7 +301,7 @@ function getNodeFromSubmorphs (submorphsNode, morphName) {
                /:properties "*" [
                  Property [
                     /:key Identifier [ @name == 'name' ]
-                 && /:value Literal [ @value == '${morphName}']
+                 && /:value Literal [ @value == ${JSON.stringify(morphName)}]
                  ]
                ]
              ]
@@ -314,7 +313,7 @@ function getNodeFromSubmorphs (submorphsNode, morphName) {
   const [replaceRef] = query.queryNodes(submorphsNode, `
     ./  CallExpression [
          /:callee Identifier [ @name == 'replace' ]
-       && /:arguments "*" [ Literal [ @value == '${morphName}']]
+       && /:arguments "*" [ Literal [ @value == ${JSON.stringify(morphName)}]]
        ]
     `);
   if (replaceRef) return replaceRef;
@@ -323,7 +322,7 @@ function getNodeFromSubmorphs (submorphsNode, morphName) {
          /:properties "*" [
            Property [
               /:key Identifier [ @name == 'name' ]
-           && /:value Literal [ @value == '${morphName}']
+           && /:value Literal [ @value == ${JSON.stringify(morphName)}]
            ]
          ]
        ]
@@ -367,32 +366,13 @@ export function getMorphNode (componentScope, aMorph) {
   return drillDownPath(getPropertiesNode(componentScope), path);
 }
 
-export function getWithoutCall (submorphsNode, aMorph) {
-  const [withoutCall] = query.queryNodes(submorphsNode, `
-    ./  CallExpression [
-         /:callee Identifier [ @name == 'without' ]
-      && /:arguments "*" [ Literal [ @value == '${aMorph.name}'] ]
-     ]
-    `);
-  return withoutCall;
-}
-
-export function getAddCallReferencing (submorphsNode, aMorph) {
-  const [addCall] = query.queryNodes(submorphsNode, `
-    ./  CallExpression [
-         /:callee Identifier [ @name == 'add' ]
-      && /:arguments "*" [ Literal [ @value == '${aMorph.name}'] ]
-     ]
-    `);
-  return addCall;
-}
-
 /************************
  * SOURCE CODE PATCHING *
  ************************/
 
 export function preserveFormatting (sourceCode, nodeToRemove) {
   if (!nodeToRemove) return nodeToRemove;
+  nodeToRemove = { ...nodeToRemove };
   let commaRemoved = false;
 
   while (sourceCode[nodeToRemove.end].match(/\,/)) {
@@ -409,91 +389,10 @@ export function preserveFormatting (sourceCode, nodeToRemove) {
   return nodeToRemove;
 }
 
-export function applySourceChanges (sourceCode, changes) {
-  for (let change of changes) {
-    // apply the change to the module source
-    if (change.action === 'remove') {
-      change = preserveFormatting(sourceCode, change);
-    }
-    sourceCode = string.applyChange(sourceCode, change);
-  }
-  return sourceCode;
-}
-
-export function applyChangesToTextMorph (aText, changes) {
-  for (let change of changes) {
-    switch (change.action) {
-      case 'insert':
-        aText.insertText(change.lines.join('\n'), aText.indexToPosition(change.start));
-        break;
-      case 'remove':
-        change = preserveFormatting(aText.textString, change);
-        aText.replace({
-          start: aText.indexToPosition(change.start),
-          end: aText.indexToPosition(change.end)
-        }, '');
-        break;
-      case 'replace':
-        aText.replace({
-          start: aText.indexToPosition(change.start),
-          end: aText.indexToPosition(change.end)
-        }, change.lines.join('\n'));
-        break;
-    }
-  }
-  return aText.textString;
-}
-
 export function scanForNamesInGenerator (closure) {
   return query.queryNodes(parse(`(${closure.toString()})`), `
     //  Property [ /:key Identifier [ @name == 'name' ]]
   `).map(hit => hit.value?.value);
-}
-
-export function getAnonymousSpecs (parsedComponent) {
-  return query.queryNodes(parsedComponent, `
-    // ObjectExpression [
-       count(/ Property [
-        /:key Identifier [ @name == 'name' ]
-       ]) == 0
-     ]`);
-}
-
-export function getAnonymousAddedParts (parsedComponent) {
-  return query.queryNodes(parsedComponent, `
-    //  CallExpression [
-         /:callee Identifier [ @name == 'add' ]
-      && /:arguments "*" [
-           CallExpression [
-             /:callee Identifier [ @name == 'part' ]
-          &&
-            count(/ ObjectExpression [
-               /:properties "*" [
-                   Property [
-                      /:key Identifier [ @name == 'name' ]
-                   ]
-                 ]
-               ]) == 0
-             
-           ]
-         ]
-       ]
-    `);
-}
-
-export function getAnonymousParts (parsedComponent) {
-  return query.queryNodes(parsedComponent, `
-     // CallExpression [
-         /:callee Identifier [ @name == 'part' ]
-      && count(/ ObjectExpression [
-         /:properties "*" [
-             Property [
-                /:key Identifier [ @name == 'name' ]
-             ]
-           ]
-         ]) == 0
-       ]
-    `);
 }
 
 export { getNodeFromSubmorphs };
