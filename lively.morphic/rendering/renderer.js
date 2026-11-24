@@ -1302,9 +1302,10 @@ export default class Renderer {
    * @param {TextPosition} end - The position in the text where the marker ends.
    * @param {CSSStyle} style - Custom styles for the marker to override the defaults.
    * @param {Boolean} entireLine - Flag to indicate wether or not the marker part covers the entire line.
+   * @param {Node} [node] - A rendered node of this marker part whose position and style are updated.
    * @return {Node} A DOM node representing the respective part of the marker.
    */
-  renderMarkerPart (morph, id, start, end, style, entireLine = false) {
+  renderMarkerPart (morph, id, start, end, style, entireLine = false, node = this.doc.createElement('div')) {
     let startX = 0; let endX = 0; let y = 0; let height = 0;
     const { document: doc, textLayout } = morph;
     const line = doc.getLine(start.row);
@@ -1319,9 +1320,9 @@ export default class Renderer {
       ({ x: endX, height } = textLayout.boundsFor(morph, end));
     }
     height = Math.ceil(height);
-    const node = this.doc.createElement('div');
     node.id = morph.id + id;
     node.classList.add('newtext-marker-layer');
+    node.style.cssText = '';
     node.style.left = startX + 'px';
     node.style.top = y + 'px';
     node.style.height = height + 'px';
@@ -2036,7 +2037,8 @@ export default class Renderer {
       alreadyRenderedMarkers,
       markersToRender,
       markerPart => this.renderMarkerPart(...Object.values(markerPart)),
-      noOpUpdate,
+      // Parts with an unchanged id and range keep their node, which follows layout and style changes.
+      (node, { morph, id, start, end, style, entireLine }) => this.renderMarkerPart(morph, id, start, end, style, entireLine, node),
       submorphsNode || morph.renderingState.textLayer,
       selectionNode || cursorNode
     );
@@ -2384,6 +2386,7 @@ export default class Renderer {
         if (document.fonts.status === 'loaded') {
           morph.textLayout.lineCharBoundsCache.set(docLine, charBounds); // override
           docLine.changeExtent(lineWidth, lineHeight, false);
+          morph.renderingState.markers = null;
           morph.renderingState.needsFit = !morph.fixedWidth || !morph.fixedHeight;
         } else {
           morph.textLayout.resetLineCharBoundsCacheOfLine(docLine);
@@ -2401,6 +2404,7 @@ export default class Renderer {
       if (nodeHeight && nodeWidth && (docLine.height !== nodeHeight || docLine.width !== nodeWidth) &&
         morph.fontMetric.isFontSupported(morph._fontFamilyToRender, morph._fontWeightToRender)) {
         docLine.changeExtent(nodeWidth, nodeHeight, false);
+        morph.renderingState.markers = null;
         morph.textLayout.resetLineCharBoundsCacheOfLine(docLine);
         morph.renderingState.needsFit = !morph.fixedWidth || !morph.fixedHeight;
       }
