@@ -383,9 +383,12 @@ export class PackageTreeData extends TreeData {
 
     // To allow correct resolution of projects we list all available projects in the package registry.
     // This filters out projects which are entirely unloaded, to make the system browser less cluttered.
+    // The selected project is listed even when none of its modules are loaded.
+    const selectedURL = this.root.browser.selectedPackage?.url;
     pkgs = pkgs.filter(p => {
       const modulesOfPkg = p.pkg.modules;
       return (p.pkg.kind !== 'project' ||
+      p.pkg.url === selectedURL ||
       modulesOfPkg.length > 1 ||
       // This excludes packages for which only the package.json is loaded, which happens only for projects which are newly cloned as dependencies at the beginning of the session.
       modulesOfPkg.length === 1 && !modulesOfPkg[0].name.endsWith('package.json'));
@@ -1159,6 +1162,8 @@ export class BrowserModel extends ViewModel {
     pName = pName || 'lively.morphic';
     if (this.selectedPackage?.address === pName) return;
     const p = await this.systemInterface.getPackage(pName);
+    // The package list shows a project without loaded modules only once it is selected.
+    await this.onPackageSelected(p);
     const columnView = this.ui.columnView;
     const td = columnView.treeData;
     await columnView.setExpandedPath(n => {
@@ -1173,7 +1178,6 @@ export class BrowserModel extends ViewModel {
       });
     }
 
-    await this.onPackageSelected(p);
     await this.whenPackageUpdated();
 
     return p;
