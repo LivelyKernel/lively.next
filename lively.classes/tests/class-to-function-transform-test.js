@@ -52,26 +52,24 @@ let opts = {
 };
 
 describe('class transform', () => {
-  it('preserves native object-method super outside classes and inside ordinary class methods', () => {
-    const source = 'var object = {__proto__: {value: 2}, value() { return super.value + 1; }, get total() { return super.value + 2; }}; class Child { value() { return {__proto__: {value: 4}, value() { return super.value + 1; }}.value(); } } [object.value(), object.total, new Child().value()];';
-    const transformed = stringify(classToFunctionTransform(source, opts));
-    const _rec = {};
-    expect(eval(transformed)).deep.equals([3, 4, 5]);
-  });
-
-  it('lowers super calls and getters in field initializers, including arrows', () => {
-    const source = 'class Base { value() { return this.amount; } get doubled() { return this.amount * 2; } } class Child extends Base { amount = 3; valueFromSuper = super.value(); inherited = super.doubled; callback = () => super.value() + 1; } var child = new Child(); [child.valueFromSuper, child.inherited, child.callback()];';
-    const transformed = stringify(classToFunctionTransform(source, opts));
-    const _rec = {};
-    expect(eval(transformed)).deep.equals([3, 6, 4]);
-  });
-
-  it('lowers class field super inside native object methods and getters', () => {
-    const source = 'class Base { value() { return this.amount; } get doubled() { return this.amount * 2; } } var factory = {make() { return class extends Base { amount = 3; valueFromSuper = super.value(); inherited = super.doubled; callback = () => super.value() + 1; }; }, get Child() { return class extends Base { amount = 4; valueFromSuper = super.value(); inherited = super.doubled; callback = () => super.value() + 1; }; }}; var first = new (factory.make())(), second = new factory.Child(); [first.valueFromSuper, first.inherited, first.callback(), second.valueFromSuper, second.inherited, second.callback()];';
-    const transformed = stringify(classToFunctionTransform(source, opts));
-    const _rec = {};
-    expect(eval(transformed)).deep.equals([3, 6, 4, 4, 8, 5]);
-  });
+  const fields = n => `amount = ${n}; valueFromSuper = super.value(); inherited = super.doubled; callback = () => super.value() + 1;`;
+  for (const [title, source, expected] of [
+    ['preserves native object-method super outside classes and inside ordinary class methods', 'var object = {__proto__: {value: 2},' +
+      ' value() { return super.value + 1; }, get total() { return super.value + 2; }}; class Child { value() {' +
+      ' return {__proto__: {value: 4}, value() { return super.value + 1; }}.value(); } }' +
+      ' [object.value(), object.total, new Child().value()];',
+    [3, 4, 5]],
+    ['lowers super calls and getters in field initializers and field arrows, also for classes created in object methods and getters',
+      'class Base { value() { return this.amount; } get doubled() { return this.amount * 2; } }' +
+      ` class Child extends Base { ${fields(3)} } var factory = {make() { return class extends Base { ${fields(3)} }; },` +
+      ` get Child() { return class extends Base { ${fields(4)} }; }}; [new Child(), new (factory.make())(), new factory.Child()]` +
+      '.map(object => [object.valueFromSuper, object.inherited, object.callback()]);', [[3, 6, 4], [3, 6, 4], [4, 8, 5]]]
+  ]) {
+    it(title, () => {
+      const _rec = {};
+      expect(eval(stringify(classToFunctionTransform(source, opts)))).deep.equals(expected);
+    });
+  }
 
   it('is translated into class initializer function', () =>
     expect(stringify(classToFunctionTransform('class Foo {}', opts))).to.equal(

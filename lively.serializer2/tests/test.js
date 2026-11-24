@@ -49,22 +49,13 @@ describe('object registration', () => {
 describe('snapshots', () => {
   beforeEach(() => objPool = new ObjectPool());
 
-  it('keeps absolute class-module references when no package name is recorded', () => {
+  it('keeps absolute class-module references when no package name is recorded, and serializes dictionaries', () => {
     const modules = ['http://127.0.0.1:9011/project/foo.js', 'local://project/foo.js', 'file:///tmp/project/foo.js'];
-    const snapshot = Object.fromEntries(modules.map((pathInPackage, id) => [id, {
-      'lively.serializer-class-info': {className: 'Example', module: {package: {}, pathInPackage}},
-      props: {}
-    }]));
-    snapshot.named = {
-      'lively.serializer-class-info': {className: 'Example', module: {package: {name: 'lively.context'}, pathInPackage: './lib/interpreter.js'}},
-      props: {}
-    };
+    const entry = module => ({'lively.serializer-class-info': {className: 'Example', module}, props: {}});
+    const snapshot = {...modules.map(pathInPackage => entry({package: {}, pathInPackage})),
+      named: entry({package: {name: 'lively.context'}, pathInPackage: './lib/interpreter.js'})};
     expect(requiredModulesOfSnapshot(snapshot)).deep.equals([...modules, 'lively.context/lib/interpreter.js']);
-  });
-
-  it('serializes dictionaries without a constructor', () => {
-    const dictionary = Object.assign(Object.create(null), {value: 23});
-    expect(serializationRoundtrip(dictionary).value).equals(23);
+    expect(serializationRoundtrip(Object.assign(Object.create(null), {value: 23})).value).equals(23);
   });
 
   it('snapshots', () => {

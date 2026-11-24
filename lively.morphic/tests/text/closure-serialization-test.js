@@ -8,67 +8,49 @@ import { module } from 'lively.modules';
 import { serializeMorph, deserializeMorph } from '../../serialization.js';
 
 describe('rich-text native callback serialization', () => {
+  /** Opens a text with `textAndAttributes`, runs `check` once it renders, and removes every morph it returns. */
+  async function withText (textAndAttributes, options, check) {
+    const text = new Text({textAndAttributes, ...options}).openInWorld(), created = [];
+    try { await text.whenRendered(); created.push(...await check(text)); } finally {
+      for (const morph of [...created, text]) morph?.remove();
+    }
+  }
+
   it('keeps embedded morph references and color expressions in the custom text snapshot', async () => {
     const embedded = new Morph({name: 'embedded', fill: Color.blue});
-    const text = new Text({textAndAttributes: ['before ', {fontColor: Color.red}, embedded, null, ' after', null]}).openInWorld();
-    let copied;
-    try {
-      await text.whenRendered();
-      copied = text.copy();
-      const copiedEmbedded = copied.textAndAttributes.find(value => value?.isMorph);
+    await withText(['before ', {fontColor: Color.red}, embedded, null, ' after', null], {}, text => {
+      const copied = text.copy(), copiedEmbedded = copied.textAndAttributes.find(value => value?.isMorph);
       expect(copiedEmbedded).not.equals(embedded);
-      expect(copiedEmbedded.name).equals('embedded');
-      expect(copiedEmbedded.fill).equals(Color.blue);
-      expect(copiedEmbedded.owner).equals(copied);
-      expect(copied.textAndAttributes[1].fontColor).equals(Color.red);
-    } finally {
-      copied?.remove();
-      text.remove();
-    }
+      expect([copiedEmbedded.name, copiedEmbedded.fill, copiedEmbedded.owner, copied.textAndAttributes[1].fontColor])
+        .ordered.members(['embedded', Color.blue, copied, Color.red]);
+      return [copied];
+    });
   });
 
   it('copies and saves inspector toggle attributes without serializing their captured environment', async () => {
     const fixture = module('lively.morphic/tests/text/fixtures/retained-callback.js');
     fixture.retainRuntimeClosures = true;
-    const {inspectorToggle} = await fixture.load();
-    const target = {enabled: false};
-    const keyString = 'enabled';
-    const node = {rerenders: 0, rerender() { this.rerenders++; }};
-    const onMouseDown = inspectorToggle(target, keyString, node);
-    const hook = Symbol.for('lively-serialize-closure');
-    expect(typeof onMouseDown[hook]).equals('function');
+    const {inspectorToggle} = await fixture.load(), target = {enabled: false}, node = {rerenders: 0, rerender () { this.rerenders++; }};
+    const onMouseDown = inspectorToggle(target, 'enabled', node), hook = Symbol.for('lively-serialize-closure');
     const cells = onMouseDown[Symbol.for('lively-debug-bindings')][Symbol.for('lively-debug-binding-cells')];
-    expect(cells.target.value).equals(target);
-    expect(cells.keyString.value).equals(keyString);
-    expect(cells.node.value).equals(node);
-    Object.defineProperty(onMouseDown, hook, {configurable: true, value() {
+    expect([typeof onMouseDown[hook], cells.target.value, cells.keyString.value, cells.node.value])
+      .ordered.members(['function', target, 'enabled', node]);
+    Object.defineProperty(onMouseDown, hook, {configurable: true, value () {
       throw new Error('Rich-text serialization must discard this callback before traversing its environment');
     }});
-    const attributes = {fontColor: Color.red, doit: {onMouseDown}};
-    const text = new Text({readOnly: true, textAndAttributes: ['toggle', attributes]}).openInWorld();
-    let copied, restored;
-    try {
-      await text.whenRendered();
+    await withText(['toggle', {fontColor: Color.red, doit: {onMouseDown}}], {readOnly: true}, text => {
       const pool = ObjectPool.withDefaultPlugins();
-      const snapshot = serializeMorph(text, {objPool: pool});
-      restored = deserializeMorph(JSON.parse(JSON.stringify(snapshot)));
-      copied = text.copy();
-      for (const result of [restored, copied]) {
-        expect(result.textString).equals('toggle');
-        expect(result.textAndAttributes[1].fontColor).equals(Color.red);
-        expect(result.textAndAttributes[1].doit.onMouseDown).equals(undefined);
+      const results = [deserializeMorph(JSON.parse(JSON.stringify(serializeMorph(text, {objPool: pool})))), text.copy()];
+      for (const result of results) {
+        expect([result.textString, result.textAndAttributes[1].fontColor, result.textAndAttributes[1].doit.onMouseDown])
+          .ordered.members(['toggle', Color.red, undefined]);
       }
-      expect(pool.ref(onMouseDown)).equals(undefined);
-      expect(pool.ref(target)).equals(undefined);
-      expect(new ExpressionSerializer().embedValue(onMouseDown)).equals(onMouseDown);
-      expect(text.textAndAttributes[1].doit.onMouseDown).equals(onMouseDown);
+      expect([pool.ref(onMouseDown), pool.ref(target)]).deep.equals([undefined, undefined]);
+      expect([new ExpressionSerializer().embedValue(onMouseDown), text.textAndAttributes[1].doit.onMouseDown])
+        .deep.equals([onMouseDown, onMouseDown]);
       onMouseDown();
-      expect(target.enabled).equals(true);
-      expect(node.rerenders).equals(1);
-    } finally {
-      copied?.remove();
-      restored?.remove();
-      text.remove();
-    }
+      expect([target.enabled, node.rerenders]).deep.equals([true, 1]);
+      return results;
+    });
   });
 });
