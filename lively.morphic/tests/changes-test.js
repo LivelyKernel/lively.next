@@ -1,5 +1,6 @@
 /* global it, describe, beforeEach, afterEach */
-import { morph, MorphicEnv } from '../index.js';
+import { morph, MorphicEnv, Text, World } from '../index.js';
+import { createDOMEnvironment } from '../rendering/dom-helper.js';
 import { GroupChange } from '../changes.js';
 import { expect } from 'mocha-es6';
 import { pt, Color } from 'lively.graphics';
@@ -10,7 +11,10 @@ let env;
 describe('changes', function () {
   this.timeout(5000);
 
-  beforeEach(() => env = MorphicEnv.pushDefault(new MorphicEnv()));
+  beforeEach(async () => {
+    env = MorphicEnv.pushDefault(new MorphicEnv(await createDOMEnvironment()));
+    await env.setWorld(new World({ extent: pt(300, 300) }));
+  });
   afterEach(() => MorphicEnv.popDefault().uninstall());
 
   it('records property modifications as changes', () => {
@@ -162,6 +166,236 @@ describe('changes', function () {
         expect(env.changeManager).not.haveOwnProperty('attributeConnections');
         expect(env.changeManager.changeRecorders).deep.equals({});
       });
+    });
+  });
+
+  describe('committed change sets', () => {
+    it('defers reference-valued operations while a recorder is active', () => {
+      const target = morph({ opacity: 1 });
+      const [change] = target.recordChangesWhile(() => target.opacity = 0.5);
+      expect(change._operation).equals(undefined);
+      change.reverseApply();
+      expect(target.opacity).equals(1);
+      change.apply();
+      expect(target.opacity).equals(0.5);
+    });
+
+    it('does not snapshot method-call internals without observers', () => {
+      const target = morph();
+      let snapshots = 0;
+      env.changeManager.setPropertyValuePolicy('customState', {
+        valueSemantics: 'snapshot',
+        snapshotValue: value => { snapshots++; return value; }
+      });
+      const change = target.addMethodCallChangeDoing({
+        target, selector: 'customMethod', args: [], undo: () => {}
+      }, () => target.setProperty('customState', { value: 1 }));
+      expect(snapshots).equals(0);
+      expect(change.changes).to.have.length(1);
+      expect(env.changeManager.recordingChangesDepth).equals(0);
+    });
+
+    it('still snapshots mutable method-call internals for an outer recorder', () => {
+      const target = morph();
+      const value = { nested: { value: 1 } };
+      const [change] = target.recordChangesWhile(() => target.addMethodCallChangeDoing({
+        target, selector: 'customMethod', args: [], undo: () => {}
+      }, () => {
+        target.setProperty('customState', value);
+        value.nested.value = 2;
+      }));
+      expect(change.changes[0].operation.after).deep.equals({ nested: { value: 1 } });
+      expect(env.changeManager.recordingChangesDepth).equals(0);
+    });
+
+    it('captures method-call leaves before they enter a committed listener scope', () => {
+      const owner = morph();
+      const commits = [];
+      env.changeManager.addCommittedChangeListener(changeSet => commits.push(changeSet), {
+        containsMorph: target => target === owner || owner.isAncestorOf(target)
+      });
+      owner.addMethodCallChangeDoing({
+        target: owner, selector: 'customMethod', args: [], undo: () => {}
+      }, () => {
+        const child = morph();
+        const value = { nested: { value: 1 } };
+        child.setProperty('customState', value);
+        value.nested.value = 2;
+        owner.addMorph(child);
+      });
+      expect(commits).to.have.length(1);
+      const operation = commits[0].operations.find(operation => operation.property === 'customState');
+      expect(operation.after).deep.equals({ nested: { value: 1 } });
+    });
+
+    it('rejects invalid falsy value semantics when registering a policy', () => {
+      for (const valueSemantics of [null, '', false, 0]) {
+        expect(() => env.changeManager.setPropertyValuePolicy('customState', { valueSemantics }))
+          .to.throw('Unknown morphic property value semantics');
+      }
+    });
+
+    it('defers property snapshots without observers or an active recorder', () => {
+      const target = morph();
+      let snapshots = 0;
+      env.changeManager.setPropertyValuePolicy('customState', {
+        valueSemantics: 'snapshot',
+        snapshotValue: value => { snapshots++; return value; }
+      });
+      target.setProperty('customState', { value: 1 });
+      expect(snapshots).equals(0);
+      const change = target.changes.find(change => change.prop === 'customState');
+      const operation = change.operation;
+      expect(operation.after).deep.equals({ value: 1 });
+      expect(snapshots).equals(2);
+      expect(change.operation === operation).equals(true);
+      expect(snapshots).equals(2);
+    });
+
+    it('captures mutable values while recording and restores recording after errors', () => {
+      const target = morph();
+      const before = { nested: { value: 1 } };
+      const after = { nested: { value: 2 } };
+      target.setProperty('customState', before);
+      const [change] = target.recordChangesWhile(() => target.setProperty('customState', after));
+      before.nested.value = 3;
+      after.nested.value = 4;
+      change.reverseApply();
+      expect(target.getProperty('customState')).deep.equals({ nested: { value: 1 } });
+      change.apply();
+      expect(target.getProperty('customState')).deep.equals({ nested: { value: 2 } });
+      expect(() => target.recordChangesWhile(() => { throw new Error('stop'); })).to.throw('stop');
+      expect(env.changeManager.recordingChangesDepth).equals(0);
+    });
+
+    it('does not construct commit context when there are no committed listeners', () => {
+      const target = morph();
+      const before = env.changeManager.commitCounter;
+      target.opacity = 0.5;
+      expect(env.changeManager.commitCounter).equals(before);
+    });
+
+    it('isolates committed listener errors and still informs morph listeners', () => {
+      const target = morph({ fill: Color.red });
+      const observed = [];
+      target.onChange = change => observed.push(change);
+      env.changeManager.addCommittedChangeListener(() => { throw new Error('listener failed'); });
+      env.changeManager.addCommittedChangeListener(() => observed.push('second listener'));
+      const originalError = console.error;
+      const errors = [];
+      console.error = message => errors.push(message);
+      try { target.fill = Color.green; } finally { console.error = originalError; }
+
+      expect(target.fill).equals(Color.green);
+      expect(observed[0]).equals('second listener');
+      expect(observed[1].prop).equals('fill');
+      expect(errors).to.have.length(1);
+      expect(errors[0]).includes('listener failed');
+    });
+    it('publishes an applied property operation with origin and target context', () => {
+      const target = morph({ fill: Color.red });
+      const owner = morph({ submorphs: [target] });
+      const commits = [];
+      const listener = (changeSet, context) => commits.push({ changeSet, context });
+      env.changeManager.addCommittedChangeListener(listener);
+
+      target.withMetaDo({ origin: 'direct-manipulation' }, () => target.fill = Color.green);
+      env.changeManager.removeCommittedChangeListener(listener);
+
+      expect(commits).to.have.length(1);
+      expect(commits[0].changeSet.origin).equals('direct-manipulation');
+      expect(commits[0].changeSet.operations).to.have.length(1);
+      expect(commits[0].changeSet.operations[0].property).equals('fill');
+      expect(commits[0].context.resolveMorph(target.id)).equals(target);
+      expect(commits[0].context.resolveMorph(owner.id)).equals(owner);
+    });
+
+    it('publishes one committed set for a grouped operation-bearing change', () => {
+      const target = morph({ fill: Color.red, opacity: 1 });
+      const commits = [];
+      env.changeManager.addCommittedChangeListener((changeSet, context) =>
+        commits.push({ changeSet, context }));
+
+      const group = new GroupChange(target);
+      target.groupChangesWhile(group, () => {
+        target.fill = Color.green;
+        target.opacity = 0.5;
+      });
+
+      expect(commits).to.have.length(1);
+      expect(commits[0].changeSet.operations).to.have.length(2);
+      expect(commits[0].context.legacyChanges).to.have.length(2);
+      expect(commits[0].context.committedChange).equals(group);
+    });
+
+    it('does not manufacture semantic commits for unsupported method records', () => {
+      const target = morph();
+      const commits = [];
+      env.changeManager.addCommittedChangeListener(changeSet => commits.push(changeSet));
+
+      target.addMethodCallChangeDoing({
+        target,
+        selector: 'unsupportedMutation',
+        args: [],
+        undo: () => {}
+      }, () => {});
+
+      expect(commits).deep.equals([]);
+    });
+
+    it('normalizes an interactive text range replacement into one property operation', () => {
+      const target = new Text({ readOnly: false, fixedWidth: true, fixedHeight: true,
+        extent: pt(300, 100), textString: 'initial text' });
+      const commits = [];
+      env.changeManager.addCommittedChangeListener((changeSet, context) =>
+        commits.push({ changeSet, context }));
+
+      target.withMetaDo({ origin: 'interactive-input' }, () => {
+        target.replace({
+          start: { row: 0, column: 8 },
+          end: { row: 0, column: 12 }
+        }, 'value', false, true, true);
+      });
+
+      expect(target.textString).equals('initial value');
+      expect(commits).to.have.length(1);
+      const [operation] = commits[0].changeSet.operations;
+      expect(operation.property).equals('textAndAttributes');
+      expect(operation.before).deep.equals(['initial text', null]);
+      expect(operation.after).deep.equals(['initial value', null]);
+      expect(operation.metadata.textReplacement).equals(true);
+      expect(commits[0].context.resolveMorph(target.id)).equals(target);
+    });
+
+    it('does not double-commit a full textAndAttributes assignment', () => {
+      const target = new Text({ readOnly: false, fixedWidth: true, fixedHeight: true,
+        extent: pt(300, 100), textString: 'initial text' });
+      const commits = [];
+      env.changeManager.addCommittedChangeListener(changeSet => commits.push(changeSet));
+
+      target.withMetaDo({ origin: 'programmatic-rich-text' }, () => {
+        target.textAndAttributes = ['replacement', { fontWeight: 'bold' }];
+      });
+
+      expect(commits).to.have.length(1);
+      expect(commits[0].operations).to.have.length(1);
+      expect(commits[0].operations[0].property).equals('textAndAttributes');
+      expect(commits[0].operations[0].metadata.textReplacement).not.equals(true);
+    });
+
+    it('publishes explicit origins while replaying legacy undo and redo', () => {
+      const target = morph({ fill: Color.red });
+      const origins = [];
+      env.changeManager.addCommittedChangeListener(changeSet => origins.push(changeSet.origin));
+      target.undoStart('recolor');
+      target.withMetaDo({ origin: 'direct-manipulation' }, () => target.fill = Color.green);
+      target.undoStop();
+      origins.length = 0;
+
+      env.undoManager.undo();
+      env.undoManager.redo();
+
+      expect(origins).deep.equals(['undo', 'redo']);
     });
   });
 
