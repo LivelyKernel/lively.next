@@ -23,17 +23,9 @@ describe('interpretation', function() {
     return interpreter.runWithContext(node, ctx, optMapping);
   }
 
-  function expectThrown(fn) {
-    try {
-      fn();
-    } catch (err) {
-      return err;
-    }
-    expect(false, 'expected function to throw').to.be.true;
-  }
-
-  function valueOf(value) {
-    return value && typeof value.valueOf === 'function' ? value.valueOf() : value;
+  function thrown(fn) {
+    try { fn(); } catch (err) { return err; }
+    expect.fail('expected function to throw');
   }
 
   it('runs an empty program', function() {
@@ -153,7 +145,7 @@ describe('interpretation', function() {
 
   it('handles this in function calls', function() {
     var node = parse('function foo() { return this; } foo.bind(4)();');
-    expect(Number(interpret(node))).to.equal(4);
+    expect(interpret(node)).to.equal(4);
   });
 
   it('handles this when bound using bind()', function() {
@@ -338,9 +330,8 @@ describe('interpretation', function() {
   });
 
   it('handles simple try without catch but with finally (with error)', function() {
-    var node = parse('try { throw { a: 1 }; } finally { 2; }'),
-        err = expectThrown(fun.curry(interpret, node));
-    expect(err.a).to.equal(1);
+    var node = parse('try { throw { a: 1 }; } finally { 2; }');
+    expect(thrown(fun.curry(interpret, node)).a).to.equal(1);
   });
 
   it('handles nested try and catch constructs', function() {
@@ -373,11 +364,9 @@ describe('interpretation', function() {
 
   it('handles try and catch with variable change in finally', function() {
     var node = parse('var a = 1; try { throw 3; } catch (e) { throw 4; } finally { a = 2; }'),
-        mapping = {},
-        err;
+        mapping = {};
 
-    err = expectThrown(fun.curry(interpret, node, mapping));
-    expect(valueOf(err)).to.equal(4);
+    expect(thrown(fun.curry(interpret, node, mapping)).valueOf()).to.equal(4);
     expect(mapping.a).to.equal(2);
   });
 
@@ -719,9 +708,8 @@ describe('interpretation', function() {
   });
 
   it('throws UnwindException for debugger statements', function() {
-    var node = parse('debugger; 123;'),
-        err = expectThrown(fun.curry(interpret, node));
-    expect(String(err)).to.match(/UNWIND.*Debugger/);
+    var node = parse('debugger; 123;');
+    expect(String(thrown(fun.curry(interpret, node)))).to.match(/UNWIND.*Debugger/);
   });
 
   it('does not leak implementation for function names', function() {

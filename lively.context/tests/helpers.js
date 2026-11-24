@@ -1,31 +1,16 @@
+/** Adds `shallowDeepEqual`: every property of `expected` (arrays: every element, same length) matches `actual`. */
 export function installShallowDeepEqual (chai) {
-  if (chai.__livelyContextShallowDeepEqual) return;
-  chai.__livelyContextShallowDeepEqual = true;
-
-  const eql = chai.util.eql;
-
-  function shallowDeepEqual (actual, expected) {
-    if (eql(actual, expected)) return true;
-    if (!expected || typeof expected !== 'object') return false;
-    if (!actual || typeof actual !== 'object') return false;
-    if (Array.isArray(expected)) {
-      if (!Array.isArray(actual) || actual.length !== expected.length) return false;
-      return expected.every((ea, i) => shallowDeepEqual(actual[i], ea));
-    }
-    return Object.keys(expected)
-      .every(key => shallowDeepEqual(actual[key], expected[key]));
-  }
-
-  function print (value) {
-    try { return JSON.stringify(value); } catch (_) { return String(value); }
-  }
-
+  const matches = (actual, expected) => chai.util.eql(actual, expected) || !!expected && typeof expected === 'object' &&
+    !!actual && typeof actual === 'object' && (!Array.isArray(expected) || Array.isArray(actual) && actual.length === expected.length) &&
+    Object.keys(expected).every(key => matches(actual[key], expected[key]));
   chai.Assertion.addMethod('shallowDeepEqual', function (expected) {
-    const actual = this._obj;
-    this.assert(
-      shallowDeepEqual(actual, expected),
-      `expected ${print(actual)} to shallow-deep equal ${print(expected)}`,
-      `expected ${print(actual)} not to shallow-deep equal ${print(expected)}`
-    );
+    this.assert(matches(this._obj, expected), 'expected #{this} to shallow-deep equal #{exp}',
+      'expected #{this} not to shallow-deep equal #{exp}', expected);
   });
+}
+
+/** Runs several garbage collections; retention cases need `globalThis.gc` (node --expose-gc, the headless TestRunner). */
+export async function collectGarbage () {
+  if (typeof globalThis.gc !== 'function') throw new Error('retention tests require the GC-enabled headless TestRunner');
+  for (let i = 0; i < 5; i++) { await new Promise(resolve => setTimeout(resolve, 0)); globalThis.gc(); }
 }
