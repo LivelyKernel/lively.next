@@ -2,13 +2,19 @@
 
 Custom SWC plugin implementing lively.next-specific transforms in Rust for high-performance bundling.
 
+## JavaScript / Rust correspondence
+
+The [architecture map](../../lively.source-transform/ARCHITECTURE.md) documents
+the matching handwritten JS passes, helper boundaries, pipeline ordering and
+shared behavioral tests.
+
 ## Overview
 
 This plugin replaces Babel transforms with Rust-based SWC transforms, providing:
 - **5-10x faster** transform phase
 - **Lower memory usage**
 - **Better parallelization**
-- **Identical output** to Babel transforms
+- **Shared parity tests** against the handwritten JavaScript transforms
 
 ## Transforms
 
