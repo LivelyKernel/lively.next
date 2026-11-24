@@ -600,14 +600,17 @@ function reorderNodeChange (source, beforeDocument, afterDocument, parentId, mov
     .propertyLocations?.[parentId]?.submorphs?.value;
   if (!parentBefore || !parentAfter || !arrayLocation ||
       parentBefore.children.length !== parentAfter.children.length) return null;
-  const locations = parentBefore.children.map(child =>
-    beforeDocument.sourceMetadata.nodeIdToAstLocation?.[child.id]);
-  if (locations.some(location => !location)) return null;
+  const sourceLocation = child => beforeDocument.sourceMetadata.nodeIdToAstLocation?.[child.id];
+  if (parentBefore.children.some(child =>
+    !sourceLocation(child) && child.provenance.kind !== ComponentNodeProvenanceKind.INHERITED)) return null;
+  const locations = parentBefore.children.map(sourceLocation).filter(Boolean)
+    .sort((a, b) => a.start - b.start);
+  if (!locations.length) return null;
+  const sourceChildrenAfter = parentAfter.children.filter(sourceLocation);
   let text = source.slice(arrayLocation.start, locations[0].start);
-  for (let index = 0; index < parentAfter.children.length; index++) {
-    const child = parentAfter.children[index];
-    const location = beforeDocument.sourceMetadata.nodeIdToAstLocation?.[child.id];
-    if (!location) return null;
+  for (let index = 0; index < sourceChildrenAfter.length; index++) {
+    const child = sourceChildrenAfter[index];
+    const location = sourceLocation(child);
     const beforeChild = parentBefore.children.find(candidate => candidate.id === child.id);
     const childSource = child.id === movedNodeId ||
       child.provenance.beforeId !== beforeChild.provenance.beforeId ||
