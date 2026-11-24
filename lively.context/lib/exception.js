@@ -13,14 +13,12 @@ export const originalFunctions = {
   set(ast, func) { originalFunctionRefs.set(ast, new WeakRef(func)); }
 };
 export const frameFunctions = debuggerState.frameFunctions ||= new WeakMap();
-/** Recover function metadata from the invocation, rather than shared code. */
-function frameFunction(state) {
-  while (Array.isArray(state)) {
-    const entry = frameFunctions.get(state);
-    if (entry) return entry;
-    state = state[2];
-  }
+/** The first truthy `pick(frameState)` along the chain of a frame state and its parents. */
+function findInFrameStates(state, pick) {
+  for (; Array.isArray(state); state = state[2]) { const found = pick(state); if (found) return found; }
 }
+/** Recover function metadata from the invocation, rather than shared code. */
+function frameFunction(state) { return findInFrameStates(state, state => frameFunctions.get(state)); }
 export const capturedBindingMappings = debuggerState.capturedBindingMappings ||= new WeakSet();
 /** The distinct names of the free variables of the function `ast`. */
 export function freeVariableNames(ast) {
@@ -264,13 +262,7 @@ export function __createClosure(namespace, idx, parentFrameState, f, lexical) {
   f.livelyDebuggingEnabled = true;
 
   if (lexical) defineLexicalCaptures(f, {this: 'this' in lexical, arguments: 'arguments' in lexical}, lexical.this, lexical.arguments);
-  let state = parentFrameState, module;
-  while (Array.isArray(state)) {
-    module = state[1]?.[Symbol.for('lively-debug-module')];
-    if (module) break;
-    state = state[2];
-  }
-  module = module || debuggerState.executingDebugModule;
+  const module = findInFrameStates(parentFrameState, state => state[1]?.[Symbol.for('lively-debug-module')]) || debuggerState.executingDebugModule;
   if (!module || module.retainRuntimeClosures) Object.defineProperty(f, Symbol.for('lively-serialize-closure'), {configurable: true, value(pool, snapshots, path) {
     return serializeManagedFunction(this, new AcornFunction(f._cachedAst, Scope.recreateFromFrameState(f._cachedScopeObject), f), pool, snapshots, path);
   }});
