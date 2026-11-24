@@ -77,21 +77,26 @@ function hostPlatform () {
   return process.platform;
 }
 
-function appCommand (bundleDir, platform) {
+// Chromium flags that render without a display. NW.js applies them anywhere on its command line.
+function headlessArgs (headless) {
+  return headless ? ['--headless=new', '--disable-gpu'] : [];
+}
+
+function appCommand (bundleDir, platform, headless = false) {
   if (platform === 'linux') {
-    return { command: path.join(bundleDir, 'nw'), args: ['--nwapp=' + bundleDir] };
+    return { command: path.join(bundleDir, 'nw'), args: [...headlessArgs(headless), '--nwapp=' + bundleDir] };
   }
   if (platform === 'osx') {
-    return { command: path.join(bundleDir, 'lively.next.app', 'Contents', 'MacOS', 'nwjs'), args: [] };
+    return { command: path.join(bundleDir, 'lively.next.app', 'Contents', 'MacOS', 'nwjs'), args: headlessArgs(headless) };
   }
   if (platform === 'win') {
-    return { command: path.join(bundleDir, 'lively.next.exe'), args: ['--nwapp=' + bundleDir] };
+    return { command: path.join(bundleDir, 'lively.next.exe'), args: [...headlessArgs(headless), '--nwapp=' + bundleDir] };
   }
   throw new Error(`Unsupported smoke platform: ${platform}`);
 }
 
-function devAppCommand (rootDir) {
-  return { command: 'bash', args: [path.join(rootDir, 'lively.app', 'start.sh')] };
+function devAppCommand (rootDir, headless = false) {
+  return { command: 'bash', args: [path.join(rootDir, 'lively.app', 'start.sh'), ...headlessArgs(headless)] };
 }
 
 function assertExecutableExists (command) {
@@ -1043,15 +1048,19 @@ async function assertDesktopWindowControls (client) {
 /** Open a dashboard tile without replacing the frozen renderer's document. */
 async function openDashboardProject (client, fullName) {
   const result = await waitFor('dashboard project tile', async () => {
+    // A frame that never renders times out this attempt instead of blocking the retries.
     const result = await client.send('Runtime.evaluate', {
       returnByValue: true,
-      expression: `(() => {
+      awaitPromise: true,
+      expression: `(async () => {
         localStorage.removeItem('LIVELY_OFFLINE_MODE');
         const preview = globalThis.$world?.get('a project browser')?.viewModel?.previews?.find(p => p._project._name === ${JSON.stringify(fullName)});
         const button = preview?.get('open button');
         const node = button && document.getElementById(button.id);
         if (!node) return null;
         node.scrollIntoView({ block: 'center', inline: 'nearest' });
+        // Measure after the scrolled layout has been rendered.
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         const bounds = node.getBoundingClientRect();
         if (!bounds.width || !bounds.height) return null;
         const x = bounds.x + bounds.width / 2, y = bounds.y + bounds.height / 2;
@@ -1059,7 +1068,7 @@ async function openDashboardProject (client, fullName) {
         globalThis.__desktopDashboardDocument = document;
         return { x, y };
       })()`
-    });
+    }, { timeoutMs: 10000 });
     if (result.exceptionDetails) throw new Error('Dashboard project tile unavailable: ' + JSON.stringify(result.exceptionDetails));
     return result.result?.value ? result : null;
   }, 60000);
@@ -1105,6 +1114,10 @@ class CDPClient {
       this.ws.addEventListener('error', event => reject(new Error(`CDP websocket error: ${event.message || 'unknown'}`)), { once: true });
     });
     this.ws.addEventListener('message', event => this._onMessage(event.data));
+    this.ws.addEventListener('close', () => {
+      for (const { reject } of this.pending.values()) reject(new Error('Desktop CDP connection closed'));
+      this.pending.clear();
+    });
   }
 
   _onMessage (data) {
@@ -1133,12 +1146,29 @@ class CDPClient {
     }
   }
 
-  send (method, params = {}) {
+  /**
+   * Sends a CDP command.
+   * @param {string} method - The CDP method.
+   * @param {object} [params] - Its parameters.
+   * @param {object} [options] - With `timeoutMs`, the command rejects when no response arrives in time.
+   * @returns {Promise<object>} The result of the command.
+   */
+  send (method, params = {}, { timeoutMs = 0 } = {}) {
     const id = this.nextId++;
     const payload = JSON.stringify({ id, method, params });
     return new Promise((resolve, reject) => {
-      this.pending.set(id, { resolve, reject });
-      this.ws.send(payload);
+      const timer = timeoutMs > 0 && setTimeout(() => {
+        this.pending.delete(id);
+        reject(new Error(`${method} timed out after ${timeoutMs}ms`));
+      }, timeoutMs);
+      const settle = fn => value => { clearTimeout(timer); fn(value); };
+      this.pending.set(id, { resolve: settle(resolve), reject: settle(reject) });
+      try {
+        this.ws.send(payload);
+      } catch (err) {
+        this.pending.delete(id);
+        settle(reject)(err);
+      }
     });
   }
 
@@ -1468,12 +1498,13 @@ async function main () {
   const bundleDir = devRoot ? null : path.resolve(args.bundleDir || '');
   const platform = args.platform || hostPlatform();
   const timeoutMs = Number(args.timeout || process.env.LIVELY_APP_SMOKE_TIMEOUT || DEFAULT_TIMEOUT);
+  const headless = args.headless === 'true';
   if (!devRoot && (!bundleDir || bundleDir === process.cwd())) throw new Error('Pass --bundleDir=<desktop bundle dir> or --devRoot=<repo root>');
   if (devRoot && !fs.existsSync(path.join(devRoot, 'lively.app', 'start.sh'))) {
     throw new Error(`Dev root does not look like lively.next: ${devRoot}`);
   }
 
-  const { command, args: commandArgs } = devRoot ? devAppCommand(devRoot) : appCommand(bundleDir, platform);
+  const { command, args: commandArgs } = devRoot ? devAppCommand(devRoot, headless) : appCommand(bundleDir, platform, headless);
   assertExecutableExists(command);
 
   // Exercise URL decoding, including Windows' RUNNER~1 temporary paths.
@@ -1680,8 +1711,12 @@ async function main () {
           expression: 'livelyNative.fileExtension().then(({resourceClass}) => new resourceClass(livelyNative.baseURL + \'package-registry.json\').readJson())', awaitPromise: true, returnByValue: true
         });
         if (registryResult?.exceptionDetails) throw new Error('Native registry failed: ' + JSON.stringify(registryResult));
+        // The HTTP backend can answer 404 while its plugins start.
         const registry = native ? registryResult.result.value
-          : await (await fetch(`http://127.0.0.1:${port}/package-registry.json`)).json();
+          : await waitFor('desktop package registry', async () => {
+            const response = await fetch(`http://127.0.0.1:${port}/package-registry.json`);
+            return response.ok && response.json();
+          }, 60000);
         const { packageMap } = registry;
         for (const name of ['lively.modules', 'lively.morphic', 'lively.server', 'lively.shell', 'lively.freezer']) {
           const entry = packageMap[name];
