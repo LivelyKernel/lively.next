@@ -8,8 +8,7 @@ import { shellCompleters } from './completers.js';
 import './mode.js';
 import { Snippet } from '../text/snippets.js';
 
-let defaultDir;
-Promise.resolve(defaultDirectory()).then(dir => defaultDir = dir);
+let defaultDir; // the server's default directory, requested when a directory chooser opens
 
 export default class ShellEditorPlugin extends CodeMirrorEnabledEditorPlugin {
   constructor () {
@@ -38,6 +37,7 @@ export default class ShellEditorPlugin extends CodeMirrorEnabledEditorPlugin {
   }
 
   async changeCwdInteractively () {
+    if (!defaultDir) defaultDir = await defaultDirectory();
     let cwd = this.cwd;
     let dirs = arr.uniq([cwd].concat(defaultDir, ...this.knownCwds)).filter(Boolean);
     let { status, list: newDirs, selections: [choice] } = await this.textMorph.world().editListPrompt(
