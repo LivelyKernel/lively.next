@@ -44,6 +44,17 @@ export async function runMochaTests (grep, testsByFile, onChange, onError) {
           } catch (e) { typeof onError === 'function' && onError(e, 'pass'); }
         });
 
+        // Static skips, this.skip() in a test and this.skip() in a hook. A skipped test has no state.
+        runner.on('pending', test => {
+          try {
+            let t = tests.find(ea => ea.fullTitle === test.fullTitle());
+            delete t.state;
+            delete t.error;
+            t.duration = test.duration;
+            typeof onChange === 'function' && onChange(t, 'pending');
+          } catch (e) { typeof onError === 'function' && onError(e, 'pending'); }
+        });
+
         runner.on('fail', (test, error) => {
           try {
             let t = tests.find(ea => ea.fullTitle === test.fullTitle());

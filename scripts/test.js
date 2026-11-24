@@ -22,6 +22,34 @@ const testServerURL = new URL(process.env.LIVELY_TEST_SERVER_READY_URL || 'http:
 let passed = 0; let failed = 0; let skipped = 0;
 let markdownListOfFailingTests = '';
 
+const escapeCommandData = value => String(value).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
+
+/**
+ * Prints a GitHub error annotation. Workflow commands end at a line break, so the
+ * escaped message keeps all of its lines in one annotation.
+ * @param {string} title - The annotation title.
+ * @param {string} message - The annotation text, possibly with several lines.
+ */
+function annotateError (title, message) {
+  const escapedTitle = escapeCommandData(title).replace(/:/g, '%3A').replace(/,/g, '%2C');
+  console.log(`::error title=${escapedTitle}::${escapeCommandData(String(message).slice(0, 8000))}`);
+}
+
+/**
+ * @param {object} test - A failed test record from the TestRunner.
+ * @returns {string[]} Its error message and, for assertions, the expected and actual values.
+ */
+function failureDetails ({ error }) {
+  if (!error) return [];
+  const message = error.message || String(error);
+  const details = [`ERROR: ${message}`];
+  if (error.actual !== undefined && error.expected !== undefined) {
+    details.push(`EXPECTED: ${JSON.stringify(error.expected).slice(0, 500)}`);
+    details.push(`ACTUAL:   ${JSON.stringify(error.actual).slice(0, 500)}`);
+  }
+  return details;
+}
+
 if (CI) {
   console.log(`Running Tests for ${targetPackage} 📦`);
 } else {
@@ -59,7 +87,7 @@ const req = http.request(options, res => {
           errorOutput += `\nRecent browser console errors:\n${data.browserErrors}`;
         }
         if (CI) {
-          console.log(`::error:: Running the tests produced the following error:\n${errorOutput}`);
+          annotateError(`Tests failed for ${targetPackage}`, `Running the tests produced the following error:\n${errorOutput}`);
           fs.appendFileSync('summary.txt', `❌ Running the tests produced the following error:\n${errorOutput}\n`);
         }
         else console.log(`❌ Running the tests produced the following error:\n${errorOutput}`);
@@ -105,18 +133,13 @@ const req = http.request(options, res => {
             console.log(`${test.fullTitle} passed ✅`);
           } else {
             failed += 1;
+            console.log(`${test.fullTitle} failed ❌`);
+            const details = failureDetails(test);
+            details.forEach(line => console.log('  ' + line));
             if (CI) {
-              console.log(`${test.fullTitle} failed ❌`);
               markdownListOfFailingTests = markdownListOfFailingTests + `- ${test.fullTitle} failed ❌\n`;
-            } else {
-              console.log(`${test.fullTitle} failed ❌`);
-            }
-            if (test.error) {
-              console.log(`  ERROR: ${test.error.message || test.error}`);
-              if (test.error.actual !== undefined && test.error.expected !== undefined) {
-                console.log(`  EXPECTED: ${JSON.stringify(test.error.expected).slice(0, 500)}`);
-                console.log(`  ACTUAL:   ${JSON.stringify(test.error.actual).slice(0, 500)}`);
-              }
+              const stack = test.error?.stack && test.error.stack !== test.error.message ? [test.error.stack] : [];
+              annotateError(`Test failed in ${targetPackage}`, [test.fullTitle, ...details, ...stack].join('\n'));
             }
           }
         });
@@ -134,7 +157,7 @@ const req = http.request(options, res => {
     } catch (err) {
       console.log('SUMMARY-INDICATE-FAILURE');
       if (CI) {
-        console.log(`::error:: Running the tests produced the following error:\n"${err}"`);
+        annotateError(`Could not read the test results for ${targetPackage}`, `Running the tests produced the following error:\n"${err}"`);
         fs.appendFileSync('test_output.md', `\n---\n❌ Running the tests for **${targetPackage}** produced the following error:\n"${err}"\n`);
       } else {
         console.log(`❌ Running the tests produced the following error:\n"${err}"`);

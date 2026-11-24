@@ -44,27 +44,35 @@ describe('test runner server URLs', () => {
 });
 
 describe('test script server URL', () => {
-  const requestOptions = async (env) => {
+  // Runs scripts/test.js against a stubbed HTTP request that answers with `responseBody`.
+  const runTestScript = async (env, responseBody) => {
     const source = await resource(System.decanonicalize('lively.server/'))
       .join('../scripts/test.js').withRelativePartsResolved().read();
-    let options;
+    let options; const lines = [];
     runInNewContext(source, {
       URL,
-      console: { log () {} },
+      console: { log (line) { lines.push(String(line)); } },
       process: { argv: ['node', 'scripts/test.js', 'pkg'], env },
       require (name) {
-        if (name === 'fs') return {};
+        if (name === 'fs') return { appendFileSync () {} };
         if (name !== 'http') throw new Error('Unexpected dependency: ' + name);
         return {
-          request (requestOptions) {
+          request (requestOptions, onResponse) {
             options = requestOptions;
+            if (responseBody !== undefined) {
+              const handlers = {};
+              onResponse({ on (event, handler) { handlers[event] = handler; } });
+              handlers.data(responseBody);
+              handlers.end();
+            }
             return { on () {}, end () {} };
           }
         };
       }
     });
-    return options;
+    return { options, lines };
   };
+  const requestOptions = async (env) => (await runTestScript(env)).options;
 
   it('uses the readiness URL port for the test result request', async () => {
     const options = await requestOptions({ LIVELY_TEST_SERVER_READY_URL: 'http://127.0.0.1:19050/' });
@@ -77,5 +85,24 @@ describe('test script server URL', () => {
     const options = await requestOptions({});
     expect(Number(options.port), 'the default test server port must remain 9011').equals(9011);
     expect(options.hostname, 'the default test server must remain local').equals('localhost');
+  });
+
+  it('annotates a failed test in CI with its message, expected and actual values', async () => {
+    const error = { message: 'expected 1 to equal 2\nsecond line', expected: 2, actual: 1, stack: 'Error: at fixture' };
+    const { lines } = await runTestScript({ CI: 'true' }, JSON.stringify([{
+      file: 'http://localhost:9011/pkg/tests/fixture-test.js',
+      tests: [{ type: 'test', fullTitle: 'fixture fails', state: 'failed', error }]
+    }]));
+    const annotation = lines.find(line => line.startsWith('::error '));
+    expect(annotation).equals('::error title=Test failed in pkg::fixture fails' +
+      '%0AERROR: expected 1 to equal 2%0Asecond line%0AEXPECTED: 2%0AACTUAL:   1%0AError: at fixture');
+    expect(lines).to.include('SUMMARY-failed:1');
+  });
+
+  it('annotates a test run error in CI as a single workflow command', async () => {
+    const { lines } = await runTestScript({ CI: 'true' }, JSON.stringify({ error: 'open failed', browserErrors: 'boom' }));
+    expect(lines.filter(line => line.startsWith('::error')), 'every line of the error belongs to one annotation').deep.equals([
+      '::error title=Tests failed for pkg::Running the tests produced the following error:%0A"open failed"%0ARecent browser console errors:%0Aboom'
+    ]);
   });
 });
