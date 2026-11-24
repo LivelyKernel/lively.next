@@ -5,6 +5,7 @@ import util from 'node:util';
 import fs from 'node:fs/promises';
 import { lively } from 'lively.freezer/src/plugins/rollup.js';
 import resolver from 'lively.freezer/src/resolvers/node.cjs';
+import { assertNoNodeBuiltins } from './assert-no-node-builtins.mjs';
 
 const verbose = process.argv[2] === '--verbose';
 const minify = !process.env.CI;
@@ -135,6 +136,8 @@ try {
     console.warn('\x1b[33m   [!] Could not copy loading-screen index.html: ' + err.message + '\x1b[0m');
   }
 
+  await assertNoNodeBuiltins('landing-page');
+  await assertNoNodeBuiltins('loading-screen');
   console.log('   Unified build complete');
 
 } catch (err) {
