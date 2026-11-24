@@ -8,7 +8,10 @@ import { join } from 'node:path';
 import { brotliCompressSync, brotliDecompressSync } from 'node:zlib';
 import LivelyDAVPlugin from '../plugins/dav.js';
 
-describe('DAV cache validators', () => {
+describe('DAV cache validators', function () {
+  // Real sockets and file I/O share the lively server process that hosts the
+  // tests, which can be busy with other work; mocha's 2s default is too tight.
+  this.timeout(30 * 1000);
   const oldBody = '{"value":"before"}';
   const newBody = '{"value":"after!"}';
   const second = Math.floor(Date.now() / 1000) * 1000 - 2000;
@@ -32,6 +35,8 @@ describe('DAV cache validators', () => {
   });
 
   after(async () => {
+    // Don't wait for keep-alive sockets to time out.
+    server?.closeAllConnections();
     if (server) await new Promise(resolve => server.close(resolve));
     plugin?.close();
     if (directory) await rm(directory, { recursive: true, force: true });
@@ -44,16 +49,20 @@ describe('DAV cache validators', () => {
     await utimes(path, new Date(second + offset), new Date(second + offset));
   }
 
-  /** Read through the real HTTP plugin and jsDAV handler. */
+  /** Read through the real HTTP plugin and DAV handler. */
   function read (path, headers = {}, method = 'GET') {
+    const started = Date.now();
     return new Promise((resolve, reject) => {
-      http.request({ hostname: '127.0.0.1', port: server.address().port, path, method,
+      const request = http.request({ hostname: '127.0.0.1', port: server.address().port, path, method,
         headers: { 'accept-encoding': 'identity', ...headers } }, response => {
         const chunks = [];
         response.on('data', chunk => chunks.push(chunk));
         response.on('end', () => resolve({ status: response.statusCode,
           headers: response.headers, body: Buffer.concat(chunks) }));
-      }).on('error', reject).end();
+      }).on('error', reject);
+      request.setTimeout(10 * 1000, () =>
+        request.destroy(new Error(`${method} ${path} stalled after ${Date.now() - started}ms`)));
+      request.end();
     });
   }
 
