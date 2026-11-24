@@ -329,6 +329,20 @@ describe('key events', () => {
     ]);
   });
 
+  for (const removed of ['focused morph', 'ancestor']) {
+    it(`dispatches key events to the world after removing the ${removed}`, async () => {
+      submorph2.focus();
+      (removed === 'focused morph' ? submorph2 : submorph1).remove();
+      expect(env.eventDispatcher.eventState.focusedMorph).equals(submorph2);
+      expect(world.focusedMorph).equals(world);
+      eventLog.length = 0;
+      await env.eventDispatcher.simulateDOMEvents(
+        { type: 'keydown', key: 'x' },
+        { type: 'keyup', key: 'x' });
+      assertEventLogContains(['onKeyDown-world', 'onKeyUp-world']);
+    });
+  }
+
   it('key down keyCombo', async () => {
     submorph1.focus();
     let pressed; submorph1.onKeyDown = evt => pressed = evt.keyCombo;

@@ -640,7 +640,7 @@ export default class EventDispatcher {
     state.timeOfLastActivity = this.timestampBase + timeStamp;
 
     if (!targetMorph && focusTargetingEvents.includes(type)) {
-      targetMorph = state.focusedMorph || world;
+      targetMorph = world.focusedMorph;
     } else if (!targetMorph) {
       // search for the target node that represents a morph: Not all nodes with
       // event handlers might be rendered by morphs, e.g. in case of HTML morphs.
