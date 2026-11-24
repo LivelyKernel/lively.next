@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+const require = createRequire(new URL('../../lively.modules/package.json', import.meta.url));
+globalThis.System = require('systemjs');
+assert.equal(typeof window, 'undefined', 'Exercise the Node realm, without a browser shim');
+const {Continuation} = await import('../lib/stackReification.js');
+const {__getClosure} = await import('../lib/exception.js');
+assert.equal(typeof Continuation.fromUnwindException, 'function', 'Node imports the continuation runtime');
+assert.equal(typeof globalThis.__createClosure, 'function', 'Closure helpers are installed in the Node realm');
+assert.equal(typeof __getClosure, 'function', 'Closure lookup uses the same Node global');
+console.log('Node context bootstrap passed');

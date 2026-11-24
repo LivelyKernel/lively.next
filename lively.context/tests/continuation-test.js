@@ -7,8 +7,9 @@ import { parseFunction, stringify } from "lively.ast";
 import { Continuation, stackCaptureMode } from "../lib/stackReification.js";
 import * as StackReification from "../lib/stackReification.js";
 import { Interpreter } from "../lib/interpreter.js";
-import shallow from 'chai-shallow-deep-equal';
-shallow(chai);
+import { runtimeFunctionSource } from '../lib/exception.js';
+import { installShallowDeepEqual } from './helpers.js';
+installShallowDeepEqual(chai);
 
 describe('continuation', function() {
   var config,
@@ -27,6 +28,183 @@ describe('continuation', function() {
   afterEach(function() {
     rewriting.setCurrentASTRegistry(oldAstRegistry);
     debugOption.set(Global, config);
+  });
+
+  it('enters and exits debug support without calling interceptable Path accessors', function() {
+    const get = Path.prototype.get, set = Path.prototype.set;
+    Path.prototype.get = Path.prototype.set = () => { throw new Error('Debugger bookkeeping must not call intercepted helpers'); };
+    try {
+      StackReification.enableDebugSupport(astRegistry);
+      const enabled = StackReification.debugSupportEnabled();
+      StackReification.disableDebugSupport();
+      expect(enabled).equals(true);
+      expect(StackReification.debugSupportEnabled()).equals(false);
+    } finally {
+      Path.prototype.get = get;
+      Path.prototype.set = set;
+      StackReification.disableDebugSupport();
+    }
+  });
+
+  it('reuses array helpers and restores prototype methods installed between captures', function() {
+    const original = Array.prototype.forEach;
+    StackReification.enableDebugSupport(astRegistry);
+    const rewritten = Array.prototype.forEach;
+    StackReification.disableDebugSupport();
+    const installed = function(callback) { return original.call(this, callback); };
+    let reused, restored;
+    try {
+      Array.prototype.forEach = installed;
+      StackReification.enableDebugSupport(astRegistry);
+      reused = Array.prototype.forEach;
+      StackReification.disableDebugSupport();
+      restored = Array.prototype.forEach;
+    } finally { StackReification.disableDebugSupport(); Array.prototype.forEach = original; }
+    expect(reused).equals(rewritten);
+    expect(restored).equals(installed);
+  });
+
+  it('captures default and destructured parameters and resumes destructured declarations', function() {
+    function compute({amount = 2} = {}, ...items) {
+      const {value = amount, ...remaining} = {other: 3};
+      debugger;
+      const [first, ...rest] = items;
+      return value + remaining.other + first + rest[0];
+    }
+    const stopped = StackReification.run(compute, astRegistry, [undefined, 4, 5]);
+    if (stopped.exception) throw stopped.exception;
+    expect(stopped.currentFrame.lookup('amount')).equals(2);
+    expect(stopped.currentFrame.lookup('value')).equals(2);
+    expect(stopped.currentFrame.lookup('items')).deep.equals([4, 5]);
+    expect(stopped.resume()).equals(14);
+  });
+
+  it('binds destructured defaults when the interpreter calls a function after suspension', function() {
+    function compute({amount = 2} = {}, ...items) { return amount + items[0]; }
+    function caller() { debugger; return compute(undefined, 4); }
+    const stopped = StackReification.run(caller, astRegistry, [], {compute});
+    expect(stopped.resume()).equals(6);
+  });
+
+  it('evaluates parameter defaults once during capture and preserves their TDZ in interpreted calls', function() {
+    const marker = {visits: 0};
+    function compute(amount = ++marker.visits) { debugger; return amount; }
+    const stopped = StackReification.run(compute, astRegistry, [], {marker});
+    expect(marker.visits).equals(1);
+    expect(stopped.resume()).equals(1);
+    expect(marker.visits).equals(1);
+    function invalid(first = second, second = 2) { return first; }
+    function caller() { debugger; return invalid(); }
+    const rejected = StackReification.run(caller, astRegistry, [], {invalid}).resume();
+    expect(rejected.exception).instanceOf(ReferenceError);
+  });
+
+  it('retains destructured bindings in ordinary and iterator loop scopes', function() {
+    function ordinary() { let total = 0; debugger; for (let [value] = [1]; value < 3; value++) total += value; return total; }
+    expect(StackReification.run(ordinary, astRegistry).resume()).equals(3);
+    function iterator() { let total = 0; for (const {value} of [{value: 3}]) { debugger; total += value; } return total; }
+    const stopped = StackReification.run(iterator, astRegistry);
+    expect(stopped.currentFrame.lookup('value')).equals(3);
+    expect(stopped.resume()).equals(3);
+  });
+
+  it('retains per-iteration lexical for-in bindings through suspension and closure capture', function() {
+    function compute() {
+      const readers = [];
+      for (const key in {first: 1, second: 2}) { readers.push(() => key); debugger; }
+      return readers.map(read => read()).join(',');
+    }
+    const first = StackReification.run(compute, astRegistry);
+    if (first.exception) throw first.exception;
+    expect(first.currentFrame.lookup('key')).equals('first');
+    const second = first.resume();
+    if (second.exception) throw second.exception;
+    expect(second.currentFrame.lookup('key')).equals('second');
+    expect(second.resume()).equals('first,second');
+  });
+
+  it('preserves template literals before and after suspension', function() {
+    function compute() { const before = `before ${2 + 1}`; debugger; return `${before}: after ${4}`; }
+    const stopped = StackReification.run(compute, astRegistry);
+    expect(stopped.currentFrame.lookup('before')).equals('before 3');
+    expect(stopped.resume()).equals('before 3: after 4');
+  });
+
+  it('preserves spread calls and constructors before and after suspension', function() {
+    function compute() {
+      const values = [];
+      values.push(...[1, 2]);
+      debugger;
+      const set = new Set([...values, ...[3]]);
+      return Math.max(...set) + values.length;
+    }
+    const stopped = StackReification.run(compute, astRegistry);
+    if (stopped.exception) throw stopped.exception;
+    expect(stopped.currentFrame.lookup('values')).deep.equals([1, 2]);
+    expect(stopped.resume()).equals(5);
+  });
+
+  it('retains expanded one-shot arguments when a callee suspends', function() {
+    function caller() {
+      function add(first, second) { debugger; return first + second; }
+      return add(...items);
+    }
+    const items = new Set([2, 3]).values();
+    const stopped = StackReification.run(caller, astRegistry, [], {items});
+    if (stopped.exception) throw stopped.exception;
+    expect(stopped.resume()).equals(5);
+    expect(items.next().done).equals(true);
+  });
+
+  it('short circuits optional chains, preserves receivers and resumes calls inside chains', function() {
+    const effects = {visits: 0};
+    function compute() {
+      function pause() { effects.visits++; debugger; return {amount: 4}; }
+      const receiver = {amount: 2, read() { return this.amount; }};
+      const before = receiver?.read?.() ?? 0;
+      const absent = null?.[effects.visits++]?.(++effects.visits) ?? 3;
+      const amount = ({pause})?.pause()?.amount;
+      debugger;
+      return before + absent + amount + (null?.missing.x ?? 0);
+    }
+    const first = StackReification.run(compute, astRegistry, [], {effects});
+    if (first.exception) throw first.exception;
+    expect(effects.visits).equals(1);
+    const second = first.resume();
+    if (second.exception) throw second.exception;
+    expect(second.isContinuation).equals(true);
+    expect(second.currentFrame.lookup('amount')).equals(4);
+    expect(second.resume()).equals(9);
+    expect(effects.visits).equals(1);
+  });
+
+  it('retains supplied closure bindings and receiver through suspend and resume', function() {
+    const marker = { count: 0 }, receiver = { step: '1' };
+    function increment() {
+      var amount = this.step;
+      debugger;
+      marker.count += amount * factor;
+      return marker.count;
+    }
+    const continuation = StackReification.run(increment, astRegistry, [], {
+      this: receiver, marker, factor: 2
+    });
+    expect(continuation.currentFrame.getThis()).equals(receiver);
+    expect(continuation.currentFrame.lookup('marker')).equals(marker);
+    expect(continuation.currentFrame.lookup('factor')).equals(2);
+    continuation.currentFrame.getScope().set('amount', 1);
+    expect(continuation.resume()).equals(2);
+    expect(marker.count).equals(2);
+  });
+
+  it('records changes to supplied primitive bindings before suspension', function() {
+    const compute = Function('factor', 'return function compute() { factor += 1; debugger; return factor; }')(1);
+    const mapping = { factor: 1 };
+    const continuation = StackReification.run(compute, astRegistry, [], mapping);
+    expect(continuation.currentFrame.lookup('factor')).equals(2);
+    expect(continuation.resume()).equals(2);
+    expect(mapping.factor).equals(2);
+    expect(compute()).equals(2);
   });
 
   it('runs code without halt', function() {
@@ -106,7 +284,7 @@ describe('continuation', function() {
     expect(stringify(actualAst)).equals(stringify(expectedAst))
     ///expect(actualAst).to.shallowDeepEqual(expectedAst);
     //expect(frame2.getOriginalAst()).to.shallowDeepEqual(parseFunction(String(code)));
-    expect(stringify(frame2.getOriginalAst())).equals(stringify(parseFunction(String(code))));
+    expect(stringify(frame2.getOriginalAst())).equals(stringify(parseFunction(runtimeFunctionSource(code))));
 
     // access the node where execution stopped
     var resumeNode = frame1.getPC(),
@@ -472,14 +650,8 @@ describe('continuation', function() {
       return x + 4;
     }
 
-    var expected = { isContinuation: true },
-        runResult;
-    try {
-      StackReification.run(code, astRegistry);
-      expect().to.not.be.ok; // Error was not detected and triggered!
-    } catch (e) {
-      runResult = Continuation.fromUnwindException(e.unwindException);
-    }
+    var runResult = StackReification.run(code, astRegistry);
+    expect(runResult.exception).instanceOf(Error);
     var frame = runResult.frames()[0];
     expect(runResult.isContinuation).to.exist; // continuation
 
@@ -497,14 +669,8 @@ describe('continuation', function() {
       throw e;
     }
 
-    var continuation, frame;
-    try {
-      StackReification.run(code, astRegistry);
-      expect().no.to.be.ok; // Error was not detected and triggered!
-    } catch (e) {
-      continuation = Continuation.fromUnwindException(e.unwindException);
-      frame = continuation.frames()[0];
-    }
+    var continuation = StackReification.run(code, astRegistry), frame = continuation.frames()[0];
+    expect(continuation.exception).instanceOf(Error);
 
     var capturedAst = frame.getOriginalAst();
     expect(capturedAst.body.body[1].astIndex).to.equal(frame.getPC().astIndex); // pc
