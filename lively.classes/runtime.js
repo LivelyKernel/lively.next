@@ -2,7 +2,6 @@
 import { prepareClassForManagedPropertiesAfterCreation } from './properties.js';
 import { superclassSymbol, moduleSubscribeToToplevelChangesSym, moduleMetaSymbol, objMetaSymbol, initializeSymbol } from './util.js';
 import { setPrototypeOf } from 'lively.lang/object.js';
-import { isNativeFunction } from 'lively.lang/function.js';
 
 const constructorArgMatcher = /\([^\\)]*\)/;
 const NEW_ONLY_CLASSES = [Proxy, Map, WeakMap, Set];
@@ -76,7 +75,7 @@ function wrapNativeClassAsSuper (Class) {
     function Wrapper () {
       return constructNewOnly(Class, arguments, Object.getPrototypeOf(this).constructor);
     }
-    if (Class === null || !isNativeFunction(Class)) return Class;
+    if (Class === null) return Class;
     if (typeof Class !== 'function') {
       throw new TypeError('Super expression must either be null or a function');
     }

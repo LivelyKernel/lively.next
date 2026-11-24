@@ -181,6 +181,16 @@ describe('create or extend classes', function () {
       expect(b.y).equals(4, 'constructor not called');
     });
 
+    it('constructor of a base class with native class syntax is used', async () => {
+      // A class that is not transpiled by lively; its constructor cannot be called without new.
+      varRecorder.A = globalThis.Function('return class A { constructor (x) { this.y = x + 1; } }')();
+      let B = await evalClass('class B extends A { m () { return 23; } }');
+      let b = new B(3);
+      expect(b.y).equals(4, 'constructor not called');
+      expect(b.m()).equals(23);
+      expect(b).instanceOf(varRecorder.A);
+    });
+
     it('constructor of base class is used when using own constructor + calling super', async () => {
       varRecorder.A = function A (x) { this.y = x + 1; };
       let B = await evalClass('class B extends A {constructor(x) { super(x); this.z = this.y + 1; } }');
