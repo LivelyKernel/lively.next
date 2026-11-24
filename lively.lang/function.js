@@ -144,7 +144,9 @@ function qualifiedMethodName (f) {
  * }) => "var x = 34;\nalert(2 + arg);"
  */
 function extractBody (func) {
-  const codeString = String(func)
+  // Functions declared in lively modules know their original source; String(func) answers the instrumented code.
+  const meta = func[Symbol.for('lively-object-meta')];
+  const codeString = (meta?.moduleSource ? meta.moduleSource.slice(meta.start, meta.end) : String(func))
     .replace(/^function[^\{]+\{\s*/, '')
     .replace(/\}$/, '')
     .trim();

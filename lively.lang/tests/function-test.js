@@ -57,6 +57,17 @@ describe('fun', function () {
       expect(fun.extractBody(function () {})).to.equal('');
       expect(fun.extractBody(function () { 123; })).to.equal('123;');
     });
+
+    it('extracts the original body of a function declared in a module', function () {
+      // Module functions carry their declaration range in the module source; their own code is instrumented.
+      const declared = 'function f (a) {\n  return helper(a);\n}';
+      const moduleSource = 'function helper (x) { return x; }\n' + declared + '\n';
+      const instrumented = function f (a) { return __lvVarRecorder.helper(a); }; // eslint-disable-line no-undef
+      instrumented[Symbol.for('lively-object-meta')] = {
+        moduleSource, start: moduleSource.indexOf(declared), end: moduleSource.indexOf(declared) + declared.length
+      };
+      expect(fun.extractBody(instrumented)).equals('return helper(a);');
+    });
   });
 
   describe('async', function () {
