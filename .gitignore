@@ -35,3 +35,6 @@ local_projects/
 snapshots/
 .puppeteer-browser-cache/
 .swc/
+
+# temporary files of PUTs in progress (lively.server/dav-handler.js)
+.lively-put-????????????

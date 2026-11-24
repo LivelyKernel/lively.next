@@ -652,7 +652,7 @@ export class Project {
       await system.resourceCreateFiles(projectDir, {
         'index.js': "'format esm';\nexport async function main () {\n    // THIS FUNCTION IS THE ENTRY POINT IN THE BUNDLED APPLICATION!\n}",
         'package.json': '',
-        '.gitignore': 'node_modules/\nbuild/\n.cachedImportMap.json\n.livelyForkInformation',
+        '.gitignore': 'node_modules/\nbuild/\n.cachedImportMap.json\n.livelyForkInformation\n# uploads that lively.server is writing\n.lively-put-????????????',
         'README.md': `# ${this.name}\n\nNo description for package ${this.name} yet.\n`,
         tools: {
           'build.sh': '',
