@@ -43,6 +43,89 @@ describe('test runner server URLs', () => {
   });
 });
 
+describe('test runner world session', () => {
+  // Records the session options and the evaluated code instead of opening a browser.
+  let originalMethods, sessions, evaluations, originalEnv;
+
+  beforeEach(() => {
+    sessions = [];
+    evaluations = [];
+    originalEnv = { ...process.env };
+    originalMethods = {};
+    for (const name of ['open', 'runEval', 'dispose']) originalMethods[name] = HeadlessSession.prototype[name];
+    HeadlessSession.prototype.open = async function () { sessions.push(this.options); return this; };
+    HeadlessSession.prototype.runEval = async function (code, options) { evaluations.push({ code, options }); return '[]'; };
+    HeadlessSession.prototype.dispose = async function () {};
+  });
+
+  afterEach(() => {
+    Object.assign(HeadlessSession.prototype, originalMethods);
+    for (const name of ['LIVELY_TEST_RUNNER_OPEN_TIMEOUT', 'LIVELY_TEST_RUNNER_EVAL_TIMEOUT']) {
+      if (name in originalEnv) process.env[name] = originalEnv[name];
+      else delete process.env[name];
+    }
+  });
+
+  /** @param {string} packageName - The package whose tests the TestRunner runs. */
+  async function run (packageName) {
+    const runner = new TestRunner();
+    await runner.setup({ port: 19050 });
+    await runner.run(packageName);
+  }
+
+  it('uses the configured timeouts for loading the world and running the tests', async () => {
+    process.env.LIVELY_TEST_RUNNER_OPEN_TIMEOUT = '1234';
+    process.env.LIVELY_TEST_RUNNER_EVAL_TIMEOUT = '5678';
+    await run('pkg');
+    expect(sessions[0].aliveTimeout).equals(1234);
+    expect(evaluations[0].options.timeout).equals(5678);
+    expect(sessions[0].protocolTimeout, 'the browser protocol outlasts the test run').greaterThan(5678);
+  });
+
+  it('keeps the timeouts of a headless session by default', async () => {
+    delete process.env.LIVELY_TEST_RUNNER_OPEN_TIMEOUT;
+    delete process.env.LIVELY_TEST_RUNNER_EVAL_TIMEOUT;
+    await run('pkg');
+    expect(sessions[0].aliveTimeout).equals(5 * 60 * 1000);
+    expect(evaluations[0].options.timeout).equals(10 * 60 * 1000);
+  });
+
+  /**
+   * Runs the code that the TestRunner evaluates in the test world against stubbed modules.
+   * @param {string[]} manifests - URLs of the package.json files that exist on the server.
+   * @returns {Promise<string>} The address of the package that the code loads.
+   */
+  async function loadedPackageAddress (manifests) {
+    await run('unregistered');
+    let address;
+    const stubResource = url => ({
+      join: path => ({ exists: async () => manifests.includes(url + path) }),
+      asFile: () => ({ url: url.replace(/\/$/, '') })
+    });
+    const modules = {
+      'lively.resources': { resource: stubResource },
+      'lively.lang': { promise: { waitFor: async () => {} } },
+      'lively-system-interface': { localInterface: { coreInterface: { getPackages: () => [] } } },
+      'lively-system-interface/commands/packages.js': { loadPackage: async (system, spec) => { address = spec.address; } },
+      'mocha-es6/index.js': {},
+      'lively.ide/test-runner.js': { default: class { async runTestsInPackage () { return []; } } }
+    };
+    const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+    await new AsyncFunction('System', '$world', 'window', evaluations[0].code)(
+      { import: async id => modules[id] }, { handForPointerId () {} }, { chai: {}, Mocha: {} });
+    return address;
+  }
+
+  it('loads an unregistered repository package from the repository root', async () => {
+    expect(await loadedPackageAddress(['http://localhost:19050/unregistered/package.json']))
+      .equals('http://localhost:19050/unregistered');
+  });
+
+  it('loads an unregistered package without a repository manifest from local_projects', async () => {
+    expect(await loadedPackageAddress([])).equals('http://localhost:19050/local_projects/unregistered');
+  });
+});
+
 describe('test script server URL', () => {
   // Runs scripts/test.js against a stubbed HTTP request that answers with `responseBody`.
   const runTestScript = async (env, responseBody) => {

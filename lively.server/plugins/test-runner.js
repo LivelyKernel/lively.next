@@ -1,6 +1,15 @@
 import { HeadlessSession } from 'lively.headless';
 import { promise } from 'lively.lang';
 
+// Milliseconds for loading the test world and for running the tests of a package.
+// The defaults are the page load and protocol timeouts of HeadlessSession.
+function timeouts () {
+  return {
+    open: Number(process.env.LIVELY_TEST_RUNNER_OPEN_TIMEOUT) || 5 * 60 * 1000,
+    run: Number(process.env.LIVELY_TEST_RUNNER_EVAL_TIMEOUT) || 10 * 60 * 1000
+  };
+}
+
 export default class TestRunner {
   async setup (livelyServer) {
     this.baseURL = `http://localhost:${livelyServer.port}`;
@@ -9,12 +18,16 @@ export default class TestRunner {
 
   async run (module_to_test) {
     let results;
+    const timeout = timeouts();
     try {
       let attempts = 1;
       while (true) {
         try {
-          // Retention tests observe garbage collection through globalThis.gc.
-          this.headlessSession = new HeadlessSession({ args: ['--js-flags=--expose-gc'] });
+          // Retention tests observe garbage collection through globalThis.gc. The protocol
+          // timeout outlasts the test run, so that the run reports its own timeout.
+          this.headlessSession = new HeadlessSession({
+            args: ['--js-flags=--expose-gc'], aliveTimeout: timeout.open, protocolTimeout: timeout.run + 60 * 1000
+          });
           await this.headlessSession.open(this.baseURL + '/worlds/load?name=__newWorld__&askForWorldName=false&fastLoad=false',  (sess) => sess.runEval(`typeof $world !== 'undefined' && $world.isWorld && $world._uiInitialized`, { timeout: 5000 }).catch(() => false));
         } catch (err) {
           if (attempts < 3) {
@@ -37,9 +50,11 @@ export default class TestRunner {
       const packageAddress = packageToTestLoaded?.url || '${this.baseURL}/local_projects/${module_to_test}';
       const packageIsLocalProject = packageAddress.startsWith('${this.baseURL}/local_projects/');
       if (!packageToTestLoaded){
+        // Repository packages that the world does not register load from the repository root.
+        const repositoryPackage = resource('${this.baseURL}/${module_to_test}/');
         await loadPackage(localInterface.coreInterface, {
           name: '${module_to_test}',
-          address: packageAddress,
+          address: await repositoryPackage.join('package.json').exists() ? repositoryPackage.asFile().url : packageAddress,
           type: 'package'
         });
       } else if (packageIsLocalProject) {
@@ -73,7 +88,7 @@ export default class TestRunner {
         })
       });
       JSON.stringify(results);
-      `)
+      `, { timeout: timeout.run })
     } catch (err) {
       const browserErrors = this.headlessSession?.summarizeRecentConsoleErrors();
       results = JSON.stringify({
