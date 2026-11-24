@@ -13,7 +13,8 @@ export default class TestRunner {
       let attempts = 1;
       while (true) {
         try {
-          this.headlessSession = new HeadlessSession();
+          // Retention tests observe garbage collection through globalThis.gc.
+          this.headlessSession = new HeadlessSession({ args: ['--js-flags=--expose-gc'] });
           await this.headlessSession.open(this.baseURL + '/worlds/load?name=__newWorld__&askForWorldName=false&fastLoad=false',  (sess) => sess.runEval(`typeof $world !== 'undefined' && $world.isWorld && $world._uiInitialized`, { timeout: 5000 }).catch(() => false));
         } catch (err) {
           if (attempts < 3) {

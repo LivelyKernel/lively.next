@@ -101,6 +101,7 @@ if [ -d "$CHROME_PROFILE_DIR" ]; then
 fi
 
 testfiles=(
+"lively.context"
 "lively.lang"
 "lively.resources"
 "lively.bindings"
