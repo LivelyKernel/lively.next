@@ -1,8 +1,8 @@
-# js-git-browser
+# lively.git
 
-Uses [js-git](https://github.com/creationix/js-git) and
-[lively.storage](https://github.com/LivelyKernel/lively.storage) to give you
-read and write access to local and remote git repositories.
+GitHub access for Lively projects: `GitHubAPIWrapper` (index.js) calls the
+GitHub REST API with the current user's token, and `js-keygen` creates the SSH
+key pairs used as deploy keys.
 
 
 # License
