@@ -782,15 +782,8 @@ export class Continuation {
       const frame = this.currentFrame;
       if (!frame.pendingAwait) throw new Error('No pending await in this frame');
       const pending = frame.pendingAwait;
-      if (pending.iteratorKey) {
-          const iterator = frame.alreadyComputed[pending.iteratorKey];
-          if (pending.operation === 'next') iterator.acceptStep(value);
-          else {
-              if (value === null || typeof value !== 'object') throw new TypeError('Iterator result is not an object');
-              iterator.done = true;
-              iterator.phase = 'done';
-          }
-      } else if (pending.valueKey) frame.alreadyComputed[pending.valueKey] = value;
+      if (pending.iteratorKey) frame.alreadyComputed[pending.iteratorKey].acceptResult(pending.operation, value);
+      else if (pending.valueKey) frame.alreadyComputed[pending.valueKey] = value;
       else if (pending.delegateKey) {
           const iterator = frame.alreadyComputed[pending.delegateKey];
           iterator.hasResult = true;

@@ -754,11 +754,7 @@ export class Interpreter {
       this.accept(node.right, state);
       iterator = __forOf(state.result, frame.alreadyComputed, node.astIndex, !!node.await);
     } else if (frame.getPC() && node.body.start <= frame.getPC().start && frame.getPC().end <= node.body.end) iterator.entered = true;
-    if (Object.prototype.hasOwnProperty.call(frame, 'awaitRejection')) {
-      const error = frame.awaitRejection;
-      delete frame.awaitRejection;
-      throw iterator.completion?.hasError ? iterator.completion.error : error;
-    }
+    frame.throwAwaitRejection(iterator.completion);
     const declaration = node.left.type === 'VariableDeclaration' ? node.left : null;
     const left = declaration ? declaration.declarations[0].id : node.left;
     const lexical = declaration && declaration.kind !== 'var';
@@ -782,12 +778,7 @@ export class Interpreter {
           });
           __awaitValue(result, node.astIndex, {iteratorKey: key, operation});
         }
-        if (operation === 'next') iterator.acceptStep(result);
-        else {
-          if (result === null || typeof result !== 'object') throw new TypeError('Iterator result is not an object');
-          iterator.done = true;
-          iterator.phase = 'done';
-        }
+        iterator.acceptResult(operation, result);
       }
       if (iterator.phase === 'done') break;
       if (!iterator.entered) {
@@ -1300,23 +1291,14 @@ export class Interpreter {
   }
 
   visitAwaitExpression(node, state) {
-    const frame = state.currentFrame;
-    if (Object.prototype.hasOwnProperty.call(frame, 'awaitRejection')) {
-      const error = frame.awaitRejection;
-      delete frame.awaitRejection;
-      throw error;
-    }
+    state.currentFrame.throwAwaitRejection();
     this.accept(node.argument, state);
     __awaitValue(state.result, node.astIndex);
   }
 
   visitYieldExpression(node, state) {
     const frame = state.currentFrame;
-    if (Object.prototype.hasOwnProperty.call(frame, 'awaitRejection')) {
-      const error = frame.awaitRejection;
-      delete frame.awaitRejection;
-      throw error;
-    }
+    frame.throwAwaitRejection();
     const request = frame.generatorRequest;
     delete frame.generatorRequest;
     if (node.delegate) return this.visitDelegatedYield(node, state, request);
@@ -1913,6 +1895,14 @@ export class Frame {
   setAlreadyComputed(mapping) {
     // mapping == {astIndex: value}
     return this.alreadyComputed = mapping;
+  }
+
+  /** Throw the rejection with which an `await` of this frame resumes (or the error of `completion`). */
+  throwAwaitRejection(completion) {
+    if (!Object.prototype.hasOwnProperty.call(this, 'awaitRejection')) return;
+    const error = this.awaitRejection;
+    delete this.awaitRejection;
+    throw completion?.hasError ? completion.error : error;
   }
 
   supplyCallResult(value) {

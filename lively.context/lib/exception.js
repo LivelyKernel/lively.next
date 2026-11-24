@@ -211,6 +211,14 @@ export class RecordedIterator {
     this.phase = this.done ? 'done' : 'body';
   }
 
+  /** Accept the result of a `next` step, or of the `return` call that closes the iterator. */
+  acceptResult(operation, step) {
+    if (operation === 'next') return this.acceptStep(step);
+    if (step === null || typeof step !== 'object') throw new TypeError('Iterator result is not an object');
+    this.done = true;
+    this.phase = 'done';
+  }
+
   return() {
     if (this.suspended) { this.suspended = false; return {}; }
     this.done = true;
