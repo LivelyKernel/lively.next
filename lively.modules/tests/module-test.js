@@ -77,89 +77,75 @@ describe('module loading', () => {
       const id = testDir + `anonymous-default-${index}.js`;
       await resource(id).write(`export default ${declaration} () { return [1].map(value => value)[0]; }`);
       module(S, id).retainRuntimeClosures = true;
-      const {default: func} = await S.import(id);
-      const result = func();
+      const result = (await S.import(id)).default();
       expect(declaration === 'function*' ? result.next().value : await result).equals(1);
     }
   });
 
-  it('lowers super calls and getters in class fields and field arrows', async () => {
-    await resource(module1).write('class Base { value() { return this.amount; } get doubled() { return this.amount * 2; } } export class Child extends Base { amount = 3; valueFromSuper = super.value(); inherited = super.doubled; callback = () => super.value() + 1; }');
-    const {Child} = await S.import(module1);
-    const child = new Child();
-    expect([child.valueFromSuper, child.inherited, child.callback()]).deep.equals([3, 6, 4]);
-  });
-
-  it('lowers class field super inside native object methods and getters', async () => {
-    await resource(module1).write('class Base { value() { return this.amount; } get doubled() { return this.amount * 2; } } export const factory = {make() { return class extends Base { amount = 3; valueFromSuper = super.value(); inherited = super.doubled; callback = () => super.value() + 1; }; }, get Child() { return class extends Base { amount = 4; valueFromSuper = super.value(); inherited = super.doubled; callback = () => super.value() + 1; }; }};');
-    const {factory} = await S.import(module1);
-    const first = new (factory.make())(), second = new factory.Child();
-    expect([first.valueFromSuper, first.inherited, first.callback(), second.valueFromSuper, second.inherited, second.callback()]).deep.equals([3, 6, 4, 4, 8, 5]);
+  it('lowers super calls and getters in class fields and field arrows, also in classes created by object methods', async () => {
+    const fields = n => `amount = ${n}; valueFromSuper = super.value(); inherited = super.doubled; callback = () => super.value() + 1;`;
+    await resource(module1).write('class Base { value() { return this.amount; } get doubled() { return this.amount * 2; } }' +
+      ` export class Child extends Base { ${fields(3)} } export const factory = {make() { return class extends Base { ${fields(3)} }; },` +
+      ` get Child() { return class extends Base { ${fields(4)} }; }};`);
+    const {Child, factory} = await S.import(module1);
+    const values = object => [object.valueFromSuper, object.inherited, object.callback()];
+    expect([new Child(), new (factory.make())(), new factory.Child()].map(values)).deep.equals([[3, 6, 4], [3, 6, 4], [4, 8, 5]]);
   });
 
   it('keeps Node polyfills primitive until debugging or source capture is enabled', async () => {
-    const primitive = module(S, 'esm://ga.jspm.io/npm:@jspm/core@2.1.0/nodelibs/browser/crypto.js');
-    expect(primitive.embedOriginalCode).equals(false);
+    const primitive = module(S, 'esm://ga.jspm.io/npm:@jspm/core@2.1.0/nodelibs/browser/crypto.js'), ordinary = module(S, module1);
+    expect([primitive.embedOriginalCode, ordinary.embedOriginalCode]).deep.equals([false, true]);
     primitive.setSource('export const value = 3;');
     await primitive.setDebuggingEnabled(true);
     expect(primitive.embedOriginalCode).equals(true);
-    primitive.embedOriginalCode = false;
-    expect(primitive.embedOriginalCode).equals(false);
-    const ordinary = module(S, module1);
-    expect(ordinary.embedOriginalCode).equals(true);
-    ordinary.embedOriginalCode = false;
-    expect(ordinary.embedOriginalCode).equals(false);
+    primitive.embedOriginalCode = ordinary.embedOriginalCode = false;
+    expect([primitive.embedOriginalCode, ordinary.embedOriginalCode]).deep.equals([false, false]);
   });
 
   it('records runtime closure source and shared native bindings without changing function identity', async () => {
-    const source = 'export function make(value) { "use strict"; const ledger = {}; function charge(amount) { return value + amount; } return {charge, read: () => value, ledger}; }';
+    const source = 'export function make(value) { "use strict"; const ledger = {}; function charge(amount) { return value + amount; }' +
+      ' return {charge, read: () => value, ledger}; }';
     await resource(module1).write(source);
     module(S, module1).retainRuntimeClosures = true;
-    const {make} = await S.import(module1);
-    const decanonicalize = S.decanonicalize;
+    const {make} = await S.import(module1), decanonicalize = S.decanonicalize;
     let account;
     try {
       S.decanonicalize = () => { throw new Error('closure recording must not invoke module resolution'); };
       account = make(2);
     } finally { S.decanonicalize = decanonicalize; }
-    const bindings = account.charge[Symbol.for('lively-debug-bindings')];
-    expect(account.charge.name).equals('charge');
-    expect(bindings.value).equals(2);
+    const bindings = account.charge[Symbol.for('lively-debug-bindings')], meta = account.charge[Symbol.for('lively-object-meta')];
+    expect([account.charge.name, bindings.value]).deep.equals(['charge', 2]);
     bindings.value = 7;
-    expect(account.read()).equals(7);
-    expect(account.charge(3)).equals(10);
-    const meta = account.charge[Symbol.for('lively-object-meta')];
+    expect([account.read(), account.charge(3)]).deep.equals([7, 10]);
     expect(source.slice(meta.start, meta.end)).equals('function charge(amount) { return value + amount; }');
-    expect(account.read[Symbol.for('lively-debug-bindings')][Symbol.for('lively-debug-binding-cells')].value)
-      .equals(bindings[Symbol.for('lively-debug-binding-cells')].value);
+    const cells = callback => callback[Symbol.for('lively-debug-bindings')][Symbol.for('lively-debug-binding-cells')];
+    expect(cells(account.read).value).equals(cells(account.charge).value);
   });
 
-  it('keeps ordinary and dependency closures native until retention is selected', async () => {
+  it('keeps ordinary and dependency closures native until retention is selected and never intercepts dependencies', async () => {
+    const dependency = testDir + 'node_modules/dependency/index.js', mod = module(S, module1);
+    for (const id of [module1, dependency, 'esm://example.test/dependency.js']) expect(module(S, id).retainRuntimeClosures).equals(false);
     await resource(module1).write('export function make(value) { return () => ++value; }');
-    const mod = module(S, module1);
-    for (const id of [module1, testDir + 'node_modules/dependency/index.js', 'esm://example.test/dependency.js']) {
-      expect(module(S, id).retainRuntimeClosures).equals(false);
-    }
-    const {make} = await S.import(module1);
-    const callback = make(1);
-    expect(callback[Symbol.for('lively-debug-bindings')]).equals(undefined);
-    expect(callback[Symbol.for('lively-serialize-closure')]).equals(undefined);
-    expect(callback()).equals(2);
+    const callback = (await S.import(module1)).make(1);
+    expect([callback[Symbol.for('lively-debug-bindings')], callback[Symbol.for('lively-serialize-closure')], callback()])
+      .deep.equals([undefined, undefined, 2]);
     mod.retainRuntimeClosures = true;
     await mod.reload({reloadDeps: false});
     const retained = S.get(module1).make(1);
-    expect(retained[Symbol.for('lively-debug-bindings')].value).equals(1);
-    expect(retained()).equals(2);
-    expect(mod.debuggingEnabled).equals(false);
+    expect([retained[Symbol.for('lively-debug-bindings')].value, retained(), mod.debuggingEnabled]).deep.equals([1, 2, false]);
+    await resource(dependency).write('export function make(value) { return () => value; } export function stop() { debugger; }');
+    S.debuggerInterception = true;
+    const {make} = await S.import(dependency);
+    expect([module(S, dependency).debuggingEnabled, make(3)[Symbol.for('lively-debug-bindings')]]).deep.equals([false, undefined]);
   });
 
-  it('does not automatically intercept debugger statements in dependencies', async () => {
-    const id = testDir + 'node_modules/dependency/index.js';
-    await resource(id).write('export function make(value) { return () => value; } export function stop() { debugger; }');
-    S.debuggerInterception = true;
-    const {make} = await S.import(id);
-    expect(module(S, id).debuggingEnabled).equals(false);
-    expect(make(3)[Symbol.for('lively-debug-bindings')]).equals(undefined);
+  it('preserves declaring-class super references in property descriptors', async () => {
+    await resource(module1).write('export class Parent { get value() { return 3; } } export class Child extends Parent {' +
+      ' static get properties() { return {value: {get() { return super.prototype.value + 1; }}}; } }');
+    const {Child} = await S.import(module1);
+    expect(Child.properties.value.get.call(new Child())).equals(4);
+    await module(S, module1).setDebuggingEnabled(true);
+    expect(Child.properties.value.get.call(new Child())).equals(4);
   });
 
   it('imports cached frozen records before the live transpiler is installed', async () => {
@@ -167,14 +153,6 @@ describe('module loading', () => {
     S.set(module1, S.newModule({ x: 3 }));
     S.get('@lively-env').loadedModules[module1] = { exports: { x: 3 }, recorder: {} };
     expect(await S.import(module1)).to.have.property('x', 3);
-  });
-
-  it('preserves declaring-class super references in property descriptors', async () => {
-    await resource(module1).write('export class Parent { get value() { return 3; } } export class Child extends Parent { static get properties() { return {value: {get() { return super.prototype.value + 1; }}}; } }');
-    const {Child} = await S.import(module1);
-    expect(Child.properties.value.get.call(new Child())).equals(4);
-    await module(S, module1).setDebuggingEnabled(true);
-    expect(Child.properties.value.get.call(new Child())).equals(4);
   });
 
   it('has module interface objects', async () => {
