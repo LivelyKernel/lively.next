@@ -90,6 +90,41 @@ function captureError (callback) {
 }
 
 describe('projectional component transaction coordinator', () => {
+  it('F6 merges without resolving or retaining a snapshot of runtime targets', () => {
+    const state = { source, document: parsedDocument(), runtime: { id: 'runtime-root', fill: 'red' } };
+    let resolutions = 0;
+    const adapters = () => ({
+      ...storesFor(state, { runtimeContext: {
+        resolveMorph: id => { resolutions++; return id === state.runtime.id ? state.runtime : null; }
+      } }),
+      forTransaction: () => adapters()
+    });
+    const edits = [];
+    for (const value of ['green', 'blue']) {
+      const { transaction } = prepare(state.document, {
+        source: state.source, command: commandFor(state.document, value)
+      });
+      commitPreparedComponentTransaction(transaction, adapters());
+      edits.push(new ProjectionalComponentEditTransaction(transaction, adapters()));
+    }
+    expect(edits[0].canMergeWith(edits[1])).equals(true);
+    resolutions = 0;
+    const merged = edits[0].merge(edits[1]);
+    expect(resolutions).equals(0);
+    const detached = state.runtime;
+    state.runtime = { id: detached.id, fill: 'blue' };
+    const after = state.source;
+    merged.reverseApply();
+    expect(resolutions).above(0);
+    expect(state.source).equals(source);
+    expect(state.runtime.fill).equals('red');
+    expect(detached.fill).equals('blue');
+    merged.apply();
+    expect(state.source).equals(after);
+    expect(state.runtime.fill).equals('blue');
+    expect(detached.fill).equals('blue');
+  });
+
   it('prepares and atomically commits source, document, and runtime state', () => {
     const document = parsedDocument();
     const preparation = prepare(document);

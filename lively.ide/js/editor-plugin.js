@@ -159,6 +159,7 @@ export default class JavaScriptEditorPlugin extends CodeMirrorEnabledEditorPlugi
   }
 
   runEval (code, opts) {
+    this.textMorph?.pluginFind(p => p.isComponentSourceEditorPlugin)?.beforeEvaluation(code);
     const env = this.sanatizedJsEnv(opts);
     const endpoint = this.systemInterface(env);
     return endpoint.runEval(code, env);

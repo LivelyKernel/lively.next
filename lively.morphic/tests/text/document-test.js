@@ -294,6 +294,18 @@ describe('document as text tree', () => {
       '  line 3 (size: 1 width: 0 height: 0 text length: 4 content: ["bbb",null])');
     });
 
+    it('keeps trailing newlines when a multiline replacement extends beyond the old lines', () => {
+      for (const text of ['one\ntwo\nthree\n', 'one\n\n']) {
+        for (const replacement of [text, [text, { fontWeight: 'bold' }]]) {
+          const doc = new Document(['first', 'second']);
+          const { inserted } = doc.replace(range(0, 0, 1, 6), replacement);
+          expect(doc.textString).equals(text);
+          expect(inserted.end).deep.equals({ row: text.split('\n').length - 1, column: 0 });
+          doc.consistencyCheck();
+        }
+      }
+    });
+
     it('replacementment longer as doc', () => {
       const doc = new Document(['aaa', 'bbb']);
       const { inserted } = doc.replace(range(1, 1, 2, 0), 'test\nfoo\nbar');

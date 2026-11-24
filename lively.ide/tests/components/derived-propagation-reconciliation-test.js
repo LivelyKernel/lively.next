@@ -459,41 +459,154 @@ export const Grandchild = component(Derived, ${grandchildSpec});
     expect(errors).deep.equals([]);
   });
 
-  it('T10b follows runtime name matching when a base introduces a handwritten stale override target', async () => {
-    await setup({ derivedSpec: "{ name: 'derived', submorphs: [{ name: 'future', fill: Color.blue }] }" });
+  for (const derivedOpen of [true, false]) {
+    it(`F8b adopts a handwritten dormant override with the derived editor ${derivedOpen ? 'open' : 'closed'}`, async () => {
+      await setup({ derivedSpec: "{ name: 'derived', submorphs: [{ name: 'future', fill: Color.blue }] }" });
+      const base = await open();
+      let derived = derivedOpen ? await open('Derived') : null;
+      if (derived) {
+        const parsed = derived._changeTracker.projectionalDocumentForCurrentSource();
+        expect(parsed.supported, JSON.stringify(parsed.diagnostics)).equals(true);
+        expect(parsed.document.root.children.find(child => child.name === 'future').provenance.suppressed).equals(true);
+      }
+      const before = sources();
+      await edit(base, () => base.addMorph(morph({ name: 'future', fill: Color.green })));
+      expect(base._changeTracker.lastShadowCommandBatch.projectionalCommit).not.equals(undefined);
+      expect(modules.get('derived.cp.js')._source).equals(before.find(([name]) => name === 'derived.cp.js')[1]);
+      const check = added => {
+        for (const instance of [base, cold('Base'), cold('Derived'), derived].filter(Boolean)) {
+          expect(instance.submorphs.map(child => child.name)).deep.equals(added ? ['label', 'container', 'future'] : ['label', 'container']);
+        }
+        if (added) {
+          expect(base.get('future').fill.equals(Color.green)).equals(true);
+          expect(cold('Derived').get('future').fill.equals(Color.blue)).equals(true);
+          if (derived) expect(derived.get('future').fill.equals(Color.blue)).equals(true);
+        }
+      };
+      check(true);
+      await replay(base, before, sources(), check);
+      const detached = derived;
+      if (derived) {
+        descriptors.Derived.stopEditSession();
+        derived.remove();
+      }
+      derived = await open('Derived');
+      expect(derived.get('future').fill.equals(Color.blue)).equals(true);
+      await replay(base, before, sources(), added => {
+        check(added);
+        if (detached) {
+          expect(detached.submorphs.map(child => child.name)).deep.equals(['label', 'container', 'future']);
+          expect(detached.get('future').fill.equals(Color.blue)).equals(true);
+        }
+      });
+      expect(errors).deep.equals([]);
+    });
+  }
+
+  it('F8b synthesizes nested local additions and overrides through further open derivations', async () => {
+    await setup({
+      derivedSpec: "{ name: 'derived', submorphs: [{ name: 'future', fill: Color.blue, submorphs: [{ name: 'detail', opacity: 0.4 }, add({ name: 'local child', fill: Color.red }, 'detail')] }] }",
+      grandchild: true,
+      grandchildSpec: "{ name: 'grandchild', submorphs: [{ name: 'future', fill: Color.yellow }] }"
+    });
     const base = await open();
     const derived = await open('Derived');
-    const parsed = derived._changeTracker.projectionalDocumentForCurrentSource();
-    expect(parsed.supported, JSON.stringify(parsed.diagnostics)).equals(true);
-    expect(parsed.document.root.children.find(child => child.name === 'future').provenance.suppressed).equals(true);
+    const grandchild = await open('Grandchild');
     const before = sources();
-    // An open dependant needs local synthesis for the handwritten override.
-    const rejected = await edit(base, () => base.addMorph(morph({ name: 'future', fill: Color.green })), true);
-    expect(rejected.message).includes('requires local synthesis');
-    expect(sources()).deep.equals(before);
-    expect(base.submorphs.map(child => child.name)).deep.equals(['label', 'container']);
-    expect(errors).has.length(1);
-    expect(errors[0].message || String(errors[0])).includes('requires local synthesis');
-    descriptors.Derived.stopEditSession();
-    derived.remove();
-    await edit(base, () => base.addMorph(morph({ name: 'future', fill: Color.green })));
+    await edit(base, () => base.addMorph(morph({ name: 'future', fill: Color.green, submorphs: [
+      { name: 'detail', fill: Color.orange, opacity: 0.9 }
+    ] })));
     expect(base._changeTracker.lastShadowCommandBatch.projectionalCommit).not.equals(undefined);
-    expect(modules.get('derived.cp.js')._source).equals(before.find(([name]) => name === 'derived.cp.js')[1]);
+    expect(sources().slice(1)).deep.equals(before.slice(1));
     const check = added => {
-      for (const instance of [base, cold('Base'), cold('Derived')]) {
-        expect(instance.submorphs.map(child => child.name)).deep.equals(added ? ['label', 'container', 'future'] : ['label', 'container']);
-      }
-      if (added) {
-        expect(base.get('future').fill.equals(Color.green)).equals(true);
-        expect(cold('Derived').get('future').fill.equals(Color.blue)).equals(true);
+      for (const [name, editable, fill] of [['Derived', derived, Color.blue], ['Grandchild', grandchild, Color.yellow]]) {
+        for (const instance of [editable, cold(name)]) {
+          expect(instance.submorphs.map(child => child.name)).deep.equals(added ? ['label', 'container', 'future'] : ['label', 'container']);
+          if (!added) continue;
+          const future = instance.get('future');
+          expect(future.fill.equals(fill)).equals(true);
+          expect(future.submorphs.map(child => child.name)).deep.equals(['local child', 'detail']);
+          expect(future.get('detail').opacity).equals(0.4);
+          expect(future.get('detail').fill.equals(Color.orange)).equals(true);
+          expect(future.get('local child').fill.equals(Color.red)).equals(true);
+        }
       }
     };
     check(true);
     await replay(base, before, sources(), check);
-    const reopened = await open('Derived');
-    expect(reopened.submorphs.map(child => child.name)).deep.equals(cold('Derived').submorphs.map(child => child.name));
-    expect(reopened.get('future').fill.equals(Color.blue)).equals(true);
+    expect(errors).deep.equals([]);
+  });
+
+  it('F8b activates a dormant part override and keeps later edits connected', async () => {
+    await setup({ derivedSpec: "{ name: 'derived', submorphs: [{ name: 'future', fill: Color.blue, submorphs: [{ name: 'deep', opacity: 0.4 }] }] }" });
+    const base = await open();
+    const derived = await open('Derived');
+    const before = sources();
+    await edit(base, () => base.addMorph(part(descriptors.Ref, { name: 'future' })));
+    const check = added => {
+      for (const instance of [derived, cold('Derived')]) {
+        expect(instance.submorphs.map(child => child.name)).deep.equals(added ? ['label', 'container', 'future'] : ['label', 'container']);
+        if (!added) continue;
+        instance.master.applyIfNeeded(true);
+        expect(instance.get('future').fill.equals(Color.blue)).equals(true);
+        expect(instance.get('future').get('deep').opacity).equals(0.4);
+        expect(instance.get('future').get('deep').fill.equals(Color.red)).equals(true);
+      }
+    };
+    check(true);
+    await replay(base, before, sources(), check);
+    const afterIntroduction = sources();
+    await edit(derived, () => { derived.get('future').get('deep').opacity = 0.6; });
+    const checkLocal = changed => {
+      for (const instance of [derived, cold('Derived')]) {
+        instance.master.applyIfNeeded(true);
+        expect(instance.get('future').get('deep').opacity).equals(changed ? 0.6 : 0.4);
+      }
+    };
+    checkLocal(true);
+    await replay(derived, afterIntroduction, sources(), checkLocal);
+    expect(errors).deep.equals([]);
+  });
+
+  it('F8b compensates a synthesis failure without changing source, caches or prior history', async () => {
+    await setup({ derivedSpec: "{ name: 'derived', submorphs: [{ name: 'future', fill: Color.blue }] }" });
+    const base = await open();
+    const derived = await open('Derived');
+    const initial = sources();
+    await edit(base, () => { base.fill = Color.orange; });
+    const before = sources();
+    const manager = base.env.undoManager;
+    const undos = manager.undos.slice();
+    const policies = ['Base', 'Derived'].map(name => descriptors[name].stylePolicy.spec);
+    const tracker = base._changeTracker;
+    const evaluate = tracker.evaluateProjectionalPolicy;
+    tracker.evaluateProjectionalPolicy = function (entry, ...args) {
+      if (entry.descriptor === descriptors.Derived) throw new Error('injected dormant synthesis failure');
+      return evaluate.call(this, entry, ...args);
+    };
+    const introduced = morph({ name: 'future', fill: Color.green });
+    instances.push(introduced);
+    let rejection;
+    try { rejection = await edit(base, () => base.addMorph(introduced), true); }
+    finally { tracker.evaluateProjectionalPolicy = evaluate; }
+    expect(rejection.message).includes('injected dormant synthesis failure');
     expect(errors).has.length(1);
+    expect(errors[0]).includes('injected dormant synthesis failure');
+    expect(sources()).deep.equals(before);
+    expect(introduced.owner).equals(null);
+    expect(manager.undos).deep.equals(undos);
+    expect(manager.undoInProgress).equals(null);
+    for (const [index, name] of ['Base', 'Derived'].entries()) {
+      expect(descriptors[name].stylePolicy.spec).equals(policies[index]);
+      expect(cold(name).submorphs.map(child => child.name)).deep.equals(['label', 'container']);
+    }
+    expect(derived.submorphs.map(child => child.name)).deep.equals(['label', 'container']);
+    manager.undo();
+    await processed(base);
+    expect(sources()).deep.equals(initial);
+    manager.redo();
+    await processed(base);
+    expect(sources()).deep.equals(before);
   });
 
   it('T10b applies a D2 override to the effective replacement name without duplicates', async () => {

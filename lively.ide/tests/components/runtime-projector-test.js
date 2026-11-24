@@ -678,4 +678,35 @@ describe('projectional component runtime projector', () => {
       sourceMorph
     })).to.throw('requires local synthesis');
   });
+
+  it('F8b uses local synthesis for an activated override instead of copying its base', () => {
+    const beforeDocument = derivedStructureDocument({ removed: true });
+    const afterDocument = derivedStructureDocument({ targetHasOverrides: true });
+    const runtime = derivedRuntimeStructure();
+    runtime.left.submorphs = [];
+    const component = derivedComponentPlan(beforeDocument, afterDocument, runtime);
+    const target = { id: 'synthesized-target', name: 'target', owner: null, submorphs: [] };
+    let calls = 0;
+    const projection = projectCachedDerivedRuntimeStructure({
+      components: [component],
+      nodeId: 'target',
+      commandKind: DerivedRuntimeStructureProjectionKind.INTRODUCE,
+      changeSetId: 'synthesized-introduction',
+      sourceMorph: { copy: () => { throw new Error('must not copy the base'); } },
+      synthesizeIntroducedMorph: (plan, nodeId) => {
+        expect(plan).equals(component);
+        expect(nodeId).equals('target');
+        calls++;
+        return target;
+      }
+    });
+    expect(calls).equals(1);
+    expect(projection.resolveMorph(target.id)).equals(target);
+    expect(projection.changeSet.operations[0]).containSubset({
+      morphId: target.id,
+      from: { kind: 'detached' },
+      to: { ownerId: runtime.left.id, index: 0 }
+    });
+    expect(projection.inverseChangeSet.operations[0].from).deep.equals(projection.changeSet.operations[0].to);
+  });
 });

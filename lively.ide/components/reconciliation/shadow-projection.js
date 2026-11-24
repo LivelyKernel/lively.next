@@ -508,6 +508,7 @@ export function prepareShadowScalarProjection ({
   bridgeCommands,
   parentDocument = null,
   resolveComponentDocument = null,
+  normalizeModuleId = null,
   resolveModuleExports,
   beforeDocument = null,
   projectionId = 'shadow-component-projection',
@@ -557,7 +558,8 @@ export function prepareShadowScalarProjection ({
         exportName,
         componentId,
         parentDocument,
-        resolveComponentDocument
+        resolveComponentDocument,
+        normalizeModuleId
       });
   if (!parsed.supported) {
     return Object.freeze({
@@ -778,7 +780,8 @@ export function compareShadowProjectionToCurrentSource (shadowProjection, curren
     exportName: document.exportName,
     componentId: document.componentId,
     parentDocument: document.sourceMetadata.parentDocument,
-    resolveComponentDocument: document.sourceMetadata.resolveComponentDocument
+    resolveComponentDocument: document.sourceMetadata.resolveComponentDocument,
+    normalizeModuleId: document.sourceMetadata.normalizeModuleId
   });
   if (!parsedCurrent.supported) {
     return Object.freeze({

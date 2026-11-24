@@ -1,4 +1,4 @@
-/* global describe, it */
+/* global describe, it, System */
 import { expect } from 'mocha-es6';
 import {
   IntroduceNode,
@@ -29,10 +29,11 @@ import {
 } from '../../components/reconciliation/derived-transaction.js';
 import { reduceComponent } from '../../components/reconciliation/reducer.js';
 
-function parentDocument () {
+/** Build an inherited tree with the supplied module identity. */
+function parentDocument (moduleId = 'local://derived-projection/parent.cp.js') {
   return new ComponentDocument({
     componentId: 'parent',
-    moduleId: 'local://derived-projection/parent.cp.js',
+    moduleId,
     exportName: 'Parent',
     root: new ComponentNode({
       id: 'parent-root', name: 'parent', provenance: localNodeProvenance(),
@@ -56,6 +57,39 @@ function renamedParent (document, name = 'renamed target') {
 }
 
 describe('projectional derived component projector', () => {
+  for (const operation of ['rename', 'remove']) {
+    it(`F7 propagates a ${operation} through a namespace package parent`, () => {
+      const beforeParentDocument = parentDocument(System.decanonicalize('lively.components/buttons.cp.js'));
+      const afterParentDocument = operation === 'rename'
+        ? renamedParent(beforeParentDocument)
+        : reduceComponent(beforeParentDocument, RemoveNode({
+            componentId: beforeParentDocument.componentId,
+            expectedRevision: beforeParentDocument.revision,
+            nodeId: 'target'
+          })).document;
+      const options = {
+        source: `import * as parents from 'lively.components/buttons.cp.js';
+const Derived = component(parents.Parent, { name: 'derived', submorphs: [
+  { name: 'container', submorphs: [{ name: 'target', fill: 'red' }] }
+] });`,
+        moduleId: 'local://derived-projection/package.cp.js', exportName: 'Derived',
+        beforeParentDocument, afterParentDocument,
+        normalizeModuleId: (id, from) => System.decanonicalize(id, from)
+      };
+      const projection = operation === 'rename'
+        ? projectDerivedComponentRename({ ...options, nodeId: 'target' })
+        : projectDerivedComponentStructure(options);
+      expect(projection.supported, JSON.stringify(projection.diagnostics)).to.be.true;
+      if (operation === 'rename') {
+        expect(findComponentNode(projection.document, 'target').name).equals('renamed target');
+        expect(projection.sourceAfter).includes('"renamed target"');
+      } else {
+        expect(findComponentNode(projection.document, 'target')).equals(null);
+        expect(projection.sourceAfter).not.includes("name: 'container'");
+      }
+    });
+  }
+
   it('propagates rename selectors, suppressions, and ordering anchors', () => {
     const beforeParentDocument = parentDocument();
     const afterParentDocument = renamedParent(beforeParentDocument);

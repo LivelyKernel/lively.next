@@ -839,6 +839,7 @@ export class BrowserModel extends ViewModel {
   }
 
   async ensureNoEditSessionActive () {
+    if (this.ui.sourceEditor.pluginFind(plugin => plugin.isComponentSourceEditorPlugin)?.sessions.size) return true;
     const openSessions = this.activeComponentEditSessions();
     if (openSessions.length > 0) {
       const plural = openSessions.length > 1;
@@ -858,7 +859,9 @@ export class BrowserModel extends ViewModel {
       this.relayout();
       return;
     }
-    this.hideComponentEditButtons();
+    if (!this.ui.sourceEditor.pluginFind(plugin => plugin.isComponentSourceEditorPlugin)?.sessions.size) {
+      this.hideComponentEditButtons();
+    }
     Object.assign(this.ui.sourceEditor,
       {
         padding: Rectangle.inset(2, 60 - 2, 2, 0),

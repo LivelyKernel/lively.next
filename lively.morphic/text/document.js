@@ -1816,10 +1816,9 @@ export default class Document {
       }
       textAndAttributesForInsert.push(...lineTextAndAttributes);
     }
-    textAndAttributesForInsert.push(...textAndAttributesByLine[length - 1]);
     // insert rest normally
     const { end: insertionEnd } = this.insertTextAndAttributes(
-      textAndAttributesForInsert, { row, column: 0 });
+      concatTextAndAttributes(textAndAttributesForInsert, textAndAttributesByLine[length - 1], true), { row, column: 0 });
     return {
       removed: { start, end },
       inserted: { start, end: insertionEnd }
