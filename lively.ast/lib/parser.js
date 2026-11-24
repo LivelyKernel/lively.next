@@ -24,8 +24,9 @@ function addSource (parsed, source) {
     source = parsed;
     parsed = parse(parsed);
   }
+  // Import and export nodes have a `source` of their own: the module specifier, or null.
   source && AllNodesVisitor.run(parsed, (node, state, path) =>
-    !node.source && (node.source = source.slice(node.start, node.end)));
+    !Object.hasOwn(node, 'source') && (node.source = source.slice(node.start, node.end)));
   return parsed;
 }
 
@@ -46,7 +47,7 @@ function parseFunction (source, options = {}) {
       node.start += offset;
       node.end += offset;
     }
-    if (options.addSource && (!node.source)) {
+    if (options.addSource && !Object.hasOwn(node, 'source')) {
       node.source = source.slice(node.start, node.end);
     }
   });
@@ -138,7 +139,7 @@ function acornParseAsyncAware (source, options) {
       const { start: { column: sc, line: sl }, end: { column: ec, line: el } } = node.loc;
       node.loc = new SourceLocation(options, { column: sc, line: sl - 1 }, { column: ec, line: el - 1 });
     }
-    if (options.addSource && (!node.source)) {
+    if (options.addSource && !Object.hasOwn(node, 'source')) {
       node.source = source.slice(node.start, node.end);
     }
   });
