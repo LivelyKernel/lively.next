@@ -7,6 +7,7 @@ import { removeDir, prepareSystem, createFiles } from './helpers.js';
 import { searchLoadedModules } from '../src/system.js';
 import mod from '../src/module.js';
 import { importPackage, removePackage, getPackage } from '../src/packages/package.js';
+import { searchInSource } from '../src/search.js';
 
 const dir = System.decanonicalize('lively.modules/tests/');
 const testProjectDir = dir + 'search-test-project/';
@@ -202,6 +203,30 @@ describe('search', () => {
       expect(res).to.have.length(1);
       expect(res).to.containSubset([
         { moduleId: file2m, line: 1, column: 0, length: 6 }]);
+    });
+  });
+
+  describe('in source text', () => {
+    const source = 'const Foo = 1;\nfoo(Foo);\n// foo.bar';
+
+    it('ignores case unless asked not to', () => {
+      expect(searchInSource(source, 'foo').map(m => [m.line, m.column])).deep.equals([[1, 6], [2, 0], [2, 4], [3, 3]]);
+      expect(searchInSource(source, 'foo', { caseSensitive: true }).map(m => [m.line, m.column])).deep.equals([[2, 0], [3, 3]]);
+    });
+
+    it('matches strings literally unless in regex mode', () => {
+      expect(searchInSource(source, 'foo.bar')).to.have.length(1);
+      expect(searchInSource(source, 'foo(', { regexMode: false })).to.containSubset([{ line: 2, column: 0, length: 4, lineString: 'foo(Foo);' }]);
+      expect(searchInSource(source, 'f.o\\(', { regexMode: true })).to.containSubset([{ line: 2, column: 0, length: 4 }]);
+    });
+
+    it('shortens lines longer than 1000 characters around the match', () => {
+      const [match] = searchInSource('x'.repeat(2000) + 'needle' + 'y'.repeat(200), 'needle');
+      expect(match.lineString).equals('...' + 'x'.repeat(10) + 'needle' + 'y'.repeat(94) + '...');
+    });
+
+    it('terminates for patterns that match the empty string', () => {
+      expect(searchInSource('ab\nab', 'x*', { regexMode: true })).to.have.length(6);
     });
   });
 });

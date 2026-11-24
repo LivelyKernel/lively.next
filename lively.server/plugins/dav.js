@@ -11,6 +11,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { computeSourceHashes } from '../source-hashes.js';
 import { handleDAVRequest, contentType } from '../dav-handler.js';
+import { searchPackages } from '../code-search.js';
 
 const COMPRESSABLE_URLS = [
   'components_cache'
@@ -182,6 +183,10 @@ export default class LivelyDAVPlugin {
       return;
     }
 
+    if (req.url === baseURI + '__CODE_SEARCH__' && req.method === 'POST') {
+      return this.sendCodeSearch(req, res, baseURI);
+    }
+
     if (req.url == '/livelyClassesRuntime.js') {
       res.writeHead(200, { 'content-type': 'application/javascript' });
       res.end(await resource(System.baseURL).join('lively.classes/build/runtime.js').read());
@@ -213,6 +218,28 @@ export default class LivelyDAVPlugin {
       fs.promises.readFile(target.file, 'utf8').then(source => {
         this.fileHashes[hashedURL] = string.hashCode(source);
       }, () => { /* removed meanwhile */ });
+    }
+  }
+
+  /** Answers a POSTed global code search; see searchPackages in ../code-search.js. */
+  async sendCodeSearch (req, res, baseURI) {
+    const answer = (status, body) => {
+      res.writeHead(status, { 'content-type': 'application/json' });
+      res.end(JSON.stringify(body));
+    };
+    let query;
+    try {
+      let body = '';
+      for await (const chunk of req) body += chunk;
+      query = JSON.parse(body);
+    } catch (err) {
+      return answer(400, { error: 'The code search request is not valid JSON' });
+    }
+    try {
+      answer(200, await searchPackages({ ...query, rootDirectory: this.options.rootDirectory, baseURI }));
+    } catch (err) {
+      // An invalid regular expression is a SyntaxError.
+      answer(err instanceof SyntaxError ? 400 : 500, { error: String(err.message) });
     }
   }
 

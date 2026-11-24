@@ -12,6 +12,7 @@ import { ImportInjector, GlobalInjector, ImportRemover } from './import-modifica
 import { _require, _resolve } from './nodejs.js';
 import { classHolder } from './cycle-breaker.js';
 import { regExpEscape } from 'lively.lang/string.js';
+import { searchInSource } from './search.js';
 
 // Used by the recorder Proxy to detect native browser functions that need
 // to be bound to the global object when stored in local variable slots.
@@ -1027,50 +1028,16 @@ class ModuleInterface {
       return false;
     })) return [];
 
-    const src = await this.source();
-    let re;
-    if (searchStr instanceof RegExp) {
-      let flags = 'g'; // add 'g' flag
-      if (searchStr.ignoreCase) flags += 'i';
-      if (searchStr.multiline) flags += 'm';
-      re = RegExp(searchStr.source, flags);
-    } else {
-      let flags = 'g';
-      if (!options.caseSensitive) flags = flags + 'i';
-      if (!options.regexMode) searchStr = regExpEscape(searchStr);
-      re = RegExp(searchStr, flags);
-    }
-
-    let match; const res = [];
-    while ((match = re.exec(src)) !== null) { res.push([match.index, match[0].length]); }
-
-    for (let i = 0, j = 0, line = 1, lineStart = 0;
-      i < src.length && j < res.length;
-      i++) {
-      if (src[i] === '\n') {
-        line++;
-        lineStart = i + 1;
-      }
-      const [idx, length] = res[j];
-      if (i !== idx) continue;
-      let lineEnd = src.slice(lineStart).indexOf('\n');
-      if (lineEnd === -1) lineEnd = src.length;
-      else lineEnd += lineStart;
-      const p = this.package();
-      res[j] = {
-        moduleId: this.id,
-        packageName: p ? p.name : undefined,
-        pathInPackage: p ? this.pathInPackage() : this.id,
-        isLoaded: this.isLoaded(),
-        length,
-        line,
-        column: i - lineStart,
-        lineString: (lineEnd - lineStart > 1000) ? `...${src.slice(i - 10, i + 100)}...` : src.slice(lineStart, lineEnd)
-      };
-      j++;
-    }
-
-    return res;
+    const matches = searchInSource(await this.source(), searchStr, options);
+    if (!matches.length) return [];
+    const p = this.package();
+    const shared = {
+      moduleId: this.id,
+      packageName: p ? p.name : undefined,
+      pathInPackage: p ? this.pathInPackage() : this.id,
+      isLoaded: this.isLoaded()
+    };
+    return matches.map(match => ({ ...shared, ...match }));
   }
 
   toString () { return `module(${this.id})`; }

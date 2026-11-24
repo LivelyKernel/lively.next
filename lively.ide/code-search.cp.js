@@ -14,7 +14,7 @@ import { localInterface } from 'lively-system-interface';
 
 export async function doSearch (
   livelySystem, searchTerm,
-  excludedModules = [/systemjs-plugin-babel|.*\.min\.js|.*browserified[^/]+js|landing-page|loading-screen/],
+  excludedModules = [/systemjs-plugin-babel|\.min\.js|browserified[^/]+js|landing-page|loading-screen/],
   excludedPackages = [],
   includeUnloaded = true,
   caseSensitive = false,

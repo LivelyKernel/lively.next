@@ -71,7 +71,7 @@ function davError (status, message = STATUS_CODES[status]) {
  * without surrounding slashes, and its location in the file system.
  * `baseURI` is the URL prefix of the root directory.
  */
-function resolveTarget (rootDirectory, url, baseURI = '/') {
+export function resolveTarget (rootDirectory, url, baseURI = '/') {
   let pathname;
   if (url.startsWith('/')) pathname = url.replace(/[?#].*$/, ''); // origin form, also for "//a.js"
   else {
@@ -114,7 +114,7 @@ function escapeXml (string) {
 }
 
 /** Encodes with `encodeURI` plus `#` and `?`; collections end in a slash. */
-function hrefFor (baseURI, relative, isDirectory) {
+export function hrefFor (baseURI, relative, isDirectory) {
   const href = baseURI + relative + (isDirectory && relative ? '/' : '');
   return encodeURI(href).replace(/#/g, '%23').replace(/\?/g, '%3F');
 }
