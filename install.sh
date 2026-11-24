@@ -90,7 +90,8 @@ if [ ! -f bun.lock ]; then
   error "bun.lock is required for a reproducible install"
   exit 1
 fi
-if ! "$BUN_PATH" install --frozen-lockfile; then
+# The Puppeteer browser is installed below, where a failed download does not stop the installation.
+if ! PUPPETEER_SKIP_DOWNLOAD=true "$BUN_PATH" install --frozen-lockfile; then
   error "Package installation failed"
   exit 1
 fi
@@ -143,6 +144,17 @@ step "Class runtime built"
 if [ "$1" = "--freezer-only" ];
 then
   exit
+fi
+
+section "Installing Puppeteer browser"
+step "Installing Chrome for headless tests..."
+# Puppeteer is a dependency of lively.headless and resolves only from there.
+if (cd "$lv_next_dir/lively.headless" &&
+    node "$(node -p "require.resolve('puppeteer/install.mjs')")" &&
+    node -e "if (!require('fs').existsSync(require('puppeteer').executablePath())) process.exit(1)"); then
+  step "Chrome for headless tests is ready"
+else
+  warn "Chrome for headless tests is unavailable. Install it before running tests with: (cd lively.headless && npx puppeteer browsers install chrome)"
 fi
 
 section "Building SWC plugin"

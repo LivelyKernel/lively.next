@@ -126,6 +126,7 @@ jobs:
           node lively.app/scripts/test-startup-parallelism.mjs
           node --experimental-import-meta-resolve lively.project/tests/package-install-test.mjs
           node --experimental-import-meta-resolve lively.installer/tests/runtime-roots-test.mjs
+          node lively.installer/tests/puppeteer-install-test.mjs
           cd lively.lang
           node --experimental-import-meta-resolve ../mocha-es6/bin/mocha-es6.js tests/string-test.js
       - name: Run strict browser boot smoke
