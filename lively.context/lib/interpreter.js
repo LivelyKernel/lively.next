@@ -1,6 +1,6 @@
 import { obj, arr } from "lively.lang";
 import { walk, custom, escodegen, parseFunction, query } from "lively.ast";
-import { isControlSignal, __debuggerSignal, UnwindException, __getClosure, __declareLexicalBindings, __initializeBinding, __cloneLexicalScope, __awaitValue, __forOf, __closeIteratorsAfterCatch, bindingCells, restoreBindingCells, capturedBindingMappings, freeFunctionReferences, runtimeFunctionSource, removeRuntimeClosureAnnotations, originalFunctions } from "./exception.js";
+import { isControlSignal, __debuggerSignal, UnwindException, __getClosure, __declareLexicalBindings, __initializeBinding, __cloneLexicalScope, __awaitValue, __forOf, __closeIteratorsAfterCatch, bindingCells, restoreBindingCells, capturedBindingMappings, freeVariableNames, runtimeFunctionSource, removeRuntimeClosureAnnotations, originalFunctions } from "./exception.js";
 import { getGlobal } from "lively.vm/lib/util.js";
 import { Continuation, debugSupportEnabled, defineRecorderBindings } from './stackReification.js';
 
@@ -301,7 +301,7 @@ export class Interpreter {
     if (func.isInterpretableFunction !== undefined) return func;
     if (!func.livelyDebuggingEnabled) {
       const ast = removeRuntimeClosureAnnotations(parseFunction(runtimeFunctionSource(func), {locations: true, addSource: true, addAstIndex: true}));
-      const names = [...new Set(freeFunctionReferences(ast).map(ref => ref.name))].filter(name => !(name in Global));
+      const names = freeVariableNames(ast).filter(name => !(name in Global));
       if (names.length) throw new UnwindException({reason: 'bindings', func, names, toString() { return 'Function bindings'; }}, true);
       return new Function(ast, new Scope(Global), func).asFunction();
     }

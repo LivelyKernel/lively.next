@@ -2,7 +2,7 @@
 import { Path, arr, Closure } from "lively.lang";
 import { ReplaceVisitor, escodegen, parseFunction, withMozillaAstDo } from "lively.ast";
 import { Interpreter, Function as AcornFunction, Scope } from "./interpreter.js";
-import { __createClosure, originalFunctions, frameFunctions, isControlSignal, capturedBindingMappings, freeFunctionReferences, runtimeFunctionSource, removeRuntimeClosureAnnotations } from "./exception.js";
+import { __createClosure, originalFunctions, frameFunctions, isControlSignal, capturedBindingMappings, freeVariableNames, runtimeFunctionSource, removeRuntimeClosureAnnotations } from "./exception.js";
 import { getCurrentASTRegistry, rewriteFunction } from "lively.context";
 
 import { lexicalCaptures } from './lexical-captures.js';
@@ -321,8 +321,7 @@ export function run(func, astRegistry, args, optMapping) {
 export async function runWithCapturedBindings(func, astRegistry, args, mapping = {}) {
     if (func.livelyDebuggingEnabled) return run(func, astRegistry, args, mapping);
     const ast = removeRuntimeClosureAnnotations(parseFunction(runtimeFunctionSource(func)));
-    const missing = [...new Set(freeFunctionReferences(ast).map(ref => ref.name))]
-        .filter(name => !Object.prototype.hasOwnProperty.call(mapping, name) && !(name in Global));
+    const missing = freeVariableNames(ast).filter(name => !Object.prototype.hasOwnProperty.call(mapping, name) && !(name in Global));
     if (!missing.length) return run(func, astRegistry, args, mapping);
     const liveBindings = func[Symbol.for('lively-debug-bindings')];
     const capture = Global.livelyDesktop?.debugger?.captureFunctionBindings;
@@ -340,7 +339,7 @@ export async function runWithCapturedBindings(func, astRegistry, args, mapping =
 export function addRecorderBindings(bindings, ast) {
     const recorder = bindings.__lvVarRecorder;
     if (!recorder) return;
-    defineRecorderBindings(bindings, recorder, [...new Set(freeFunctionReferences(removeToplevelRecorderRefs(ast)).map(ref => ref.name))]
+    defineRecorderBindings(bindings, recorder, freeVariableNames(removeToplevelRecorderRefs(ast))
         .filter(name => !Object.prototype.hasOwnProperty.call(bindings, name) && name in recorder));
 }
 
@@ -547,20 +546,10 @@ function savedMethodForFrame(frame) {
   return original;
 }
 
-/** Map each node of `root` to its structural path, e.g. `/body/body/0`. */
+/** Map each node of `root` to its structural path, e.g. `body/body/0`. */
 function astPaths(root) {
   const nodes = new Map();
-  function visit(node, path) {
-      if (!node || typeof node !== 'object' || !node.type) return;
-      nodes.set(path, node);
-      for (const key of Object.keys(node)) {
-          if (key === 'loc') continue;
-          const value = node[key];
-          if (Array.isArray(value)) value.forEach((child, i) => visit(child, path + '/' + key + '/' + i));
-          else if (value && value.type) visit(value, path + '/' + key);
-      }
-  }
-  visit(root, '');
+  withMozillaAstDo(root, null, (next, node, state, path) => { nodes.set(path.join('/'), node); next(); });
   return nodes;
 }
 
@@ -681,14 +670,11 @@ export class Continuation {
       frame = this.currentFrame;
       const interpreter = new Interpreter({captureErrors: true});
       const targets = new Set(), root = frame.getOriginalAst();
-      (function visit(node) {
+      withMozillaAstDo(root, null, (next, node) => {
           if (node !== root && functionTypes.includes(node.type)) return;
           if (node.loc && node.loc.start.line === line && interpreter.statements.includes(node.type)) targets.add(node);
-          for (const value of Object.values(node)) {
-              if (Array.isArray(value)) value.forEach(child => child && child.type && visit(child));
-              else if (value && value.type) visit(value);
-          }
-      })(root);
+          next();
+      });
       if (!targets.size) throw new DebuggerActionError('No executable statement on this line.');
       interpreter.shouldHaltAtNextStatement = node => targets.has(node);
       try { return returnFromFrame(this, frame, interpreter.runFromPC(frame)); }

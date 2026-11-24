@@ -22,8 +22,9 @@ function frameFunction(state) {
   }
 }
 export const capturedBindingMappings = debuggerState.capturedBindingMappings ||= new WeakSet();
-export function freeFunctionReferences(ast) {
-  return query.findGlobalVarRefs('(' + escodegen.generate(ast) + ')');
+/** The distinct names of the free variables of the function `ast`. */
+export function freeVariableNames(ast) {
+  return [...new Set(query.findGlobalVarRefs('(' + escodegen.generate(ast) + ')').map(ref => ref.name))];
 }
 const lexicalBindings = debuggerState.lexicalBindings ||= new WeakMap();
 const capturedScopes = debuggerState.capturedScopes ||= new WeakMap();
