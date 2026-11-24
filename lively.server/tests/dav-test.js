@@ -8,7 +8,10 @@ import { join } from 'node:path';
 import { brotliCompressSync, brotliDecompressSync } from 'node:zlib';
 import LivelyDAVPlugin from '../plugins/dav.js';
 
-describe('DAV content encoding', () => {
+describe('DAV content encoding', function () {
+  // Real sockets and file I/O share the lively server process that hosts the
+  // tests, which can be busy with other work; mocha's 2s default is too tight.
+  this.timeout(30 * 1000);
   const body = '{"value":42}';
   let directory, server, plugin;
 
@@ -33,6 +36,8 @@ describe('DAV content encoding', () => {
   });
 
   after(async () => {
+    // Don't wait for keep-alive sockets to time out.
+    server?.closeAllConnections();
     if (server) await new Promise(resolve => server.close(resolve));
     plugin?.close();
     if (directory) await rm(directory, { recursive: true, force: true });
@@ -40,8 +45,9 @@ describe('DAV content encoding', () => {
 
   /** Make a real request without an implicit Accept-Encoding header. */
   function read (path, headers = {}) {
+    const started = Date.now();
     return new Promise((resolve, reject) => {
-      http.get({ hostname: '127.0.0.1', port: server.address().port, path, headers }, response => {
+      const request = http.get({ hostname: '127.0.0.1', port: server.address().port, path, headers }, response => {
         const chunks = [];
         response.on('data', chunk => chunks.push(chunk));
         response.on('end', () => resolve({
@@ -50,6 +56,8 @@ describe('DAV content encoding', () => {
           body: Buffer.concat(chunks)
         }));
       }).on('error', reject);
+      request.setTimeout(10 * 1000, () =>
+        request.destroy(new Error(`GET ${path} stalled after ${Date.now() - started}ms`)));
     });
   }
 
