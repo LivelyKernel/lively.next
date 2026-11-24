@@ -137,8 +137,9 @@ export default class ExpressionSerializer {
   }
 
   getModuleExports (modName) {
-    const m = System.get('@lively-env').loadedModules[this.resolveModule(modName)];
-    return m ? m.record().exports : {};
+    const moduleId = this.resolveModule(modName);
+    const m = System.get('@lively-env').loadedModules[moduleId];
+    return m?.record()?.exports || System.get(moduleId) || {};
   }
 
   async ensureAllBindingsLoaded (exprObj) {
