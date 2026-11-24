@@ -16,14 +16,6 @@
       "lively.storage": "./node_modules/lively.storage"
     }
   },
-  "scripts": {},
-  "devDependencies": {
-    "browserify": "^13.0.1",
-    "minimist": "^1.2.0",
-    "bodec": "^1.1.0",
-    "js-git": "^0.7.7",
-    "js-github": "^1.0.0"
-  },
   "dependencies": {
     "lively.resources": "workspace:*",
     "lively.storage": "workspace:*",
