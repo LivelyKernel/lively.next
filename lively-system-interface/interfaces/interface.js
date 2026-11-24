@@ -137,6 +137,28 @@ export class AbstractCoreInterface {
 
     return items;
   }
+
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+  // search
+  // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+  /**
+   * The matches of `searchString` in `packages` ([{ url, name }]), searched
+   * one package after the other with `searchInPackage`. A package that cannot
+   * be searched is logged and skipped. `options.progress` gets a step per package.
+   */
+  async searchInPackages (packages, searchString, options = {}) {
+    const { progress } = options;
+    const results = [];
+    for (let i = 0; i < packages.length; i++) {
+      const { url } = packages[i];
+      progress && progress.step(url.replace(System.baseURL, '').slice(0, 20), 0.1 + (0.9 * (i / packages.length)));
+      try {
+        results.push(...await this.searchInPackage(url, searchString, options));
+      } catch (e) { console.error(`Error searching in package ${url}:\n${e.stack}`); }
+    }
+    return results;
+  }
 }
 
 export class RemoteCoreInterface extends AbstractCoreInterface {

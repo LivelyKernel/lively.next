@@ -239,6 +239,49 @@ export class LocalCoreInterface extends AbstractCoreInterface {
     return modules.getPackage(packageURL).search(searchString, options);
   }
 
+  /**
+   * With `options.includeUnloaded`, the lively.server that serves this system
+   * searches the files of the packages below `System.baseURL` in one request
+   * (see lively.server/code-search.js); other packages, and all packages if
+   * that request fails, are searched here, one after the other.
+   */
+  async searchInPackages (packages, searchString, options = {}) {
+    const { includeUnloaded, excludedModules = [], progress } = options;
+    const onServer = includeUnloaded && /^https?:/.test(System.baseURL)
+      ? packages.filter(({ url }) => url.startsWith(System.baseURL))
+      : [];
+    if (!onServer.length) return super.searchInPackages(packages, searchString, options);
+    const toJSON = pattern => pattern instanceof RegExp ? { source: pattern.source, flags: pattern.flags } : pattern;
+    const excludeFns = excludedModules.filter(ex => typeof ex === 'function');
+    let answer;
+    try {
+      progress && progress.step('Searching on the server...', 0.1);
+      const res = await fetch(System.baseURL + '__CODE_SEARCH__', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          packages: onServer.map(({ url, name }) => ({ url, name })),
+          packageURLs: System.get('@lively-env').packageRegistry.allPackageURLs(),
+          needle: toJSON(searchString),
+          caseSensitive: !!options.caseSensitive,
+          regexMode: !!options.regexMode,
+          excludedModules: excludedModules.filter(ex => typeof ex !== 'function').map(toJSON)
+        })
+      });
+      answer = await res.json();
+      if (!res.ok) throw new Error(answer.error || res.statusText);
+    } catch (err) {
+      console.warn(`[code search] searching on the server failed, searching in the browser instead: ${err.message}`);
+      return super.searchInPackages(packages, searchString, options);
+    }
+    const results = answer.results
+      .filter(({ moduleId }) => !excludeFns.some(fn => fn(moduleId)))
+      .map(match => ({ ...match, isLoaded: modules.module(match.moduleId).isLoaded() }));
+    const unsearched = answer.unsearched.concat(packages.filter(p => !onServer.includes(p)).map(({ url }) => url));
+    const elsewhere = packages.filter(({ url }) => unsearched.includes(url));
+    return results.concat(elsewhere.length ? await super.searchInPackages(elsewhere, searchString, options) : []);
+  }
+
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
   // tests
   // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

@@ -82,16 +82,11 @@ export class Interface {
   }
 
   async searchInAllPackages (searchTerm, options = {}) {
-    let packages = await this.coreInterface.getPackages({ excluded: options.excludedPackages });
-    let results = [];
-    for (let { url } of packages) {
-      if (!url || url === 'no group'/* FIXME */) continue;
-      try {
-        let packageResults = await this.coreInterface.searchInPackage(url, searchTerm, options);
-        results = results.concat(packageResults);
-      } catch (e) { console.error(`Error searching in package ${url}:\n${e.stack}`); }
-    }
-    return results;
+    let pm = options.progress;
+    pm && pm.step('Fetching Packages...', 0);
+    let packages = (await this.coreInterface.getPackages({ excluded: options.excludedPackages }))
+      .filter(({ url }) => url && url !== 'no group'/* FIXME */);
+    return this.coreInterface.searchInPackages(packages, searchTerm, options);
   }
 
   // -=-=-=-=-

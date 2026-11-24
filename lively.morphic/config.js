@@ -88,8 +88,6 @@ const config = {
 
   ide: {
 
-    workerEnabled: false,
-
     studio: {
       canvasModeEnabled: true,
       zoom: { step: 0.07, min: 0.02 },
