@@ -47,6 +47,22 @@ try {
     setFetch(() => { throw new Error('A mapped module cache must not access the network'); });
     assert.deepEqual(await generateImportMapForPackage(root), mapped);
   } finally { setFetch(globalThis.fetch); }
+
+  // CDN builds, such as jspm.io's build of mermaid, load chunks with dynamic
+  // imports of constant template literals; the chunks belong to the closure.
+  const chunkedUrl = 'https://ga.jspm.io/npm:chunk-fixture@1.0.0/index.js';
+  const chunkUrl = new URL('./chunk.js', chunkedUrl).href;
+  setFetch(async url => {
+    if (String(url) === chunkedUrl) return new Response('export const load = () => import(`./chunk.js`); export const pick = name => import(`./${name}.js`);');
+    if (String(url) === chunkUrl) return new Response('export default 1;');
+    throw new Error('Unexpected generator request: ' + url);
+  });
+  try {
+    await fs.writeFile(manifest, JSON.stringify({ name: 'fixture', dependencies,
+      systemjs: { map: { chunked: { node: 'chunk-fixture', '~node': chunkedUrl.replace(/^https:/, 'esm:') } } } }));
+    const chunked = await generateImportMapForPackage(root);
+    assert(chunked._modules.includes(chunkUrl), 'The chunk of a constant template import must be in the module closure');
+  } finally { setFetch(globalThis.fetch); }
   console.log('Hidden browser map generation, cache reuse, manifest refresh, and mapped module closure passed.');
 } finally { await fs.rm(root, { recursive: true, force: true }); }
 
