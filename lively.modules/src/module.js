@@ -13,7 +13,7 @@ import { _require, _resolve } from './nodejs.js';
 import { classHolder } from './cycle-breaker.js';
 import { regExpEscape } from 'lively.lang/string.js';
 import { searchInSource } from './search.js';
-import { declaringClassCell, defineBindingCell } from './runtime-closure.js';
+import { declaringClassCell, defineBindingCell, defineLexicalCaptures } from './runtime-closure.js';
 
 // Used by the recorder Proxy to detect native browser functions that need
 // to be bound to the global object when stored in local variable slots.
@@ -815,8 +815,7 @@ class ModuleInterface {
         return meta;
       }}
     });
-    if (lexicalFlags & 1) Object.defineProperty(func, '_lexicalThis', {value: lexicalThis, configurable: true, writable: true});
-    if (lexicalFlags & 2) Object.defineProperty(func, '_lexicalArguments', {value: lexicalArguments, configurable: true, writable: true});
+    defineLexicalCaptures(func, {this: lexicalFlags & 1, arguments: lexicalFlags & 2}, lexicalThis, lexicalArguments);
     if (this.retainRuntimeClosures && Object.keys(cells).length) Object.defineProperty(func, Symbol.for('lively-serialize-closure'), {
       configurable: true,
       value(pool, snapshots, path) {

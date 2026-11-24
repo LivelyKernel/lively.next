@@ -6,7 +6,7 @@ import { __createClosure, originalFunctions, frameFunctions, isControlSignal, ca
 import { getCurrentASTRegistry, rewriteFunction } from "lively.context";
 
 import { lexicalCaptures } from './lexical-captures.js';
-import { defineBindingCell } from '../../lively.modules/src/runtime-closure.js';
+import { defineBindingCell, defineLexicalCaptures } from '../../lively.modules/src/runtime-closure.js';
 
 let Global = typeof window !== "undefined" ? window : globalThis;
 
@@ -424,9 +424,7 @@ export class RewrittenClosure extends Closure {
           const receiver = this.originalFunc && Object.prototype.hasOwnProperty.call(this.originalFunc, '_lexicalThis') ? this.originalFunc._lexicalThis : this.varMapping.this;
           const args = this.originalFunc && this.originalFunc._lexicalArguments || this.varMapping.arguments;
           func = factory.apply(receiver, args || []);
-          const captures = lexicalCaptures(this.originalAst);
-          if (captures.this) Object.defineProperty(func, '_lexicalThis', {value: receiver, configurable: true, writable: true});
-          if (captures.arguments) Object.defineProperty(func, '_lexicalArguments', {value: args, configurable: true, writable: true});
+          defineLexicalCaptures(func, lexicalCaptures(this.originalAst), receiver, args);
       }
       const prototype = original.prototype;
       if (prototype && func.prototype) func.prototype = prototype;

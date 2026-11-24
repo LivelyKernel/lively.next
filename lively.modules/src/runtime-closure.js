@@ -18,6 +18,12 @@ export function defineBindingCell(mapping, name, cell, {checked = true, configur
     }});
 }
 
+/** Record on `func` the receiver and `arguments` of an arrow that uses them (`captures.this`/`.arguments`). */
+export function defineLexicalCaptures(func, captures, receiver, args) {
+  if (captures.this) Object.defineProperty(func, '_lexicalThis', {value: receiver, configurable: true, writable: true});
+  if (captures.arguments) Object.defineProperty(func, '_lexicalArguments', {value: args, configurable: true, writable: true});
+}
+
 /** Keep a declaring class reference stable when an opted-in closure is saved. */
 export function declaringClassCell(declaringClass) {
   return {kind: 'const', initialized: true, value: declaringClass, __serialize__(pool) {

@@ -3,7 +3,7 @@ import { Scope, Frame, Function as AcornFunction, serializeManagedFunction } fro
 import { getCurrentASTRegistry } from "lively.context";
 import { custom, query, escodegen, parseFunction, ReplaceVisitor, withMozillaAstDo } from "lively.ast";
 import { addRecorderBindings } from './stackReification.js';
-import { defineBindingCell } from '../../lively.modules/src/runtime-closure.js';
+import { defineBindingCell, defineLexicalCaptures } from '../../lively.modules/src/runtime-closure.js';
 
 let Global = typeof window !== "undefined" ? window : globalThis;
 const debuggerState = Global[Symbol.for('lively-debugger-state')] ||= {};
@@ -254,8 +254,7 @@ export function __createClosure(namespace, idx, parentFrameState, f, lexical) {
   }
   f.livelyDebuggingEnabled = true;
 
-  if (lexical) for (const [name, value] of Object.entries(lexical))
-    Object.defineProperty(f, name === 'this' ? '_lexicalThis' : '_lexicalArguments', {value, configurable: true, writable: true});
+  if (lexical) defineLexicalCaptures(f, {this: 'this' in lexical, arguments: 'arguments' in lexical}, lexical.this, lexical.arguments);
   let state = parentFrameState, module;
   while (Array.isArray(state)) {
     module = state[1]?.[Symbol.for('lively-debug-module')];
