@@ -19,8 +19,29 @@ import { evaluateInDebuggerScopes } from './evaluation.js';
 
 const borderColor = Color.rgb(204, 204, 204);
 
-function scopeView (name, type, bindings, scope) {
-  return { name, type, bindings, bindingNames: () => Object.keys(bindings), setBinding: scope && ((key, value) => scope.set(key, value)) };
+/**
+ * A scope as the debugger lists and evaluates it. The bindings of a frame scope
+ * are accessors that raise the temporal dead zone of lexical declarations, so
+ * a snapshot keeps only the label; selecting a frame lists its scopes again.
+ */
+class ScopeView {
+  constructor (name, type, bindings = {}, scope) { Object.assign(this, { name, type, bindings, scope }); }
+
+  get __only_serialize__ () { return ['name', 'type']; }
+
+  __after_deserialize__ () { this.bindings = {}; }
+
+  bindingNames () { return Object.keys(this.bindings); }
+
+  setBinding (key, value) {
+    if (this.scope) this.scope.set(key, value);
+    else this.bindings[key] = value;
+  }
+}
+
+/** The value of `bindings[key]`, or the error that reading it raises, e.g. in the temporal dead zone. */
+function readBinding (bindings, key) {
+  try { return bindings[key]; } catch (error) { return error; }
 }
 
 /** The receiver, arguments and exception of a frame, followed by its scope chain. */
@@ -28,11 +49,11 @@ function visibleScopesForFrame (frame) {
   if (!frame) return [];
   const read = getter => { try { return frame[getter](); } catch (err) { return undefined; } };
   const scopes = [['this', 'receiver', read('getThis')], ['arguments', 'arguments', read('getArguments')], ['exception', 'exception', read('getException')]]
-    .filter(([,, value]) => value !== undefined).map(([name, type, value]) => scopeView(name, type, { [name]: value }));
+    .filter(([,, value]) => value !== undefined).map(([name, type, value]) => new ScopeView(name, type, { [name]: value }));
   for (let scope = frame.getScope(); scope; scope = scope.getParentScope()) {
     const mapping = scope.getMapping(), isGlobal = mapping === globalThis;
     const name = isGlobal ? 'global' : scope.nativeSnapshot ? 'closure snapshot' : scope.lexicalNodeIndex !== undefined ? 'block' : 'scope';
-    scopes.push(scopeView(name, isGlobal ? 'global' : 'local', mapping, scope));
+    scopes.push(new ScopeView(name, isGlobal ? 'global' : 'local', mapping, scope));
   }
   return scopes;
 }
@@ -40,7 +61,7 @@ function visibleScopesForFrame (frame) {
 /** An inspection tree whose top level lists `names` of `bindings` as plain `name: value` lines. */
 class ScopeTree extends InspectionTree {
   static forBindings (bindings, names) {
-    const properties = () => ({ includeDefault: false, properties: names.map(key => ({ key, value: bindings[key] })) });
+    const properties = () => ({ includeDefault: false, properties: names.map(key => ({ key, value: readBinding(bindings, key) })) });
     return new this({ key: 'inspectee', isCollapsed: true, value: { inspectee: bindings, livelyCustomInspect: properties } });
   }
 
@@ -219,7 +240,7 @@ export class LivelyDebuggerModel extends ViewModel {
   }
 
   evaluationScopes () {
-    const workspace = scopeView('workspace', 'workspace', this.workspaceBindings);
+    const workspace = new ScopeView('workspace', 'workspace', this.workspaceBindings);
     return [workspace, ...visibleScopesForFrame(this.selectedFrame)];
   }
 

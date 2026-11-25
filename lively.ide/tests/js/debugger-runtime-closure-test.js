@@ -10,6 +10,7 @@ import { localInterface } from 'lively-system-interface';
 import browserCommands from '../../js/browser/commands.js';
 import { LivelyWorld } from '../../world.js';
 import { readFrameSource, moduleUrlForFrame, lineRangeForFrame } from '../../js/debugger/source.js';
+import { RuntimeClosureLesson } from '../../js/debugger/examples/runtime-closure.js';
 import { debuggerFor, closeDebuggers, withModule } from './debugger-helpers.js';
 
 const { module } = modules;
@@ -122,4 +123,31 @@ describe('debugger interception and runtime closures', function () {
       await mod.setDebuggingEnabled(false);
       mod.retainRuntimeClosures = true;
     }));
+
+  it('saves the runtime closure tutorial while the caller with an uninitialized constant is selected and resumes it', async () => {
+    const lesson = new RuntimeClosureLesson();
+    const model = await debuggerFor(await runWithCapturedBindings(lesson.checkout, null, [3], { this: lesson }));
+    try {
+      for (const action of ['stepOver', 'stepInto', 'proceed']) {
+        await model[action]();
+        await model.selectFrame(model.continuation.currentFrame);
+      }
+      for (const source of ['rate = 2', 'amount = rate + quantity']) await model.evaluateWorkspaceSource(source);
+      await model.selectFrame(model.continuation.frames()[1]);
+      const snapshot = serializeMorph(model.view.getWindow());
+      const declaring = model.ui.scopeList.items.find(item => item.value.bindingNames().includes('total'));
+      await model.selectScope(declaring.value);
+      const lines = model.ui.valueTree.treeData.asListWithIndexAndDepth().map(({ node }) => node.keyString + ': ' + node.valueString);
+      expect(lines.find(line => line.startsWith('total'))).contains("Cannot access 'total' before initialization");
+      const restoredWindow = await loadMorphFromSnapshot(snapshot, { moduleManager: modules });
+      $world.addMorph(restoredWindow);
+      const restored = restoredWindow.targetMorph.viewModel, [charge, checkout] = restored.continuation.frames();
+      try {
+        expect(() => checkout.lookup('total')).to.throw(ReferenceError);
+        const ledger = charge.lookup('ledger');
+        expect(await restored.proceed()).equals(6);
+        expect([ledger.total, ledger.visits]).deep.equals([5, 1]);
+      } finally { if (restoredWindow.owner) { restored.sourceBuffers.clear(); await restored.closeDebugger(); } }
+    } finally { await closeDebuggers(); }
+  });
 });
