@@ -58,13 +58,12 @@ The lively.next desktop app reads the bindings of a native closure that has no r
 commands on the function's `[[Scopes]]` and returns an object of the page realm.
 `runWithCapturedBindings` and Step Into use it for missing bindings. Objects keep their
 identity; primitives are copies, so assigning them does not change the native binding.
-`LIVELY_APP_FUNCTION_SCOPES=0` disables the reader. The app manifest's `chromium-args` request
-`--remote-debugging-port=0`: NW.js serves its inspector on a free port and writes the port to
-`DevToolsActivePort` in its user data directory (`--user-data-dir`, the parent of
-`nw.App.dataPath`), where the reader and other inspector clients find it. NW.js writes this file
-only for port 0, and the manifest's port overrides a `--remote-debugging-port` launch flag.
-Without the file the reader waits up to 5 s for it, then connects to `LIVELY_APP_CDP_PORT`
-(default 9222).
+`LIVELY_APP_FUNCTION_SCOPES=0` disables the reader. For each read the app's background page
+attaches NW.js's in-process `chrome.debugger` API to the calling page and detaches afterwards;
+reads take turns, and every `chrome.debugger` call and inspector command fails after 4 s. The
+manifest's `--silent-debugger-extension-api` hides Chromium's "started debugging this browser"
+bar during a read. The app opens no network debugging endpoint; tools that drive it over CDP
+pass `--remote-debugging-port` when they launch it.
 
 ### Limits
 

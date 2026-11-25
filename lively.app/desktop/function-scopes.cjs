@@ -1,8 +1,10 @@
 // Desktop [[Scopes]] reader: reads the values a function's closure scopes retain
 // through the inspector's Runtime domain, and installs it on trusted desktop pages
-// as `livelyDesktop.debugger.captureFunctionBindings(fn, names)`. It uses no
-// Debugger domain, breakpoint, exception pause, call-frame handle, or native
-// continuation. LIVELY_APP_FUNCTION_SCOPES=0 disables the page bridge.
+// as `livelyDesktop.debugger.captureFunctionBindings(fn, names)`. Pages are read
+// through NW.js's in-process `chrome.debugger` API, which opens no network
+// endpoint. It uses no Debugger domain, breakpoint, exception pause, call-frame
+// handle, or native continuation. LIVELY_APP_FUNCTION_SCOPES=0 disables the
+// page bridge.
 const fs = require('node:fs');
 const path = require('node:path');
 const { fileURLToPath } = require('node:url');
@@ -10,7 +12,6 @@ const { randomUUID } = require('node:crypto');
 const { Session } = require('node:inspector');
 
 const COMMAND_TIMEOUT = 4000;
-const CONNECT_TIMEOUT = 5000;
 
 /**
  * Read the retained bindings `names` of `func`. Without `send` this attaches an
@@ -138,101 +139,66 @@ async function annotateFunctionSource () {
 }
 
 /**
- * The port of NW.js's Blink inspector. The manifest requests
- * `--remote-debugging-port=0`, so Chromium binds a free port and writes it as
- * the first line of `DevToolsActivePort` in `userDataDir`, the parent of
- * `nw.App.dataPath`. Waits up to `timeout` ms for that file; without it the port
- * is LIVELY_APP_CDP_PORT (default 9222).
+ * Call `chrome.debugger[method](...args)`, NW.js's in-process inspector API.
+ * Resolves to the callback's result; rejects with `chrome.runtime.lastError`,
+ * whose protocol errors carry the JSON of the CDP error object.
  */
-async function inspectorPort ({ userDataDir = nwUserDataDir(), timeout = CONNECT_TIMEOUT } = {}) {
-  if (userDataDir) {
-    const file = path.join(userDataDir, 'DevToolsActivePort');
-    const deadline = Date.now() + timeout;
-    for (;;) {
-      let content = '';
-      try { content = fs.readFileSync(file, 'utf8'); } catch (_) {}
-      // The browser target path on the second line marks a completely written file.
-      const port = /^(\d+)\n\/devtools\/browser\//.exec(content)?.[1];
-      if (port) return Number(port);
-      if (Date.now() >= deadline) break;
-      await new Promise(resolve => setTimeout(resolve, 50));
-    }
-  }
-  return Number(process.env.LIVELY_APP_CDP_PORT || 9222);
+function chromeDebugger (method, ...args) {
+  return new Promise((resolve, reject) => chrome.debugger[method](...args, result => {
+    const error = chrome.runtime.lastError;
+    if (!error) return resolve(result);
+    let message = error.message;
+    try { message = JSON.parse(message).message || message; } catch (_) {}
+    reject(new Error(message));
+  }));
 }
 
-/** NW.js's user data dir, or null outside NW.js. */
-function nwUserDataDir () {
-  return typeof nw !== 'undefined' && nw.App?.dataPath ? path.dirname(nw.App.dataPath) : null;
+/** `promise`, or a rejection with `label + ' timed out'` after COMMAND_TIMEOUT ms. */
+function withDeadline (promise, label) {
+  let timer;
+  const expired = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(label + ' timed out')), COMMAND_TIMEOUT);
+  });
+  return Promise.race([promise, expired]).finally(() => clearTimeout(timer));
 }
 
-/**
- * Open a CDP connection to the page target showing `href` in NW.js's Blink
- * inspector on `port`, by default the `inspectorPort` of `userDataDir`. Waiting
- * for the port file, target discovery and the WebSocket handshake each take at
- * most `timeout` ms. Resolves to `{send(method, params), close()}`; a socket
- * error or close rejects pending and later commands.
- */
-async function connectRenderer (href, { port, userDataDir, timeout = CONNECT_TIMEOUT } = {}) {
-  port ??= await inspectorPort({ userDataDir, timeout });
-  const targetList = 'http://127.0.0.1:' + port + '/json/list';
-  const response = await fetch(targetList, { signal: AbortSignal.timeout(timeout) });
-  if (!response.ok) throw new Error(targetList + ' returned HTTP ' + response.status);
-  const target = (await response.json()).find(target => target.type === 'page' && target.url === href);
-  if (!target || !target.webSocketDebuggerUrl) throw new Error('No inspector target for this renderer');
-  const socket = new WebSocket(target.webSocketDebuggerUrl);
-  const pending = new Map();
-  let nextId = 1, closedError = null;
-  const disconnect = error => {
-    closedError = error;
-    for (const { reject } of pending.values()) reject(error);
-    pending.clear();
-  };
-  await new Promise((resolve, reject) => {
-    const fail = error => { clearTimeout(timer); disconnect(error); reject(error); };
-    const timer = setTimeout(() => {
-      fail(new Error('CDP websocket connection timed out'));
-      try { socket.close(); } catch (_) {}
-    }, timeout);
-    socket.addEventListener('open', () => { clearTimeout(timer); resolve(); }, { once: true });
-    socket.addEventListener('error', event => fail(new Error(event?.message || 'CDP websocket error')));
-    socket.addEventListener('close', () => fail(new Error('CDP websocket closed')));
-  });
-  socket.addEventListener('message', event => {
-    const message = JSON.parse(event.data);
-    const request = pending.get(message.id);
-    if (!request) return;
-    pending.delete(message.id);
-    if (message.error) request.reject(new Error(message.error.message || 'CDP error'));
-    else request.resolve(message.result || {});
-  });
-  return {
-    send (method, params = {}) {
-      if (closedError) return Promise.reject(closedError);
-      const id = nextId++;
-      return new Promise((resolve, reject) => {
-        pending.set(id, { resolve, reject });
-        try { socket.send(JSON.stringify({ id, method, params })); } catch (error) { pending.delete(id); reject(error); }
-      });
-    },
-    close () {
-      disconnect(new Error('CDP websocket closed'));
-      try { socket.close(); } catch (_) {}
-    }
-  };
-}
+// An extension attaches to a target at most once, so renderer reads take turns.
+let rendererTurn = Promise.resolve();
 
 /**
  * Read retained bindings of a function living in the NW.js renderer `renderer`
- * (a page window) through NW.js's Blink inspector on its `inspectorPort`.
- * Attaching node:inspector to the renderer instead would replace its DOM
- * inspector and can crash with concurrent DevTools.
+ * (a page window). Attaches `chrome.debugger` to the page target showing
+ * `renderer.location.href`, sends the Runtime commands through it and detaches
+ * before the next read attaches. Target lookup, attach and detach each fail
+ * after COMMAND_TIMEOUT ms. Attaching node:inspector to the renderer instead
+ * would replace its DOM inspector and can crash with concurrent DevTools.
  */
-async function captureRendererFunctionBindings (renderer, func, names) {
-  const client = await connectRenderer(renderer.location.href);
+function captureRendererFunctionBindings (renderer, func, names) {
+  const read = rendererTurn.then(() => readRenderer(renderer, func, names));
+  rendererTurn = read.catch(() => {});
+  return read;
+}
+
+async function readRenderer (renderer, func, names) {
+  const href = renderer.location.href;
+  const targets = await withDeadline(chromeDebugger('getTargets'), 'chrome.debugger.getTargets');
+  const page = targets.find(target => target.type === 'page' && target.url === href);
+  if (!page) throw new Error('No inspector target for this renderer');
+  const target = { targetId: page.id };
+  const attached = chromeDebugger('attach', target, '1.3');
   try {
-    return await captureFunctionBindings(func, names, { globalObject: renderer, send: client.send });
-  } finally { client.close(); }
+    await withDeadline(attached, 'chrome.debugger.attach');
+  } catch (error) {
+    // An attach that completes after its deadline must not hold the target.
+    attached.then(() => chromeDebugger('detach', target)).catch(() => {});
+    throw error;
+  }
+  try {
+    const send = (method, params) => chromeDebugger('sendCommand', target, method, params).then(result => result || {});
+    return await captureFunctionBindings(func, names, { globalObject: renderer, send });
+  } finally {
+    await withDeadline(chromeDebugger('detach', target), 'chrome.debugger.detach').catch(() => {});
+  }
 }
 
 /**
@@ -294,4 +260,4 @@ function installFunctionScopeReader (win, bootstrap) {
   if (win.window.document?.readyState === 'complete') install();
 }
 
-module.exports = { captureFunctionBindings, captureRendererFunctionBindings, connectRenderer, installFunctionScopeReader };
+module.exports = { captureFunctionBindings, captureRendererFunctionBindings, installFunctionScopeReader };

@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import vm from 'node:vm';
@@ -11,56 +10,69 @@ import { after, test } from 'node:test';
 
 const require = createRequire(import.meta.url);
 const appDir = path.join(import.meta.dirname, '..');
-const { captureFunctionBindings, captureRendererFunctionBindings, connectRenderer, installFunctionScopeReader } =
+const { captureFunctionBindings, captureRendererFunctionBindings, installFunctionScopeReader } =
   require('../desktop/function-scopes.cjs');
 
-// A CDP endpoint like NW.js's Blink inspector: /json/list lists the registered
-// pages, and each page's WebSocket is served by an in-process inspector session
-// attached to that page's vm context.
-const targets = new Map(); // page URL -> inspector context name
-let discoveries = 0;
-const inspector = http.createServer((req, res) => {
-  discoveries++;
-  assert.equal(req.url, '/json/list');
-  res.end(JSON.stringify([...targets].map(([url, name]) => ({ type: 'page', url, webSocketDebuggerUrl: 'ws://inspector/' + name }))));
-});
-await new Promise(resolve => inspector.listen(0, '127.0.0.1', resolve));
-const port = inspector.address().port;
-// Without nw.App the reader connects to LIVELY_APP_CDP_PORT.
-process.env.LIVELY_APP_CDP_PORT = String(port);
-const closedPort = await new Promise(resolve => {
-  const server = http.createServer().listen(0, '127.0.0.1', () => {
-    const { port } = server.address();
-    server.close(() => resolve(port));
-  });
-});
-
-class InspectorSocket extends EventTarget {
-  constructor (url) {
-    super();
-    const name = url.slice('ws://inspector/'.length);
-    this.session = new Session();
-    this.session.on('Runtime.executionContextCreated', ({ params: { context } }) => {
-      if (context.name === name) this.contextId = context.id;
+// NW.js's chrome.debugger: getTargets lists the registered pages, and attaching
+// to a page opens an in-process inspector session on that page's vm context.
+// Like Chrome, it refuses a second attach to an attached target, answers
+// through callbacks with chrome.runtime.lastError set on failure, and reports
+// protocol errors as the JSON of the CDP error object.
+const targets = new Map(); // page URL -> target id (the inspector context name)
+const sessions = new Map(); // target id -> {session, contextId}
+const calls = []; // [method, targetId, command]
+let maxAttached = 0;
+const chromeDebugger = {
+  getTargets (callback) {
+    calls.push(['getTargets']);
+    const list = [...targets].map(([url, id]) => ({ type: 'page', url, id, attached: sessions.has(id) }));
+    answer(callback, null, [{ type: 'background_page', url: 'chrome-extension://app/background.html', id: 'background' }, ...list]);
+  },
+  attach ({ targetId }, version, callback) {
+    calls.push(['attach', targetId, version]);
+    if (sessions.has(targetId)) return answer(callback, 'Another debugger is already attached to the target with id: ' + targetId + '.');
+    if (![...targets.values()].includes(targetId)) return answer(callback, 'No target with given id ' + targetId);
+    const attachment = { session: new Session() };
+    attachment.session.on('Runtime.executionContextCreated', ({ params: { context } }) => {
+      if (context.name === targetId) attachment.contextId = context.id;
     });
-    this.session.connect();
-    queueMicrotask(() => this.dispatchEvent(new Event('open')));
-  }
-
-  send (data) {
-    const { id, method, params } = JSON.parse(data);
+    attachment.session.connect();
+    sessions.set(targetId, attachment);
+    maxAttached = Math.max(maxAttached, sessions.size);
+    answer(callback);
+  },
+  sendCommand ({ targetId }, method, params, callback) {
+    calls.push(['sendCommand', targetId, method]);
+    const attachment = sessions.get(targetId);
+    if (!attachment) return answer(callback, 'Debugger is not attached to the target with id: ' + targetId + '.');
     if (method === 'Runtime.evaluate') {
-      assert(this.contextId, 'Runtime.enable must discover the actual page context');
-      params.contextId = this.contextId;
+      assert(attachment.contextId, 'Runtime.enable must discover the actual page context');
+      params = { ...params, contextId: attachment.contextId };
     }
-    this.session.post(method, params, (error, result) => this.dispatchEvent(new MessageEvent('message', {
-      data: JSON.stringify(error ? { id, error: { message: error.message } } : { id, result })
-    })));
+    attachment.session.post(method, params, (error, result) =>
+      answer(callback, error && JSON.stringify({ code: -32000, message: error.message }), result));
+  },
+  detach ({ targetId }, callback) {
+    calls.push(['detach', targetId]);
+    const attachment = sessions.get(targetId);
+    if (!attachment) return answer(callback, 'Debugger is not attached to the target with id: ' + targetId + '.');
+    sessions.delete(targetId);
+    attachment.session.disconnect();
+    answer(callback);
   }
-
-  close () { this.session.disconnect(); }
+};
+const chrome = globalThis.chrome = { debugger: { ...chromeDebugger }, runtime: { lastError: undefined } };
+function answer (callback, error = null, result) {
+  setImmediate(() => {
+    chrome.runtime.lastError = error ? { message: error } : undefined;
+    try { callback(result); } finally { chrome.runtime.lastError = undefined; }
+  });
 }
-globalThis.WebSocket = InspectorSocket;
+/** Run `fn` with `chrome.debugger[method]` replaced by `fake`. */
+async function withDebuggerMethod (method, fake, fn) {
+  chrome.debugger[method] = fake;
+  try { return await fn(); } finally { chrome.debugger[method] = chromeDebugger[method]; }
+}
 
 const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'lively-function-scopes-'));
 const baseURL = pathToFileURL(fixture + path.sep).href;
@@ -69,11 +81,7 @@ for (const entry of ['landing-page', 'loading-screen']) {
   fs.writeFileSync(path.join(fixture, 'lively.freezer', entry, 'index.html'), '');
 }
 const bootstrap = { desktopOrigin: 'http://127.0.0.1:9017', livelyNative: { baseURL } };
-after(() => {
-  inspector.closeAllConnections();
-  inspector.close();
-  fs.rmSync(fixture, { recursive: true });
-});
+after(() => fs.rmSync(fixture, { recursive: true }));
 
 let sequence = 0;
 /** Load a page realm with its own inspector context and run the real installer on its window. */
@@ -296,110 +304,86 @@ test('a saved bridge rejects after navigation without contacting the inspector',
   const { page, loaded } = openPage();
   const capture = page.livelyDesktop.debugger.captureFunctionBindings;
   page.location = { href: 'https://example.com/' };
-  const before = discoveries;
+  const before = calls.length;
   await assert.rejects(capture(page.sample.fn, []), { message: 'Function scopes require a trusted desktop page' });
-  assert.equal(discoveries, before);
+  assert.equal(calls.length, before);
   loaded();
   assert.equal(page.livelyDesktop.debugger.captureFunctionBindings, undefined, 'Loading an untrusted page removes the bridge');
 });
 
-/**
- * Run `fn(userDataDir)` with a temporary user data dir whose DevToolsActivePort
- * holds `content` (no file for null) and LIVELY_APP_CDP_PORT set to `fallback`
- * (unset for undefined).
- */
-async function withUserDataDir (content, fallback, fn) {
-  const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lively-user-data-'));
-  if (content !== null) fs.writeFileSync(path.join(userDataDir, 'DevToolsActivePort'), content);
-  if (fallback === undefined) delete process.env.LIVELY_APP_CDP_PORT;
-  else process.env.LIVELY_APP_CDP_PORT = String(fallback);
-  try { return await fn(userDataDir); } finally {
-    process.env.LIVELY_APP_CDP_PORT = String(port);
-    fs.rmSync(userDataDir, { recursive: true, force: true });
-  }
-}
-
-test('renderer capture connects to the port in DevToolsActivePort next to nw.App.dataPath', async () => {
+test('renderer capture attaches to its page target, sends only Runtime commands and detaches', async () => {
   const { page } = openPage();
-  await withUserDataDir(port + '\n/devtools/browser/test', closedPort, async userDataDir => {
-    globalThis.nw = { App: { dataPath: path.join(userDataDir, 'Default') } };
-    try {
-      assert.equal((await captureRendererFunctionBindings(page, page.sample.fn, ['answer'])).answer, 42);
-    } finally { delete globalThis.nw; }
-  });
+  const id = targets.get(page.location.href);
+  calls.length = 0;
+  const values = await captureRendererFunctionBindings(page, page.sample.fn, ['marker', 'answer']);
+  assert.equal(values.marker, page.sample.marker, 'Objects keep their identity');
+  assert.equal(values.answer, 42);
+  assert.deepEqual(calls.slice(0, 2), [['getTargets'], ['attach', id, '1.3']]);
+  assert.deepEqual(calls.at(-1), ['detach', id]);
+  const commands = calls.slice(2, -1);
+  assert(commands.length && commands.every(([method, target, command]) => method === 'sendCommand' && target === id && command.startsWith('Runtime.')));
+  assert.equal(sessions.size, 0, 'The read leaves no attachment behind');
 });
 
-test('discovery waits until DevToolsActivePort is completely written', async () => {
-  // A port line without the browser target line is still being written.
-  await withUserDataDir(String(closedPort), closedPort, async userDataDir => {
-    const written = new Promise(resolve => setTimeout(() => {
-      fs.writeFileSync(path.join(userDataDir, 'DevToolsActivePort'), port + '\n/devtools/browser/test');
-      resolve(Date.now());
-    }, 100));
-    const before = discoveries;
-    await assert.rejects(connectRenderer('http://renderer/', { userDataDir, timeout: 2000 }), { message: 'No inspector target for this renderer' });
-    assert(Date.now() - await written < 1000, 'Discovery continues once the file is complete');
-    assert.equal(discoveries, before + 1);
-  });
+test('concurrent renderer captures attach one at a time', async () => {
+  const first = openPage(), second = openPage();
+  maxAttached = 0;
+  calls.length = 0;
+  const reads = [first, second, first].map(({ run }) =>
+    run("livelyDesktop.debugger.captureFunctionBindings(sample.fn, ['answer']).then(values => values.answer)"));
+  assert.deepEqual(await Promise.all(reads), [42, 42, 42]);
+  assert.equal(maxAttached, 1, 'Each read detaches before the next one attaches');
+  const order = calls.filter(([method]) => method === 'attach' || method === 'detach').map(([method]) => method);
+  assert.deepEqual(order, ['attach', 'detach', 'attach', 'detach', 'attach', 'detach']);
 });
 
-test('without DevToolsActivePort, discovery waits until its deadline, then uses LIVELY_APP_CDP_PORT or 9222', async () => {
-  await withUserDataDir(null, port, async userDataDir => {
-    const before = discoveries, started = Date.now();
-    await assert.rejects(connectRenderer('http://renderer/', { userDataDir, timeout: 200 }), { message: 'No inspector target for this renderer' });
-    assert(Date.now() - started >= 200, 'Discovery waits until its deadline for the port file');
-    assert.equal(discoveries, before + 1);
-  });
-  const fetch = globalThis.fetch;
-  let requested;
-  globalThis.fetch = async url => { requested = url; throw new Error('offline'); };
-  try {
-    await withUserDataDir(null, undefined, () =>
-      assert.rejects(connectRenderer('http://renderer/', { userDataDir: null }), { message: 'offline' }));
-  } finally { globalThis.fetch = fetch; }
-  assert.equal(requested, 'http://127.0.0.1:9222/json/list');
+test('a failed command detaches and its CDP error message reaches the page', async () => {
+  const { run } = openPage();
+  const sendCommand = (target, method, params, callback) => method === 'Runtime.getProperties'
+    ? answer(callback, JSON.stringify({ code: -32000, message: 'Could not find object with given id' }))
+    : chromeDebugger.sendCommand(target, method, params, callback);
+  await withDebuggerMethod('sendCommand', sendCommand, () => assert.rejects(
+    run("livelyDesktop.debugger.captureFunctionBindings(sample.fn, ['answer'])"),
+    error => error.message === 'Could not find object with given id' && run('Error.prototype') === Object.getPrototypeOf(error)));
+  assert.equal(sessions.size, 0, 'The failed read detached');
+  assert.equal(await run("livelyDesktop.debugger.captureFunctionBindings(sample.fn, ['answer']).then(values => values.answer)"), 42);
 });
 
-test('target discovery and the WebSocket handshake have deadlines', async () => {
-  const stalled = http.createServer(() => {});
-  await new Promise(resolve => stalled.listen(0, '127.0.0.1', resolve));
-  try {
-    await assert.rejects(connectRenderer('http://renderer/', { port: stalled.address().port, timeout: 20 }), { name: 'TimeoutError' });
-  } finally { stalled.closeAllConnections(); stalled.close(); }
-  class StalledSocket extends EventTarget {
-    constructor () { super(); StalledSocket.last = this; }
-    close () { this.closed = true; }
-  }
-  globalThis.WebSocket = StalledSocket;
-  targets.set('http://renderer/', 'stalled');
-  try {
-    await assert.rejects(connectRenderer('http://renderer/', { port, timeout: 20 }), { message: 'CDP websocket connection timed out' });
-    assert.equal(StalledSocket.last.closed, true, 'The timeout closes the connecting socket');
-  } finally { globalThis.WebSocket = InspectorSocket; targets.delete('http://renderer/'); }
+test('a command without an answer fails after 4 seconds, detaches and lets the next read attach', async t => {
+  const { page } = openPage();
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const sent = Promise.withResolvers();
+  const read = withDebuggerMethod('sendCommand', (target, method) => sent.resolve(method),
+    () => captureRendererFunctionBindings(page, page.sample.fn, ['answer']));
+  assert.equal(await sent.promise, 'Runtime.enable');
+  t.mock.timers.tick(4000);
+  await assert.rejects(read, { message: 'Runtime.enable timed out' });
+  assert.equal(sessions.size, 0, 'The timed out read detached');
+  assert(!Object.getOwnPropertyNames(page).some(key => key.startsWith('__livelyFunctionScopes')));
+  t.mock.timers.reset();
+  assert.equal((await captureRendererFunctionBindings(page, page.sample.fn, ['answer'])).answer, 42);
 });
 
-test('a socket error or close rejects pending and later commands', async () => {
-  class SilentSocket extends EventTarget {
-    constructor () { super(); SilentSocket.last = this; queueMicrotask(() => this.dispatchEvent(new Event('open'))); }
-    send () {}
-    close () {}
-  }
-  globalThis.WebSocket = SilentSocket;
-  targets.set('http://renderer/', 'silent');
-  try {
-    for (const [event, message] of [['close', 'CDP websocket closed'], ['error', 'CDP websocket error']]) {
-      const client = await connectRenderer('http://renderer/', { port });
-      const failed = assert.rejects(client.send('Runtime.evaluate'), { message });
-      SilentSocket.last.dispatchEvent(new Event(event));
-      await failed;
-      await assert.rejects(client.send('Runtime.evaluate'), { message });
-    }
-  } finally { globalThis.WebSocket = InspectorSocket; targets.delete('http://renderer/'); }
+test('attach failures are reported and release the next read', async () => {
+  const { page } = openPage();
+  await withDebuggerMethod('attach', (target, version, callback) => answer(callback, 'Cannot attach to this target.'), () =>
+    assert.rejects(captureRendererFunctionBindings(page, page.sample.fn, ['answer']), { message: 'Cannot attach to this target.' }));
+  assert.equal((await captureRendererFunctionBindings(page, page.sample.fn, ['answer'])).answer, 42);
 });
 
-test('the manifest requests the free inspector port that NW.js writes to DevToolsActivePort', () => {
+test('a renderer without a page target is not attached', async () => {
+  const { page } = openPage();
+  targets.delete(page.location.href);
+  calls.length = 0;
+  await assert.rejects(captureRendererFunctionBindings(page, page.sample.fn, ['answer']), { message: 'No inspector target for this renderer' });
+  assert.deepEqual(calls, [['getTargets']]);
+});
+
+test('the manifest opens no remote debugging port and silences the debugger infobar', () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(appDir, 'package.json'), 'utf8'));
-  assert.match(manifest['chromium-args'], /(^| )--remote-debugging-port=0( |$)/);
+  const flags = manifest['chromium-args'].split(/\s+/);
+  assert(!flags.some(flag => flag.startsWith('--remote-debugging-')), manifest['chromium-args']);
+  assert(flags.includes('--silent-debugger-extension-api'), manifest['chromium-args']);
 });
 
 test('the desktop build copies every sibling module start-server.cjs requires', () => {
