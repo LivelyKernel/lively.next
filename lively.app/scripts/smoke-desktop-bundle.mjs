@@ -742,9 +742,10 @@ async function assertProjectProgramming (client, port, reopened = false) {
 }
 
 /**
- * The DevTools port of the app running with `profileDir`. The manifest asks
- * NW.js for a free port, and Chromium writes the port it bound, followed by the
- * browser target, to DevToolsActivePort. LIVELY_APP_SMOKE_CDP_PORT overrides it.
+ * The DevTools port of the app running with `profileDir`. The smoke launches the
+ * app with `--remote-debugging-port=0`, and Chromium writes the free port it
+ * bound, followed by the browser target, to DevToolsActivePort. With
+ * LIVELY_APP_SMOKE_CDP_PORT the smoke launches the app on that port instead.
  */
 function devToolsPort (profileDir) {
   if (SMOKE_CDP_PORT) return Number(SMOKE_CDP_PORT);
@@ -1516,8 +1517,9 @@ async function main () {
     fs.rmSync(path.join(profileDir, 'DevToolsActivePort'), { force: true });
     console.log(`Smoke data: ${dataDir}`);
     console.log(`Launching ${command}${devRoot ? ` in dev mode from ${devRoot}` : ''}`);
-    const profileArg = `--user-data-dir=${profileDir}`;
-    const child = spawn(command, devRoot ? [...commandArgs, profileArg] : [profileArg, ...commandArgs], {
+    // The app opens no DevTools endpoint of its own; the smoke asks for one.
+    const launchArgs = [`--user-data-dir=${profileDir}`, `--remote-debugging-port=${SMOKE_CDP_PORT || 0}`];
+    const child = spawn(command, devRoot ? [...commandArgs, ...launchArgs] : [...launchArgs, ...commandArgs], {
       cwd: devRoot || bundleDir,
       env: {
         ...process.env,
