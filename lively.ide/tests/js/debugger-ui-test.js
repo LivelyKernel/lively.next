@@ -9,7 +9,7 @@ import { installModuleDebugger } from 'lively.context/lib/module-debugger.js';
 import { lineRangeForFrame, moduleUrlForFrame, readFrameSource, sourceNameForFrame, sourcePathForFrame } from '../../js/debugger/source.js';
 import { evaluateInDebuggerScopes } from '../../js/debugger/evaluation.js';
 import { openForContinuation } from '../../js/debugger/ui.cp.js';
-import { LiveCounter } from '../../js/debugger/examples/live-counter.js';
+import { LiveCounter, openLiveCounter } from '../../js/debugger/examples/live-counter.js';
 import { fn, bounds, lineNode, debuggerFor, closeDebuggers, withModule, signalsOf } from './debugger-helpers.js';
 
 /** Replace `$world[name]` with `answer` while `test` runs; returns the requests. */
@@ -60,6 +60,15 @@ describe('lively debugger', function () {
     expect(view.getWindow().title).equals('debugger - (no source url)');
     const center = pt(box('step over').left + box('step over').width / 2, box('step over').top + box('step over').height / 2);
     expect(view.get('step over button').viewModel.considerPress({ positionIn: morph => morph.localize(center) })).equals(true);
+  });
+
+  it('opens the live counter tutorial with its buttons', async () => {
+    const counter = openLiveCounter($world);
+    try {
+      expect(counter).instanceOf(LiveCounter);
+      expect(counter.submorphs.map(morph => morph.name)).deep.equals(['title', 'count', 'Increment', 'Reset', 'Edit source', 'Lessons']);
+      expect(counter.get('Lessons').position.x).equals(390);
+    } finally { await counter.getWindow().close(); }
   });
 
   it('shows the original module with syntax colors and an accurate statement highlight', async () => {

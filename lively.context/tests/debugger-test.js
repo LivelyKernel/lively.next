@@ -275,6 +275,11 @@ const scenarios = [
   ['preserves template literals before and after suspension', {},
     'const before = `before ${2 + 1}`; debugger; return `${before}: after ${4}`;',
     {lookup: {before: 'before 3'}}, 'resume', {is: 'before 3: after 4'}],
+  ['constructs only the callees of new expressions, also when they nest, after suspension',
+    {Outer: fn('function Outer(value) { this.value = value; }'), Inner: fn('function Inner() {}')},
+    'debugger; const nested = new Outer(new Inner()), converted = new Outer(String(1));' +
+    ' return [nested instanceof Outer, nested.value instanceof Inner, converted instanceof Outer, typeof converted.value];',
+    'resume', {is: [true, true, true, 'string']}],
   ['preserves spread calls and constructors before and after suspension', {}, 'const values = []; values.push(...[1, 2]); debugger;' +
     ' const set = new Set([...values, ...[3]]); return Math.max(...set) + values.length;',
   {exception: undefined, lookup: {values: [1, 2]}}, 'resume', {is: 5}],

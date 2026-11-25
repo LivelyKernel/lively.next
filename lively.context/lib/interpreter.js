@@ -1195,9 +1195,7 @@ export class Interpreter {
   }
 
   visitNewExpression(node, state) {
-    state.isNew = true;
     this.visitCallExpression(node, state);
-    delete state.isNew; // FIXME: nested NewExpressions?
   }
 
   visitCallExpression(node, state) {
@@ -1233,7 +1231,7 @@ export class Interpreter {
     }
     }
     try {
-      state.result = this.invoke(recv, fn, args, state.currentFrame, state.isNew);
+      state.result = this.invoke(recv, fn, args, state.currentFrame, node.type === 'NewExpression');
     } catch (e) {
       if (e?.isUnwindException && e.error?.reason === 'bindings') frame.pendingCall = {node, recv, fn, args};
       if (lively.Config && lively.Config.loadRewrittenCode && e.unwindException)

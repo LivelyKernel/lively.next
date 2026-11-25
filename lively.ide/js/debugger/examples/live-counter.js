@@ -151,14 +151,14 @@ export function openLiveCounter (world = $world) {
         extent: pt(370, 45), fontSize: 30, readOnly: true })
     ]
   });
-  [['Increment', 'debugIncrement'], ['Reset', 'reset'], ['Edit source', 'editSource'], ['Lessons', 'chooseLesson']].forEach(([label, method], index) => {
+  for (const [index, [label, method]] of [['Increment', 'debugIncrement'], ['Reset', 'reset'], ['Edit source', 'editSource'], ['Lessons', 'chooseLesson']].entries()) {
     const button = part(SystemButton, {
       name: label, position: pt(15 + index * 125, 115), extent: pt(115, 30),
       submorphs: [{ name: 'label', textString: label }]
     });
     counter.addMorph(button);
     connect(button, 'fire', counter, method);
-  });
+  }
   counter.openInWindow({ title: 'Debugger tutorial: live counter' });
   return counter;
 }
