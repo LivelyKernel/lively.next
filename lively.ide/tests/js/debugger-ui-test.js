@@ -2,6 +2,8 @@
 import { expect } from 'mocha-es6';
 import { pt, Color } from 'lively.graphics';
 import { serialize, deserialize } from 'lively.serializer2';
+import * as modules from 'lively.modules';
+import { serializeMorph, loadMorphFromSnapshot } from 'lively.morphic/serialization.js';
 import { RuntimeSourceDescriptor } from 'lively.classes/source-descriptors.js';
 import { run, Continuation } from 'lively.context/lib/stackReification.js';
 import { Interpreter } from 'lively.context/lib/interpreter.js';
@@ -106,6 +108,19 @@ describe('lively debugger', function () {
     await model.selectFrame(stopped.currentFrame);
     expect(pane.selection.range.start.row).equals(targetRow);
     expect(counter.count).equals(0);
+  });
+
+  it('labels the frames of a restored debugger like the frames of the live debugger', async () => {
+    const counter = new LiveCounter();
+    const model = await debuggerFor(run(counter.increment, null, [], { this: counter }));
+    expect(model.ui.stackList.items.map(item => item.string)).deep.equals(['#0  increment']);
+    const restoredWindow = await loadMorphFromSnapshot(serializeMorph(model.view.getWindow()), { moduleManager: modules });
+    $world.addMorph(restoredWindow);
+    const restored = restoredWindow.targetMorph.viewModel;
+    try {
+      await restored.selectFrame(restored.continuation.currentFrame);
+      expect(restored.ui.stackList.items.map(item => item.string)).deep.equals(['#0  increment']);
+    } finally { restored.sourceBuffers.clear(); await restored.closeDebugger(); }
   });
 
   it('keeps original module positions when stepping into a method or nested closure', async () => {

@@ -66,7 +66,9 @@ function sourceContextForFrame (frame) {
     if (ast?.body && comparableBody(ast.body) === comparableBody(frame.getOriginalAst().body)) context = { ...sourceContextForFrame(parent), ast, name: undefined };
   }
   if (context) {
-    const { source, ast, moduleName, name } = context, recorded = frame.getOriginalAst();
+    const { source, ast, moduleName } = context, recorded = frame.getOriginalAst();
+    // A restored function has no original, so it keeps the name of its live frame label.
+    const name = context.name || original && String(original.displayName || original.name);
     func.debuggerSource = { source, ast, moduleName, name };
     context = { ...func.debuggerSource, url: module(moduleName).id, nodes: new Map() };
     // Compiler transformations can change the body; never guess a source position.
