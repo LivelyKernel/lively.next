@@ -8,6 +8,7 @@ import { Interpreter } from 'lively.context/lib/interpreter.js';
 import { installModuleDebugger } from 'lively.context/lib/module-debugger.js';
 import { lineRangeForFrame, moduleUrlForFrame, readFrameSource, sourceNameForFrame, sourcePathForFrame } from '../../js/debugger/source.js';
 import { evaluateInDebuggerScopes } from '../../js/debugger/evaluation.js';
+import { openForContinuation } from '../../js/debugger/ui.cp.js';
 import { LiveCounter } from '../../js/debugger/examples/live-counter.js';
 import { fn, bounds, lineNode, debuggerFor, closeDebuggers, withModule, signalsOf } from './debugger-helpers.js';
 
@@ -27,6 +28,12 @@ describe('lively debugger', function () {
     const name = props => sourceNameForFrame({ func: { originalFunction: Object.assign(function initialize () {}, props), name: () => '' } });
     expect(name({ displayName: Symbol.for('custom') })).equals('Symbol(custom)');
     expect(name({ [Symbol.for('lively-debug-constructor')]: { name: 'Example' } })).equals('Example.constructor');
+  });
+
+  it('names the window of a frame without module source as soon as it opens', async () => {
+    const view = openForContinuation(run(fn('function sourceless () { debugger; }')), $world);
+    try { expect(view.getWindow().title).equals('debugger - (no source url)'); }
+    finally { await view.getWindow().close(); }
   });
 
   it('shows grouped toolbar buttons with their tooltips in a transparent window', async () => {
@@ -62,7 +69,7 @@ describe('lively debugger', function () {
     expect(pane.textString).equals(RuntimeSourceDescriptor.for(LiveCounter).moduleSource);
     expect(pane.textString).contains('  increment () {').and.not.contains('function LiveCounter_increment_');
     expect(view.getWindow().title).equals('debugger - [lively.ide] js/debugger/examples/live-counter.js');
-    expect(model.ui.stackList.items[0].string).equals('#0  increment:' + (pane.selection.start.row + 1));
+    expect(model.ui.stackList.items[0].string).equals('#0  increment');
     view.env.forceUpdate();
     expect(bounds(pane).top).closeTo(bounds(view.get('toolbar')).bottom, 0.5);
     const plugin = pane.pluginFind(p => p.isJSEditorPlugin);

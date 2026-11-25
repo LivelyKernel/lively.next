@@ -6,9 +6,9 @@ const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
  * Evaluate `source` with lively.vm in a chain of scopes, innermost first. Each
  * scope is `{bindings, setBinding?}`; `setBinding(name, value)` handles
  * assignments to its bindings. Free variables resolve through the chain, then
- * as globals. Declarations and assignments to unknown names are recorded in the
- * bindings of the scope of type 'workspace'. `this` and `arguments` are the first
- * such bindings.
+ * as globals. Declarations are recorded in the bindings of the scope of type
+ * 'workspace'; an assignment to an undeclared name assigns a global. `this` and
+ * `arguments` are the first such bindings.
  */
 export function evaluateInDebuggerScopes (source, scopes = []) {
   const workspace = scopes.find(scope => scope.type === 'workspace')?.bindings || {};

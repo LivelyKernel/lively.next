@@ -12,7 +12,7 @@ import { InspectionTree, PropertyTree, printValue } from '../inspector/context.j
 import { SystemInspector } from '../inspector/ui.cp.js';
 import JavaScriptEditorPlugin from '../editor-plugin.js';
 import {
-  CURRENT_LINE_MARKER_ID, interpreterLineForSourcePosition, lineRangeForFrame, locationForFrame,
+  CURRENT_LINE_MARKER_ID, interpreterLineForSourcePosition, lineRangeForFrame,
   moduleUrlForFrame, readFrameSource, sourceNameForFrame, sourcePathForFrame, sourceUrlForFrame
 } from './source.js';
 import { evaluateInDebuggerScopes } from './evaluation.js';
@@ -154,13 +154,20 @@ export class LivelyDebuggerModel extends ViewModel {
 
   refreshFromContinuation () {
     const frames = this.continuation ? this.continuation.frames() : [];
-    this.ui.stackList.items = frames.map((frame, index) => {
-      const location = locationForFrame(frame);
-      return { isListItem: true, value: frame, string: '#' + index + '  ' + sourceNameForFrame(frame) + (location ? ':' + (location.line + 1) : '') };
-    });
+    this.ui.stackList.items = frames.map((frame, index) =>
+      ({ isListItem: true, value: frame, string: '#' + index + '  ' + sourceNameForFrame(frame) }));
     this.ui.stackList.selection = frames[0] || null;
     this.selectFrame(frames[0] || null);
     if (this.continuation?.exception) this.view.showError(this.continuation.exception);
+  }
+
+  /** Name the window after the selected frame's module; called again once the view is in a window. */
+  updateTitle () {
+    const win = this.view.getWindow(), frame = this.selectedFrame;
+    if (!win || !frame) return;
+    const url = this.currentModuleUrl, mod = url && module(url), pkg = mod && mod.package();
+    const path = pkg ? `[${BrowserModel.prototype.formatPackageName(pkg)}] ${mod.pathInPackage()}` : sourcePathForFrame(frame);
+    win.title = 'debugger' + (path ? ' - ' + path : '');
   }
 
   async selectFrame (frame) {
@@ -179,10 +186,7 @@ export class LivelyDebuggerModel extends ViewModel {
     }
     this.currentSourceText = source;
     this.currentModuleUrl = url;
-    const mod = url && module(url), pkg = mod && mod.package();
-    const path = pkg ? `[${BrowserModel.prototype.formatPackageName(pkg)}] ${mod.pathInPackage()}` : sourcePathForFrame(frame);
-    const win = this.view.getWindow();
-    if (win) win.title = 'debugger' + (path ? ' - ' + path : '');
+    this.updateTitle();
     const pane = this.ui.sourcePane;
     const plugin = pane.pluginFind(p => p.isJSEditorPlugin) || pane.addPlugin(new JavaScriptEditorPlugin());
     plugin.evalEnvironment = { ...plugin.evalEnvironment, targetModule: sourceUrlForFrame(frame) };
@@ -481,6 +485,7 @@ export const LivelyDebugger = component({
 export function openForContinuation (continuation, world = $world, { onComplete, onCancel } = {}) {
   const view = part(LivelyDebugger, { viewModel: { continuation, onComplete, onCancel } });
   const win = view.openInWindow({ title: 'debugger', world: world || $world });
+  view.viewModel.updateTitle();
   win.activate();
   win.ensureToBeInWorldBounds();
   return view;
