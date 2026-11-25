@@ -4,7 +4,6 @@ import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import vm from 'node:vm';
-import { spawnSync } from 'node:child_process';
 import { Session } from 'node:inspector';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
@@ -27,7 +26,14 @@ const inspector = http.createServer((req, res) => {
 });
 await new Promise(resolve => inspector.listen(0, '127.0.0.1', resolve));
 const port = inspector.address().port;
+// Without nw.App the reader connects to LIVELY_APP_CDP_PORT.
 process.env.LIVELY_APP_CDP_PORT = String(port);
+const closedPort = await new Promise(resolve => {
+  const server = http.createServer().listen(0, '127.0.0.1', () => {
+    const { port } = server.address();
+    server.close(() => resolve(port));
+  });
+});
 
 class InspectorSocket extends EventTarget {
   constructor (url) {
@@ -297,10 +303,61 @@ test('a saved bridge rejects after navigation without contacting the inspector',
   assert.equal(page.livelyDesktop.debugger.captureFunctionBindings, undefined, 'Loading an untrusted page removes the bridge');
 });
 
-test('renderer capture discovers its target on LIVELY_APP_CDP_PORT', async () => {
-  const before = discoveries;
-  await assert.rejects(captureRendererFunctionBindings({ location: { href: 'http://renderer/' } }, () => {}, []), { message: 'No inspector target for this renderer' });
-  assert.equal(discoveries, before + 1);
+/**
+ * Run `fn(userDataDir)` with a temporary user data dir whose DevToolsActivePort
+ * holds `content` (no file for null) and LIVELY_APP_CDP_PORT set to `fallback`
+ * (unset for undefined).
+ */
+async function withUserDataDir (content, fallback, fn) {
+  const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lively-user-data-'));
+  if (content !== null) fs.writeFileSync(path.join(userDataDir, 'DevToolsActivePort'), content);
+  if (fallback === undefined) delete process.env.LIVELY_APP_CDP_PORT;
+  else process.env.LIVELY_APP_CDP_PORT = String(fallback);
+  try { return await fn(userDataDir); } finally {
+    process.env.LIVELY_APP_CDP_PORT = String(port);
+    fs.rmSync(userDataDir, { recursive: true, force: true });
+  }
+}
+
+test('renderer capture connects to the port in DevToolsActivePort next to nw.App.dataPath', async () => {
+  const { page } = openPage();
+  await withUserDataDir(port + '\n/devtools/browser/test', closedPort, async userDataDir => {
+    globalThis.nw = { App: { dataPath: path.join(userDataDir, 'Default') } };
+    try {
+      assert.equal((await captureRendererFunctionBindings(page, page.sample.fn, ['answer'])).answer, 42);
+    } finally { delete globalThis.nw; }
+  });
+});
+
+test('discovery waits until DevToolsActivePort is completely written', async () => {
+  // A port line without the browser target line is still being written.
+  await withUserDataDir(String(closedPort), closedPort, async userDataDir => {
+    const written = new Promise(resolve => setTimeout(() => {
+      fs.writeFileSync(path.join(userDataDir, 'DevToolsActivePort'), port + '\n/devtools/browser/test');
+      resolve(Date.now());
+    }, 100));
+    const before = discoveries;
+    await assert.rejects(connectRenderer('http://renderer/', { userDataDir, timeout: 2000 }), { message: 'No inspector target for this renderer' });
+    assert(Date.now() - await written < 1000, 'Discovery continues once the file is complete');
+    assert.equal(discoveries, before + 1);
+  });
+});
+
+test('without DevToolsActivePort, discovery waits until its deadline, then uses LIVELY_APP_CDP_PORT or 9222', async () => {
+  await withUserDataDir(null, port, async userDataDir => {
+    const before = discoveries, started = Date.now();
+    await assert.rejects(connectRenderer('http://renderer/', { userDataDir, timeout: 200 }), { message: 'No inspector target for this renderer' });
+    assert(Date.now() - started >= 200, 'Discovery waits until its deadline for the port file');
+    assert.equal(discoveries, before + 1);
+  });
+  const fetch = globalThis.fetch;
+  let requested;
+  globalThis.fetch = async url => { requested = url; throw new Error('offline'); };
+  try {
+    await withUserDataDir(null, undefined, () =>
+      assert.rejects(connectRenderer('http://renderer/', { userDataDir: null }), { message: 'offline' }));
+  } finally { globalThis.fetch = fetch; }
+  assert.equal(requested, 'http://127.0.0.1:9222/json/list');
 });
 
 test('target discovery and the WebSocket handshake have deadlines', async () => {
@@ -340,21 +397,9 @@ test('a socket error or close rejects pending and later commands', async () => {
   } finally { globalThis.WebSocket = InspectorSocket; targets.delete('http://renderer/'); }
 });
 
-test('start.sh forwards LIVELY_APP_CDP_PORT to NW.js', { skip: process.platform === 'win32' && 'Unix launcher' }, () => {
-  const launcherDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lively launch options '));
-  try {
-    fs.copyFileSync(path.join(appDir, 'start.sh'), path.join(launcherDir, 'start.sh'));
-    const nw = path.join(launcherDir, 'node_modules/.bin/nw');
-    fs.mkdirSync(path.dirname(nw), { recursive: true });
-    fs.writeFileSync(nw, "#!/bin/bash\nprintf '%s\\n' \"$@\"\n", { mode: 0o755 });
-    const launch = env => {
-      const result = spawnSync('bash', [path.join(launcherDir, 'start.sh'), '--extra'], { env: { ...process.env, ...env }, encoding: 'utf8' });
-      assert.equal(result.status, 0, result.stderr);
-      return result.stdout.trim().split('\n');
-    };
-    assert.deepEqual(launch({ LIVELY_APP_CDP_PORT: '9777' }), ['--remote-debugging-port=9777', launcherDir, '--extra']);
-    assert.deepEqual(launch({ LIVELY_APP_CDP_PORT: '' }), [launcherDir, '--extra']);
-  } finally { fs.rmSync(launcherDir, { recursive: true, force: true }); }
+test('the manifest requests the free inspector port that NW.js writes to DevToolsActivePort', () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(appDir, 'package.json'), 'utf8'));
+  assert.match(manifest['chromium-args'], /(^| )--remote-debugging-port=0( |$)/);
 });
 
 test('the desktop build copies every sibling module start-server.cjs requires', () => {

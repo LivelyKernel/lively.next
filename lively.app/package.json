@@ -23,7 +23,7 @@
     "frame": false,
     "resizable": true
   },
-  "chromium-args": "--enable-features=NWESM --enable-node-worker --disable-raf-throttling --remote-debugging-port=9222",
+  "chromium-args": "--enable-features=NWESM --enable-node-worker --disable-raf-throttling --remote-debugging-port=0",
   "exports": {
     ".": "./index.js",
     "./resources.js": "./resources.js"

@@ -16,6 +16,4 @@ fi
 # Resolver hooks in NODE_OPTIONS run in NW.js's renderer and crash Blink.
 unset NODE_OPTIONS
 
-# The desktop function-scope reader connects to the inspector on LIVELY_APP_CDP_PORT
-# (default 9222, the port in the manifest's chromium-args).
-exec "$NW_BIN" ${LIVELY_APP_CDP_PORT:+"--remote-debugging-port=$LIVELY_APP_CDP_PORT"} "$SCRIPT_DIR" "$@"
+exec "$NW_BIN" "$SCRIPT_DIR" "$@"

@@ -138,12 +138,43 @@ async function annotateFunctionSource () {
 }
 
 /**
+ * The port of NW.js's Blink inspector. The manifest requests
+ * `--remote-debugging-port=0`, so Chromium binds a free port and writes it as
+ * the first line of `DevToolsActivePort` in `userDataDir`, the parent of
+ * `nw.App.dataPath`. Waits up to `timeout` ms for that file; without it the port
+ * is LIVELY_APP_CDP_PORT (default 9222).
+ */
+async function inspectorPort ({ userDataDir = nwUserDataDir(), timeout = CONNECT_TIMEOUT } = {}) {
+  if (userDataDir) {
+    const file = path.join(userDataDir, 'DevToolsActivePort');
+    const deadline = Date.now() + timeout;
+    for (;;) {
+      let content = '';
+      try { content = fs.readFileSync(file, 'utf8'); } catch (_) {}
+      // The browser target path on the second line marks a completely written file.
+      const port = /^(\d+)\n\/devtools\/browser\//.exec(content)?.[1];
+      if (port) return Number(port);
+      if (Date.now() >= deadline) break;
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+  }
+  return Number(process.env.LIVELY_APP_CDP_PORT || 9222);
+}
+
+/** NW.js's user data dir, or null outside NW.js. */
+function nwUserDataDir () {
+  return typeof nw !== 'undefined' && nw.App?.dataPath ? path.dirname(nw.App.dataPath) : null;
+}
+
+/**
  * Open a CDP connection to the page target showing `href` in NW.js's Blink
- * inspector on `port`. Target discovery and the WebSocket handshake each fail
- * after `timeout` ms. Resolves to `{send(method, params), close()}`; a socket
+ * inspector on `port`, by default the `inspectorPort` of `userDataDir`. Waiting
+ * for the port file, target discovery and the WebSocket handshake each take at
+ * most `timeout` ms. Resolves to `{send(method, params), close()}`; a socket
  * error or close rejects pending and later commands.
  */
-async function connectRenderer (href, { port, timeout = CONNECT_TIMEOUT } = {}) {
+async function connectRenderer (href, { port, userDataDir, timeout = CONNECT_TIMEOUT } = {}) {
+  port ??= await inspectorPort({ userDataDir, timeout });
   const targetList = 'http://127.0.0.1:' + port + '/json/list';
   const response = await fetch(targetList, { signal: AbortSignal.timeout(timeout) });
   if (!response.ok) throw new Error(targetList + ' returned HTTP ' + response.status);
@@ -193,12 +224,12 @@ async function connectRenderer (href, { port, timeout = CONNECT_TIMEOUT } = {}) 
 
 /**
  * Read retained bindings of a function living in the NW.js renderer `renderer`
- * (a page window) through NW.js's Blink inspector on LIVELY_APP_CDP_PORT
- * (default 9222). Attaching node:inspector to the renderer instead would replace
- * its DOM inspector and can crash with concurrent DevTools.
+ * (a page window) through NW.js's Blink inspector on its `inspectorPort`.
+ * Attaching node:inspector to the renderer instead would replace its DOM
+ * inspector and can crash with concurrent DevTools.
  */
-async function captureRendererFunctionBindings (renderer, func, names, port = Number(process.env.LIVELY_APP_CDP_PORT || 9222)) {
-  const client = await connectRenderer(renderer.location.href, { port });
+async function captureRendererFunctionBindings (renderer, func, names) {
+  const client = await connectRenderer(renderer.location.href);
   try {
     return await captureFunctionBindings(func, names, { globalObject: renderer, send: client.send });
   } finally { client.close(); }
