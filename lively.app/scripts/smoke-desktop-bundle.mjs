@@ -8,7 +8,7 @@ import { createServer } from 'node:http';
 import { once } from 'node:events';
 import { spawn, spawnSync } from 'node:child_process';
 
-const CDP_PORT = Number(process.env.LIVELY_APP_SMOKE_CDP_PORT || 9222);
+const SMOKE_CDP_PORT = process.env.LIVELY_APP_SMOKE_CDP_PORT;
 const DEFAULT_TIMEOUT = 300000;
 const WORLD_PATH = '/worlds/load?name=__newWorld__&askForWorldName=false&fastLoad=true';
 const PROJECT_PATH = '/projects/load?name=__newProject__&askForWorldName=false&fastLoad=true';
@@ -741,9 +741,21 @@ async function assertProjectProgramming (client, port, reopened = false) {
     : 'local project creation, client/server module creation, live editing, evaluation and project save'));
 }
 
-async function waitForPageTarget (dashboardUrl, timeoutMs) {
+/**
+ * The DevTools port of the app running with `profileDir`. The manifest asks
+ * NW.js for a free port, and Chromium writes the port it bound, followed by the
+ * browser target, to DevToolsActivePort. LIVELY_APP_SMOKE_CDP_PORT overrides it.
+ */
+function devToolsPort (profileDir) {
+  if (SMOKE_CDP_PORT) return Number(SMOKE_CDP_PORT);
+  const [port, browserTarget] = fs.readFileSync(path.join(profileDir, 'DevToolsActivePort'), 'utf8').split('\n');
+  if (!port || !browserTarget) throw new Error('DevToolsActivePort is incomplete');
+  return Number(port);
+}
+
+async function waitForPageTarget (dashboardUrl, profileDir, timeoutMs) {
   return waitFor('NW.js dashboard DevTools page target', async () => {
-    const targets = await fetchJson(`http://127.0.0.1:${CDP_PORT}/json/list`);
+    const targets = await fetchJson(`http://127.0.0.1:${devToolsPort(profileDir)}/json/list`);
     const target = targets.find(target =>
       target.webSocketDebuggerUrl &&
       String(target.url || '').startsWith(dashboardUrl));
@@ -1465,6 +1477,7 @@ async function main () {
 
   // Exercise URL decoding, including Windows' RUNNER~1 temporary paths.
   const smokeRoot = args.dataDir ? path.dirname(path.resolve(args.dataDir)) : fs.mkdtempSync(path.join(os.tmpdir(), 'lively-app-smoke~ spaces-'));
+  const profileDir = path.join(smokeRoot, 'profile');
   const dataDir = args.dataDir ? path.resolve(args.dataDir) : path.join(smokeRoot, 'data');
   const cacheDir = path.join(smokeRoot, 'cache');
   fs.mkdirSync(dataDir, { recursive: true });
@@ -1499,9 +1512,12 @@ async function main () {
       console.log('Desktop app smoke: reserved previous HTTP port ' + previousPort);
     }
     try { fs.rmSync(logFile, { force: true }); } catch (_) {}
+    // A port file left by the previous launch names a port nobody listens on.
+    fs.rmSync(path.join(profileDir, 'DevToolsActivePort'), { force: true });
     console.log(`Smoke data: ${dataDir}`);
     console.log(`Launching ${command}${devRoot ? ` in dev mode from ${devRoot}` : ''}`);
-    const child = spawn(command, devRoot ? commandArgs : [`--user-data-dir=${path.join(smokeRoot, 'profile')}`, ...commandArgs], {
+    const profileArg = `--user-data-dir=${profileDir}`;
+    const child = spawn(command, devRoot ? [...commandArgs, profileArg] : [profileArg, ...commandArgs], {
       cwd: devRoot || bundleDir,
       env: {
         ...process.env,
@@ -1543,7 +1559,7 @@ async function main () {
       };
       const dashboardURL = routeURL('/dashboard/');
       if (!native) await waitForHttpOk(dashboardURL, 60000);
-      const target = await waitForPageTarget(dashboardURL, 60000);
+      const target = await waitForPageTarget(dashboardURL, profileDir, 60000);
       console.log(`Attached to desktop page ${target.url}`);
       const client = new CDPClient(target.webSocketDebuggerUrl);
       if (native) {
