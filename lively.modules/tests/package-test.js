@@ -9,6 +9,7 @@ import module from '../src/module.js';
 import { getSystem, removeSystem } from '../src/system.js';
 import { getPackage, ensurePackage, applyConfig, getPackageSpecs, Package } from '../src/packages/package.js';
 import { PackageRegistry } from '../src/packages/package-registry.js';
+import ModulePackageMapping from '../src/packages/module-package-mapping.js';
 
 let testDir = System.decanonicalize('lively.modules/tests/package-tests-temp/');
 let project1aDir = testDir + 'dep1/';
@@ -363,6 +364,13 @@ describe('package loading', function () {
 
       expect(arr.pluck(p.modules(), 'id'))
         .equals(['package.json', 'entry-a.js', 'other.js'].map(ea => project1aDir + ea), 'after sub-project loaded');
+    });
+
+    it('lists a module looked up before the module mapping is built among the modules of its package', async () => {
+      const p = await ensurePackage(S, project1aDir), id = project1aDir + 'not-loaded.js';
+      ModulePackageMapping.forSystem(S).clearCache();
+      expect(Package.forModuleId(S, id)).equals(p);
+      expect(arr.pluck(p.modules(), 'id')).to.include(id);
     });
 
     it('finds resources of registered package', async () => {

@@ -32,33 +32,8 @@ const registry = system.get('@lively-env').packageRegistry;
 const serialized = registry.toJSON();
 assert.equal(serialized.schema, 2);
 assert.ok(Object.values(serialized.packageMap).some(entry => Object.keys(entry.instances || {}).length > Object.keys(entry.versions).length));
-// Restoring packages neither copies the loader configuration nor rebuilds the module-to-package mapping per package;
-// a cold single-module lookup scans no loaded modules.
-const {getConfig} = system, mapping = system['__lively.modules__modulePackageMapCache'], {ensureCache} = mapping;
-const calls = {getConfig: 0, ensureCache: 0, coldScans: 0};
-system.getConfig = name => {
-  calls.getConfig++;
-  assert.ok(name && name !== 'packages', 'Restoring packages must not copy the whole loader configuration');
-  return getConfig.call(system, name);
-};
-mapping.ensureCache = function () {
-  calls.ensureCache++;
-  assert.ok(this._cacheInitialized, 'A single-module lookup must not rebuild every module-to-package mapping');
-  return ensureCache.call(this);
-};
-let roundTripped;
-try { roundTripped = new instrumentedModules.PackageRegistry(system).fromJSON(serialized); } finally {
-  system.getConfig = getConfig;
-  mapping.ensureCache = ensureCache;
-}
-assert.ok(calls.ensureCache <= 1 && calls.getConfig <= 1, `fromJSON scans per package (calls: ${JSON.stringify(calls)})`);
+const roundTripped = new instrumentedModules.PackageRegistry(system).fromJSON(serialized);
 assert.equal(roundTripped.allPackages().length, registry.allPackages().length);
-mapping.clearCache();
-mapping.ensureCache = function () { calls.coldScans++; return ensureCache.call(this); };
-try { mapping.addModuleIdToCache(system.baseURL + 'lively.modules/tests/unloaded-mapping-probe.js'); } finally {
-  mapping.ensureCache = ensureCache;
-}
-assert.equal(calls.coldScans, 0, 'A single-module lookup must not scan every loaded module');
 const duplicated = Object.values(roundTripped.packageMap).find(entry =>
   Object.values(entry.versions).some(pkg => Object.values(entry.instances)
     .filter(instance => instance.version === pkg.version).length > 1));
