@@ -1,4 +1,5 @@
 // Saved-world loaders enable debugger interception before loading snapshot modules and keep an explicit opt-out.
+// A bundle chunk that loads after the live module system took over registers only modules the live system does not load.
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { runInNewContext } from 'node:vm';
@@ -24,3 +25,18 @@ for (const initialSetting of [undefined, false]) {
   }
 }
 console.log('debugger bootstrap: interception precedes saved-world loading');
+
+const registerSource = source.match(/\nfunction registerFrozenChunkModules [\s\S]*?\n}\n/)[0];
+const loading = 'lively.context/lib/interpreter.js', late = 'lively.context/lib/rewriter.js', url = id => 'http://fixture.test/' + id;
+const loaded = {}, liveRecorder = {}, modules = {[loading]: {_recorder: liveRecorder}};
+const System = {decanonicalize: url, get: id => loaded[id], set: (id, m) => { loaded[id] = m; }, newModule: exports => ({...exports}),
+  REGISTER_INTERNAL: {records: {[url(loading)]: {}}}};
+const R = {registry: {[loading]: {recorder: {}}, [late]: {recorder: {}}}, exportsOf: id => ({id})};
+const register = runInNewContext(`(${registerSource})`, {lively: {modules: {module: id => modules[id] ||= {}}}});
+assert.deepEqual(register(System, R, [loading, late]), [late]);
+assert.equal(modules[loading]._recorder, liveRecorder, 'A module that loads from source keeps its recorder');
+assert.equal(loaded[url(loading)], undefined, 'A module that loads from source keeps its source module');
+assert.deepEqual(loaded[url(late)], {id: late});
+assert.equal(modules[late]._recorder, R.registry[late].recorder);
+assert.equal(modules[late]._frozenModule, true);
+console.log('debugger bootstrap: late bundle chunks keep modules that load from source');

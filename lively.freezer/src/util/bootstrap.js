@@ -208,6 +208,25 @@ async function shallowReloadModulesIfNeeded (modulesToCheck, moduleHashes, R) {
   return arr.uniq(modsToReload);
 }
 
+/**
+ * Make the modules `ids` of a bundle chunk that loads after the switch to the live
+ * loader `System` available to it as frozen modules. A module that `System` already
+ * loads or loaded keeps its source module and recorder: its code calls the definition
+ * callbacks of a lively.modules recorder, which a recorder of the frozen runtime lacks.
+ * Answers the ids of the registered modules.
+ */
+function registerFrozenChunkModules (System, R, ids) {
+  return ids.filter(id => {
+    const url = System.decanonicalize(id);
+    if (System.get(url) || System.REGISTER_INTERNAL?.records?.[url]) return false;
+    System.set(url, System.newModule(R.exportsOf(id)));
+    const m = lively.modules.module(id);
+    m._recorder = R.registry[id].recorder;
+    m._frozenModule = true;
+    return true;
+  });
+}
+
 const baseURL = (window.SYSTEM_BASE_URL || document.location.origin).replace(/\/$/, '');
 function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false || window.FORCE_FAST_LOAD) {
   lively.wasFastLoaded = fastLoad;
@@ -385,13 +404,8 @@ function bootstrapLivelySystem (progress, fastLoad = query.fastLoad !== false ||
                 // detect modules to be reloaded
                 const modulesToUpdate = arr.withoutAll(keysAfter, keysBefore)
                   .filter(id => !id.startsWith('esm://') && !id.startsWith('http://') && !id.startsWith('https://'));
-                for (const mod of modulesToUpdate) {
-                  System.set(System.decanonicalize(mod), System.newModule(R.exportsOf(mod)));
-                  const m = lively.modules.module(mod);
-                  m._recorder = R.registry[mod].recorder;
-                  m._frozenModule = true;
-                }
-                updateBundledModules(S, await shallowReloadModulesIfNeeded(modulesToUpdate, moduleHashes, R));
+                const registered = registerFrozenChunkModules(System, R, modulesToUpdate);
+                updateBundledModules(S, await shallowReloadModulesIfNeeded(registered, moduleHashes, R));
               }
               return mod;
             });
