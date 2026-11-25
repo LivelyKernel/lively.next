@@ -335,11 +335,20 @@ impl ClassTransform {
                     constructor,
                 )),
             });
-            vec![Stmt::Decl(create_var_decl_with_ident(
-                VarDeclKind::Var,
-                lively_class_ident.clone(),
-                Some(class_value_expr),
-            ))]
+            vec![
+                Stmt::Decl(create_var_decl_with_ident(
+                    VarDeclKind::Var,
+                    lively_class_ident.clone(),
+                    Some(class_value_expr),
+                )),
+                // Like the inner binding of a class body, so that methods keep their class
+                // when the outer name is reassigned.
+                Stmt::Decl(create_var_decl_with_ident(
+                    VarDeclKind::Const,
+                    class_ident.expect("class holder mode requires named classes").clone(),
+                    Some(class_ref.clone()),
+                )),
+            ]
         } else if let Some(class_ident) = class_ident {
             let local_ident = class_ident.clone();
             vec![
@@ -1024,6 +1033,16 @@ mod tests {
         assert!(
             !output.contains("__super_initialize__.apply(this, arguments)"),
             "should not install a synthetic forwarding initializer: {}",
+            output
+        );
+    }
+
+    #[test]
+    fn test_class_declaration_binds_its_name_inside_the_class() {
+        let output = transform_code("class Example { create() { return new Example(); } }");
+        assert!(
+            output.contains("const Example = __lively_class__;"),
+            "methods refer to the class through an inner binding: {}",
             output
         );
     }

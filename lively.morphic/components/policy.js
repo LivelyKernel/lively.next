@@ -992,7 +992,8 @@ export class StylePolicy {
       if (specOrPolicy.name) synthesized.name = specOrPolicy.name;
       // remove the props that are equal to the default value
       getStylePropertiesFor(specOrPolicy.type).forEach(prop => {
-        if (synthesized[prop]?.isDefaultValue) {
+        // Skipped values mark local overrides of the derived instance; a new morph does not have them.
+        if (synthesized[prop]?.isDefaultValue || synthesized[prop] === skippedValue) {
           delete synthesized[prop];
         }
         if (prop === 'layout' && synthesized[prop]?.isLayout) synthesized[prop] = synthesized[prop].copy();
@@ -1720,6 +1721,7 @@ export class PolicyApplicator extends StylePolicy {
    * @param { string } submorphName - The name of the sub spec. If ambiguous the first one starting from root is picked.
    */
   ensureSubSpecFor (submorph, wrapAsAdded = false) {
+    if (!submorph) return null; // reached the top of a hierarchy outside of this policy
     const isRoot = this.targetMorph === submorph || submorph.isComponent;
     const targetName = isRoot ? null : submorph.name;
     let currSpec = this.getSubSpecFor(targetName);
@@ -1739,6 +1741,7 @@ export class PolicyApplicator extends StylePolicy {
     currSpec.name = submorph.name;
 
     const parentSpecOrPolicy = this.ensureSubSpecFor(submorph.owner);
+    if (!parentSpecOrPolicy) return null;
     let parentSpec;
     if (parentSpecOrPolicy.isPolicy) return parentSpecOrPolicy.ensureSubSpecFor(submorph, wrapAsAdded);
     else parentSpec = parentSpecOrPolicy;

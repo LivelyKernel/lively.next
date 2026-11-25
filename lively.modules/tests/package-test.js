@@ -9,6 +9,7 @@ import module from '../src/module.js';
 import { getSystem, removeSystem } from '../src/system.js';
 import { getPackage, ensurePackage, applyConfig, getPackageSpecs, Package } from '../src/packages/package.js';
 import { PackageRegistry } from '../src/packages/package-registry.js';
+import ModulePackageMapping from '../src/packages/module-package-mapping.js';
 
 let testDir = System.decanonicalize('lively.modules/tests/package-tests-temp/');
 let project1aDir = testDir + 'dep1/';
@@ -73,6 +74,29 @@ describe('package loading', function () {
       applyConfig(S, { systemjs: { map: { dependency } } }, 'some-project');
 
       expect(pkg.systemjs?.map?.dependency, 'applyConfig must update package systemjs metadata').to.equal(dependency);
+    });
+
+    it('records closure metadata lazily, without scanning packages or reading the filesystem', async () => {
+      const pkg = await ensurePackage(S, project1aDir), mod = module(S, pkg.url + '/entry-a.js'), packageLookup = mod.package;
+      const registry = PackageRegistry.ofSystem(S), allPackageURLs = registry.allPackageURLs, nodeRequire = S._nodeRequire;
+      const cell = {value: 3};
+      let lookups = 0, filesystemLookups = 0;
+      expect(mod.package()).equals(pkg);
+      mod.package = function () { lookups++; return packageLookup.call(this); };
+      if (nodeRequire) S._nodeRequire = name => { if (name === 'node:fs') filesystemLookups++; return nodeRequire(name); };
+      registry.allPackageURLs = () => { throw new Error('Cached package lookups must not enumerate the registry'); };
+      try {
+        expect(getPackage(S, pkg.url, true)).equals(pkg);
+        const func = mod.recordDebugClosure(() => cell.value, {value: cell}, 0, 8, '() => 3');
+        expect(lookups).equals(0);
+        const bindings = func[Symbol.for('lively-debug-bindings')];
+        bindings.value = 4;
+        expect([cell.value, func(), func[Symbol.for('lively-debug-bindings')]]).ordered.members([4, 4, bindings]);
+        const meta = func[Symbol.for('lively-module-meta')];
+        expect(meta).deep.equals({package: {name: pkg.name, version: pkg.version}, pathInPackage: 'entry-a.js'});
+        expect(lookups).above(0);
+        expect([func[Symbol.for('lively-module-meta')], filesystemLookups]).ordered.members([meta, 0]);
+      } finally { mod.package = packageLookup; registry.allPackageURLs = allPackageURLs; S._nodeRequire = nodeRequire; }
     });
 
     it('loads package configs from encoded file URLs before the transpiler is configured', async () => {
@@ -340,6 +364,13 @@ describe('package loading', function () {
 
       expect(arr.pluck(p.modules(), 'id'))
         .equals(['package.json', 'entry-a.js', 'other.js'].map(ea => project1aDir + ea), 'after sub-project loaded');
+    });
+
+    it('lists a module looked up before the module mapping is built among the modules of its package', async () => {
+      const p = await ensurePackage(S, project1aDir), id = project1aDir + 'not-loaded.js';
+      ModulePackageMapping.forSystem(S).clearCache();
+      expect(Package.forModuleId(S, id)).equals(p);
+      expect(arr.pluck(p.modules(), 'id')).to.include(id);
     });
 
     it('finds resources of registered package', async () => {

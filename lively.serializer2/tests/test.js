@@ -49,6 +49,15 @@ describe('object registration', () => {
 describe('snapshots', () => {
   beforeEach(() => objPool = new ObjectPool());
 
+  it('keeps absolute class-module references when no package name is recorded, and serializes dictionaries', () => {
+    const modules = ['http://127.0.0.1:9011/project/foo.js', 'local://project/foo.js', 'file:///tmp/project/foo.js'];
+    const entry = module => ({'lively.serializer-class-info': {className: 'Example', module}, props: {}});
+    const snapshot = {...modules.map(pathInPackage => entry({package: {}, pathInPackage})),
+      named: entry({package: {name: 'lively.context'}, pathInPackage: './lib/interpreter.js'})};
+    expect(requiredModulesOfSnapshot(snapshot)).deep.equals([...modules, 'lively.context/lib/interpreter.js']);
+    expect(serializationRoundtrip(Object.assign(Object.create(null), {value: 23})).value).equals(23);
+  });
+
   it('snapshots', () => {
     let o = { foo: 23, ref: { bar: 24 } };
     let { id, snapshot } = objPool.snapshotObject(o);

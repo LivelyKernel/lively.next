@@ -4,6 +4,7 @@ import { expect } from 'mocha-es6';
 
 import { string } from 'lively.lang';
 import { classToFunctionTransform } from '../class-to-function-transform.js';
+import { initializeClass } from '../runtime.js';
 import { member } from 'lively.ast/lib/nodes.js';
 import { parse } from 'lively.ast/lib/parser.js';
 import stringify from 'lively.ast/lib/stringify.js';
@@ -31,7 +32,7 @@ function classTemplate (className, superClassName, methodString, classMethodStri
     } else {
       return this[Symbol.for("lively-instance-initialize")].apply(this, arguments);
     }
-  };${(useClassHolder || !className) ? '' : '\n  var __lively_class__ = Foo;'}
+  };${useClassHolder ? `\n  const ${className} = __lively_class__;` : !className ? '' : '\n  var __lively_class__ = Foo;'}
   if (Object.isFrozen(__lively_classholder__) || Object.isFrozen(__lively_class__.prototype)) {
     return __lively_class__;
   }
@@ -51,6 +52,31 @@ let opts = {
 };
 
 describe('class transform', () => {
+  const fields = n => `amount = ${n}; valueFromSuper = super.value(); inherited = super.doubled; callback = () => super.value() + 1;`;
+  for (const [title, source, expected] of [
+    ['preserves native object-method super outside classes and inside ordinary class methods', 'var object = {__proto__: {value: 2},' +
+      ' value() { return super.value + 1; }, get total() { return super.value + 2; }}; class Child { value() {' +
+      ' return {__proto__: {value: 4}, value() { return super.value + 1; }}.value(); } }' +
+      ' [object.value(), object.total, new Child().value()];',
+    [3, 4, 5]],
+    ['lowers super calls and getters in field initializers and field arrows, also for classes created in object methods and getters',
+      'class Base { value() { return this.amount; } get doubled() { return this.amount * 2; } }' +
+      ` class Child extends Base { ${fields(3)} } var factory = {make() { return class extends Base { ${fields(3)} }; },` +
+      ` get Child() { return class extends Base { ${fields(4)} }; }}; [new Child(), new (factory.make())(), new factory.Child()]` +
+      '.map(object => [object.valueFromSuper, object.inherited, object.callback()]);', [[3, 6, 4], [3, 6, 4], [4, 8, 5]]]
+  ]) {
+    it(title, () => {
+      const _rec = {};
+      expect(eval(stringify(classToFunctionTransform(source, opts)))).deep.equals(expected);
+    });
+  }
+  it('keeps the class of its methods when the outer class name is reassigned', () => {
+    const source = 'class Example { create() { return new Example(); } } var original = new Example(); Example = null; original.create() instanceof original.constructor;';
+    const transformed = stringify(classToFunctionTransform(source, opts));
+    const _rec = {};
+    expect(eval(transformed)).equals(true);
+  });
+
   it('is translated into class initializer function', () =>
     expect(stringify(classToFunctionTransform('class Foo {}', opts))).to.equal(
       classTemplateDecl('Foo', 'undefined', 'undefined', 'undefined', '_rec', 'undefined', 0, 12)));

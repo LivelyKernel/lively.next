@@ -4,7 +4,7 @@ import { resource } from 'lively.resources';
 import { promise } from 'lively.lang';
 import { localInterface, serverInterfaceFor } from 'lively-system-interface';
 import { browse } from '../../js/browser/ui.cp.js';
-import { BrowserModel } from '../../js/browser/index.js';
+import { BrowserModel, PackageTreeData } from '../../js/browser/index.js';
 
 describe('system browser client/server switching', function () {
   // Source-world tree refreshes also list files and render the browser columns.
@@ -187,5 +187,39 @@ describe('system browser client/server switching', function () {
     let error;
     try { await browser.editorPlugin.runEval('1 + 1'); } catch (err) { error = err; }
     expect(String(error)).includes('server only');
+  });
+});
+
+describe('system browser package list', () => {
+  it('lists the selected project while none of its modules are loaded', async () => {
+    const projectURL = name => System.baseURL + 'local_projects/' + name;
+    const selected = { name: 'selected', url: projectURL('selected'), modules: [] };
+    const unselected = { name: 'unselected', url: projectURL('unselected'), modules: [] };
+    const tree = new PackageTreeData({
+      browser: {
+        selectedPackage: { ...selected },
+        systemInterface: {
+          getPackages: async () => [selected, unselected],
+          getConfig: async () => ({ baseURL: System.baseURL })
+        }
+      }
+    });
+    for (const modules of [[], [{ name: selected.url + '/package.json' }]]) {
+      selected.modules = unselected.modules = modules;
+      expect((await tree.listAllPackages()).map(node => node.name)).deep.equals(['selected']);
+    }
+  });
+
+  it('selects a package before expanding the package list to it', async () => {
+    const pkg = { name: 'selected', address: 'selected', url: 'selected' };
+    const steps = [];
+    const browserModel = {
+      systemInterface: { getPackage: async () => pkg },
+      ui: { columnView: { treeData: { root: {} }, setExpandedPath: async () => { steps.push('expand'); } } },
+      onPackageSelected: async p => { steps.push('select ' + p.name); },
+      whenPackageUpdated: async () => {}
+    };
+    expect(await BrowserModel.prototype.selectPackageNamed.call(browserModel, 'selected')).equals(pkg);
+    expect(steps).deep.equals(['select selected', 'expand']);
   });
 });

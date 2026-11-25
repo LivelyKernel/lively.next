@@ -117,13 +117,17 @@ jobs:
           node --experimental-import-meta-resolve lively.freezer/tests/package-resolution-test.cjs
           node --experimental-import-meta-resolve lively.freezer/tests/dynamic-system-import-test.mjs
           node --experimental-import-meta-resolve lively.freezer/tests/swc-state-test.mjs
+          node --experimental-import-meta-resolve lively.freezer/tests/define-meta-test.mjs
+          node lively.freezer/tests/node-builtins-guard-test.mjs
           node --experimental-import-meta-resolve lively.freezer/tests/minify-test.cjs
           node --experimental-import-meta-resolve lively.freezer/tests/project-bundle-test.mjs
           node --experimental-import-meta-resolve lively.server/tests/browser-import-map-cache-test.mjs
           node --experimental-import-meta-resolve lively.server/tests/source-hashes-test.mjs
+          node --experimental-import-meta-resolve lively.freezer/tests/debugger-bootstrap-test.mjs
           node lively.app/scripts/test-startup-parallelism.mjs
           node --experimental-import-meta-resolve lively.project/tests/package-install-test.mjs
           node --experimental-import-meta-resolve lively.installer/tests/runtime-roots-test.mjs
+          node lively.installer/tests/puppeteer-install-test.mjs
           cd lively.lang
           node --experimental-import-meta-resolve ../mocha-es6/bin/mocha-es6.js tests/string-test.js
       - name: Run strict browser boot smoke

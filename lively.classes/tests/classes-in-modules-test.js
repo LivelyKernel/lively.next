@@ -55,6 +55,22 @@ describe('circular module deps', function () {
   });
 });
 
+describe('class name binding in modules', () => {
+  const file = resource('local://classnamebindingtest/module.js');
+
+  afterEach(async () => {
+    await module(file.url).unload();
+    await file.parent().remove();
+  });
+
+  it('keeps the class of its methods when the module reassigns the class name', async () => {
+    await file.write(`class Example { create () { return new Example(); } }
+export function createAfterReassignment () { const original = new Example(); Example = null; return original.create() instanceof original.constructor; }`);
+    const { createAfterReassignment } = await module(file.url).load();
+    expect(createAfterReassignment()).equals(true);
+  });
+});
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 let modules;

@@ -7,8 +7,8 @@ import { parseFunction, stringify } from "lively.ast";
 import { Continuation, stackCaptureMode } from "../lib/stackReification.js";
 import * as StackReification from "../lib/stackReification.js";
 import { Interpreter } from "../lib/interpreter.js";
-import shallow from 'chai-shallow-deep-equal';
-shallow(chai);
+import { installShallowDeepEqual } from './helpers.js';
+installShallowDeepEqual(chai);
 
 describe('continuation', function() {
   var config,
@@ -474,12 +474,8 @@ describe('continuation', function() {
 
     var expected = { isContinuation: true },
         runResult;
-    try {
-      StackReification.run(code, astRegistry);
-      expect().to.not.be.ok; // Error was not detected and triggered!
-    } catch (e) {
-      runResult = Continuation.fromUnwindException(e.unwindException);
-    }
+    runResult = StackReification.run(code, astRegistry);
+    expect(runResult.exception).instanceOf(Error);
     var frame = runResult.frames()[0];
     expect(runResult.isContinuation).to.exist; // continuation
 
@@ -498,13 +494,8 @@ describe('continuation', function() {
     }
 
     var continuation, frame;
-    try {
-      StackReification.run(code, astRegistry);
-      expect().no.to.be.ok; // Error was not detected and triggered!
-    } catch (e) {
-      continuation = Continuation.fromUnwindException(e.unwindException);
-      frame = continuation.frames()[0];
-    }
+    continuation = StackReification.run(code, astRegistry), frame = continuation.frames()[0];
+    expect(continuation.exception).instanceOf(Error);
 
     var capturedAst = frame.getOriginalAst();
     expect(capturedAst.body.body[1].astIndex).to.equal(frame.getPC().astIndex); // pc

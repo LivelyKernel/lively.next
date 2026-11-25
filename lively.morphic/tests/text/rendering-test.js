@@ -192,4 +192,39 @@ describe('text rendering', () => {
       expect(l.lastFullVisibleLine(sut)).equals(3);
     });
   });
+
+  describe('markers', () => {
+    const range = Range.create(1, 0, 1, 3);
+    const markerNode = () => sut.env.renderer.getNodeForMorph(sut).querySelector('.newtext-marker-layer');
+    const lineNode = row => sut.env.renderer.getNodeForMorph(sut)
+      .querySelector(`.newtext-text-layer.actual .line[data-row="${row}"]`);
+
+    beforeEach(() => {
+      sut.textString = 'first\nsecond';
+      sut.addMarker({ id: 'test-marker', range, style: { backgroundColor: 'red' } });
+      sut.env.forceUpdate();
+    });
+
+    it('restyles the node of a marker that keeps its id and range', () => {
+      const node = markerNode();
+      sut.addMarker({ id: 'test-marker', range, style: { backgroundColor: 'blue' } });
+      sut.env.forceUpdate();
+      expect(markerNode()).equals(node);
+      expect(node.style.backgroundColor).equals('blue');
+    });
+
+    for (const [change, changeLayout] of [
+      ['line extents', () => { sut.fontSize = 30; }],
+      ['padding', () => { sut.padding = Rectangle.inset(20); }]
+    ]) {
+      it(`moves a marker with its line when the ${change} change`, async () => {
+        const topBefore = markerNode().getBoundingClientRect().top;
+        changeLayout();
+        await sut.whenRendered();
+        const lineTop = lineNode(1).getBoundingClientRect().top;
+        expect(lineTop).greaterThan(topBefore + 10);
+        expect(markerNode().getBoundingClientRect().top).closeTo(lineTop, 1);
+      });
+    }
+  });
 });

@@ -27,6 +27,21 @@ export function runtimeDefinition () {
     return m.split('/')[0];
   }
 
+  // The lively-module-meta of a value that a bundled module defines, in the shape
+  // lively.modules and lively.classes record: {package: {name, version}, pathInPackage}.
+  // Bundles pass the module recorder, or the module accessor of the class transform,
+  // as `moduleAccessor`. Without an accessor, the first segment of the module id names
+  // the package, so that package name and path join to the module id.
+  function moduleMetaFor (moduleId, moduleAccessor) {
+    if (moduleAccessor && typeof moduleAccessor.package === 'function' && typeof moduleAccessor.pathInPackage === 'function') {
+      const p = moduleAccessor.package();
+      return { package: p ? { name: p.name, version: p.version } : {}, pathInPackage: moduleAccessor.pathInPackage() };
+    }
+    if (moduleId.includes('://') || !moduleId.includes('/')) return { package: {}, pathInPackage: moduleId };
+    const name = getPackageName(moduleId);
+    return { package: { name }, pathInPackage: moduleId.slice(name.length + 1) };
+  }
+
   function prepareGlobal (moduleName, exports, globals, encapsulate) {
     // disable module detection
     let curDefine = G.define;
@@ -632,16 +647,16 @@ export function runtimeDefinition () {
         return this.registry[moduleId].recorder;
       }
       let rec = {
-        [moduleId + '__define__'] (name, type, value, moduleMeta) {
+        [moduleId + '__define__'] (name, type, value, moduleAccessor) {
           if (Object.isFrozen(this)) return this[name];
           // attach meta info — but don't overwrite if already set
           // (initializeES6ClassForLively and ComponentDescriptor.init set it first)
           const metaKey = Symbol.for('lively-module-meta');
           if (typeof value === 'function') {
-            if (!value[metaKey]) value[metaKey] = moduleMeta;
+            if (!value[metaKey]) value[metaKey] = moduleMetaFor(moduleId, moduleAccessor);
             try { value.name = name; } catch(e) {}
           } else if (value && typeof value === 'object' && !Object.isFrozen(value)) {
-            if (!value[metaKey]) value[metaKey] = moduleMeta;
+            if (!value[metaKey]) value[metaKey] = moduleMetaFor(moduleId, moduleAccessor);
           }
           return value;
         }

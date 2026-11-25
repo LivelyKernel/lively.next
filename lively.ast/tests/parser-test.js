@@ -4,12 +4,31 @@ import { expect } from 'mocha-es6';
 
 import { printAst } from '../lib/mozilla-ast-visitor-interface.js';
 import { parse, parseFunction } from '../lib/parser.js';
+import * as query from '../lib/query.js';
 
 describe('parse', function () {
   it('JavaScript code', () =>
     expect(parse('1 + 2'))
       .nested.property('body[0].type')
       .equals('ExpressionStatement'));
+
+  describe('with source', () => {
+    const source = 'import { x } from "a"; export { x } from "b"; export class Counter { increment () { return 1; } }';
+
+    it('keeps the module specifiers of imports and exports', () => {
+      const [imported, reexported, exported] = parse(source, { addSource: true }).body;
+      expect(imported.source.value).equals('a');
+      expect(reexported.source.value).equals('b');
+      expect(exported.source).equals(null, 'an export without "from" has no module specifier');
+      expect(exported.declaration.source).equals('class Counter { increment () { return 1; } }');
+    });
+
+    it('answers the exporting module of a declaration export', () => {
+      const parsed = parse(source, { addSource: true });
+      expect(query.exports(query.scopes(parsed)).map(({ exported, fromModule }) => [exported, fromModule]))
+        .deep.equals([['x', 'b'], ['Counter', null]]);
+    });
+  });
 
   describe('async / await', () => {
     it('parses nested awaits', () => {

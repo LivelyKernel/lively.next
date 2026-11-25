@@ -44,7 +44,11 @@ const urlHelper = {
 };
 
 function determineLocation () {
-  if (typeof document !== 'undefined' && document.location) { return System.baseURL || document.location.origin; }
+  if (typeof document !== 'undefined' && document.location) {
+    // SYSTEM_BASE_URL is the runtime root of sub-path deployments and of the native desktop app.
+    // Frozen pages such as the dashboard have their bundle directory as System.baseURL.
+    return globalThis.SYSTEM_BASE_URL || urlHelper.root(System.baseURL || document.location.origin);
+  }
 
   if (isNode) { return System._nodeRequire('os').hostname(); }
 

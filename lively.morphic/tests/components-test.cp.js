@@ -651,6 +651,21 @@ describe('components', () => {
     detach(c3);
   });
 
+  it('derives a part from the policy of an instance with locally changed props', () => {
+    const c = component({ name: 'locally changed', extent: pt(100, 80), submorphs: [{ name: 'child', extent: pt(20, 20) }] });
+    const instance = part(c);
+    instance.extent = pt(50, 50);
+    instance.get('child').extent = pt(5, 5);
+    const derived = part(instance.master);
+    expect(derived.extent.isPoint).equals(true);
+    expect(derived.get('child').extent.isPoint).equals(true);
+  });
+
+  it('does not add specs for morphs outside of the policy hierarchy', () => {
+    const instance = part(component({ name: 'hierarchy', extent: pt(100, 80) }));
+    expect(instance.master.ensureSubSpecFor(new Morph({ name: 'outside' }), true)).equals(null);
+  });
+
   it('prevents accumulation of overridden props', () => {
     const A = ComponentDescriptor.for(() => component(c1, {
       name: 'A',

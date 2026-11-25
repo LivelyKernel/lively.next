@@ -8,7 +8,7 @@ import { createServer } from 'node:http';
 import { once } from 'node:events';
 import { spawn, spawnSync } from 'node:child_process';
 
-const CDP_PORT = Number(process.env.LIVELY_APP_SMOKE_CDP_PORT || 9222);
+const SMOKE_CDP_PORT = process.env.LIVELY_APP_SMOKE_CDP_PORT;
 const DEFAULT_TIMEOUT = 300000;
 const WORLD_PATH = '/worlds/load?name=__newWorld__&askForWorldName=false&fastLoad=true';
 const PROJECT_PATH = '/projects/load?name=__newProject__&askForWorldName=false&fastLoad=true';
@@ -77,21 +77,26 @@ function hostPlatform () {
   return process.platform;
 }
 
-function appCommand (bundleDir, platform) {
+// Chromium flags that render without a display. NW.js applies them anywhere on its command line.
+function headlessArgs (headless) {
+  return headless ? ['--headless=new', '--disable-gpu'] : [];
+}
+
+function appCommand (bundleDir, platform, headless = false) {
   if (platform === 'linux') {
-    return { command: path.join(bundleDir, 'nw'), args: ['--nwapp=' + bundleDir] };
+    return { command: path.join(bundleDir, 'nw'), args: [...headlessArgs(headless), '--nwapp=' + bundleDir] };
   }
   if (platform === 'osx') {
-    return { command: path.join(bundleDir, 'lively.next.app', 'Contents', 'MacOS', 'nwjs'), args: [] };
+    return { command: path.join(bundleDir, 'lively.next.app', 'Contents', 'MacOS', 'nwjs'), args: headlessArgs(headless) };
   }
   if (platform === 'win') {
-    return { command: path.join(bundleDir, 'lively.next.exe'), args: ['--nwapp=' + bundleDir] };
+    return { command: path.join(bundleDir, 'lively.next.exe'), args: [...headlessArgs(headless), '--nwapp=' + bundleDir] };
   }
   throw new Error(`Unsupported smoke platform: ${platform}`);
 }
 
-function devAppCommand (rootDir) {
-  return { command: 'bash', args: [path.join(rootDir, 'lively.app', 'start.sh')] };
+function devAppCommand (rootDir, headless = false) {
+  return { command: 'bash', args: [path.join(rootDir, 'lively.app', 'start.sh'), ...headlessArgs(headless)] };
 }
 
 function assertExecutableExists (command) {
@@ -741,9 +746,22 @@ async function assertProjectProgramming (client, port, reopened = false) {
     : 'local project creation, client/server module creation, live editing, evaluation and project save'));
 }
 
-async function waitForPageTarget (dashboardUrl, timeoutMs) {
+/**
+ * The DevTools port of the app running with `profileDir`. The smoke launches the
+ * app with `--remote-debugging-port=0`, and Chromium writes the free port it
+ * bound, followed by the browser target, to DevToolsActivePort. With
+ * LIVELY_APP_SMOKE_CDP_PORT the smoke launches the app on that port instead.
+ */
+function devToolsPort (profileDir) {
+  if (SMOKE_CDP_PORT) return Number(SMOKE_CDP_PORT);
+  const [port, browserTarget] = fs.readFileSync(path.join(profileDir, 'DevToolsActivePort'), 'utf8').split('\n');
+  if (!port || !browserTarget) throw new Error('DevToolsActivePort is incomplete');
+  return Number(port);
+}
+
+async function waitForPageTarget (dashboardUrl, profileDir, timeoutMs) {
   return waitFor('NW.js dashboard DevTools page target', async () => {
-    const targets = await fetchJson(`http://127.0.0.1:${CDP_PORT}/json/list`);
+    const targets = await fetchJson(`http://127.0.0.1:${devToolsPort(profileDir)}/json/list`);
     const target = targets.find(target =>
       target.webSocketDebuggerUrl &&
       String(target.url || '').startsWith(dashboardUrl));
@@ -1030,15 +1048,19 @@ async function assertDesktopWindowControls (client) {
 /** Open a dashboard tile without replacing the frozen renderer's document. */
 async function openDashboardProject (client, fullName) {
   const result = await waitFor('dashboard project tile', async () => {
+    // A frame that never renders times out this attempt instead of blocking the retries.
     const result = await client.send('Runtime.evaluate', {
       returnByValue: true,
-      expression: `(() => {
+      awaitPromise: true,
+      expression: `(async () => {
         localStorage.removeItem('LIVELY_OFFLINE_MODE');
         const preview = globalThis.$world?.get('a project browser')?.viewModel?.previews?.find(p => p._project._name === ${JSON.stringify(fullName)});
         const button = preview?.get('open button');
         const node = button && document.getElementById(button.id);
         if (!node) return null;
         node.scrollIntoView({ block: 'center', inline: 'nearest' });
+        // Measure after the scrolled layout has been rendered.
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         const bounds = node.getBoundingClientRect();
         if (!bounds.width || !bounds.height) return null;
         const x = bounds.x + bounds.width / 2, y = bounds.y + bounds.height / 2;
@@ -1046,7 +1068,7 @@ async function openDashboardProject (client, fullName) {
         globalThis.__desktopDashboardDocument = document;
         return { x, y };
       })()`
-    });
+    }, { timeoutMs: 10000 });
     if (result.exceptionDetails) throw new Error('Dashboard project tile unavailable: ' + JSON.stringify(result.exceptionDetails));
     return result.result?.value ? result : null;
   }, 60000);
@@ -1092,6 +1114,10 @@ class CDPClient {
       this.ws.addEventListener('error', event => reject(new Error(`CDP websocket error: ${event.message || 'unknown'}`)), { once: true });
     });
     this.ws.addEventListener('message', event => this._onMessage(event.data));
+    this.ws.addEventListener('close', () => {
+      for (const { reject } of this.pending.values()) reject(new Error('Desktop CDP connection closed'));
+      this.pending.clear();
+    });
   }
 
   _onMessage (data) {
@@ -1120,12 +1146,29 @@ class CDPClient {
     }
   }
 
-  send (method, params = {}) {
+  /**
+   * Sends a CDP command.
+   * @param {string} method - The CDP method.
+   * @param {object} [params] - Its parameters.
+   * @param {object} [options] - With `timeoutMs`, the command rejects when no response arrives in time.
+   * @returns {Promise<object>} The result of the command.
+   */
+  send (method, params = {}, { timeoutMs = 0 } = {}) {
     const id = this.nextId++;
     const payload = JSON.stringify({ id, method, params });
     return new Promise((resolve, reject) => {
-      this.pending.set(id, { resolve, reject });
-      this.ws.send(payload);
+      const timer = timeoutMs > 0 && setTimeout(() => {
+        this.pending.delete(id);
+        reject(new Error(`${method} timed out after ${timeoutMs}ms`));
+      }, timeoutMs);
+      const settle = fn => value => { clearTimeout(timer); fn(value); };
+      this.pending.set(id, { resolve: settle(resolve), reject: settle(reject) });
+      try {
+        this.ws.send(payload);
+      } catch (err) {
+        this.pending.delete(id);
+        settle(reject)(err);
+      }
     });
   }
 
@@ -1455,16 +1498,18 @@ async function main () {
   const bundleDir = devRoot ? null : path.resolve(args.bundleDir || '');
   const platform = args.platform || hostPlatform();
   const timeoutMs = Number(args.timeout || process.env.LIVELY_APP_SMOKE_TIMEOUT || DEFAULT_TIMEOUT);
+  const headless = args.headless === 'true';
   if (!devRoot && (!bundleDir || bundleDir === process.cwd())) throw new Error('Pass --bundleDir=<desktop bundle dir> or --devRoot=<repo root>');
   if (devRoot && !fs.existsSync(path.join(devRoot, 'lively.app', 'start.sh'))) {
     throw new Error(`Dev root does not look like lively.next: ${devRoot}`);
   }
 
-  const { command, args: commandArgs } = devRoot ? devAppCommand(devRoot) : appCommand(bundleDir, platform);
+  const { command, args: commandArgs } = devRoot ? devAppCommand(devRoot, headless) : appCommand(bundleDir, platform, headless);
   assertExecutableExists(command);
 
   // Exercise URL decoding, including Windows' RUNNER~1 temporary paths.
   const smokeRoot = args.dataDir ? path.dirname(path.resolve(args.dataDir)) : fs.mkdtempSync(path.join(os.tmpdir(), 'lively-app-smoke~ spaces-'));
+  const profileDir = path.join(smokeRoot, 'profile');
   const dataDir = args.dataDir ? path.resolve(args.dataDir) : path.join(smokeRoot, 'data');
   const cacheDir = path.join(smokeRoot, 'cache');
   fs.mkdirSync(dataDir, { recursive: true });
@@ -1499,9 +1544,13 @@ async function main () {
       console.log('Desktop app smoke: reserved previous HTTP port ' + previousPort);
     }
     try { fs.rmSync(logFile, { force: true }); } catch (_) {}
+    // A port file left by the previous launch names a port nobody listens on.
+    fs.rmSync(path.join(profileDir, 'DevToolsActivePort'), { force: true });
     console.log(`Smoke data: ${dataDir}`);
     console.log(`Launching ${command}${devRoot ? ` in dev mode from ${devRoot}` : ''}`);
-    const child = spawn(command, devRoot ? commandArgs : [`--user-data-dir=${path.join(smokeRoot, 'profile')}`, ...commandArgs], {
+    // The app opens no DevTools endpoint of its own; the smoke asks for one.
+    const launchArgs = [`--user-data-dir=${profileDir}`, `--remote-debugging-port=${SMOKE_CDP_PORT || 0}`];
+    const child = spawn(command, devRoot ? [...commandArgs, ...launchArgs] : [...launchArgs, ...commandArgs], {
       cwd: devRoot || bundleDir,
       env: {
         ...process.env,
@@ -1543,7 +1592,7 @@ async function main () {
       };
       const dashboardURL = routeURL('/dashboard/');
       if (!native) await waitForHttpOk(dashboardURL, 60000);
-      const target = await waitForPageTarget(dashboardURL, 60000);
+      const target = await waitForPageTarget(dashboardURL, profileDir, 60000);
       console.log(`Attached to desktop page ${target.url}`);
       const client = new CDPClient(target.webSocketDebuggerUrl);
       if (native) {
@@ -1662,8 +1711,12 @@ async function main () {
           expression: 'livelyNative.fileExtension().then(({resourceClass}) => new resourceClass(livelyNative.baseURL + \'package-registry.json\').readJson())', awaitPromise: true, returnByValue: true
         });
         if (registryResult?.exceptionDetails) throw new Error('Native registry failed: ' + JSON.stringify(registryResult));
+        // The HTTP backend can answer 404 while its plugins start.
         const registry = native ? registryResult.result.value
-          : await (await fetch(`http://127.0.0.1:${port}/package-registry.json`)).json();
+          : await waitFor('desktop package registry', async () => {
+            const response = await fetch(`http://127.0.0.1:${port}/package-registry.json`);
+            return response.ok && response.json();
+          }, 60000);
         const { packageMap } = registry;
         for (const name of ['lively.modules', 'lively.morphic', 'lively.server', 'lively.shell', 'lively.freezer']) {
           const entry = packageMap[name];
@@ -1673,6 +1726,21 @@ async function main () {
           }
         }
         console.log('Desktop app smoke passed: dashboard initialized with canonical workspace packages');
+        if (process.env.LIVELY_APP_FUNCTION_SCOPES !== '0') {
+          const scopes = await client.send('Runtime.evaluate', {
+            expression: `(async () => {
+              const marker = {};
+              let step = 3;
+              const read = () => marker && step;
+              const values = await livelyDesktop.debugger.captureFunctionBindings(read, ['marker', 'step']);
+              return values.marker === marker && values.step === 3;
+            })()`, awaitPromise: true, returnByValue: true
+          });
+          if (scopes.exceptionDetails || scopes.result?.value !== true) {
+            throw new Error('Default function-scope reader failed: ' + JSON.stringify(scopes));
+          }
+          console.log('Desktop app smoke passed: function-scope reader enabled by default' + (native ? ' in native mode' : ''));
+        }
         const readyEvent = readTextFile(logFile).match(/^\[([^\]]+)\] (?:Native backend ready|Server ready, loading lively)/m);
         if (!readyEvent) throw new Error('Backend readiness event missing from boot log');
         console.log(JSON.stringify({ mode: native ? 'native' : 'http', reopened, backendReadyMs: Date.parse(readyEvent[1]) - launchStarted }));

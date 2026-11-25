@@ -23,6 +23,11 @@ describe('interpretation', function() {
     return interpreter.runWithContext(node, ctx, optMapping);
   }
 
+  function thrown(fn) {
+    try { fn(); } catch (err) { return err; }
+    expect.fail('expected function to throw');
+  }
+
   it('runs an empty program', function() {
     var node = parse('');
     expect(interpret(node)).to.be.undefined;
@@ -191,12 +196,12 @@ describe('interpretation', function() {
     var node = parse('var obj = { i: 0 }; while (obj.i < 3) { ++obj.i; }'),
        mapping = { obj: { i: 0 } };
     expect(interpret(node, mapping)).to.equal(3);
-    expect(mapping).to.have.deep.property('obj.i', 3);
+    expect(mapping.obj.i).to.equal(3);
 
     node = parse('var obj = { i: 0 }; while (obj.i < 3) { obj.i++; }');
     mapping = { obj: { i: 0 } };
     expect(interpret(node, mapping)).to.equal(2);
-    expect(mapping).to.have.deep.property('obj.i', 3);
+    expect(mapping.obj.i).to.equal(3);
   });
 
   it('handles do-while-loop', function() {
@@ -326,7 +331,7 @@ describe('interpretation', function() {
 
   it('handles simple try without catch but with finally (with error)', function() {
     var node = parse('try { throw { a: 1 }; } finally { 2; }');
-    expect(fun.curry(interpret, node)).to.throw({ a: 1 });
+    expect(thrown(fun.curry(interpret, node)).a).to.equal(1);
   });
 
   it('handles nested try and catch constructs', function() {
@@ -361,7 +366,7 @@ describe('interpretation', function() {
     var node = parse('var a = 1; try { throw 3; } catch (e) { throw 4; } finally { a = 2; }'),
         mapping = {};
 
-    expect(fun.curry(interpret, node, mapping)).to.throw(4);
+    expect(thrown(fun.curry(interpret, node, mapping)).valueOf()).to.equal(4);
     expect(mapping.a).to.equal(2);
   });
 
@@ -601,21 +606,21 @@ describe('interpretation', function() {
     var node = parse('delete x.a;'),
         mapping = { x: { a: 1 } };
     expect(interpret(node, mapping)).to.equal(true);
-    expect(mapping).not.to.have.deep.property('x.a');
+    expect(mapping.x.a).to.be.undefined;
   });
 
   it('can delete a non-existing property from an object', function() {
     var node = parse('delete x.b;'),
         mapping = { x: { a: 1 } };
     expect(interpret(node, mapping)).to.equal(true);
-    expect(mapping).not.to.have.deep.property('x.b');
+    expect(mapping.x.b).to.be.undefined;
   });
 
   it('can delete a deeply nested property from an object graph', function() {
     var node = parse('delete x.y.z;'),
         mapping = { x: { y: { z: 1 } } };
     expect(interpret(node, mapping)).to.equal(true);
-    expect(mapping).not.to.have.deep.property('x.y.z');
+    expect(mapping.x.y.z).to.be.undefined;
   });
 
   it('cannot delete a property from a non-existing object', function() {
@@ -704,7 +709,7 @@ describe('interpretation', function() {
 
   it('throws UnwindException for debugger statements', function() {
     var node = parse('debugger; 123;');
-    expect(fun.curry(interpret, node)).to.throw(/UNWIND.*Debugger/);
+    expect(String(thrown(fun.curry(interpret, node)))).to.match(/UNWIND.*Debugger/);
   });
 
   it('does not leak implementation for function names', function() {
@@ -727,7 +732,7 @@ describe('interpretation', function() {
     var fnStr = 'function foo(a, b, c) {}',
         src = '(' + fnStr + ').toString();',
         node = parse(src);
-    ast.acorn.walk.addSource(node, src); // FIXME: this should not be necessary!
+    ast.custom.addSource(node, src); // FIXME: this should not be necessary!
     expect(interpret(node)).to.eql(fnStr); // right function string/source was returned
   });
 
