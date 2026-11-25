@@ -3,7 +3,7 @@ import { expect } from 'mocha-es6';
 import { Path } from 'lively.lang';
 import { walk } from 'lively.ast';
 import { serialize, deserialize } from 'lively.serializer2';
-import { run, enableDebugSupport, disableDebugSupport } from '../lib/stackReification.js';
+import { run, enableDebugSupport, disableDebugSupport, debugReplacements } from '../lib/stackReification.js';
 
 /** A function from its source; a statement list (ending with `;`) becomes the body of `function task()`. */
 const fn = source => globalThis.Function('return (' + (source.endsWith(';') ? `function task() { ${source} }` : source) + ')')();
@@ -393,6 +393,20 @@ describe('suspended computations', function () {
       Array.prototype.forEach = installed;
       expect([capture(), Array.prototype.forEach]).ordered.members([rewritten, installed]);
     } finally { disableDebugSupport(); Array.prototype.forEach = original; }
+  });
+
+  it('compiles an Array replacement that reaches its helpers through the recorder name of a bundle chunk', () => {
+    const spec = debugReplacements.Array.forEach, source = spec.dbg;
+    // A freezer bundle names the recorder __varRecorder__, with a $1 suffix for the second module of a chunk.
+    spec.dbg = fn(String(source).replaceAll('__lvVarRecorder.', '__varRecorder__$1.'));
+    expect(String(spec.dbg)).contains('__varRecorder__$1.arrayObject(this)');
+    delete spec.astRegistry;
+    enableDebugSupport();
+    try {
+      const values = [];
+      [1, 2].forEach(value => values.push(value));
+      expect([values, Array.prototype.forEach]).deep.equals([[1, 2], spec.rewritten]);
+    } finally { disableDebugSupport(); spec.dbg = source; delete spec.astRegistry; }
   });
 
   it('remaps for-of iterator keys and continues with the third element after a saved edit', () => {

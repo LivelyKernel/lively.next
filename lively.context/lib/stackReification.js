@@ -28,11 +28,16 @@ function runtimeAst(func) {
     return ast;
 }
 
-function removeToplevelRecorderRefs(ast, recorderName = '__lvVarRecorder') {
+// Module code reaches its top-level bindings through a recorder: `__lvVarRecorder` in
+// lively.modules, `__varRecorder__` in freezer bundles, where Rollup names the recorders
+// of further modules in a chunk `__varRecorder__$1`, `__varRecorder__$2`, ...
+const recorderName = /^(__lvVarRecorder|__varRecorder__(\$\d+)?)$/;
+
+function removeToplevelRecorderRefs(ast) {
     return ReplaceVisitor.run(removeRuntimeClosureAnnotations(ast), node => {
         if (!node) return node;
         if (node.type !== 'MemberExpression' || node.computed || !node.object) return node;
-        if (node.object.type !== 'Identifier' || node.object.name !== recorderName) return node;
+        if (node.object.type !== 'Identifier' || !recorderName.test(node.object.name)) return node;
         return node.property;
     });
 }
