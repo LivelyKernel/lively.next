@@ -180,7 +180,8 @@ export class Interpreter {
     if (this.shouldHaltAtNextCall() || !this.isNative(func) && func.livelyDebuggingEnabled || this.functionHasDebugger(func))
       func = this.fetchInterpretedFunction(func) || func;
 
-    if (this.shouldInterpret(frame, func)) {
+    const interpreted = this.shouldInterpret(frame, func);
+    if (interpreted) {
       func.setParentFrame(frame);
       if (this.shouldHaltAtNextCall()) {
         this.breakAtCall = false;
@@ -191,7 +192,8 @@ export class Interpreter {
       }
     }
     if (isNew) {
-      if (this.isNative(func)) return Reflect.construct(func, argValues);
+      // Constructors that run natively, such as ES classes, need construct semantics and their own new.target.
+      if (!interpreted) return Reflect.construct(func, argValues);
       recv = this.newObject(origFunc);
     }
 
@@ -297,7 +299,8 @@ export class Interpreter {
   }
 
   fetchInterpretedFunction(func) {
-    if (typeof func !== 'function' || this.isNative(func)) return null;
+    // ES class syntax is not interpreted; such constructors run natively like built-ins.
+    if (typeof func !== 'function' || this.isNative(func) || /^class\b/.test(func.toString())) return null;
     if (func.isInterpretableFunction !== undefined) return func;
     if (!func.livelyDebuggingEnabled) {
       const ast = removeRuntimeClosureAnnotations(parseFunction(runtimeFunctionSource(func), {locations: true, addSource: true, addAstIndex: true}));

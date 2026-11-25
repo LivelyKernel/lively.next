@@ -280,6 +280,14 @@ const scenarios = [
     'debugger; const nested = new Outer(new Inner()), converted = new Outer(String(1));' +
     ' return [nested instanceof Outer, nested.value instanceof Inner, converted instanceof Outer, typeof converted.value];',
     'resume', {is: [true, true, true, 'string']}],
+  ['constructs native classes with new.target and keeps an object returned by a constructor after suspension',
+    {Point: fn('class Point { constructor(x) { this.x = x; this.target = new.target; } }'),
+      Target: fn('function Target() { this.target = new.target; }'), Make: fn('function Make() { this.ignored = true; return {made: true}; }')},
+    'debugger; const point = new Point(2); return [point.x, point.target === Point, new Target().target === Target, new Make()];',
+    'resume', {is: [2, true, true, {made: true}]}],
+  ['steps into the construction of a native class by running its constructor natively',
+    {Point: fn('class Point { constructor(x) { this.x = x; } }')}, 'debugger; const point = new Point(2); return point.x;',
+    'stepInto', 'stepInto', {exception: undefined}, 'resume', {is: 2}],
   ['preserves spread calls and constructors before and after suspension', {}, 'const values = []; values.push(...[1, 2]); debugger;' +
     ' const set = new Set([...values, ...[3]]); return Math.max(...set) + values.length;',
   {exception: undefined, lookup: {values: [1, 2]}}, 'resume', {is: 5}],
