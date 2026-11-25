@@ -96,6 +96,16 @@ describe('expression serializer deserialize', () => {
     });
   });
 
+  it('binds functions named differently from their exports to their export names', () => {
+    // Bundles rename classes, e.g. `List` to `List1`; expressions combining classes of one module need distinct locals.
+    const id = 'http://127.0.0.1:9011/expression-renamed-test.js', List1 = class {}, ListScroller1 = class {};
+    withModule(id, {List: List1, ListScroller: ListScroller1}, [List1, ListScroller1], () => {
+      const decoded = [List1, ListScroller1].map(func => sut.exprStringDecode(sut.getExpressionForFunction(func)));
+      expect(decoded.map(expr => [expr.__expr__, expr.bindings[id]])).deep.equals([['List', ['List']], ['ListScroller', ['ListScroller']]]);
+      for (const func of [List1, ListScroller1]) expect(sut.deserializeExpr(sut.getExpressionForFunction(func))).equals(func);
+    });
+  });
+
   it('rejects local varMapping functions even when a top-level binding has the same name', () => {
     const id = 'local://expression-local-function-test.js';
     const local = module(System, id).recordDebugClosure(function double (value) { return value * 3; }, {}, 0, 0, '', 'double');

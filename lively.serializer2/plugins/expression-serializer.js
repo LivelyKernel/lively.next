@@ -93,7 +93,8 @@ export default class ExpressionSerializer {
       : Object.keys(exports || {}).find(name => exports[name] === func) ||
         (!func[Symbol.for('lively-local-closure')] && func.name);
     if (!binding) throw new Error(`Cannot serialize ${func.name || 'anonymous function'} as a module reference: no matching binding in ${moduleId}`);
-    const name = binding === func.name && binding !== 'default' ? func.name : '__function__';
+    // The local binding is named after the module binding; `default` is no identifier and gets an alias.
+    const name = binding === 'default' ? '__function__' : binding;
     return this.exprStringEncode({
       __expr__: name,
       bindings: {
