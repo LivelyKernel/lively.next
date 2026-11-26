@@ -18,6 +18,20 @@ function customSections (source) {
   return sections;
 }
 
+/**
+ * Whether two workflow sources hold the same custom section contents.
+ * Sources with invalid section markers never match.
+ */
+export function haveSameCustomSections (source, other) {
+  try {
+    const sections = customSections(source);
+    const others = customSections(other);
+    return sections.size === others.size && [...sections].every(([id, { content }]) => others.get(id)?.content === content);
+  } catch (err) {
+    return false;
+  }
+}
+
 function generatedContent (source, generatedDependencies) {
   source = source
     .replace(/\r\n/g, '\n')

@@ -42,3 +42,9 @@ project stops with the error. When opening a project binds it to the running
 lively.next version, such an error does not stop the opening: the project keeps its
 previous version binding, a status warning names the error, and the next opening
 retries the update.
+
+Before pulling, opening a project discards uncommitted changes to
+`.github/workflows/ci-tests.yml` that leave its custom sections as committed,
+such as a runtime pin written by an earlier opening. Uncommitted edits of its
+custom sections, including a repaired section marker, are kept until saving
+commits them.

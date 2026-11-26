@@ -5,7 +5,7 @@ import { resource } from 'lively.resources';
 import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
 import { loadPackage } from 'lively-system-interface/commands/packages.js';
 import { workflowDefinition } from './templates/test-action.js';
-import { preserveWorkflowCustomizations } from './templates/workflow-customizations.js';
+import { preserveWorkflowCustomizations, haveSameCustomSections } from './templates/workflow-customizations.js';
 import { VersionChecker } from 'lively.ide/studio/version-checker.cp.js';
 import { StatusMessageConfirm, StatusMessageWarning, StatusMessageError } from 'lively.halos/components/messages.cp.js';
 import { join } from 'lively.modules/src/url-helpers.js';
@@ -117,7 +117,18 @@ export class Project {
 
   static async resetConfigFiles (gitResource) {
     // Dependency manifests and locks are user-owned; do not discard local updates.
-    await gitResource.resetFile('.github/workflows/ci-tests.yml');
+    // Opening regenerates ci-tests.yml for the bound lively.next version. Discarding that uncommitted
+    // output avoids conflicts with upstream changes when pulling. Uncommitted edits of its custom
+    // sections, including broken or repaired section markers, are kept.
+    const file = '.github/workflows/ci-tests.yml';
+    const read = async command => {
+      const cmd = await gitResource.runCommand(command).whenDone();
+      return cmd.exitCode === 0 ? cmd.stdout : null;
+    };
+    const committed = await read(`git show HEAD:${file}`);
+    if (committed === null) return;
+    const current = await read(`cat ${file}`);
+    if (current === null || haveSameCustomSections(current, committed)) await gitResource.resetFile(file);
   }
 
   static async pullUpstreamChangesIfRemote (gitResource) {

@@ -15,7 +15,7 @@ const warnings = [];
 let merge = (_, generated) => generated;
 const helper = path.join(projectRoot, 'templates/workflow-customizations.js');
 if (fs.existsSync(helper)) {
-  merge = vm.runInNewContext(fs.readFileSync(helper, 'utf8').replace('export function preserveWorkflowCustomizations', 'function preserveWorkflowCustomizations') + '\npreserveWorkflowCustomizations');
+  merge = vm.runInNewContext(fs.readFileSync(helper, 'utf8').replace(/^export function /gm, 'function ') + '\npreserveWorkflowCustomizations');
 }
 const Runner = vm.runInNewContext(`class Project { ${source.slice(start, end)} }; Project`, {
   lively: { isInOfflineMode: true },

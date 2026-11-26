@@ -1,98 +1,160 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const vm = require('node:vm');
+const { execFileSync } = require('node:child_process');
 const projectRoot = path.resolve(__dirname, '..');
 const source = fs.readFileSync(path.join(projectRoot, 'project.js'), 'utf8');
-const slice = (from, to) => {
-  const start = source.indexOf(from);
-  const end = source.indexOf(to, start);
-  assert(start > 0 && end > start, `load the real project methods from ${from.trim()}`);
-  return source.slice(start, end);
+const sliceOf = (text, from, to) => {
+  const start = text.indexOf(from);
+  const end = text.indexOf(to, start);
+  assert(start > 0 && end > start, `load the real methods from ${from.trim()}`);
+  return text.slice(start, end);
 };
 const loadTemplate = (name, exported) => vm.runInNewContext(
   fs.readFileSync(path.join(projectRoot, 'templates', name), 'utf8').replace('export const ', 'const ') + '\n' + exported);
-const merge = vm.runInNewContext(fs.readFileSync(path.join(projectRoot, 'templates/workflow-customizations.js'), 'utf8')
-  .replace('export function preserveWorkflowCustomizations', 'function preserveWorkflowCustomizations') + '\npreserveWorkflowCustomizations');
+const customizations = vm.runInNewContext(fs.readFileSync(path.join(projectRoot, 'templates/workflow-customizations.js'), 'utf8')
+  .replace(/^export function /gm, 'function ') + '\n({ preserveWorkflowCustomizations, haveSameCustomSections })');
 
 const BOUND = 'abcdef1234567';
 const RUNNING = '1234567abcdef';
-const files = new Map();
 const statuses = [];
-let comparison;
+const repos = [];
+let repo, relation, storedPin;
 const Project = vm.runInNewContext(`class Project {
-${slice('  async bindAgainstCurrentLivelyVersion (', '\n  addRemoteConfig (')}
-${slice('  async regeneratePipelines (', '\n  async generateBuildScripts')}
+${sliceOf(source, '  static async resetConfigFiles (', '\n  static async pullUpstreamChangesIfRemote')}
+${sliceOf(source, '  async bindAgainstCurrentLivelyVersion (', '\n  addRemoteConfig (')}
+${sliceOf(source, '  async regeneratePipelines (', '\n  async generateBuildScripts')}
 }; Project`, {
   lively: { isInOfflineMode: true },
-  join: (...parts) => parts.join('/'),
+  join: (...parts) => path.join(...parts),
   workflowDefinition: loadTemplate('test-action.js', 'workflowDefinition'),
   buildRemoteScript: loadTemplate('build-upload-action.js', 'buildRemoteScript'),
   deployScript: loadTemplate('deploy-pages-action.js', 'deployScript'),
-  preserveWorkflowCustomizations: merge,
+  ...customizations,
   VersionChecker: {
-    checkVersionRelation: async () => ({ comparison }),
-    parseHashComparison: value => value === '' ? 3 : 1,
+    checkVersionRelation: async version => ({ comparison: version === RUNNING ? '0\t0' : relation }),
+    parseHashComparison: value => value === '' ? 3 : value === '0\t0' ? 0 : 1,
     currentLivelyVersion: async () => RUNNING
   },
   console: { warn: () => {} },
   $world: { confirm: async () => true, setStatusMessage: (message, type) => statuses.push({ message, type }) },
   StatusMessageConfirm: 'confirm', StatusMessageWarning: 'warning', StatusMessageError: 'error',
   resource: name => ({
-    exists: async () => files.has(name),
-    read: async () => files.get(name),
-    ensureExistance: async function () { return this; },
-    write: async content => files.set(name, content)
+    exists: async () => fs.existsSync(name),
+    read: async () => fs.readFileSync(name, 'utf8'),
+    ensureExistance: async function () { fs.mkdirSync(path.dirname(name), { recursive: true }); return this; },
+    write: async content => fs.writeFileSync(name, content)
   })
 });
 
-function openedProject () {
+// The project's git checkout, driven through the real reset of lively.shell's git resource.
+const shellSource = fs.readFileSync(path.join(projectRoot, '../lively.shell/git-client-resource.js'), 'utf8');
+const GitResource = vm.runInNewContext(`class GitResource {
+${sliceOf(shellSource, '  async resetFile (', '\n  async hasUncommitedChanges')}
+}; GitResource`);
+GitResource.prototype.runCommand = command => ({
+  whenDone: async () => {
+    try {
+      return { exitCode: 0, stdout: execFileSync('bash', ['-c', command], { cwd: repo, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }) };
+    } catch (err) {
+      return { exitCode: err.status || 1, stdout: err.stdout || '', stderr: err.stderr || '' };
+    }
+  }
+});
+const gitResource = new GitResource();
+const git = (...args) => execFileSync('git', ['-c', 'user.name=test', '-c', 'user.email=test@example.invalid', ...args],
+  { cwd: repo, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+const ciTests = () => path.join(repo, '.github/workflows/ci-tests.yml');
+const workflows = () => Object.fromEntries(['ci-tests.yml', 'build-upload-action.yml', 'deploy-pages-action.yml']
+  .map(name => [name, fs.readFileSync(path.join(repo, '.github/workflows', name), 'utf8')]));
+
+function projectBoundTo (version) {
   const project = new Project();
-  project.url = '/project';
+  project.url = repo;
   project.fullName = 'me--project';
   project.name = 'project';
-  project.config = { name: 'me--project', lively: { boundLivelyVersion: BOUND, projectDependencies: [] } };
+  project.config = { name: 'me--project', lively: { boundLivelyVersion: version, projectDependencies: [] } };
   project.generateFlatDependenciesList = async () => [];
-  project.savedPins = [];
   project.saveConfigData = async function () {
-    if (this.config.hasUnsavedChanges) this.savedPins.push(this.config.lively.boundLivelyVersion);
+    if (this.config.hasUnsavedChanges) storedPin = this.config.lively.boundLivelyVersion;
     delete this.config.hasUnsavedChanges;
   };
   return project;
 }
 
-(async () => {
-  const ciTests = '/project/.github/workflows/ci-tests.yml';
-  for (const [label, versionRelation] of [['confirmed version change', '0\t2'], ['overwritten version', '']]) {
-    comparison = versionRelation;
-    files.clear(); statuses.length = 0;
-    const project = openedProject();
-    await project.regeneratePipelines();
-    // A custom step whose end marker is missing, as after an unresolved merge.
-    const valid = files.get(ciTests).replace(/^([ \t]*)# lively.next:custom end after-tests/m, '$1- run: echo custom-step\n$&');
-    files.set(ciTests, valid.replace(/\n[ \t]*# lively.next:custom end after-tests/, ''));
-    const workflows = new Map(files);
+/** A repository whose committed workflows are generated for BOUND, with `edit` applied to ci-tests.yml. */
+async function committedProject (edit = text => text) {
+  repo = fs.mkdtempSync(path.join(os.tmpdir(), 'lively-version-binding-'));
+  repos.push(repo);
+  git('init', '-q');
+  await projectBoundTo(BOUND).regeneratePipelines();
+  const generated = fs.readFileSync(ciTests(), 'utf8');
+  fs.writeFileSync(ciTests(), edit(generated));
+  git('add', '.');
+  git('commit', '-q', '-m', 'workflows');
+  storedPin = BOUND;
+  statuses.length = 0;
+  return generated;
+}
 
-    const result = await project.bindAgainstCurrentLivelyVersion(BOUND);
-    assert.notEqual(result, 'UPDATED', `${label}: a broken custom section does not count as an update`);
-    assert.deepEqual(project.savedPins, [], `${label}: keep the stored version so the next opening retries`);
-    assert.equal(project.config.lively.boundLivelyVersion, BOUND, `${label}: keep the version for this session`);
-    assert.deepEqual(files, workflows, `${label}: leave every workflow unchanged`);
+/** Opening a project resets its configuration files before binding it to the running version. */
+async function open () {
+  await Project.resetConfigFiles(gitResource);
+  const project = projectBoundTo(storedPin);
+  return { project, result: await project.bindAgainstCurrentLivelyVersion(storedPin) };
+}
+
+const withCustomStep = text => text.replace(/^([ \t]*)# lively.next:custom end after-tests/m, '$1- run: echo custom-step\n$&');
+const withoutEndMarker = text => text.replace(/\n[ \t]*# lively.next:custom end after-tests/, '');
+
+(async () => {
+  for (const [label, versionRelation] of [['confirmed version change', '0\t2'], ['overwritten version', '']]) {
+    relation = versionRelation;
+
+    // An uncommitted custom step in ci-tests.yml.
+    await committedProject();
+    fs.writeFileSync(ciTests(), withCustomStep(fs.readFileSync(ciTests(), 'utf8')));
+    assert.equal((await open()).result, 'UPDATED', `${label}: bind to the running version`);
+    assert.match(fs.readFileSync(ciTests(), 'utf8'), /echo custom-step/, `${label}: opening keeps an uncommitted custom step`);
+    assert.equal((await open()).result, 'SUCCESS', `${label}: the next opening finds the running version`);
+    assert.match(fs.readFileSync(ciTests(), 'utf8'), /echo custom-step/, `${label}: reopening keeps the uncommitted custom step`);
+    assert.match(fs.readFileSync(ciTests(), 'utf8'), new RegExp(RUNNING), `${label}: reopening keeps the regenerated workflow`);
+
+    // A committed custom step whose end marker is missing, as after an unresolved merge.
+    const generated = await committedProject(text => withoutEndMarker(withCustomStep(text)));
+    const committed = workflows();
+    const failed = await open();
+    assert.notEqual(failed.result, 'UPDATED', `${label}: a broken custom section does not count as an update`);
+    assert.equal(storedPin, BOUND, `${label}: keep the stored version so the next opening retries`);
+    assert.equal(failed.project.config.lively.boundLivelyVersion, BOUND, `${label}: keep the version for this session`);
+    assert.deepEqual(workflows(), committed, `${label}: leave every workflow unchanged`);
     const warning = statuses.find(({ type }) => type === 'warning');
     assert.match(warning?.message || '', /ci-tests\.yml: Unclosed custom workflow section: after-tests/, `${label}: name the broken workflow`);
     assert.ok(!statuses.some(({ type }) => type === 'confirm'), `${label}: do not report an update`);
-    await assert.rejects(() => project.regeneratePipelines(), /Unclosed custom workflow section/, `${label}: saving still stops on the broken section`);
+    await assert.rejects(() => failed.project.regeneratePipelines(), /Unclosed custom workflow section/, `${label}: saving still stops on the broken section`);
 
-    files.set(ciTests, valid);
+    // The user repairs the marker without committing and opens the project again.
+    fs.writeFileSync(ciTests(), withCustomStep(generated));
     statuses.length = 0;
-    assert.equal(await project.bindAgainstCurrentLivelyVersion(BOUND), 'UPDATED', `${label}: retry once the section is repaired`);
-    assert.deepEqual(project.savedPins, [RUNNING], `${label}: store the running version`);
-    for (const content of files.values()) {
-      assert.match(content, new RegExp(RUNNING), `${label}: workflows use the running version`);
+    assert.equal((await open()).result, 'UPDATED', `${label}: the next opening retries with the repaired section`);
+    assert.equal(storedPin, RUNNING, `${label}: store the running version`);
+    for (const [name, content] of Object.entries(workflows())) {
+      assert.match(content, new RegExp(RUNNING), `${name}: use the running version`);
       assert.doesNotMatch(content, new RegExp(BOUND));
     }
-    assert.match(files.get(ciTests), /echo custom-step/, `${label}: keep the repaired custom step`);
+    assert.match(fs.readFileSync(ciTests(), 'utf8'), /echo custom-step/, `${label}: keep the repaired custom step`);
     assert.ok(!statuses.some(({ message }) => /stays bound/.test(message)), `${label}: no binding warning after repair`);
   }
-  console.log('Lively version binding: broken custom sections keep the bound version, warn and retry on the next opening');
-})().catch(err => { console.error(err); process.exitCode = 1; });
+
+  // A ci-tests.yml regenerated by an earlier opening, with unchanged custom sections.
+  await committedProject(withCustomStep);
+  const committed = fs.readFileSync(ciTests(), 'utf8');
+  fs.writeFileSync(ciTests(), committed.replaceAll(BOUND, RUNNING));
+  await Project.resetConfigFiles(gitResource);
+  assert.equal(fs.readFileSync(ciTests(), 'utf8'), committed, 'opening discards uncommitted generated changes before pulling');
+  console.log('Lively version binding: openings keep uncommitted custom sections, broken sections keep the bound version and an uncommitted repair is retried');
+})().catch(err => { console.error(err); process.exitCode = 1; }).finally(() => {
+  for (const dir of repos) fs.rmSync(dir, { recursive: true, force: true });
+});
