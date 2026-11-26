@@ -19,14 +19,18 @@ function customSections (source) {
 }
 
 /**
- * Whether two workflow sources hold the same custom section contents.
+ * Whether two workflow sources hold the same custom steps. A missing section counts as an empty one,
+ * so an unmarked workflow matches its migration to empty sections, and line endings are ignored.
  * Sources with invalid section markers never match.
  */
 export function haveSameCustomSections (source, other) {
+  const customSteps = text => new Map([...customSections(text.replace(/\r\n/g, '\n'))]
+    .filter(([, { content }]) => content.trim())
+    .map(([id, { content }]) => [id, content]));
   try {
-    const sections = customSections(source);
-    const others = customSections(other);
-    return sections.size === others.size && [...sections].every(([id, { content }]) => others.get(id)?.content === content);
+    const steps = customSteps(source);
+    const others = customSteps(other);
+    return steps.size === others.size && [...steps].every(([id, content]) => others.get(id) === content);
   } catch (err) {
     return false;
   }

@@ -178,6 +178,29 @@ const withoutEndMarker = text => text.replace(/\n[ \t]*# lively.next:custom end 
   fs.writeFileSync(ciTests(), committed.replaceAll(BOUND, RUNNING));
   await Project.resetConfigFiles(gitResource);
   assert.equal(fs.readFileSync(ciTests(), 'utf8'), committed, 'opening discards uncommitted generated changes before pulling');
+
+  // A committed unmarked workflow, which an earlier opening migrated to empty custom sections for the running version.
+  await committedProject(text => text.replace(/^[ \t]*# lively.next:custom[^\n]*\n?/gm, '').trimEnd());
+  const unmarked = fs.readFileSync(ciTests(), 'utf8');
+  relation = '';
+  assert.equal((await open()).result, 'UPDATED', 'an earlier opening binds the unmarked project');
+  assert.match(fs.readFileSync(ciTests(), 'utf8'), /lively.next:custom start/, 'the earlier opening migrates ci-tests.yml');
+  await Project.resetConfigFiles(gitResource);
+  assert.equal(fs.readFileSync(ciTests(), 'utf8'), unmarked, 'the next opening discards the uncommitted migration before pulling');
+
+  // A checkout with core.autocrlf, whose working copy has CRLF line endings, with a pin written by an earlier opening.
+  await committedProject(withCustomStep);
+  git('config', 'core.autocrlf', 'true');
+  fs.rmSync(ciTests());
+  git('checkout', '--', '.github/workflows/ci-tests.yml');
+  const checkedOut = fs.readFileSync(ciTests(), 'utf8');
+  assert.match(checkedOut, /\r\n/, 'the checkout has CRLF line endings');
+  fs.writeFileSync(ciTests(), checkedOut.replaceAll(BOUND, RUNNING));
+  await Project.resetConfigFiles(gitResource);
+  assert.equal(fs.readFileSync(ciTests(), 'utf8'), checkedOut, 'line endings do not keep an uncommitted pin');
+  fs.writeFileSync(ciTests(), checkedOut.replace('echo custom-step', 'echo edited-step'));
+  await Project.resetConfigFiles(gitResource);
+  assert.match(fs.readFileSync(ciTests(), 'utf8'), /echo edited-step/, 'an edited custom step with CRLF line endings is kept');
   console.log('Lively version binding: openings keep uncommitted custom sections, broken sections keep the bound version with a dialog naming them, and an uncommitted repair is retried');
 })().catch(err => { console.error(err); process.exitCode = 1; }).finally(() => {
   for (const dir of repos) fs.rmSync(dir, { recursive: true, force: true });

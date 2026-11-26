@@ -44,7 +44,8 @@ lively.next version it is bound to, a dialog names the error, and the next openi
 retries the update.
 
 Before pulling, opening a project discards uncommitted changes to
-`.github/workflows/ci-tests.yml` that leave its custom sections as committed,
-such as a runtime pin written by an earlier opening. Uncommitted edits of its
-custom sections, including a repaired section marker, are kept until saving
+`.github/workflows/ci-tests.yml` that leave its custom steps as committed, such
+as a runtime pin or a migration to marked sections written by an earlier opening.
+Line endings and empty sections do not count as custom steps. Uncommitted edits of
+its custom sections, including a repaired section marker, are kept until saving
 commits them.
