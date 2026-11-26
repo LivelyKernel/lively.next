@@ -609,8 +609,35 @@ async function assertNativeAssets (client) {
   console.log('Desktop app smoke passed: browser images, fonts, styles and workers load directly from the native filesystem');
 }
 
+/**
+ * Describes how far installing the project in `projectDir` got: which install
+ * results exist on disk, and which Bun processes are running.
+ */
+function projectInstallDiagnostics (projectDir) {
+  const lines = [`--- install state of ${projectDir} ---`];
+  for (const name of ['package.json', 'bun.lock', 'node_modules', '.cachedImportMap.json']) {
+    try {
+      const stat = fs.statSync(path.join(projectDir, name));
+      lines.push(`${name}: ${stat.isDirectory() ? fs.readdirSync(path.join(projectDir, name)).length + ' entries' : stat.size + ' bytes'}, modified ${stat.mtime.toISOString()}`);
+    } catch (_) { lines.push(`${name}: missing`); }
+  }
+  try {
+    const config = JSON.parse(fs.readFileSync(path.join(projectDir, 'package.json'), 'utf8'));
+    lines.push('lively.localDependencies: ' + JSON.stringify(config.lively?.localDependencies));
+  } catch (err) { lines.push('package.json unreadable: ' + err.message); }
+  const processes = process.platform === 'win32'
+    ? spawnSync('powershell', ['-NoProfile', '-Command', "Get-CimInstance Win32_Process | Where-Object { $_.Name -like 'bun*' } | Format-List ProcessId,ParentProcessId,CreationDate,CommandLine"], { encoding: 'utf8' })
+    : spawnSync('ps', ['-eo', 'pid,ppid,etime,args'], { encoding: 'utf8' });
+  const isBunProcess = line => /^bun(\.exe)?$/i.test(path.basename(line.match(/^\s*\d+\s+\d+\s+\S+\s+(\S+)/)?.[1] || ''));
+  const bunProcesses = String(processes.stdout || '').split('\n')
+    .filter(line => process.platform === 'win32' ? line.trim() : isBunProcess(line))
+    .map(line => line.slice(0, 400));
+  lines.push('Bun processes: ' + (bunProcesses.length ? '\n' + bunProcesses.join('\n') : (processes.error?.message || 'none')));
+  return lines.join('\n');
+}
+
 /** Exercise local programming and verify the saved work after an app restart. */
-async function assertProjectProgramming (client, port, reopened = false) {
+async function assertProjectProgramming (client, port, dataDir, reopened = false) {
   const result = await client.send('Runtime.evaluate', {
     awaitPromise: true,
     returnByValue: true,
@@ -734,7 +761,8 @@ async function assertProjectProgramming (client, port, reopened = false) {
     })()`
   });
   if (result.exceptionDetails || result.result?.value !== true) {
-    throw new Error('Desktop project programming failed: ' + JSON.stringify(result.exceptionDetails || result.result));
+    throw new Error('Desktop project programming failed: ' + JSON.stringify(result.exceptionDetails || result.result) +
+      '\n' + projectInstallDiagnostics(path.join(dataDir, 'runtime-root', 'local_projects', 'smoke--programming')));
   }
   console.log('Desktop app smoke passed: ' + (reopened
     ? 'relaunch reopens saved client/server source, evaluation, visible output and module environments'
@@ -1735,7 +1763,7 @@ async function main () {
             });
             return result.result?.value === true;
           }, timeoutMs);
-          await assertProjectProgramming(client, port, true);
+          await assertProjectProgramming(client, port, dataDir, true);
           await assertBrowserSwc(client);
           if (fs.readFileSync(path.join(dataDir, 'runtime-root', 'local_projects', 'smoke--programming', 'bun.lock'), 'utf8') !== programmingLock) {
             throw new Error('Restarting the programming project changed its Bun lock');
@@ -1827,7 +1855,7 @@ async function main () {
           await assertRendererUsesHttpSystemURLs(client, port, timeoutMs, { requirePopulatedSystemMap: true, native });
           console.log('Desktop app smoke passed: project route preserves browser module resolution');
           if (!devRoot) {
-            await assertProjectProgramming(client, port);
+            await assertProjectProgramming(client, port, dataDir);
             await assertBrowserSwc(client);
             programmingLock = fs.readFileSync(path.join(dataDir, 'runtime-root', 'local_projects', 'smoke--programming', 'bun.lock'), 'utf8');
           }
