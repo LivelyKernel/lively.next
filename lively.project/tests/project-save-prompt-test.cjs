@@ -39,6 +39,8 @@ function fixture ({ remote = true, regeneration, saveConfigData = async () => {}
   return { model, indicator, statuses, StatusMessageError, whenRegenerationStarts, regenerations: () => regenerations };
 }
 
+const shownText = ({ textAndAttributes = [] }) => textAndAttributes.filter((_, i) => i % 2 === 0).join('');
+
 async function check () {
   let finish;
   const deferred = new Promise(resolve => { finish = resolve; });
@@ -71,6 +73,10 @@ async function check () {
   await failed.model.resolve(true);
   assert.match(failed.statuses[0].message, /Invalid custom workflow section/);
   assert.equal(failed.statuses[0].type, failed.StatusMessageError);
+  const { dependencyStatusInfo } = failed.model.ui;
+  assert.equal(dependencyStatusInfo.visible, true, 'the prompt keeps showing why saving is disabled');
+  assert.match(shownText(dependencyStatusInfo), /cannot be saved: Invalid custom workflow section/);
+  assert.equal(dependencyStatusInfo.fixedHeight, false, 'the reason is shown in full');
 
   const configFailure = fixture({ saveConfigData: async () => { throw new Error('Cannot write project configuration'); } });
   await configFailure.model.viewDidLoad();
@@ -79,6 +85,8 @@ async function check () {
   assert.equal(configFailure.model.view.visible, true);
   assert.equal(configFailure.model.ui.okButton.viewModel.deactivated, true);
   assert.match(configFailure.statuses[0].message, /Cannot write project configuration/);
+  assert.equal(configFailure.model.ui.dependencyStatusInfo.visible, true);
+  assert.match(shownText(configFailure.model.ui.dependencyStatusInfo), /Cannot write project configuration/);
 
   const local = fixture({ remote: false });
   await local.model.viewDidLoad();
@@ -86,7 +94,8 @@ async function check () {
   assert.equal(local.model.ui.okButton.viewModel.deactivated, false);
   assert.equal(local.model.view.visible, true);
   assert.equal(local.indicator.removals, 1);
-  console.log('Project save prompt: deferred workflows, rejected workflows, configuration failure and local setup pass');
+  assert.equal(local.model.ui.dependencyStatusInfo.visible, false, 'successful setup shows no error');
+  console.log('Project save prompt: deferred workflows, rejected workflows with a lasting reason, configuration failure and local setup pass');
 }
 
 check().catch(error => { console.error(error); process.exitCode = 1; });

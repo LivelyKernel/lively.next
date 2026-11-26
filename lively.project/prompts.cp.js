@@ -482,7 +482,13 @@ class ProjectSavePrompt extends AbstractPromptModel {
       if (await this.project.hasRemoteConfigured()) await this.project.regeneratePipelines({ showWarnings: false });
       this.ui.okButton.enable();
     } catch (err) {
-      this.view.setStatusMessage(err.message || String(err), StatusMessageError);
+      const message = err.message || String(err);
+      this.view.setStatusMessage(message, StatusMessageError);
+      // Saving stays disabled, so the prompt keeps showing why.
+      const { dependencyStatusInfo } = this.ui;
+      dependencyStatusInfo.textAndAttributes = ['', { fontFamily: 'Font Awesome', fontWeight: '900' }, ' ', {}, `The project cannot be saved: ${message}`, null];
+      dependencyStatusInfo.fixedHeight = false;
+      dependencyStatusInfo.visible = true;
     } finally {
       li.remove();
       this.view.visible = true;
