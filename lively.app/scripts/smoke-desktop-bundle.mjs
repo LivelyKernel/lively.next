@@ -637,49 +637,63 @@ function projectInstallDiagnostics (projectDir) {
 }
 
 /**
- * Prints how network requests from the native backend worker behave: one
- * through `globalThis.fetch` with `AbortSignal.timeout`, as `@jspm/fetch`
- * issues them, and one through `node:https`. Hangs are reported, not awaited.
+ * Prints how long each stage of generating a browser import map takes in the
+ * native backend worker: importing lib-lookup.js and @jspm/generator,
+ * installing one dependency into a temporary package, extracting the map, and
+ * a HEAD request without a timeout as findUnavailableJspmPackages issues it.
+ * Each stage reports a hang after 60 s instead of waiting for it; the probe
+ * does not fail the test.
  */
-async function reportNativeBackendFetch (client) {
+async function reportNativeBackendImportMap (client) {
   const result = await client.send('Runtime.evaluate', {
     awaitPromise: true,
     returnByValue: true,
     expression: `(async () => {
       if (!globalThis.livelyNative?.evaluate) return 'no native backend';
       const source = ${JSON.stringify(`(async () => {
-        const url = 'https://ga.jspm.io/npm:@rollup/plugin-json@4.1.0/package.json';
         const workerTimeout = (typeof self !== 'undefined' ? self : globalThis).setTimeout;
-        const within = (ms, work) => Promise.race([work, new Promise(resolve => workerTimeout(() => resolve({ hung: true }), ms))]);
-        const timed = async (label, run) => {
+        const stages = [];
+        const stage = async (label, run) => {
           const started = Date.now();
-          try { return { label, ...(await within(30000, run())), ms: Date.now() - started }; }
-          catch (err) { return { label, error: String(err && err.message || err), ms: Date.now() - started }; }
+          try {
+            const summary = await Promise.race([run(), new Promise(resolve => workerTimeout(() => resolve({ hung: true }), 60000))]);
+            stages.push({ label, ms: Date.now() - started, ...summary });
+            return !summary.hung;
+          } catch (err) {
+            stages.push({ label, ms: Date.now() - started, error: String(err && err.stack || err).slice(0, 500) });
+            return false;
+          }
         };
-        const env = {
-          fetchIsNative: /\\[native code\\]/.test(Function.prototype.toString.call(globalThis.fetch)),
-          abortSignalIsWorkerGlobal: typeof self !== 'undefined' && globalThis.AbortSignal === self.AbortSignal,
-          node: process.versions.node,
-          undici: process.versions.undici
-        };
-        const results = [
-          await timed('globalThis.fetch with AbortSignal.timeout(20s)', () => globalThis.fetch(url, { signal: AbortSignal.timeout(20000) })
-            .then(async res => ({ status: res.status, bytes: (await res.text()).length }))),
-          await timed('node:https', () => new Promise((resolve, reject) => require('node:https').get(url, res => {
-            let bytes = 0;
-            res.on('data', chunk => { bytes += chunk.length; });
-            res.on('end', () => resolve({ status: res.statusCode, bytes }));
-          }).on('error', reject)))
-        ];
-        return { env, results };
+        const path = require('node:path');
+        const fs = require('node:fs');
+        const os = require('node:os');
+        const libLookup = path.join(rootDir, 'lively.server', 'plugins', 'lib-lookup.js');
+        let generatorModule;
+        const generatorFile = createRequire(libLookup).resolve('@jspm/generator');
+        const ok = await stage('import lib-lookup.js', async () => { await System.nativeImport(pathToFileURL(libLookup).href); return {}; }) &&
+          await stage('import @jspm/generator', async () => { generatorModule = await System.nativeImport(pathToFileURL(generatorFile).href); return {}; });
+        if (ok) {
+          const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lively-import-map-probe-'));
+          fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'import-map-probe', version: '1.0.0', dependencies: { '@rollup/plugin-json': '4.1.0' } }));
+          const baseUrl = pathToFileURL(dir + path.sep);
+          const generator = new generatorModule.Generator({ env: ['browser', 'module', 'import'], baseUrl, mapUrl: new URL('.cachedImportMap.json', baseUrl), defaultProvider: 'jspm.io' });
+          await stage('generator.install @rollup/plugin-json@4.1.0', async () => { await generator.install('@rollup/plugin-json@4.1.0'); return {}; }) &&
+            await stage('generator.extractMap', async () => {
+              const { map } = await generator.extractMap(Object.keys(generator.map.imports), undefined, undefined, true);
+              return { imports: Object.keys(map.imports || {}).length };
+            });
+        }
+        await stage('HEAD fetch without timeout', async () =>
+          ({ status: (await fetch('https://ga.jspm.io/npm:@rollup/plugin-json@4.1.0/dist/index.js', { method: 'HEAD' })).status }));
+        return { generatorFile, stages };
       })()`)};
       return Promise.race([
         livelyNative.evaluate(source),
-        new Promise(resolve => setTimeout(() => resolve('native backend did not answer within 90 s'), 90000))
+        new Promise(resolve => setTimeout(() => resolve('native backend did not answer within 6 minutes'), 6 * 60000))
       ]);
     })()`
   });
-  console.log('Desktop app smoke: native backend fetch probe: ' +
+  console.log('Desktop app smoke: native backend import map probe: ' +
     JSON.stringify(result.exceptionDetails || result.result?.value));
 }
 
@@ -1902,7 +1916,7 @@ async function main () {
           await assertRendererUsesHttpSystemURLs(client, port, timeoutMs, { requirePopulatedSystemMap: true, native });
           console.log('Desktop app smoke passed: project route preserves browser module resolution');
           if (!devRoot) {
-            await reportNativeBackendFetch(client);
+            await reportNativeBackendImportMap(client);
             await assertProjectProgramming(client, port, dataDir);
             await assertBrowserSwc(client);
             programmingLock = fs.readFileSync(path.join(dataDir, 'runtime-root', 'local_projects', 'smoke--programming', 'bun.lock'), 'utf8');
