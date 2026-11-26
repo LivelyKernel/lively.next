@@ -55,15 +55,26 @@ async function addPackageAtIfMissing (registry, packageDir, preferredLocation) {
   return registry.addPackageAt(packageDir, preferredLocation);
 }
 
+/**
+ * Installs the dependencies of the project `fullName` on the server and adds
+ * its package to the server's package registry. Throws unless the server
+ * answers with the registered package.
+ */
 async function addProjectPackageOnServerIfMissing (fullName, update = false) {
-  await evalOnServer(`(async () => {
+  const registeredName = await evalOnServer(`(async () => {
     const registry = System.get("@lively-env").packageRegistry;
     const projectURL = System.baseURL + "local_projects/" + ${JSON.stringify(fullName)};
     const { installProjectDependencies } = await System.nativeImport(new URL('lively.project/package-install.mjs', System.baseURL).href);
     await installProjectDependencies(System._nodeRequire('node:url').fileURLToPath(projectURL), { update: ${JSON.stringify(update)} });
-    if (!registry.findPackageWithURL(projectURL)) await registry.addPackageAt(projectURL);
-    return true;
-  })()`);
+    const pkg = registry.findPackageWithURL(projectURL) || await registry.addPackageAt(projectURL);
+    return pkg ? pkg.name : null;
+  })()`, {
+    // Installing the dependencies of a project can take minutes.
+    promiseTimeout: 10 * 60 * 1000
+  });
+  if (typeof registeredName !== 'string') {
+    throw new Error(`The server did not confirm that it registered the package of project ${fullName}`);
+  }
 }
 
 export class Project {

@@ -1159,6 +1159,7 @@ export class BrowserModel extends ViewModel {
     pName = pName || 'lively.morphic';
     if (this.selectedPackage?.address === pName) return;
     const p = await this.systemInterface.getPackage(pName);
+    if (!p) throw new Error(`Package ${pName} is not known to the ${this.systemInterface.name} system`);
     const columnView = this.ui.columnView;
     const td = columnView.treeData;
     await columnView.setExpandedPath(n => {

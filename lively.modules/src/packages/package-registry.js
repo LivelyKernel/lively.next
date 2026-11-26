@@ -727,7 +727,10 @@ export class PackageRegistry {
         console.log(`[lively.modules] package ${name}@${version} discovered in ${dir.url}`);
       }
       return discovered;
-    } catch (err) { return discovered; }
+    } catch (err) {
+      console.warn(`[lively.modules] cannot add the package in ${url}: ${err.message}`); // eslint-disable-line no-console
+      return discovered;
+    }
   }
 
   _addToPackageMap (pkg, name, version, allowOverride = true) {

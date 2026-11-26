@@ -104,7 +104,12 @@ export function fixSourceForBugsInGoogleClosure (id, source) {
   return source;
 }
 
-export async function evalOnServer (code) {
+/**
+ * Evaluates `code` in the first Node.js eval backend and answers its result.
+ * In the browser, `options` are passed on to `runEvalAndStringify`, e.g.
+ * `promiseTimeout`.
+ */
+export async function evalOnServer (code, options = {}) {
   if (isNode) {
     return runEval(code);
   }
@@ -114,7 +119,7 @@ export async function evalOnServer (code) {
   const remoteInterface = (await EvalBackendChooser.default.allEvalBackends())
     .map(backend => backend.coreInterface)
     .find(coreInterface => coreInterface instanceof RemoteCoreInterface);
-  return await remoteInterface.runEvalAndStringify(code, { classTransform: classes.classToFunctionTransform });
+  return await remoteInterface.runEvalAndStringify(code, { classTransform: classes.classToFunctionTransform, ...options });
 }
 
 export async function compileOnServer (code, resolver) {
