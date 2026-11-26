@@ -30,6 +30,13 @@ try {
   assert.equal(resolver.resolveModuleId('./entry.js'), null);
   const bundler = new LivelyRollup({ resolver, asBrowserModule: false });
   assert.equal(bundler.resolveRelativeImport(path.join(pkg, 'index.js'), './internal/node.js'), path.join(pkg, 'internal/node.js'));
+  // Modules fetched from a CDN import their relative dependencies from the same host.
+  const browserBundler = new LivelyRollup({ resolver, asBrowserModule: true });
+  for (const [importer, id, expected] of [
+    ['https://unpkg.com/lodash-es@4.17.21/add.js', './_createMathOperation.js', 'https://unpkg.com/lodash-es@4.17.21/_createMathOperation.js'],
+    ['https://cdn.jsdelivr.net/npm/lodash-es@4.17.21/add.js', './_createMathOperation.js', 'https://cdn.jsdelivr.net/npm/lodash-es@4.17.21/_createMathOperation.js'],
+    ['https://cdn.jsdelivr.net/npm/lodash-es@4.17.21/fp/add.js', '../add.js', 'https://cdn.jsdelivr.net/npm/lodash-es@4.17.21/add.js']
+  ]) assert.equal(browserBundler.resolveId(id, importer), expected, `${id} from ${importer}`);
   build = await rollup({
     input: entry,
     plugins: [lively({

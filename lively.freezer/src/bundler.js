@@ -382,10 +382,14 @@ export default class LivelyRollup {
 
   /**
    * Resolve relative imports with the target conditions and package mappings.
+   * Imports from modules fetched by URL resolve against that URL.
    * @param { string } moduleId - The module from where the import happens.
    * @param { string } path - The relative path to be imported.
    */
   resolveRelativeImport (moduleId, path, isRequire = false) {
+    if (/^[a-z][a-z\d+.-]+:\/\//i.test(moduleId) && !moduleId.startsWith('file:')) {
+      return resource(moduleId).parent().join(path).withRelativePartsResolved().url;
+    }
     return this.resolver.resolveModuleId(path, moduleId, this.getResolutionContext(), isRequire);
   }
 
