@@ -22,8 +22,6 @@ lively({
 
 This can also contain `<meta>`, `<link>`, or `<style>` elements. Rebuild the project after changing the configuration. A world's `__head_html__` property is not read by the project build script.
 
-When calling `bundleModule` from `lively.freezer` directly, pass the same configuration as `htmlConfig`, for example `{ htmlConfig: { title: 'My app', head: '<meta name="theme-color" content="#f1c40f">' } }`.
-
 ## Resurrection Builds
 
 lively.freezer provides the option to produce a bundle that ships with module meta annotations. 
