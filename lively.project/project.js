@@ -628,17 +628,22 @@ export class Project {
 
   /**
    * Binds the project to the running lively.next version and regenerates its workflows for that version.
+   * The workflows are written only after the new version is stored in the project configuration.
    * A workflow whose custom sections cannot be merged, for example because of a broken section marker,
-   * leaves the bound version unchanged and is reported in a dialog, so the next opening retries the update.
-   * Other failures are thrown, also without changing the bound version.
+   * leaves the bound version and every workflow unchanged and is reported in a dialog, so the next
+   * opening retries the update. Other failures before the new version is stored, such as a GitHub API
+   * error while saving the configuration, are thrown and leave the bound version and workflows unchanged too.
    * @returns {Promise<boolean>} Whether the project is bound to the running version.
    */
   async bindToCurrentLivelyVersion () {
     const livelyConfig = this.config.lively;
     const boundVersion = livelyConfig.boundLivelyVersion;
     livelyConfig.boundLivelyVersion = await VersionChecker.currentLivelyVersion(true);
+    let pipelines;
     try {
-      await this.regeneratePipelines();
+      pipelines = await this.generatePipelines();
+      this.config.hasUnsavedChanges = true;
+      await this.saveConfigData();
     } catch (err) {
       livelyConfig.boundLivelyVersion = boundVersion;
       if (!err.workflowFile) throw err;
@@ -649,8 +654,7 @@ export class Project {
       });
       return false;
     }
-    this.config.hasUnsavedChanges = true;
-    await this.saveConfigData();
+    await this.writePipelines(pipelines);
     return true;
   }
 
@@ -754,6 +758,15 @@ export class Project {
   }
 
   async regeneratePipelines ({ showWarnings = true } = {}) {
+    await this.writePipelines(await this.generatePipelines(), { showWarnings });
+  }
+
+  /**
+   * Generates the workflows for the current configuration, keeping their custom sections, without writing them.
+   * Every custom section is validated before any workflow is written: a section that cannot be merged
+   * throws an error whose `workflowFile` names the workflow.
+   */
+  async generatePipelines () {
     if (!lively.isInOfflineMode) {
       await this.checkPagesSupport();
       await this.gitResource.activateGitHubPages(currentUserToken(), this.name, this.repoOwner);
@@ -776,7 +789,10 @@ export class Project {
         throw Object.assign(new Error(`${name}: ${error.message}`), { workflowFile: name });
       }
     }
-    // Validate every custom section before replacing any workflow.
+    return { updates, warnings };
+  }
+
+  async writePipelines ({ updates, warnings }, { showWarnings = true } = {}) {
     for (const { file, content } of updates) await (await file.ensureExistance()).write(content);
     if (showWarnings && warnings.length) {
       const message = warnings.join('\n');
