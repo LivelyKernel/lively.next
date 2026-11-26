@@ -16,8 +16,15 @@ const http = require('http');
 const fs = require('fs');
 
 const CI = !!process.env.CI;
-// Failure details are bounded so that the reports of all packages fit GitHub's step summary.
+// A package's report in the CI step summary lists at most MAX_LISTED_FAILURES failed tests with the
+// details of the first MAX_DETAILED_FAILURES in at most MAX_FAILURE_LIST_LENGTH characters, followed by
+// at most MAX_BROWSER_ERRORS_LENGTH characters of browser errors. Including the emoji markup that
+// scripts/test.sh adds, an ASCII report stays below 30 KB, so that many packages fit GitHub's 1 MiB
+// step summary limit. The job log keeps every failure with its full stack.
 const MAX_DETAIL_LENGTH = 1000;
+const MAX_DETAILED_FAILURES = 5;
+const MAX_LISTED_FAILURES = 30;
+const MAX_FAILURE_LIST_LENGTH = 10000;
 const MAX_BROWSER_ERRORS_LENGTH = 10000;
 
 /**
@@ -38,6 +45,26 @@ function boundBrowserErrors (summary) {
   return kept.join('\n');
 }
 
+/**
+ * Lists failed tests for the CI step summary within MAX_FAILURE_LIST_LENGTH characters,
+ * with the details of the first MAX_DETAILED_FAILURES and at most MAX_LISTED_FAILURES names.
+ */
+function failureList (failures) {
+  let list = '';
+  let listed = 0;
+  for (const { title, details } of failures) {
+    if (listed === MAX_LISTED_FAILURES) break;
+    const name = `- ${title} failed ❌\n`;
+    let entry = details && listed < MAX_DETAILED_FAILURES ? `${name}\n\`\`\`text\n${details}\n\`\`\`\n` : name;
+    if (list.length + entry.length > MAX_FAILURE_LIST_LENGTH) entry = name;
+    if (list.length + entry.length > MAX_FAILURE_LIST_LENGTH) break;
+    list += entry;
+    listed++;
+  }
+  if (listed < failures.length) list += `- ${failures.length - listed} more failed test(s) are listed in the job log\n`;
+  return list;
+}
+
 /** Encodes a message for a GitHub Actions workflow command, which ends at the first line break. */
 function workflowCommandMessage (text) {
   return text.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
@@ -46,7 +73,7 @@ function workflowCommandMessage (text) {
 const targetPackage = process.argv[2];
 const testServerURL = new URL(process.env.LIVELY_TEST_SERVER_READY_URL || 'http://localhost:9011/');
 let passed = 0; let failed = 0; let skipped = 0;
-let markdownListOfFailingTests = '';
+const failures = [];
 
 if (CI) {
   console.log(`Running Tests for ${targetPackage} 📦`);
@@ -133,24 +160,23 @@ const req = http.request(options, res => {
             console.log(`${test.fullTitle} passed ✅`);
           } else {
             failed += 1;
-            if (CI) {
-              console.log(`${test.fullTitle} failed ❌`);
-              markdownListOfFailingTests = markdownListOfFailingTests + `- ${test.fullTitle} failed ❌\n`;
-            } else {
-              console.log(`${test.fullTitle} failed ❌`);
-            }
+            console.log(`${test.fullTitle} failed ❌`);
+            let details;
             if (test.error) {
-              const details = [test.error.stack || test.error.message || String(test.error)];
-              if (test.error.expected !== undefined) details.push(`EXPECTED: ${JSON.stringify(test.error.expected).slice(0, MAX_DETAIL_LENGTH)}`);
-              if (test.error.actual !== undefined) details.push(`ACTUAL: ${JSON.stringify(test.error.actual).slice(0, MAX_DETAIL_LENGTH)}`);
-              console.log(details.join('\n'));
-              if (CI) markdownListOfFailingTests += `\n\`\`\`text\n${details.join('\n')}\n\`\`\`\n`;
+              const stack = test.error.stack || test.error.message || String(test.error);
+              const values = [];
+              if (test.error.expected !== undefined) values.push(`EXPECTED: ${JSON.stringify(test.error.expected).slice(0, MAX_DETAIL_LENGTH)}`);
+              if (test.error.actual !== undefined) values.push(`ACTUAL: ${JSON.stringify(test.error.actual).slice(0, MAX_DETAIL_LENGTH)}`);
+              console.log([stack, ...values].join('\n'));
+              details = [stack.slice(0, MAX_DETAIL_LENGTH), ...values].join('\n');
             }
+            failures.push({ title: test.fullTitle, details });
           }
         });
         if (CI) console.log('::endgroup::');
         else console.log('');
       });
+      let markdownListOfFailingTests = failureList(failures);
       if (data.browserErrors) {
         const details = boundBrowserErrors(data.browserErrors);
         if (CI) {

@@ -49,6 +49,28 @@ function checkAssertionBounds () {
   console.log('Assertion bounds: CLI output retains useful prefixes within 1000 characters');
 }
 
+function checkFailureListBounds () {
+  // One package with hundreds of failed tests, the first with a stack far longer than any bound.
+  const frame = '    at eval (https://ga.jspm.io/npm:mocha@10.0.0/lib/runner.js!transpiled:496:31)';
+  const stack = 'AssertionError: expected 1 to equal 2\n' + Array(12).fill(frame).join('\n');
+  const tests = Array.from({ length: 700 }, (_, i) => ({ type: 'test', state: 'failed', fullTitle: `behaviour ${i} works`,
+    error: { message: 'expected 1 to equal 2', stack: i === 0 ? `${stack}\n${'x'.repeat(20000)}STACK_TAIL` : stack, expected: 2, actual: 1 } }));
+  const { output, written } = runCLI(JSON.stringify({ files: [{ file: '/pkg/tests/many-test.js', tests }], browserErrors: null }));
+  const summary = written.filter(entry => entry.file === 'failing.txt').map(entry => entry.text).join('');
+  assert.ok(summary.length < 11000, `the CI summary of a package is bounded, got ${summary.length} characters`);
+  assert.match(summary, /the following 700 test\(s\) failed/);
+  assert.equal(summary.split('❌').length - 1, 30, 'the CI summary lists 30 failed tests');
+  assert.equal(summary.split('```text').length - 1, 5, 'the CI summary details the first five failures');
+  assert.match(summary, /behaviour 0 works failed ❌\n\n```text\nAssertionError/);
+  assert.ok(!summary.includes('STACK_TAIL'), 'the CI summary shortens stacks');
+  assert.match(summary, /- 670 more failed test\(s\) are listed in the job log\n/);
+  const log = output.join('\n');
+  assert.equal(log.split(' failed ❌').length - 1, 700, 'the job log lists every failed test');
+  assert.match(log, /STACK_TAIL/, 'the job log keeps full stacks');
+  assert.match(log, /SUMMARY-failed:700/);
+  console.log('Failure list: the CI summary of a package is bounded while the job log keeps every failure');
+}
+
 function loadRunner (Session) {
   const source = fs.readFileSync(path.join(root, 'lively.server/plugins/test-runner.js'), 'utf8')
     .replace(/^import .*;\n/gm, '').replace('export default class TestRunner', 'class TestRunner');
@@ -106,6 +128,7 @@ function checkRunnerFailureReport (data) {
 
 async function check () {
   checkAssertionBounds();
+  checkFailureListBounds();
   await checkBrowserErrorsOncePerPackage();
   let disposed = 0;
   const records = [{ file: '/pkg/tests/failing-test.js', tests: [{
