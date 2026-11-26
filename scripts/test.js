@@ -16,6 +16,27 @@ const http = require('http');
 const fs = require('fs');
 
 const CI = !!process.env.CI;
+// Failure details are bounded so that the reports of all packages fit GitHub's step summary.
+const MAX_DETAIL_LENGTH = 1000;
+const MAX_BROWSER_ERRORS_LENGTH = 10000;
+
+/**
+ * Keeps the most recent browser console errors within MAX_BROWSER_ERRORS_LENGTH characters
+ * and shortens each entry to MAX_DETAIL_LENGTH characters.
+ */
+function boundBrowserErrors (summary) {
+  // lively.headless starts every entry with its ISO timestamp in brackets.
+  const entries = summary.split(/\n(?=\[\d{4}-\d\d-\d\dT[^\]\n]*\] )/).map(entry => entry.slice(0, MAX_DETAIL_LENGTH));
+  const kept = [];
+  let length = 0;
+  while (entries.length && length + entries[entries.length - 1].length <= MAX_BROWSER_ERRORS_LENGTH) {
+    const entry = entries.pop();
+    kept.unshift(entry);
+    length += entry.length + 1;
+  }
+  if (entries.length) kept.unshift(`(${entries.length} earlier entries omitted)`);
+  return kept.join('\n');
+}
 
 const targetPackage = process.argv[2];
 const testServerURL = new URL(process.env.LIVELY_TEST_SERVER_READY_URL || 'http://localhost:9011/');
@@ -43,20 +64,11 @@ const req = http.request(options, res => {
   res.on('end', () => {
     try {
       data = JSON.parse(data);
-      if (!Object.keys(data).length) {
-        if (CI) {
-          console.log(`ℹ️ ${targetPackage} does not contain any tests\n`);
-        } else {
-          console.log(`ℹ️ ${targetPackage} does not contain any tests`);
-        }
-
-        return;
-      }
       if (data.error) {
         console.log('SUMMARY-INDICATE-FAILURE');
         let errorOutput = JSON.stringify(data.error);
         if (data.browserErrors) {
-          errorOutput += `\nRecent browser console errors:\n${data.browserErrors}`;
+          errorOutput += `\nRecent browser console errors:\n${boundBrowserErrors(data.browserErrors)}`;
         }
         if (CI) {
           console.log(`::error:: Running the tests produced the following error:\n${errorOutput}`);
@@ -65,7 +77,18 @@ const req = http.request(options, res => {
         else console.log(`❌ Running the tests produced the following error:\n${errorOutput}`);
         return;
       }
-      data.forEach((testfile) => {
+      // A reused local server can run another lively.next version, which reports the files as a plain array.
+      const files = Array.isArray(data) ? data : data.files;
+      if (!files.length) {
+        if (CI) {
+          console.log(`ℹ️ ${targetPackage} does not contain any tests\n`);
+        } else {
+          console.log(`ℹ️ ${targetPackage} does not contain any tests`);
+        }
+
+        return;
+      }
+      files.forEach((testfile) => {
         const pathStructure = testfile.file.split('/');
         const testsFolderIndex = pathStructure.findIndex(p => p === 'tests');
         const testPathStructure = pathStructure.slice(testsFolderIndex + 1);
@@ -113,21 +136,25 @@ const req = http.request(options, res => {
             }
             if (test.error) {
               const details = [test.error.stack || test.error.message || String(test.error)];
-              if (test.error.expected !== undefined) details.push(`EXPECTED: ${JSON.stringify(test.error.expected).slice(0, 1000)}`);
-              if (test.error.actual !== undefined) details.push(`ACTUAL: ${JSON.stringify(test.error.actual).slice(0, 1000)}`);
+              if (test.error.expected !== undefined) details.push(`EXPECTED: ${JSON.stringify(test.error.expected).slice(0, MAX_DETAIL_LENGTH)}`);
+              if (test.error.actual !== undefined) details.push(`ACTUAL: ${JSON.stringify(test.error.actual).slice(0, MAX_DETAIL_LENGTH)}`);
               console.log(details.join('\n'));
               if (CI) markdownListOfFailingTests += `\n\`\`\`text\n${details.join('\n')}\n\`\`\`\n`;
             }
           }
         });
-        if (testfile.browserErrors) {
-          const details = `Recent browser console errors:\n${testfile.browserErrors}`;
-          console.log(details);
-          if (CI) markdownListOfFailingTests += `\n\`\`\`text\n${details}\n\`\`\`\n`;
-        }
         if (CI) console.log('::endgroup::');
         else console.log('');
       });
+      if (data.browserErrors) {
+        const details = boundBrowserErrors(data.browserErrors);
+        if (CI) {
+          console.log('::group:: Recent browser console errors');
+          console.log(details);
+          console.log('::endgroup::');
+          markdownListOfFailingTests += `\n\`\`\`text\nRecent browser console errors:\n${details}\n\`\`\`\n`;
+        } else console.log(`Recent browser console errors:\n${details}\n`);
+      }
         console.log(`SUMMARY-passed:${passed}`);
         console.log(`SUMMARY-skipped:${skipped}`);
         console.log(`SUMMARY-failed:${failed}`);

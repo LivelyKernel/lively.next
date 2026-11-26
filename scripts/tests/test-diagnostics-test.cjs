@@ -49,8 +49,45 @@ function checkAssertionBounds () {
   console.log('Assertion bounds: CLI output retains useful prefixes within 1000 characters');
 }
 
+function loadRunner (Session) {
+  const source = fs.readFileSync(path.join(root, 'lively.server/plugins/test-runner.js'), 'utf8')
+    .replace(/^import .*;\n/gm, '').replace('export default class TestRunner', 'class TestRunner');
+  return vm.runInNewContext(`${source}\nTestRunner`, { HeadlessSession: Session, console, promise: {}, process: { env: {} } });
+}
+
+async function checkBrowserErrorsOncePerPackage () {
+  // Five failing files in one package and a full buffer of long session-wide browser errors.
+  const records = Array.from({ length: 5 }, (_, i) => ({ file: `/pkg/tests/failing-${i}-test.js`, tests: [{
+    type: 'test', state: 'failed', fullTitle: `failing ${i}`, error: { message: 'failure', stack: 'Error: failure' }
+  }] }));
+  const entries = Array.from({ length: 200 }, (_, i) =>
+    `[2026-01-01T00:00:00.${String(i).padStart(3, '0')}Z] console.error http://localhost/x.js:1:1 BROWSER_ERROR_${i}| ` +
+    'x'.repeat(i === 199 ? 5000 : 500) + (i === 198 ? '\n    at multi-line entry' : ''));
+  class Session {
+    async open () {}
+    async runEval () { return JSON.stringify(records); }
+    summarizeRecentConsoleErrors () { return entries.join('\n'); }
+    async dispose () {}
+  }
+  const { output, written } = runCLI(await new (loadRunner(Session))().run('pkg'));
+  const stdout = output.join('\n');
+  const summary = written.map(entry => entry.text).join('');
+  for (const [label, text] of [['CLI output', stdout], ['CI summary', summary]]) {
+    assert.equal(text.split('BROWSER_ERROR_199|').length - 1, 1, `${label} prints the browser errors once per package`);
+    assert.equal(text.split('Recent browser console errors').length - 1, 1, `${label} has one browser error block`);
+    assert.ok(text.includes('at multi-line entry'), `${label} keeps multi-line entries`);
+    assert.ok(!text.includes('BROWSER_ERROR_0|'), `${label} omits the oldest entries beyond the total bound`);
+    assert.match(text, /\(\d+ earlier entries omitted\)/, `${label} reports omitted entries`);
+    const block = text.slice(text.indexOf('Recent browser console errors'));
+    for (const line of block.split('\n')) assert.ok(line.length <= 1000, `${label} bounds each entry to 1000 characters, got ${line.length}`);
+  }
+  assert.ok(summary.length < 20000, `CI summary stays bounded, got ${summary.length} characters`);
+  console.log('Browser errors: reported once per package within per-entry and total bounds');
+}
+
 async function check () {
   checkAssertionBounds();
+  await checkBrowserErrorsOncePerPackage();
   let disposed = 0;
   const records = [{ file: '/pkg/tests/failing-test.js', tests: [{
     type: 'test', state: 'failed', fullTitle: 'ordinary assertion',
@@ -62,12 +99,10 @@ async function check () {
     summarizeRecentConsoleErrors () { return 'BROWSER_SENTINEL'; }
     async dispose () { disposed++; }
   }
-  const source = fs.readFileSync(path.join(root, 'lively.server/plugins/test-runner.js'), 'utf8')
-    .replace(/^import .*;\n/gm, '').replace('export default class TestRunner', 'class TestRunner');
-  const Runner = vm.runInNewContext(`${source}\nTestRunner`, { HeadlessSession: Session, console, promise: {}, process: { env: {} } });
+  const Runner = loadRunner(Session);
   const data = await new Runner().run('pkg');
   assert.equal(disposed, 1, 'dispose the browser on ordinary assertion failures');
-  assert.equal(JSON.parse(data)[0].browserErrors, 'BROWSER_SENTINEL');
+  assert.equal(JSON.parse(data).browserErrors, 'BROWSER_SENTINEL');
   const { output, written } = runCLI(data);
   assert.equal(output.join('\n').split('STACK_SENTINEL').length - 1, 1, 'CI prints each assertion stack once');
   assert.match(output.join('\n'), /STACK_SENTINEL/);
@@ -79,7 +114,8 @@ async function check () {
   assert.match(written.map(entry => entry.text).join('\n'), /BROWSER_SENTINEL/);
   records[0].tests[0].state = 'succeeded';
   const successful = JSON.parse(await new Runner().run('pkg'));
-  assert.equal(successful[0].browserErrors, undefined, 'do not attach errors to successful files');
+  assert.equal(successful.browserErrors, null, 'do not attach errors to successful packages');
+  assert.match(runCLI(JSON.stringify(successful)).output.join('\n'), /SUMMARY-passed:1/);
   Session.prototype.runEval = async () => { throw new Error('RUNNER_SENTINEL'); };
   const runnerFailure = JSON.parse(await new Runner().run('pkg'));
   assert.match(runnerFailure.error, /Error: RUNNER_SENTINEL\n\s+at/);
