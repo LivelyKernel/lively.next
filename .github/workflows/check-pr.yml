@@ -39,11 +39,12 @@ jobs:
         run: node lively.freezer/tests/browser-linter-test.mjs
       - name: Check dynamic import paths
         run: node lively.freezer/tests/dynamic-system-import-test.mjs
-      - name: Check frozen dependency regressions
-        run: |
-          node --experimental-import-meta-resolve lively.freezer/tests/node-builtins-test.mjs
-          node --experimental-import-meta-resolve lively.freezer/tests/browser-relative-import-test.mjs
-          node --experimental-import-meta-resolve lively.freezer/tests/commonjs-conditions-test.mjs
+      - name: Check browser builtin polyfills
+        run: node lively.freezer/tests/node-builtins-test.mjs
+      - name: Check browser relative imports
+        run: node lively.freezer/tests/browser-relative-import-test.mjs
+      - name: Check CommonJS package conditions
+        run: node lively.freezer/tests/commonjs-conditions-test.mjs
       - name: Check project bundles
         run: node lively.freezer/tests/project-bundle-test.mjs
       - name: Check native resolver
