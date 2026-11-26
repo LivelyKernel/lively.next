@@ -347,7 +347,7 @@ function supportingPlugins(context = 'node', self) {
       ]
     }),
     // Convert CommonJS before polyfill injection adds ES imports.
-    // Flatn/Bun dependencies can live outside the build working directory.
+    // Bun dependencies can live outside the build working directory.
     context == 'browser' && nodePolyfills({ include: /[/\\]node_modules[/\\].*\.[cm]?js$/ }),
     self,
   ].filter(Boolean);
