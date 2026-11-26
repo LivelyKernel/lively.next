@@ -636,6 +636,53 @@ function projectInstallDiagnostics (projectDir) {
   return lines.join('\n');
 }
 
+/**
+ * Prints how network requests from the native backend worker behave: one
+ * through `globalThis.fetch` with `AbortSignal.timeout`, as `@jspm/fetch`
+ * issues them, and one through `node:https`. Hangs are reported, not awaited.
+ */
+async function reportNativeBackendFetch (client) {
+  const result = await client.send('Runtime.evaluate', {
+    awaitPromise: true,
+    returnByValue: true,
+    expression: `(async () => {
+      if (!globalThis.livelyNative?.evaluate) return 'no native backend';
+      const source = ${JSON.stringify(`(async () => {
+        const url = 'https://ga.jspm.io/npm:@rollup/plugin-json@4.1.0/package.json';
+        const workerTimeout = (typeof self !== 'undefined' ? self : globalThis).setTimeout;
+        const within = (ms, work) => Promise.race([work, new Promise(resolve => workerTimeout(() => resolve({ hung: true }), ms))]);
+        const timed = async (label, run) => {
+          const started = Date.now();
+          try { return { label, ...(await within(30000, run())), ms: Date.now() - started }; }
+          catch (err) { return { label, error: String(err && err.message || err), ms: Date.now() - started }; }
+        };
+        const env = {
+          fetchIsNative: /\\[native code\\]/.test(Function.prototype.toString.call(globalThis.fetch)),
+          abortSignalIsWorkerGlobal: typeof self !== 'undefined' && globalThis.AbortSignal === self.AbortSignal,
+          node: process.versions.node,
+          undici: process.versions.undici
+        };
+        const results = [
+          await timed('globalThis.fetch with AbortSignal.timeout(20s)', () => globalThis.fetch(url, { signal: AbortSignal.timeout(20000) })
+            .then(async res => ({ status: res.status, bytes: (await res.text()).length }))),
+          await timed('node:https', () => new Promise((resolve, reject) => require('node:https').get(url, res => {
+            let bytes = 0;
+            res.on('data', chunk => { bytes += chunk.length; });
+            res.on('end', () => resolve({ status: res.statusCode, bytes }));
+          }).on('error', reject)))
+        ];
+        return { env, results };
+      })()`)};
+      return Promise.race([
+        livelyNative.evaluate(source),
+        new Promise(resolve => setTimeout(() => resolve('native backend did not answer within 90 s'), 90000))
+      ]);
+    })()`
+  });
+  console.log('Desktop app smoke: native backend fetch probe: ' +
+    JSON.stringify(result.exceptionDetails || result.result?.value));
+}
+
 /** Exercise local programming and verify the saved work after an app restart. */
 async function assertProjectProgramming (client, port, dataDir, reopened = false) {
   const result = await client.send('Runtime.evaluate', {
@@ -1855,6 +1902,7 @@ async function main () {
           await assertRendererUsesHttpSystemURLs(client, port, timeoutMs, { requirePopulatedSystemMap: true, native });
           console.log('Desktop app smoke passed: project route preserves browser module resolution');
           if (!devRoot) {
+            await reportNativeBackendFetch(client);
             await assertProjectProgramming(client, port, dataDir);
             await assertBrowserSwc(client);
             programmingLock = fs.readFileSync(path.join(dataDir, 'runtime-root', 'local_projects', 'smoke--programming', 'bun.lock'), 'utf8');
