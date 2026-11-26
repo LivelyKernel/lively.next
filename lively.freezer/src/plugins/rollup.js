@@ -80,7 +80,10 @@ export function lively (args) {
         source = source.replace(/^var (hasRequired[\w$]+);$/m, 'var $1 = false;');
       }
       try {
-        return await bundler.transform(source, id);
+        const result = await bundler.transform(source, id);
+        // Rollup reuses an AST returned by an earlier plugin (such as the polyfill
+        // injector) unless a result object replaces it; a plain string keeps it.
+        return typeof result === 'string' ? { code: result } : result;
       } catch (err) {
         return null;
       }
