@@ -33,6 +33,7 @@ async function check () {
   write('start-server.sh', '#!/bin/bash\nnode server.cjs\n');
   write('server.cjs', `const fs = require('node:fs');
 const { spawn } = require('node:child_process');
+console.log('SERVER_LOG_SENTINEL');
 fs.appendFileSync(process.env.FIXTURE_PIDS, process.pid + '\\n');
 spawn(process.execPath, ['descendant.cjs'], { detached: true, stdio: 'ignore' });
 setInterval(() => {}, 1000);`);
@@ -86,6 +87,9 @@ else if (process.env.FIXTURE_RETRY && !fs.existsSync('retried')) {
     assert.ok(running(outsider.pid), `${label}: must preserve unrelated process`);
     if (label === 'existing') assert.equal(pids(log).length, 0, 'must reuse existing local server');
     if (label === 'ci-restart' || label === 'retry') assert.equal(pids(log).length, 4, 'must start two owned server trees');
+    const showsServerLog = ['retry', 'client-error', 'startup-error'].includes(label);
+    assert.equal(output.includes('Recent server output:\nSERVER_LOG_SENTINEL'), showsServerLog,
+      `${label}: ${showsServerLog ? 'show' : 'omit'} the owned server output: ${output}`);
     console.log(`Owned test processes: ${label} passed`);
   }
 }

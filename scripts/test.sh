@@ -36,14 +36,22 @@ start_test_server() {
       return 0
     fi
 
-    echo "Lively server start attempt $attempt/$SERVER_START_MAX_ATTEMPTS failed. Recent server output:"
-    tail -80 "$SERVER_LOG" 2>/dev/null || true
+    echo "Lively server start attempt $attempt/$SERVER_START_MAX_ATTEMPTS failed."
+    print_server_log
     stop_test_server
     ((attempt++))
   done
 
   echo "Failed to start lively server for tests after $SERVER_START_MAX_ATTEMPTS attempts."
   return 1
+}
+
+# Prints the end of the output of the server this script started, if any.
+print_server_log() {
+  if [ -s "$SERVER_LOG" ]; then
+    echo "Recent server output:"
+    tail -80 "$SERVER_LOG"
+  fi
 }
 
 stop_test_server() {
@@ -87,6 +95,7 @@ run_package_tests() {
     fi
 
     echo "Test result request for $package failed due to a transient server connection issue; retrying ($attempt/$TEST_RESULT_MAX_ATTEMPTS)..." >&2
+    print_server_log >&2
     if [ "$CI" ]; then
       stop_test_server >&2
       start_test_server >&2 || {
@@ -172,7 +181,8 @@ for package in "${testfiles[@]}"; do
   # For perl magic see: https://stackoverflow.com/a/16658690
   if echo "$output" | grep -q "INDICATE-FAILURE"
   then
-      ((FAILURE+=1))      
+      ((FAILURE+=1))
+      print_server_log
   fi
   green=$(echo "$output" | perl -nle'print $& while m{(?<=SUMMARY-passed:)\d+}g')
   red=$(echo "$output" | perl -nle'print $& while m{(?<=SUMMARY-failed:)\d+}g')
