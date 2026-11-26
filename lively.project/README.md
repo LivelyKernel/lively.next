@@ -37,4 +37,8 @@ also have `before-tests` and `after-tests`. Build workflows have `before-build`
 and `after-build`, with the latter running before artifact upload. Pages
 workflows additionally have `before-deploy` and `after-deploy` in the deploy job.
 Keep both markers and each section name intact. Invalid, duplicate or removed
-sections stop regeneration before any workflow file is replaced.
+sections stop regeneration before any workflow file is replaced, and saving the
+project stops with the error. When opening a project binds it to the running
+lively.next version, such an error does not stop the opening: the project keeps its
+previous version binding, a status warning names the error, and the next opening
+retries the update.

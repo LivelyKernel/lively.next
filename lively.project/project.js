@@ -597,15 +597,10 @@ export class Project {
         if (!confirmed) {
           $world.setStatusMessage('Changing the required version of lively.next has been canceled.', StatusMessageError);
           return 'CANCELED';
-        } else {
-          $world.setStatusMessage(`Updated the required version of lively.next for ${this.name}.`, StatusMessageConfirm);
-          const currentCommit = await VersionChecker.currentLivelyVersion(true);
-          this.config.lively.boundLivelyVersion = currentCommit;
-          this.config.hasUnsavedChanges = true;
-          await this.saveConfigData();
-          await this.regeneratePipelines();
-          return 'UPDATED';
         }
+        if (!await this.bindToCurrentLivelyVersion()) return 'CANCELED';
+        $world.setStatusMessage(`Updated the required version of lively.next for ${this.name}.`, StatusMessageConfirm);
+        return 'UPDATED';
       }
       case (-1):
       case (2): {
@@ -613,15 +608,35 @@ export class Project {
         return 'OUTDATED';
       }
       case (3) : {
+        if (!await this.bindToCurrentLivelyVersion()) return 'CANCELED';
         $world.setStatusMessage(`The required version of lively.next ${this.name} has been overwritten. ${this.name} has been upgraded to use the latest version available to you.`, StatusMessageWarning);
-        const currentCommit = await VersionChecker.currentLivelyVersion(true);
-        this.config.lively.boundLivelyVersion = currentCommit;
-        this.config.hasUnsavedChanges = true;
-        await this.saveConfigData();
-        await this.regeneratePipelines();
         return 'UPDATED';
       }
     }
+  }
+
+  /**
+   * Binds the project to the running lively.next version and regenerates its workflows for that version.
+   * A workflow that cannot be regenerated, for example because of a broken custom section marker,
+   * leaves the bound version unchanged and is reported as a warning, so the next opening retries the update.
+   * @returns {Promise<boolean>} Whether the project is bound to the running version.
+   */
+  async bindToCurrentLivelyVersion () {
+    const livelyConfig = this.config.lively;
+    const boundVersion = livelyConfig.boundLivelyVersion;
+    livelyConfig.boundLivelyVersion = await VersionChecker.currentLivelyVersion(true);
+    try {
+      await this.regeneratePipelines();
+    } catch (err) {
+      livelyConfig.boundLivelyVersion = boundVersion;
+      const message = `${this.name} stays bound to its previous version of lively.next, as its workflows cannot be updated (${err.message}). Repair the workflow and open the project again to retry.`;
+      console.warn(message);
+      $world.setStatusMessage(message, StatusMessageWarning);
+      return false;
+    }
+    this.config.hasUnsavedChanges = true;
+    await this.saveConfigData();
+    return true;
   }
 
   addRemoteConfig (priv) {
