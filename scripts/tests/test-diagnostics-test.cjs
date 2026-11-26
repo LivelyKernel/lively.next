@@ -85,6 +85,25 @@ async function checkBrowserErrorsOncePerPackage () {
   console.log('Browser errors: reported once per package within per-entry and total bounds');
 }
 
+function checkRunnerFailureReport (data) {
+  // The runner error is a stack trace that spans several lines.
+  const local = runCLI(data, false).output.join('\n');
+  assert.match(local, /^Error: RUNNER_SENTINEL 100%\n\s+at /m, 'CLI prints the stack on separate lines');
+  assert.ok(!local.includes('\\n'), 'CLI prints no escaped line breaks');
+  assert.match(local, /BROWSER_SENTINEL/);
+  const { output, written } = runCLI(data);
+  const annotation = output.filter(line => line.startsWith('::error::'));
+  assert.equal(annotation.length, 1, 'CI reports one error annotation');
+  assert.ok(!annotation[0].includes('\n'), 'the annotation is a single workflow command line');
+  assert.match(annotation[0], /Error: RUNNER_SENTINEL 100%25%0A\s+at /, 'the annotation encodes line breaks and percent signs');
+  assert.match(output.join('\n'), /BROWSER_SENTINEL/, 'CI log shows the browser errors');
+  const summary = written.filter(entry => entry.file === 'summary.txt').map(entry => entry.text).join('');
+  assert.match(summary, /^Error: RUNNER_SENTINEL 100%\n\s+at /m, 'summary prints the stack on separate lines');
+  assert.ok(!summary.includes('\\n'), 'summary contains no escaped line breaks');
+  assert.match(summary, /BROWSER_SENTINEL/);
+  console.log('Runner failures: stack traces stay multi-line in CLI and summary and are encoded for annotations');
+}
+
 async function check () {
   checkAssertionBounds();
   await checkBrowserErrorsOncePerPackage();
@@ -116,11 +135,13 @@ async function check () {
   const successful = JSON.parse(await new Runner().run('pkg'));
   assert.equal(successful.browserErrors, null, 'do not attach errors to successful packages');
   assert.match(runCLI(JSON.stringify(successful)).output.join('\n'), /SUMMARY-passed:1/);
-  Session.prototype.runEval = async () => { throw new Error('RUNNER_SENTINEL'); };
-  const runnerFailure = JSON.parse(await new Runner().run('pkg'));
-  assert.match(runnerFailure.error, /Error: RUNNER_SENTINEL\n\s+at/);
+  Session.prototype.runEval = async () => { throw new Error('RUNNER_SENTINEL 100%'); };
+  const runnerFailureData = await new Runner().run('pkg');
+  const runnerFailure = JSON.parse(runnerFailureData);
+  assert.match(runnerFailure.error, /Error: RUNNER_SENTINEL 100%\n\s+at/);
   assert.equal(runnerFailure.browserErrors, 'BROWSER_SENTINEL');
   assert.equal(disposed, 3, 'dispose the browser on success and runner failure too');
+  checkRunnerFailureReport(runnerFailureData);
   console.log('Failure diagnostics: assertion stack, expected/actual and browser errors reach CLI and CI summary');
 }
 check().catch(err => { console.error(err); process.exitCode = 1; });

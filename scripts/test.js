@@ -38,6 +38,11 @@ function boundBrowserErrors (summary) {
   return kept.join('\n');
 }
 
+/** Encodes a message for a GitHub Actions workflow command, which ends at the first line break. */
+function workflowCommandMessage (text) {
+  return text.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
+}
+
 const targetPackage = process.argv[2];
 const testServerURL = new URL(process.env.LIVELY_TEST_SERVER_READY_URL || 'http://localhost:9011/');
 let passed = 0; let failed = 0; let skipped = 0;
@@ -66,15 +71,15 @@ const req = http.request(options, res => {
       data = JSON.parse(data);
       if (data.error) {
         console.log('SUMMARY-INDICATE-FAILURE');
-        let errorOutput = JSON.stringify(data.error);
-        if (data.browserErrors) {
-          errorOutput += `\nRecent browser console errors:\n${boundBrowserErrors(data.browserErrors)}`;
-        }
+        const error = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
+        const browserErrors = data.browserErrors && `Recent browser console errors:\n${boundBrowserErrors(data.browserErrors)}`;
+        const report = [error, browserErrors].filter(Boolean).join('\n');
         if (CI) {
-          console.log(`::error:: Running the tests produced the following error:\n${errorOutput}`);
-          fs.appendFileSync('summary.txt', `❌ Running the tests produced the following error:\n${errorOutput}\n`);
+          console.log(`::error:: Running the tests produced the following error:%0A${workflowCommandMessage(error)}`);
+          if (browserErrors) console.log(browserErrors);
+          fs.appendFileSync('summary.txt', `❌ Running the tests produced the following error:\n${report}\n`);
         }
-        else console.log(`❌ Running the tests produced the following error:\n${errorOutput}`);
+        else console.log(`❌ Running the tests produced the following error:\n${report}`);
         return;
       }
       // A reused local server can run another lively.next version, which reports the files as a plain array.
