@@ -30,6 +30,11 @@ try {
     write(`${name}/package.json`, { name, ...manifests[index] });
     write(`${name}/index.js`, 'initial');
   });
+  // Top-level packages outside the workspaces: one with tests and one without.
+  write('lively.extra/package.json', { name: 'lively.extra', dependencies: { 'lively.a': '*' } });
+  write('lively.extra/tests/extra-test.js', 'initial');
+  write('lively.untested/package.json', { name: 'lively.untested' });
+  write('lively.untested/index.js', 'initial');
   write('README.md', 'docs');
   write('scripts/shared.js', 'initial');
   git('add', '.');
@@ -39,13 +44,22 @@ try {
     cwd: fixture, env: { ...process.env, GITHUB_BASE_REF: 'main' }, encoding: 'utf8'
   }).trim().split(/\s+/).sort();
   assert.deepEqual(select(), ['none']);
+  write('lively.extra/tests/extra-test.js', 'changed');
+  git('add', '.'); git('commit', '-m', 'non-workspace package');
+  assert.deepEqual(select(), ['lively.extra'], 'changed top-level packages with tests are selected outside the workspaces');
+  git('update-ref', 'refs/remotes/origin/main', 'HEAD');
+  write('lively.untested/index.js', 'changed');
+  git('add', '.'); git('commit', '-m', 'package without tests');
+  assert.deepEqual(select(), ['none'], 'top-level packages without tests are not selected');
+  git('update-ref', 'refs/remotes/origin/main', 'HEAD');
   write('lively.unlisted/index.js', 'changed uncatalogued package');
   git('add', '.'); git('commit', '-m', 'uncatalogued');
   assert.deepEqual(select(), ['lively.unlisted'], 'changed workspaces cannot disappear from test selection');
   git('update-ref', 'refs/remotes/origin/main', 'HEAD');
   write('lively.a/index.js', 'changed');
   git('add', '.'); git('commit', '-m', 'dependency');
-  assert.deepEqual(select(), ['lively-system-interface', 'lively.a', 'lively.b', 'lively.c'].sort());
+  assert.deepEqual(select(), ['lively-system-interface', 'lively.a', 'lively.b', 'lively.c'].sort(),
+    'workspace dependents are selected; packages outside the workspaces only when they change');
   git('update-ref', 'refs/remotes/origin/main', 'HEAD');
   write('README.md', 'changed docs');
   git('add', '.'); git('commit', '-m', 'docs');
@@ -53,7 +67,7 @@ try {
   git('update-ref', 'refs/remotes/origin/main', 'HEAD');
   write('scripts/shared.js', 'changed tooling');
   git('add', '.'); git('commit', '-m', 'tooling');
-  assert.deepEqual(select(), packages.sort());
+  assert.deepEqual(select(), packages.sort(), 'shared changes select the workspaces');
   git('update-ref', 'refs/remotes/origin/main', 'HEAD');
   write('lively-system-interface/index.js', 'changed backend');
   git('add', '.'); git('commit', '-m', 'backend');
@@ -71,7 +85,7 @@ try {
   write('package.json', { workspaces: packages.filter(name => name !== 'lively.d') });
   git('add', '.'); git('commit', '-m', 'remove workspace');
   assert.deepEqual(select(), packages.filter(name => name !== 'lively.d').sort());
-  console.log('Affected-test selection: transitive cycles, dependency kinds, backend package, shared tooling and docs passed');
+  console.log('Affected-test selection: transitive cycles, dependency kinds, backend package, non-workspace packages, shared tooling and docs passed');
 } finally {
   fs.rmSync(fixture, { recursive: true, force: true });
 }
