@@ -41,7 +41,10 @@ try {
   const sandbox = {};
   runInNewContext(output.find(chunk => chunk.type === 'chunk').code, sandbox);
   assert.deepEqual(Array.from(sandbox.browserResult), ['browser', 0]);
-  assert.ok(!build.cache.modules.some(module => module.id.endsWith('/internal/node.js') || module.id.endsWith('/ignored.js')));
+  // Module ids use the platform's path separator.
+  const bundledIds = build.cache.modules.map(module => module.id.replace(/\\/g, '/'));
+  assert.ok(bundledIds.some(id => id.endsWith('/browser-relative/internal/browser.js')), JSON.stringify(bundledIds));
+  assert.ok(!bundledIds.some(id => id.endsWith('/browser-relative/internal/node.js') || id.endsWith('/browser-relative/ignored.js')), JSON.stringify(bundledIds));
   console.log('Browser bundles honor package browser aliases and disabled relative imports.');
 } finally {
   await build?.close();
