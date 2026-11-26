@@ -439,14 +439,16 @@ export default class TestRunner extends HTMLMorph {
   }
 
   async runTestsInPackage (packageName) {
-    // Necessary to access packages which are not default packages, aka are not in the packages-config.js
+    // Includes packages that are not listed in lively.installer/packages-config.json.
     const pkgs = localInterface.coreInterface.getPackages();
     const pkg = pkgs.find(pkg => pkg.name === packageName);
     if (!pkg) throw new Error('Cannot find package for name: ' + packageName);
 
-    // Allows us to access the testing configurations stored in packages-config.js
+    // `lively.wantsServerInterface` in the package's package.json selects the evaluation backend;
+    // without it, the default from lively.installer/packages-config.json applies.
     const pkgsConf = await packagesConfig();
-    const wantsServerInterface = pkgsConf.find(p => p.name === packageName)?.wantsServerInterface;
+    const wantsServerInterface = pkg.lively?.wantsServerInterface ??
+      pkgsConf.find(p => p.name === packageName)?.wantsServerInterface;
     this.updateEvalBackendForPackage(wantsServerInterface);
 
     const testModuleURLs = await findTestModulesInPackage(this.systemInterface, packageName);

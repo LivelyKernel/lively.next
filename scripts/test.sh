@@ -1,13 +1,12 @@
 #!/bin/bash
 # This script can be used to run tests outside of a lively.next environment. It is used for the CI pipelines for lively.next and its projects.
-# It either executes all tests present in the test folders of the packages specified in `testfiles` (defaulting to all lively core packages),
-# or all tests in the single package given as a parameter when executing this script.
-# It is not possible to run multiple explicitly specified packages (except when modifying the below array).
+# It executes all tests present in the test folders of the packages given as parameters,
+# or, without parameters, of the lively core packages listed in `scripts/test-packages.json`.
 # As this script supports either running locally or inside of a GitHub Action environment, this leaves us with four cases:
-# (1) Testing the lively core a) in CI b) locally or (1) Testing one specific package a) in CI or b) locally.
-# In case (1), we provicde some summary statistics at the end of our test run and put them, as well as further information in markdown format, in a file called `test_output_clean.md` for later consumption.
+# (1) Testing the lively core a) in CI or b) locally, or (2) testing the given packages a) in CI or b) locally.
+# In case (1), we provide some summary statistics at the end of our test run and put them, as well as further information in markdown format, in a file called `test_output_clean.md` for later consumption.
 # In the cases a) we add some GitHub Actions output formatting hints as well as providing markdown to be rendered in the summary section of the action run.
-# In cases b), we provide more lean, human readable output meant for reading consumtion in a shell. 
+# In cases b), we provide more lean, human readable output meant for reading consumption in a shell.
 # For Linux systems, this script requires `ss` to run. On Mac, netstat is required instead.
 # On mac, make sure to have `gsed` installed.
 
@@ -28,14 +27,16 @@ start_test_server() {
 
   while (( attempt <= SERVER_START_MAX_ATTEMPTS )); do
     # start a new lively.next server
-    ./start-server.sh > /tmp/lively-next-test-server.log 2>&1 &
+    set -m
+    ./start-server.sh > "$SERVER_LOG" 2>&1 &
     SERVER_PID=$!
+    set +m
     if node ./scripts/wait-for-server.js "$SERVER_READY_URL" "$SERVER_READY_TIMEOUT" 1000 "$SERVER_PID"; then
       return 0
     fi
 
-    echo "Lively server start attempt $attempt/$SERVER_START_MAX_ATTEMPTS failed. Recent server output:"
-    tail -80 /tmp/lively-next-test-server.log 2>/dev/null || true
+    echo "Lively server start attempt $attempt/$SERVER_START_MAX_ATTEMPTS failed."
+    print_server_log
     stop_test_server
     ((attempt++))
   done
@@ -44,38 +45,59 @@ start_test_server() {
   return 1
 }
 
+# Prints the end of the output of the server this script started, if any.
+print_server_log() {
+  if [ -s "$SERVER_LOG" ]; then
+    echo "Recent server output:"
+    tail -80 "$SERVER_LOG"
+  fi
+}
+
 stop_test_server() {
   if [ -n "$SERVER_PID" ]; then
-    kill "$SERVER_PID" 2>/dev/null || true
+    node ./scripts/stop-process-tree.cjs "$SERVER_PID"
     wait "$SERVER_PID" 2>/dev/null || true
     SERVER_PID=
   fi
-  pkill -f "bin/start-server.js.*9011" 2>/dev/null || true
-  pkill -f "start-server.sh" 2>/dev/null || true
 }
+
+cleanup() {
+  if [ -n "$TEST_CLIENT_PID" ]; then
+    node ./scripts/stop-process-tree.cjs "$TEST_CLIENT_PID"
+    wait "$TEST_CLIENT_PID" 2>/dev/null || true
+  fi
+  stop_test_server
+  rm -f "$SERVER_LOG" "$RESULT_LOG"
+}
+
+SERVER_LOG=$(mktemp "${TMPDIR:-/tmp}/lively-next-test-server.XXXXXX")
+RESULT_LOG=$(mktemp "${TMPDIR:-/tmp}/lively-next-test-results.XXXXXX")
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 run_package_tests() {
   local package="$1"
   local attempt=1
-  local output
-
   while true; do
-    output=$(node --dns-result-order ipv4first ./scripts/test.js "$package")
+    node --dns-result-order ipv4first ./scripts/test.js "$package" > "$RESULT_LOG" &
+    TEST_CLIENT_PID=$!
+    wait "$TEST_CLIENT_PID" || echo 'SUMMARY-INDICATE-FAILURE' >> "$RESULT_LOG"
+    TEST_CLIENT_PID=
+    output=$(cat "$RESULT_LOG")
     if ! echo "$output" | grep -Eq "ECONNREFUSED|ECONNRESET|socket hang up"; then
-      echo "$output"
       return 0
     fi
 
     if (( attempt >= TEST_RESULT_MAX_ATTEMPTS )); then
-      echo "$output"
       return 0
     fi
 
     echo "Test result request for $package failed due to a transient server connection issue; retrying ($attempt/$TEST_RESULT_MAX_ATTEMPTS)..." >&2
+    print_server_log >&2
     if [ "$CI" ]; then
       stop_test_server >&2
       start_test_server >&2 || {
-        echo "$output"
         return 0
       }
     else
@@ -85,51 +107,7 @@ run_package_tests() {
   done
 }
 
-# Clean up any lingering headless Chrome processes and lock files
-# These can remain from previous test runs and block new browser instances
-echo "Cleaning up any lingering Chrome processes..."
-pkill -f "chrome.*--headless" 2>/dev/null || true
-pkill -f "chromium.*--headless" 2>/dev/null || true
-
-# Remove Chrome singleton files if they exist
-CHROME_PROFILE_DIR="lively.headless/chrome-data-dir"
-if [ -d "$CHROME_PROFILE_DIR" ]; then
-  echo "Resetting Chrome profile directory: $CHROME_PROFILE_DIR"
-  rm -rf "$CHROME_PROFILE_DIR"
-  mkdir -p "$CHROME_PROFILE_DIR"
-  touch "$CHROME_PROFILE_DIR/.gitkeep"
-fi
-
-testfiles=(
-"lively.lang"
-"lively.resources"
-"lively.bindings"
-"lively.notifications"
-"lively.classes"
-"lively.serializer2"
-"lively.storage"
-"lively.ast"
-"lively.source-transform"
-"lively.vm"
-"lively.modules"
-"lively-system-interface"
-"lively.graphics"
-"lively.morphic"
-"lively.components"
-"lively.ide"
-"lively.halos"
-"lively.user"
-"lively.2lively"
-"lively.changesets"
-"lively.git"
-"lively.server"
-"lively.shell"
-"lively.collab"
-"lively.traits" 
-"lively.freezer"
-"lively.headless"
-"lively.keyboard"
-)
+testfiles=($(node -e 'console.log(require("./scripts/test-packages.json").join(" "))'))
 
 # To easily handle the case where we run the tests for a PR but no relevant files changed.
 # Challenge here is to differentiate this case from the one where we want to run the tests in all packages.
@@ -187,7 +165,7 @@ for package in "${testfiles[@]}"; do
     }
   fi
   # echo output without the summary stats
-  output=$(run_package_tests "$package")
+  run_package_tests "$package"
   
   if uname | grep 'Linux' > /dev/null; then
     echo "$output" | sed -s -e 's/SUMMARY.*$//g'
@@ -202,7 +180,8 @@ for package in "${testfiles[@]}"; do
   # For perl magic see: https://stackoverflow.com/a/16658690
   if echo "$output" | grep -q "INDICATE-FAILURE"
   then
-      ((FAILURE+=1))      
+      ((FAILURE+=1))
+      print_server_log
   fi
   green=$(echo "$output" | perl -nle'print $& while m{(?<=SUMMARY-passed:)\d+}g')
   red=$(echo "$output" | perl -nle'print $& while m{(?<=SUMMARY-failed:)\d+}g')
@@ -222,13 +201,6 @@ if [ "$STARTED_SERVER" = "1" ];
 then
     stop_test_server
 fi
-
-# Clean up any headless Chrome processes that may have been started during tests
-echo "Cleaning up Chrome processes after tests..."
-pkill -f "chrome.*--headless" 2>/dev/null || true
-pkill -f "chromium.*--headless" 2>/dev/null || true
-pkill -f "chrome.*lively.headless/chrome-data-dir" 2>/dev/null || true
-pkill -f "chromium.*lively.headless/chrome-data-dir" 2>/dev/null || true
 
 ((ALL_TESTS=GREEN_TESTS + RED_TESTS + SKIPPED_TESTS))
 if [ ! "$1" ];

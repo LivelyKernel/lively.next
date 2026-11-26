@@ -73,14 +73,18 @@ export default class TestRunner {
       });
       JSON.stringify(results);
       `)
+      const files = JSON.parse(results);
+      const failed = files.some(file => file.tests?.some(test => test.type === 'test' && test.state && test.state !== 'succeeded'));
+      // The browser errors belong to the whole headless session, so the package result holds them once.
+      results = JSON.stringify({ files, browserErrors: failed ? this.headlessSession.summarizeRecentConsoleErrors() : null });
     } catch (err) {
       const browserErrors = this.headlessSession?.summarizeRecentConsoleErrors();
       results = JSON.stringify({
-        error: err.message,
+        error: err.stack || err.message || String(err),
         browserErrors
       });
     } finally {
-      await this.headlessSession.dispose();
+      await this.headlessSession?.dispose();
       return results;
     }
   }

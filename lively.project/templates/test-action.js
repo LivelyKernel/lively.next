@@ -56,6 +56,8 @@ jobs:
         with:
           path: .            
           key: \${{ runner.os }}-\${{ env.cache-name }}-\${{ env.ref }}     
+      # lively.next:custom start before-project
+      # lively.next:custom end before-project
       - name: Checkout Project Repository
         uses: actions/checkout@v4
         with:
@@ -68,5 +70,9 @@ jobs:
           ./start-server.sh > /dev/null 2>&1 &
           # wait until server is guaranteed to be running
           sleep 30
+      # lively.next:custom start before-tests
+      # lively.next:custom end before-tests
       - name: Run CI Test Script 
-        run:  ./scripts/test.sh %PROJECT_NAME%`;
+        run:  ./scripts/test.sh %PROJECT_NAME%
+      # lively.next:custom start after-tests
+      # lively.next:custom end after-tests`;

@@ -5,6 +5,7 @@ import { resource } from 'lively.resources';
 import { defaultDirectory } from 'lively.ide/shell/shell-interface.js';
 import { loadPackage } from 'lively-system-interface/commands/packages.js';
 import { workflowDefinition } from './templates/test-action.js';
+import { preserveWorkflowCustomizations, haveSameCustomSections } from './templates/workflow-customizations.js';
 import { VersionChecker } from 'lively.ide/studio/version-checker.cp.js';
 import { StatusMessageConfirm, StatusMessageWarning, StatusMessageError } from 'lively.halos/components/messages.cp.js';
 import { join } from 'lively.modules/src/url-helpers.js';
@@ -116,7 +117,18 @@ export class Project {
 
   static async resetConfigFiles (gitResource) {
     // Dependency manifests and locks are user-owned; do not discard local updates.
-    await gitResource.resetFile('.github/workflows/ci-tests.yml');
+    // Opening regenerates ci-tests.yml for the bound lively.next version. Discarding that uncommitted
+    // output avoids conflicts with upstream changes when pulling. Uncommitted edits of its custom
+    // sections, including broken or repaired section markers, are kept.
+    const file = '.github/workflows/ci-tests.yml';
+    const read = async command => {
+      const cmd = await gitResource.runCommand(command).whenDone();
+      return cmd.exitCode === 0 ? cmd.stdout : null;
+    };
+    const committed = await read(`git show HEAD:${file}`);
+    if (committed === null) return;
+    const current = await read(`cat ${file}`);
+    if (current === null || haveSameCustomSections(current, committed)) await gitResource.resetFile(file);
   }
 
   static async pullUpstreamChangesIfRemote (gitResource) {
@@ -596,15 +608,10 @@ export class Project {
         if (!confirmed) {
           $world.setStatusMessage('Changing the required version of lively.next has been canceled.', StatusMessageError);
           return 'CANCELED';
-        } else {
-          $world.setStatusMessage(`Updated the required version of lively.next for ${this.name}.`, StatusMessageConfirm);
-          const currentCommit = await VersionChecker.currentLivelyVersion(true);
-          this.config.lively.boundLivelyVersion = currentCommit;
-          this.config.hasUnsavedChanges = true;
-          await this.saveConfigData();
-          await this.regeneratePipelines();
-          return 'UPDATED';
         }
+        if (!await this.bindToCurrentLivelyVersion()) return 'WORKFLOWS_NOT_UPDATED';
+        $world.setStatusMessage(`Updated the required version of lively.next for ${this.name}.`, StatusMessageConfirm);
+        return 'UPDATED';
       }
       case (-1):
       case (2): {
@@ -612,15 +619,43 @@ export class Project {
         return 'OUTDATED';
       }
       case (3) : {
+        if (!await this.bindToCurrentLivelyVersion()) return 'WORKFLOWS_NOT_UPDATED';
         $world.setStatusMessage(`The required version of lively.next ${this.name} has been overwritten. ${this.name} has been upgraded to use the latest version available to you.`, StatusMessageWarning);
-        const currentCommit = await VersionChecker.currentLivelyVersion(true);
-        this.config.lively.boundLivelyVersion = currentCommit;
-        this.config.hasUnsavedChanges = true;
-        await this.saveConfigData();
-        await this.regeneratePipelines();
         return 'UPDATED';
       }
     }
+  }
+
+  /**
+   * Binds the project to the running lively.next version and regenerates its workflows for that version.
+   * The workflows are written only after the new version is stored in the project configuration.
+   * A workflow whose custom sections cannot be merged, for example because of a broken section marker,
+   * leaves the bound version and every workflow unchanged and is reported in a dialog, so the next
+   * opening retries the update. Other failures before the new version is stored, such as a GitHub API
+   * error while saving the configuration, are thrown and leave the bound version and workflows unchanged too.
+   * @returns {Promise<boolean>} Whether the project is bound to the running version.
+   */
+  async bindToCurrentLivelyVersion () {
+    const livelyConfig = this.config.lively;
+    const boundVersion = livelyConfig.boundLivelyVersion;
+    livelyConfig.boundLivelyVersion = await VersionChecker.currentLivelyVersion(true);
+    let pipelines;
+    try {
+      pipelines = await this.generatePipelines();
+      this.config.hasUnsavedChanges = true;
+      await this.saveConfigData();
+    } catch (err) {
+      livelyConfig.boundLivelyVersion = boundVersion;
+      if (!err.workflowFile) throw err;
+      console.warn(err.message);
+      await $world.inform({
+        title: `The workflows of ${this.name} cannot be updated`,
+        text: `${err.message}\n\nRepair the custom sections of .github/workflows/${err.workflowFile} and open the project again. Until then, ${this.name} stays bound to the lively.next version it requires.`
+      });
+      return false;
+    }
+    await this.writePipelines(pipelines);
+    return true;
   }
 
   addRemoteConfig (priv) {
@@ -722,25 +757,48 @@ export class Project {
     reloadPackage(System, this.package.url);
   }
 
-  async regeneratePipelines () {
+  async regeneratePipelines ({ showWarnings = true } = {}) {
+    await this.writePipelines(await this.generatePipelines(), { showWarnings });
+  }
+
+  /**
+   * Generates the workflows for the current configuration, keeping their custom sections, without writing them.
+   * Every custom section is validated before any workflow is written: a section that cannot be merged
+   * throws an error whose `workflowFile` names the workflow.
+   */
+  async generatePipelines () {
     if (!lively.isInOfflineMode) {
       await this.checkPagesSupport();
       await this.gitResource.activateGitHubPages(currentUserToken(), this.name, this.repoOwner);
     }
-    let pipelineFile, content;
     const livelyConfig = this.config.lively;
+    const updates = [];
+    const warnings = [];
+    for (const [name, definition, onPush] of [
+      ['ci-tests.yml', workflowDefinition, livelyConfig.testOnPush],
+      ['build-upload-action.yml', buildRemoteScript, livelyConfig.buildOnPush],
+      ['deploy-pages-action.yml', deployScript, livelyConfig.deployOnPush]
+    ]) {
+      const file = resource(join(this.url, '.github/workflows', name));
+      const previous = await file.exists() ? await file.read() : '';
+      const generated = await this.fillPipelineTemplate(definition, onPush);
+      try {
+        const content = preserveWorkflowCustomizations(previous, generated, message => warnings.push(`${name}: ${message}`));
+        updates.push({ file, content });
+      } catch (error) {
+        throw Object.assign(new Error(`${name}: ${error.message}`), { workflowFile: name });
+      }
+    }
+    return { updates, warnings };
+  }
 
-    pipelineFile = join(this.url, '.github/workflows/ci-tests.yml');
-    content = await this.fillPipelineTemplate(workflowDefinition, livelyConfig.testOnPush);
-    await (await resource(pipelineFile).ensureExistance()).write(content);
-
-    pipelineFile = join(this.url, '.github/workflows/build-upload-action.yml');
-    content = await this.fillPipelineTemplate(buildRemoteScript, livelyConfig.buildOnPush);
-    await (await resource(pipelineFile).ensureExistance()).write(content);
-
-    pipelineFile = join(this.url, '.github/workflows/deploy-pages-action.yml');
-    content = await this.fillPipelineTemplate(deployScript, livelyConfig.deployOnPush);
-    await (await resource(pipelineFile).ensureExistance()).write(content);
+  async writePipelines ({ updates, warnings }, { showWarnings = true } = {}) {
+    for (const { file, content } of updates) await (await file.ensureExistance()).write(content);
+    if (showWarnings && warnings.length) {
+      const message = warnings.join('\n');
+      console.warn(message);
+      $world.setStatusMessage(message, StatusMessageWarning);
+    }
   }
 
   async fillPipelineTemplate (workflowDefinition, triggerOnPush = false) {
@@ -799,7 +857,7 @@ export class Project {
     this.increaseVersion(increaseLevel);
     try {
       const hasRemote = await this.gitResource.hasRemote();
-      if (hasRemote && needsPipelines) await this.regeneratePipelines();
+      if (hasRemote && needsPipelines) await this.regeneratePipelines({ showWarnings: false });
       await this.saveConfigData();
       if (hasRemote) {
         if (!lively.isInOfflineMode && !initialSave) await this.gitResource.pullRepo();

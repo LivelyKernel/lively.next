@@ -469,17 +469,30 @@ class ProjectSavePrompt extends AbstractPromptModel {
   async viewDidLoad () {
     const { promptTitle, branchInput } = this.ui;
     this.view.visible = false;
+    this.ui.okButton.disable();
     const li = $world.showLoadingIndicatorFor(null, 'Setting up Save operation...');
-    const dependencies = await this.project.generateFlatDependenciesList();
-    const localDeps = dependencies.some(d => !d.hasRemote);
-    this.ui.dependencyStatusInfo.visible = localDeps;
-    branchInput.deactivate();
-    const currentBranchName = await this.project.gitResource.branchName();
-    promptTitle.textAndAttributes = ['Save Project\n', null, '(currently on', { fontSize: 16 }, ` ${currentBranchName}`, { fontSize: 16, fontColor: Color.lively }, ')', null];
-    await this.project.saveConfigData();
-    if (await this.project.hasRemoteConfigured()) this.project.regeneratePipelines();
-    li.remove();
-    this.view.visible = true;
+    try {
+      const dependencies = await this.project.generateFlatDependenciesList();
+      const localDeps = dependencies.some(d => !d.hasRemote);
+      this.ui.dependencyStatusInfo.visible = localDeps;
+      branchInput.deactivate();
+      const currentBranchName = await this.project.gitResource.branchName();
+      promptTitle.textAndAttributes = ['Save Project\n', null, '(currently on', { fontSize: 16 }, ` ${currentBranchName}`, { fontSize: 16, fontColor: Color.lively }, ')', null];
+      await this.project.saveConfigData();
+      if (await this.project.hasRemoteConfigured()) await this.project.regeneratePipelines({ showWarnings: false });
+      this.ui.okButton.enable();
+    } catch (err) {
+      const message = err.message || String(err);
+      this.view.setStatusMessage(message, StatusMessageError);
+      // Saving stays disabled, so the prompt keeps showing why.
+      const { dependencyStatusInfo } = this.ui;
+      dependencyStatusInfo.textAndAttributes = ['', { fontFamily: 'Font Awesome', fontWeight: '900' }, ' ', {}, `The project cannot be saved: ${message}`, null];
+      dependencyStatusInfo.fixedHeight = false;
+      dependencyStatusInfo.visible = true;
+    } finally {
+      li.remove();
+      this.view.visible = true;
+    }
   }
 
   cancelSave () {
@@ -493,6 +506,7 @@ class ProjectSavePrompt extends AbstractPromptModel {
   }
 
   async resolve (force) {
+    if (this.ui.okButton.viewModel.deactivated) return;
     if (!force && this.ui.description.isFocused()) {
       this.ui.description.insertText('\n');
       return;
