@@ -653,59 +653,44 @@ async function evaluateInNativeBackend (client, source, timeoutMs = 60000) {
 }
 
 /**
- * Makes @jspm/generator in the native backend record each network request in
- * `globalThis.__livelyImportMapFetchLog`: URL, status, time to headers, body
- * size or error, and total time.
+ * Prints how a Brotli-encoded module response from ga.jspm.io arrives in the
+ * native backend worker through four request paths, from the least to the
+ * most likely to stall: node:https with synchronous decompression, undici
+ * fetch without content encoding, node:https with streaming decompression,
+ * and undici fetch as @jspm/fetch issues it. Each path reports a stall after
+ * 30 s, and whether a Node timer started with it fired.
  */
-async function recordImportMapFetches (client) {
-  console.log('Desktop app smoke: recording import map fetches: ' + await evaluateInNativeBackend(client, `(async () => {
-    const libLookup = require('node:path').join(rootDir, 'lively.server', 'plugins', 'lib-lookup.js');
-    const generator = await System.nativeImport(pathToFileURL(createRequire(libLookup).resolve('@jspm/generator')).href);
-    const log = globalThis.__livelyImportMapFetchLog = [];
-    generator.setFetch(async (url, options) => {
-      const entry = { url: String(url), started: Date.now() };
-      log.push(entry);
-      try {
-        const response = await globalThis.fetch(url, options);
-        entry.status = response.status;
-        entry.headersMs = Date.now() - entry.started;
-        const arrayBuffer = response.arrayBuffer.bind(response);
-        response.arrayBuffer = async () => {
-          try {
-            const body = await arrayBuffer();
-            entry.bytes = body.byteLength;
-            return body;
-          } catch (err) {
-            entry.error = String(err && err.name || err) + ' reading the body: ' + String(err && err.message || '');
-            throw err;
-          } finally { entry.ms = Date.now() - entry.started; }
-        };
-        return response;
-      } catch (err) {
-        entry.error = String(err && err.name || err) + ': ' + String(err && err.message || '');
-        entry.ms = Date.now() - entry.started;
-        throw err;
-      }
+async function reportNativeBackendBodyReads (client) {
+  console.log('Desktop app smoke: native backend body reads: ' + await evaluateInNativeBackend(client, `(async () => {
+    const url = 'https://ga.jspm.io/npm:@rollup/pluginutils@3.1.0/dist/cjs/index.js';
+    const https = require('node:https');
+    const zlib = require('node:zlib');
+    const nodeTimers = require('node:timers');
+    const workerTimeout = (typeof self !== 'undefined' ? self : globalThis).setTimeout;
+    const get = () => new Promise((resolve, reject) => https.get(url, { headers: { 'accept-encoding': 'br' } }, resolve).on('error', reject));
+    const read = stream => new Promise((resolve, reject) => {
+      const chunks = [];
+      stream.on('data', chunk => chunks.push(chunk)).on('end', () => resolve(Buffer.concat(chunks))).on('error', reject);
     });
-    return true;
-  })()`));
-}
-
-/** Prints a summary of the requests `recordImportMapFetches` recorded. */
-async function reportImportMapFetches (client) {
-  console.log('Desktop app smoke: import map fetches: ' + await evaluateInNativeBackend(client, `(() => {
-    const log = globalThis.__livelyImportMapFetchLog;
-    if (!log) return 'not recording';
-    const now = Date.now();
-    const brief = entry => ({ url: entry.url, status: entry.status, headersMs: entry.headersMs, bytes: entry.bytes, ms: entry.ms, error: entry.error });
-    return {
-      requests: log.length,
-      completed: log.filter(entry => entry.ms !== undefined && !entry.error).length,
-      inFlight: log.filter(entry => entry.ms === undefined).map(entry => ({ ...brief(entry), ageMs: now - entry.started })),
-      failed: log.filter(entry => entry.error).map(brief).slice(0, 20),
-      slowest: log.filter(entry => entry.ms !== undefined).sort((a, b) => b.ms - a.ms).slice(0, 10).map(brief)
+    const paths = {
+      'node:https + brotliDecompressSync': async () => zlib.brotliDecompressSync(await read(await get())).length,
+      'undici fetch, accept-encoding identity': async () => (await (await fetch(url, { headers: { 'accept-encoding': 'identity' } })).arrayBuffer()).byteLength,
+      'node:https + createBrotliDecompress': async () => (await read((await get()).pipe(zlib.createBrotliDecompress()))).length,
+      'undici fetch with AbortSignal.timeout(60s)': async () => (await (await fetch(url, { signal: AbortSignal.timeout(60000) })).arrayBuffer()).byteLength
     };
-  })()`));
+    const results = [];
+    for (const [label, run] of Object.entries(paths)) {
+      const started = Date.now();
+      let nodeTimerFired = false;
+      nodeTimers.setTimeout(() => { nodeTimerFired = true; }, 500);
+      const outcome = await Promise.race([
+        run().then(bytes => ({ bytes }), err => ({ error: String(err && err.message || err) })),
+        new Promise(resolve => workerTimeout(() => resolve({ stalled: true }), 30000))
+      ]);
+      results.push({ label, ms: Date.now() - started, nodeTimerFired, ...outcome });
+    }
+    return results;
+  })()`, 3 * 60000));
 }
 
 /** Exercise local programming and verify the saved work after an app restart. */
@@ -1927,9 +1912,8 @@ async function main () {
           await assertRendererUsesHttpSystemURLs(client, port, timeoutMs, { requirePopulatedSystemMap: true, native });
           console.log('Desktop app smoke passed: project route preserves browser module resolution');
           if (!devRoot) {
-            await recordImportMapFetches(client);
-            try { await assertProjectProgramming(client, port, dataDir); }
-            finally { await reportImportMapFetches(client); }
+            await reportNativeBackendBodyReads(client);
+            await assertProjectProgramming(client, port, dataDir);
             await assertBrowserSwc(client);
             programmingLock = fs.readFileSync(path.join(dataDir, 'runtime-root', 'local_projects', 'smoke--programming', 'bun.lock'), 'utf8');
           }
