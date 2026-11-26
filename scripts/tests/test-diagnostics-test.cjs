@@ -119,11 +119,17 @@ function checkRunnerFailureReport (data) {
   assert.ok(!annotation[0].includes('\n'), 'the annotation is a single workflow command line');
   assert.match(annotation[0], /Error: RUNNER_SENTINEL 100%25%0A\s+at /, 'the annotation encodes line breaks and percent signs');
   assert.match(output.join('\n'), /BROWSER_SENTINEL/, 'CI log shows the browser errors');
-  const summary = written.filter(entry => entry.file === 'summary.txt').map(entry => entry.text).join('');
-  assert.match(summary, /^Error: RUNNER_SENTINEL 100%\n\s+at /m, 'summary prints the stack on separate lines');
-  assert.ok(!summary.includes('\\n'), 'summary contains no escaped line breaks');
+  // scripts/test.sh builds the CI step summary from test_output.md and failing.txt.
+  const summary = written.filter(entry => ['test_output.md', 'failing.txt'].includes(entry.file)).map(entry => entry.text).join('');
+  assert.match(summary, /Running the tests for \*\*pkg\*\* produced the following error/, 'the CI summary names the package');
+  assert.match(summary, /^Error: RUNNER_SENTINEL 100%\n\s+at /m, 'the CI summary prints the stack on separate lines');
+  assert.ok(!summary.includes('\\n'), 'the CI summary contains no escaped line breaks');
   assert.match(summary, /BROWSER_SENTINEL/);
-  console.log('Runner failures: stack traces stay multi-line in CLI and summary and are encoded for annotations');
+  const long = JSON.parse(data);
+  long.error = `Error: page failed to load\n${'x'.repeat(50000)}ERROR_TAIL`;
+  const bounded = runCLI(JSON.stringify(long)).written.map(entry => entry.text).join('');
+  assert.ok(bounded.length < 11000 && !bounded.includes('ERROR_TAIL'), `the CI summary bounds the error, got ${bounded.length} characters`);
+  console.log('Runner failures: stack traces stay multi-line in CLI and CI summary and are encoded for annotations');
 }
 
 async function check () {

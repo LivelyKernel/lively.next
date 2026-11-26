@@ -20,7 +20,8 @@ const CI = !!process.env.CI;
 // details of the first MAX_DETAILED_FAILURES in at most MAX_FAILURE_LIST_LENGTH characters, followed by
 // at most MAX_BROWSER_ERRORS_LENGTH characters of browser errors. Including the emoji markup that
 // scripts/test.sh adds, an ASCII report stays below 30 KB, so that many packages fit GitHub's 1 MiB
-// step summary limit. The job log keeps every failure with its full stack.
+// step summary limit. A package whose test run fails reports at most MAX_FAILURE_LIST_LENGTH characters
+// of the error with its browser errors instead. The job log keeps every failure with its full stack.
 const MAX_DETAIL_LENGTH = 1000;
 const MAX_DETAILED_FAILURES = 5;
 const MAX_LISTED_FAILURES = 30;
@@ -104,7 +105,8 @@ const req = http.request(options, res => {
         if (CI) {
           console.log(`::error:: Running the tests produced the following error:%0A${workflowCommandMessage(error)}`);
           if (browserErrors) console.log(browserErrors);
-          fs.appendFileSync('summary.txt', `❌ Running the tests produced the following error:\n${report}\n`);
+          const summaryReport = [error.slice(0, MAX_FAILURE_LIST_LENGTH), browserErrors].filter(Boolean).join('\n');
+          fs.appendFileSync('test_output.md', `\n---\n❌ Running the tests for **${targetPackage}** produced the following error:\n\`\`\`text\n${summaryReport}\n\`\`\`\n`);
         }
         else console.log(`❌ Running the tests produced the following error:\n${report}`);
         return;
