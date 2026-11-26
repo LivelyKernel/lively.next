@@ -1947,7 +1947,6 @@ async function main () {
           await assertRendererUsesHttpSystemURLs(client, port, timeoutMs, { requirePopulatedSystemMap: true, native });
           console.log('Desktop app smoke passed: project route preserves browser module resolution');
           if (!devRoot) {
-            await recordImportMapFetches(client);
             try { await assertProjectProgramming(client, port, dataDir); }
             finally { await reportImportMapFetches(client); }
             await assertBrowserSwc(client);
