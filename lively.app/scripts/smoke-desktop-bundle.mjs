@@ -636,65 +636,76 @@ function projectInstallDiagnostics (projectDir) {
   return lines.join('\n');
 }
 
-/**
- * Prints how long each stage of generating a browser import map takes in the
- * native backend worker: importing lib-lookup.js and @jspm/generator,
- * installing one dependency into a temporary package, extracting the map, and
- * a HEAD request without a timeout as findUnavailableJspmPackages issues it.
- * Each stage reports a hang after 60 s instead of waiting for it; the probe
- * does not fail the test.
- */
-async function reportNativeBackendImportMap (client) {
+/** Evaluates `source` in the native backend worker and answers its JSON result, or why there is none. */
+async function evaluateInNativeBackend (client, source, timeoutMs = 60000) {
   const result = await client.send('Runtime.evaluate', {
     awaitPromise: true,
     returnByValue: true,
     expression: `(async () => {
       if (!globalThis.livelyNative?.evaluate) return 'no native backend';
-      const source = ${JSON.stringify(`(async () => {
-        const workerTimeout = (typeof self !== 'undefined' ? self : globalThis).setTimeout;
-        const stages = [];
-        const stage = async (label, run) => {
-          const started = Date.now();
-          try {
-            const summary = await Promise.race([run(), new Promise(resolve => workerTimeout(() => resolve({ hung: true }), 60000))]);
-            stages.push({ label, ms: Date.now() - started, ...summary });
-            return !summary.hung;
-          } catch (err) {
-            stages.push({ label, ms: Date.now() - started, error: String(err && err.stack || err).slice(0, 500) });
-            return false;
-          }
-        };
-        const path = require('node:path');
-        const fs = require('node:fs');
-        const os = require('node:os');
-        const libLookup = path.join(rootDir, 'lively.server', 'plugins', 'lib-lookup.js');
-        let generatorModule;
-        const generatorFile = createRequire(libLookup).resolve('@jspm/generator');
-        const ok = await stage('import lib-lookup.js', async () => { await System.nativeImport(pathToFileURL(libLookup).href); return {}; }) &&
-          await stage('import @jspm/generator', async () => { generatorModule = await System.nativeImport(pathToFileURL(generatorFile).href); return {}; });
-        if (ok) {
-          const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lively-import-map-probe-'));
-          fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'import-map-probe', version: '1.0.0', dependencies: { '@rollup/plugin-json': '4.1.0' } }));
-          const baseUrl = pathToFileURL(dir + path.sep);
-          const generator = new generatorModule.Generator({ env: ['browser', 'module', 'import'], baseUrl, mapUrl: new URL('.cachedImportMap.json', baseUrl), defaultProvider: 'jspm.io' });
-          await stage('generator.install @rollup/plugin-json@4.1.0', async () => { await generator.install('@rollup/plugin-json@4.1.0'); return {}; }) &&
-            await stage('generator.extractMap', async () => {
-              const { map } = await generator.extractMap(Object.keys(generator.map.imports), undefined, undefined, true);
-              return { imports: Object.keys(map.imports || {}).length };
-            });
-        }
-        await stage('HEAD fetch without timeout', async () =>
-          ({ status: (await fetch('https://ga.jspm.io/npm:@rollup/plugin-json@4.1.0/dist/index.js', { method: 'HEAD' })).status }));
-        return { generatorFile, stages };
-      })()`)};
       return Promise.race([
-        livelyNative.evaluate(source),
-        new Promise(resolve => setTimeout(() => resolve('native backend did not answer within 6 minutes'), 6 * 60000))
+        livelyNative.evaluate(${JSON.stringify(source)}),
+        new Promise(resolve => setTimeout(() => resolve('native backend did not answer within ${timeoutMs} ms'), ${timeoutMs}))
       ]);
     })()`
   });
-  console.log('Desktop app smoke: native backend import map probe: ' +
-    JSON.stringify(result.exceptionDetails || result.result?.value));
+  return JSON.stringify(result.exceptionDetails || result.result?.value);
+}
+
+/**
+ * Makes @jspm/generator in the native backend record each network request in
+ * `globalThis.__livelyImportMapFetchLog`: URL, status, time to headers, body
+ * size or error, and total time.
+ */
+async function recordImportMapFetches (client) {
+  console.log('Desktop app smoke: recording import map fetches: ' + await evaluateInNativeBackend(client, `(async () => {
+    const libLookup = require('node:path').join(rootDir, 'lively.server', 'plugins', 'lib-lookup.js');
+    const generator = await System.nativeImport(pathToFileURL(createRequire(libLookup).resolve('@jspm/generator')).href);
+    const log = globalThis.__livelyImportMapFetchLog = [];
+    generator.setFetch(async (url, options) => {
+      const entry = { url: String(url), started: Date.now() };
+      log.push(entry);
+      try {
+        const response = await globalThis.fetch(url, options);
+        entry.status = response.status;
+        entry.headersMs = Date.now() - entry.started;
+        const arrayBuffer = response.arrayBuffer.bind(response);
+        response.arrayBuffer = async () => {
+          try {
+            const body = await arrayBuffer();
+            entry.bytes = body.byteLength;
+            return body;
+          } catch (err) {
+            entry.error = String(err && err.name || err) + ' reading the body: ' + String(err && err.message || '');
+            throw err;
+          } finally { entry.ms = Date.now() - entry.started; }
+        };
+        return response;
+      } catch (err) {
+        entry.error = String(err && err.name || err) + ': ' + String(err && err.message || '');
+        entry.ms = Date.now() - entry.started;
+        throw err;
+      }
+    });
+    return true;
+  })()`));
+}
+
+/** Prints a summary of the requests `recordImportMapFetches` recorded. */
+async function reportImportMapFetches (client) {
+  console.log('Desktop app smoke: import map fetches: ' + await evaluateInNativeBackend(client, `(() => {
+    const log = globalThis.__livelyImportMapFetchLog;
+    if (!log) return 'not recording';
+    const now = Date.now();
+    const brief = entry => ({ url: entry.url, status: entry.status, headersMs: entry.headersMs, bytes: entry.bytes, ms: entry.ms, error: entry.error });
+    return {
+      requests: log.length,
+      completed: log.filter(entry => entry.ms !== undefined && !entry.error).length,
+      inFlight: log.filter(entry => entry.ms === undefined).map(entry => ({ ...brief(entry), ageMs: now - entry.started })),
+      failed: log.filter(entry => entry.error).map(brief).slice(0, 20),
+      slowest: log.filter(entry => entry.ms !== undefined).sort((a, b) => b.ms - a.ms).slice(0, 10).map(brief)
+    };
+  })()`));
 }
 
 /** Exercise local programming and verify the saved work after an app restart. */
@@ -1916,8 +1927,9 @@ async function main () {
           await assertRendererUsesHttpSystemURLs(client, port, timeoutMs, { requirePopulatedSystemMap: true, native });
           console.log('Desktop app smoke passed: project route preserves browser module resolution');
           if (!devRoot) {
-            await reportNativeBackendImportMap(client);
-            await assertProjectProgramming(client, port, dataDir);
+            await recordImportMapFetches(client);
+            try { await assertProjectProgramming(client, port, dataDir); }
+            finally { await reportImportMapFetches(client); }
             await assertBrowserSwc(client);
             programmingLock = fs.readFileSync(path.join(dataDir, 'runtime-root', 'local_projects', 'smoke--programming', 'bun.lock'), 'utf8');
           }
