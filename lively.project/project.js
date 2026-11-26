@@ -609,7 +609,7 @@ export class Project {
           $world.setStatusMessage('Changing the required version of lively.next has been canceled.', StatusMessageError);
           return 'CANCELED';
         }
-        if (!await this.bindToCurrentLivelyVersion()) return 'CANCELED';
+        if (!await this.bindToCurrentLivelyVersion()) return 'WORKFLOWS_NOT_UPDATED';
         $world.setStatusMessage(`Updated the required version of lively.next for ${this.name}.`, StatusMessageConfirm);
         return 'UPDATED';
       }
@@ -619,7 +619,7 @@ export class Project {
         return 'OUTDATED';
       }
       case (3) : {
-        if (!await this.bindToCurrentLivelyVersion()) return 'CANCELED';
+        if (!await this.bindToCurrentLivelyVersion()) return 'WORKFLOWS_NOT_UPDATED';
         $world.setStatusMessage(`The required version of lively.next ${this.name} has been overwritten. ${this.name} has been upgraded to use the latest version available to you.`, StatusMessageWarning);
         return 'UPDATED';
       }
@@ -628,8 +628,9 @@ export class Project {
 
   /**
    * Binds the project to the running lively.next version and regenerates its workflows for that version.
-   * A workflow that cannot be regenerated, for example because of a broken custom section marker,
-   * leaves the bound version unchanged and is reported as a warning, so the next opening retries the update.
+   * A workflow whose custom sections cannot be merged, for example because of a broken section marker,
+   * leaves the bound version unchanged and is reported in a dialog, so the next opening retries the update.
+   * Other failures are thrown, also without changing the bound version.
    * @returns {Promise<boolean>} Whether the project is bound to the running version.
    */
   async bindToCurrentLivelyVersion () {
@@ -640,9 +641,12 @@ export class Project {
       await this.regeneratePipelines();
     } catch (err) {
       livelyConfig.boundLivelyVersion = boundVersion;
-      const message = `${this.name} stays bound to its previous version of lively.next, as its workflows cannot be updated (${err.message}). Repair the workflow and open the project again to retry.`;
-      console.warn(message);
-      $world.setStatusMessage(message, StatusMessageWarning);
+      if (!err.workflowFile) throw err;
+      console.warn(err.message);
+      await $world.inform({
+        title: `The workflows of ${this.name} cannot be updated`,
+        text: `${err.message}\n\nRepair the custom sections of .github/workflows/${err.workflowFile} and open the project again. Until then, ${this.name} stays bound to the lively.next version it requires.`
+      });
       return false;
     }
     this.config.hasUnsavedChanges = true;
@@ -769,7 +773,7 @@ export class Project {
         const content = preserveWorkflowCustomizations(previous, generated, message => warnings.push(`${name}: ${message}`));
         updates.push({ file, content });
       } catch (error) {
-        throw new Error(`${name}: ${error.message}`);
+        throw Object.assign(new Error(`${name}: ${error.message}`), { workflowFile: name });
       }
     }
     // Validate every custom section before replacing any workflow.

@@ -39,8 +39,8 @@ workflows additionally have `before-deploy` and `after-deploy` in the deploy job
 Keep both markers and each section name intact. Invalid, duplicate or removed
 sections stop regeneration before any workflow file is replaced, and saving the
 project stops with the error. When opening a project binds it to the running
-lively.next version, such an error does not stop the opening: the project keeps its
-previous version binding, a status warning names the error, and the next opening
+lively.next version, such an error does not stop the opening: the project keeps the
+lively.next version it is bound to, a dialog names the error, and the next opening
 retries the update.
 
 Before pulling, opening a project discards uncommitted changes to
