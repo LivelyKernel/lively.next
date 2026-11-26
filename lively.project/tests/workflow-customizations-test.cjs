@@ -73,6 +73,8 @@ const fileName = name => `/project/.github/workflows/${name}`;
     const customized = actual.replace(custom(id).trimEnd(), custom(id, '      - run: echo keep-custom-step\n').trimEnd());
     assert.match(merge(customized, actual.replaceAll('%LIVELY_VERSION%', 'fresh-runtime')), /keep-custom-step/);
     assert.equal(merge(actual, actual), actual, name + ' sections are valid');
+    const withoutMarkers = customized.replace(new RegExp(`^[ \\t]*# lively.next:custom (start|end) ${id}\\n`, 'gm'), '');
+    assert.equal(merge(withoutMarkers, actual), actual, name + ': deleting both markers of a section recreates it empty and replaces its steps');
     const legacy = actual.replace(/^[ \t]*# lively.next:custom[^\n]*\n?/gm, '').trimEnd();
     assert.equal(merge(legacy.replaceAll('%LIVELY_VERSION%', 'abcdef1234567'), actual.replaceAll('%LIVELY_VERSION%', '1234567abcdef')),
       actual.replaceAll('%LIVELY_VERSION%', '1234567abcdef'), name + ' unchanged legacy workflows migrate with runtime updates');

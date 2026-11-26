@@ -36,12 +36,15 @@ All workflows have `before-project`, before project checkout. Test workflows
 also have `before-tests` and `after-tests`. Build workflows have `before-build`
 and `after-build`, with the latter running before artifact upload. Pages
 workflows additionally have `before-deploy` and `after-deploy` in the deploy job.
-Keep both markers and each section name intact. Invalid, duplicate or removed
-sections stop regeneration before any workflow file is replaced, and saving the
-project stops with the error. When opening a project binds it to the running
-lively.next version, such an error does not stop the opening: the project keeps the
-lively.next version it is bound to, a dialog names the error, and the next opening
-retries the update.
+Keep both markers and each section name intact. Deleting both markers of a
+section makes its steps part of the generated template: regeneration recreates
+the section empty and replaces those steps. A malformed or unmatched marker, a
+section that appears twice, or a section name that the current template does not
+have, such as a renamed section, stops regeneration before any workflow file is
+replaced, and saving the project stops with the error. When opening a project
+binds it to the running lively.next version, such an error does not stop the
+opening: the project keeps the lively.next version it is bound to, a dialog names
+the error, and the next opening retries the update.
 
 Before pulling, opening a project discards uncommitted changes to
 `.github/workflows/ci-tests.yml` that leave its custom steps as committed, such
