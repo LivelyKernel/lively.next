@@ -28,7 +28,7 @@ async function check () {
   write('scripts/stop-process-tree.cjs', fs.readFileSync(path.join(root, 'scripts/stop-process-tree.cjs')));
   write('scripts/test-packages.json', '["pkg"]');
   write('bin/ss', '#!/bin/bash\nif [ "$FIXTURE_EXISTING" ]; then echo "LISTEN 0 0 127.0.0.1:9011"; fi\n');
-  // Running the old script for the regression must never touch real browsers or servers.
+  // A pkill shim records process-wide kills, so the script under test cannot reach real browsers or servers.
   write('bin/pkill', '#!/bin/bash\necho "$*" >> "$FIXTURE_BROAD_KILLS"\n');
   write('start-server.sh', '#!/bin/bash\nnode server.cjs\n');
   write('server.cjs', `const fs = require('node:fs');

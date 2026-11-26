@@ -1,13 +1,12 @@
 #!/bin/bash
 # This script can be used to run tests outside of a lively.next environment. It is used for the CI pipelines for lively.next and its projects.
-# It either executes all tests present in the test folders of the packages specified in `testfiles` (defaulting to all lively core packages),
-# or all tests in the single package given as a parameter when executing this script.
-# It is not possible to run multiple explicitly specified packages (except when modifying the below array).
+# It executes all tests present in the test folders of the packages given as parameters,
+# or, without parameters, of the lively core packages listed in `scripts/test-packages.json`.
 # As this script supports either running locally or inside of a GitHub Action environment, this leaves us with four cases:
-# (1) Testing the lively core a) in CI b) locally or (1) Testing one specific package a) in CI or b) locally.
-# In case (1), we provicde some summary statistics at the end of our test run and put them, as well as further information in markdown format, in a file called `test_output_clean.md` for later consumption.
+# (1) Testing the lively core a) in CI or b) locally, or (2) testing the given packages a) in CI or b) locally.
+# In case (1), we provide some summary statistics at the end of our test run and put them, as well as further information in markdown format, in a file called `test_output_clean.md` for later consumption.
 # In the cases a) we add some GitHub Actions output formatting hints as well as providing markdown to be rendered in the summary section of the action run.
-# In cases b), we provide more lean, human readable output meant for reading consumtion in a shell. 
+# In cases b), we provide more lean, human readable output meant for reading consumption in a shell.
 # For Linux systems, this script requires `ss` to run. On Mac, netstat is required instead.
 # On mac, make sure to have `gsed` installed.
 
